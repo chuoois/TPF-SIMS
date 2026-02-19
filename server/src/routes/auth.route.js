@@ -4,7 +4,7 @@ const {
   login,
   logout,
   refreshAccessToken,
-  me,
+  forgotPassword,
 } = require("../controller/auth.controller");
 const { verifyAccessToken } = require("../middleware/auth.middleware");
 
@@ -17,5 +17,6 @@ const { verifyAccessToken } = require("../middleware/auth.middleware");
 router.post("/login", login);
 router.post("/logout", logout);
 router.post("/refresh-token", refreshAccessToken);
+router.post("/forgot-password", forgotPassword);
 
 module.exports = router;

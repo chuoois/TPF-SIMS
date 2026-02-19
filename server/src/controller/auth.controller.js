@@ -182,4 +182,60 @@ const refreshAccessToken = async (req, res) => {
   }
 };
 
-module.exports = { login, logout, refreshAccessToken };
+/**
+ * Forgot Password — gửi mật khẩu mới qua email
+ */
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res
+        .status(400)
+        .json({ message: "Vui lòng nhập email" });
+    }
+
+    const user = await UserRepo.findOne({ where: { email } });
+
+    if (!user) {
+      // Không tiết lộ email có tồn tại hay không
+      return res
+        .status(200)
+        .json({ message: "Nếu email tồn tại, mật khẩu mới đã được gửi" });
+    }
+
+    // Tạo mật khẩu ngẫu nhiên 10 ký tự
+    const newPassword = randomUUID().replace(/-/g, "").slice(0, 10);
+
+    // Hash mật khẩu mới
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Cập nhật mật khẩu trong DB
+    user.password_hash = hashedPassword;
+    await UserRepo.save(user);
+
+    // Xóa tất cả refresh token (buộc đăng nhập lại)
+    await RefreshTokenRepo.delete({ userAccount: { pk_user_account_id: user.pk_user_account_id } });
+
+    // Gửi email mật khẩu mới
+    const { sendNewPasswordEmail } = require("../utils/email");
+    await sendNewPasswordEmail(email, newPassword);
+
+    // Ghi log
+    await SystemLogRepo.save({
+      pk_system_log_id: randomUUID(),
+      description: "Đặt lại mật khẩu (forgot password)",
+      userAccount: user,
+    });
+
+    return res
+      .status(200)
+      .json({ message: "Mật khẩu mới đã được gửi đến email của bạn" });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    return res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+module.exports = { login, logout, refreshAccessToken, forgotPassword };
