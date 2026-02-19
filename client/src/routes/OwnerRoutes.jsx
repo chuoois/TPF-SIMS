@@ -1,5 +1,6 @@
 import { LoginPage } from "@/pages/login/index"
 import { OwnerLayout } from "@/layouts/owner-layout/index"
+import OwnerAccountManage from "@/pages/owner-page/owner-account-manage"
 
 /**
  * Authentication Routes
@@ -16,6 +17,10 @@ export const ownerRoutes = {
         {
             path: "home",
             element: <div>Home</div>,
+        },
+        {
+            path: "dashboard/account-manage",
+            element: <OwnerAccountManage />,
         },
     ],
 }

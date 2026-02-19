@@ -45,6 +45,7 @@ const login = async (req, res) => {
     }
 
     const payload = {
+      id: user.pk_user_account_id,
       email: user.email,
       roleCode: user.role?.role_code,
     };
@@ -81,6 +82,7 @@ const login = async (req, res) => {
     return res.status(200).json({
       message: "Đăng nhập thành công",
       role: user.role?.role_code,
+      user: user.email
     });
   } catch (error) {
     console.error("Login error:", error);
@@ -137,6 +139,7 @@ const refreshAccessToken = async (req, res) => {
     jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
 
     const payload = {
+      id: tokenRecord.userAccount.pk_user_account_id,
       email: tokenRecord.userAccount.email,
       roleCode: tokenRecord.userAccount.role?.role_code,
     };
@@ -179,14 +182,4 @@ const refreshAccessToken = async (req, res) => {
   }
 };
 
-const me = async (req, res) => {
-  try {
-    const user = req.user;
-    return res.status(200).json(user);
-  } catch (error) {
-    console.error("Me error:", error);
-    return res.status(500).json({ message: "Lỗi server" });
-  }
-};
-
-module.exports = { login, logout, refreshAccessToken, me };
+module.exports = { login, logout, refreshAccessToken };

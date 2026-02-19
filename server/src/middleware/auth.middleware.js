@@ -10,6 +10,7 @@ const verifyAccessToken = (req, res, next) => {
 
     const decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET);
 
+
     // Gắn user info vào request
     req.user = decoded;
 
@@ -23,4 +24,18 @@ const verifyAccessToken = (req, res, next) => {
   }
 };
 
-module.exports = { verifyAccessToken };
+const verifyRole = (roles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Chưa đăng nhập" });
+    }
+
+    if (!roles.includes(req.user.roleCode)) {
+      return res.status(403).json({ message: "Không có quyền truy cập" });
+    }
+
+    next();
+  };
+};
+
+module.exports = { verifyAccessToken, verifyRole };

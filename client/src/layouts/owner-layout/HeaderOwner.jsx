@@ -18,6 +18,7 @@ export const Header = () => {
     try {
       await authService.logout();
       toast.success("Đã đăng xuất");
+      localStorage.clear();
       navigate("/auth/login");
     } catch (error) {
       console.error(error);
