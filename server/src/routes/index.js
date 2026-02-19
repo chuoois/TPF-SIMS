@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 
 const authRoutes = require("./auth.route");
+const commonRoutes = require("./common.route");
+const ownerRoutes = require("./owner.route");
 
 /**
  * Root Router
@@ -10,5 +12,7 @@ const authRoutes = require("./auth.route");
  */
 
 router.use("/auth", authRoutes);
+router.use("/common", commonRoutes);
+router.use("/owner", ownerRoutes);
 
 module.exports = router;

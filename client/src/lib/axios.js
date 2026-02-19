@@ -38,8 +38,7 @@ axiosInstance.interceptors.response.use(
     if (
       status === 401 &&
       !originalRequest._retry &&
-      !originalRequest.url.includes("/auth/refresh") &&
-      !originalRequest.url.includes("/auth/me")
+      !originalRequest.url.includes("/auth/refresh-token")
     ) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -54,7 +53,7 @@ axiosInstance.interceptors.response.use(
 
       try {
         // Gọi refresh -> cookie tự gửi
-        await axiosInstance.post("/auth/refresh");
+        await axiosInstance.post("/auth/refresh-token");
 
         processQueue();
         isRefreshing = false;

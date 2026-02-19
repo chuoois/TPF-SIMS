@@ -17,6 +17,5 @@ const { verifyAccessToken } = require("../middleware/auth.middleware");
 router.post("/login", login);
 router.post("/logout", logout);
 router.post("/refresh-token", refreshAccessToken);
-router.get("/me", verifyAccessToken, me);
 
 module.exports = router;

@@ -51,9 +51,8 @@ export const LoginPage = () => {
          * - Trả về { message, role }
          */
         const data = await authService.login(values.email, values.password);
-
         const role = data.role;
-
+        localStorage.setItem("user", JSON.stringify(data.user));
         const roleRedirectMap = {
           OWNER: "/owner/home",
           SALES: "/sales/home",
