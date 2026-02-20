@@ -7,6 +7,18 @@ const {
 } = require("./base.controller");
 const { randomUUID } = require("crypto");
 
+// Helper ghi SystemLog vào DB
+const writeSystemLog = async (manager, { description, actorAccount }) => {
+    const logRepo = manager.getRepository("SystemLog");
+    const log = logRepo.create({
+        pk_system_log_id: randomUUID(),
+        description,
+        modified_by: actorAccount?.email ?? "unknown",
+        userAccount: actorAccount ? { pk_user_account_id: actorAccount.pk_user_account_id } : null,
+    });
+    await logRepo.save(log);
+};
+
 /**
  * Create a new account with profile (Owner only)
  */
@@ -39,7 +51,7 @@ const createAccount = async (req, res) => {
         // Get Role
         const role = await UserRoleRepo.findOne({
             where: { role_code: roleCode || "" },
-        }); // Default to  if not specified
+        });
         if (!role) {
             return res.status(400).json({ message: "Role không hợp lệ" });
         }
@@ -64,13 +76,18 @@ const createAccount = async (req, res) => {
             full_name: fullName,
             phone_number: phoneNumber,
             dob: dob ? new Date(dob) : null,
-            gender: gender, // Verify type logic if needed (e.g. 0/1)
+            gender: gender,
             salary_type: salaryType,
         });
 
         await queryRunner.manager.getRepository("UserProfile").save(newUserProfile);
 
-        // Commit Transaction
+        // Ghi SystemLog
+        await writeSystemLog(queryRunner.manager, {
+            description: `Tạo tài khoản mới: ${email} (role: ${roleCode})`,
+            actorAccount: req.user,
+        });
+
         await queryRunner.commitTransaction();
 
         return res.status(201).json({
@@ -116,6 +133,12 @@ const getAllAccounts = async (req, res) => {
             },
         });
 
+        // Ghi SystemLog
+        await writeSystemLog(AppDataSource.manager, {
+            description: `Xem danh sách tất cả tài khoản (${accounts.length} tài khoản)`,
+            actorAccount: req.user,
+        });
+
         return res.status(200).json(accounts);
     } catch (error) {
         console.error("Get All Accounts Error:", error);
@@ -138,7 +161,13 @@ const getAccountById = async (req, res) => {
             return res.status(404).json({ message: "Không tìm thấy tài khoản" });
         }
 
-        // Remove sensitive data if needed, though usually handled by select or DTO
+        // Ghi SystemLog
+        await writeSystemLog(AppDataSource.manager, {
+            description: `Xem chi tiết tài khoản: ${account.email} (ID: ${id})`,
+            actorAccount: req.user,
+        });
+
+        // Remove sensitive data
         delete account.password_hash;
 
         return res.status(200).json(account);
@@ -195,6 +224,12 @@ const updateAccount = async (req, res) => {
             await queryRunner.manager.getRepository("UserProfile").save(account.profile);
         }
 
+        // Ghi SystemLog
+        await writeSystemLog(queryRunner.manager, {
+            description: `Cập nhật tài khoản: ${account.email} (ID: ${id})`,
+            actorAccount: req.user,
+        });
+
         await queryRunner.commitTransaction();
 
         return res.status(200).json({ message: "Cập nhật thành công" });
@@ -214,6 +249,9 @@ const deleteAccount = async (req, res) => {
     try {
         const { id } = req.params;
 
+        // Lấy thông tin tài khoản trước khi xóa để ghi log
+        const account = await UserRepo.findOne({ where: { pk_user_account_id: id } });
+
         const result = await UserRepo.delete(id);
 
         if (result.affected === 0) {
@@ -221,6 +259,12 @@ const deleteAccount = async (req, res) => {
                 .status(404)
                 .json({ message: "Không tìm thấy tài khoản để xóa" });
         }
+
+        // Ghi SystemLog
+        await writeSystemLog(AppDataSource.manager, {
+            description: `Xóa tài khoản: ${account?.email ?? id} (ID: ${id})`,
+            actorAccount: req.user,
+        });
 
         return res.status(200).json({ message: "Xóa tài khoản thành công" });
     } catch (error) {
