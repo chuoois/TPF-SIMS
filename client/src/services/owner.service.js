@@ -35,4 +35,16 @@ export const ownerService = {
         const res = await api.delete(`/owner/accounts/${id}`);
         return res.data;
     },
+
+    // Update Account Status
+    updateAccountStatus: async (id, status) => {
+        const res = await api.patch(`/owner/accounts/${id}/status`, { status });
+        return res.data;
+    },
+
+    // Get System Logs
+    getSystemLogs: async (page = 1, limit = 20) => {
+        const res = await api.get(`/owner/logs?page=${page}&limit=${limit}`);
+        return res.data;
+    },
 };

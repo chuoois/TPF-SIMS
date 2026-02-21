@@ -169,12 +169,6 @@ const refreshAccessToken = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    await SystemLogRepo.save({
-      pk_system_log_id: randomUUID(),
-      description: "Làm mới access token",
-      userAccount: tokenRecord.userAccount,
-    });
-
     return res.status(200).json({ message: "Refreshed" });
   } catch (error) {
     console.error("Refresh token error:", error);
