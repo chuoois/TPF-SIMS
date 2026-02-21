@@ -21,6 +21,12 @@ router.get("/accounts/:id", ownerController.getAccountById);
 // Update Account
 router.put("/accounts/:id", ownerController.updateAccount);
 
+// Change Status
+router.patch("/accounts/:id/status", ownerController.updateAccountStatus);
+
+// Get System Logs
+router.get("/logs", ownerController.getSystemLogs);
+
 // Delete Account
 router.delete("/accounts/:id", ownerController.deleteAccount);
 

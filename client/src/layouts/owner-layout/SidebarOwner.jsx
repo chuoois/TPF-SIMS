@@ -7,6 +7,7 @@ import {
   ShoppingCart,
   Users,
   UserCog,
+  ShieldAlert,
 } from "lucide-react";
 
 /**
@@ -32,6 +33,11 @@ const menus = [
     label: "Quản lý tài khoản",
     path: "dashboard/account-manage",
     icon: UserCog,
+  },
+  {
+    label: "Nhật ký hệ thống",
+    path: "dashboard/system-log",
+    icon: ShieldAlert,
   },
   {
     label: "Sản phẩm",

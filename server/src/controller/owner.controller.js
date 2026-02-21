@@ -7,6 +7,12 @@ const {
 } = require("./base.controller");
 const { randomUUID } = require("crypto");
 
+const statusLabels = {
+    1: "Hoạt động",
+    0: "Tạm nghỉ",
+    "-1": "Đã khóa",
+};
+
 // Helper ghi SystemLog vào DB
 const writeSystemLog = async (manager, { description, actorAccount }) => {
     const logRepo = manager.getRepository("SystemLog");
@@ -225,8 +231,9 @@ const updateAccount = async (req, res) => {
         }
 
         // Ghi SystemLog
+        const statusLabel = status !== undefined ? ` (Trạng thái: ${statusLabels[status] || status})` : "";
         await writeSystemLog(queryRunner.manager, {
-            description: `Cập nhật tài khoản: ${account.email} (ID: ${id})`,
+            description: `Cập nhật tài khoản: ${account.email}${statusLabel} (ID: ${id})`,
             actorAccount: req.user,
         });
 
@@ -273,10 +280,78 @@ const deleteAccount = async (req, res) => {
     }
 };
 
+/**
+ * Update Account Status (e.g., -1, 0, 1)
+ */
+const updateAccountStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+
+        if (status === undefined) {
+            return res.status(400).json({ message: "Thiếu trạng thái (status)" });
+        }
+
+        const account = await UserRepo.findOne({ where: { pk_user_account_id: id } });
+
+        if (!account) {
+            return res.status(404).json({ message: "Không tìm thấy tài khoản" });
+        }
+
+        account.status = status;
+        await UserRepo.save(account);
+
+        // Ghi SystemLog
+        const statusLabel = statusLabels[status] || status;
+        await writeSystemLog(AppDataSource.manager, {
+            description: `Cập nhật trạng thái tài khoản: ${account.email} thành "${statusLabel}" (ID: ${id})`,
+            actorAccount: req.user,
+        });
+
+        return res.status(200).json({ message: "Cập nhật trạng thái thành công" });
+    } catch (error) {
+        console.error("Update Account Status Error:", error);
+        return res.status(500).json({ message: "Lỗi server" });
+    }
+};
+
+/**
+ * Get System Logs (Auditing)
+ */
+const getSystemLogs = async (req, res) => {
+    try {
+        const { page = 1, limit = 20 } = req.query;
+        const skip = (page - 1) * limit;
+
+        const logRepo = AppDataSource.getRepository("SystemLog");
+        const [logs, total] = await logRepo.findAndCount({
+            relations: ["userAccount"],
+            order: {
+                timestamp: "DESC",
+            },
+            take: Number(limit),
+            skip: Number(skip),
+        });
+
+        return res.status(200).json({
+            items: logs,
+            total,
+            page: Number(page),
+            limit: Number(limit),
+            totalPages: Math.ceil(total / limit),
+        });
+    } catch (error) {
+        console.error("Get System Logs Error:", error);
+        return res.status(500).json({ message: "Lỗi server khi lấy lịch sử thao tác" });
+    }
+};
+
 module.exports = {
     createAccount,
     getAllAccounts,
     getAccountById,
     updateAccount,
     deleteAccount,
+    updateAccountStatus,
+    getSystemLogs,
 };
