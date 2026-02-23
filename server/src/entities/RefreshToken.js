@@ -18,10 +18,6 @@ module.exports = new EntitySchema({
     expires_at: {
       type: "datetime",
     },
-    timestamp: {
-      type: "datetime",
-      createDate: true,
-    },
   },
 
   relations: {
