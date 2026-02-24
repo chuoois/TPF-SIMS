@@ -201,7 +201,7 @@ const forgotPassword = async (req, res) => {
     }
 
     // Tạo mật khẩu ngẫu nhiên 10 ký tự
-    const newPassword = randomUUID().replace(/-/g, "").slice(0, 10);
+    const newPassword = randomUUID().replace(/-/g, "").slice(0,6);
 
     // Hash mật khẩu mới
     const salt = await bcrypt.genSalt(10);

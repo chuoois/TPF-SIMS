@@ -8,6 +8,7 @@ const UserRoleRepo = AppDataSource.getRepository("UserRole");
 const WoodTypeRepo = AppDataSource.getRepository("WoodType");
 const ProductCategoryRepo = AppDataSource.getRepository("ProductCategory");
 const ProductRepo = AppDataSource.getRepository("Product");
+const CustomerProfileRepo = AppDataSource.getRepository("CustomerProfile");
 
 /**
  * Đăng kí các entites trên database
@@ -25,5 +26,6 @@ module.exports = {
   WoodTypeRepo,
   ProductCategoryRepo,
   ProductRepo,
+  CustomerProfileRepo,
 };
 
