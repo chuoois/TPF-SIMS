@@ -1,3 +1,4 @@
+const { Like } = require("typeorm");
 const bcrypt = require("bcrypt");
 const { AppDataSource } = require("../config/db");
 const {
@@ -19,8 +20,8 @@ const writeSystemLog = async (manager, { description, actorAccount }) => {
     const log = logRepo.create({
         pk_system_log_id: randomUUID(),
         description,
-        modified_by: actorAccount?.email ?? "unknown",
-        userAccount: actorAccount ? { pk_user_account_id: actorAccount.pk_user_account_id } : null,
+        modified_by: actorAccount?.fullName ?? actorAccount?.email ?? "unknown",
+        userAccount: actorAccount ? { pk_user_account_id: actorAccount.id } : null,
     });
     await logRepo.save(log);
 };
@@ -118,7 +119,16 @@ const createAccount = async (req, res) => {
  */
 const getAllAccounts = async (req, res) => {
     try {
-        const accounts = await UserRepo.find({
+        const { page = 1, limit = 10, search = "" } = req.query;
+        const skip = (page - 1) * limit;
+
+        const where = search ? [
+            { email: Like(`%${search}%`) },
+            { profile: { full_name: Like(`%${search}%`) } }
+        ] : {};
+
+        const [accounts, total] = await UserRepo.findAndCount({
+            where,
             relations: ["profile", "role"],
             select: {
                 pk_user_account_id: true,
@@ -137,15 +147,18 @@ const getAllAccounts = async (req, res) => {
                     salary_type: true
                 },
             },
+            order: { timestamp: "DESC" },
+            take: Number(limit),
+            skip: Number(skip),
         });
 
-        // Ghi SystemLog
-        await writeSystemLog(AppDataSource.manager, {
-            description: `Xem danh sách tất cả tài khoản (${accounts.length} tài khoản)`,
-            actorAccount: req.user,
+        return res.status(200).json({
+            items: accounts,
+            total,
+            page: Number(page),
+            limit: Number(limit),
+            totalPages: Math.ceil(total / limit),
         });
-
-        return res.status(200).json(accounts);
     } catch (error) {
         console.error("Get All Accounts Error:", error);
         return res.status(500).json({ message: "Lỗi server" });
@@ -166,12 +179,6 @@ const getAccountById = async (req, res) => {
         if (!account) {
             return res.status(404).json({ message: "Không tìm thấy tài khoản" });
         }
-
-        // Ghi SystemLog
-        await writeSystemLog(AppDataSource.manager, {
-            description: `Xem chi tiết tài khoản: ${account.email} (ID: ${id})`,
-            actorAccount: req.user,
-        });
 
         // Remove sensitive data
         delete account.password_hash;
@@ -320,12 +327,18 @@ const updateAccountStatus = async (req, res) => {
  */
 const getSystemLogs = async (req, res) => {
     try {
-        const { page = 1, limit = 20 } = req.query;
+        const { page = 1, limit = 20, search = "" } = req.query;
         const skip = (page - 1) * limit;
+
+        const where = search ? [
+            { description: Like(`%${search}%`) },
+            { modified_by: Like(`%${search}%`) },
+        ] : {};
 
         const logRepo = AppDataSource.getRepository("SystemLog");
         const [logs, total] = await logRepo.findAndCount({
-            relations: ["userAccount"],
+            where,
+            relations: ["userAccount", "userAccount.profile"],
             order: {
                 timestamp: "DESC",
             },

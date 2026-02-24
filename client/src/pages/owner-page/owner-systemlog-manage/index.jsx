@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "react-hot-toast";
+import useDebounce from "@/hooks/useDebounce";
 import { Input } from "../../../components/ui/input";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 
@@ -29,10 +30,12 @@ const OwnerSystemLogManage = () => {
   const [totalItems, setTotalItems] = useState(0);
   const limit = 20;
 
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
   const fetchLogs = async (page = 1) => {
     setLoading(true);
     try {
-      const data = await ownerService.getSystemLogs(page, limit);
+      const data = await ownerService.getSystemLogs(page, limit, searchTerm);
       setLogs(data.items || []);
       setTotalPages(data.totalPages || 1);
       setTotalItems(data.total || 0);
@@ -47,12 +50,12 @@ const OwnerSystemLogManage = () => {
 
   useEffect(() => {
     fetchLogs(1);
-  }, []);
+  }, [debouncedSearchTerm]);
 
   const filteredLogs = logs.filter((log) => {
-    const matchesSearch =
-      log.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.modified_by.toLowerCase().includes(searchTerm.toLowerCase());
+    // Search đã thực hiện ở server-side.
+    // Dưới đây chỉ lọc thêm client-side cho ngày tháng (trên trang hiện tại).
+    const matchesSearch = true;
 
     // Sử dụng format yyyy-MM-dd để so sánh chuỗi, tránh lỗi lệch múi giờ (Timezone)
     const logDateStr = format(new Date(log.timestamp), "yyyy-MM-dd");
@@ -192,7 +195,7 @@ const OwnerSystemLogManage = () => {
                             className="text-xs font-bold text-gray-700 truncate max-w-[160px]"
                             title={log.modified_by}
                           >
-                            {log.modified_by}
+                            {log.userAccount?.profile?.full_name || log.modified_by}
                           </span>
                         </div>
                       </td>
