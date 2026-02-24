@@ -5,6 +5,9 @@ const SystemLogRepo = AppDataSource.getRepository("SystemLog");
 const EmployeeSalaryRepo = AppDataSource.getRepository("EmployeeSalary");
 const UserProfileRepo = AppDataSource.getRepository("UserProfile");
 const UserRoleRepo = AppDataSource.getRepository("UserRole");
+const WoodTypeRepo = AppDataSource.getRepository("WoodType");
+const ProductCategoryRepo = AppDataSource.getRepository("ProductCategory");
+const ProductRepo = AppDataSource.getRepository("Product");
 
 /**
  * Đăng kí các entites trên database
@@ -18,6 +21,9 @@ module.exports = {
   SystemLogRepo,
   EmployeeSalaryRepo,
   UserProfileRepo,
-  UserRoleRepo
+  UserRoleRepo,
+  WoodTypeRepo,
+  ProductCategoryRepo,
+  ProductRepo,
 };
 
