@@ -5,6 +5,9 @@ const SystemLogRepo = AppDataSource.getRepository("SystemLog");
 const EmployeeSalaryRepo = AppDataSource.getRepository("EmployeeSalary");
 const UserProfileRepo = AppDataSource.getRepository("UserProfile");
 const UserRoleRepo = AppDataSource.getRepository("UserRole");
+const WoodTypeRepo = AppDataSource.getRepository("WoodType");
+const ProductCategoryRepo = AppDataSource.getRepository("ProductCategory");
+const ProductRepo = AppDataSource.getRepository("Product");
 const CustomerProfileRepo = AppDataSource.getRepository("CustomerProfile");
 const ProductCategoryRepo = AppDataSource.getRepository("ProductCategory");
 const ProductRepo = AppDataSource.getRepository("Product");
@@ -26,6 +29,9 @@ module.exports = {
   EmployeeSalaryRepo,
   UserProfileRepo,
   UserRoleRepo,
+  WoodTypeRepo,
+  ProductCategoryRepo,
+  ProductRepo,
   CustomerProfileRepo,
   ProductCategoryRepo,
   ProductRepo,

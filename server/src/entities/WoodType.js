@@ -13,33 +13,27 @@ module.exports = new EntitySchema({
         wood_code: {
             type: "varchar",
             length: 50,
-            nullable: false,
+            unique: true,
         },
         wood_name: {
             type: "varchar",
             length: 255,
-            nullable: false,
         },
         wood_status: {
             type: "varchar",
             length: 20,
+            default: "ACTIVE",
             nullable: true,
         },
         created_at: {
             type: "datetime",
             createDate: true,
+            nullable: true,
         },
         updated_at: {
             type: "datetime",
             updateDate: true,
-        },
-    },
-
-    relations: {
-        skus: {
-            type: "one-to-many",
-            target: "Sku",
-            inverseSide: "woodType",
+            nullable: true,
         },
     },
 });

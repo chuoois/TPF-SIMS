@@ -32,7 +32,7 @@ const login = async (req, res) => {
 
     const user = await UserRepo.findOne({
       where: { email },
-      relations: ["role"],
+      relations: ["role", "profile"],
     });
 
     if (!user) {
@@ -48,6 +48,7 @@ const login = async (req, res) => {
       id: user.pk_user_account_id,
       email: user.email,
       roleCode: user.role?.role_code,
+      fullName: user.profile?.full_name || user.email,
     };
 
     const accessToken = generateAccessToken(payload);
@@ -124,7 +125,7 @@ const refreshAccessToken = async (req, res) => {
 
     const tokenRecord = await RefreshTokenRepo.findOne({
       where: { token_hash: refreshToken },
-      relations: ["userAccount", "userAccount.role"],
+      relations: ["userAccount", "userAccount.role", "userAccount.profile"],
     });
 
     if (!tokenRecord) {
@@ -142,6 +143,7 @@ const refreshAccessToken = async (req, res) => {
       id: tokenRecord.userAccount.pk_user_account_id,
       email: tokenRecord.userAccount.email,
       roleCode: tokenRecord.userAccount.role?.role_code,
+      fullName: tokenRecord.userAccount.profile?.full_name || tokenRecord.userAccount.email,
     };
 
     const newAccessToken = generateAccessToken(payload);

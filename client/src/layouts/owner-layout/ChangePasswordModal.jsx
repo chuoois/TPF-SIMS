@@ -15,8 +15,8 @@ const PasswordInput = ({
     id, name, value, label, required: isRequired,
     show, error, touched, onToggle, onChange, onBlur,
 }) => (
-    <div className="space-y-1.5">
-        <Label htmlFor={id}>
+    <div className="space-y-1.5 uppercase-labels">
+        <Label htmlFor={id} className={touched && error ? "text-red-500" : ""}>
             {label} {isRequired && <span className="text-red-500">*</span>}
         </Label>
         <div className="relative">
@@ -28,7 +28,7 @@ const PasswordInput = ({
                 onChange={onChange}
                 onBlur={onBlur}
                 placeholder="••••••••"
-                className={`pr-10 ${touched && error ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                className={`pr-10 transition-all ${touched && error ? "border-red-500 focus-visible:ring-red-500 bg-red-50/10" : "border-gray-200"}`}
             />
             <button
                 type="button"
@@ -40,7 +40,7 @@ const PasswordInput = ({
             </button>
         </div>
         {touched && error && (
-            <p className="text-xs text-red-500 mt-1">{error}</p>
+            <p className="text-[11px] text-red-500 mt-1 font-medium animate-in fade-in slide-in-from-top-1">{error}</p>
         )}
     </div>
 );

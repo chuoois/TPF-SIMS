@@ -13,12 +13,11 @@ module.exports = new EntitySchema({
         category_code: {
             type: "varchar",
             length: 50,
-            nullable: false,
+            unique: true,
         },
         category_name: {
             type: "varchar",
             length: 150,
-            nullable: false,
         },
         category_status: {
             type: "varchar",
@@ -26,20 +25,14 @@ module.exports = new EntitySchema({
             nullable: true,
         },
         created_at: {
-            type: "timestamp",
+            type: "datetime",
             createDate: true,
+            nullable: true,
         },
         updated_at: {
-            type: "timestamp",
+            type: "datetime",
             updateDate: true,
-        },
-    },
-
-    relations: {
-        products: {
-            type: "one-to-many",
-            target: "Product",
-            inverseSide: "productCategory",
+            nullable: true,
         },
     },
 });
