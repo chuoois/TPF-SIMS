@@ -6,6 +6,12 @@ const EmployeeSalaryRepo = AppDataSource.getRepository("EmployeeSalary");
 const UserProfileRepo = AppDataSource.getRepository("UserProfile");
 const UserRoleRepo = AppDataSource.getRepository("UserRole");
 const CustomerProfileRepo = AppDataSource.getRepository("CustomerProfile");
+const ProductCategoryRepo = AppDataSource.getRepository("ProductCategory");
+const ProductRepo = AppDataSource.getRepository("Product");
+const WoodTypeRepo = AppDataSource.getRepository("WoodType");
+const SkuRepo = AppDataSource.getRepository("Sku");
+const WarehouseRepo = AppDataSource.getRepository("Warehouse");
+const WarehouseInventoryRepo = AppDataSource.getRepository("WarehouseInventory");
 
 /**
  * Đăng kí các entites trên database
@@ -21,5 +27,11 @@ module.exports = {
   UserProfileRepo,
   UserRoleRepo,
   CustomerProfileRepo,
+  ProductCategoryRepo,
+  ProductRepo,
+  WoodTypeRepo,
+  SkuRepo,
+  WarehouseRepo,
+  WarehouseInventoryRepo,
 };
 
