@@ -5,6 +5,7 @@ const SystemLogRepo = AppDataSource.getRepository("SystemLog");
 const EmployeeSalaryRepo = AppDataSource.getRepository("EmployeeSalary");
 const UserProfileRepo = AppDataSource.getRepository("UserProfile");
 const UserRoleRepo = AppDataSource.getRepository("UserRole");
+const CustomerProfileRepo = AppDataSource.getRepository("CustomerProfile");
 
 /**
  * Đăng kí các entites trên database
@@ -18,6 +19,7 @@ module.exports = {
   SystemLogRepo,
   EmployeeSalaryRepo,
   UserProfileRepo,
-  UserRoleRepo
+  UserRoleRepo,
+  CustomerProfileRepo,
 };
 
