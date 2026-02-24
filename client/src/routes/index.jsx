@@ -3,12 +3,13 @@ import { NotFoundPage } from "@/pages/not-found";
 import { NoPermissionPage } from "@/pages/no-permission";
 import { authRoutes } from "./AuthRoutes";
 import { ownerRoutes } from "./OwnerRoutes";
+import { salesRoutes } from "./SalesRoutes";
 import ProtectedRoute from "./ProtectedRoute";
 
 /**
  * Main Router Configuration
  * Cấu hình Router chính cho toàn bộ ứng dụng:
- * - Kết hợp các module route (Auth, Admin, Warehouse...)
+ * - Kết hợp các module route (Auth, Owner, Sales...)
  * - Định nghĩa root redirect
  * - Xử lý lỗi 404 Global
  *
@@ -21,7 +22,7 @@ export const router = createBrowserRouter([
   // Protected Routes
   {
     element: <ProtectedRoute />,
-    children: [ownerRoutes],
+    children: [ownerRoutes, salesRoutes],
   },
   { path: "/404", element: <NotFoundPage /> },
   { path: "/403", element: <NoPermissionPage /> },

@@ -11,12 +11,14 @@ module.exports = new EntitySchema({
       primary: true,
     },
     token_hash: {
-      type: "varchar",
-      length: 255,
-      unique: true,
+      type: "text",
     },
     expires_at: {
       type: "datetime",
+    },
+    timestamp: {
+      type: "datetime",
+      createDate: true,
     },
   },
 
