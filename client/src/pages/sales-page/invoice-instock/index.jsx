@@ -25,6 +25,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Package,
+  Truck,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
@@ -204,7 +205,7 @@ export default function InStockInvoicePage() {
         {/* ═══════════════ CỘT TRÁI – GIỎ HÀNG ═══════════════ */}
         <div className="flex flex-col w-[58%] border-r bg-white">
           {/* ── Header: Search + Invoice Tabs ── */}
-          <div className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white">
+          <div className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground">
             <div className="flex items-center gap-2 shrink-0">
               <Search size={16} />
               <input
@@ -215,7 +216,7 @@ export default function InStockInvoicePage() {
                   setSearchProduct(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="bg-white/20 backdrop-blur-sm text-white placeholder-white/70 rounded-md px-3 py-1.5 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-white/40"
+                className="bg-white/20 backdrop-blur-sm text-primary-foreground placeholder-white/70 rounded-md px-3 py-1.5 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-white/40"
               />
             </div>
 
@@ -283,7 +284,7 @@ export default function InStockInvoicePage() {
                   {activeTab.cartItems.map((item, idx) => (
                     <tr
                       key={item.id}
-                      className="hover:bg-blue-50/30 transition-colors"
+                      className="hover:bg-muted/50 transition-colors"
                     >
                       <td className="p-3 text-xs text-gray-400 font-medium">
                         {idx + 1}
@@ -315,7 +316,7 @@ export default function InStockInvoicePage() {
                             onChange={(e) =>
                               setQuantity(item.id, e.target.value)
                             }
-                            className="w-12 h-7 text-center text-sm font-semibold border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="w-12 h-7 text-center text-sm font-semibold border rounded-md focus:outline-none focus:ring-2 focus:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <button
                             onClick={() => updateQuantity(item.id, 1)}
@@ -328,7 +329,7 @@ export default function InStockInvoicePage() {
                       <td className="p-3 text-right text-sm font-medium text-gray-700">
                         {formatCurrency(item.price)}
                       </td>
-                      <td className="p-3 text-right text-sm font-bold text-blue-600">
+                      <td className="p-3 text-right text-sm font-bold text-primary">
                         {formatCurrency(item.price * item.quantity)}
                       </td>
                       <td className="p-3">
@@ -378,12 +379,12 @@ export default function InStockInvoicePage() {
                       discount: Math.max(0, parseInt(e.target.value) || 0),
                     })
                   }
-                  className="w-28 text-right text-sm font-semibold border rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-28 text-right text-sm font-semibold border rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
               <div className="flex justify-between text-base font-bold pt-1 border-t">
                 <span className="text-gray-800">Khách cần trả</span>
-                <span className="text-blue-600 text-lg">
+                <span className="text-primary text-lg">
                   {formatCurrency(totalPayable)}
                 </span>
               </div>
@@ -392,14 +393,14 @@ export default function InStockInvoicePage() {
 
           {/* ── Bottom Tabs ── */}
           <div className="flex border-t bg-gray-50">
-            <button className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold text-blue-600 border-b-2 border-blue-600 bg-white">
-              🛒 Bán thường
+            <button className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold text-primary border-b-2 border-primary bg-white">
+              <ShoppingCart size={15} /> Bán thường
             </button>
             <button
               onClick={() => navigate("/sales/dashboard/invoice-custom-order")}
               className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium text-gray-500 hover:bg-gray-100 transition"
             >
-              🚚 Bán giao hàng
+              <Truck size={15} /> Bán giao hàng
             </button>
           </div>
         </div>
@@ -420,7 +421,7 @@ export default function InStockInvoicePage() {
             />
             <button
               onClick={() => setShowAddCustomer(true)}
-              className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition border border-blue-200"
+              className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 transition border border-primary/20"
               title="Thêm khách hàng mới"
             >
               <UserPlus size={14} />
@@ -428,18 +429,18 @@ export default function InStockInvoicePage() {
           </div>
 
           {activeTab.selectedCustomer && (
-            <div className="px-4 py-2 bg-blue-50 border-b flex items-center justify-between">
+            <div className="px-4 py-2 bg-primary/10 border-b flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold text-blue-700">
+                <p className="text-sm font-semibold text-primary">
                   {activeTab.selectedCustomer.name}
                 </p>
-                <p className="text-xs text-blue-500">
+                <p className="text-xs text-primary/70">
                   {activeTab.selectedCustomer.phone}
                 </p>
               </div>
               <button
                 onClick={() => updateActiveTab({ selectedCustomer: null })}
-                className="text-blue-400 hover:text-blue-600"
+                className="text-primary/50 hover:text-primary"
               >
                 <X size={14} />
               </button>
@@ -459,7 +460,7 @@ export default function InStockInvoicePage() {
                   <button
                     key={product.id}
                     onClick={() => addToCart(product)}
-                    className="group flex flex-col items-center p-3 rounded-lg border border-gray-100 hover:border-blue-300 hover:bg-blue-50/50 hover:shadow-md transition-all duration-200 text-left cursor-pointer"
+                    className="group flex flex-col items-center p-3 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-primary/5 hover:shadow-md transition-all duration-200 text-left cursor-pointer"
                   >
                     <div className="w-16 h-16 rounded-lg bg-gray-50 flex items-center justify-center text-3xl mb-2 group-hover:scale-105 transition-transform border">
                       {product.image}
@@ -467,7 +468,7 @@ export default function InStockInvoicePage() {
                     <p className="text-xs font-medium text-gray-700 text-center line-clamp-2 leading-tight min-h-[2rem]">
                       {product.name}
                     </p>
-                    <p className="text-xs font-bold text-blue-600 mt-1">
+                    <p className="text-xs font-bold text-primary mt-1">
                       {formatCurrency(product.price)}
                     </p>
                   </button>
@@ -504,7 +505,7 @@ export default function InStockInvoicePage() {
           {/* ── Checkout Button ── */}
           <div className="p-3 border-t">
             <Button
-              className="w-full h-12 text-base font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-lg shadow-blue-600/30 transition-all duration-200 active:scale-[0.98]"
+              className="w-full h-12 text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-lg shadow-primary/30 transition-all duration-200 active:scale-[0.98]"
               disabled={activeTab.cartItems.length === 0}
             >
               THANH TOÁN

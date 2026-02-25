@@ -253,7 +253,7 @@ export default function CustomOrderInvoicePage() {
         {/* ═══════════════ CỘT TRÁI – SẢN PHẨM ĐẶT ═══════════════ */}
         <div className="flex flex-col w-[58%] border-r bg-white">
           {/* ── Header ── */}
-          <div className="flex items-center justify-between px-4 py-2 bg-blue-600 text-white">
+          <div className="flex items-center justify-between px-4 py-2 bg-primary text-primary-foreground">
             <div className="flex items-center gap-2 shrink-0">
               <Truck size={16} />
               <span className="font-semibold text-sm">Đơn đặt hàng riêng</span>
@@ -304,10 +304,10 @@ export default function CustomOrderInvoicePage() {
 
           {/* ── Add Custom Item Form (Slide-down) ── */}
           {showAddForm && (
-            <div className="border-b bg-blue-50/50 p-4 space-y-3 animate-in slide-in-from-top">
+            <div className="border-b bg-muted/50 p-4 space-y-3 animate-in slide-in-from-top">
               <div className="flex items-center justify-between mb-1">
                 <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                  <Package size={15} className="text-blue-500" />
+                  <Package size={15} className="text-primary" />
                   Thêm sản phẩm đặt riêng
                 </h4>
                 <button
@@ -324,7 +324,7 @@ export default function CustomOrderInvoicePage() {
                 placeholder="Tên sản phẩm *"
                 value={newItem.productName}
                 onChange={(e) => updateNewItem("productName", e.target.value)}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 placeholder-gray-400"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring placeholder-gray-400"
               />
 
               {/* Row 2: Loại gỗ + Màu sắc */}
@@ -337,7 +337,7 @@ export default function CustomOrderInvoicePage() {
                   <select
                     value={newItem.woodType}
                     onChange={(e) => updateNewItem("woodType", e.target.value)}
-                    className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-gray-600 appearance-none"
+                    className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring bg-white text-gray-600 appearance-none"
                   >
                     <option value="">Loại gỗ</option>
                     {WOOD_TYPES.map((w) => (
@@ -357,7 +357,7 @@ export default function CustomOrderInvoicePage() {
                     placeholder="Màu sắc"
                     value={newItem.color}
                     onChange={(e) => updateNewItem("color", e.target.value)}
-                    className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
+                    className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring placeholder-gray-400"
                   />
                 </div>
               </div>
@@ -374,7 +374,7 @@ export default function CustomOrderInvoicePage() {
                     placeholder="Kích thước (D×R×C)"
                     value={newItem.size}
                     onChange={(e) => updateNewItem("size", e.target.value)}
-                    className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
+                    className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring placeholder-gray-400"
                   />
                 </div>
                 <input
@@ -387,7 +387,7 @@ export default function CustomOrderInvoicePage() {
                       Math.max(1, parseInt(e.target.value) || 1),
                     )
                   }
-                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <input
                   type="number"
@@ -399,7 +399,7 @@ export default function CustomOrderInvoicePage() {
                       Math.max(0, parseInt(e.target.value) || 0),
                     )
                   }
-                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
 
@@ -409,7 +409,7 @@ export default function CustomOrderInvoicePage() {
                 placeholder="Ghi chú yêu cầu đặc biệt (sơn màu, chạm khắc, ...)"
                 value={newItem.note}
                 onChange={(e) => updateNewItem("note", e.target.value)}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring placeholder-gray-400"
               />
 
               {/* Actions */}
@@ -426,7 +426,7 @@ export default function CustomOrderInvoicePage() {
                   size="sm"
                   onClick={addCustomItem}
                   disabled={!newItem.productName.trim()}
-                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold"
                 >
                   <Plus size={14} className="mr-1" />
                   Thêm vào đơn
@@ -448,7 +448,7 @@ export default function CustomOrderInvoicePage() {
                 </p>
                 <button
                   onClick={() => setShowAddForm(true)}
-                  className="mt-4 flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-50 text-blue-600 text-sm font-medium hover:bg-blue-100 transition border border-blue-200"
+                  className="mt-4 flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition border border-primary/20"
                 >
                   <Plus size={14} />
                   Thêm sản phẩm đặt
@@ -459,7 +459,7 @@ export default function CustomOrderInvoicePage() {
                 {activeTab.cartItems.map((item, idx) => (
                   <div
                     key={item.id}
-                    className="p-3 hover:bg-blue-50/30 transition-colors group"
+                    className="p-3 hover:bg-muted/50 transition-colors group"
                   >
                     <div className="flex items-start justify-between gap-3">
                       {/* Info */}
@@ -514,7 +514,7 @@ export default function CustomOrderInvoicePage() {
                             onChange={(e) =>
                               setQuantity(item.id, e.target.value)
                             }
-                            className="w-10 h-6 text-center text-xs font-semibold border rounded focus:outline-none focus:ring-1 focus:ring-blue-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="w-10 h-6 text-center text-xs font-semibold border rounded focus:outline-none focus:ring-1 focus:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <button
                             onClick={() => updateQuantity(item.id, 1)}
@@ -527,7 +527,7 @@ export default function CustomOrderInvoicePage() {
                           <p className="text-xs text-gray-400">
                             {formatCurrency(item.unitPrice)}
                           </p>
-                          <p className="text-sm font-bold text-blue-600">
+                          <p className="text-sm font-bold text-primary">
                             {formatCurrency(item.unitPrice * item.quantity)}
                           </p>
                         </div>
@@ -545,7 +545,7 @@ export default function CustomOrderInvoicePage() {
                 {/* Quick add button at bottom */}
                 <button
                   onClick={() => setShowAddForm(true)}
-                  className="w-full p-3 flex items-center justify-center gap-2 text-sm text-blue-500 hover:bg-blue-50 transition font-medium"
+                  className="w-full p-3 flex items-center justify-center gap-2 text-sm text-primary hover:bg-muted transition font-medium"
                 >
                   <Plus size={14} />
                   Thêm sản phẩm đặt khác
@@ -586,7 +586,7 @@ export default function CustomOrderInvoicePage() {
                       discount: Math.max(0, parseInt(e.target.value) || 0),
                     })
                   }
-                  className="w-28 text-right text-sm font-semibold border rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-28 text-right text-sm font-semibold border rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
               {vatAmount > 0 && (
@@ -609,12 +609,12 @@ export default function CustomOrderInvoicePage() {
                       depositAmount: Math.max(0, parseInt(e.target.value) || 0),
                     })
                   }
-                  className="w-28 text-right text-sm font-semibold border rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400 text-green-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-28 text-right text-sm font-semibold border rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-ring text-green-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
               <div className="flex justify-between text-base font-bold pt-1 border-t">
                 <span className="text-gray-800">Còn phải trả</span>
-                <span className="text-blue-600 text-lg">
+                <span className="text-primary text-lg">
                   {formatCurrency(totalPayable)}
                 </span>
               </div>
@@ -627,10 +627,10 @@ export default function CustomOrderInvoicePage() {
               onClick={() => navigate("/sales/dashboard/invoice-instock")}
               className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium text-gray-500 hover:bg-gray-100 transition"
             >
-              🛒 Bán thường
+              <ShoppingCart size={15} /> Bán thường
             </button>
-            <button className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold text-blue-600 border-b-2 border-blue-600 bg-white">
-              🚚 Bán giao hàng
+            <button className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold text-primary border-b-2 border-primary bg-white">
+              <Truck size={15} /> Bán giao hàng
             </button>
           </div>
         </div>
@@ -665,7 +665,7 @@ export default function CustomOrderInvoicePage() {
             />
             <button
               onClick={() => setShowAddCustomer(true)}
-              className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition border border-blue-200"
+              className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 transition border border-primary/20"
               title="Thêm khách hàng mới"
             >
               <UserPlus size={14} />
@@ -677,7 +677,7 @@ export default function CustomOrderInvoicePage() {
             <div className="p-4 space-y-4">
               {/* SĐT khách hàng */}
               <div className="flex items-center gap-3">
-                <Phone size={16} className="text-blue-500 shrink-0" />
+                <Phone size={16} className="text-primary shrink-0" />
                 <div className="flex-1">
                   <input
                     type="tel"
@@ -686,7 +686,7 @@ export default function CustomOrderInvoicePage() {
                     onChange={(e) =>
                       updateDelivery("recipientPhone", e.target.value)
                     }
-                    className="w-full text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-blue-400 transition placeholder-gray-400"
+                    className="w-full text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
                   />
                 </div>
               </div>
@@ -702,12 +702,12 @@ export default function CustomOrderInvoicePage() {
                     onChange={(e) =>
                       updateDelivery("recipientName", e.target.value)
                     }
-                    className="text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-blue-400 transition placeholder-gray-400"
+                    className="text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
                   />
                   <input
                     type="tel"
                     placeholder="SĐT người nhận"
-                    className="text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-blue-400 transition placeholder-gray-400"
+                    className="text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
                   />
                 </div>
               </div>
@@ -719,7 +719,7 @@ export default function CustomOrderInvoicePage() {
                   placeholder="Địa chỉ giao hàng (Số nhà, ngõ, đường)"
                   value={activeTab.deliveryInfo.address}
                   onChange={(e) => updateDelivery("address", e.target.value)}
-                  className="w-full text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-blue-400 transition placeholder-gray-400"
+                  className="w-full text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
                 />
                 <div className="grid grid-cols-2 gap-3">
                   <input
@@ -727,14 +727,14 @@ export default function CustomOrderInvoicePage() {
                     placeholder="Quận/Huyện"
                     value={activeTab.deliveryInfo.district}
                     onChange={(e) => updateDelivery("district", e.target.value)}
-                    className="text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-blue-400 transition placeholder-gray-400"
+                    className="text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
                   />
                   <input
                     type="text"
                     placeholder="Phường/Xã"
                     value={activeTab.deliveryInfo.ward}
                     onChange={(e) => updateDelivery("ward", e.target.value)}
-                    className="text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-blue-400 transition placeholder-gray-400"
+                    className="text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
                   />
                 </div>
               </div>
@@ -752,7 +752,7 @@ export default function CustomOrderInvoicePage() {
                     onChange={(e) =>
                       updateDelivery("expectedDate", e.target.value)
                     }
-                    className="w-full text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-blue-400 transition"
+                    className="w-full text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition"
                   />
                 </div>
               </div>
@@ -767,7 +767,7 @@ export default function CustomOrderInvoicePage() {
                     updateDelivery("shippingNote", e.target.value)
                   }
                   rows={3}
-                  className="flex-1 text-sm border border-gray-200 rounded-lg p-3 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition resize-none placeholder-gray-400"
+                  className="flex-1 text-sm border border-gray-200 rounded-lg p-3 focus:outline-none focus:border-primary focus:ring-2 focus:ring-ring/20 transition resize-none placeholder-gray-400"
                 />
               </div>
 
@@ -785,7 +785,7 @@ export default function CustomOrderInvoicePage() {
           {/* ── Create Order Button ── */}
           <div className="p-3 border-t">
             <Button
-              className="w-full h-12 text-base font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-lg shadow-blue-600/30 transition-all duration-200 active:scale-[0.98]"
+              className="w-full h-12 text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-lg shadow-primary/30 transition-all duration-200 active:scale-[0.98]"
               disabled={activeTab.cartItems.length === 0}
             >
               TẠO ĐƠN ĐẶT HÀNG

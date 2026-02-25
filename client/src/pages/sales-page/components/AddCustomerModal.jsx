@@ -21,7 +21,6 @@ const GENDER_OPTIONS = [
 const CUSTOMER_TYPES = [
   { value: "Cá nhân", label: "Cá nhân" },
   { value: "Doanh nghiệp", label: "Doanh nghiệp" },
-  { value: "Đại lý", label: "Đại lý" },
 ];
 
 const INITIAL_FORM = {
@@ -106,7 +105,7 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
       {/* Modal */}
       <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-in zoom-in-95">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b bg-blue-600 text-white">
+        <div className="flex items-center justify-between px-5 py-4 border-b bg-primary text-primary-foreground">
           <div className="flex items-center gap-2">
             <User size={18} />
             <h2 className="text-base font-bold">Thêm khách hàng mới</h2>
@@ -149,7 +148,7 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
               <select
                 value={form.customer_type}
                 onChange={(e) => updateField("customer_type", e.target.value)}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white appearance-none"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring bg-white appearance-none"
               >
                 {CUSTOMER_TYPES.map((t) => (
                   <option key={t.value} value={t.value}>
@@ -176,7 +175,7 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
                   placeholder="0xxx xxx xxx"
                   value={form.phone_number}
                   onChange={(e) => updateField("phone_number", e.target.value)}
-                  className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
+                  className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring placeholder-gray-400"
                 />
               </div>
             </div>
@@ -194,7 +193,7 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
                   placeholder="email@example.com"
                   value={form.email}
                   onChange={(e) => updateField("email", e.target.value)}
-                  className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
+                  className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring placeholder-gray-400"
                 />
               </div>
             </div>
@@ -214,7 +213,7 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
                     onClick={() => updateField("gender", g.value)}
                     className={`flex-1 text-sm rounded-lg py-2 border transition font-medium ${
                       form.gender === g.value
-                        ? "bg-blue-50 border-blue-400 text-blue-600"
+                        ? "bg-primary/10 border-primary text-primary"
                         : "border-gray-200 text-gray-500 hover:bg-gray-50"
                     }`}
                   >
@@ -236,7 +235,7 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
                   type="date"
                   value={form.dob}
                   onChange={(e) => updateField("dob", e.target.value)}
-                  className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
             </div>
@@ -257,7 +256,7 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
                 placeholder="Số nhà, đường, quận/huyện, tỉnh/thành"
                 value={form.address}
                 onChange={(e) => updateField("address", e.target.value)}
-                className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
+                className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring placeholder-gray-400"
               />
             </div>
           </div>
@@ -272,7 +271,7 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
               value={form.note}
               onChange={(e) => updateField("note", e.target.value)}
               rows={2}
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none placeholder-gray-400"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring resize-none placeholder-gray-400"
             />
           </div>
 
@@ -289,7 +288,7 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
             <Button
               type="submit"
               disabled={loading || !form.full_name.trim()}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold min-w-[120px]"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold min-w-[120px]"
             >
               {loading ? "Đang lưu..." : "Thêm khách hàng"}
             </Button>
