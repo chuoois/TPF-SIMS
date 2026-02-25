@@ -6,6 +6,7 @@ const {
     addSpecialNote,
     getAllCustomers,
     getCustomerById,
+    deleteCustomer,
 } = require("../controller/customer.controller");
 const { verifyAccessToken, verifyRole } = require("../middleware/auth.middleware");
 
@@ -34,5 +35,8 @@ router.put("/customers/:id", updateCustomer);
 
 // Add / Update Special Note (ngày giao, màu sơn, vị trí lắp đặt,...)
 router.patch("/customers/:id/note", addSpecialNote);
+
+// Delete Customer Profile
+router.delete("/customers/:id", deleteCustomer);
 
 module.exports = router;
