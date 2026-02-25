@@ -95,13 +95,15 @@ export const ProfileModal = ({ open, onClose }) => {
 
     const FieldError = ({ name }) =>
         formik.touched[name] && formik.errors[name] ? (
-            <p className="text-xs text-red-500 mt-1">{formik.errors[name]}</p>
+            <p className="text-[11px] text-red-500 mt-1 font-medium animate-in fade-in slide-in-from-top-1">
+                {formik.errors[name]}
+            </p>
         ) : null;
 
     const inputClass = (name) =>
         formik.touched[name] && formik.errors[name]
-            ? "border-red-500 focus-visible:ring-red-500"
-            : "";
+            ? "border-red-500 focus-visible:ring-red-500 bg-red-50/10"
+            : "border-gray-200";
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -128,7 +130,10 @@ export const ProfileModal = ({ open, onClose }) => {
                 <form onSubmit={formik.handleSubmit} className="px-6 py-5 space-y-4">
                     {/* Họ và tên */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="full_name">
+                        <Label
+                            htmlFor="full_name"
+                            className={formik.touched.full_name && formik.errors.full_name ? "text-red-500" : ""}
+                        >
                             Họ và tên <span className="text-red-500">*</span>
                         </Label>
                         <Input
@@ -145,7 +150,12 @@ export const ProfileModal = ({ open, onClose }) => {
 
                     {/* Số điện thoại */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="phone_number">Số điện thoại</Label>
+                        <Label
+                            htmlFor="phone_number"
+                            className={formik.touched.phone_number && formik.errors.phone_number ? "text-red-500" : ""}
+                        >
+                            Số điện thoại
+                        </Label>
                         <Input
                             id="phone_number"
                             name="phone_number"
@@ -160,7 +170,12 @@ export const ProfileModal = ({ open, onClose }) => {
 
                     {/* Ngày sinh */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="dob">Ngày sinh</Label>
+                        <Label
+                            htmlFor="dob"
+                            className={formik.touched.dob && formik.errors.dob ? "text-red-500" : ""}
+                        >
+                            Ngày sinh
+                        </Label>
                         <Input
                             id="dob"
                             name="dob"

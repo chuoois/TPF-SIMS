@@ -8,10 +8,11 @@
 
 import { useEffect, useState } from "react";
 import { ownerService } from "../../../services/owner.service";
-import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { Plus, Pencil, Trash2, X, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { toast } from "react-hot-toast";
+import useDebounce from "@/hooks/useDebounce";
 import { PageHelmet } from "@/components/seo/PageHelmet"
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,12 @@ export default function OwnerAccountManage() {
   const [filterRole, setFilterRole] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
 
+  // PAGINATION STATE
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const limit = 10;
+
   // ================= STATS =================
   const stats = {
     total: accounts.length,
@@ -39,47 +46,90 @@ export default function OwnerAccountManage() {
   };
 
   // ================= FILTERED ACCOUNTS =================
+  // LƯU Ý: Hiện tại server-side search chỉ tìm theo searchTerm. 
+  // Code dưới đây lọc thêm theo Role/Status client-side từ kết quả phân trang.
   const filteredAccounts = accounts.filter((acc) => {
-    const matchesSearch =
-      acc.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      acc.profile?.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = filterRole ? acc.role?.role_code === filterRole : true;
     const matchesStatus =
       filterStatus !== "" ? acc.status === Number(filterStatus) : true;
-    return matchesSearch && matchesRole && matchesStatus;
+    return matchesRole && matchesStatus;
   });
 
   // ================= VALIDATION =================
   const accountSchema = Yup.object().shape({
-    email: Yup.string().email("Email không hợp lệ").required("Vui lòng nhập email"),
+    email: Yup.string()
+      .trim()
+      .email("Email không đúng định dạng")
+      .required("Vui lòng nhập email"),
     password: Yup.string().when("isEdit", {
       is: false,
-      then: (schema) => schema.required("Vui lòng nhập mật khẩu").min(6, "Mật khẩu tối thiểu 6 ký tự"),
+      then: (schema) =>
+        schema
+          .required("Vui lòng nhập mật khẩu")
+          .min(6, "Mật khẩu tối thiểu 6 ký tự"),
       otherwise: (schema) => schema.notRequired(),
     }),
-    fullName: Yup.string().required("Vui lòng nhập họ tên"),
+    fullName: Yup.string()
+      .trim()
+      .min(2, "Họ tên quá ngắn")
+      .required("Vui lòng nhập họ tên nhân viên"),
     roleCode: Yup.string().required("Vui lòng chọn vai trò"),
-    phoneNumber: Yup.string(),
-    gender: Yup.number().required(),
-    salaryType: Yup.number().required(),
+    phoneNumber: Yup.string()
+      .trim()
+      .matches(
+        /^(0[3|5|7|8|9])+([0-9]{8})$/,
+        "Số điện thoại không hợp lệ (ví dụ: 0901234567)"
+      )
+      .nullable(),
+    dob: Yup.date()
+      .max(new Date(), "Ngày sinh không được ở tương lai")
+      .nullable()
+      .transform((curr, orig) => (orig === "" ? null : curr)),
+    gender: Yup.number().required("Vui lòng chọn giới tính"),
+    salaryType: Yup.number().required("Vui lòng chọn loại lương"),
     status: Yup.number(),
   });
 
+  const FieldError = ({ name }) => (
+    <ErrorMessage
+      name={name}
+      render={(msg) => (
+        <p className="text-[11px] text-red-500 mt-1 font-medium animate-in fade-in slide-in-from-top-1">
+          {msg}
+        </p>
+      )}
+    />
+  );
+
+  const inputErrorClass = (touched, error) =>
+    touched && error ? "border-red-500 focus-visible:ring-red-500 bg-red-50/10" : "border-gray-200";
+
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
   // ================= FETCH =================
   useEffect(() => {
-    fetchAccounts();
-  }, []);
+    fetchAccounts(1);
+  }, [debouncedSearchTerm]);
 
-  const fetchAccounts = async () => {
+  const fetchAccounts = async (page = 1) => {
     try {
       setLoading(true);
-      const data = await ownerService.getAllAccounts();
-      setAccounts(data);
+      const data = await ownerService.getAllAccounts(page, limit, searchTerm);
+      setAccounts(data.items || []);
+      setTotalPages(data.totalPages || 1);
+      setTotalItems(data.total || 0);
+      setCurrentPage(data.page || 1);
     } catch (error) {
       console.error("Error fetching accounts:", error);
       toast.error("Không thể tải danh sách tài khoản");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      fetchAccounts(newPage);
     }
   };
 
@@ -161,12 +211,13 @@ export default function OwnerAccountManage() {
 
         {/* SEARCH & FILTERS BAR */}
         <div className="bg-white p-3 border rounded-md flex flex-col md:flex-row gap-3 shadow-sm">
-          <div className="flex-1">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
             <Input
               placeholder="Tìm theo email, họ tên..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-10 border-gray-200"
+              className="h-10 border-gray-200 pl-10"
             />
           </div>
           <div className="flex gap-3">
@@ -197,7 +248,7 @@ export default function OwnerAccountManage() {
         {/* TABLE */}
         <Card className="border shadow-none overflow-hidden">
           <CardContent className="p-0">
-            <div className="overflow-auto max-h-[calc(100vh-350px)] relative">
+            <div className="overflow-auto h-[calc(100vh-350px)] relative">
               <table className="w-full text-left border-collapse">
                 <thead className="bg-gray-50 sticky top-0 z-10 border-b">
                   <tr>
@@ -286,6 +337,39 @@ export default function OwnerAccountManage() {
               </table>
             </div>
           </CardContent>
+          {/* PAGINATION CONTROLS */}
+          <div className="bg-gray-50/50 border-t p-3 flex justify-between items-center">
+            <div className="text-xs text-gray-500 italic">
+              Hiển thị {filteredAccounts.length} / {totalItems} tài khoản
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                disabled={currentPage === 1 || loading}
+                onClick={() => handlePageChange(currentPage - 1)}
+                className="h-8 w-8 border-gray-200 shadow-none"
+              >
+                <ChevronLeft size={14} />
+              </Button>
+              <div className="bg-white border rounded-md h-8 px-3 flex items-center justify-center min-w-[60px] shadow-sm">
+                <span className="text-xs font-bold text-primary">
+                  {currentPage}{" "}
+                  <span className="text-gray-300 mx-1 font-normal">/</span>{" "}
+                  {totalPages}
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                disabled={currentPage === totalPages || loading}
+                onClick={() => handlePageChange(currentPage + 1)}
+                className="h-8 w-8 border-gray-200 shadow-none"
+              >
+                <ChevronRight size={14} />
+              </Button>
+            </div>
+          </div>
         </Card>
 
         {/* ================= MODAL ================= */}
@@ -336,36 +420,56 @@ export default function OwnerAccountManage() {
                   }
                 }}
               >
-                {({ isSubmitting }) => (
+                {({ isSubmitting, touched, errors, getFieldProps }) => (
                   <Form className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
                     {/* PHẦN 1: THÔNG TIN TÀI KHOẢN */}
                     <div className="space-y-4">
                       <h4 className="text-sm font-bold text-gray-500 border-b pb-2 uppercase italic tracking-wider">Thông tin tài khoản</h4>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
-                          <Label>Email</Label>
-                          <Field name="email" type="email" as={Input} disabled={!!currentAccount} className="bg-gray-50" />
-                          <ErrorMessage name="email" component="div" className="text-red-500 text-xs" />
+                          <Label className={touched.email && errors.email ? "text-red-500" : ""}>
+                            Email <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            {...getFieldProps("email")}
+                            type="email"
+                            disabled={!!currentAccount}
+                            className={`h-10 transition-all ${inputErrorClass(touched.email, errors.email)} ${!!currentAccount ? "bg-gray-100" : "bg-white"}`}
+                            placeholder="example@gmail.com"
+                          />
+                          <FieldError name="email" />
                         </div>
 
                         {!currentAccount && (
                           <div className="space-y-1">
-                            <Label>Mật khẩu</Label>
-                            <Field name="password" type="password" as={Input} />
-                            <ErrorMessage name="password" component="div" className="text-red-500 text-xs" />
+                            <Label className={touched.password && errors.password ? "text-red-500" : ""}>
+                              Mật khẩu <span className="text-red-500">*</span>
+                            </Label>
+                            <Input
+                              {...getFieldProps("password")}
+                              type="password"
+                              className={`h-10 transition-all ${inputErrorClass(touched.password, errors.password)}`}
+                              placeholder="••••••••"
+                            />
+                            <FieldError name="password" />
                           </div>
                         )}
 
                         <div className="space-y-1">
-                          <Label>Vai trò</Label>
-                          <Field as="select" name="roleCode" className="w-full h-10 border rounded-md px-3 text-sm bg-white">
+                          <Label className={touched.roleCode && errors.roleCode ? "text-red-500" : ""}>
+                            Vai trò <span className="text-red-500">*</span>
+                          </Label>
+                          <select
+                            {...getFieldProps("roleCode")}
+                            className={`w-full h-10 border rounded-md px-3 text-sm bg-white outline-none transition-all focus:ring-1 focus:ring-primary ${inputErrorClass(touched.roleCode, errors.roleCode)}`}
+                          >
                             <option value="">Chọn vai trò</option>
                             <option value="SALES">Nhân viên bán hàng</option>
                             <option value="ACCOUNTANT">Kế toán</option>
                             <option value="WORKER">Thợ chế tác</option>
                             <option value="OWNER">Chủ cửa hàng</option>
-                          </Field>
-                          <ErrorMessage name="roleCode" component="div" className="text-red-500 text-xs" />
+                          </select>
+                          <FieldError name="roleCode" />
                         </div>
 
                         {currentAccount && (
@@ -386,35 +490,57 @@ export default function OwnerAccountManage() {
                       <h4 className="text-sm font-bold text-gray-500 border-b pb-2 uppercase italic tracking-wider">Thông tin cá nhân</h4>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
-                          <Label>Họ tên</Label>
-                          <Field name="fullName" as={Input} />
-                          <ErrorMessage name="fullName" component="div" className="text-red-500 text-xs" />
+                          <Label className={touched.fullName && errors.fullName ? "text-red-500" : ""}>
+                            Họ tên <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            {...getFieldProps("fullName")}
+                            className={`h-10 transition-all ${inputErrorClass(touched.fullName, errors.fullName)}`}
+                            placeholder="Nguyễn Văn A"
+                          />
+                          <FieldError name="fullName" />
                         </div>
 
                         <div className="space-y-1">
-                          <Label>SĐT</Label>
-                          <Field name="phoneNumber" as={Input} />
+                          <Label className={touched.phoneNumber && errors.phoneNumber ? "text-red-500" : ""}>SĐT</Label>
+                          <Input
+                            {...getFieldProps("phoneNumber")}
+                            className={`h-10 transition-all ${inputErrorClass(touched.phoneNumber, errors.phoneNumber)}`}
+                            placeholder="0901234567"
+                          />
+                          <FieldError name="phoneNumber" />
                         </div>
 
                         <div className="space-y-1">
-                          <Label>Ngày sinh</Label>
-                          <Field type="date" name="dob" as={Input} />
+                          <Label className={touched.dob && errors.dob ? "text-red-500" : ""}>Ngày sinh</Label>
+                          <Input
+                            {...getFieldProps("dob")}
+                            type="date"
+                            className={`h-10 transition-all ${inputErrorClass(touched.dob, errors.dob)}`}
+                          />
+                          <FieldError name="dob" />
                         </div>
 
                         <div className="space-y-1">
-                          <Label>Giới tính</Label>
-                          <Field as="select" name="gender" className="w-full h-10 border rounded-md px-3 text-sm bg-white">
+                          <Label>Giới tính <span className="text-red-500">*</span></Label>
+                          <select
+                            {...getFieldProps("gender")}
+                            className="w-full h-10 border border-gray-200 rounded-md px-3 text-sm bg-white outline-none focus:ring-1 focus:ring-primary"
+                          >
                             <option value={0}>Nữ</option>
                             <option value={1}>Nam</option>
-                          </Field>
+                          </select>
                         </div>
 
                         <div className="space-y-1">
-                          <Label>Lương</Label>
-                          <Field as="select" name="salaryType" className="w-full h-10 border rounded-md px-3 text-sm bg-white">
+                          <Label>Lương <span className="text-red-500">*</span></Label>
+                          <select
+                            {...getFieldProps("salaryType")}
+                            className="w-full h-10 border border-gray-200 rounded-md px-3 text-sm bg-white outline-none focus:ring-1 focus:ring-primary"
+                          >
                             <option value={1}>Theo giờ</option>
                             <option value={2}>Theo tháng</option>
-                          </Field>
+                          </select>
                         </div>
                       </div>
                     </div>

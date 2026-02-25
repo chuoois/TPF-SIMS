@@ -13,8 +13,8 @@ export const ownerService = {
     },
 
     // Get All Accounts
-    getAllAccounts: async () => {
-        const res = await api.get("/owner/accounts");
+    getAllAccounts: async (page = 1, limit = 10, search = "") => {
+        const res = await api.get(`/owner/accounts?page=${page}&limit=${limit}&search=${search}`);
         return res.data;
     },
 
@@ -43,8 +43,8 @@ export const ownerService = {
     },
 
     // Get System Logs
-    getSystemLogs: async (page = 1, limit = 20) => {
-        const res = await api.get(`/owner/logs?page=${page}&limit=${limit}`);
+    getSystemLogs: async (page = 1, limit = 20, search = "") => {
+        const res = await api.get(`/owner/logs?page=${page}&limit=${limit}&search=${search}`);
         return res.data;
     },
 };

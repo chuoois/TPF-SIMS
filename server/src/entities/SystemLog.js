@@ -15,7 +15,7 @@ module.exports = new EntitySchema({
     },
     modified_by: {
       type: "varchar",
-      length: 20,
+      length: 255,
       nullable: true,
     },
     timestamp: {

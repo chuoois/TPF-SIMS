@@ -8,6 +8,9 @@ import {
   Users,
   UserCog,
   ShieldAlert,
+  Boxes,
+  ListChecks,
+  Settings2,
 } from "lucide-react";
 
 /**
@@ -26,37 +29,42 @@ import {
 const menus = [
   {
     label: "Tổng quan",
-    path: "/dashboard",
+    path: "/owner/home",
     icon: LayoutGrid,
   },
   {
     label: "Quản lý tài khoản",
-    path: "dashboard/account-manage",
+    path: "/owner/dashboard/account-manage",
     icon: UserCog,
   },
   {
     label: "Nhật ký hệ thống",
-    path: "dashboard/system-log",
+    path: "/owner/dashboard/system-log",
     icon: ShieldAlert,
   },
   {
+    label: "Quản lý danh mục",
+    path: "/owner/dashboard/master-data",
+    icon: Settings2,
+  },
+  {
     label: "Sản phẩm",
-    path: "/dashboard/products",
+    path: "/owner/dashboard/products",
     icon: Package,
   },
   {
     label: "Kho hàng",
-    path: "/dashboard/inventory",
+    path: "/owner/dashboard/inventory",
     icon: Warehouse,
   },
   {
     label: "Đơn hàng",
-    path: "/dashboard/orders",
+    path: "/owner/dashboard/orders",
     icon: ShoppingCart,
   },
   {
     label: "Khách hàng",
-    path: "/dashboard/customers",
+    path: "/owner/dashboard/customers",
     icon: Users,
   },
 ];
