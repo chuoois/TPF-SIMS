@@ -36,4 +36,10 @@ export const salesService = {
         const res = await api.patch(`/sales/customers/${id}/note`, { note });
         return res.data;
     },
+
+    // DELETE /sales/customers/:id
+    deleteCustomer: async (id) => {
+        const res = await api.delete(`/sales/customers/${id}`);
+        return res.data;
+    },
 };

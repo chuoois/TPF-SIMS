@@ -6,7 +6,7 @@ import { SidebarSales } from "./SidebarSales";
  * Sales Layout
  * Layout dành cho nhân viên bán hàng (SALES / OWNER)
  *
- * Created By: ThinhBui
+ * Created By: DNC
  * Created Date: 24/02/2026
  */
 export const SalesLayout = () => {

@@ -18,7 +18,7 @@ const writeSystemLog = async (manager, { description, actorAccount }) => {
     await logRepo.save({
         pk_system_log_id: randomUUID(),
         description,
-        modified_by: actorAccount?.email ?? "unknown",
+        modified_by: actorAccount?.fullName ??actorAccount?.email ?? "unknown",
         userAccount: actorAccount
             ? { pk_user_account_id: actorAccount.id }
             : null,
@@ -244,10 +244,48 @@ const getCustomerById = async (req, res) => {
     }
 };
 
+/**
+ * Delete Customer Profile
+ * DELETE /sales/customers/:id
+ * Role: SALES, OWNER
+ */
+const deleteCustomer = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const customer = await CustomerProfileRepo.findOne({
+            where: { pk_customer_id: id },
+        });
+
+        if (!customer) {
+            return res
+                .status(404)
+                .json({ message: "Không tìm thấy hồ sơ khách hàng" });
+        }
+
+        await CustomerProfileRepo.remove(customer);
+
+        await writeSystemLog(AppDataSource.manager, {
+            description: `Xóa hồ sơ khách hàng: ${customer.full_name} (${customer.customer_code})`,
+            actorAccount: req.user,
+        });
+
+        return res
+            .status(200)
+            .json({ message: "Xóa hồ sơ khách hàng thành công" });
+    } catch (error) {
+        console.error("Delete Customer Error:", error);
+        return res
+            .status(500)
+            .json({ message: "Lỗi server khi xóa hồ sơ khách hàng" });
+    }
+};
+
 module.exports = {
     createCustomer,
     updateCustomer,
     addSpecialNote,
     getAllCustomers,
     getCustomerById,
+    deleteCustomer,
 };

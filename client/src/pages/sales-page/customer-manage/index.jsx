@@ -5,7 +5,7 @@
  * - Tạo mới / cập nhật hồ sơ khách hàng
  * - Thêm / cập nhật ghi chú đặc biệt
  *
- * Created By: ThinhBui
+ * Created By: DNC
  * Created Date: 24/02/2026
  */
 
@@ -20,6 +20,7 @@ import {
   Users,
   User,
   Building2,
+  Trash2,
 } from "lucide-react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -64,6 +65,7 @@ export default function SalesCustomerManage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isNoteOpen, setIsNoteOpen] = useState(false);
   const [currentCustomer, setCurrentCustomer] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   // ---- Debounce search ----
   useEffect(() => {
@@ -156,6 +158,19 @@ export default function SalesCustomerManage() {
       toast.error(error.response?.data?.message || "Lỗi khi cập nhật ghi chú");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDeleteCustomer = async () => {
+    if (!deleteConfirm) return;
+    try {
+      await salesService.deleteCustomer(deleteConfirm.pk_customer_id);
+      toast.success("Xóa khách hàng thành công");
+      fetchCustomers();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Lỗi khi xóa khách hàng");
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
@@ -377,6 +392,18 @@ export default function SalesCustomerManage() {
                               <NotebookPen size={13} />
                               <span className="ml-1 text-[11px] font-bold uppercase">
                                 Ghi chú
+                              </span>
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setDeleteConfirm(c)}
+                              className="h-8 px-2 text-gray-400 hover:text-red-600 hover:bg-red-50"
+                              title="Xóa khách hàng"
+                            >
+                              <Trash2 size={13} />
+                              <span className="ml-1 text-[11px] font-bold uppercase">
+                                Xóa
                               </span>
                             </Button>
                           </div>
@@ -662,6 +689,53 @@ export default function SalesCustomerManage() {
                 </Form>
               )}
             </Formik>
+          </Card>
+        </div>
+      )}
+      {/* ===================== MODAL: XÁC NHẬN XÓA ===================== */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <Card className="w-full max-w-md bg-white shadow-2xl border-none overflow-hidden rounded-xl">
+            <div className="flex justify-between items-center p-5 border-b bg-gray-50">
+              <CardTitle className="text-lg font-bold text-red-600 flex items-center gap-2">
+                <Trash2 size={18} />
+                Xác nhận xóa
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setDeleteConfirm(null)}
+                className="rounded-full text-gray-400"
+              >
+                <X size={20} />
+              </Button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-gray-600">
+                Bạn có chắc chắn muốn xóa khách hàng{" "}
+                <span className="font-bold text-gray-800">
+                  {deleteConfirm.full_name}
+                </span>{" "}
+                <span className="text-xs text-gray-400">
+                  ({deleteConfirm.customer_code})
+                </span>
+                ? Hành động này không thể hoàn tác.
+              </p>
+              <div className="flex justify-end gap-3 pt-2 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setDeleteConfirm(null)}
+                >
+                  Hủy
+                </Button>
+                <Button
+                  onClick={handleDeleteCustomer}
+                  className="font-bold bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Xóa khách hàng
+                </Button>
+              </div>
+            </div>
           </Card>
         </div>
       )}
