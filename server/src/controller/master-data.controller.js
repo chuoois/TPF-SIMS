@@ -242,38 +242,6 @@ const deleteCategory = async (req, res) => {
         return res.status(500).json({ message: "Lỗi server khi xóa danh mục (có thể đang được sử dụng)" });
     }
 };
-/**
- * Color Read
- */
-const getAllColors = async (req, res) => {
-    try {
-        const { page = 1, limit = 10, search = "" } = req.query;
-        const skip = (page - 1) * limit;
-
-        const where = search ? [
-            { color_code: Like(`%${search}%`) },
-            { color_name: Like(`%${search}%`) }
-        ] : {};
-
-        const [items, total] = await ColorRepo.findAndCount({
-            where,
-            order: { created_at: "DESC" },
-            take: Number(limit),
-            skip: Number(skip),
-        });
-
-        return res.status(200).json({
-            items,
-            total,
-            page: Number(page),
-            limit: Number(limit),
-            totalPages: Math.ceil(total / limit),
-        });
-    } catch (error) {
-        console.error("Get All Colors Error:", error);
-        return res.status(500).json({ message: "Lỗi server khi lấy danh sách màu sắc" });
-    }
-};
 
 /**
  * Color CRUD
