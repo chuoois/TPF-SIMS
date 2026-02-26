@@ -38,4 +38,22 @@ export const masterDataService = {
         const response = await api.delete(`${API_URL}/categories/${id}`);
         return response.data;
     },
+
+    // Colors
+    getAllColors: async (page = 1, limit = 10, search = "") => {
+        const response = await api.get(`${API_URL}/colors?page=${page}&limit=${limit}&search=${search}`);
+        return response.data;
+    },
+    createColor: async (data) => {
+        const response = await api.post(`${API_URL}/colors`, data);
+        return response.data;
+    },
+    updateColor: async (id, data) => {
+        const response = await api.put(`${API_URL}/colors/${id}`, data);
+        return response.data;
+    },
+    deleteColor: async (id) => {
+        const response = await api.delete(`${API_URL}/colors/${id}`);
+        return response.data;
+    },
 };
