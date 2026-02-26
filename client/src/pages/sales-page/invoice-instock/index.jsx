@@ -4,14 +4,15 @@
  * - Hỗ trợ nhiều tab hóa đơn (mỗi tab có giỏ hàng riêng)
  * - Layout 2 cột: Giỏ hàng (trái) + Danh mục sản phẩm (phải)
  * - Tìm kiếm sản phẩm, thêm vào giỏ, chỉnh SL, xoá
- * - Tìm khách hàng, ghi chú đơn hàng
+ * - Tìm khách hàng (tùy chọn), ghi chú đơn hàng
  * - Tính tổng tiền tự động
+ * - THANH TOÁN → tạo đơn hàng qua API
  *
  * Created By: DNC
  * Created Date: 25/02/2026
  */
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -27,41 +28,16 @@ import {
   Package,
   PackageCheck,
   Hammer,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import AddCustomerModal from "@/pages/sales-page/components/AddCustomerModal";
+import { salesService } from "@/services/sales.service";
 
-// ===================== MOCK DATA =====================
-const MOCK_PRODUCTS = [
-  { id: "p1", name: "Quầy tiếp tân Mộc Thành", price: 6500000, image: "🪑" },
-  { id: "p2", name: "Bàn giám đốc gỗ sồi", price: 8900000, image: "🪵" },
-  { id: "p3", name: "Ghế xoay trắng Trình Thiên", price: 1389500, image: "💺" },
-  { id: "p4", name: "Ghế xoay đỏ Trình Thiên", price: 1389500, image: "💺" },
-  { id: "p5", name: "Bàn ghế cafe sân vườn", price: 1750000, image: "☕" },
-  { id: "p6", name: "Bàn ghế gỗ đầu màu vàng", price: 500000, image: "🪑" },
-  { id: "p7", name: "Ghế quầy bar cao cấp", price: 599000, image: "🍸" },
-  { id: "p8", name: "Bộ bàn ăn 6 ghế", price: 6000000, image: "🍽️" },
-  { id: "p9", name: "Tủ bếp gỗ sồi Alaska", price: 2500000, image: "🏠" },
-  { id: "p10", name: "Kệ xoong nồi inox", price: 450000, image: "🍳" },
-  { id: "p11", name: "Sofa góc phòng khách", price: 3450000, image: "🛋️" },
-  { id: "p12", name: "Vách ngăn phòng khách", price: 2200000, image: "🚪" },
-  { id: "p13", name: "Tủ rượu Alaska gỗ óc chó", price: 4200000, image: "🍷" },
-  { id: "p14", name: "Bộ bàn ghế gỗ hương đẹp", price: 28500000, image: "🪑" },
-  { id: "p15", name: "Kệ tủ bếp nhôm kính", price: 1200000, image: "🏠" },
-  { id: "p16", name: "Chậu rửa chén Roland", price: 2040000, image: "🚰" },
-  { id: "p17", name: "Bộ bàn ghế chữ nhật", price: 480000, image: "📐" },
-  {
-    id: "p18",
-    name: "Bộ bàn ghế cafe ngoài trời",
-    price: 1350000,
-    image: "☀️",
-  },
-  { id: "p19", name: "Ghế đơn hình bàn tay", price: 2800000, image: "✋" },
-  { id: "p20", name: "Bộ drop ga gối lụa tơ tằm", price: 4500000, image: "🛏️" },
-];
-
+// ===================== CONSTANTS =====================
 const ITEMS_PER_PAGE = 9;
 
 // ===================== HELPERS =====================
@@ -102,6 +78,20 @@ export default function InStockInvoicePage() {
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
+  // ---- API state ----
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [customerResults, setCustomerResults] = useState([]);
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const [searchingCustomers, setSearchingCustomers] = useState(false);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+
+  // Toast state
+  const [toast, setToast] = useState(null); // { type: 'success' | 'error', message }
+  const toastTimer = useRef(null);
+
+  const customerDropdownRef = useRef(null);
+
   // ---- Active tab helpers ----
   const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0];
 
@@ -114,6 +104,70 @@ export default function InStockInvoicePage() {
     [activeTabId],
   );
 
+  // ---- Show toast ----
+  const showToast = (type, message) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ type, message });
+    toastTimer.current = setTimeout(() => setToast(null), 4000);
+  };
+
+  // ---- Fetch products ----
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoadingProducts(true);
+        const data = await salesService.getProductsForSale(searchProduct);
+        setProducts(data);
+      } catch (err) {
+        console.error("Fetch products error:", err);
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+
+    const timer = setTimeout(fetchProducts, 300); // debounce
+    return () => clearTimeout(timer);
+  }, [searchProduct]);
+
+  // ---- Customer search ----
+  useEffect(() => {
+    const query = activeTab.searchCustomer.trim();
+    if (!query) {
+      setCustomerResults([]);
+      setShowCustomerDropdown(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        setSearchingCustomers(true);
+        const data = await salesService.getCustomers(query);
+        setCustomerResults(data);
+        setShowCustomerDropdown(true);
+      } catch (err) {
+        console.error("Search customers error:", err);
+      } finally {
+        setSearchingCustomers(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [activeTab.searchCustomer]);
+
+  // Close customer dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        customerDropdownRef.current &&
+        !customerDropdownRef.current.contains(e.target)
+      ) {
+        setShowCustomerDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   // ---- Tab management ----
   const addTab = () => {
     const newTab = createEmptyTab();
@@ -123,7 +177,7 @@ export default function InStockInvoicePage() {
 
   const closeTab = (tabId, e) => {
     e.stopPropagation();
-    if (tabs.length <= 1) return; // Phải giữ ít nhất 1 tab
+    if (tabs.length <= 1) return;
     setTabs((prev) => {
       const filtered = prev.filter((t) => t.id !== tabId);
       if (activeTabId === tabId) {
@@ -133,31 +187,46 @@ export default function InStockInvoicePage() {
     });
   };
 
-  // ---- Filter products ----
-  const filteredProducts = useMemo(() => {
-    if (!searchProduct.trim()) return MOCK_PRODUCTS;
-    const q = searchProduct.toLowerCase();
-    return MOCK_PRODUCTS.filter((p) => p.name.toLowerCase().includes(q));
-  }, [searchProduct]);
-
-  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
-  const paginatedProducts = filteredProducts.slice(
+  // ---- Pagination ----
+  const totalPages = Math.ceil(products.length / ITEMS_PER_PAGE);
+  const paginatedProducts = products.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE,
   );
 
   // ---- Cart actions (operate on active tab) ----
   const addToCart = (product) => {
-    const existing = activeTab.cartItems.find((i) => i.id === product.id);
+    const cartId = product.sku?.pk_sku_id || product.pk_product_id;
+    const existing = activeTab.cartItems.find((i) => i.id === cartId);
     if (existing) {
+      // Kiểm tra tồn kho
+      if (existing.quantity >= product.stock) {
+        showToast("error", `Sản phẩm "${product.product_name}" đã hết hàng`);
+        return;
+      }
       updateActiveTab({
         cartItems: activeTab.cartItems.map((i) =>
-          i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i,
+          i.id === cartId ? { ...i, quantity: i.quantity + 1 } : i,
         ),
       });
     } else {
+      if (product.stock <= 0) {
+        showToast("error", `Sản phẩm "${product.product_name}" đã hết hàng`);
+        return;
+      }
       updateActiveTab({
-        cartItems: [...activeTab.cartItems, { ...product, quantity: 1 }],
+        cartItems: [
+          ...activeTab.cartItems,
+          {
+            id: cartId,
+            skuId: product.sku?.pk_sku_id,
+            name: product.product_name,
+            price: product.selling_price,
+            stock: product.stock,
+            skuCode: product.sku?.sku_code || "",
+            quantity: 1,
+          },
+        ],
       });
     }
   };
@@ -165,9 +234,15 @@ export default function InStockInvoicePage() {
   const updateQuantity = (id, delta) => {
     updateActiveTab({
       cartItems: activeTab.cartItems
-        .map((i) =>
-          i.id === id ? { ...i, quantity: Math.max(0, i.quantity + delta) } : i,
-        )
+        .map((i) => {
+          if (i.id !== id) return i;
+          const newQty = i.quantity + delta;
+          if (delta > 0 && newQty > i.stock) {
+            showToast("error", `Tồn kho chỉ còn ${i.stock}`);
+            return i;
+          }
+          return { ...i, quantity: Math.max(0, newQty) };
+        })
         .filter((i) => i.quantity > 0),
     });
   };
@@ -183,12 +258,30 @@ export default function InStockInvoicePage() {
     if (val <= 0) {
       removeFromCart(id);
     } else {
+      const item = activeTab.cartItems.find((i) => i.id === id);
+      if (item && val > item.stock) {
+        showToast("error", `Tồn kho chỉ còn ${item.stock}`);
+        return;
+      }
       updateActiveTab({
         cartItems: activeTab.cartItems.map((i) =>
           i.id === id ? { ...i, quantity: val } : i,
         ),
       });
     }
+  };
+
+  // ---- Select customer ----
+  const selectCustomer = (customer) => {
+    updateActiveTab({
+      selectedCustomer: {
+        id: customer.pk_customer_id,
+        name: customer.full_name,
+        phone: customer.phone_number,
+      },
+      searchCustomer: "",
+    });
+    setShowCustomerDropdown(false);
   };
 
   // ---- Totals ----
@@ -198,10 +291,80 @@ export default function InStockInvoicePage() {
   );
   const totalPayable = Math.max(0, subtotal - activeTab.discount);
 
+  // ---- Checkout ----
+  const handleCheckout = async () => {
+    if (activeTab.cartItems.length === 0) return;
+
+    try {
+      setIsCheckingOut(true);
+      const data = {
+        customerId: activeTab.selectedCustomer?.id || null,
+        orderNote: activeTab.orderNote || "",
+        discount: activeTab.discount || 0,
+        items: activeTab.cartItems.map((item) => ({
+          skuId: item.skuId,
+          quantity: item.quantity,
+          unitPrice: item.price,
+        })),
+      };
+
+      const result = await salesService.createInStockOrder(data);
+
+      showToast(
+        "success",
+        `Tạo hóa đơn ${result.order.orderCode} thành công! Tổng: ${formatCurrency(result.order.totalAmount)}đ`,
+      );
+
+      // Reset giỏ hàng tab hiện tại
+      updateActiveTab({
+        cartItems: [],
+        selectedCustomer: null,
+        orderNote: "",
+        discount: 0,
+        searchCustomer: "",
+      });
+
+      // Refresh sản phẩm (tồn kho đã thay đổi)
+      const refreshed = await salesService.getProductsForSale(searchProduct);
+      setProducts(refreshed);
+    } catch (err) {
+      const msg =
+        err.response?.data?.message || "Lỗi khi tạo hóa đơn, vui lòng thử lại";
+      showToast("error", msg);
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
+
   // ===================== RENDER =====================
   return (
     <>
       <PageHelmet title="Bán hàng có sẵn - TPF-SIMS" />
+
+      {/* ── Toast notification ── */}
+      {toast && (
+        <div
+          className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg text-sm font-medium animate-in slide-in-from-top-2 ${
+            toast.type === "success"
+              ? "bg-green-600 text-white"
+              : "bg-red-600 text-white"
+          }`}
+        >
+          {toast.type === "success" ? (
+            <CheckCircle2 size={16} />
+          ) : (
+            <AlertCircle size={16} />
+          )}
+          {toast.message}
+          <button
+            onClick={() => setToast(null)}
+            className="ml-2 opacity-70 hover:opacity-100"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       <div className="flex h-[calc(100vh-64px)] bg-gray-100 -m-6">
         {/* ═══════════════ CỘT TRÁI – GIỎ HÀNG ═══════════════ */}
         <div className="flex flex-col w-[58%] border-r bg-white">
@@ -291,16 +454,13 @@ export default function InStockInvoicePage() {
                         {idx + 1}
                       </td>
                       <td className="p-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl">{item.image}</span>
-                          <div>
-                            <p className="text-sm font-semibold text-gray-800 line-clamp-1">
-                              {item.name}
-                            </p>
-                            <p className="text-[10px] text-gray-400 font-mono">
-                              SKU-{item.id.toUpperCase()}
-                            </p>
-                          </div>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-800 line-clamp-1">
+                            {item.name}
+                          </p>
+                          <p className="text-[10px] text-gray-400 font-mono">
+                            {item.skuCode}
+                          </p>
                         </div>
                       </td>
                       <td className="p-3">
@@ -409,24 +569,54 @@ export default function InStockInvoicePage() {
         {/* ═══════════════ CỘT PHẢI – SẢN PHẨM ═══════════════ */}
         <div className="flex flex-col w-[42%] bg-white">
           {/* ── Customer Search ── */}
-          <div className="flex items-center gap-2 px-4 py-3 border-b">
-            <Search size={16} className="text-gray-400 shrink-0" />
-            <input
-              type="text"
-              placeholder="Tìm khách hàng (F4)"
-              value={activeTab.searchCustomer}
-              onChange={(e) =>
-                updateActiveTab({ searchCustomer: e.target.value })
-              }
-              className="flex-1 text-sm text-gray-600 focus:outline-none placeholder-gray-400"
-            />
-            <button
-              onClick={() => setShowAddCustomer(true)}
-              className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 transition border border-primary/20"
-              title="Thêm khách hàng mới"
-            >
-              <UserPlus size={14} />
-            </button>
+          <div className="relative" ref={customerDropdownRef}>
+            <div className="flex items-center gap-2 px-4 py-3 border-b">
+              <Search size={16} className="text-gray-400 shrink-0" />
+              <input
+                type="text"
+                placeholder="Tìm khách hàng (tùy chọn)"
+                value={activeTab.searchCustomer}
+                onChange={(e) =>
+                  updateActiveTab({ searchCustomer: e.target.value })
+                }
+                onFocus={() => {
+                  if (customerResults.length > 0) setShowCustomerDropdown(true);
+                }}
+                className="flex-1 text-sm text-gray-600 focus:outline-none placeholder-gray-400"
+              />
+              {searchingCustomers && (
+                <Loader2 size={14} className="animate-spin text-gray-400" />
+              )}
+              <button
+                onClick={() => setShowAddCustomer(true)}
+                className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 transition border border-primary/20"
+                title="Thêm khách hàng mới"
+              >
+                <UserPlus size={14} />
+              </button>
+            </div>
+
+            {/* Customer dropdown */}
+            {showCustomerDropdown && customerResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 bg-white border shadow-lg rounded-b-lg z-20 max-h-48 overflow-y-auto">
+                {customerResults.map((c) => (
+                  <button
+                    key={c.pk_customer_id}
+                    onClick={() => selectCustomer(c)}
+                    className="w-full px-4 py-2.5 text-left hover:bg-primary/5 transition flex items-center justify-between border-b last:border-b-0"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">
+                        {c.full_name}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {c.phone_number || "Không có SĐT"} • {c.customer_code}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {activeTab.selectedCustomer && (
@@ -436,7 +626,7 @@ export default function InStockInvoicePage() {
                   {activeTab.selectedCustomer.name}
                 </p>
                 <p className="text-xs text-primary/70">
-                  {activeTab.selectedCustomer.phone}
+                  {activeTab.selectedCustomer.phone || "Không có SĐT"}
                 </p>
               </div>
               <button
@@ -450,7 +640,12 @@ export default function InStockInvoicePage() {
 
           {/* ── Product Grid ── */}
           <div className="flex-1 overflow-y-auto p-3">
-            {paginatedProducts.length === 0 ? (
+            {loadingProducts ? (
+              <div className="flex flex-col items-center justify-center h-full text-gray-300">
+                <Loader2 size={48} strokeWidth={1} className="animate-spin" />
+                <p className="mt-3 text-sm">Đang tải sản phẩm...</p>
+              </div>
+            ) : paginatedProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-gray-300">
                 <Package size={48} strokeWidth={1} />
                 <p className="mt-3 text-sm">Không tìm thấy sản phẩm</p>
@@ -459,18 +654,41 @@ export default function InStockInvoicePage() {
               <div className="grid grid-cols-3 gap-2">
                 {paginatedProducts.map((product) => (
                   <button
-                    key={product.id}
+                    key={product.pk_product_id}
                     onClick={() => addToCart(product)}
-                    className="group flex flex-col items-center p-3 rounded-lg border border-gray-100 hover:border-primary/30 hover:bg-primary/5 hover:shadow-md transition-all duration-200 text-left cursor-pointer"
+                    disabled={product.stock <= 0}
+                    className={`group flex flex-col items-center p-3 rounded-lg border transition-all duration-200 text-left cursor-pointer relative ${
+                      product.stock <= 0
+                        ? "border-gray-100 opacity-50 cursor-not-allowed"
+                        : "border-gray-100 hover:border-primary/30 hover:bg-primary/5 hover:shadow-md"
+                    }`}
                   >
+                    {/* Stock badge */}
+                    <span
+                      className={`absolute top-1.5 right-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                        product.stock <= 0
+                          ? "bg-red-100 text-red-600"
+                          : product.stock <= 5
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-green-100 text-green-700"
+                      }`}
+                    >
+                      {product.stock <= 0 ? "Hết" : `SL: ${product.stock}`}
+                    </span>
+
                     <div className="w-16 h-16 rounded-lg bg-gray-50 flex items-center justify-center text-3xl mb-2 group-hover:scale-105 transition-transform border">
-                      {product.image}
+                      📦
                     </div>
                     <p className="text-xs font-medium text-gray-700 text-center line-clamp-2 leading-tight min-h-[2rem]">
-                      {product.name}
+                      {product.product_name}
                     </p>
+                    {product.sku?.sku_code && (
+                      <p className="text-[9px] text-gray-400 font-mono mt-0.5">
+                        {product.sku.sku_code}
+                      </p>
+                    )}
                     <p className="text-xs font-bold text-primary mt-1">
-                      {formatCurrency(product.price)}
+                      {formatCurrency(product.selling_price)}
                     </p>
                   </button>
                 ))}
@@ -507,9 +725,17 @@ export default function InStockInvoicePage() {
           <div className="p-3 border-t">
             <Button
               className="w-full h-12 text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-lg shadow-primary/30 transition-all duration-200 active:scale-[0.98]"
-              disabled={activeTab.cartItems.length === 0}
+              disabled={activeTab.cartItems.length === 0 || isCheckingOut}
+              onClick={handleCheckout}
             >
-              THANH TOÁN
+              {isCheckingOut ? (
+                <>
+                  <Loader2 size={18} className="animate-spin mr-2" />
+                  ĐANG XỬ LÝ...
+                </>
+              ) : (
+                "THANH TOÁN"
+              )}
             </Button>
           </div>
         </div>

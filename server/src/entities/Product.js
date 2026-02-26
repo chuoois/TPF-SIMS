@@ -15,6 +15,11 @@ module.exports = new EntitySchema({
             length: 150,
             nullable: false,
         },
+        product_img: {
+            type: "varchar",
+            length: 225,
+            nullable: true,
+        },
         purchase_price: {
             type: "decimal",
             precision: 15,

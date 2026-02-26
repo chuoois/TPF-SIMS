@@ -12,6 +12,9 @@ const WoodTypeRepo = AppDataSource.getRepository("WoodType");
 const SkuRepo = AppDataSource.getRepository("Sku");
 const WarehouseRepo = AppDataSource.getRepository("Warehouse");
 const WarehouseInventoryRepo = AppDataSource.getRepository("WarehouseInventory");
+const OrderRepo = AppDataSource.getRepository("Order");
+const OrderItemRepo = AppDataSource.getRepository("OrderItem");
+const ColorRepo = AppDataSource.getRepository("Color");
 
 /**
  * Đăng kí các entites trên database
@@ -36,5 +39,8 @@ module.exports = {
   SkuRepo,
   WarehouseRepo,
   WarehouseInventoryRepo,
+  OrderRepo,
+  OrderItemRepo,
+  ColorRepo,
 };
 

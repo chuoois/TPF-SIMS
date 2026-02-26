@@ -8,6 +8,12 @@ const {
     getCustomerById,
     deleteCustomer,
 } = require("../controller/customer.controller");
+const {
+    getProductsForSale,
+    createInStockOrder,
+    createCustomOrder,
+} = require("../controller/order.controller");
+const { getAllWoodTypes, getAllColors } = require("../controller/master-data.controller");
 const { verifyAccessToken, verifyRole } = require("../middleware/auth.middleware");
 
 /**
@@ -21,6 +27,22 @@ const { verifyAccessToken, verifyRole } = require("../middleware/auth.middleware
 router.use(verifyAccessToken);
 router.use(verifyRole(["SALES", "OWNER"]));
 
+// ── Products ──
+// Get Products for Sale (with stock info)
+router.get("/products", getProductsForSale);
+
+// ── Master Data (read-only for sales) ──
+router.get("/wood-types", getAllWoodTypes);
+router.get("/colors", getAllColors);
+
+// ── Orders ──
+// Create In-Stock Order
+router.post("/orders/instock", createInStockOrder);
+
+// Create Custom Order (Đặt hàng riêng)
+router.post("/orders/custom", createCustomOrder);
+
+// ── Customers ──
 // Get All Customers (có thể tìm kiếm theo ?search=)
 router.get("/customers", getAllCustomers);
 

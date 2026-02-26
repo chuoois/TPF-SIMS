@@ -16,10 +16,16 @@ module.exports = new EntitySchema({
       unique: true,
       nullable: false,
     },
+    order_type: {
+      type: "varchar",
+      length: 20,
+      nullable: false,
+      default: "'IN_STOCK'",
+    },
     fk_customer_id: {
       type: "varchar",
       length: 36,
-      nullable: false,
+      nullable: true,
     },
     order_address: {
       type: "varchar",

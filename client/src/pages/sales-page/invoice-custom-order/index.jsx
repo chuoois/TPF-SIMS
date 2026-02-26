@@ -10,7 +10,7 @@
  * Created Date: 25/02/2026
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -32,23 +32,16 @@ import {
   Palette,
   Ruler,
   TreePine,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
-import AddCustomerModal from "@/pages/sales-page/components/AddCustomerModal";
+import { salesService } from "@/services/sales.service";
 
 // ===================== CONSTANTS =====================
-const WOOD_TYPES = [
-  "Gỗ sồi",
-  "Gỗ óc chó",
-  "Gỗ hương",
-  "Gỗ teak",
-  "Gỗ thông",
-  "Gỗ MDF",
-  "Gỗ công nghiệp",
-  "Khác",
-];
-
+// Wood types will be fetched from the database
 // ===================== HELPERS =====================
 const formatCurrency = (value) => {
   return new Intl.NumberFormat("vi-VN").format(value);
@@ -82,6 +75,8 @@ const createEmptyTab = () => ({
   discount: 0,
   depositAmount: 0,
   vatRate: 0,
+  customerName: "",
+  customerPhone: "",
   deliveryInfo: {
     recipientName: "",
     recipientPhone: "",
@@ -102,8 +97,6 @@ export default function CustomOrderInvoicePage() {
     {
       id: 1,
       cartItems: [],
-      searchCustomer: "",
-      selectedCustomer: null,
       orderNote: "",
       discount: 0,
       depositAmount: 0,
@@ -123,7 +116,6 @@ export default function CustomOrderInvoicePage() {
 
   // Add item form (shared UI state)
   const [showAddForm, setShowAddForm] = useState(false);
-  const [showAddCustomer, setShowAddCustomer] = useState(false);
   const [newItem, setNewItem] = useState({
     productName: "",
     woodType: "",
@@ -145,6 +137,38 @@ export default function CustomOrderInvoicePage() {
     },
     [activeTabId],
   );
+
+  // ---- API state ----
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toast, setToast] = useState(null);
+  const toastTimer = useRef(null);
+
+  // ---- Wood types & Colors from DB ----
+  const [woodTypes, setWoodTypes] = useState([]);
+  const [colors, setColors] = useState([]);
+
+  useEffect(() => {
+    const fetchMasterData = async () => {
+      try {
+        const [wtData, colorData] = await Promise.all([
+          salesService.getWoodTypes(),
+          salesService.getColors(),
+        ]);
+        setWoodTypes(wtData.items || []);
+        setColors(colorData.items || []);
+      } catch (err) {
+        console.error("Fetch master data error:", err);
+      }
+    };
+    fetchMasterData();
+  }, []);
+
+  // ---- Show toast ----
+  const showToast = (type, message) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ type, message });
+    toastTimer.current = setTimeout(() => setToast(null), 4000);
+  };
 
   const updateDelivery = (field, value) => {
     updateActiveTab({
@@ -247,10 +271,112 @@ export default function CustomOrderInvoicePage() {
     totalBeforeDeposit - activeTab.depositAmount,
   );
 
+  // ---- Checkout ----
+  const handleCreateOrder = async () => {
+    if (activeTab.cartItems.length === 0) return;
+
+    const name = activeTab.customerName.trim();
+    const phone = activeTab.customerPhone.trim();
+    if (!name) {
+      showToast("error", "Vui lòng nhập tên khách hàng");
+      return;
+    }
+    if (!phone) {
+      showToast("error", "Vui lòng nhập số điện thoại khách hàng");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      // Tạo hồ sơ khách hàng trước
+      const customerRes = await salesService.createCustomer({
+        fullName: name,
+        phoneNumber: phone,
+      });
+      const customerId = customerRes.customer?.pk_customer_id;
+
+      const data = {
+        customerId,
+        orderNote: activeTab.orderNote || "",
+        discount: activeTab.discount || 0,
+        depositAmount: activeTab.depositAmount || 0,
+        vatRate: activeTab.vatRate || 0,
+        deliveryInfo: activeTab.deliveryInfo,
+        items: activeTab.cartItems.map((item) => ({
+          productName: item.productName,
+          woodType: item.woodType || "",
+          size: item.size || "",
+          color: item.color || "",
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          note: item.note || "",
+        })),
+      };
+
+      const result = await salesService.createCustomOrder(data);
+
+      showToast(
+        "success",
+        `Tạo đơn đặt hàng ${result.order.orderCode} thành công!`,
+      );
+
+      // Reset tab
+      updateActiveTab({
+        cartItems: [],
+        orderNote: "",
+        discount: 0,
+        depositAmount: 0,
+        vatRate: 0,
+        customerName: "",
+        customerPhone: "",
+        deliveryInfo: {
+          recipientName: "",
+          recipientPhone: "",
+          address: "",
+          district: "",
+          ward: "",
+          expectedDate: "",
+          shippingNote: "",
+        },
+      });
+    } catch (err) {
+      const msg = err.response?.data?.message || "Lỗi khi tạo đơn đặt hàng";
+      showToast("error", msg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // ===================== RENDER =====================
   return (
     <>
       <PageHelmet title="Đặt hàng riêng - TPF-SIMS" />
+
+      {/* ── Toast notification ── */}
+      {toast && (
+        <div
+          className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg text-sm font-medium animate-in slide-in-from-top-2 ${
+            toast.type === "success"
+              ? "bg-green-600 text-white"
+              : "bg-red-600 text-white"
+          }`}
+        >
+          {toast.type === "success" ? (
+            <CheckCircle2 size={16} />
+          ) : (
+            <AlertCircle size={16} />
+          )}
+          {toast.message}
+          <button
+            onClick={() => setToast(null)}
+            className="ml-2 opacity-70 hover:opacity-100"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       <div className="flex h-[calc(100vh-64px)] bg-gray-100 -m-6">
         {/* ═══════════════ CỘT TRÁI – SẢN PHẨM ĐẶT ═══════════════ */}
         <div className="flex flex-col w-[58%] border-r bg-white">
@@ -342,9 +468,9 @@ export default function CustomOrderInvoicePage() {
                     className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring bg-white text-gray-600 appearance-none"
                   >
                     <option value="">Loại gỗ</option>
-                    {WOOD_TYPES.map((w) => (
-                      <option key={w} value={w}>
-                        {w}
+                    {woodTypes.map((w) => (
+                      <option key={w.pk_wood_type_id} value={w.wood_name}>
+                        {w.wood_name}
                       </option>
                     ))}
                   </select>
@@ -354,13 +480,18 @@ export default function CustomOrderInvoicePage() {
                     size={14}
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                   />
-                  <input
-                    type="text"
-                    placeholder="Màu sắc"
+                  <select
                     value={newItem.color}
                     onChange={(e) => updateNewItem("color", e.target.value)}
-                    className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring placeholder-gray-400"
-                  />
+                    className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring bg-white text-gray-600 appearance-none"
+                  >
+                    <option value="">Màu sắc</option>
+                    {colors.map((c) => (
+                      <option key={c.pk_color_id} value={c.color_name}>
+                        {c.color_name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -392,16 +523,16 @@ export default function CustomOrderInvoicePage() {
                   className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <input
-                  type="number"
+                  type="text"
                   placeholder="Đơn giá (VNĐ)"
-                  value={newItem.unitPrice || ""}
-                  onChange={(e) =>
-                    updateNewItem(
-                      "unitPrice",
-                      Math.max(0, parseInt(e.target.value) || 0),
-                    )
+                  value={
+                    newItem.unitPrice ? formatCurrency(newItem.unitPrice) : ""
                   }
-                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, "");
+                    updateNewItem("unitPrice", parseInt(raw) || 0);
+                  }}
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
 
@@ -653,91 +784,69 @@ export default function CustomOrderInvoicePage() {
             </span>
           </div>
 
-          {/* ── Customer Search ── */}
-          <div className="flex items-center gap-2 px-4 py-3 border-b">
-            <Search size={16} className="text-gray-400 shrink-0" />
-            <input
-              type="text"
-              placeholder="Tìm khách hàng (F4)"
-              value={activeTab.searchCustomer}
-              onChange={(e) =>
-                updateActiveTab({ searchCustomer: e.target.value })
-              }
-              className="flex-1 text-sm text-gray-600 focus:outline-none placeholder-gray-400"
-            />
-            <button
-              onClick={() => setShowAddCustomer(true)}
-              className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 transition border border-primary/20"
-              title="Thêm khách hàng mới"
-            >
-              <UserPlus size={14} />
-            </button>
+          {/* ── Thông tin khách hàng (bắt buộc) ── */}
+          <div className="px-4 py-3 border-b space-y-3">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+              Thông tin khách hàng <span className="text-red-500">*</span>
+            </p>
+            <div className="flex items-center gap-3">
+              <UserPlus size={16} className="text-primary shrink-0" />
+              <input
+                type="text"
+                placeholder="Tên khách hàng"
+                value={activeTab.customerName}
+                onChange={(e) =>
+                  updateActiveTab({ customerName: e.target.value })
+                }
+                className="flex-1 text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <Phone size={16} className="text-primary shrink-0" />
+              <input
+                type="tel"
+                placeholder="Số điện thoại"
+                value={activeTab.customerPhone}
+                onChange={(e) =>
+                  updateActiveTab({ customerPhone: e.target.value })
+                }
+                className="flex-1 text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
+              />
+            </div>
           </div>
 
           {/* ── Delivery Form ── */}
           <div className="flex-1 overflow-y-auto">
             <div className="p-4 space-y-4">
-              {/* SĐT khách hàng */}
-              <div className="flex items-center gap-3">
-                <Phone size={16} className="text-primary shrink-0" />
-                <div className="flex-1">
-                  <input
-                    type="tel"
-                    placeholder="+84 Số điện thoại khách hàng"
-                    value={activeTab.deliveryInfo.recipientPhone}
-                    onChange={(e) =>
-                      updateDelivery("recipientPhone", e.target.value)
-                    }
-                    className="w-full text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
-                  />
-                </div>
-              </div>
-
-              {/* Tên người nhận + SĐT nhận hàng */}
+              {/* Địa chỉ */}
               <div className="flex items-start gap-3">
                 <MapPin size={16} className="text-green-500 shrink-0 mt-1" />
-                <div className="flex-1 grid grid-cols-2 gap-3">
+                <div className="flex-1 space-y-3">
                   <input
                     type="text"
-                    placeholder="Tên người nhận"
-                    value={activeTab.deliveryInfo.recipientName}
-                    onChange={(e) =>
-                      updateDelivery("recipientName", e.target.value)
-                    }
-                    className="text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
+                    placeholder="Địa chỉ giao hàng (Số nhà, ngõ, đường)"
+                    value={activeTab.deliveryInfo.address}
+                    onChange={(e) => updateDelivery("address", e.target.value)}
+                    className="w-full text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
                   />
-                  <input
-                    type="tel"
-                    placeholder="SĐT người nhận"
-                    className="text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
-                  />
-                </div>
-              </div>
-
-              {/* Địa chỉ */}
-              <div className="pl-7 space-y-3">
-                <input
-                  type="text"
-                  placeholder="Địa chỉ giao hàng (Số nhà, ngõ, đường)"
-                  value={activeTab.deliveryInfo.address}
-                  onChange={(e) => updateDelivery("address", e.target.value)}
-                  className="w-full text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
-                />
-                <div className="grid grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    placeholder="Quận/Huyện"
-                    value={activeTab.deliveryInfo.district}
-                    onChange={(e) => updateDelivery("district", e.target.value)}
-                    className="text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Phường/Xã"
-                    value={activeTab.deliveryInfo.ward}
-                    onChange={(e) => updateDelivery("ward", e.target.value)}
-                    className="text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
-                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      placeholder="Quận/Huyện"
+                      value={activeTab.deliveryInfo.district}
+                      onChange={(e) =>
+                        updateDelivery("district", e.target.value)
+                      }
+                      className="text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Phường/Xã"
+                      value={activeTab.deliveryInfo.ward}
+                      onChange={(e) => updateDelivery("ward", e.target.value)}
+                      className="text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -759,20 +868,6 @@ export default function CustomOrderInvoicePage() {
                 </div>
               </div>
 
-              {/* Ghi chú giao hàng */}
-              <div className="flex items-start gap-3">
-                <FileText size={16} className="text-gray-400 shrink-0 mt-1" />
-                <textarea
-                  placeholder="Ghi chú cho giao hàng & lắp đặt"
-                  value={activeTab.deliveryInfo.shippingNote}
-                  onChange={(e) =>
-                    updateDelivery("shippingNote", e.target.value)
-                  }
-                  rows={3}
-                  className="flex-1 text-sm border border-gray-200 rounded-lg p-3 focus:outline-none focus:border-primary focus:ring-2 focus:ring-ring/20 transition resize-none placeholder-gray-400"
-                />
-              </div>
-
               {/* Tip box */}
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                 <p className="text-xs text-amber-700">
@@ -788,28 +883,21 @@ export default function CustomOrderInvoicePage() {
           <div className="p-3 border-t">
             <Button
               className="w-full h-12 text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-lg shadow-primary/30 transition-all duration-200 active:scale-[0.98]"
-              disabled={activeTab.cartItems.length === 0}
+              disabled={activeTab.cartItems.length === 0 || isSubmitting}
+              onClick={handleCreateOrder}
             >
-              TẠO ĐƠN ĐẶT HÀNG
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={18} className="animate-spin mr-2" />
+                  ĐANG XỬ LÝ...
+                </>
+              ) : (
+                "TẠO ĐƠN ĐẶT HÀNG"
+              )}
             </Button>
           </div>
         </div>
       </div>
-      {/* ── Add Customer Modal ── */}
-      <AddCustomerModal
-        isOpen={showAddCustomer}
-        onClose={() => setShowAddCustomer(false)}
-        onCustomerAdded={(customer) => {
-          updateActiveTab({
-            selectedCustomer: {
-              id: customer.pk_customer_id,
-              name: customer.full_name,
-              phone: customer.phone_number,
-            },
-            searchCustomer: "",
-          });
-        }}
-      />
     </>
   );
 }
