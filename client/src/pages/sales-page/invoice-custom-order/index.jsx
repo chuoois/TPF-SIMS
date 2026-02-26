@@ -27,6 +27,8 @@ import {
   FileText,
   Truck,
   Package,
+  PackageCheck,
+  Hammer,
   Palette,
   Ruler,
   TreePine,
@@ -627,10 +629,10 @@ export default function CustomOrderInvoicePage() {
               onClick={() => navigate("/sales/dashboard/invoice-instock")}
               className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium text-gray-500 hover:bg-gray-100 transition"
             >
-              <ShoppingCart size={15} /> Bán thường
+              <PackageCheck size={15} /> Hàng có sẵn
             </button>
             <button className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold text-primary border-b-2 border-primary bg-white">
-              <Truck size={15} /> Bán giao hàng
+              <Hammer size={15} /> Hàng đặt riêng
             </button>
           </div>
         </div>

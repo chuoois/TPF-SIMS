@@ -25,7 +25,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Package,
-  Truck,
+  PackageCheck,
+  Hammer,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
@@ -210,7 +211,7 @@ export default function InStockInvoicePage() {
               <Search size={16} />
               <input
                 type="text"
-                placeholder="Tìm hàng hóa (F3)"
+                placeholder="Tìm hàng hóa"
                 value={searchProduct}
                 onChange={(e) => {
                   setSearchProduct(e.target.value);
@@ -394,13 +395,13 @@ export default function InStockInvoicePage() {
           {/* ── Bottom Tabs ── */}
           <div className="flex border-t bg-gray-50">
             <button className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold text-primary border-b-2 border-primary bg-white">
-              <ShoppingCart size={15} /> Bán thường
+              <PackageCheck size={15} /> Hàng có sẵn
             </button>
             <button
               onClick={() => navigate("/sales/dashboard/invoice-custom-order")}
               className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium text-gray-500 hover:bg-gray-100 transition"
             >
-              <Truck size={15} /> Bán giao hàng
+              <Hammer size={15} /> Hàng đặt riêng
             </button>
           </div>
         </div>
