@@ -19,4 +19,10 @@ router.post("/categories", masterDataController.createCategory);
 router.put("/categories/:id", masterDataController.updateCategory);
 router.delete("/categories/:id", masterDataController.deleteCategory);
 
+// Colors
+router.get("/colors", masterDataController.getAllColors);
+router.post("/colors", masterDataController.createColor);
+router.put("/colors/:id", masterDataController.updateColor);
+router.delete("/colors/:id", masterDataController.deleteColor);
+
 module.exports = router;

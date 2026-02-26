@@ -275,6 +275,119 @@ const getAllColors = async (req, res) => {
     }
 };
 
+/**
+ * Color CRUD
+ */
+const getAllColors = async (req, res) => {
+    try {
+        const { page = 1, limit = 10, search = "" } = req.query;
+        const skip = (page - 1) * limit;
+
+        const where = search ? [
+            { color_code: Like(`%${search}%`) },
+            { color_name: Like(`%${search}%`) }
+        ] : {};
+
+        const [items, total] = await ColorRepo.findAndCount({
+            where,
+            order: { created_at: "DESC" },
+            take: Number(limit),
+            skip: Number(skip),
+        });
+
+        return res.status(200).json({
+            items,
+            total,
+            page: Number(page),
+            limit: Number(limit),
+            totalPages: Math.ceil(total / limit),
+        });
+    } catch (error) {
+        console.error("Get All Colors Error:", error);
+        return res.status(500).json({ message: "Lỗi server khi lấy danh sách màu" });
+    }
+};
+
+const createColor = async (req, res) => {
+    try {
+        const { color_code, color_name } = req.body;
+
+        const existing = await ColorRepo.findOne({ where: { color_code } });
+        if (existing) {
+            return res.status(400).json({ message: "Mã màu đã tồn tại" });
+        }
+
+        const newItem = ColorRepo.create({
+            pk_color_id: randomUUID(),
+            color_code,
+            color_name,
+            color_status: "ACTIVE"
+        });
+
+        await ColorRepo.save(newItem);
+
+        await writeSystemLog(AppDataSource.manager, {
+            description: `Tạo màu mới: ${color_name} (${color_code})`,
+            actorAccount: req.user,
+        });
+
+        return res.status(201).json({ message: "Tạo màu thành công", item: newItem });
+    } catch (error) {
+        console.error("Create Color Error:", error);
+        return res.status(500).json({ message: "Lỗi server khi tạo màu" });
+    }
+};
+
+const updateColor = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { color_name, color_status } = req.body;
+
+        const item = await ColorRepo.findOne({ where: { pk_color_id: id } });
+        if (!item) {
+            return res.status(404).json({ message: "Không tìm thấy màu" });
+        }
+
+        const oldName = item.color_name;
+        if (color_name) item.color_name = color_name;
+        if (color_status) item.color_status = color_status;
+
+        await ColorRepo.save(item);
+
+        await writeSystemLog(AppDataSource.manager, {
+            description: `Cập nhật màu: ${oldName} -> ${item.color_name} (ID: ${id})`,
+            actorAccount: req.user,
+        });
+
+        return res.status(200).json({ message: "Cập nhật thành công", item });
+    } catch (error) {
+        console.error("Update Color Error:", error);
+        return res.status(500).json({ message: "Lỗi server khi cập nhật màu" });
+    }
+};
+
+const deleteColor = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const item = await ColorRepo.findOne({ where: { pk_color_id: id } });
+
+        const result = await ColorRepo.delete(id);
+        if (result.affected === 0) {
+            return res.status(404).json({ message: "Không tìm thấy màu" });
+        }
+
+        await writeSystemLog(AppDataSource.manager, {
+            description: `Xóa màu: ${item?.color_name || id} (ID: ${id})`,
+            actorAccount: req.user,
+        });
+
+        return res.status(200).json({ message: "Xóa thành công" });
+    } catch (error) {
+        console.error("Delete Color Error:", error);
+        return res.status(500).json({ message: "Lỗi server khi xóa màu (có thể đang được sử dụng)" });
+    }
+};
+
 module.exports = {
     getAllWoodTypes,
     createWoodType,
@@ -285,5 +398,8 @@ module.exports = {
     updateCategory,
     deleteCategory,
     getAllColors,
+    createColor,
+    updateColor,
+    deleteColor,
 };
 

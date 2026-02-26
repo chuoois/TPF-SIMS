@@ -14,6 +14,7 @@ module.exports = new EntitySchema({
             type: "varchar",
             length: 50,
             nullable: false,
+            unique: true,
         },
         color_name: {
             type: "varchar",
