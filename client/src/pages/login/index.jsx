@@ -56,7 +56,7 @@ export const LoginPage = () => {
         const roleRedirectMap = {
           OWNER: "/owner/home",
           SALES: "/sales/home",
-          ACCOUNTANT: "/accountant/home",
+          ACCOUNTANT: "/accountant/dashboard",
           WORKER: "/worker/home",
         };
 
@@ -136,11 +136,10 @@ export const LoginPage = () => {
                       value={formik.values.password}
                       onChange={formik.handleChange}
                       onBlur={formik.handleBlur}
-                      className={`pr-10 ${
-                        formik.touched.password && formik.errors.password
+                      className={`pr-10 ${formik.touched.password && formik.errors.password
                           ? "border-red-500 focus-visible:ring-red-500"
                           : ""
-                      }`}
+                        }`}
                     />
                     <button
                       type="button"

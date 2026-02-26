@@ -4,6 +4,7 @@ import { NoPermissionPage } from "@/pages/no-permission";
 import { authRoutes } from "./AuthRoutes";
 import { ownerRoutes } from "./OwnerRoutes";
 import { salesRoutes } from "./SalesRoutes";
+import { accountantRoutes } from "./AccountantRoutes";
 import ProtectedRoute from "./ProtectedRoute";
 
 /**
@@ -22,7 +23,7 @@ export const router = createBrowserRouter([
   // Protected Routes
   {
     element: <ProtectedRoute />,
-    children: [ownerRoutes, salesRoutes],
+    children: [ownerRoutes, salesRoutes, accountantRoutes],
   },
   { path: "/404", element: <NotFoundPage /> },
   { path: "/403", element: <NoPermissionPage /> },
