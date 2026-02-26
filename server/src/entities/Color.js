@@ -13,27 +13,26 @@ module.exports = new EntitySchema({
         color_code: {
             type: "varchar",
             length: 50,
+            nullable: false,
             unique: true,
         },
         color_name: {
             type: "varchar",
             length: 100,
+            nullable: false,
         },
         color_status: {
             type: "varchar",
             length: 50,
-            default: "ACTIVE",
             nullable: true,
         },
         created_at: {
-            type: "datetime",
+            type: "timestamp",
             createDate: true,
-            nullable: true,
         },
         updated_at: {
-            type: "datetime",
+            type: "timestamp",
             updateDate: true,
-            nullable: true,
         },
     },
 });

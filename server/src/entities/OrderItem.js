@@ -18,7 +18,31 @@ module.exports = new EntitySchema({
     fk_sku_id: {
       type: "varchar",
       length: 36,
-      nullable: false,
+      nullable: true,
+    },
+    custom_product_name: {
+      type: "varchar",
+      length: 150,
+      nullable: true,
+    },
+    custom_wood_type: {
+      type: "varchar",
+      length: 100,
+      nullable: true,
+    },
+    custom_size: {
+      type: "varchar",
+      length: 100,
+      nullable: true,
+    },
+    custom_color: {
+      type: "varchar",
+      length: 50,
+      nullable: true,
+    },
+    custom_note: {
+      type: "text",
+      nullable: true,
     },
     quantity: {
       type: "int",
