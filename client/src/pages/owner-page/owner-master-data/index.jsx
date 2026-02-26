@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import useDebounce from "@/hooks/useDebounce";
 import { masterDataService } from "@/services/master-data.service";
-import { Plus, Pencil, Trash2, X, ListChecks, LayoutGrid, Settings2, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, X, ListChecks, LayoutGrid, Settings2, ChevronLeft, ChevronRight, Search, Palette } from "lucide-react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { toast } from "react-hot-toast";
@@ -61,10 +61,24 @@ export default function OwnerMasterDataManage() {
                         <LayoutGrid size={18} />
                         Danh mục sản phẩm
                     </button>
+                    <button
+                        onClick={() => setActiveTab("color")}
+                        className={cn(
+                            "flex items-center gap-2 px-6 py-2 rounded-md font-bold text-sm transition-all",
+                            activeTab === "color"
+                                ? "bg-white text-primary shadow-sm"
+                                : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
+                        )}
+                    >
+                        <Palette size={18} />
+                        Màu sắc
+                    </button>
                 </div>
 
                 <div className="animate-in fade-in slide-in-from-bottom-1 duration-300">
-                    {activeTab === "wood-type" ? <WoodTypeSection /> : <CategorySection />}
+                    {activeTab === "wood-type" && <WoodTypeSection />}
+                    {activeTab === "category" && <CategorySection />}
+                    {activeTab === "color" && <ColorSection />}
                 </div>
             </div>
         </>
@@ -428,9 +442,204 @@ function CategorySection() {
     );
 }
 
+// --- Color Section Component ---
+function ColorSection() {
+    const [items, setItems] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [currentItem, setCurrentItem] = useState(null);
+    const [searchTerm, setSearchTerm] = useState("");
+
+    // PAGINATION STATE
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const limit = 10;
+
+    const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+    const filteredItems = items; // Server side filtered
+
+    const validationSchema = Yup.object().shape({
+        color_code: Yup.string().trim().required("Vui lòng nhập mã màu").max(50, "Tối đa 50 ký tự"),
+        color_name: Yup.string().trim().required("Vui lòng nhập tên màu").max(100, "Tối đa 100 ký tự"),
+        color_status: Yup.string().oneOf(["ACTIVE", "INACTIVE"], "Trạng thái không hợp lệ"),
+    });
+
+    useEffect(() => { fetchItems(1); }, [debouncedSearchTerm]);
+
+    const fetchItems = async (page = 1) => {
+        try {
+            setLoading(true);
+            const data = await masterDataService.getAllColors(page, limit, searchTerm);
+            setItems(data.items || []);
+            setTotalPages(data.totalPages || 1);
+            setTotalItems(data.total || 0);
+            setCurrentPage(data.page || 1);
+        } catch (error) { console.error("Error fetching colors:", error); }
+        finally { setLoading(false); }
+    };
+
+    const handlePageChange = (newPage) => {
+        if (newPage >= 1 && newPage <= totalPages) {
+            fetchItems(newPage);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm("Bạn có chắc muốn xóa màu này?")) return;
+        try {
+            await masterDataService.deleteColor(id);
+            toast.success("Xóa thành công");
+            fetchItems();
+        } catch (error) { toast.error("Không thể xóa item đang sử dụng"); }
+    };
+
+    if (loading) return <div className="p-12 text-center text-primary animate-pulse">Đang tải...</div>;
+
+    return (
+        <div className="space-y-4">
+            <div className="flex justify-between items-center bg-white p-3 border rounded-md shadow-sm gap-4">
+                <div className="flex-1 relative max-w-md">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                    <Input
+                        placeholder="Tìm theo mã hoặc tên màu..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="h-10 border-gray-200 pl-10"
+                    />
+                </div>
+                <Button onClick={() => { setCurrentItem(null); setIsModalOpen(true); }} className="flex items-center gap-2">
+                    <Plus size={20} />
+                    <span>Thêm màu</span>
+                </Button>
+            </div>
+
+            <Card className="border shadow-none overflow-hidden">
+                <CardContent className="p-0">
+                    <div className="overflow-auto h-[calc(100vh-350px)] relative">
+                        <table className="w-full text-left border-collapse">
+                            <thead className="bg-gray-50 sticky top-0 z-10 border-b">
+                                <tr>
+                                    <th className="p-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest w-[50px]">#</th>
+                                    <th className="p-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Mã màu</th>
+                                    <th className="p-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Tên màu</th>
+                                    <th className="p-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest w-[120px]">Trạng thái</th>
+                                    <th className="p-4 text-right text-[11px] font-bold text-gray-400 uppercase tracking-widest">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y bg-white">
+                                {filteredItems.map((item, index) => (
+                                    <tr key={item.pk_color_id} className="hover:bg-gray-50/50 transition-colors">
+                                        <td className="p-4 text-xs text-gray-400 font-medium">{index + 1}</td>
+                                        <td className="p-4 font-bold text-primary text-sm tracking-tight">{item.color_code}</td>
+                                        <td className="p-4 text-sm font-medium text-gray-800">{item.color_name}</td>
+                                        <td className="p-4">
+                                            <span className={cn(
+                                                "text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider border",
+                                                item.color_status === "ACTIVE" ? "bg-green-50 text-green-600 border-green-100" : "bg-gray-50 text-gray-400 border-gray-100"
+                                            )}>
+                                                {item.color_status === "ACTIVE" ? "Hoạt động" : "Khóa"}
+                                            </span>
+                                        </td>
+                                        <td className="p-4 text-right">
+                                            <div className="flex justify-end gap-1">
+                                                <Button variant="ghost" size="sm" onClick={() => { setCurrentItem(item); setIsModalOpen(true); }} className="h-8 px-2 text-gray-400 hover:text-primary hover:bg-gray-100">
+                                                    <Pencil size={14} />
+                                                </Button>
+                                                <Button variant="ghost" size="sm" onClick={() => handleDelete(item.pk_color_id)} className="h-8 px-2 text-gray-400 hover:text-red-500 hover:bg-red-50">
+                                                    <Trash2 size={14} />
+                                                </Button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </CardContent>
+                {/* PAGINATION CONTROLS */}
+                <div className="bg-gray-50/50 border-t p-3 flex justify-between items-center">
+                    <div className="text-xs text-gray-500 italic">
+                        Hiển thị {items.length} / {totalItems} màu
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            disabled={currentPage === 1 || loading}
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            className="h-8 w-8 border-gray-200 shadow-none"
+                        >
+                            <ChevronLeft size={14} />
+                        </Button>
+                        <div className="bg-white border rounded-md h-8 px-3 flex items-center justify-center min-w-[60px] shadow-sm">
+                            <span className="text-xs font-bold text-primary">
+                                {currentPage} <span className="text-gray-300 mx-1 font-normal">/</span> {totalPages}
+                            </span>
+                        </div>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            disabled={currentPage === totalPages || loading}
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            className="h-8 w-8 border-gray-200 shadow-none"
+                        >
+                            <ChevronRight size={14} />
+                        </Button>
+                    </div>
+                </div>
+            </Card>
+
+            {isModalOpen && (
+                <MasterDataModal
+                    title={currentItem ? "Cập nhật màu" : "Thêm màu mới"}
+                    initialValues={{
+                        color_code: currentItem?.color_code || "",
+                        color_name: currentItem?.color_name || "",
+                        color_status: currentItem?.color_status || "ACTIVE",
+                    }}
+                    validationSchema={validationSchema}
+                    isEdit={!!currentItem}
+                    onClose={() => setIsModalOpen(false)}
+                    onSubmit={async (values) => {
+                        if (currentItem) await masterDataService.updateColor(currentItem.pk_color_id, values);
+                        else await masterDataService.createColor(values);
+                        fetchItems();
+                    }}
+                    codeLabel="Mã màu"
+                    nameLabel="Tên màu"
+                    isColor={true}
+                />
+            )}
+        </div>
+    );
+}
+
+/**
+ * Chuyển chuỗi tiếng Việt có dấu thành mã CODE không dấu, viết hoa, thay khoảng trắng bằng "_".
+ * VD: "Gỗ sồi" => "GO_SOI", "bàn ăn gỗ" => "BAN_AN_GO"
+ */
+function generateCode(name) {
+    if (!name) return "";
+    const normalized = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    // Xử lý thêm các ký tự đặc biệt tiếng Việt (đ/Đ)
+    const result = normalized.replace(/[đĐ]/g, (c) => (c === "đ" ? "d" : "D"));
+    return result
+        .toUpperCase()
+        .trim()
+        .replace(/\s+/g, "_")          // thay khoảng trắng bằng _
+        .replace(/[^A-Z0-9_]/g, "");    // loại bỏ ký tự đặc biệt còn lại
+}
+
 // --- Shared Modal Component ---
-function MasterDataModal({ title, initialValues, validationSchema, isEdit, onClose, onSubmit, codeLabel, nameLabel, isCategory }) {
+function MasterDataModal({ title, initialValues, validationSchema, isEdit, onClose, onSubmit, codeLabel, nameLabel, isCategory, isColor }) {
     const inputErrorClass = (touched, error) => touched && error ? "border-red-500 focus-visible:ring-red-500 bg-red-50/10" : "border-gray-200";
+
+    // Determine field names based on type
+    const nameField = isColor ? "color_name" : isCategory ? "category_name" : "wood_name";
+    const codeField = isColor ? "color_code" : isCategory ? "category_code" : "wood_code";
+    const statusField = isColor ? "color_status" : isCategory ? "category_status" : "wood_status";
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -452,36 +661,42 @@ function MasterDataModal({ title, initialValues, validationSchema, isEdit, onClo
                         finally { setSubmitting(false); }
                     }}
                 >
-                    {({ isSubmitting, touched, errors, getFieldProps }) => (
+                    {({ isSubmitting, touched, errors, getFieldProps, setFieldValue, values }) => (
                         <Form className="p-6 space-y-4">
                             <div className="space-y-1.5">
-                                <Label className={cn("text-[13px] font-bold", touched[isCategory ? "category_code" : "wood_code"] && errors[isCategory ? "category_code" : "wood_code"] ? "text-red-500" : "text-gray-700")}>
-                                    {codeLabel} <span className="text-red-500">*</span>
-                                </Label>
-                                <Input
-                                    {...getFieldProps(isCategory ? "category_code" : "wood_code")}
-                                    disabled={isEdit}
-                                    className={cn("h-11", inputErrorClass(touched[isCategory ? "category_code" : "wood_code"], errors[isCategory ? "category_code" : "wood_code"]), isEdit && "bg-gray-50")}
-                                    placeholder="VD: MA_SO_01..."
-                                />
-                                <ErrorMessage name={isCategory ? "category_code" : "wood_code"} render={msg => <p className="text-[11px] text-red-500 font-medium">{msg}</p>} />
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <Label className={cn("text-[13px] font-bold", touched[isCategory ? "category_name" : "wood_name"] && errors[isCategory ? "category_name" : "wood_name"] ? "text-red-500" : "text-gray-700")}>
+                                <Label className={cn("text-[13px] font-bold", touched[nameField] && errors[nameField] ? "text-red-500" : "text-gray-700")}>
                                     {nameLabel} <span className="text-red-500">*</span>
                                 </Label>
                                 <Input
-                                    {...getFieldProps(isCategory ? "category_name" : "wood_name")}
-                                    className={cn("h-11", inputErrorClass(touched[isCategory ? "category_name" : "wood_name"], errors[isCategory ? "category_name" : "wood_name"]))}
+                                    {...getFieldProps(nameField)}
+                                    onChange={(e) => {
+                                        setFieldValue(nameField, e.target.value);
+                                        if (!isEdit) {
+                                            setFieldValue(codeField, generateCode(e.target.value));
+                                        }
+                                    }}
+                                    className={cn("h-11", inputErrorClass(touched[nameField], errors[nameField]))}
                                     placeholder="Nhập tên hiển thị..."
                                 />
-                                <ErrorMessage name={isCategory ? "category_name" : "wood_name"} render={msg => <p className="text-[11px] text-red-500 font-medium">{msg}</p>} />
+                                <ErrorMessage name={nameField} render={msg => <p className="text-[11px] text-red-500 font-medium">{msg}</p>} />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label className={cn("text-[13px] font-bold", touched[codeField] && errors[codeField] ? "text-red-500" : "text-gray-700")}>
+                                    {codeLabel} <span className="text-red-500">*</span>
+                                </Label>
+                                <Input
+                                    {...getFieldProps(codeField)}
+                                    disabled={isEdit}
+                                    className={cn("h-11 font-mono tracking-wide", inputErrorClass(touched[codeField], errors[codeField]), isEdit && "bg-gray-50")}
+                                    placeholder="Tự động tạo từ tên..."
+                                />
+                                <ErrorMessage name={codeField} render={msg => <p className="text-[11px] text-red-500 font-medium">{msg}</p>} />
                             </div>
 
                             <div className="space-y-1.5">
                                 <Label className="text-[13px] font-bold text-gray-700">Trạng thái</Label>
-                                <Field as="select" name={isCategory ? "category_status" : "wood_status"} className="w-full h-11 border border-gray-200 rounded-md px-3 text-sm bg-white focus:ring-1 focus:ring-primary outline-none">
+                                <Field as="select" name={statusField} className="w-full h-11 border border-gray-200 rounded-md px-3 text-sm bg-white focus:ring-1 focus:ring-primary outline-none">
                                     <option value="ACTIVE">Hoạt động</option>
                                     <option value="INACTIVE">Khóa</option>
                                 </Field>

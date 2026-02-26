@@ -69,6 +69,15 @@ module.exports = new EntitySchema({
             onDelete: "SET NULL",
             onUpdate: "CASCADE",
         },
+        color: {
+            type: "many-to-one",
+            target: "Color",
+            joinColumn: {
+                name: "fk_color_id",
+            },
+            onDelete: "SET NULL",
+            onUpdate: "CASCADE",
+        },
         warehouseInventories: {
             type: "one-to-many",
             target: "WarehouseInventory",
