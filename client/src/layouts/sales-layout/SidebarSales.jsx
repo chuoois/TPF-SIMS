@@ -13,6 +13,7 @@ import {
   ClipboardList,
   ChevronRight,
   PanelLeftClose,
+  Package,
 } from "lucide-react";
 
 const menuItems = [
@@ -31,6 +32,11 @@ const menuItems = [
     text: "Đặt hàng theo mẫu",
     icon: ClipboardList,
     path: "/sales/dashboard/invoice-custom-order",
+  },
+  {
+    text: "Quản lý đơn hàng",
+    icon: Package,
+    path: "/sales/dashboard/orders",
   },
 ];
 
