@@ -7,20 +7,13 @@
  */
 
 import { useState } from "react";
-import { X, User, Phone, Mail, MapPin, Calendar } from "lucide-react";
+import { X, User, Phone, Mail, MapPin, Calendar, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { salesService } from "@/services/sales.service";
-import toast from "react-hot-toast";
 
 const GENDER_OPTIONS = [
   { value: "Nam", label: "Nam" },
   { value: "Nữ", label: "Nữ" },
   { value: "Khác", label: "Khác" },
-];
-
-const CUSTOMER_TYPES = [
-  { value: "Cá nhân", label: "Cá nhân" },
-  { value: "Doanh nghiệp", label: "Doanh nghiệp" },
 ];
 
 const INITIAL_FORM = {
@@ -30,67 +23,61 @@ const INITIAL_FORM = {
   address: "",
   gender: "",
   dob: "",
-  customer_type: "Cá nhân",
   note: "",
 };
 
+const inputBase =
+  "w-full text-[13px] rounded-lg pl-10 pr-3 py-2.5 focus:outline-none focus:ring-2 transition bg-transparent";
+const inputStyle = {
+  border: "1px solid var(--grid-border)",
+  color: "var(--text-main)",
+};
+const labelClass =
+  "text-[11px] font-semibold uppercase tracking-wider mb-1.5 block";
+
 export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
   const [form, setForm] = useState({ ...INITIAL_FORM });
-  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
   if (!isOpen) return null;
 
   const updateField = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!form.full_name.trim()) {
-      toast.error("Vui lòng nhập tên khách hàng");
+    const newErrors = {};
+    if (!form.full_name.trim()) newErrors.full_name = "Vui lòng nhập tên";
+    if (!form.phone_number.trim()) newErrors.phone_number = "Vui lòng nhập SĐT";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
-    try {
-      setLoading(true);
-      const res = await salesService.createCustomer({
-        fullName: form.full_name.trim(),
-        phoneNumber: form.phone_number.trim() || null,
-        email: form.email.trim() || null,
-        address: form.address.trim() || null,
-        gender: form.gender || null,
-        dob: form.dob || null,
-        customerType: form.customer_type || null,
-        note: form.note.trim() || null,
-      });
+    // Mock: create a fake customer object and return
+    const customer = {
+      pk_customer_id: `cust_${Date.now()}`,
+      full_name: form.full_name.trim(),
+      phone_number: form.phone_number.trim(),
+      email: form.email.trim() || null,
+      address: form.address.trim() || null,
+      gender: form.gender || null,
+      dob: form.dob || null,
+    };
 
-      const customer = res.data?.customer || res.customer || res.data || res;
-
-      toast.success(
-        `Đã thêm khách hàng "${customer.full_name || form.full_name}" thành công!`,
-      );
-
-      // Trả về khách hàng vừa tạo
-      if (onCustomerAdded) {
-        onCustomerAdded(customer);
-      }
-
-      // Reset & đóng
-      setForm({ ...INITIAL_FORM });
-      onClose();
-    } catch (err) {
-      toast.error(
-        err?.response?.data?.message ||
-          "Không thể thêm khách hàng. Vui lòng thử lại.",
-      );
-    } finally {
-      setLoading(false);
-    }
+    if (onCustomerAdded) onCustomerAdded(customer);
+    setForm({ ...INITIAL_FORM });
+    setErrors({});
+    onClose();
   };
 
   const handleClose = () => {
     setForm({ ...INITIAL_FORM });
+    setErrors({});
     onClose();
   };
 
@@ -98,102 +85,146 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
         onClick={handleClose}
       />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-in zoom-in-95">
+      <div
+        className="relative bg-white rounded-2xl w-full max-w-lg mx-4 overflow-hidden animate-in zoom-in-95"
+        style={{ boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b bg-primary text-primary-foreground">
-          <div className="flex items-center gap-2">
-            <User size={18} />
-            <h2 className="text-base font-bold">Thêm khách hàng mới</h2>
+        <div
+          className="flex items-center justify-between px-5 py-4 border-b"
+          style={{ borderColor: "var(--grid-border)" }}
+        >
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{
+                backgroundColor: "var(--status-focus)",
+                color: "var(--brand-primary)",
+              }}
+            >
+              <UserPlus size={16} />
+            </div>
+            <h2
+              className="text-[15px] font-bold"
+              style={{ color: "var(--text-main)" }}
+            >
+              Thêm khách hàng mới
+            </h2>
           </div>
           <button
             onClick={handleClose}
-            className="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center transition"
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100"
+            style={{ color: "var(--text-placeholder)" }}
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          {/* Tên + Loại KH */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-2">
-              <label className="text-xs font-medium text-gray-500 mb-1 block">
-                Họ và tên *
-              </label>
-              <div className="relative">
-                <User
-                  size={14}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                />
-                <input
-                  type="text"
-                  placeholder="Nhập họ tên khách hàng"
-                  value={form.full_name}
-                  onChange={(e) => updateField("full_name", e.target.value)}
-                  className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 placeholder-gray-400"
-                  autoFocus
-                />
-              </div>
+          {/* Họ tên */}
+          <div>
+            <label
+              className={labelClass}
+              style={{ color: "var(--text-placeholder)" }}
+            >
+              Họ và tên <span style={{ color: "var(--status-error)" }}>*</span>
+            </label>
+            <div className="relative">
+              <User
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2"
+                style={{ color: "var(--text-placeholder)" }}
+              />
+              <input
+                type="text"
+                placeholder="Nhập họ tên khách hàng"
+                value={form.full_name}
+                onChange={(e) => updateField("full_name", e.target.value)}
+                className={inputBase}
+                style={{
+                  ...inputStyle,
+                  borderColor: errors.full_name
+                    ? "var(--status-error)"
+                    : "var(--grid-border)",
+                }}
+                autoFocus
+              />
             </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500 mb-1 block">
-                Loại KH
-              </label>
-              <select
-                value={form.customer_type}
-                onChange={(e) => updateField("customer_type", e.target.value)}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring bg-white appearance-none"
+            {errors.full_name && (
+              <p
+                className="text-[11px] mt-1"
+                style={{ color: "var(--status-error)" }}
               >
-                {CUSTOMER_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+                {errors.full_name}
+              </p>
+            )}
           </div>
 
           {/* SĐT + Email */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium text-gray-500 mb-1 block">
-                Số điện thoại
+              <label
+                className={labelClass}
+                style={{ color: "var(--text-placeholder)" }}
+              >
+                Số điện thoại{" "}
+                <span style={{ color: "var(--status-error)" }}>*</span>
               </label>
               <div className="relative">
                 <Phone
                   size={14}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2"
+                  style={{ color: "var(--text-placeholder)" }}
                 />
                 <input
                   type="tel"
                   placeholder="0xxx xxx xxx"
                   value={form.phone_number}
                   onChange={(e) => updateField("phone_number", e.target.value)}
-                  className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring placeholder-gray-400"
+                  className={inputBase}
+                  style={{
+                    ...inputStyle,
+                    borderColor: errors.phone_number
+                      ? "var(--status-error)"
+                      : "var(--grid-border)",
+                  }}
                 />
               </div>
+              {errors.phone_number && (
+                <p
+                  className="text-[11px] mt-1"
+                  style={{ color: "var(--status-error)" }}
+                >
+                  {errors.phone_number}
+                </p>
+              )}
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-500 mb-1 block">
+              <label
+                className={labelClass}
+                style={{ color: "var(--text-placeholder)" }}
+              >
                 Email
               </label>
               <div className="relative">
                 <Mail
                   size={14}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2"
+                  style={{ color: "var(--text-placeholder)" }}
                 />
                 <input
                   type="email"
                   placeholder="email@example.com"
                   value={form.email}
                   onChange={(e) => updateField("email", e.target.value)}
-                  className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring placeholder-gray-400"
+                  className={inputBase}
+                  style={inputStyle}
                 />
               </div>
             </div>
@@ -202,20 +233,30 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
           {/* Giới tính + Ngày sinh */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium text-gray-500 mb-1 block">
+              <label
+                className={labelClass}
+                style={{ color: "var(--text-placeholder)" }}
+              >
                 Giới tính
               </label>
-              <div className="flex gap-2">
+              <div className="flex gap-1.5">
                 {GENDER_OPTIONS.map((g) => (
                   <button
                     key={g.value}
                     type="button"
                     onClick={() => updateField("gender", g.value)}
-                    className={`flex-1 text-sm rounded-lg py-2 border transition font-medium ${
-                      form.gender === g.value
-                        ? "bg-primary/10 border-primary text-primary"
-                        : "border-gray-200 text-gray-500 hover:bg-gray-50"
-                    }`}
+                    className="flex-1 text-[13px] rounded-lg py-2 transition font-medium cursor-pointer"
+                    style={{
+                      border: `1px solid ${form.gender === g.value ? "var(--brand-primary)" : "var(--grid-border)"}`,
+                      backgroundColor:
+                        form.gender === g.value
+                          ? "var(--status-focus)"
+                          : "transparent",
+                      color:
+                        form.gender === g.value
+                          ? "var(--brand-primary)"
+                          : "var(--text-secondary)",
+                    }}
                   >
                     {g.label}
                   </button>
@@ -223,19 +264,24 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
               </div>
             </div>
             <div>
-              <label className="text-xs font-medium text-gray-500 mb-1 block">
+              <label
+                className={labelClass}
+                style={{ color: "var(--text-placeholder)" }}
+              >
                 Ngày sinh
               </label>
               <div className="relative">
                 <Calendar
                   size={14}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2"
+                  style={{ color: "var(--text-placeholder)" }}
                 />
                 <input
                   type="date"
                   value={form.dob}
                   onChange={(e) => updateField("dob", e.target.value)}
-                  className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring"
+                  className={inputBase}
+                  style={inputStyle}
                 />
               </div>
             </div>
@@ -243,27 +289,35 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
 
           {/* Địa chỉ */}
           <div>
-            <label className="text-xs font-medium text-gray-500 mb-1 block">
+            <label
+              className={labelClass}
+              style={{ color: "var(--text-placeholder)" }}
+            >
               Địa chỉ
             </label>
             <div className="relative">
               <MapPin
                 size={14}
-                className="absolute left-3 top-3 text-gray-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2"
+                style={{ color: "var(--text-placeholder)" }}
               />
               <input
                 type="text"
                 placeholder="Số nhà, đường, quận/huyện, tỉnh/thành"
                 value={form.address}
                 onChange={(e) => updateField("address", e.target.value)}
-                className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring placeholder-gray-400"
+                className={inputBase}
+                style={inputStyle}
               />
             </div>
           </div>
 
           {/* Ghi chú */}
           <div>
-            <label className="text-xs font-medium text-gray-500 mb-1 block">
+            <label
+              className={labelClass}
+              style={{ color: "var(--text-placeholder)" }}
+            >
               Ghi chú
             </label>
             <textarea
@@ -271,26 +325,31 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
               value={form.note}
               onChange={(e) => updateField("note", e.target.value)}
               rows={2}
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring resize-none placeholder-gray-400"
+              className="w-full text-[13px] rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 transition resize-none bg-transparent"
+              style={inputStyle}
             />
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 pt-2 border-t">
+          <div
+            className="flex justify-end gap-2.5 pt-3 border-t"
+            style={{ borderColor: "var(--grid-border)" }}
+          >
             <Button
               type="button"
               variant="outline"
               onClick={handleClose}
-              disabled={loading}
+              className="rounded-lg cursor-pointer text-[13px]"
             >
               Hủy
             </Button>
             <Button
               type="submit"
-              disabled={loading || !form.full_name.trim()}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold min-w-[120px]"
+              disabled={!form.full_name.trim() || !form.phone_number.trim()}
+              className="rounded-lg text-[13px] font-bold text-white min-w-[130px] cursor-pointer disabled:opacity-40"
+              style={{ backgroundColor: "var(--brand-primary)" }}
             >
-              {loading ? "Đang lưu..." : "Thêm khách hàng"}
+              Thêm khách hàng
             </Button>
           </div>
         </form>

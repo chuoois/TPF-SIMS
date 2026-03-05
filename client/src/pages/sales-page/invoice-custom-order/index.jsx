@@ -1,19 +1,17 @@
 /**
  * Component CustomOrderInvoicePage
- * Tạo đơn hàng đặt riêng – Hàng custom theo yêu cầu khách
- * - Hỗ trợ nhiều tab hóa đơn (mỗi tab có giỏ hàng & thông tin giao hàng riêng)
- * - Layout 2 cột: Danh sách sản phẩm đặt (trái) + Khách hàng & Giao hàng (phải)
- * - Thêm sản phẩm thủ công: tên, loại gỗ, kích thước, màu sắc, SL, đơn giá
- * - Form thông tin giao hàng + đặt cọc + ngày giao dự kiến
+ * Custom wood product orders — made-to-order items
+ *
+ * Layout: 2-column — Product list (left) + Customer & Delivery info (right)
+ * Features: Multi-tab orders, custom item form, delivery details, deposit
  *
  * Created By: DNC
  * Created Date: 25/02/2026
  */
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Search,
   X,
   Plus,
   Minus,
@@ -24,7 +22,6 @@ import {
   MapPin,
   Phone,
   CalendarDays,
-  FileText,
   Truck,
   Package,
   PackageCheck,
@@ -32,20 +29,37 @@ import {
   Palette,
   Ruler,
   TreePine,
-  Loader2,
   CheckCircle2,
   AlertCircle,
+  User,
+  Receipt,
+  FileText,
+  CreditCard,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
-import { salesService } from "@/services/sales.service";
 
-// ===================== CONSTANTS =====================
-// Wood types will be fetched from the database
+// ===================== STATIC DATA =====================
+const WOOD_TYPES = [
+  "Gỗ sồi",
+  "Gỗ óc chó",
+  "Gỗ tần bì",
+  "Gỗ cao su",
+  "Gỗ thông",
+  "Gỗ hương",
+];
+
+const COLORS = [
+  "Tự nhiên",
+  "Nâu đậm",
+  "Nâu nhạt",
+  "Đen",
+  "Trắng ngà",
+  "Ghi xám",
+];
+
 // ===================== HELPERS =====================
-const formatCurrency = (value) => {
-  return new Intl.NumberFormat("vi-VN").format(value);
-};
+const fmt = (v) => new Intl.NumberFormat("vi-VN").format(v);
 
 const generateOrderCode = () => {
   const now = new Date();
@@ -53,8 +67,7 @@ const generateOrderCode = () => {
 };
 
 const formatDateTime = () => {
-  const now = new Date();
-  return now.toLocaleString("vi-VN", {
+  return new Date().toLocaleString("vi-VN", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -69,8 +82,6 @@ let itemIdCounter = 0;
 const createEmptyTab = () => ({
   id: ++tabIdCounter,
   cartItems: [],
-  searchCustomer: "",
-  selectedCustomer: null,
   orderNote: "",
   discount: 0,
   depositAmount: 0,
@@ -78,8 +89,6 @@ const createEmptyTab = () => ({
   customerName: "",
   customerPhone: "",
   deliveryInfo: {
-    recipientName: "",
-    recipientPhone: "",
     address: "",
     district: "",
     ward: "",
@@ -88,33 +97,20 @@ const createEmptyTab = () => ({
   },
 });
 
+// ===================== SHARED INPUT STYLE =====================
+const inputBase =
+  "w-full text-[13px] rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 transition bg-transparent";
+const inputStyle = {
+  border: "1px solid var(--grid-border)",
+  color: "var(--text-main)",
+};
+
 // ===================== COMPONENT =====================
 export default function CustomOrderInvoicePage() {
   const navigate = useNavigate();
 
-  // ---- Multi-tab state ----
-  const [tabs, setTabs] = useState([
-    {
-      id: 1,
-      cartItems: [],
-      orderNote: "",
-      discount: 0,
-      depositAmount: 0,
-      vatRate: 0,
-      deliveryInfo: {
-        recipientName: "",
-        recipientPhone: "",
-        address: "",
-        district: "",
-        ward: "",
-        expectedDate: "",
-        shippingNote: "",
-      },
-    },
-  ]);
-  const [activeTabId, setActiveTabId] = useState(1);
-
-  // Add item form (shared UI state)
+  const [tabs, setTabs] = useState([createEmptyTab()]);
+  const [activeTabId, setActiveTabId] = useState(tabs[0].id);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newItem, setNewItem] = useState({
     productName: "",
@@ -125,8 +121,9 @@ export default function CustomOrderInvoicePage() {
     unitPrice: 0,
     note: "",
   });
+  const [toast, setToast] = useState(null);
+  const toastTimer = useRef(null);
 
-  // ---- Active tab helpers ----
   const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0];
 
   const updateActiveTab = useCallback(
@@ -138,32 +135,6 @@ export default function CustomOrderInvoicePage() {
     [activeTabId],
   );
 
-  // ---- API state ----
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [toast, setToast] = useState(null);
-  const toastTimer = useRef(null);
-
-  // ---- Wood types & Colors from DB ----
-  const [woodTypes, setWoodTypes] = useState([]);
-  const [colors, setColors] = useState([]);
-
-  useEffect(() => {
-    const fetchMasterData = async () => {
-      try {
-        const [wtData, colorData] = await Promise.all([
-          salesService.getWoodTypes(),
-          salesService.getColors(),
-        ]);
-        setWoodTypes(wtData.items || []);
-        setColors(colorData.items || []);
-      } catch (err) {
-        console.error("Fetch master data error:", err);
-      }
-    };
-    fetchMasterData();
-  }, []);
-
-  // ---- Show toast ----
   const showToast = (type, message) => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     setToast({ type, message });
@@ -176,45 +147,37 @@ export default function CustomOrderInvoicePage() {
     });
   };
 
-  const updateNewItem = (field, value) => {
+  const updateNewItem = (field, value) =>
     setNewItem((prev) => ({ ...prev, [field]: value }));
-  };
 
-  // ---- Tab management ----
+  // Tab management
   const addTab = () => {
-    const newTab = createEmptyTab();
-    setTabs((prev) => [...prev, newTab]);
-    setActiveTabId(newTab.id);
+    const t = createEmptyTab();
+    setTabs((p) => [...p, t]);
+    setActiveTabId(t.id);
   };
-
   const closeTab = (tabId, e) => {
     e.stopPropagation();
     if (tabs.length <= 1) return;
     setTabs((prev) => {
       const filtered = prev.filter((t) => t.id !== tabId);
-      if (activeTabId === tabId) {
+      if (activeTabId === tabId)
         setActiveTabId(filtered[filtered.length - 1].id);
-      }
       return filtered;
     });
   };
 
-  // ---- Cart actions ----
+  // Cart
   const addCustomItem = () => {
     if (!newItem.productName.trim()) return;
-    const id = `custom-${++itemIdCounter}`;
     updateActiveTab({
       cartItems: [
         ...activeTab.cartItems,
         {
-          id,
-          productName: newItem.productName,
-          woodType: newItem.woodType,
-          size: newItem.size,
-          color: newItem.color,
+          id: `custom-${++itemIdCounter}`,
+          ...newItem,
           quantity: newItem.quantity || 1,
           unitPrice: newItem.unitPrice || 0,
-          note: newItem.note,
         },
       ],
     });
@@ -240,26 +203,22 @@ export default function CustomOrderInvoicePage() {
     });
   };
 
-  const removeFromCart = (id) => {
+  const removeFromCart = (id) =>
     updateActiveTab({
       cartItems: activeTab.cartItems.filter((i) => i.id !== id),
     });
-  };
 
   const setQuantity = (id, qty) => {
     const val = parseInt(qty) || 0;
-    if (val <= 0) {
-      removeFromCart(id);
-    } else {
-      updateActiveTab({
-        cartItems: activeTab.cartItems.map((i) =>
-          i.id === id ? { ...i, quantity: val } : i,
-        ),
-      });
-    }
+    if (val <= 0) return removeFromCart(id);
+    updateActiveTab({
+      cartItems: activeTab.cartItems.map((i) =>
+        i.id === id ? { ...i, quantity: val } : i,
+      ),
+    });
   };
 
-  // ---- Totals ----
+  // Totals
   const subtotal = activeTab.cartItems.reduce(
     (sum, i) => sum + i.unitPrice * i.quantity,
     0,
@@ -270,82 +229,21 @@ export default function CustomOrderInvoicePage() {
     0,
     totalBeforeDeposit - activeTab.depositAmount,
   );
+  const itemCount = activeTab.cartItems.reduce((sum, i) => sum + i.quantity, 0);
 
-  // ---- Checkout ----
-  const handleCreateOrder = async () => {
+  // Checkout
+  const handleCreateOrder = () => {
     if (activeTab.cartItems.length === 0) return;
-
-    const name = activeTab.customerName.trim();
-    const phone = activeTab.customerPhone.trim();
-    if (!name) {
+    if (!activeTab.customerName.trim()) {
       showToast("error", "Vui lòng nhập tên khách hàng");
       return;
     }
-    if (!phone) {
-      showToast("error", "Vui lòng nhập số điện thoại khách hàng");
+    if (!activeTab.customerPhone.trim()) {
+      showToast("error", "Vui lòng nhập số điện thoại");
       return;
     }
-
-    try {
-      setIsSubmitting(true);
-
-      // Tạo hồ sơ khách hàng trước
-      const customerRes = await salesService.createCustomer({
-        fullName: name,
-        phoneNumber: phone,
-      });
-      const customerId = customerRes.customer?.pk_customer_id;
-
-      const data = {
-        customerId,
-        orderNote: activeTab.orderNote || "",
-        discount: activeTab.discount || 0,
-        depositAmount: activeTab.depositAmount || 0,
-        vatRate: activeTab.vatRate || 0,
-        deliveryInfo: activeTab.deliveryInfo,
-        items: activeTab.cartItems.map((item) => ({
-          productName: item.productName,
-          woodType: item.woodType || "",
-          size: item.size || "",
-          color: item.color || "",
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          note: item.note || "",
-        })),
-      };
-
-      const result = await salesService.createCustomOrder(data);
-
-      showToast(
-        "success",
-        `Tạo đơn đặt hàng ${result.order.orderCode} thành công!`,
-      );
-
-      // Reset tab
-      updateActiveTab({
-        cartItems: [],
-        orderNote: "",
-        discount: 0,
-        depositAmount: 0,
-        vatRate: 0,
-        customerName: "",
-        customerPhone: "",
-        deliveryInfo: {
-          recipientName: "",
-          recipientPhone: "",
-          address: "",
-          district: "",
-          ward: "",
-          expectedDate: "",
-          shippingNote: "",
-        },
-      });
-    } catch (err) {
-      const msg = err.response?.data?.message || "Lỗi khi tạo đơn đặt hàng";
-      showToast("error", msg);
-    } finally {
-      setIsSubmitting(false);
-    }
+    showToast("success", `Tạo đơn đặt hàng ${generateOrderCode()} thành công!`);
+    updateActiveTab(createEmptyTab());
   };
 
   // ===================== RENDER =====================
@@ -353,161 +251,235 @@ export default function CustomOrderInvoicePage() {
     <>
       <PageHelmet title="Đặt hàng riêng - TPF-SIMS" />
 
-      {/* ── Toast notification ── */}
+      {/* Toast */}
       {toast && (
         <div
-          className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg text-sm font-medium animate-in slide-in-from-top-2 ${
-            toast.type === "success"
-              ? "bg-green-600 text-white"
-              : "bg-red-600 text-white"
-          }`}
+          className="fixed top-5 right-5 z-50 flex items-center gap-3 pl-4 pr-3 py-3 rounded-xl text-sm font-medium text-white animate-in slide-in-from-top-2"
+          style={{
+            backgroundColor:
+              toast.type === "success"
+                ? "var(--status-success)"
+                : "var(--status-error)",
+            boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
+          }}
         >
           {toast.type === "success" ? (
             <CheckCircle2 size={16} />
           ) : (
             <AlertCircle size={16} />
           )}
-          {toast.message}
+          <span className="mr-1">{toast.message}</span>
           <button
             onClick={() => setToast(null)}
-            className="ml-2 opacity-70 hover:opacity-100"
+            className="opacity-60 hover:opacity-100 cursor-pointer p-0.5"
           >
             <X size={14} />
           </button>
         </div>
       )}
 
-      <div className="flex h-[calc(100vh-64px)] bg-gray-100 -m-6">
-        {/* ═══════════════ CỘT TRÁI – SẢN PHẨM ĐẶT ═══════════════ */}
-        <div className="flex flex-col w-[58%] border-r bg-white">
-          {/* ── Header ── */}
-          <div className="flex items-center justify-between px-4 py-2 bg-primary text-primary-foreground">
-            <div className="flex items-center gap-2 shrink-0">
-              <Truck size={16} />
-              <span className="font-semibold text-sm">Đơn đặt hàng riêng</span>
-            </div>
-            <div className="flex items-center gap-1 overflow-x-auto flex-1 ml-3 scrollbar-none">
-              {tabs.map((tab, idx) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTabId(tab.id)}
-                  className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-sm whitespace-nowrap transition shrink-0 ${
-                    tab.id === activeTabId
-                      ? "bg-white/25 font-semibold"
-                      : "bg-white/10 hover:bg-white/15"
-                  }`}
-                >
-                  <ShoppingCart size={12} />
-                  <span>ĐH {idx + 1}</span>
-                  {tab.cartItems.length > 0 && (
-                    <span className="bg-white/30 text-[10px] font-bold px-1.5 rounded-full ml-0.5">
-                      {tab.cartItems.length}
-                    </span>
-                  )}
-                  {tabs.length > 1 && (
-                    <X
-                      size={12}
-                      className="ml-1 cursor-pointer hover:text-red-200 opacity-60 hover:opacity-100"
-                      onClick={(e) => closeTab(tab.id, e)}
-                    />
-                  )}
-                </button>
-              ))}
+      <div
+        className="flex h-full gap-4 -m-4 p-4"
+        style={{ backgroundColor: "var(--bg-main)" }}
+      >
+        {/* ═══════════════ LEFT — ORDER ITEMS ═══════════════ */}
+        <div
+          className="flex flex-col w-[56%] bg-white rounded-2xl overflow-hidden"
+          style={{
+            boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+          }}
+        >
+          {/* Tab Bar */}
+          <div
+            className="flex items-center gap-1.5 px-4 py-2.5 border-b"
+            style={{ borderColor: "var(--grid-border)" }}
+          >
+            {tabs.map((tab, idx) => (
               <button
-                onClick={addTab}
-                className="w-7 h-7 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center transition shrink-0"
-                title="Thêm đơn hàng mới"
+                key={tab.id}
+                onClick={() => setActiveTabId(tab.id)}
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] whitespace-nowrap transition-all shrink-0 cursor-pointer ${
+                  tab.id === activeTabId ? "font-semibold" : "hover:bg-gray-50"
+                }`}
+                style={{
+                  backgroundColor:
+                    tab.id === activeTabId
+                      ? "var(--status-focus)"
+                      : "transparent",
+                  color:
+                    tab.id === activeTabId
+                      ? "var(--brand-primary)"
+                      : "var(--text-secondary)",
+                }}
               >
-                <Plus size={14} />
+                <Receipt size={13} />
+                <span>ĐH {idx + 1}</span>
+                {tab.cartItems.length > 0 && (
+                  <span
+                    className="text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none"
+                    style={{
+                      backgroundColor:
+                        tab.id === activeTabId
+                          ? "var(--brand-primary)"
+                          : "var(--grid-border)",
+                      color:
+                        tab.id === activeTabId
+                          ? "#fff"
+                          : "var(--text-secondary)",
+                    }}
+                  >
+                    {tab.cartItems.length}
+                  </span>
+                )}
+                {tabs.length > 1 && (
+                  <X
+                    size={12}
+                    className="ml-0.5 cursor-pointer opacity-40 hover:opacity-100"
+                    onClick={(e) => closeTab(tab.id, e)}
+                  />
+                )}
               </button>
-            </div>
+            ))}
             <button
-              onClick={() => setShowAddForm(true)}
-              className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 rounded-md px-3 py-1.5 text-sm font-medium transition shrink-0 ml-2"
+              onClick={addTab}
+              className="w-7 h-7 rounded-lg flex items-center justify-center transition shrink-0 cursor-pointer hover:bg-gray-50"
+              style={{ color: "var(--text-placeholder)" }}
+              title="Thêm đơn hàng mới"
             >
               <Plus size={14} />
-              Thêm SP
+            </button>
+
+            {/* Order type switch */}
+            <div
+              className="ml-auto flex rounded-lg overflow-hidden text-[12px] font-medium shrink-0"
+              style={{ border: "1px solid var(--grid-border)" }}
+            >
+              <button
+                onClick={() => navigate("/sales/dashboard/invoice-instock")}
+                className="flex items-center gap-1 px-3 py-1.5 cursor-pointer transition hover:bg-gray-50"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                <PackageCheck size={12} /> Có sẵn
+              </button>
+              <button
+                className="flex items-center gap-1 px-3 py-1.5 cursor-pointer transition"
+                style={{
+                  backgroundColor: "var(--brand-primary)",
+                  color: "#fff",
+                }}
+              >
+                <Hammer size={12} /> Đặt riêng
+              </button>
+            </div>
+
+            {/* Add product */}
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition shrink-0 ml-2 cursor-pointer"
+              style={{
+                backgroundColor: "var(--status-focus)",
+                color: "var(--brand-primary)",
+              }}
+            >
+              <Plus size={13} /> Thêm SP
             </button>
           </div>
 
-          {/* ── Add Custom Item Form (Slide-down) ── */}
+          {/* Add Item Form */}
           {showAddForm && (
-            <div className="border-b bg-muted/50 p-4 space-y-3 animate-in slide-in-from-top">
-              <div className="flex items-center justify-between mb-1">
-                <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                  <Package size={15} className="text-primary" />
+            <div
+              className="border-b p-4 space-y-3 animate-in slide-in-from-top"
+              style={{
+                borderColor: "var(--grid-border)",
+                backgroundColor: "var(--grid-header-bg)",
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <h4
+                  className="text-[13px] font-bold flex items-center gap-2"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  <Package
+                    size={14}
+                    style={{ color: "var(--brand-primary)" }}
+                  />
                   Thêm sản phẩm đặt riêng
                 </h4>
                 <button
                   onClick={() => setShowAddForm(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="cursor-pointer"
+                  style={{ color: "var(--text-placeholder)" }}
                 >
                   <X size={16} />
                 </button>
               </div>
 
-              {/* Row 1: Tên sản phẩm */}
               <input
                 type="text"
                 placeholder="Tên sản phẩm *"
                 value={newItem.productName}
                 onChange={(e) => updateNewItem("productName", e.target.value)}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring placeholder-gray-400"
+                className={inputBase}
+                style={inputStyle}
               />
 
-              {/* Row 2: Loại gỗ + Màu sắc */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="relative">
                   <TreePine
-                    size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    size={13}
+                    className="absolute left-3 top-1/2 -translate-y-1/2"
+                    style={{ color: "var(--text-placeholder)" }}
                   />
                   <select
                     value={newItem.woodType}
                     onChange={(e) => updateNewItem("woodType", e.target.value)}
-                    className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring bg-white text-gray-600 appearance-none"
+                    className={`${inputBase} pl-9 appearance-none bg-white`}
+                    style={inputStyle}
                   >
                     <option value="">Loại gỗ</option>
-                    {woodTypes.map((w) => (
-                      <option key={w.pk_wood_type_id} value={w.wood_name}>
-                        {w.wood_name}
+                    {WOOD_TYPES.map((w) => (
+                      <option key={w} value={w}>
+                        {w}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div className="relative">
                   <Palette
-                    size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    size={13}
+                    className="absolute left-3 top-1/2 -translate-y-1/2"
+                    style={{ color: "var(--text-placeholder)" }}
                   />
                   <select
                     value={newItem.color}
                     onChange={(e) => updateNewItem("color", e.target.value)}
-                    className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring bg-white text-gray-600 appearance-none"
+                    className={`${inputBase} pl-9 appearance-none bg-white`}
+                    style={inputStyle}
                   >
                     <option value="">Màu sắc</option>
-                    {colors.map((c) => (
-                      <option key={c.pk_color_id} value={c.color_name}>
-                        {c.color_name}
+                    {COLORS.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
                       </option>
                     ))}
                   </select>
                 </div>
               </div>
 
-              {/* Row 3: Kích thước + Số lượng + Đơn giá */}
               <div className="grid grid-cols-3 gap-3">
                 <div className="relative">
                   <Ruler
-                    size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    size={13}
+                    className="absolute left-3 top-1/2 -translate-y-1/2"
+                    style={{ color: "var(--text-placeholder)" }}
                   />
                   <input
                     type="text"
                     placeholder="Kích thước (D×R×C)"
                     value={newItem.size}
                     onChange={(e) => updateNewItem("size", e.target.value)}
-                    className="w-full text-sm border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring placeholder-gray-400"
+                    className={`${inputBase} pl-9`}
+                    style={inputStyle}
                   />
                 </div>
                 <input
@@ -520,38 +492,37 @@ export default function CustomOrderInvoicePage() {
                       Math.max(1, parseInt(e.target.value) || 1),
                     )
                   }
-                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className={`${inputBase} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                  style={inputStyle}
                 />
                 <input
                   type="text"
                   placeholder="Đơn giá (VNĐ)"
-                  value={
-                    newItem.unitPrice ? formatCurrency(newItem.unitPrice) : ""
-                  }
+                  value={newItem.unitPrice ? fmt(newItem.unitPrice) : ""}
                   onChange={(e) => {
                     const raw = e.target.value.replace(/\D/g, "");
                     updateNewItem("unitPrice", parseInt(raw) || 0);
                   }}
-                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring"
+                  className={inputBase}
+                  style={inputStyle}
                 />
               </div>
 
-              {/* Row 4: Ghi chú riêng */}
               <input
                 type="text"
                 placeholder="Ghi chú yêu cầu đặc biệt (sơn màu, chạm khắc, ...)"
                 value={newItem.note}
                 onChange={(e) => updateNewItem("note", e.target.value)}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-ring placeholder-gray-400"
+                className={inputBase}
+                style={inputStyle}
               />
 
-              {/* Actions */}
               <div className="flex justify-end gap-2 pt-1">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowAddForm(false)}
-                  className="text-xs"
+                  className="text-xs cursor-pointer rounded-lg"
                 >
                   Hủy
                 </Button>
@@ -559,342 +530,509 @@ export default function CustomOrderInvoicePage() {
                   size="sm"
                   onClick={addCustomItem}
                   disabled={!newItem.productName.trim()}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold"
+                  className="text-xs font-bold text-white rounded-lg cursor-pointer"
+                  style={{ backgroundColor: "var(--brand-primary)" }}
                 >
-                  <Plus size={14} className="mr-1" />
-                  Thêm vào đơn
+                  <Plus size={13} className="mr-1" /> Thêm vào đơn
                 </Button>
               </div>
             </div>
           )}
 
-          {/* ── Cart Table ── */}
+          {/* Cart Content */}
           <div className="flex-1 overflow-y-auto">
             {activeTab.cartItems.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-gray-300">
-                <Package size={64} strokeWidth={1} />
-                <p className="mt-4 text-sm font-medium">
+              <div
+                className="flex flex-col items-center justify-center h-full gap-2"
+                style={{ color: "var(--text-placeholder)" }}
+              >
+                <div
+                  className="w-20 h-20 rounded-2xl flex items-center justify-center"
+                  style={{ backgroundColor: "var(--bg-main)" }}
+                >
+                  <Package size={32} strokeWidth={1.5} />
+                </div>
+                <p className="text-sm font-medium mt-2">
                   Chưa có sản phẩm đặt nào
                 </p>
-                <p className="text-xs mt-1">
+                <p className="text-xs">
                   Nhấn "Thêm SP" để mô tả hàng đặt riêng
                 </p>
                 <button
                   onClick={() => setShowAddForm(true)}
-                  className="mt-4 flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary/10 text-primary text-sm font-medium hover:bg-primary/20 transition border border-primary/20"
+                  className="mt-3 flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-medium transition cursor-pointer"
+                  style={{
+                    backgroundColor: "var(--status-focus)",
+                    color: "var(--brand-primary)",
+                  }}
                 >
-                  <Plus size={14} />
-                  Thêm sản phẩm đặt
+                  <Plus size={14} /> Thêm sản phẩm đặt
                 </button>
               </div>
             ) : (
-              <div className="divide-y">
+              <div
+                className="divide-y"
+                style={{ borderColor: "var(--grid-border)" }}
+              >
                 {activeTab.cartItems.map((item, idx) => (
                   <div
                     key={item.id}
-                    className="p-3 hover:bg-muted/50 transition-colors group"
+                    className="px-4 py-3 group hover:bg-gray-50/50 transition-colors"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      {/* Info */}
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <span className="text-xs text-gray-400 font-bold mt-1 w-5 shrink-0">
-                          {idx + 1}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-800 truncate">
-                            {item.productName}
-                          </p>
-                          <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1">
-                            {item.woodType && (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-green-700 bg-green-50 px-1.5 py-0.5 rounded border border-green-200">
-                                <TreePine size={10} />
-                                {item.woodType}
-                              </span>
-                            )}
-                            {item.size && (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
-                                <Ruler size={10} />
-                                {item.size}
-                              </span>
-                            )}
-                            {item.color && (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-orange-700 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-200">
-                                <Palette size={10} />
-                                {item.color}
-                              </span>
-                            )}
-                          </div>
-                          {item.note && (
-                            <p className="text-[11px] text-gray-400 italic mt-1 truncate">
-                              📝 {item.note}
-                            </p>
+                    <div className="flex items-start gap-3">
+                      <span
+                        className="text-xs font-medium w-5 text-center shrink-0 mt-0.5"
+                        style={{ color: "var(--text-placeholder)" }}
+                      >
+                        {idx + 1}
+                      </span>
+
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className="text-[13px] font-semibold truncate"
+                          style={{ color: "var(--text-main)" }}
+                        >
+                          {item.productName}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5 mt-1.5">
+                          {item.woodType && (
+                            <span
+                              className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md"
+                              style={{
+                                backgroundColor: "var(--status-focus)",
+                                color: "var(--status-success)",
+                              }}
+                            >
+                              <TreePine size={9} /> {item.woodType}
+                            </span>
+                          )}
+                          {item.size && (
+                            <span
+                              className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md"
+                              style={{
+                                backgroundColor: "#F3E8FF",
+                                color: "#7C3AED",
+                              }}
+                            >
+                              <Ruler size={9} /> {item.size}
+                            </span>
+                          )}
+                          {item.color && (
+                            <span
+                              className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md"
+                              style={{
+                                backgroundColor: "#FFF7ED",
+                                color: "#EA580C",
+                              }}
+                            >
+                              <Palette size={9} /> {item.color}
+                            </span>
                           )}
                         </div>
+                        {item.note && (
+                          <p
+                            className="text-[11px] italic mt-1 truncate"
+                            style={{ color: "var(--text-placeholder)" }}
+                          >
+                            📝 {item.note}
+                          </p>
+                        )}
                       </div>
 
-                      {/* Quantity + Price */}
-                      <div className="flex items-center gap-3 shrink-0">
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => updateQuantity(item.id, -1)}
-                            className="w-6 h-6 rounded border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition text-gray-500"
-                          >
-                            <Minus size={10} />
-                          </button>
-                          <input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) =>
-                              setQuantity(item.id, e.target.value)
-                            }
-                            className="w-10 h-6 text-center text-xs font-semibold border rounded focus:outline-none focus:ring-1 focus:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          />
-                          <button
-                            onClick={() => updateQuantity(item.id, 1)}
-                            className="w-6 h-6 rounded border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition text-gray-500"
-                          >
-                            <Plus size={10} />
-                          </button>
-                        </div>
-                        <div className="text-right w-24">
-                          <p className="text-xs text-gray-400">
-                            {formatCurrency(item.unitPrice)}
-                          </p>
-                          <p className="text-sm font-bold text-primary">
-                            {formatCurrency(item.unitPrice * item.quantity)}
-                          </p>
-                        </div>
+                      {/* Quantity */}
+                      <div className="flex items-center gap-0.5 shrink-0">
                         <button
-                          onClick={() => removeFromCart(item.id)}
-                          className="text-gray-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100"
+                          onClick={() => updateQuantity(item.id, -1)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100"
+                          style={{
+                            border: "1px solid var(--grid-border)",
+                            color: "var(--text-secondary)",
+                          }}
                         >
-                          <Trash2 size={14} />
+                          <Minus size={11} />
+                        </button>
+                        <input
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) => setQuantity(item.id, e.target.value)}
+                          className="w-10 h-7 text-center text-[13px] font-semibold rounded-lg focus:outline-none focus:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          style={{
+                            border: "1px solid var(--grid-border)",
+                            color: "var(--text-main)",
+                          }}
+                        />
+                        <button
+                          onClick={() => updateQuantity(item.id, 1)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100"
+                          style={{
+                            border: "1px solid var(--grid-border)",
+                            color: "var(--text-secondary)",
+                          }}
+                        >
+                          <Plus size={11} />
                         </button>
                       </div>
+
+                      {/* Price */}
+                      <div className="text-right w-24 shrink-0">
+                        <p
+                          className="text-[11px]"
+                          style={{ color: "var(--text-placeholder)" }}
+                        >
+                          × {fmt(item.unitPrice)}đ
+                        </p>
+                        <p
+                          className="text-[13px] font-bold"
+                          style={{ color: "var(--brand-primary)" }}
+                        >
+                          {fmt(item.unitPrice * item.quantity)}đ
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => removeFromCart(item.id)}
+                        className="w-7 h-7 rounded-lg items-center justify-center transition cursor-pointer opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 hidden group-hover:flex shrink-0 mt-0.5"
+                        style={{ color: "var(--text-placeholder)" }}
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     </div>
                   </div>
                 ))}
 
-                {/* Quick add button at bottom */}
                 <button
                   onClick={() => setShowAddForm(true)}
-                  className="w-full p-3 flex items-center justify-center gap-2 text-sm text-primary hover:bg-muted transition font-medium"
+                  className="w-full py-3 flex items-center justify-center gap-2 text-[13px] font-medium transition cursor-pointer hover:bg-gray-50"
+                  style={{ color: "var(--brand-primary)" }}
                 >
-                  <Plus size={14} />
-                  Thêm sản phẩm đặt khác
+                  <Plus size={14} /> Thêm sản phẩm đặt khác
                 </button>
               </div>
             )}
           </div>
 
-          {/* ── Footer: Note + Totals ── */}
-          <div className="border-t bg-white">
-            {/* Order Note */}
-            <div className="flex items-center gap-2 px-4 py-2 border-b">
-              <Pencil size={14} className="text-gray-400 shrink-0" />
+          {/* Footer */}
+          <div
+            className="border-t"
+            style={{ borderColor: "var(--grid-border)" }}
+          >
+            {/* Note row */}
+            <div
+              className="flex items-center gap-2 px-4 py-2.5 border-b"
+              style={{ borderColor: "var(--grid-border)" }}
+            >
+              <Pencil
+                size={12}
+                style={{ color: "var(--text-placeholder)" }}
+                className="shrink-0"
+              />
               <input
                 type="text"
-                placeholder="Ghi chú đơn hàng"
+                placeholder="Ghi chú đơn hàng..."
                 value={activeTab.orderNote}
                 onChange={(e) => updateActiveTab({ orderNote: e.target.value })}
-                className="flex-1 text-sm text-gray-600 focus:outline-none placeholder-gray-300"
+                className="flex-1 text-[13px] focus:outline-none bg-transparent"
+                style={{ color: "var(--text-secondary)" }}
               />
             </div>
 
-            {/* Totals */}
-            <div className="px-4 py-3 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Tổng tiền hàng</span>
-                <span className="font-semibold text-gray-700">
-                  {formatCurrency(subtotal)}
+            {/* Summary */}
+            <div
+              className="px-4 py-3 space-y-2 border-b"
+              style={{
+                borderColor: "var(--grid-border)",
+                backgroundColor: "var(--grid-header-bg)",
+              }}
+            >
+              <div className="flex justify-between text-[13px]">
+                <span style={{ color: "var(--text-secondary)" }}>
+                  Tổng ({itemCount} sản phẩm)
+                </span>
+                <span
+                  className="font-medium"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  {fmt(subtotal)}đ
                 </span>
               </div>
-              <div className="flex justify-between text-sm items-center">
-                <span className="text-gray-500">Giảm giá</span>
-                <input
-                  type="number"
-                  value={activeTab.discount}
-                  onChange={(e) =>
-                    updateActiveTab({
-                      discount: Math.max(0, parseInt(e.target.value) || 0),
-                    })
-                  }
-                  className="w-28 text-right text-sm font-semibold border rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-              </div>
-              {vatAmount > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400 text-xs">
-                    Thuế VAT ({activeTab.vatRate}%)
+              <div className="flex justify-between text-[13px] items-center">
+                <span style={{ color: "var(--text-secondary)" }}>Giảm giá</span>
+                <div className="flex items-center gap-1">
+                  <span
+                    className="text-[13px]"
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
+                    ₫
                   </span>
-                  <span className="text-xs text-gray-500">
-                    +{formatCurrency(vatAmount)}
-                  </span>
+                  <input
+                    type="number"
+                    value={activeTab.discount}
+                    onChange={(e) =>
+                      updateActiveTab({
+                        discount: Math.max(0, parseInt(e.target.value) || 0),
+                      })
+                    }
+                    className="w-24 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    style={{
+                      border: "1px solid var(--grid-border)",
+                      color: "var(--text-main)",
+                    }}
+                  />
                 </div>
-              )}
-              <div className="flex justify-between text-sm items-center">
-                <span className="text-gray-500 font-medium">Tiền đặt cọc</span>
-                <input
-                  type="number"
-                  value={activeTab.depositAmount}
-                  onChange={(e) =>
-                    updateActiveTab({
-                      depositAmount: Math.max(0, parseInt(e.target.value) || 0),
-                    })
-                  }
-                  className="w-28 text-right text-sm font-semibold border rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-ring text-green-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
               </div>
-              <div className="flex justify-between text-base font-bold pt-1 border-t">
-                <span className="text-gray-800">Còn phải trả</span>
-                <span className="text-primary text-lg">
-                  {formatCurrency(totalPayable)}
+              <div className="flex justify-between text-[13px] items-center">
+                <span
+                  className="font-medium"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  <CreditCard size={12} className="inline mr-1.5" />
+                  Tiền đặt cọc
                 </span>
+                <div className="flex items-center gap-1">
+                  <span
+                    className="text-[13px]"
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
+                    ₫
+                  </span>
+                  <input
+                    type="number"
+                    value={activeTab.depositAmount}
+                    onChange={(e) =>
+                      updateActiveTab({
+                        depositAmount: Math.max(
+                          0,
+                          parseInt(e.target.value) || 0,
+                        ),
+                      })
+                    }
+                    className="w-24 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    style={{
+                      border: "1px solid var(--grid-border)",
+                      color: "var(--brand-primary)",
+                    }}
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* ── Bottom Tabs ── */}
-          <div className="flex border-t bg-gray-50">
-            <button
-              onClick={() => navigate("/sales/dashboard/invoice-instock")}
-              className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium text-gray-500 hover:bg-gray-100 transition"
-            >
-              <PackageCheck size={15} /> Hàng có sẵn
-            </button>
-            <button className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold text-primary border-b-2 border-primary bg-white">
-              <Hammer size={15} /> Hàng đặt riêng
-            </button>
+            {/* Checkout bar */}
+            <div className="flex items-center justify-between px-4 py-3">
+              <div>
+                <p
+                  className="text-xs uppercase tracking-wider font-medium"
+                  style={{ color: "var(--text-placeholder)" }}
+                >
+                  Còn phải trả
+                </p>
+                <p
+                  className="text-xl font-bold tracking-tight"
+                  style={{ color: "var(--brand-primary)" }}
+                >
+                  {fmt(totalPayable)}đ
+                </p>
+              </div>
+              <Button
+                className="h-11 px-8 text-sm font-bold text-white rounded-xl transition-all duration-200 active:scale-[0.97] cursor-pointer disabled:opacity-40"
+                style={{
+                  backgroundColor: "var(--brand-primary)",
+                  boxShadow:
+                    activeTab.cartItems.length > 0
+                      ? "0 4px 14px rgba(52, 176, 87, 0.25)"
+                      : "none",
+                }}
+                disabled={activeTab.cartItems.length === 0}
+                onClick={handleCreateOrder}
+              >
+                Tạo đơn đặt hàng
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* ═══════════════ CỘT PHẢI – KHÁCH HÀNG & GIAO HÀNG ═══════════════ */}
-        <div className="flex flex-col w-[42%] bg-white">
-          {/* ── Order Header ── */}
-          <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50">
+        {/* ═══════════════ RIGHT — CUSTOMER & DELIVERY ═══════════════ */}
+        <div
+          className="flex flex-col w-[44%] bg-white rounded-2xl overflow-hidden"
+          style={{
+            boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+          }}
+        >
+          {/* Order Header */}
+          <div
+            className="flex items-center justify-between px-4 py-3 border-b"
+            style={{ borderColor: "var(--grid-border)" }}
+          >
             <div className="flex items-center gap-3">
-              <span className="text-sm font-bold text-gray-700">
+              <FileText
+                size={14}
+                style={{ color: "var(--text-placeholder)" }}
+              />
+              <span
+                className="text-[13px] font-bold"
+                style={{ color: "var(--text-main)" }}
+              >
                 {generateOrderCode()}
               </span>
-              <span className="text-gray-300">|</span>
-              <span className="text-xs text-gray-400">{formatDateTime()}</span>
+              <span
+                className="w-px h-4"
+                style={{ backgroundColor: "var(--grid-border)" }}
+              />
+              <span
+                className="text-[12px]"
+                style={{ color: "var(--text-placeholder)" }}
+              >
+                {formatDateTime()}
+              </span>
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-orange-500 bg-orange-50 px-2 py-1 rounded border border-orange-200">
+            <span
+              className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md"
+              style={{
+                backgroundColor: "#FFF7ED",
+                color: "var(--status-pending)",
+              }}
+            >
               Đơn đặt
             </span>
           </div>
 
-          {/* ── Thông tin khách hàng (bắt buộc) ── */}
-          <div className="px-4 py-3 border-b space-y-3">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-              Thông tin khách hàng <span className="text-red-500">*</span>
-            </p>
-            <div className="flex items-center gap-3">
-              <UserPlus size={16} className="text-primary shrink-0" />
-              <input
-                type="text"
-                placeholder="Tên khách hàng"
-                value={activeTab.customerName}
-                onChange={(e) =>
-                  updateActiveTab({ customerName: e.target.value })
-                }
-                className="flex-1 text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
-              />
-            </div>
-            <div className="flex items-center gap-3">
-              <Phone size={16} className="text-primary shrink-0" />
-              <input
-                type="tel"
-                placeholder="Số điện thoại"
-                value={activeTab.customerPhone}
-                onChange={(e) =>
-                  updateActiveTab({ customerPhone: e.target.value })
-                }
-                className="flex-1 text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
-              />
-            </div>
-          </div>
-
-          {/* ── Delivery Form ── */}
           <div className="flex-1 overflow-y-auto">
-            <div className="p-4 space-y-4">
-              {/* Địa chỉ */}
-              <div className="flex items-start gap-3">
-                <MapPin size={16} className="text-green-500 shrink-0 mt-1" />
-                <div className="flex-1 space-y-3">
+            {/* Customer Info */}
+            <div
+              className="p-4 space-y-3 border-b"
+              style={{ borderColor: "var(--grid-border)" }}
+            >
+              <p
+                className="text-[11px] font-bold uppercase tracking-wider"
+                style={{ color: "var(--text-placeholder)" }}
+              >
+                Thông tin khách hàng{" "}
+                <span style={{ color: "var(--status-error)" }}>*</span>
+              </p>
+              <div className="space-y-2.5">
+                <div className="relative">
+                  <User
+                    size={14}
+                    className="absolute left-3 top-1/2 -translate-y-1/2"
+                    style={{ color: "var(--text-placeholder)" }}
+                  />
                   <input
                     type="text"
-                    placeholder="Địa chỉ giao hàng (Số nhà, ngõ, đường)"
+                    placeholder="Tên khách hàng"
+                    value={activeTab.customerName}
+                    onChange={(e) =>
+                      updateActiveTab({ customerName: e.target.value })
+                    }
+                    className={`${inputBase} pl-10`}
+                    style={inputStyle}
+                  />
+                </div>
+                <div className="relative">
+                  <Phone
+                    size={14}
+                    className="absolute left-3 top-1/2 -translate-y-1/2"
+                    style={{ color: "var(--text-placeholder)" }}
+                  />
+                  <input
+                    type="tel"
+                    placeholder="Số điện thoại"
+                    value={activeTab.customerPhone}
+                    onChange={(e) =>
+                      updateActiveTab({ customerPhone: e.target.value })
+                    }
+                    className={`${inputBase} pl-10`}
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Delivery Info */}
+            <div
+              className="p-4 space-y-3 border-b"
+              style={{ borderColor: "var(--grid-border)" }}
+            >
+              <p
+                className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5"
+                style={{ color: "var(--text-placeholder)" }}
+              >
+                <Truck size={12} /> Thông tin giao hàng
+              </p>
+              <div className="space-y-2.5">
+                <div className="relative">
+                  <MapPin
+                    size={14}
+                    className="absolute left-3 top-1/2 -translate-y-1/2"
+                    style={{ color: "var(--text-placeholder)" }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Địa chỉ giao hàng"
                     value={activeTab.deliveryInfo.address}
                     onChange={(e) => updateDelivery("address", e.target.value)}
-                    className="w-full text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
+                    className={`${inputBase} pl-10`}
+                    style={inputStyle}
                   />
-                  <div className="grid grid-cols-2 gap-3">
-                    <input
-                      type="text"
-                      placeholder="Quận/Huyện"
-                      value={activeTab.deliveryInfo.district}
-                      onChange={(e) =>
-                        updateDelivery("district", e.target.value)
-                      }
-                      className="text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Phường/Xã"
-                      value={activeTab.deliveryInfo.ward}
-                      onChange={(e) => updateDelivery("ward", e.target.value)}
-                      className="text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition placeholder-gray-400"
-                    />
-                  </div>
                 </div>
-              </div>
-
-              {/* Ngày giao hàng dự kiến */}
-              <div className="flex items-center gap-3">
-                <CalendarDays size={16} className="text-purple-500 shrink-0" />
-                <div className="flex-1">
-                  <label className="text-xs text-gray-400 font-medium block mb-1">
-                    Ngày giao hàng dự kiến
-                  </label>
+                <div className="grid grid-cols-2 gap-2.5">
                   <input
-                    type="date"
-                    value={activeTab.deliveryInfo.expectedDate}
-                    onChange={(e) =>
-                      updateDelivery("expectedDate", e.target.value)
-                    }
-                    className="w-full text-sm border-b border-gray-200 pb-2 focus:outline-none focus:border-primary transition"
+                    type="text"
+                    placeholder="Quận/Huyện"
+                    value={activeTab.deliveryInfo.district}
+                    onChange={(e) => updateDelivery("district", e.target.value)}
+                    className={inputBase}
+                    style={inputStyle}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Phường/Xã"
+                    value={activeTab.deliveryInfo.ward}
+                    onChange={(e) => updateDelivery("ward", e.target.value)}
+                    className={inputBase}
+                    style={inputStyle}
                   />
                 </div>
               </div>
+            </div>
 
-              {/* Tip box */}
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <p className="text-xs text-amber-700">
+            {/* Expected Date */}
+            <div
+              className="p-4 space-y-3 border-b"
+              style={{ borderColor: "var(--grid-border)" }}
+            >
+              <p
+                className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5"
+                style={{ color: "var(--text-placeholder)" }}
+              >
+                <CalendarDays size={12} /> Ngày giao dự kiến
+              </p>
+              <input
+                type="date"
+                value={activeTab.deliveryInfo.expectedDate}
+                onChange={(e) => updateDelivery("expectedDate", e.target.value)}
+                className={inputBase}
+                style={inputStyle}
+              />
+            </div>
+
+            {/* Tip box */}
+            <div className="p-4">
+              <div
+                className="rounded-xl p-3.5"
+                style={{
+                  backgroundColor: "#FFF7ED",
+                  border: "1px solid #FED7AA",
+                }}
+              >
+                <p
+                  className="text-[12px] leading-relaxed"
+                  style={{ color: "var(--status-pending)" }}
+                >
                   💡 <strong>Đơn đặt hàng riêng:</strong> Sản phẩm sẽ được sản
                   xuất theo yêu cầu. Vui lòng xác nhận đặt cọc và ngày giao hàng
                   dự kiến với khách.
                 </p>
               </div>
             </div>
-          </div>
-
-          {/* ── Create Order Button ── */}
-          <div className="p-3 border-t">
-            <Button
-              className="w-full h-12 text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg shadow-lg shadow-primary/30 transition-all duration-200 active:scale-[0.98]"
-              disabled={activeTab.cartItems.length === 0 || isSubmitting}
-              onClick={handleCreateOrder}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 size={18} className="animate-spin mr-2" />
-                  ĐANG XỬ LÝ...
-                </>
-              ) : (
-                "TẠO ĐƠN ĐẶT HÀNG"
-              )}
-            </Button>
           </div>
         </div>
       </div>

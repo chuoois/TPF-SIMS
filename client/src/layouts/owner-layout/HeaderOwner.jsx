@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Bell, LogOut, UserCircle2, KeyRound, ChevronDown } from "lucide-react";
-import Logo from "@/assets/logos/Logo.png";
+
 import { useNavigate } from "react-router-dom";
 import { authService } from "@/services/auth.service";
 import { commonService } from "@/services/common.service";
