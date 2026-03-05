@@ -1,16 +1,12 @@
 /**
  * Component SalesCustomerManage
- * Quản lý khách hàng dành cho nhân viên bán hàng (SALES/OWNER)
- * - Danh sách + tìm kiếm real-time
- * - Tạo mới / cập nhật hồ sơ khách hàng
- * - Thêm / cập nhật ghi chú đặc biệt
+ * Quản lý khách hàng — CRUD với static data + Phân trang
  *
  * Created By: DNC
  * Created Date: 24/02/2026
  */
 
-import { useEffect, useState, useCallback } from "react";
-import { salesService } from "@/services/sales.service";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   Plus,
   Pencil,
@@ -19,47 +15,346 @@ import {
   Search,
   Users,
   User,
-  Building2,
   Trash2,
+  Phone,
+  Mail,
+  MapPin,
+  Calendar,
+  CheckCircle2,
+  AlertCircle,
+  UserPlus,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-import { Formik, Form, Field, ErrorMessage } from "formik";
-import * as Yup from "yup";
-import { toast } from "react-hot-toast";
 import { PageHelmet } from "@/components/seo/PageHelmet";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
-// ===================== VALIDATION =====================
-const customerSchema = Yup.object().shape({
-  fullName: Yup.string().required("Vui lòng nhập họ tên"),
-  phoneNumber: Yup.string()
-    .matches(/^[0-9]{9,11}$/, "Số điện thoại không hợp lệ")
-    .notRequired(),
-  email: Yup.string().email("Email không hợp lệ").notRequired(),
-  address: Yup.string().notRequired(),
-  gender: Yup.string().notRequired(),
-  dob: Yup.string().notRequired(),
-  customerType: Yup.string().notRequired(),
-  note: Yup.string().notRequired(),
-});
+// ===================== STATIC DATA =====================
+const INITIAL_CUSTOMERS = [
+  {
+    id: "KH001",
+    code: "KH-0001",
+    name: "Nguyễn Văn Hoàng",
+    phone: "0901234567",
+    email: "hoang@gmail.com",
+    gender: "Nam",
+    dob: "1990-05-15",
+    address: "123 Nguyễn Huệ, Q.1, TP.HCM",
+    note: "Khách VIP, thích gỗ óc chó",
+    createdAt: "2026-01-15",
+  },
+  {
+    id: "KH002",
+    code: "KH-0002",
+    name: "Trần Thị Mai",
+    phone: "0912345678",
+    email: "mai.tran@gmail.com",
+    gender: "Nữ",
+    dob: "1985-08-22",
+    address: "456 Lê Lợi, Q.3, TP.HCM",
+    note: "",
+    createdAt: "2026-01-20",
+  },
+  {
+    id: "KH003",
+    code: "KH-0003",
+    name: "Lê Minh Tuấn",
+    phone: "0923456789",
+    email: "",
+    gender: "Nam",
+    dob: "",
+    address: "789 Trần Hưng Đạo, Q.5, TP.HCM",
+    note: "Cần giao trước 16h",
+    createdAt: "2026-02-01",
+  },
+  {
+    id: "KH004",
+    code: "KH-0004",
+    name: "Phạm Thị Lan",
+    phone: "0934567890",
+    email: "lan.pham@company.vn",
+    gender: "Nữ",
+    dob: "1992-12-03",
+    address: "12 Pasteur, Q.1, TP.HCM",
+    note: "",
+    createdAt: "2026-02-10",
+  },
+  {
+    id: "KH005",
+    code: "KH-0005",
+    name: "Võ Đức Anh",
+    phone: "0945678901",
+    email: "",
+    gender: "Nam",
+    dob: "1988-03-18",
+    address: "",
+    note: "Mua sỉ, cần chiết khấu",
+    createdAt: "2026-02-15",
+  },
+  {
+    id: "KH006",
+    code: "KH-0006",
+    name: "Đặng Thùy Linh",
+    phone: "0956789012",
+    email: "linh.dang@gmail.com",
+    gender: "Nữ",
+    dob: "",
+    address: "34 Hai Bà Trưng, Q.1, TP.HCM",
+    note: "",
+    createdAt: "2026-02-20",
+  },
+  {
+    id: "KH007",
+    code: "KH-0007",
+    name: "Bùi Tuấn Anh",
+    phone: "0967890123",
+    email: "tuananh.bui@gmail.com",
+    gender: "Nam",
+    dob: "1995-11-20",
+    address: "55 Điện Biên Phủ, Q.Bình Thạnh, TP.HCM",
+    note: "",
+    createdAt: "2026-02-22",
+  },
+  {
+    id: "KH008",
+    code: "KH-0008",
+    name: "Hoàng Nguyệt Ánh",
+    phone: "0978901234",
+    email: "anh.hoang@yahoo.com",
+    gender: "Nữ",
+    dob: "1982-04-10",
+    address: "89 Lê Duẩn, Q.1, TP.HCM",
+    note: "Chỉ nhận hàng vào thứ 7",
+    createdAt: "2026-02-25",
+  },
+  {
+    id: "KH009",
+    code: "KH-0009",
+    name: "Đinh Quang Hiếu",
+    phone: "0989012345",
+    email: "quanghieu.dinh@outlook.com",
+    gender: "Nam",
+    dob: "1978-01-05",
+    address: "23 Võ Văn Tần, Q.3, TP.HCM",
+    note: "",
+    createdAt: "2026-03-01",
+  },
+  {
+    id: "KH010",
+    code: "KH-0010",
+    name: "Vũ Phương Thảo",
+    phone: "0990123456",
+    email: "thao.vu@gmail.com",
+    gender: "Nữ",
+    dob: "1998-09-30",
+    address: "102 Nguyễn Đình Chiểu, Q.3, TP.HCM",
+    note: "Cần xuất hóa đơn đỏ",
+    createdAt: "2026-03-02",
+  },
+   {
+    id: "KH010",
+    code: "KH-0010",
+    name: "Vũ Phương Thảo",
+    phone: "0990123456",
+    email: "thao.vu@gmail.com",
+    gender: "Nữ",
+    dob: "1998-09-30",
+    address: "102 Nguyễn Đình Chiểu, Q.3, TP.HCM",
+    note: "Cần xuất hóa đơn đỏ",
+    createdAt: "2026-03-02",
+  },
+   {
+    id: "KH010",
+    code: "KH-0010",
+    name: "Vũ Phương Thảo",
+    phone: "0990123456",
+    email: "thao.vu@gmail.com",
+    gender: "Nữ",
+    dob: "1998-09-30",
+    address: "102 Nguyễn Đình Chiểu, Q.3, TP.HCM",
+    note: "Cần xuất hóa đơn đỏ",
+    createdAt: "2026-03-02",
+  },
+   {
+    id: "KH010",
+    code: "KH-0010",
+    name: "Vũ Phương Thảo",
+    phone: "0990123456",
+    email: "thao.vu@gmail.com",
+    gender: "Nữ",
+    dob: "1998-09-30",
+    address: "102 Nguyễn Đình Chiểu, Q.3, TP.HCM",
+    note: "Cần xuất hóa đơn đỏ",
+    createdAt: "2026-03-02",
+  },
+   {
+    id: "KH010",
+    code: "KH-0010",
+    name: "Vũ Phương Thảo",
+    phone: "0990123456",
+    email: "thao.vu@gmail.com",
+    gender: "Nữ",
+    dob: "1998-09-30",
+    address: "102 Nguyễn Đình Chiểu, Q.3, TP.HCM",
+    note: "Cần xuất hóa đơn đỏ",
+    createdAt: "2026-03-02",
+  },
+   {
+    id: "KH010",
+    code: "KH-0010",
+    name: "Vũ Phương Thảo",
+    phone: "0990123456",
+    email: "thao.vu@gmail.com",
+    gender: "Nữ",
+    dob: "1998-09-30",
+    address: "102 Nguyễn Đình Chiểu, Q.3, TP.HCM",
+    note: "Cần xuất hóa đơn đỏ",
+    createdAt: "2026-03-02",
+  },
+   {
+    id: "KH010",
+    code: "KH-0010",
+    name: "Vũ Phương Thảo",
+    phone: "0990123456",
+    email: "thao.vu@gmail.com",
+    gender: "Nữ",
+    dob: "1998-09-30",
+    address: "102 Nguyễn Đình Chiểu, Q.3, TP.HCM",
+    note: "Cần xuất hóa đơn đỏ",
+    createdAt: "2026-03-02",
+  },
+   {
+    id: "KH010",
+    code: "KH-0010",
+    name: "Vũ Phương Thảo",
+    phone: "0990123456",
+    email: "thao.vu@gmail.com",
+    gender: "Nữ",
+    dob: "1998-09-30",
+    address: "102 Nguyễn Đình Chiểu, Q.3, TP.HCM",
+    note: "Cần xuất hóa đơn đỏ",
+    createdAt: "2026-03-02",
+  },
+   {
+    id: "KH010",
+    code: "KH-0010",
+    name: "Vũ Phương Thảo",
+    phone: "0990123456",
+    email: "thao.vu@gmail.com",
+    gender: "Nữ",
+    dob: "1998-09-30",
+    address: "102 Nguyễn Đình Chiểu, Q.3, TP.HCM",
+    note: "Cần xuất hóa đơn đỏ",
+    createdAt: "2026-03-02",
+  },
+   {
+    id: "KH010",
+    code: "KH-0010",
+    name: "Vũ Phương Thảo",
+    phone: "0990123456",
+    email: "thao.vu@gmail.com",
+    gender: "Nữ",
+    dob: "1998-09-30",
+    address: "102 Nguyễn Đình Chiểu, Q.3, TP.HCM",
+    note: "Cần xuất hóa đơn đỏ",
+    createdAt: "2026-03-02",
+  },
+   {
+    id: "KH011",
+    code: "KH-0011",
+    name: "Vũ Phương Thảo",
+    phone: "0990123456",
+    email: "thao.vu@gmail.com",
+    gender: "Nữ",
+    dob: "1998-09-30",
+    address: "102 Nguyễn Đình Chiểu, Q.3, TP.HCM",
+    note: "Cần xuất hóa đơn đỏ",
+    createdAt: "2026-03-02",
+  },
+  {
+    id: "KH012",
+    code: "KH-0012",
+    name: "Vũ Phương Thảo",
+    phone: "0990123456",
+    email: "thao.vu@gmail.com",
+    gender: "Nữ",
+    dob: "1998-09-30",
+    address: "102 Nguyễn Đình Chiểu, Q.3, TP.HCM",
+    note: "Cần xuất hóa đơn đỏ",
+    createdAt: "2026-03-02",
+  },
+  {
+    id: "KH013",
+    code: "KH-0013",
+    name: "Vũ Phương Thảo",
+    phone: "0990123456",
+    email: "thao.vu@gmail.com",
+    gender: "Nữ",
+    dob: "1998-09-30",
+    address: "102 Nguyễn Đình Chiểu, Q.3, TP.HCM",
+    note: "Cần xuất hóa đơn đỏ",
+    createdAt: "2026-03-02",
+  },
+  {
+    id: "KH014",
+    code: "KH-0014",
+    name: "Vũ Phương Thảo",
+    phone: "0990123456",
+    email: "thao.vu@gmail.com",
+    gender: "Nữ",
+    dob: "1998-09-30",
+    address: "102 Nguyễn Đình Chiểu, Q.3, TP.HCM",
+    note: "Cần xuất hóa đơn đỏ",
+    createdAt: "2026-03-02",
+  },
+  {
+    id: "KH015",
+    code: "KH-0015",
+    name: "Vũ Phương Thảo",
+    phone: "0990123456",
+    email: "thao.vu@gmail.com",
+    gender: "Nữ",
+    dob: "1998-09-30",
+    address: "102 Nguyễn Đình Chiểu, Q.3, TP.HCM",
+    note: "Cần xuất hóa đơn đỏ",
+    createdAt: "2026-03-02",
+  },
+  {
+    id: "KH016",
+    code: "KH-0016",
+    name: "Vũ Phương Thảo",
+    phone: "0990123456",
+    email: "thao.vu@gmail.com",
+    gender: "Nữ",
+    dob: "1998-09-30",
+    address: "102 Nguyễn Đình Chiểu, Q.3, TP.HCM",
+    note: "Cần xuất hóa đơn đỏ",
+    createdAt: "2026-03-02",
+  },
+];
 
-const noteSchema = Yup.object().shape({
-  note: Yup.string().required("Vui lòng nhập nội dung ghi chú"),
-});
+const GENDER_OPTIONS = ["Nam", "Nữ", "Khác"];
+const ITEMS_PER_PAGE = 15; // Kích thước mỗi trang
 
 // ===================== HELPERS =====================
-const formatDate = (dateStr) => {
-  if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString("vi-VN");
-};
+const formatDate = (d) => (d ? new Date(d).toLocaleDateString("vi-VN") : "—");
 
+const inputBase =
+  "w-full text-[13px] rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 transition bg-transparent";
+const inputIconBase =
+  "w-full text-[13px] rounded-lg pl-10 pr-3 py-2.5 focus:outline-none focus:ring-2 transition bg-transparent";
+const inputStyle = {
+  border: "1px solid var(--grid-border)",
+  color: "var(--text-main)",
+};
+const labelClass =
+  "text-[11px] font-semibold uppercase tracking-wider mb-1.5 block";
+
+// ===================== COMPONENT =====================
 export default function SalesCustomerManage() {
-  const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [customers, setCustomers] = useState(INITIAL_CUSTOMERS);
   const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Modal states
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -67,676 +362,948 @@ export default function SalesCustomerManage() {
   const [currentCustomer, setCurrentCustomer] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
-  // ---- Debounce search ----
+  // Form state
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    gender: "",
+    dob: "",
+    address: "",
+    note: "",
+  });
+  const [noteText, setNoteText] = useState("");
+  const [formErrors, setFormErrors] = useState({});
+
+  // Toast
+  const [toast, setToast] = useState(null);
+  const toastTimer = useRef(null);
+  const showToast = (type, message) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ type, message });
+    toastTimer.current = setTimeout(() => setToast(null), 4000);
+  };
+
+  // Filtered customers
+  const filtered = useMemo(() => {
+    if (!searchTerm.trim()) return customers;
+    const q = searchTerm.toLowerCase();
+    return customers.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.phone.includes(q) ||
+        c.code.toLowerCase().includes(q),
+    );
+  }, [searchTerm, customers]);
+
+  // Reset trang về 1 khi tìm kiếm
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 400);
-    return () => clearTimeout(timer);
+    setCurrentPage(1);
   }, [searchTerm]);
 
-  // ---- Fetch danh sách ----
-  const fetchCustomers = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await salesService.getCustomers(debouncedSearch);
-      setCustomers(data);
-    } catch {
-      toast.error("Không thể tải danh sách khách hàng");
-    } finally {
-      setLoading(false);
-    }
-  }, [debouncedSearch]);
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginatedCustomers = filtered.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
 
-  useEffect(() => {
-    fetchCustomers();
-  }, [fetchCustomers]);
-
-  // ---- Stats ----
-  const stats = {
-    total: customers.length,
-    individual: customers.filter((c) => c.customer_type === "Cá nhân").length,
-    business: customers.filter((c) => c.customer_type === "Doanh nghiệp")
-      .length,
-  };
-
-  // ---- Handlers ----
+  // Handlers
   const handleOpenCreate = () => {
     setCurrentCustomer(null);
+    setForm({
+      name: "",
+      phone: "",
+      email: "",
+      gender: "",
+      dob: "",
+      address: "",
+      note: "",
+    });
+    setFormErrors({});
     setIsFormOpen(true);
   };
 
-  const handleOpenEdit = (customer) => {
-    setCurrentCustomer(customer);
+  const handleOpenEdit = (c) => {
+    setCurrentCustomer(c);
+    setForm({
+      name: c.name,
+      phone: c.phone,
+      email: c.email || "",
+      gender: c.gender || "",
+      dob: c.dob || "",
+      address: c.address || "",
+      note: c.note || "",
+    });
+    setFormErrors({});
     setIsFormOpen(true);
   };
 
-  const handleOpenNote = (customer) => {
-    setCurrentCustomer(customer);
+  const handleOpenNote = (c) => {
+    setCurrentCustomer(c);
+    setNoteText(c.note || "");
     setIsNoteOpen(true);
   };
 
-  const handleCloseForm = () => {
+  const handleSubmitForm = (e) => {
+    e.preventDefault();
+    const errors = {};
+    if (!form.name.trim()) errors.name = "Vui lòng nhập họ tên";
+    if (!form.phone.trim()) errors.phone = "Vui lòng nhập SĐT";
+    if (Object.keys(errors).length) {
+      setFormErrors(errors);
+      return;
+    }
+
+    if (currentCustomer) {
+      setCustomers((prev) =>
+        prev.map((c) => (c.id === currentCustomer.id ? { ...c, ...form } : c)),
+      );
+      showToast("success", "Cập nhật hồ sơ thành công");
+    } else {
+      const newId = `KH${String(customers.length + 1).padStart(3, "0")}`;
+      setCustomers((prev) => [
+        ...prev,
+        {
+          id: newId,
+          code: `KH-${String(customers.length + 1).padStart(4, "0")}`,
+          ...form,
+          createdAt: new Date().toISOString().split("T")[0],
+        },
+      ]);
+      showToast("success", "Tạo hồ sơ khách hàng thành công");
+    }
     setIsFormOpen(false);
     setCurrentCustomer(null);
   };
 
-  const handleCloseNote = () => {
+  const handleSaveNote = () => {
+    if (!noteText.trim()) return;
+    setCustomers((prev) =>
+      prev.map((c) =>
+        c.id === currentCustomer.id ? { ...c, note: noteText } : c,
+      ),
+    );
+    showToast("success", "Ghi chú đã được cập nhật");
     setIsNoteOpen(false);
-    setCurrentCustomer(null);
   };
 
-  const handleSubmitForm = async (values, { setSubmitting }) => {
-    try {
-      if (currentCustomer) {
-        await salesService.updateCustomer(
-          currentCustomer.pk_customer_id,
-          values,
-        );
-        toast.success("Cập nhật hồ sơ thành công");
-      } else {
-        await salesService.createCustomer(values);
-        toast.success("Tạo hồ sơ khách hàng thành công");
-      }
-      fetchCustomers();
-      handleCloseForm();
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Lỗi khi lưu hồ sơ");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleSubmitNote = async (values, { setSubmitting }) => {
-    try {
-      await salesService.updateCustomerNote(
-        currentCustomer.pk_customer_id,
-        values.note,
-      );
-      toast.success("Ghi chú đã được cập nhật");
-      fetchCustomers();
-      handleCloseNote();
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Lỗi khi cập nhật ghi chú");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleDeleteCustomer = async () => {
+  const handleDelete = () => {
     if (!deleteConfirm) return;
-    try {
-      await salesService.deleteCustomer(deleteConfirm.pk_customer_id);
-      toast.success("Xóa khách hàng thành công");
-      fetchCustomers();
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Lỗi khi xóa khách hàng");
-    } finally {
-      setDeleteConfirm(null);
-    }
+    setCustomers((prev) => prev.filter((c) => c.id !== deleteConfirm.id));
+    showToast("success", "Xóa khách hàng thành công");
+    setDeleteConfirm(null);
+  };
+
+  const updateForm = (field, value) => {
+    setForm((p) => ({ ...p, [field]: value }));
+    if (formErrors[field]) setFormErrors((p) => ({ ...p, [field]: null }));
   };
 
   // ===================== RENDER =====================
   return (
     <>
       <PageHelmet title="Quản lý khách hàng - TPF-SIMS" />
-      <div className="space-y-6">
-        {/* ─── HEADER ─── */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+
+      {/* Toast */}
+      {toast && (
+        <div
+          className="fixed top-5 right-5 z-50 flex items-center gap-3 pl-4 pr-3 py-3 rounded-xl text-sm font-medium text-white animate-in slide-in-from-top-2"
+          style={{
+            backgroundColor:
+              toast.type === "success"
+                ? "var(--status-success)"
+                : "var(--status-error)",
+            boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
+          }}
+        >
+          {toast.type === "success" ? (
+            <CheckCircle2 size={16} />
+          ) : (
+            <AlertCircle size={16} />
+          )}
+          <span className="mr-1">{toast.message}</span>
+          <button
+            onClick={() => setToast(null)}
+            className="opacity-60 hover:opacity-100 cursor-pointer p-0.5"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      <div
+        className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 space-y-4"
+        style={{ backgroundColor: "var(--bg-main)" }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between shrink-0">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Quản lý khách hàng
+            <h1
+              className="text-xl font-bold"
+              style={{ color: "var(--text-main)" }}
+            >
+              Khách hàng
             </h1>
-            <p className="text-gray-500 text-sm mt-0.5">
-              Hồ sơ và thông tin khách hàng TPF-SIMS
+            <p
+              className="text-[13px] mt-0.5"
+              style={{ color: "var(--text-placeholder)" }}
+            >
+              {filtered.length} khách hàng
             </p>
           </div>
           <Button
             onClick={handleOpenCreate}
-            className="flex items-center gap-2"
+            className="h-9 px-4 text-[13px] font-semibold text-white rounded-lg cursor-pointer transition-all duration-200 active:scale-[0.97]"
+            style={{ backgroundColor: "var(--brand-primary)" }}
           >
-            <Plus size={18} />
-            <span>Thêm khách hàng</span>
+            <Plus size={15} className="mr-1.5" /> Thêm khách hàng
           </Button>
         </div>
 
-        {/* ─── STATS ─── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
-            {
-              label: "Tổng khách hàng",
-              value: stats.total,
-              icon: Users,
-              color: "text-primary",
-            },
-            {
-              label: "Cá nhân",
-              value: stats.individual,
-              icon: User,
-              color: "text-blue-500",
-            },
-            {
-              label: "Doanh nghiệp",
-              value: stats.business,
-              icon: Building2,
-              color: "text-amber-500",
-            },
-          ].map((item, idx) => {
-            const Icon = item.icon;
-            return (
-              <Card
-                key={idx}
-                className="bg-white shadow-none border border-gray-200"
-              >
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div
-                    className={`p-2.5 rounded-lg bg-gray-50 border ${item.color}`}
-                  >
-                    <Icon size={20} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">
-                      {item.label}
-                    </p>
-                    <h3 className={`text-2xl font-bold mt-0.5 ${item.color}`}>
-                      {item.value}
-                    </h3>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        {/* Search + Table Card */}
+        <div
+          className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden"
+          style={{
+            boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+          }}
+        >
+          {/* Search */}
+          <div
+            className="px-4 py-3 border-b shrink-0"
+            style={{ borderColor: "var(--grid-border)" }}
+          >
+            <div className="relative max-w-sm">
+              <Search
+                size={15}
+                className="absolute left-3 top-1/2 -translate-y-1/2"
+                style={{ color: "var(--text-placeholder)" }}
+              />
+              <input
+                type="text"
+                placeholder="Tìm tên, SĐT, mã KH..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
+                style={{
+                  border: "1px solid var(--grid-border)",
+                  backgroundColor: "var(--bg-main)",
+                  color: "var(--text-main)",
+                }}
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer"
+                  style={{ color: "var(--text-placeholder)" }}
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          </div>
 
-        {/* ─── SEARCH BAR ─── */}
-        <div className="bg-white p-3 border rounded-md shadow-sm flex gap-3 items-center">
-          <Search size={16} className="text-gray-400 shrink-0" />
-          <Input
-            placeholder="Tìm theo tên, số điện thoại, mã khách hàng..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="h-9 border-0 shadow-none focus-visible:ring-0 p-0"
-          />
-          {searchTerm && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 shrink-0"
-              onClick={() => setSearchTerm("")}
+          {/* Table Container - Fixed Height Scroll */}
+          <div className="flex-1 overflow-y-auto">
+            <table className="w-full text-left relative">
+              <thead
+                className="sticky top-0 z-10"
+                style={{
+                  backgroundColor: "var(--grid-header-bg)",
+                  borderBottom: "1px solid var(--grid-border)",
+                }}
+              >
+                <tr>
+                  {[
+                    "#",
+                    "Khách hàng",
+                    "SĐT / Email",
+                    "Địa chỉ",
+                    "Ghi chú",
+                    "Ngày tạo",
+                    "",
+                  ].map((h, i) => (
+                    <th
+                      key={i}
+                      className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 6 ? "text-right" : ""}`}
+                      style={{ color: "var(--text-placeholder)" }}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedCustomers.map((c, idx) => (
+                  <tr
+                    key={c.id}
+                    className="hover:bg-gray-50/50 transition-colors"
+                    style={{ borderBottom: "1px solid var(--grid-border)" }}
+                  >
+                    <td
+                      className="px-4 py-3 text-[12px] font-medium"
+                      style={{ color: "var(--text-placeholder)" }}
+                    >
+                      {(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-[12px] font-bold shrink-0"
+                          style={{
+                            backgroundColor: "var(--status-focus)",
+                            color: "var(--brand-primary)",
+                          }}
+                        >
+                          {c.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p
+                            className="text-[13px] font-semibold"
+                            style={{ color: "var(--text-main)" }}
+                          >
+                            {c.name}
+                          </p>
+                          <p
+                            className="text-[10px] font-mono tracking-wide"
+                            style={{ color: "var(--text-placeholder)" }}
+                          >
+                            {c.code}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p
+                        className="text-[13px] font-medium"
+                        style={{ color: "var(--text-main)" }}
+                      >
+                        {c.phone}
+                      </p>
+                      <p
+                        className="text-[11px]"
+                        style={{ color: "var(--text-placeholder)" }}
+                      >
+                        {c.email || "—"}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p
+                        className="text-[12px] max-w-[180px] truncate"
+                        style={{ color: "var(--text-secondary)" }}
+                        title={c.address}
+                      >
+                        {c.address || "—"}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3 max-w-[180px]">
+                      {c.note ? (
+                        <p
+                          className="text-[12px] italic line-clamp-2"
+                          style={{ color: "var(--text-secondary)" }}
+                          title={c.note}
+                        >
+                          {c.note}
+                        </p>
+                      ) : (
+                        <span
+                          className="text-[12px]"
+                          style={{ color: "var(--text-placeholder)" }}
+                        >
+                          —
+                        </span>
+                      )}
+                    </td>
+                    <td
+                      className="px-4 py-3 text-[12px]"
+                      style={{ color: "var(--text-placeholder)" }}
+                    >
+                      {formatDate(c.createdAt)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end gap-1">
+                        <button
+                          onClick={() => handleOpenEdit(c)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100"
+                          style={{ color: "var(--text-placeholder)" }}
+                          title="Sửa"
+                        >
+                          <Pencil size={13} />
+                        </button>
+                        <button
+                          onClick={() => handleOpenNote(c)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-amber-50"
+                          style={{ color: "var(--text-placeholder)" }}
+                          title="Ghi chú"
+                        >
+                          <NotebookPen size={13} />
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirm(c)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-red-50 hover:text-red-500"
+                          style={{ color: "var(--text-placeholder)" }}
+                          title="Xóa"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {paginatedCustomers.length === 0 && (
+                  <tr>
+                    <td colSpan="7" className="py-24 text-center">
+                      <div
+                        className="flex flex-col items-center gap-2"
+                        style={{ color: "var(--text-placeholder)" }}
+                      >
+                        <div
+                          className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                          style={{ backgroundColor: "var(--bg-main)" }}
+                        >
+                          <Users size={28} strokeWidth={1.5} />
+                        </div>
+                        <p className="text-sm font-medium mt-1">
+                          {searchTerm
+                            ? `Không tìm thấy "${searchTerm}"`
+                            : "Chưa có khách hàng nào"}
+                        </p>
+                        {searchTerm && (
+                          <button
+                            onClick={() => setSearchTerm("")}
+                            className="text-[13px] font-medium cursor-pointer"
+                            style={{ color: "var(--brand-primary)" }}
+                          >
+                            Xóa bộ lọc
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination Footer */}
+          {totalPages > 1 && (
+            <div
+              className="flex items-center justify-between px-4 py-3 border-t shrink-0"
+              style={{
+                borderColor: "var(--grid-border)",
+                backgroundColor: "var(--grid-header-bg)",
+              }}
             >
-              <X size={14} />
-            </Button>
+              <span
+                className="text-[12px]"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                Hiển thị{" "}
+                <span
+                  className="font-bold"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  {(currentPage - 1) * ITEMS_PER_PAGE + 1}
+                </span>{" "}
+                -{" "}
+                <span
+                  className="font-bold"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}
+                </span>{" "}
+                trong{" "}
+                <span
+                  className="font-bold"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  {filtered.length}
+                </span>{" "}
+                kết quả
+              </span>
+
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="w-7 h-7 rounded-md flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className="w-7 h-7 rounded-md text-[13px] font-semibold transition cursor-pointer"
+                      style={{
+                        backgroundColor:
+                          currentPage === page
+                            ? "var(--brand-primary)"
+                            : "transparent",
+                        color:
+                          currentPage === page ? "#fff" : "var(--text-main)",
+                      }}
+                    >
+                      {page}
+                    </button>
+                  ),
+                )}
+                <button
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                  className="w-7 h-7 rounded-md flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
           )}
         </div>
-
-        {/* ─── TABLE ─── */}
-        <Card className="border shadow-none overflow-hidden">
-          <CardContent className="p-0">
-            {loading ? (
-              <div className="p-16 text-center text-primary animate-pulse">
-                Đang tải dữ liệu...
-              </div>
-            ) : (
-              <div className="overflow-auto max-h-[calc(100vh-380px)] relative">
-                <table className="w-full text-left border-collapse">
-                  <thead className="bg-gray-50 sticky top-0 z-10 border-b">
-                    <tr>
-                      <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-widest w-[50px]">
-                        #
-                      </th>
-                      <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-widest">
-                        Khách hàng
-                      </th>
-                      <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-widest">
-                        SĐT / Email
-                      </th>
-                      <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-widest">
-                        Loại / Địa chỉ
-                      </th>
-                      <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-widest">
-                        Ghi chú
-                      </th>
-                      <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-widest">
-                        Ngày tạo
-                      </th>
-                      <th className="p-4 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">
-                        Thao tác
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y bg-white">
-                    {customers.map((c, index) => (
-                      <tr
-                        key={c.pk_customer_id}
-                        className="hover:bg-gray-50/50 transition-colors"
-                      >
-                        <td className="p-4 text-xs text-gray-400 font-medium">
-                          {index + 1}
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs shrink-0 border border-primary/20">
-                              {c.full_name?.charAt(0)?.toUpperCase() ?? "K"}
-                            </div>
-                            <div>
-                              <p className="font-bold text-gray-800 text-sm">
-                                {c.full_name}
-                              </p>
-                              <p className="text-[10px] text-gray-400 font-mono tracking-wider">
-                                {c.customer_code}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <p className="text-sm text-gray-700 font-medium">
-                            {c.phone_number || "—"}
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            {c.email || "—"}
-                          </p>
-                        </td>
-                        <td className="p-4">
-                          <span
-                            className={`inline-block px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider ${
-                              c.customer_type === "Doanh nghiệp"
-                                ? "bg-amber-50 text-amber-600 border border-amber-200"
-                                : "bg-blue-50 text-blue-600 border border-blue-200"
-                            }`}
-                          >
-                            {c.customer_type || "Cá nhân"}
-                          </span>
-                          <p
-                            className="text-xs text-gray-400 mt-1 max-w-[160px] truncate"
-                            title={c.address}
-                          >
-                            {c.address || "—"}
-                          </p>
-                        </td>
-                        <td className="p-4 max-w-[180px]">
-                          {c.note ? (
-                            <p
-                              className="text-xs text-gray-600 italic line-clamp-2"
-                              title={c.note}
-                            >
-                              {c.note}
-                            </p>
-                          ) : (
-                            <span className="text-xs text-gray-300">
-                              Chưa có ghi chú
-                            </span>
-                          )}
-                        </td>
-                        <td className="p-4 text-xs text-gray-400">
-                          {formatDate(c.created_at)}
-                        </td>
-                        <td className="p-4 text-right">
-                          <div className="flex justify-end gap-1.5">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleOpenEdit(c)}
-                              className="h-8 px-2 text-gray-400 hover:text-primary hover:bg-gray-100"
-                              title="Chỉnh sửa hồ sơ"
-                            >
-                              <Pencil size={13} />
-                              <span className="ml-1 text-[11px] font-bold uppercase">
-                                Sửa
-                              </span>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleOpenNote(c)}
-                              className="h-8 px-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50"
-                              title="Ghi chú đặc biệt"
-                            >
-                              <NotebookPen size={13} />
-                              <span className="ml-1 text-[11px] font-bold uppercase">
-                                Ghi chú
-                              </span>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setDeleteConfirm(c)}
-                              className="h-8 px-2 text-gray-400 hover:text-red-600 hover:bg-red-50"
-                              title="Xóa khách hàng"
-                            >
-                              <Trash2 size={13} />
-                              <span className="ml-1 text-[11px] font-bold uppercase">
-                                Xóa
-                              </span>
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-
-                    {customers.length === 0 && !loading && (
-                      <tr>
-                        <td colSpan="7" className="p-16 text-center">
-                          <div className="flex flex-col items-center text-gray-300">
-                            <Users size={40} className="mb-3" />
-                            <p className="text-sm font-medium">
-                              {debouncedSearch
-                                ? `Không tìm thấy kết quả cho "${debouncedSearch}"`
-                                : "Chưa có khách hàng nào"}
-                            </p>
-                            {debouncedSearch && (
-                              <Button
-                                variant="link"
-                                size="sm"
-                                onClick={() => setSearchTerm("")}
-                                className="mt-2 text-primary font-bold"
-                              >
-                                Xoá bộ lọc
-                              </Button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
 
-      {/* ===================== MODAL: TẠO / SỬA HỒ SƠ ===================== */}
+      {/* ═══ MODAL: CREATE / EDIT ═══ */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-          <Card className="w-full max-w-2xl bg-white shadow-2xl border-none overflow-hidden rounded-xl">
-            <div className="flex justify-between items-center p-5 border-b bg-gray-50">
-              <CardTitle className="text-lg font-bold text-primary">
-                {currentCustomer
-                  ? "Cập nhật hồ sơ khách hàng"
-                  : "Tạo hồ sơ khách hàng mới"}
-              </CardTitle>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleCloseForm}
-                className="rounded-full text-gray-400"
-              >
-                <X size={20} />
-              </Button>
-            </div>
-
-            <Formik
-              enableReinitialize
-              initialValues={{
-                fullName: currentCustomer?.full_name || "",
-                phoneNumber: currentCustomer?.phone_number || "",
-                email: currentCustomer?.email || "",
-                address: currentCustomer?.address || "",
-                gender: currentCustomer?.gender || "Nam",
-                dob: currentCustomer?.dob
-                  ? new Date(currentCustomer.dob).toISOString().split("T")[0]
-                  : "",
-                customerType: currentCustomer?.customer_type || "Cá nhân",
-                note: currentCustomer?.note || "",
-              }}
-              validationSchema={customerSchema}
-              onSubmit={handleSubmitForm}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
+            onClick={() => setIsFormOpen(false)}
+          />
+          <div
+            className="relative bg-white rounded-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95"
+            style={{ boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
+          >
+            {/* Header */}
+            <div
+              className="flex items-center justify-between px-5 py-4 border-b"
+              style={{ borderColor: "var(--grid-border)" }}
             >
-              {({ isSubmitting }) => (
-                <Form className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
-                  {/* ── THÔNG TIN CƠ BẢN ── */}
-                  <div className="space-y-4">
-                    <h4 className="text-sm font-bold text-gray-500 border-b pb-2 uppercase italic tracking-wider">
-                      Thông tin cơ bản
-                    </h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="col-span-2 space-y-1">
-                        <Label>
-                          Họ và tên <span className="text-red-500">*</span>
-                        </Label>
-                        <Field
-                          name="fullName"
-                          as={Input}
-                          placeholder="Nguyễn Văn A"
-                        />
-                        <ErrorMessage
-                          name="fullName"
-                          component="div"
-                          className="text-red-500 text-xs"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <Label>Số điện thoại</Label>
-                        <Field
-                          name="phoneNumber"
-                          as={Input}
-                          placeholder="0901234567"
-                        />
-                        <ErrorMessage
-                          name="phoneNumber"
-                          component="div"
-                          className="text-red-500 text-xs"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <Label>Email</Label>
-                        <Field
-                          name="email"
-                          type="email"
-                          as={Input}
-                          placeholder="example@gmail.com"
-                        />
-                        <ErrorMessage
-                          name="email"
-                          component="div"
-                          className="text-red-500 text-xs"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <Label>Giới tính</Label>
-                        <Field
-                          as="select"
-                          name="gender"
-                          className="w-full h-10 border rounded-md px-3 text-sm bg-white"
-                        >
-                          <option value="Nam">Nam</option>
-                          <option value="Nữ">Nữ</option>
-                        </Field>
-                      </div>
-
-                      <div className="space-y-1">
-                        <Label>Ngày sinh</Label>
-                        <Field type="date" name="dob" as={Input} />
-                      </div>
-
-                      <div className="space-y-1">
-                        <Label>Loại khách hàng</Label>
-                        <Field
-                          as="select"
-                          name="customerType"
-                          className="w-full h-10 border rounded-md px-3 text-sm bg-white"
-                        >
-                          <option value="Cá nhân">Cá nhân</option>
-                          <option value="Doanh nghiệp">Doanh nghiệp</option>
-                        </Field>
-                      </div>
-
-                      <div className="col-span-2 space-y-1">
-                        <Label>Địa chỉ</Label>
-                        <Field
-                          name="address"
-                          as={Input}
-                          placeholder="123 Lê Lợi, Quận 1, TP.HCM"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* ── GHI CHÚ (khi tạo mới) ── */}
-                  <div className="space-y-4">
-                    <h4 className="text-sm font-bold text-gray-500 border-b pb-2 uppercase italic tracking-wider">
-                      Ghi chú thêm
-                    </h4>
-                    <div className="space-y-1">
-                      <Label>Ghi chú</Label>
-                      <Field
-                        name="note"
-                        as="textarea"
-                        rows={3}
-                        placeholder="Ghi chú về sở thích, yêu cầu đặc biệt..."
-                        className="w-full border rounded-md px-3 py-2 text-sm bg-white resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-3 pt-4 border-t">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleCloseForm}
-                    >
-                      Đóng
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="font-bold"
-                    >
-                      {isSubmitting
-                        ? "Đang lưu..."
-                        : currentCustomer
-                          ? "Cập nhật"
-                          : "Tạo hồ sơ"}
-                    </Button>
-                  </div>
-                </Form>
-              )}
-            </Formik>
-          </Card>
-        </div>
-      )}
-
-      {/* ===================== MODAL: GHI CHÚ ĐẶC BIỆT ===================== */}
-      {isNoteOpen && currentCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-          <Card className="w-full max-w-lg bg-white shadow-2xl border-none overflow-hidden rounded-xl">
-            <div className="flex justify-between items-center p-5 border-b bg-gray-50">
-              <div>
-                <CardTitle className="text-lg font-bold text-amber-600 flex items-center gap-2">
-                  <NotebookPen size={18} />
-                  Ghi chú đặc biệt
-                </CardTitle>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {currentCustomer.full_name} – {currentCustomer.customer_code}
-                </p>
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{
+                    backgroundColor: "var(--status-focus)",
+                    color: "var(--brand-primary)",
+                  }}
+                >
+                  <UserPlus size={16} />
+                </div>
+                <h2
+                  className="text-[15px] font-bold"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  {currentCustomer ? "Cập nhật hồ sơ" : "Thêm khách hàng mới"}
+                </h2>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleCloseNote}
-                className="rounded-full text-gray-400"
+              <button
+                onClick={() => setIsFormOpen(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100"
+                style={{ color: "var(--text-placeholder)" }}
               >
-                <X size={20} />
-              </Button>
+                <X size={16} />
+              </button>
             </div>
 
-            <Formik
-              enableReinitialize
-              initialValues={{ note: currentCustomer?.note || "" }}
-              validationSchema={noteSchema}
-              onSubmit={handleSubmitNote}
+            <form
+              onSubmit={handleSubmitForm}
+              className="p-5 space-y-4 max-h-[70vh] overflow-y-auto"
             >
-              {({ isSubmitting }) => (
-                <Form className="p-6 space-y-4">
-                  <div className="space-y-1">
-                    <Label>
-                      Nội dung ghi chú <span className="text-red-500">*</span>
-                    </Label>
-                    <Field
-                      name="note"
-                      as="textarea"
-                      rows={5}
-                      placeholder="VD: Giao trước 16h, sơn màu kem ivory, lắp tầng 3 bên trái..."
-                      className="w-full border rounded-md px-3 py-2 text-sm bg-white resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                    <ErrorMessage
-                      name="note"
-                      component="div"
-                      className="text-red-500 text-xs"
-                    />
-                  </div>
-                  <p className="text-xs text-gray-400 bg-amber-50 border border-amber-100 rounded-md p-3">
-                    💡 Ghi chú dành cho các yêu cầu đặc biệt: ngày giao hàng,
-                    màu sơn, vị trí lắp đặt...
+              {/* Name */}
+              <div>
+                <label
+                  className={labelClass}
+                  style={{ color: "var(--text-placeholder)" }}
+                >
+                  Họ và tên{" "}
+                  <span style={{ color: "var(--status-error)" }}>*</span>
+                </label>
+                <div className="relative">
+                  <User
+                    size={14}
+                    className="absolute left-3 top-1/2 -translate-y-1/2"
+                    style={{ color: "var(--text-placeholder)" }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Nhập họ tên"
+                    value={form.name}
+                    onChange={(e) => updateForm("name", e.target.value)}
+                    className={inputIconBase}
+                    style={{
+                      ...inputStyle,
+                      borderColor: formErrors.name
+                        ? "var(--status-error)"
+                        : "var(--grid-border)",
+                    }}
+                    autoFocus
+                  />
+                </div>
+                {formErrors.name && (
+                  <p
+                    className="text-[11px] mt-1"
+                    style={{ color: "var(--status-error)" }}
+                  >
+                    {formErrors.name}
                   </p>
-                  <div className="flex justify-end gap-3 pt-2 border-t">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleCloseNote}
-                    >
-                      Đóng
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="font-bold bg-amber-500 hover:bg-amber-600 text-white"
-                    >
-                      {isSubmitting ? "Đang lưu..." : "Lưu ghi chú"}
-                    </Button>
+                )}
+              </div>
+
+              {/* Phone + Email */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label
+                    className={labelClass}
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
+                    Số điện thoại{" "}
+                    <span style={{ color: "var(--status-error)" }}>*</span>
+                  </label>
+                  <div className="relative">
+                    <Phone
+                      size={14}
+                      className="absolute left-3 top-1/2 -translate-y-1/2"
+                      style={{ color: "var(--text-placeholder)" }}
+                    />
+                    <input
+                      type="tel"
+                      placeholder="0xxx xxx xxx"
+                      value={form.phone}
+                      onChange={(e) => updateForm("phone", e.target.value)}
+                      className={inputIconBase}
+                      style={{
+                        ...inputStyle,
+                        borderColor: formErrors.phone
+                          ? "var(--status-error)"
+                          : "var(--grid-border)",
+                      }}
+                    />
                   </div>
-                </Form>
-              )}
-            </Formik>
-          </Card>
-        </div>
-      )}
-      {/* ===================== MODAL: XÁC NHẬN XÓA ===================== */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-          <Card className="w-full max-w-md bg-white shadow-2xl border-none overflow-hidden rounded-xl">
-            <div className="flex justify-between items-center p-5 border-b bg-gray-50">
-              <CardTitle className="text-lg font-bold text-red-600 flex items-center gap-2">
-                <Trash2 size={18} />
-                Xác nhận xóa
-              </CardTitle>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setDeleteConfirm(null)}
-                className="rounded-full text-gray-400"
+                  {formErrors.phone && (
+                    <p
+                      className="text-[11px] mt-1"
+                      style={{ color: "var(--status-error)" }}
+                    >
+                      {formErrors.phone}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label
+                    className={labelClass}
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
+                    Email
+                  </label>
+                  <div className="relative">
+                    <Mail
+                      size={14}
+                      className="absolute left-3 top-1/2 -translate-y-1/2"
+                      style={{ color: "var(--text-placeholder)" }}
+                    />
+                    <input
+                      type="email"
+                      placeholder="email@example.com"
+                      value={form.email}
+                      onChange={(e) => updateForm("email", e.target.value)}
+                      className={inputIconBase}
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Gender + DOB */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label
+                    className={labelClass}
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
+                    Giới tính
+                  </label>
+                  <div className="flex gap-1.5">
+                    {GENDER_OPTIONS.map((g) => (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => updateForm("gender", g)}
+                        className="flex-1 text-[13px] rounded-lg py-2 transition font-medium cursor-pointer"
+                        style={{
+                          border: `1px solid ${form.gender === g ? "var(--brand-primary)" : "var(--grid-border)"}`,
+                          backgroundColor:
+                            form.gender === g
+                              ? "var(--status-focus)"
+                              : "transparent",
+                          color:
+                            form.gender === g
+                              ? "var(--brand-primary)"
+                              : "var(--text-secondary)",
+                        }}
+                      >
+                        {g}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label
+                    className={labelClass}
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
+                    Ngày sinh
+                  </label>
+                  <div className="relative">
+                    <Calendar
+                      size={14}
+                      className="absolute left-3 top-1/2 -translate-y-1/2"
+                      style={{ color: "var(--text-placeholder)" }}
+                    />
+                    <input
+                      type="date"
+                      value={form.dob}
+                      onChange={(e) => updateForm("dob", e.target.value)}
+                      className={inputIconBase}
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Address */}
+              <div>
+                <label
+                  className={labelClass}
+                  style={{ color: "var(--text-placeholder)" }}
+                >
+                  Địa chỉ
+                </label>
+                <div className="relative">
+                  <MapPin
+                    size={14}
+                    className="absolute left-3 top-1/2 -translate-y-1/2"
+                    style={{ color: "var(--text-placeholder)" }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Số nhà, đường, quận/huyện"
+                    value={form.address}
+                    onChange={(e) => updateForm("address", e.target.value)}
+                    className={inputIconBase}
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+
+              {/* Note */}
+              <div>
+                <label
+                  className={labelClass}
+                  style={{ color: "var(--text-placeholder)" }}
+                >
+                  Ghi chú
+                </label>
+                <textarea
+                  placeholder="Ghi chú về khách hàng..."
+                  value={form.note}
+                  onChange={(e) => updateForm("note", e.target.value)}
+                  rows={2}
+                  className="w-full text-[13px] rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 transition resize-none bg-transparent"
+                  style={inputStyle}
+                />
+              </div>
+
+              {/* Actions */}
+              <div
+                className="flex justify-end gap-2.5 pt-3 border-t"
+                style={{ borderColor: "var(--grid-border)" }}
               >
-                <X size={20} />
-              </Button>
-            </div>
-            <div className="p-6 space-y-4">
-              <p className="text-sm text-gray-600">
-                Bạn có chắc chắn muốn xóa khách hàng{" "}
-                <span className="font-bold text-gray-800">
-                  {deleteConfirm.full_name}
-                </span>{" "}
-                <span className="text-xs text-gray-400">
-                  ({deleteConfirm.customer_code})
-                </span>
-                ? Hành động này không thể hoàn tác.
-              </p>
-              <div className="flex justify-end gap-3 pt-2 border-t">
                 <Button
+                  type="button"
                   variant="outline"
-                  onClick={() => setDeleteConfirm(null)}
+                  onClick={() => setIsFormOpen(false)}
+                  className="rounded-lg cursor-pointer text-[13px]"
                 >
                   Hủy
                 </Button>
                 <Button
-                  onClick={handleDeleteCustomer}
-                  className="font-bold bg-red-600 hover:bg-red-700 text-white"
+                  type="submit"
+                  className="rounded-lg text-[13px] font-bold text-white min-w-[120px] cursor-pointer"
+                  style={{ backgroundColor: "var(--brand-primary)" }}
                 >
-                  Xóa khách hàng
+                  {currentCustomer ? "Cập nhật" : "Thêm khách hàng"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ MODAL: NOTE ═══ */}
+      {isNoteOpen && currentCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
+            onClick={() => setIsNoteOpen(false)}
+          />
+          <div
+            className="relative bg-white rounded-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95"
+            style={{ boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
+          >
+            <div
+              className="flex items-center justify-between px-5 py-4 border-b"
+              style={{ borderColor: "var(--grid-border)" }}
+            >
+              <div>
+                <h2
+                  className="text-[15px] font-bold flex items-center gap-2"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  <NotebookPen
+                    size={15}
+                    style={{ color: "var(--status-pending)" }}
+                  />{" "}
+                  Ghi chú đặc biệt
+                </h2>
+                <p
+                  className="text-[12px] mt-0.5"
+                  style={{ color: "var(--text-placeholder)" }}
+                >
+                  {currentCustomer.name} – {currentCustomer.code}
+                </p>
+              </div>
+              <button
+                onClick={() => setIsNoteOpen(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100"
+                style={{ color: "var(--text-placeholder)" }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label
+                  className={labelClass}
+                  style={{ color: "var(--text-placeholder)" }}
+                >
+                  Nội dung ghi chú{" "}
+                  <span style={{ color: "var(--status-error)" }}>*</span>
+                </label>
+                <textarea
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
+                  rows={4}
+                  placeholder="VD: Giao trước 16h, sơn màu kem..."
+                  className="w-full text-[13px] rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 transition resize-none bg-transparent"
+                  style={inputStyle}
+                />
+              </div>
+              <div
+                className="rounded-xl p-3"
+                style={{
+                  backgroundColor: "#FFF7ED",
+                  border: "1px solid #FED7AA",
+                }}
+              >
+                <p
+                  className="text-[12px]"
+                  style={{ color: "var(--status-pending)" }}
+                >
+                  💡 Ghi chú dành cho yêu cầu đặc biệt: ngày giao, màu sơn, vị
+                  trí lắp đặt...
+                </p>
+              </div>
+              <div
+                className="flex justify-end gap-2.5 pt-3 border-t"
+                style={{ borderColor: "var(--grid-border)" }}
+              >
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsNoteOpen(false)}
+                  className="rounded-lg cursor-pointer text-[13px]"
+                >
+                  Hủy
+                </Button>
+                <Button
+                  onClick={handleSaveNote}
+                  disabled={!noteText.trim()}
+                  className="rounded-lg text-[13px] font-bold text-white cursor-pointer disabled:opacity-40"
+                  style={{ backgroundColor: "var(--status-pending)" }}
+                >
+                  Lưu ghi chú
                 </Button>
               </div>
             </div>
-          </Card>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ MODAL: DELETE ═══ */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
+            onClick={() => setDeleteConfirm(null)}
+          />
+          <div
+            className="relative bg-white rounded-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95"
+            style={{ boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
+          >
+            <div className="p-5 space-y-4">
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto"
+                style={{
+                  backgroundColor: "#FEE2E2",
+                  color: "var(--status-error)",
+                }}
+              >
+                <Trash2 size={22} />
+              </div>
+              <div className="text-center">
+                <h3
+                  className="text-[15px] font-bold"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  Xác nhận xóa
+                </h3>
+                <p
+                  className="text-[13px] mt-2"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  Bạn có chắc muốn xóa khách hàng{" "}
+                  <strong style={{ color: "var(--text-main)" }}>
+                    {deleteConfirm.name}
+                  </strong>
+                  ?
+                </p>
+                <p
+                  className="text-[11px] mt-1"
+                  style={{ color: "var(--text-placeholder)" }}
+                >
+                  Hành động này không thể hoàn tác.
+                </p>
+              </div>
+              <div className="flex gap-2.5 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setDeleteConfirm(null)}
+                  className="flex-1 rounded-lg cursor-pointer text-[13px]"
+                >
+                  Hủy
+                </Button>
+                <Button
+                  onClick={handleDelete}
+                  className="flex-1 rounded-lg text-[13px] font-bold text-white cursor-pointer"
+                  style={{ backgroundColor: "var(--status-error)" }}
+                >
+                  Xóa
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </>

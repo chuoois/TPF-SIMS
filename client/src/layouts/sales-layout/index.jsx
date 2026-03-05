@@ -1,26 +1,31 @@
 import { Outlet } from "react-router-dom";
-import { Header } from "@/layouts/owner-layout/HeaderOwner";
+import { NavbarSale } from "./NavbarSale";
 import { SidebarSales } from "./SidebarSales";
 
 /**
- * Sales Layout
- * Layout dành cho nhân viên bán hàng (SALES / OWNER)
- *
- * Created By: DNC
+ * Component Name: SalesLayout
+ * Description: Layout chính dành cho Sales (Header + Sidebar + Content)
+ * Created By: ThinhBui
  * Created Date: 24/02/2026
  */
 export const SalesLayout = () => {
   return (
-    <>
-      <div className="flex h-dvh flex-col">
-        <Header />
-        <div className="flex flex-1 overflow-hidden">
-          <SidebarSales />
-          <main className="flex-1 overflow-y-auto p-6 bg-muted/30">
-            <Outlet />
-          </main>
-        </div>
+    <div className="flex flex-col h-screen">
+      {/* Header */}
+      <NavbarSale />
+
+      <div className="flex flex-1 overflow-hidden pt-12">
+        {/* Sidebar */}
+        <SidebarSales />
+
+        {/* Main Content */}
+        <main
+          className="flex-1 min-h-0 overflow-auto px-6 py-4"
+          style={{ backgroundColor: "var(--bg-main)" }}
+        >
+          <Outlet />
+        </main>
       </div>
-    </>
+    </div>
   );
 };
