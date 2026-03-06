@@ -1,19 +1,19 @@
-import AccountantLayout from "@/layouts/accountant-layout/index";
-import AccountantDashboard from "@/pages/accountant-page/accountant-dashboard";
-import AccountantProductManage from "@/pages/accountant-page/accountant-product";
+import { Navigate } from "react-router-dom";
+import AccountantLayout from "../layouts/accountant-layout/index";
+import AccountantDashboard from "../pages/accountant-page/accountant-dashboard";
+import AccountantProductManage from "../pages/accountant-page/accountant-product";
+import AccountantImportManage from "../pages/accountant-page/accountant-import";
 
 /**
  * Accountant Routes
- * Định nghĩa các đường dẫn của kế toán
- *
- * Created By: HieuNM
- * Created Date: 27/02/2026
+ * Created By: HieuNM – 27/02/2026
  */
 
 export const accountantRoutes = {
     path: "/accountant",
     element: <AccountantLayout />,
     children: [
+        { index: true, element: <Navigate to="/accountant/dashboard" replace /> },
         {
             path: "dashboard",
             element: <AccountantDashboard />,
@@ -21,6 +21,10 @@ export const accountantRoutes = {
         {
             path: "products",
             element: <AccountantProductManage />,
+        },
+        {
+            path: "imports",
+            element: <AccountantImportManage />,
         },
     ],
 };
