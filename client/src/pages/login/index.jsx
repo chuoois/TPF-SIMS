@@ -35,10 +35,38 @@ export const LoginPage = () => {
       password: "",
     },
     validationSchema,
-    onSubmit: async () => {
-      setLoading(true);
-      // Fake login – navigate trực tiếp
-      setTimeout(() => {
+
+    onSubmit: async (values) => {
+      try {
+        setLoading(true);
+
+        /**
+         * Backend sẽ:
+         * - Set accessToken cookie
+         * - Set refreshToken cookie
+         * - Trả về { message, role }
+         */
+        const data = await authService.login(values.email, values.password);
+        const role = data.role;
+        localStorage.setItem("user", JSON.stringify(data.user));
+        const roleRedirectMap = {
+          OWNER: "/owner/dashboard",
+          SALES: "/sales/home",
+          ACCOUNTANT: "/accountant/dashboard",
+          WORKER: "/worker/home",
+        };
+
+        toast.success("Đăng nhập thành công");
+
+        navigate(roleRedirectMap[role] || "/");
+      } catch (error) {
+        console.error(error);
+
+        toast.error(
+          error?.response?.data?.message || "Sai email hoặc mật khẩu",
+        );
+      } finally {
+
         setLoading(false);
         navigate("/sales/home");
       }, 800);
