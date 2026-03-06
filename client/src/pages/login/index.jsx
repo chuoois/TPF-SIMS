@@ -66,13 +66,11 @@ export const LoginPage = () => {
           error?.response?.data?.message || "Sai email hoặc mật khẩu",
         );
       } finally {
-
         setLoading(false);
-        navigate("/sales/home");
-      }, 800);
+        // navigate("/sales/home"); 
+      }
     },
   });
-
   return (
     <>
       <PageHelmet title="Đăng nhập | TPF-SIMS" />

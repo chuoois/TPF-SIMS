@@ -1,4 +1,4 @@
-import { AccountantLayout } from "@/layouts/accountant-layout/index";
+import AccountantLayout from "@/layouts/accountant-layout/index";
 import AccountantDashboard from "@/pages/accountant-page/accountant-dashboard";
 import AccountantProductManage from "@/pages/accountant-page/accountant-product";
 

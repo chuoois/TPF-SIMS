@@ -6,6 +6,7 @@ import Orders from "../pages/owner-page/orders";
 import OrderDetail from "../pages/owner-page/orders/detail";
 
 import Production from "../pages/owner-page/production";
+import ProductionDetail from "../pages/owner-page/production/detail";
 import Products from "../pages/owner-page/products";
 import Customers from "../pages/owner-page/customers";
 import Suppliers from "../pages/owner-page/suppliers";
@@ -33,6 +34,10 @@ export const ownerRoutes = {
     {
       path: "production",
       element: <Production />,
+    },
+    {
+      path: "production/:id",
+      element: <ProductionDetail />,
     },
     {
       path: "products",

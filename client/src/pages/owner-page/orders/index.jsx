@@ -11,15 +11,13 @@ import {
   Search,
   Users,
   Eye,
-  Printer,
-  ChevronLeft,
-  ChevronRight,
   Package,
   Calendar,
-  X,
   FileText,
   XCircle,
-  CheckCircle,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 
@@ -476,7 +474,6 @@ const DAT_THEO_MAU_STATUSES = [
   "Đã hủy",
 ];
 
-const ITEMS_PER_PAGE = 15;
 
 // ===================== HELPERS =====================
 const formatCurrency = (amount) => {
@@ -532,7 +529,10 @@ export default function OwnerOrders() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("Hàng sẵn");
   const [statusFilter, setStatusFilter] = useState("Tất cả");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(15);
 
   // Filter & Search
   const filtered = useMemo(() => {
@@ -544,6 +544,18 @@ export default function OwnerOrders() {
     // Filter by status
     if (statusFilter !== "Tất cả") {
       result = result.filter((o) => o.status === statusFilter);
+    }
+
+    // Filter by date range
+    if (dateFrom) {
+      const from = new Date(dateFrom);
+      from.setHours(0, 0, 0, 0);
+      result = result.filter((o) => new Date(o.date) >= from);
+    }
+    if (dateTo) {
+      const to = new Date(dateTo);
+      to.setHours(23, 59, 59, 999);
+      result = result.filter((o) => new Date(o.date) <= to);
     }
 
     // Search
@@ -558,22 +570,34 @@ export default function OwnerOrders() {
     }
 
     return result.sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, [orders, activeTab, searchTerm, statusFilter]);
+  }, [orders, activeTab, searchTerm, statusFilter, dateFrom, dateTo]);
+
+  const hasActiveFilters = statusFilter !== "Tất cả" || dateFrom || dateTo || searchTerm;
+
+  const clearAllFilters = () => {
+    setStatusFilter("Tất cả");
+    setDateFrom("");
+    setDateTo("");
+    setSearchTerm("");
+  };
 
   // Reset status filter when switching tabs
   useEffect(() => {
     setStatusFilter("Tất cả");
+    setDateFrom("");
+    setDateTo("");
+    setSearchTerm("");
   }, [activeTab]);
 
   // Reset page on filter change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, activeTab, statusFilter]);
+  }, [searchTerm, activeTab, statusFilter, dateFrom, dateTo]);
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginatedOrders = filtered.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
   );
 
   // ===================== RENDER =====================
@@ -680,10 +704,11 @@ export default function OwnerOrders() {
         >
           {/* Search */}
           <div
-            className="px-4 py-3 border-b shrink-0 flex items-center justify-between"
+            className="px-4 py-3 border-b shrink-0 flex flex-wrap items-center justify-between gap-3"
             style={{ borderColor: "var(--grid-border)" }}
           >
-            <div className="relative w-full max-w-md">
+            {/* LEFT — Search */}
+            <div className="relative w-full max-w-md shrink-0">
               <Search
                 size={15}
                 className="absolute left-3 top-1/2 -translate-y-1/2"
@@ -708,6 +733,74 @@ export default function OwnerOrders() {
                   style={{ color: "var(--text-placeholder)" }}
                 >
                   <X size={14} />
+                </button>
+              )}
+            </div>
+
+            {/* RIGHT — Filters */}
+            <div className="flex items-center gap-2.5 shrink-0 overflow-x-auto">
+              {/* Date From */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Calendar
+                  size={14}
+                  style={{ color: "var(--text-placeholder)" }}
+                />
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="h-9 px-3 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
+                  style={{
+                    border: `1px solid ${dateFrom ? "var(--brand-primary)" : "var(--grid-border)"}`,
+                    backgroundColor: dateFrom
+                      ? "var(--status-focus)"
+                      : "var(--bg-main)",
+                    color: dateFrom
+                      ? "var(--brand-primary)"
+                      : "var(--text-main)",
+                    fontWeight: dateFrom ? 600 : 400,
+                  }}
+                  title="Từ ngày"
+                />
+              </div>
+
+              <span
+                className="text-[12px] shrink-0"
+                style={{ color: "var(--text-placeholder)" }}
+              >
+                đến
+              </span>
+
+              {/* Date To */}
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="h-9 px-3 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition shrink-0"
+                style={{
+                  border: `1px solid ${dateTo ? "var(--brand-primary)" : "var(--grid-border)"}`,
+                  backgroundColor: dateTo
+                    ? "var(--status-focus)"
+                    : "var(--bg-main)",
+                  color: dateTo ? "var(--brand-primary)" : "var(--text-main)",
+                  fontWeight: dateTo ? 600 : 400,
+                }}
+                title="Đến ngày"
+              />
+
+              {/* Clear filters */}
+              {hasActiveFilters && (
+                <button
+                  onClick={clearAllFilters}
+                  className="h-9 px-3 rounded-lg text-[13px] font-medium flex-shrink-0 flex items-center gap-1.5 cursor-pointer transition hover:opacity-80"
+                  style={{
+                    color: "var(--status-error)",
+                    backgroundColor: "#FEF2F2",
+                    border: "1px solid #FECACA",
+                  }}
+                >
+                  <X size={14} />
+                  Xóa bộ lọc
                 </button>
               )}
             </div>
@@ -905,80 +998,96 @@ export default function OwnerOrders() {
           </div>
 
           {/* Pagination Footer */}
-          {totalPages > 1 && (
+          {filtered.length > 0 && (
             <div
-              className="flex items-center justify-between px-4 py-3 border-t shrink-0"
+              className="flex items-center justify-between px-6 py-3 border-t shrink-0"
               style={{
                 borderColor: "var(--grid-border)",
-                backgroundColor: "var(--grid-header-bg)",
+                backgroundColor: "var(--bg-main)",
               }}
             >
-              <span
-                className="text-[12px]"
+              <div
+                className="text-[13px]"
                 style={{ color: "var(--text-secondary)" }}
               >
-                Hiển thị{" "}
-                <span
-                  className="font-bold"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  {(currentPage - 1) * ITEMS_PER_PAGE + 1}
-                </span>{" "}
-                -{" "}
-                <span
-                  className="font-bold"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}
-                </span>{" "}
-                trong{" "}
+                Tổng số bản ghi:{" "}
                 <span
                   className="font-bold"
                   style={{ color: "var(--text-main)" }}
                 >
                   {filtered.length}
-                </span>{" "}
-                kết quả
-              </span>
+                </span>
+              </div>
 
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="w-7 h-7 rounded-md flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200"
-                  style={{ color: "var(--text-main)" }}
+              <div className="flex items-center gap-6">
+                {/* Items per page indicator */}
+                <div className="flex items-center gap-2">
+                  <span
+                    className="text-[13px]"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    Số bản ghi/trang
+                  </span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(1); // Reset to page 1 when changing items per page
+                    }}
+                    className="h-8 px-2 pr-6 rounded-md text-[13px] border cursor-pointer focus:outline-none focus:ring-1 transition appearance-none"
+                    style={{
+                      borderColor: "var(--grid-border)",
+                      backgroundColor: "#fff",
+                      color: "var(--text-main)",
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                      backgroundRepeat: "no-repeat",
+                      backgroundPosition: "right 8px center",
+                    }}
+                  >
+                    {[15, 30, 50, 100].map((size) => (
+                      <option key={size} value={size}>
+                        {size}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Range Info */}
+                <div
+                  className="text-[13px]"
+                  style={{ color: "var(--text-secondary)" }}
                 >
-                  <ChevronLeft size={16} />
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className="w-7 h-7 rounded-md text-[13px] font-semibold transition cursor-pointer"
-                      style={{
-                        backgroundColor:
-                          currentPage === page
-                            ? "var(--brand-primary)"
-                            : "transparent",
-                        color:
-                          currentPage === page ? "#fff" : "var(--text-main)",
-                      }}
-                    >
-                      {page}
-                    </button>
-                  ),
-                )}
-                <button
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="w-7 h-7 rounded-md flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  <ChevronRight size={16} />
-                </button>
+                  <span
+                    className="font-bold"
+                    style={{ color: "var(--text-main)" }}
+                  >
+                    {(currentPage - 1) * itemsPerPage + 1} -{" "}
+                    {Math.min(currentPage * itemsPerPage, filtered.length)}
+                  </span>{" "}
+                  bản ghi
+                </div>
+
+                {/* Arrows */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
+                    style={{ color: "var(--text-main)" }}
+                  >
+                    <ChevronLeft size={16} strokeWidth={2.5} />
+                  </button>
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
+                    style={{ color: "var(--text-main)" }}
+                  >
+                    <ChevronRight size={16} strokeWidth={2.5} />
+                  </button>
+                </div>
               </div>
             </div>
           )}
