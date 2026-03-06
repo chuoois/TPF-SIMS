@@ -1,276 +1,457 @@
+/**
+ * Component OwnerProducts
+ * Quản lý Sản phẩm — Chủ cửa hàng (Mô phỏng Đồ gỗ mỹ nghệ)
+ *
+ * Created Date: 06/03/2026
+ */
+
 import { useState } from "react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, Plus, Package, Layers, FolderTree, Pencil, Eye } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Package,
+  Layers,
+  FolderTree,
+  Pencil,
+  Eye,
+  Filter,
+  Image as ImageIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const TABS = [
-  { id: "products", label: "Sản phẩm", icon: Package },
-  { id: "variants", label: "Biến thể", icon: Layers },
-  { id: "categories", label: "Danh mục", icon: FolderTree },
+// ===================== MOCK DATA =====================
+const CATEGORIES = [
+  { id: "C01", name: "Phòng khách", count: 12 },
+  { id: "C02", name: "Phòng ngủ", count: 8 },
+  { id: "C03", name: "Phòng thờ", count: 15 },
+  { id: "C04", name: "Phòng ăn", count: 6 },
 ];
 
+const WOOD_TYPES = ["Gỗ hương đá", "Gỗ gõ đỏ", "Gỗ sồi Nga", "Gỗ gụ mật", "Gỗ xà cừ"];
+const COLORS = ["Cánh gián", "Trần (giữ vân)", "Óc chó", "Hương", "Chưa sơn (Mộc)"];
+
+// Sản phẩm cha (Product)
+const PRODUCTS = [
+  {
+    id: "P001",
+    code: "SP-PK-001",
+    name: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món",
+    category: "Phòng khách",
+    type: "FINISHED", // Hoàn thiện
+    status: "Đang kinh doanh",
+    stock: 5,
+    img: "https://placehold.co/100x100?text=BanGhe",
+  },
+  {
+    id: "P002",
+    code: "SP-PK-002",
+    name: "Sofa nguyên khối chữ L (Mộc)",
+    category: "Phòng khách",
+    type: "RAW", // Thô
+    status: "Đang kinh doanh",
+    stock: 12,
+    img: "https://placehold.co/100x100?text=Sofa",
+  },
+  {
+    id: "P003",
+    code: "SP-PT-001",
+    name: "Sập thờ Mai Điểu chân 20",
+    category: "Phòng thờ",
+    type: "FINISHED",
+    status: "Sắp hết hàng",
+    stock: 2,
+    img: "https://placehold.co/100x100?text=SapTho",
+  },
+  {
+    id: "P004",
+    code: "SP-PN-001",
+    name: "Giường ngủ hoa hồng Tân cổ điển (Thô)",
+    category: "Phòng ngủ",
+    type: "RAW",
+    status: "Đang kinh doanh",
+    stock: 8,
+    img: null,
+  },
+];
+
+// Biến thể (Variants) — Các cấu hình cụ thể của sản phẩm
+const VARIANTS = [
+  {
+    id: "V001",
+    sku: "SP-PK-001-HD-CG",
+    productName: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món",
+    woodType: "Gỗ hương đá",
+    color: "Cánh gián",
+    importPrice: 42000000,
+    retailPrice: 55000000,
+    wholeSalePrice: 50000000,
+    stock: 3,
+  },
+  {
+    id: "V002",
+    sku: "SP-PK-001-GD-TR",
+    productName: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món",
+    woodType: "Gỗ gõ đỏ",
+    color: "Trần (giữ vân)",
+    importPrice: 45000000,
+    retailPrice: 58000000,
+    wholeSalePrice: 53000000,
+    stock: 2,
+  },
+  {
+    id: "V003",
+    sku: "SP-PK-002-HD-M",
+    productName: "Sofa nguyên khối chữ L (Mộc)",
+    woodType: "Gỗ hương đá",
+    color: "Chưa sơn (Mộc)",
+    importPrice: 25000000,
+    retailPrice: 35000000,
+    wholeSalePrice: 30000000,
+    stock: 8,
+  },
+  {
+    id: "V004",
+    sku: "SP-PT-001-GM-CG",
+    productName: "Sập thờ Mai Điểu chân 20",
+    woodType: "Gỗ gụ mật",
+    color: "Cánh gián",
+    importPrice: 18000000,
+    retailPrice: 25000000,
+    wholeSalePrice: 22000000,
+    stock: 2,
+  },
+];
+
+const TABS = [
+  { id: "products", label: "Danh sách sản phẩm", icon: Package },
+  { id: "variants", label: "Biến thể sản phẩm", icon: Layers },
+  { id: "categories", label: "Danh mục sản phẩm", icon: FolderTree },
+];
+
+const fmtCurrency = (n) => new Intl.NumberFormat("vi-VN").format(n);
+
+// ===================== COMPONENT =====================
 export default function OwnerProducts() {
   const [activeTab, setActiveTab] = useState("products");
+
+  // --- Filter Sản phẩm cha ---
   const [productTypeFilter, setProductTypeFilter] = useState(""); // ALL | RAW | FINISHED
   const [categoryFilter, setCategoryFilter] = useState("");
   const [productSearch, setProductSearch] = useState("");
+
+  // --- Filter Biến thể ---
+  const [variantSearch, setVariantSearch] = useState("");
   const [woodFilter, setWoodFilter] = useState("");
   const [colorFilter, setColorFilter] = useState("");
-  const [variantSearch, setVariantSearch] = useState("");
 
-  // TODO: API
-  const products = [];
-  const variants = [];
-  const categories = [];
-
+  // ================= RENDER TABS =================
   return (
     <>
-      <PageHelmet title="Sản phẩm | Chủ cửa hàng" />
-      <div className="p-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Sản phẩm</h1>
-          <p className="mt-1 text-gray-500">Quản lý sản phẩm thô, hoàn thiện; danh mục và biến thể.</p>
+      <PageHelmet title="Sản phẩm | TPF-SIMS" />
+
+      <div className="flex flex-col h-[calc(100vh-64px)] -m-6" style={{ backgroundColor: "var(--bg-main)" }}>
+        {/* HEADER */}
+        <div
+          className="shrink-0 px-6 py-4 flex items-center justify-between"
+          style={{ backgroundColor: "var(--background)", borderBottom: "1px solid var(--grid-border)" }}
+        >
+          <div>
+            <h1 className="text-xl font-bold" style={{ color: "var(--text-main)" }}>Quản lý Sản phẩm</h1>
+            <p className="text-[12px] mt-1" style={{ color: "var(--text-secondary)" }}>
+              Quản lý danh mục hàng thô (mộc), hàng hoàn thiện và các biến thể gỗ/màu sơn.
+            </p>
+          </div>
+          
+          {/* TAB SWITCHER */}
+          <div className="flex p-1 rounded-xl" style={{ backgroundColor: "var(--bg-main)", border: "1px solid var(--grid-border)" }}>
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-bold transition-all",
+                    isActive ? "bg-white shadow-sm" : "hover:bg-white/50"
+                  )}
+                  style={{ color: isActive ? "var(--brand-primary)" : "var(--text-secondary)" }}
+                >
+                  <Icon size={16} />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-1 p-1 bg-gray-100 rounded-lg w-fit">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors",
-                  activeTab === tab.id ? "bg-white text-primary shadow-sm" : "text-gray-600 hover:bg-white/60"
-                )}
-              >
-                <Icon size={18} />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
+        {/* CONTENT */}
+        <div className="flex-1 overflow-y-auto p-6">
+          
+         
+          {activeTab === "products" && (
+            <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--background)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+              {/* TOOLBAR */}
+              <div className="p-4 flex flex-wrap items-center justify-between gap-4" style={{ borderBottom: "1px solid var(--grid-border)" }}>
+                <div className="flex items-center gap-3">
+                  {/* Tìm kiếm */}
+                  <div className="relative w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4" style={{ color: "var(--text-placeholder)" }} />
+                    <input
+                      type="text"
+                      placeholder="Tìm tên sản phẩm..."
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      className="w-full h-9 pl-9 pr-3 rounded-lg text-[13px] font-medium outline-none transition-all"
+                      style={{ border: "1px solid var(--grid-border)", color: "var(--text-main)" }}
+                    />
+                  </div>
+                  {/* Lọc loại */}
+                  <select
+                    value={productTypeFilter}
+                    onChange={(e) => setProductTypeFilter(e.target.value)}
+                    className="h-9 px-3 rounded-lg text-[13px] font-medium outline-none cursor-pointer"
+                    style={{ border: "1px solid var(--grid-border)", color: "var(--text-main)" }}
+                  >
+                    <option value="">Tất cả loại</option>
+                    <option value="RAW">Hàng Mộc</option>
+                    <option value="FINISHED">Hàng Hoàn thiện (Sơn PU)</option>
+                  </select>
+                  {/* Lọc danh mục */}
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="h-9 px-3 rounded-lg text-[13px] font-medium outline-none cursor-pointer"
+                    style={{ border: "1px solid var(--grid-border)", color: "var(--text-main)" }}
+                  >
+                    <option value="">Tất cả danh mục</option>
+                    {CATEGORIES.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                  </select>
+                </div>
+                
+                {/* ACTIONS */}
+                <div className="flex items-center gap-2">
+                  <button
+                    className="h-9 px-4 rounded-lg flex items-center gap-2 text-[13px] font-bold transition hover:bg-gray-50 cursor-pointer"
+                    style={{ border: "1px solid var(--grid-border)", color: "var(--text-main)" }}
+                  >
+                    <FolderTree size={14} /> Thêm Danh mục
+                  </button>
+                  <button
+                    className="h-9 px-4 rounded-lg flex items-center gap-2 text-[13px] font-bold transition hover:opacity-90 cursor-pointer"
+                    style={{ backgroundColor: "var(--brand-primary)", color: "#fff" }}
+                  >
+                    <Plus size={16} /> Thêm Sản phẩm
+                  </button>
+                </div>
+              </div>
 
-        {/* Tab Sản phẩm */}
-        {activeTab === "products" && (
-          <>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex flex-wrap items-end gap-3">
-                  <div>
-                    <label className="text-sm text-gray-600 block mb-1">Loại</label>
-                    <select
-                      value={productTypeFilter}
-                      onChange={(e) => setProductTypeFilter(e.target.value)}
-                      className="flex h-9 min-w-[140px] rounded-md border border-input bg-transparent px-3 py-1 text-sm"
-                    >
-                      <option value="">Tất cả</option>
-                      <option value="RAW">Sản phẩm thô</option>
-                      <option value="FINISHED">Sản phẩm hoàn thiện</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-600 block mb-1">Danh mục</label>
-                    <select
-                      value={categoryFilter}
-                      onChange={(e) => setCategoryFilter(e.target.value)}
-                      className="flex h-9 min-w-[160px] rounded-md border border-input bg-transparent px-3 py-1 text-sm"
-                    >
-                      <option value="">Tất cả</option>
-                      {/* TODO: map categories */}
-                    </select>
-                  </div>
-                  <div className="flex-1 min-w-[200px]">
-                    <label className="text-sm text-gray-600 block mb-1">Tìm theo tên</label>
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-                      <Input
-                        placeholder="Tên sản phẩm..."
-                        value={productSearch}
-                        onChange={(e) => setProductSearch(e.target.value)}
-                        className="pl-9"
-                      />
-                    </div>
-                  </div>
-                  <Button variant="outline" size="default">Thêm danh mục</Button>
-                  <Button variant="default" size="default"><Plus size={16} /> Thêm sản phẩm</Button>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-gray-50">
-                        <th className="text-left py-3 px-2 font-medium">Mã</th>
-                        <th className="text-left py-3 px-2 font-medium">Tên</th>
-                        <th className="text-left py-3 px-2 font-medium w-14">Ảnh</th>
-                        <th className="text-left py-3 px-2 font-medium">Danh mục</th>
-                        <th className="text-left py-3 px-2 font-medium">Loại</th>
-                        <th className="text-left py-3 px-2 font-medium">Trạng thái</th>
-                        <th className="text-right py-3 px-2 font-medium w-28">Thao tác</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {products.length === 0 ? (
-                        <tr>
-                          <td colSpan={7} className="py-8 text-center text-gray-500">
-                            Chưa có sản phẩm. Nhấn &quot;Thêm sản phẩm&quot; để tạo mới.
-                          </td>
-                        </tr>
-                      ) : (
-                        products.map((p) => (
-                          <tr key={p.id} className="border-b hover:bg-gray-50">
-                            <td className="py-2 px-2 font-medium">{p.code}</td>
-                            <td className="py-2 px-2">{p.product_name}</td>
-                            <td className="py-2 px-2">{p.product_img ? <img src={p.product_img} alt="" className="w-10 h-10 object-cover rounded" /> : "—"}</td>
-                            <td className="py-2 px-2">{p.category_name}</td>
-                            <td className="py-2 px-2">{p.product_type === "RAW" ? "Thô" : "Hoàn thiện"}</td>
-                            <td className="py-2 px-2">{p.product_status}</td>
-                            <td className="py-2 px-2 text-right">
-                              <Button variant="ghost" size="xs"><Eye size={14} /></Button>
-                              <Button variant="ghost" size="xs"><Pencil size={14} /></Button>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </>
-        )}
-
-        {/* Tab Biến thể */}
-        {activeTab === "variants" && (
-          <>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex flex-wrap items-end gap-3">
-                  <div>
-                    <label className="text-sm text-gray-600 block mb-1">Sản phẩm</label>
-                    <select className="flex h-9 min-w-[180px] rounded-md border border-input bg-transparent px-3 py-1 text-sm">
-                      <option value="">Tất cả</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-600 block mb-1">Loại gỗ</label>
-                    <select value={woodFilter} onChange={(e) => setWoodFilter(e.target.value)} className="flex h-9 min-w-[140px] rounded-md border border-input bg-transparent px-3 py-1 text-sm">
-                      <option value="">Tất cả</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-600 block mb-1">Màu</label>
-                    <select value={colorFilter} onChange={(e) => setColorFilter(e.target.value)} className="flex h-9 min-w-[140px] rounded-md border border-input bg-transparent px-3 py-1 text-sm">
-                      <option value="">Tất cả</option>
-                    </select>
-                  </div>
-                  <div className="flex-1 min-w-[200px]">
-                    <label className="text-sm text-gray-600 block mb-1">Tìm theo tên</label>
-                    <Input placeholder="Tên biến thể..." value={variantSearch} onChange={(e) => setVariantSearch(e.target.value)} />
-                  </div>
-                  <Button variant="outline" size="default">Thêm loại gỗ</Button>
-                  <Button variant="outline" size="default">Thêm màu</Button>
-                  <Button variant="default" size="default"><Plus size={16} /> Thêm biến thể</Button>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-gray-50">
-                        <th className="text-left py-3 px-2 font-medium">Mã SKU</th>
-                        <th className="text-left py-3 px-2 font-medium">Sản phẩm</th>
-                        <th className="text-left py-3 px-2 font-medium">Loại gỗ</th>
-                        <th className="text-left py-3 px-2 font-medium">Màu</th>
-                        <th className="text-right py-3 px-2 font-medium">Giá bán</th>
-                        <th className="text-right py-3 px-2 font-medium">Tồn</th>
-                        <th className="text-right py-3 px-2 font-medium w-28">Thao tác</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {variants.length === 0 ? (
-                        <tr>
-                          <td colSpan={7} className="py-8 text-center text-gray-500">
-                            Chưa có biến thể. Thêm sản phẩm và tạo biến thể (loại gỗ, màu).
-                          </td>
-                        </tr>
-                      ) : (
-                        variants.map((v) => (
-                          <tr key={v.id} className="border-b hover:bg-gray-50">
-                            <td className="py-2 px-2 font-medium">{v.sku_code}</td>
-                            <td className="py-2 px-2">{v.product_name}</td>
-                            <td className="py-2 px-2">{v.wood_type_name}</td>
-                            <td className="py-2 px-2">{v.color_name}</td>
-                            <td className="py-2 px-2 text-right">{v.selling_price}</td>
-                            <td className="py-2 px-2 text-right">{v.stock_quantity}</td>
-                            <td className="py-2 px-2 text-right">
-                              <Button variant="ghost" size="xs"><Eye size={14} /></Button>
-                              <Button variant="ghost" size="xs"><Pencil size={14} /></Button>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </>
-        )}
-
-        {/* Tab Danh mục */}
-        {activeTab === "categories" && (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Danh mục sản phẩm</CardTitle>
-              <Button variant="default" size="default"><Plus size={16} /> Thêm danh mục</Button>
-            </CardHeader>
-            <CardContent>
+              {/* BẢNG SẢN PHẨM */}
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b bg-gray-50">
-                      <th className="text-left py-3 px-2 font-medium">Mã</th>
-                      <th className="text-left py-3 px-2 font-medium">Tên</th>
-                      <th className="text-left py-3 px-2 font-medium">Trạng thái</th>
-                      <th className="text-right py-3 px-2 font-medium w-28">Thao tác</th>
+                    <tr style={{ backgroundColor: "var(--grid-header-bg)", borderBottom: "1px solid var(--grid-border)" }}>
+                      <th className="px-5 py-3 text-[12px] font-bold uppercase tracking-wider text-center w-12" style={{ color: "var(--text-secondary)" }}>STT</th>
+                      <th className="px-5 py-3 text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Mã SP</th>
+                      <th className="px-5 py-3 text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Ảnh</th>
+                      <th className="px-5 py-3 text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Tên sản phẩm</th>
+                      <th className="px-5 py-3 text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Danh mục</th>
+                      <th className="px-5 py-3 text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Loại hàng</th>
+                      <th className="px-5 py-3 text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Tồn tổng</th>
+                      <th className="px-5 py-3 text-[12px] font-bold uppercase tracking-wider text-right" style={{ color: "var(--text-secondary)" }}>Hành động</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {categories.length === 0 ? (
-                      <tr>
-                        <td colSpan={4} className="py-8 text-center text-gray-500">
-                          Chưa có danh mục. Nhấn &quot;Thêm danh mục&quot; để tạo (VD: Phòng khách, Phòng thờ).
+                  <tbody className="divide-y" style={{ borderColor: "var(--grid-border)" }}>
+                    {PRODUCTS.map((p, index) => (
+                      <tr key={p.id} className="transition-colors hover:bg-gray-50/50">
+                        <td className="px-5 py-3 text-[13px] font-medium text-center text-gray-500">{index + 1}</td>
+                        <td className="px-5 py-3 text-[13px] font-bold text-gray-700">{p.code}</td>
+                        <td className="px-5 py-3">
+                          {p.img ? (
+                            <img src={p.img} alt={p.name} className="w-10 h-10 rounded-lg object-cover border border-gray-200" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gray-100 border border-gray-200">
+                              <ImageIcon size={16} className="text-gray-400" />
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-5 py-3 text-[14px] font-bold" style={{ color: "var(--text-main)" }}>{p.name}</td>
+                        <td className="px-5 py-3 text-[13px] font-medium text-gray-600">{p.category}</td>
+                        <td className="px-5 py-3">
+                          <span className={`px-2 py-1 rounded text-[11px] font-bold ${
+                            p.type === 'RAW' ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                          }`}>
+                            {p.type === 'RAW' ? 'Hàng Mộc (Thô)' : 'Hoàn thiện'}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 text-[13px] font-bold text-gray-700">{p.stock}</td>
+                        <td className="px-5 py-3 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-100 transition border border-transparent hover:border-gray-200">
+                              <Eye size={14} />
+                            </button>
+                            <button className="w-8 h-8 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue-50 transition border border-transparent hover:border-blue-200">
+                              <Pencil size={14} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
-                    ) : (
-                      categories.map((c) => (
-                        <tr key={c.id} className="border-b hover:bg-gray-50">
-                          <td className="py-2 px-2 font-medium">{c.category_code}</td>
-                          <td className="py-2 px-2">{c.category_name}</td>
-                          <td className="py-2 px-2">{c.status === 1 ? "Hoạt động" : "Ẩn"}</td>
-                          <td className="py-2 px-2 text-right">
-                            <Button variant="ghost" size="xs"><Pencil size={14} /> Sửa</Button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
+                    ))}
                   </tbody>
                 </table>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          )}
+
+
+          {activeTab === "variants" && (
+            <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--background)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+              {/* TOOLBAR */}
+              <div className="p-4 flex flex-wrap items-center justify-between gap-4" style={{ borderBottom: "1px solid var(--grid-border)" }}>
+                <div className="flex items-center gap-3">
+                  {/* Tìm kiếm */}
+                  <div className="relative w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4" style={{ color: "var(--text-placeholder)" }} />
+                    <input
+                      type="text"
+                      placeholder="Tìm mã SKU hoặc tên SP..."
+                      value={variantSearch}
+                      onChange={(e) => setVariantSearch(e.target.value)}
+                      className="w-full h-9 pl-9 pr-3 rounded-lg text-[13px] font-medium outline-none transition-all"
+                      style={{ border: "1px solid var(--grid-border)", color: "var(--text-main)" }}
+                    />
+                  </div>
+                  {/* Lọc Gỗ */}
+                  <select
+                    value={woodFilter}
+                    onChange={(e) => setWoodFilter(e.target.value)}
+                    className="h-9 px-3 rounded-lg text-[13px] font-medium outline-none cursor-pointer"
+                    style={{ border: "1px solid var(--grid-border)", color: "var(--text-main)" }}
+                  >
+                    <option value="">Tất cả Loại Gỗ</option>
+                    {WOOD_TYPES.map((w, index) => <option key={index} value={w}>{w}</option>)}
+                  </select>
+                  {/* Lọc Màu */}
+                  <select
+                    value={colorFilter}
+                    onChange={(e) => setColorFilter(e.target.value)}
+                    className="h-9 px-3 rounded-lg text-[13px] font-medium outline-none cursor-pointer"
+                    style={{ border: "1px solid var(--grid-border)", color: "var(--text-main)" }}
+                  >
+                    <option value="">Tất cả Màu Sơn</option>
+                    {COLORS.map((c, index) => <option key={index} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                
+                {/* ACTIONS */}
+                <div className="flex items-center gap-2">
+                  <button
+                    className="h-9 px-3 rounded-lg flex items-center gap-1.5 text-[12px] font-bold transition hover:bg-gray-50 cursor-pointer text-amber-700 border border-amber-200 bg-amber-50"
+                  >
+                    <Plus size={14} /> Thêm Loại Gỗ
+                  </button>
+                  <button
+                    className="h-9 px-3 rounded-lg flex items-center gap-1.5 text-[12px] font-bold transition hover:bg-gray-50 cursor-pointer text-emerald-700 border border-emerald-200 bg-emerald-50"
+                  >
+                    <Plus size={14} /> Thêm Màu Sơn
+                  </button>
+                  <div className="w-px h-6 bg-gray-300 mx-2"></div>
+                  <button
+                    className="h-9 px-4 rounded-lg flex items-center gap-2 text-[13px] font-bold transition hover:opacity-90 cursor-pointer"
+                    style={{ backgroundColor: "var(--brand-primary)", color: "#fff" }}
+                  >
+                    <Plus size={16} /> Thêm Biến thể
+                  </button>
+                </div>
+              </div>
+
+              {/* BẢNG BIẾN THỂ */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr style={{ backgroundColor: "var(--grid-header-bg)", borderBottom: "1px solid var(--grid-border)" }}>
+                      <th className="px-5 py-3 text-[12px] font-bold uppercase tracking-wider text-center w-12" style={{ color: "var(--text-secondary)" }}>STT</th>
+                      <th className="px-5 py-3 text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Mã SKU</th>
+                      <th className="px-5 py-3 text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Tên sản phẩm</th>
+                      <th className="px-5 py-3 text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Loại Gỗ</th>
+                      <th className="px-5 py-3 text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Màu Sơn</th>
+                      <th className="px-5 py-3 text-[12px] font-bold uppercase tracking-wider text-right" style={{ color: "var(--text-secondary)" }}>Giá Bán Lẻ</th>
+                      <th className="px-5 py-3 text-[12px] font-bold uppercase tracking-wider text-center" style={{ color: "var(--text-secondary)" }}>Tồn kho</th>
+                      <th className="px-5 py-3 text-[12px] font-bold uppercase tracking-wider text-right" style={{ color: "var(--text-secondary)" }}>Hành động</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y" style={{ borderColor: "var(--grid-border)" }}>
+                    {VARIANTS.map((v, index) => (
+                      <tr key={v.id} className="transition-colors hover:bg-gray-50/50">
+                        <td className="px-5 py-3 text-[13px] font-medium text-center text-gray-500">{index + 1}</td>
+                        <td className="px-5 py-3">
+                          <span className="font-mono text-[13px] font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded border border-gray-200">
+                            {v.sku}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 text-[13px] font-bold" style={{ color: "var(--text-main)" }}>{v.productName}</td>
+                        <td className="px-5 py-3 text-[13px] font-medium text-amber-800">{v.woodType}</td>
+                        <td className="px-5 py-3 text-[13px] font-medium text-emerald-800">{v.color}</td>
+                        <td className="px-5 py-3 text-[14px] font-bold text-right text-red-600">{fmtCurrency(v.retailPrice)}</td>
+                        <td className="px-5 py-3 text-[14px] font-bold text-center text-gray-800">{v.stock}</td>
+                        <td className="px-5 py-3 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button className="w-8 h-8 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue-50 transition border border-transparent hover:border-blue-200">
+                              <Pencil size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════ TAB: DANH MỤC ══════════════ */}
+          {activeTab === "categories" && (
+            <div className="rounded-2xl overflow-hidden max-w-4xl border" style={{ backgroundColor: "var(--background)", borderColor: "var(--grid-border)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+              <div className="p-4 flex items-center justify-between" style={{ borderBottom: "1px solid var(--grid-border)" }}>
+                <h2 className="text-[14px] font-bold uppercase tracking-wider" style={{ color: "var(--text-main)" }}>Danh mục sản phẩm</h2>
+                <button
+                  className="h-9 px-4 rounded-lg flex items-center gap-2 text-[13px] font-bold transition hover:opacity-90 cursor-pointer"
+                  style={{ backgroundColor: "var(--brand-primary)", color: "#fff" }}
+                >
+                  <Plus size={16} /> Thêm Danh mục
+                </button>
+              </div>
+              <table className="w-full text-left">
+                  <thead>
+                    <tr style={{ backgroundColor: "var(--grid-header-bg)", borderBottom: "1px solid var(--grid-border)" }}>
+                      <th className="px-5 py-3 text-[12px] font-bold uppercase tracking-wider text-center w-12" style={{ color: "var(--text-secondary)" }}>STT</th>
+                      <th className="px-5 py-3 text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Mã</th>
+                      <th className="px-5 py-3 text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Tên Danh mục</th>
+                      <th className="px-5 py-3 text-[12px] font-bold uppercase tracking-wider text-center" style={{ color: "var(--text-secondary)" }}>Số SP</th>
+                      <th className="px-5 py-3 text-[12px] font-bold uppercase tracking-wider text-right" style={{ color: "var(--text-secondary)" }}>Hành động</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y" style={{ borderColor: "var(--grid-border)" }}>
+                    {CATEGORIES.map((c, index) => (
+                      <tr key={c.id} className="transition-colors hover:bg-gray-50/50">
+                        <td className="px-5 py-3 text-[13px] font-medium text-center text-gray-500">{index + 1}</td>
+                        <td className="px-5 py-3 text-[13px] font-bold text-gray-500">{c.id}</td>
+                        <td className="px-5 py-3 text-[14px] font-bold" style={{ color: "var(--text-main)" }}>{c.name}</td>
+                        <td className="px-5 py-3 text-[13px] font-bold text-center text-blue-600 bg-blue-50/50">{c.count}</td>
+                        <td className="px-5 py-3 text-right">
+                          <button className="px-3 py-1.5 rounded-lg text-[12px] font-bold text-blue-600 hover:bg-blue-50 transition border border-transparent hover:border-blue-200">
+                            Chỉnh sửa
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+              </table>
+            </div>
+          )}
+
+        </div>
       </div>
     </>
   );

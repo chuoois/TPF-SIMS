@@ -3,12 +3,15 @@ import OwnerLayout from "../layouts/owner-layout/index";
 
 import Dashboard from "../pages/owner-page/dashboard";
 import Orders from "../pages/owner-page/orders";
+import OrderDetail from "../pages/owner-page/orders/detail";
+
 import Production from "../pages/owner-page/production";
 import Products from "../pages/owner-page/products";
 import Customers from "../pages/owner-page/customers";
 import Suppliers from "../pages/owner-page/suppliers";
 import Employees from "../pages/owner-page/employees";
 import Reports from "../pages/owner-page/reports";
+
 
 export const ownerRoutes = {
   path: "/owner",
@@ -24,6 +27,10 @@ export const ownerRoutes = {
       element: <Orders />,
     },
     {
+      path: "orders/:id",
+      element: <OrderDetail />,
+    },
+    {
       path: "production",
       element: <Production />,
     },
@@ -35,6 +42,7 @@ export const ownerRoutes = {
       path: "customers",
       element: <Customers />,
     },
+
     {
       path: "suppliers",
       element: <Suppliers />,

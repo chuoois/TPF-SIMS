@@ -1,3 +1,9 @@
+/**
+ * Component Name: SidebarSales
+ * Description: Sidebar dành cho Sales Layout
+ * Created By: ThinhBui
+ * Created Date: 24/02/2026
+ */
 
 
 import { NavLink, useLocation } from "react-router-dom";
@@ -13,10 +19,10 @@ import {
   ChevronRight,
   PanelLeftClose,
 } from "lucide-react";
-
 const menuItems = [
   { text: "Tổng quan", icon: Home, path: "/owner/dashboard" },
   { text: "Đơn hàng", icon: ClipboardList, path: "/owner/orders" },
+  
   { text: "Sản phẩm", icon: Package, path: "/owner/products" },
   { text: "Quản lý sản xuất", icon: Hammer, path: "/owner/production" },
   { text: "Khách hàng", icon: Users, path: "/owner/customers" },
@@ -24,6 +30,7 @@ const menuItems = [
   { text: "Nhân sự", icon: UserCog, path: "/owner/employees" },
   { text: "Báo cáo", icon: BarChart3, path: "/owner/reports" },
 ];
+
 
 export const SidebarOwner = () => {
   const location = useLocation();
@@ -53,17 +60,16 @@ export const SidebarOwner = () => {
         <div className="flex flex-col gap-1.5 pt-4 flex-1">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.path;
+            const isActive = item.path === '/owner/dashboard' ? location.pathname === item.path : location.pathname.startsWith(item.path);
 
             return (
               <NavLink
                 key={item.path}
                 to={item.path}
                 className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg cursor-pointer transition-all no-underline
-                  ${
-                    isActive
-                      ? "bg-[var(--brand-primary)] text-white font-medium"
-                      : "text-gray-300 hover:bg-white/[0.08]"
+                  ${isActive
+                    ? "bg-[var(--brand-primary)] text-white font-medium"
+                    : "text-gray-300 hover:bg-white/[0.08]"
                   }`}
               >
                 <Icon
@@ -71,10 +77,12 @@ export const SidebarOwner = () => {
                   className={isActive ? "text-white" : "text-gray-400"}
                 />
                 <span className="flex-1">{item.text}</span>
-                <ChevronRight
-                  size={14}
-                  className={isActive ? "text-white/70" : "text-gray-500"}
-                />
+                {item.hasArrow && (
+                  <ChevronRight
+                    size={14}
+                    className={isActive ? "text-white/70" : "text-gray-500"}
+                  />
+                )}
               </NavLink>
             );
           })}
