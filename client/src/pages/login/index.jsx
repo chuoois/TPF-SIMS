@@ -54,7 +54,7 @@ export const LoginPage = () => {
         const role = data.role;
         localStorage.setItem("user", JSON.stringify(data.user));
         const roleRedirectMap = {
-          OWNER: "/owner/home",
+          OWNER: "/owner/dashboard",
           SALES: "/sales/home",
           ACCOUNTANT: "/accountant/dashboard",
           WORKER: "/worker/home",
