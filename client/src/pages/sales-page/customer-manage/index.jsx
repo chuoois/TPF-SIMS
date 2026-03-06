@@ -151,7 +151,7 @@ const INITIAL_CUSTOMERS = [
     note: "Cần xuất hóa đơn đỏ",
     createdAt: "2026-03-02",
   },
-   {
+  {
     id: "KH010",
     code: "KH-0010",
     name: "Vũ Phương Thảo",
@@ -163,7 +163,7 @@ const INITIAL_CUSTOMERS = [
     note: "Cần xuất hóa đơn đỏ",
     createdAt: "2026-03-02",
   },
-   {
+  {
     id: "KH010",
     code: "KH-0010",
     name: "Vũ Phương Thảo",
@@ -175,7 +175,7 @@ const INITIAL_CUSTOMERS = [
     note: "Cần xuất hóa đơn đỏ",
     createdAt: "2026-03-02",
   },
-   {
+  {
     id: "KH010",
     code: "KH-0010",
     name: "Vũ Phương Thảo",
@@ -187,7 +187,7 @@ const INITIAL_CUSTOMERS = [
     note: "Cần xuất hóa đơn đỏ",
     createdAt: "2026-03-02",
   },
-   {
+  {
     id: "KH010",
     code: "KH-0010",
     name: "Vũ Phương Thảo",
@@ -199,7 +199,7 @@ const INITIAL_CUSTOMERS = [
     note: "Cần xuất hóa đơn đỏ",
     createdAt: "2026-03-02",
   },
-   {
+  {
     id: "KH010",
     code: "KH-0010",
     name: "Vũ Phương Thảo",
@@ -211,7 +211,7 @@ const INITIAL_CUSTOMERS = [
     note: "Cần xuất hóa đơn đỏ",
     createdAt: "2026-03-02",
   },
-   {
+  {
     id: "KH010",
     code: "KH-0010",
     name: "Vũ Phương Thảo",
@@ -223,7 +223,7 @@ const INITIAL_CUSTOMERS = [
     note: "Cần xuất hóa đơn đỏ",
     createdAt: "2026-03-02",
   },
-   {
+  {
     id: "KH010",
     code: "KH-0010",
     name: "Vũ Phương Thảo",
@@ -235,7 +235,7 @@ const INITIAL_CUSTOMERS = [
     note: "Cần xuất hóa đơn đỏ",
     createdAt: "2026-03-02",
   },
-   {
+  {
     id: "KH010",
     code: "KH-0010",
     name: "Vũ Phương Thảo",
@@ -247,7 +247,7 @@ const INITIAL_CUSTOMERS = [
     note: "Cần xuất hóa đơn đỏ",
     createdAt: "2026-03-02",
   },
-   {
+  {
     id: "KH010",
     code: "KH-0010",
     name: "Vũ Phương Thảo",
@@ -259,7 +259,7 @@ const INITIAL_CUSTOMERS = [
     note: "Cần xuất hóa đơn đỏ",
     createdAt: "2026-03-02",
   },
-   {
+  {
     id: "KH011",
     code: "KH-0011",
     name: "Vũ Phương Thảo",
@@ -334,7 +334,6 @@ const INITIAL_CUSTOMERS = [
 ];
 
 const GENDER_OPTIONS = ["Nam", "Nữ", "Khác"];
-const ITEMS_PER_PAGE = 15; // Kích thước mỗi trang
 
 // ===================== HELPERS =====================
 const formatDate = (d) => (d ? new Date(d).toLocaleDateString("vi-VN") : "—");
@@ -355,6 +354,7 @@ export default function SalesCustomerManage() {
   const [customers, setCustomers] = useState(INITIAL_CUSTOMERS);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(15);
 
   // Modal states
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -401,10 +401,10 @@ export default function SalesCustomerManage() {
     setCurrentPage(1);
   }, [searchTerm]);
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginatedCustomers = filtered.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
   );
 
   // Handlers
@@ -643,7 +643,7 @@ export default function SalesCustomerManage() {
                       className="px-4 py-3 text-[12px] font-medium"
                       style={{ color: "var(--text-placeholder)" }}
                     >
-                      {(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}
+                      {(currentPage - 1) * itemsPerPage + idx + 1}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
@@ -785,80 +785,96 @@ export default function SalesCustomerManage() {
           </div>
 
           {/* Pagination Footer */}
-          {totalPages > 1 && (
+          {filtered.length > 0 && (
             <div
-              className="flex items-center justify-between px-4 py-3 border-t shrink-0"
+              className="flex items-center justify-between px-6 py-3 border-t shrink-0"
               style={{
                 borderColor: "var(--grid-border)",
-                backgroundColor: "var(--grid-header-bg)",
+                backgroundColor: "var(--bg-main)",
               }}
             >
-              <span
-                className="text-[12px]"
+              <div
+                className="text-[13px]"
                 style={{ color: "var(--text-secondary)" }}
               >
-                Hiển thị{" "}
-                <span
-                  className="font-bold"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  {(currentPage - 1) * ITEMS_PER_PAGE + 1}
-                </span>{" "}
-                -{" "}
-                <span
-                  className="font-bold"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}
-                </span>{" "}
-                trong{" "}
+                Tổng số bản ghi:{" "}
                 <span
                   className="font-bold"
                   style={{ color: "var(--text-main)" }}
                 >
                   {filtered.length}
-                </span>{" "}
-                kết quả
-              </span>
+                </span>
+              </div>
 
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="w-7 h-7 rounded-md flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200"
-                  style={{ color: "var(--text-main)" }}
+              <div className="flex items-center gap-6">
+                {/* Items per page indicator */}
+                <div className="flex items-center gap-2">
+                  <span
+                    className="text-[13px]"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    Số bản ghi/trang
+                  </span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(1); // Reset to page 1 when changing items per page
+                    }}
+                    className="h-8 px-2 pr-6 rounded-md text-[13px] border cursor-pointer focus:outline-none focus:ring-1 transition appearance-none"
+                    style={{
+                      borderColor: "var(--grid-border)",
+                      backgroundColor: "#fff",
+                      color: "var(--text-main)",
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                      backgroundRepeat: "no-repeat",
+                      backgroundPosition: "right 8px center",
+                    }}
+                  >
+                    {[15, 30, 50, 100].map((size) => (
+                      <option key={size} value={size}>
+                        {size}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Range Info */}
+                <div
+                  className="text-[13px]"
+                  style={{ color: "var(--text-secondary)" }}
                 >
-                  <ChevronLeft size={16} />
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className="w-7 h-7 rounded-md text-[13px] font-semibold transition cursor-pointer"
-                      style={{
-                        backgroundColor:
-                          currentPage === page
-                            ? "var(--brand-primary)"
-                            : "transparent",
-                        color:
-                          currentPage === page ? "#fff" : "var(--text-main)",
-                      }}
-                    >
-                      {page}
-                    </button>
-                  ),
-                )}
-                <button
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="w-7 h-7 rounded-md flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  <ChevronRight size={16} />
-                </button>
+                  <span
+                    className="font-bold"
+                    style={{ color: "var(--text-main)" }}
+                  >
+                    {(currentPage - 1) * itemsPerPage + 1} -{" "}
+                    {Math.min(currentPage * itemsPerPage, filtered.length)}
+                  </span>{" "}
+                  bản ghi
+                </div>
+
+                {/* Arrows */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
+                    style={{ color: "var(--text-main)" }}
+                  >
+                    <ChevronLeft size={16} strokeWidth={2.5} />
+                  </button>
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
+                    style={{ color: "var(--text-main)" }}
+                  >
+                    <ChevronRight size={16} strokeWidth={2.5} />
+                  </button>
+                </div>
               </div>
             </div>
           )}

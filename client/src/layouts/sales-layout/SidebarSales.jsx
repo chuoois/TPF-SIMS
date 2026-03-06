@@ -19,12 +19,17 @@ import {
 const menuItems = [
   { text: "Tổng quan", icon: Home, path: "/sales/home" },
   {
+    text: "Quản lý đơn hàng",
+    icon: Package,
+    path: "/sales/dashboard/orders",
+  },
+  {
     text: "Quản lý khách hàng",
     icon: Users,
     path: "/sales/dashboard/customers",
   },
   {
-    text: "Bán hàng tại quầy",
+    text: "Hàng có sẵn",
     icon: ShoppingBag,
     path: "/sales/dashboard/invoice-instock",
   },
@@ -32,11 +37,6 @@ const menuItems = [
     text: "Đặt hàng theo mẫu",
     icon: ClipboardList,
     path: "/sales/dashboard/invoice-custom-order",
-  },
-  {
-    text: "Quản lý đơn hàng",
-    icon: Package,
-    path: "/sales/dashboard/orders",
   },
 ];
 

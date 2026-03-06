@@ -8,6 +8,7 @@ import { toast } from "react-hot-toast";
 import { ProfileModal } from "./ProfileModal";
 import { ChangePasswordModal } from "./ChangePasswordModal";
 import { Button } from "@/components/ui/button";
+import Logo from "@/assets/tp-logo.svg";
 
 /**
  * Component Header – Owner Layout
@@ -73,7 +74,8 @@ export const Header = () => {
     if (shouldReload) fetchProfile();
   };
 
-  const displayName = profile?.profile?.full_name ?? profile?.email ?? "Người dùng";
+  const displayName =
+    profile?.profile?.full_name ?? profile?.email ?? "Người dùng";
   const displayEmail = profile?.email ?? "";
   const roleLabel = profile?.role?.role_name ?? profile?.role?.role_code ?? "";
 
@@ -82,7 +84,10 @@ export const Header = () => {
       <header className="h-16 border-b bg-background flex items-center justify-between px-6 z-40">
         {/* Logo */}
         <div className="flex items-center gap-3">
-          <img src={Logo} alt="TPF-SIMS" className="h-8 w-auto" />
+          <img src={Logo} alt="TPF-SIMS" className="h-9 w-9 rounded-lg" />
+          <span className="text-lg font-bold text-foreground tracking-tight">
+            TPF-SIMS
+          </span>
         </div>
 
         {/* Right actions */}
@@ -108,12 +113,15 @@ export const Header = () => {
                   {displayName}
                 </span>
                 {roleLabel && (
-                  <span className="text-xs text-muted-foreground">{roleLabel}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {roleLabel}
+                  </span>
                 )}
               </div>
               <ChevronDown
-                className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""
-                  }`}
+                className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
+                  dropdownOpen ? "rotate-180" : ""
+                }`}
               />
             </button>
 
@@ -172,10 +180,7 @@ export const Header = () => {
       </header>
 
       {/* Modals */}
-      <ProfileModal
-        open={profileModalOpen}
-        onClose={handleProfileClose}
-      />
+      <ProfileModal open={profileModalOpen} onClose={handleProfileClose} />
       <ChangePasswordModal
         open={changePasswordModalOpen}
         onClose={() => setChangePasswordModalOpen(false)}

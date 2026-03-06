@@ -12,6 +12,7 @@ import {
   ListChecks,
   Settings2,
 } from "lucide-react";
+import Logo from "@/assets/tp-logo.svg";
 
 /**
  * Component Sidebar
@@ -74,6 +75,19 @@ export const Sidebar = () => {
 
   return (
     <aside className="w-72 border-r bg-background flex flex-col">
+      {/* Logo */}
+      <div className="flex items-center gap-2.5 px-4 py-4 border-b">
+        <img src={Logo} alt="TPF-SIMS" className="h-9 w-9 rounded-lg" />
+        <div className="flex flex-col">
+          <span className="text-sm font-bold text-foreground tracking-tight leading-tight">
+            TPF-SIMS
+          </span>
+          <span className="text-[11px] text-muted-foreground leading-tight">
+            Management System
+          </span>
+        </div>
+      </div>
+
       {/* App grid */}
       <nav className="grid grid-cols-2 gap-3 p-4">
         {menus.map((item) => {

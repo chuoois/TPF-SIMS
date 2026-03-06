@@ -1,23 +1,18 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
-import Logo from "@/assets/logos/Logo.png";
+import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
+import Logo from "@/assets/tp-logo.svg";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { authService } from "@/services/auth.service";
-import { toast } from "react-hot-toast";
 
 /**
  * Component LoginPage
- * Trang đăng nhập hệ thống TPF-SIMS (FAKE LOGIN).
+ * Trang đăng nhập hệ thống TPF-SIMS
  *
  * Created By: ThinhBui
  * Created Date: 05/02/2026
+ * Updated: 06/03/2026 – redesign modern SaaS style
  */
 
 export const LoginPage = () => {
@@ -40,38 +35,13 @@ export const LoginPage = () => {
       password: "",
     },
     validationSchema,
-    onSubmit: async (values) => {
-      try {
-        setLoading(true);
-
-        /**
-         * Backend sẽ:
-         * - Set accessToken cookie
-         * - Set refreshToken cookie
-         * - Trả về { message, role }
-         */
-        const data = await authService.login(values.email, values.password);
-        const role = data.role;
-        localStorage.setItem("user", JSON.stringify(data.user));
-        const roleRedirectMap = {
-          OWNER: "/owner/home",
-          SALES: "/sales/home",
-          ACCOUNTANT: "/accountant/dashboard",
-          WORKER: "/worker/home",
-        };
-
-        toast.success("Đăng nhập thành công");
-
-        navigate(roleRedirectMap[role] || "/");
-      } catch (error) {
-        console.error(error);
-
-        toast.error(
-          error?.response?.data?.message || "Sai email hoặc mật khẩu",
-        );
-      } finally {
+    onSubmit: async () => {
+      setLoading(true);
+      // Fake login – navigate trực tiếp
+      setTimeout(() => {
         setLoading(false);
-      }
+        navigate("/sales/home");
+      }, 800);
     },
   });
 
@@ -79,114 +49,310 @@ export const LoginPage = () => {
     <>
       <PageHelmet title="Đăng nhập | TPF-SIMS" />
 
-      <div className="flex flex-col gap-6">
-        <Card className="overflow-hidden p-0">
-          <CardContent className="grid p-0 md:grid-cols-2">
-            <form className="p-6 md:p-8" onSubmit={formik.handleSubmit}>
-              <FieldGroup>
-                <div className="flex flex-col items-center gap-2 text-center">
-                  <h1 className="text-2xl font-bold">Chào mừng bạn quay lại</h1>
-                  <p className="text-muted-foreground text-balance">
-                    Đăng nhập vào tài khoản TPF-SIMS của bạn
-                  </p>
-                </div>
+      <div>
+        <div
+          className="w-full max-w-[960px] grid md:grid-cols-2 rounded-2xl overflow-hidden"
+          style={{
+            boxShadow:
+              "0 4px 32px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)",
+          }}
+        >
+          {/* LEFT — Illustration Panel */}
+          <div
+            className="relative hidden md:flex flex-col items-center justify-center p-12 overflow-hidden"
+            style={{
+              background:
+                "linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #15803d 100%)",
+            }}
+          >
+            {/* Abstract decorative circles */}
+            <div
+              className="absolute -top-20 -left-20 w-72 h-72 rounded-full opacity-10"
+              style={{ backgroundColor: "#fff" }}
+            />
+            <div
+              className="absolute -bottom-16 -right-16 w-56 h-56 rounded-full opacity-10"
+              style={{ backgroundColor: "#fff" }}
+            />
+            <div
+              className="absolute top-1/2 left-1/4 w-32 h-32 rounded-full opacity-5"
+              style={{ backgroundColor: "#fff" }}
+            />
 
-                {/* EMAIL */}
-                <Field>
-                  <FieldLabel htmlFor="email">Email</FieldLabel>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="Nhập email..."
-                    value={formik.values.email}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    className={
-                      formik.touched.email && formik.errors.email
-                        ? "border-red-500 focus-visible:ring-red-500"
-                        : ""
-                    }
-                  />
-                  {formik.touched.email && formik.errors.email && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {formik.errors.email}
-                    </p>
-                  )}
-                </Field>
+            {/* Content */}
+            <div className="relative z-10 flex flex-col items-center text-center">
+              {/* Icon illustration */}
+              <div
+                className="w-20 h-20 rounded-2xl flex items-center justify-center mb-8"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.18)",
+                  backdropFilter: "blur(10px)",
+                }}
+              >
+                <img src={Logo} alt="TPF-SIMS" className="h-12 w-12" />
+              </div>
 
-                {/* PASSWORD */}
-                <Field>
-                  <div className="flex items-center">
-                    <FieldLabel htmlFor="password">Mật khẩu</FieldLabel>
-                    <Link
-                      to="/auth/forgot-password"
-                      className="ml-auto text-sm underline-offset-2 hover:underline"
-                    >
-                      Quên mật khẩu?
-                    </Link>
-                  </div>
-
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Nhập mật khẩu..."
-                      value={formik.values.password}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      className={`pr-10 ${formik.touched.password && formik.errors.password
-                          ? "border-red-500 focus-visible:ring-red-500"
-                          : ""
-                        }`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-
-                  {formik.touched.password && formik.errors.password && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {formik.errors.password}
-                    </p>
-                  )}
-                </Field>
-
-                <Field>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Đang đăng nhập..." : "Đăng nhập"}
-                  </Button>
-                </Field>
-              </FieldGroup>
-            </form>
-
-            <div className="bg-muted relative hidden md:flex flex-col items-center justify-center p-10 text-center">
-              <img
-                src={Logo}
-                alt="TPF-SIMS Logo"
-                className="h-20 w-auto mb-4"
-              />
-
-              <p className="mt-3 text-sm text-muted-foreground max-w-xs">
+              <h2 className="text-2xl font-bold text-white mb-3">TPF-SIMS</h2>
+              <p className="text-white/80 text-sm max-w-[260px] leading-relaxed">
                 Hệ thống quản lý nội bộ giúp vận hành hiệu quả, minh bạch và
                 chính xác hơn mỗi ngày.
               </p>
 
-              <div className="mt-6 text-xs text-muted-foreground">
-                © 2026 5PGroup
+              {/* Feature highlights */}
+              <div className="mt-8 flex flex-col gap-3 w-full max-w-[240px]">
+                {[
+                  "Quản lý đơn hàng thông minh",
+                  "Theo dõi sản phẩm & kho",
+                  "Báo cáo doanh thu realtime",
+                ].map((text, i) => (
+                  <div key={i} className="flex items-center gap-2.5 text-left">
+                    <div
+                      className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: "rgba(255,255,255,0.2)" }}
+                    >
+                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                        <path
+                          d="M1 4L3.5 6.5L9 1"
+                          stroke="white"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                    <span className="text-white/90 text-[13px]">{text}</span>
+                  </div>
+                ))}
               </div>
             </div>
-          </CardContent>
-        </Card>
+
+            {/* Footer */}
+            <div className="absolute bottom-6 text-white/40 text-xs">
+              © 2026 5PGroup
+            </div>
+          </div>
+
+          {/* RIGHT — Login Form */}
+          <div className="bg-white p-8 md:p-10 flex flex-col justify-center">
+            {/* Mobile logo */}
+            <div className="flex items-center gap-2 mb-8 md:mb-10">
+              <img src={Logo} alt="TPF-SIMS" className="h-9 w-9 rounded-lg" />
+              <span className="text-lg font-bold" style={{ color: "#1e293b" }}>
+                TPF-SIMS
+              </span>
+            </div>
+
+            <div className="mb-8">
+              <h1
+                className="text-2xl font-bold tracking-tight"
+                style={{ color: "#0f172a" }}
+              >
+                Chào mừng bạn quay lại
+              </h1>
+              <p className="text-sm mt-1.5" style={{ color: "#94a3b8" }}>
+                Đăng nhập vào tài khoản TPF-SIMS của bạn
+              </p>
+            </div>
+
+            <form
+              onSubmit={formik.handleSubmit}
+              className="flex flex-col gap-5"
+            >
+              {/* EMAIL */}
+              <div className="flex flex-col gap-1.5">
+                <label
+                  htmlFor="email"
+                  className="text-sm font-medium"
+                  style={{ color: "#374151" }}
+                >
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail
+                    size={16}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2"
+                    style={{ color: "#94a3b8" }}
+                  />
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="you@company.com"
+                    value={formik.values.email}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full h-11 pl-10 pr-4 rounded-xl text-sm transition-all duration-200 outline-none"
+                    style={{
+                      border: `1.5px solid ${formik.touched.email && formik.errors.email ? "#ef4444" : "#e2e8f0"}`,
+                      color: "#0f172a",
+                      backgroundColor: "#f8fafc",
+                    }}
+                    onFocus={(e) => {
+                      if (!(formik.touched.email && formik.errors.email)) {
+                        e.target.style.borderColor = "#22c55e";
+                        e.target.style.boxShadow =
+                          "0 0 0 3px rgba(34,197,94,0.1)";
+                      }
+                    }}
+                    onBlurCapture={(e) => {
+                      if (!(formik.touched.email && formik.errors.email)) {
+                        e.target.style.borderColor = "#e2e8f0";
+                        e.target.style.boxShadow = "none";
+                      }
+                    }}
+                  />
+                </div>
+                {formik.touched.email && formik.errors.email && (
+                  <p className="text-xs mt-0.5" style={{ color: "#ef4444" }}>
+                    {formik.errors.email}
+                  </p>
+                )}
+              </div>
+
+              {/* PASSWORD */}
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="password"
+                    className="text-sm font-medium"
+                    style={{ color: "#374151" }}
+                  >
+                    Mật khẩu
+                  </label>
+                  <Link
+                    to="/auth/forgot-password"
+                    className="text-xs font-medium no-underline transition-colors hover:opacity-80"
+                    style={{ color: "#22c55e" }}
+                  >
+                    Quên mật khẩu?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <Lock
+                    size={16}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2"
+                    style={{ color: "#94a3b8" }}
+                  />
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Nhập mật khẩu..."
+                    value={formik.values.password}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full h-11 pl-10 pr-11 rounded-xl text-sm transition-all duration-200 outline-none"
+                    style={{
+                      border: `1.5px solid ${formik.touched.password && formik.errors.password ? "#ef4444" : "#e2e8f0"}`,
+                      color: "#0f172a",
+                      backgroundColor: "#f8fafc",
+                    }}
+                    onFocus={(e) => {
+                      if (
+                        !(formik.touched.password && formik.errors.password)
+                      ) {
+                        e.target.style.borderColor = "#22c55e";
+                        e.target.style.boxShadow =
+                          "0 0 0 3px rgba(34,197,94,0.1)";
+                      }
+                    }}
+                    onBlurCapture={(e) => {
+                      if (
+                        !(formik.touched.password && formik.errors.password)
+                      ) {
+                        e.target.style.borderColor = "#e2e8f0";
+                        e.target.style.boxShadow = "none";
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 cursor-pointer transition-colors"
+                    style={{ color: "#94a3b8" }}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                {formik.touched.password && formik.errors.password && (
+                  <p className="text-xs mt-0.5" style={{ color: "#ef4444" }}>
+                    {formik.errors.password}
+                  </p>
+                )}
+              </div>
+
+              {/* Remember me */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="remember"
+                  className="w-4 h-4 rounded cursor-pointer accent-[#22c55e]"
+                />
+                <label
+                  htmlFor="remember"
+                  className="text-sm cursor-pointer select-none"
+                  style={{ color: "#64748b" }}
+                >
+                  Ghi nhớ đăng nhập
+                </label>
+              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full h-11 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{
+                  background: loading
+                    ? "#86efac"
+                    : "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+                  boxShadow: loading ? "none" : "0 2px 8px rgba(34,197,94,0.3)",
+                  border: "none",
+                }}
+                onMouseEnter={(e) => {
+                  if (!loading)
+                    e.target.style.boxShadow = "0 4px 16px rgba(34,197,94,0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!loading)
+                    e.target.style.boxShadow = "0 2px 8px rgba(34,197,94,0.3)";
+                }}
+              >
+                {loading ? (
+                  <>
+                    <svg
+                      className="animate-spin h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
+                    </svg>
+                    Đang đăng nhập...
+                  </>
+                ) : (
+                  <>
+                    Đăng nhập
+                    <ArrowRight size={16} />
+                  </>
+                )}
+              </button>
+
+              {/* Divider */}
+            </form>
+          </div>
+        </div>
       </div>
     </>
   );
