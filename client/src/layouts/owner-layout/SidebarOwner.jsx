@@ -19,6 +19,7 @@ import {
   ChevronRight,
   PanelLeftClose,
 } from "lucide-react";
+
 const menuItems = [
   { text: "Tổng quan", icon: Home, path: "/owner/dashboard" },
   { text: "Đơn hàng", icon: ClipboardList, path: "/owner/orders" },
@@ -29,6 +30,7 @@ const menuItems = [
   { text: "Nhà cung cấp", icon: Building2, path: "/owner/suppliers" },
   { text: "Nhân sự", icon: UserCog, path: "/owner/employees" },
   { text: "Báo cáo", icon: BarChart3, path: "/owner/reports" },
+
 ];
 
 
@@ -36,6 +38,7 @@ export const SidebarOwner = () => {
   const location = useLocation();
 
   return (
+
     <aside
       className="w-[220px] h-full relative overflow-hidden bg-[#1a1a1b] bg-bottom bg-no-repeat bg-contain"
       style={{
@@ -87,6 +90,7 @@ export const SidebarOwner = () => {
             );
           })}
         </div>
+
 
         {/* Collapse button */}
         <div className="mt-auto">

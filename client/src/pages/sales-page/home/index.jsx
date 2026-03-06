@@ -7,13 +7,7 @@
 
 import { useState } from "react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
-import {
-  TrendingUp,
-  Users,
-  CheckCircle2,
-  Package,
-  ShoppingBag,
-} from "lucide-react";
+import { TrendingUp, Users, Package, ShoppingBag } from "lucide-react";
 import {
   AreaChart,
   Area,
@@ -29,100 +23,391 @@ import {
 } from "recharts";
 
 // ===================== STATIC DATA =====================
-const KPIS = [
-  {
-    label: "Doanh thu hôm nay",
-    value: "85.500.000 ₫",
-    trend: "+12.5%",
-    isPositive: true,
-    icon: TrendingUp,
-    color: "var(--brand-primary)",
+const MOCK_DATA = {
+  today: {
+    kpis: [
+      {
+        label: "Doanh thu",
+        value: "85.500.000 ₫",
+        trend: "+12.5%",
+        isPositive: true,
+        icon: TrendingUp,
+        color: "var(--brand-primary)",
+      },
+      {
+        label: "Đơn hàng",
+        value: "24",
+        trend: "+4",
+        isPositive: true,
+        icon: ShoppingBag,
+        color: "var(--palette-blue)",
+      },
+      {
+        label: "Khách mới",
+        value: "8",
+        trend: "-2",
+        isPositive: false,
+        icon: Users,
+        color: "var(--palette-purple)",
+      },
+      {
+        label: "SP bán ra",
+        value: "158",
+        trend: "+12",
+        isPositive: true,
+        icon: Package,
+        color: "var(--palette-teal)",
+      },
+    ],
+    revenueData: [
+      { name: "08:00", total: 12000000 },
+      { name: "10:00", total: 25000000 },
+      { name: "12:00", total: 18000000 },
+      { name: "14:00", total: 45000000 },
+      { name: "16:00", total: 85500000 },
+    ],
+    orderStatusData: [
+      { name: "Hoàn thành", value: 65, color: "var(--status-success)" },
+      { name: "Đang giao", value: 20, color: "var(--palette-dark-blue)" },
+      { name: "Chờ xử lý", value: 10, color: "var(--status-pending)" },
+      { name: "Hủy", value: 5, color: "var(--status-error)" },
+    ],
+    recentOrders: [
+      {
+        id: "DH-0001",
+        customer: "Nguyễn Văn Hoàng",
+        type: "Hàng có sẵn",
+        total: 15500000,
+        status: "Hoàn thành",
+        date: "15 phút trước",
+      },
+      {
+        id: "DH-0002",
+        customer: "Trần Thị Mai",
+        type: "Đặt theo mẫu",
+        total: 42000000,
+        status: "Chờ xử lý",
+        date: "1 giờ trước",
+      },
+      {
+        id: "DH-0003",
+        customer: "Phạm Thị Lan",
+        type: "Đặt theo mẫu",
+        total: 125000000,
+        status: "Đang giao",
+        date: "3 giờ trước",
+      },
+    ],
   },
-  {
-    label: "Đơn hàng mới",
-    value: "24",
-    trend: "+4",
-    isPositive: true,
-    icon: ShoppingBag,
-    color: "var(--palette-blue)",
+  yesterday: {
+    kpis: [
+      {
+        label: "Doanh thu",
+        value: "72.000.000 ₫",
+        trend: "-5.2%",
+        isPositive: false,
+        icon: TrendingUp,
+        color: "var(--brand-primary)",
+      },
+      {
+        label: "Đơn hàng",
+        value: "20",
+        trend: "-1",
+        isPositive: false,
+        icon: ShoppingBag,
+        color: "var(--palette-blue)",
+      },
+      {
+        label: "Khách mới",
+        value: "10",
+        trend: "+3",
+        isPositive: true,
+        icon: Users,
+        color: "var(--palette-purple)",
+      },
+      {
+        label: "SP bán ra",
+        value: "140",
+        trend: "-8",
+        isPositive: false,
+        icon: Package,
+        color: "var(--palette-teal)",
+      },
+    ],
+    revenueData: [
+      { name: "08:00", total: 8000000 },
+      { name: "10:00", total: 20000000 },
+      { name: "12:00", total: 35000000 },
+      { name: "14:00", total: 50000000 },
+      { name: "16:00", total: 72000000 },
+    ],
+    orderStatusData: [
+      { name: "Hoàn thành", value: 60, color: "var(--status-success)" },
+      { name: "Đang giao", value: 15, color: "var(--palette-dark-blue)" },
+      { name: "Chờ xử lý", value: 15, color: "var(--status-pending)" },
+      { name: "Hủy", value: 10, color: "var(--status-error)" },
+    ],
+    recentOrders: [
+      {
+        id: "DH-Y001",
+        customer: "Lê Minh Tuấn",
+        type: "Hàng có sẵn",
+        total: 8900000,
+        status: "Hoàn thành",
+        date: "10:30",
+      },
+      {
+        id: "DH-Y002",
+        customer: "Võ Đức Anh",
+        type: "Hàng có sẵn",
+        total: 3400000,
+        status: "Hủy",
+        date: "14:20",
+      },
+    ],
   },
-  {
-    label: "Khách hàng mới",
-    value: "8",
-    trend: "-2",
-    isPositive: false,
-    icon: Users,
-    color: "var(--palette-purple)",
+  "7_days": {
+    kpis: [
+      {
+        label: "Doanh thu",
+        value: "417.000.000 ₫",
+        trend: "+15.8%",
+        isPositive: true,
+        icon: TrendingUp,
+        color: "var(--brand-primary)",
+      },
+      {
+        label: "Đơn hàng",
+        value: "145",
+        trend: "+20",
+        isPositive: true,
+        icon: ShoppingBag,
+        color: "var(--palette-blue)",
+      },
+      {
+        label: "Khách mới",
+        value: "45",
+        trend: "+12",
+        isPositive: true,
+        icon: Users,
+        color: "var(--palette-purple)",
+      },
+      {
+        label: "SP bán ra",
+        value: "920",
+        trend: "+85",
+        isPositive: true,
+        icon: Package,
+        color: "var(--palette-teal)",
+      },
+    ],
+    revenueData: [
+      { name: "T2", total: 45000000 },
+      { name: "T3", total: 52000000 },
+      { name: "T4", total: 38000000 },
+      { name: "T5", total: 65000000 },
+      { name: "T6", total: 40000000 },
+      { name: "T7", total: 85000000 },
+      { name: "CN", total: 92000000 },
+    ],
+    orderStatusData: [
+      { name: "Hoàn thành", value: 70, color: "var(--status-success)" },
+      { name: "Đang giao", value: 15, color: "var(--palette-dark-blue)" },
+      { name: "Chờ xử lý", value: 10, color: "var(--status-pending)" },
+      { name: "Hủy", value: 5, color: "var(--status-error)" },
+    ],
+    recentOrders: [
+      {
+        id: "DH-0001",
+        customer: "Nguyễn Văn Hoàng",
+        type: "Hàng có sẵn",
+        total: 15500000,
+        status: "Hoàn thành",
+        date: "15 phút trước",
+      },
+      {
+        id: "DH-0002",
+        customer: "Trần Thị Mai",
+        type: "Đặt theo mẫu",
+        total: 42000000,
+        status: "Chờ xử lý",
+        date: "1 giờ trước",
+      },
+      {
+        id: "DH-0003",
+        customer: "Phạm Thị Lan",
+        type: "Đặt theo mẫu",
+        total: 125000000,
+        status: "Đang giao",
+        date: "3 giờ trước",
+      },
+      {
+        id: "DH-0004",
+        customer: "Lê Minh Tuấn",
+        type: "Hàng có sẵn",
+        total: 8900000,
+        status: "Hoàn thành",
+        date: "Hôm qua",
+      },
+      {
+        id: "DH-0005",
+        customer: "Võ Đức Anh",
+        type: "Hàng có sẵn",
+        total: 3400000,
+        status: "Hủy",
+        date: "Hôm qua",
+      },
+    ],
   },
-  {
-    label: "Sản phẩm bán ra",
-    value: "158",
-    trend: "+12",
-    isPositive: true,
-    icon: Package,
-    color: "var(--palette-teal)",
+  this_month: {
+    kpis: [
+      {
+        label: "Doanh thu",
+        value: "1.250.000.000 ₫",
+        trend: "+25.4%",
+        isPositive: true,
+        icon: TrendingUp,
+        color: "var(--brand-primary)",
+      },
+      {
+        label: "Đơn hàng",
+        value: "620",
+        trend: "+115",
+        isPositive: true,
+        icon: ShoppingBag,
+        color: "var(--palette-blue)",
+      },
+      {
+        label: "Khách mới",
+        value: "185",
+        trend: "+45",
+        isPositive: true,
+        icon: Users,
+        color: "var(--palette-purple)",
+      },
+      {
+        label: "SP bán ra",
+        value: "3.850",
+        trend: "+420",
+        isPositive: true,
+        icon: Package,
+        color: "var(--palette-teal)",
+      },
+    ],
+    revenueData: [
+      { name: "Tuần 1", total: 250000000 },
+      { name: "Tuần 2", total: 320000000 },
+      { name: "Tuần 3", total: 410000000 },
+      { name: "Tuần 4", total: 270000000 },
+    ],
+    orderStatusData: [
+      { name: "Hoàn thành", value: 75, color: "var(--status-success)" },
+      { name: "Đang giao", value: 15, color: "var(--palette-dark-blue)" },
+      { name: "Chờ xử lý", value: 7, color: "var(--status-pending)" },
+      { name: "Hủy", value: 3, color: "var(--status-error)" },
+    ],
+    recentOrders: [
+      {
+        id: "DH-M001",
+        customer: "Hoàng Nguyệt Ánh",
+        type: "Đặt theo mẫu",
+        total: 56000000,
+        status: "Hoàn thành",
+        date: "01/03/2026",
+      },
+      {
+        id: "DH-M002",
+        customer: "Bùi Tuấn Anh",
+        type: "Hàng có sẵn",
+        total: 21000000,
+        status: "Đang giao",
+        date: "02/03/2026",
+      },
+      {
+        id: "DH-0002",
+        customer: "Trần Thị Mai",
+        type: "Đặt theo mẫu",
+        total: 42000000,
+        status: "Chờ xử lý",
+        date: "05/03/2026",
+      },
+      {
+        id: "DH-0001",
+        customer: "Nguyễn Văn Hoàng",
+        type: "Hàng có sẵn",
+        total: 15500000,
+        status: "Hoàn thành",
+        date: "06/03/2026",
+      },
+    ],
   },
-];
-
-const REVENUE_DATA = [
-  { name: "T2", total: 45000000 },
-  { name: "T3", total: 52000000 },
-  { name: "T4", total: 38000000 },
-  { name: "T5", total: 65000000 },
-  { name: "T6", total: 48000000 },
-  { name: "T7", total: 85000000 },
-  { name: "CN", total: 92000000 },
-];
-
-const WOOD_TYPE_DATA = [
-  { name: "Gỗ Óc chó", value: 45, color: "#8B5A2B" }, // Brown
-  { name: "Gỗ Sồi", value: 30, color: "#D2B48C" }, // Tan
-  { name: "Gỗ Gõ đỏ", value: 15, color: "#CD5C5C" }, // IndianRed
-  { name: "Khác", value: 10, color: "var(--status-pending)" },
-];
-
-const RECENT_ORDERS = [
-  {
-    id: "DH-0001",
-    customer: "Nguyễn Văn Hoàng",
-    type: "Bán tại quầy",
-    total: 15500000,
-    status: "Hoàn thành",
-    date: "15 phút trước",
+  last_month: {
+    kpis: [
+      {
+        label: "Doanh thu",
+        value: "980.000.000 ₫",
+        trend: "-10.5%",
+        isPositive: false,
+        icon: TrendingUp,
+        color: "var(--brand-primary)",
+      },
+      {
+        label: "Đơn hàng",
+        value: "480",
+        trend: "-50",
+        isPositive: false,
+        icon: ShoppingBag,
+        color: "var(--palette-blue)",
+      },
+      {
+        label: "Khách mới",
+        value: "140",
+        trend: "-15",
+        isPositive: false,
+        icon: Users,
+        color: "var(--palette-purple)",
+      },
+      {
+        label: "SP bán ra",
+        value: "2.950",
+        trend: "-120",
+        isPositive: false,
+        icon: Package,
+        color: "var(--palette-teal)",
+      },
+    ],
+    revenueData: [
+      { name: "Tuần 1", total: 150000000 },
+      { name: "Tuần 2", total: 220000000 },
+      { name: "Tuần 3", total: 280000000 },
+      { name: "Tuần 4", total: 330000000 },
+    ],
+    orderStatusData: [
+      { name: "Hoàn thành", value: 68, color: "var(--status-success)" },
+      { name: "Đang giao", value: 18, color: "var(--palette-dark-blue)" },
+      { name: "Chờ xử lý", value: 10, color: "var(--status-pending)" },
+      { name: "Hủy", value: 4, color: "var(--status-error)" },
+    ],
+    recentOrders: [
+      {
+        id: "DH-L001",
+        customer: "Đặng Thùy Linh",
+        type: "Đặt theo mẫu",
+        total: 85000000,
+        status: "Hoàn thành",
+        date: "28/02/2026",
+      },
+      {
+        id: "DH-L002",
+        customer: "Vũ Phương Thảo",
+        type: "Đặt theo mẫu",
+        total: 95000000,
+        status: "Hủy",
+        date: "25/02/2026",
+      },
+    ],
   },
-  {
-    id: "DH-0002",
-    customer: "Trần Thị Mai",
-    type: "Đặt theo mẫu",
-    total: 42000000,
-    status: "Chờ xử lý",
-    date: "1 giờ trước",
-  },
-  {
-    id: "DH-0003",
-    customer: "Phạm Thị Lan",
-    type: "Đặt theo mẫu",
-    total: 125000000,
-    status: "Đang giao",
-    date: "3 giờ trước",
-  },
-  {
-    id: "DH-0004",
-    customer: "Lê Minh Tuấn",
-    type: "Bán tại quầy",
-    total: 8900000,
-    status: "Hoàn thành",
-    date: "Hôm qua",
-  },
-  {
-    id: "DH-0005",
-    customer: "Võ Đức Anh",
-    type: "Bán tại quầy",
-    total: 3400000,
-    status: "Hủy",
-    date: "Hôm qua",
-  },
-];
+};
 
 // ===================== HELPERS =====================
 const formatCurrency = (value) => {
@@ -151,6 +436,9 @@ const getStatusColor = (status) => {
 // ===================== COMPONENT =====================
 export default function SalesDashboardHome() {
   const [timeRange, setTimeRange] = useState("7_days");
+
+  // Get current active data
+  const data = MOCK_DATA[timeRange];
 
   return (
     <>
@@ -185,9 +473,11 @@ export default function SalesDashboardHome() {
             }}
           >
             {[
+              { id: "today", label: "Hôm nay" },
+              { id: "yesterday", label: "Hôm qua" },
               { id: "7_days", label: "7 ngày qua" },
-              { id: "30_days", label: "30 ngày qua" },
               { id: "this_month", label: "Tháng này" },
+              { id: "last_month", label: "Tháng trước" },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -212,7 +502,7 @@ export default function SalesDashboardHome() {
 
         {/* 1. KPIs */}
         <div className="grid grid-cols-4 gap-4 mb-6 shrink-0">
-          {KPIS.map((kpi, idx) => {
+          {data.kpis.map((kpi, idx) => {
             const Icon = kpi.icon;
             return (
               <div
@@ -269,7 +559,7 @@ export default function SalesDashboardHome() {
             <div className="h-[280px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
-                  data={REVENUE_DATA}
+                  data={data.revenueData}
                   margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
                 >
                   <defs>
@@ -343,19 +633,19 @@ export default function SalesDashboardHome() {
               className="text-[15px] font-bold mb-2"
               style={{ color: "var(--text-main)" }}
             >
-              Cơ cấu sản phẩm
+              Đơn hàng theo trạng thái
             </h3>
             <p
               className="text-[12px] mb-4"
               style={{ color: "var(--text-placeholder)" }}
             >
-              Phân bổ theo loại gỗ
+              Tỷ lệ theo số lượng đơn
             </p>
             <div className="flex-1 min-h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={WOOD_TYPE_DATA}
+                    data={data.orderStatusData}
                     cx="50%"
                     cy="45%"
                     innerRadius={60}
@@ -364,7 +654,7 @@ export default function SalesDashboardHome() {
                     dataKey="value"
                     stroke="none"
                   >
-                    {WOOD_TYPE_DATA.map((entry, index) => (
+                    {data.orderStatusData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -450,9 +740,9 @@ export default function SalesDashboardHome() {
                 </tr>
               </thead>
               <tbody>
-                {RECENT_ORDERS.map((o, idx) => {
+                {data.recentOrders.map((o, idx) => {
                   const statusConfig = getStatusColor(o.status);
-                  const isLast = idx === RECENT_ORDERS.length - 1;
+                  const isLast = idx === data.recentOrders.length - 1;
                   return (
                     <tr
                       key={o.id}

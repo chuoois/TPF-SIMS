@@ -29,6 +29,7 @@ import {
   AlertCircle,
   User,
   Receipt,
+  Filter,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,7 @@ const WOOD_PRODUCTS = [
     price: 12500000,
     stock: 8,
     image: "/wood_products.png",
-    category: "Bàn ăn",
+    category: "Phòng ăn",
   },
   {
     id: 2,
@@ -52,7 +53,7 @@ const WOOD_PRODUCTS = [
     price: 8900000,
     stock: 5,
     image: "/wood_products.png",
-    category: "Kệ / Tủ",
+    category: "Phòng làm việc",
   },
   {
     id: 3,
@@ -61,7 +62,7 @@ const WOOD_PRODUCTS = [
     price: 7200000,
     stock: 12,
     image: "/wood_products.png",
-    category: "Bàn làm việc",
+    category: "Phòng làm việc",
   },
   {
     id: 4,
@@ -70,7 +71,7 @@ const WOOD_PRODUCTS = [
     price: 9800000,
     stock: 3,
     image: "/wood_products.png",
-    category: "Kệ / Tủ",
+    category: "Phòng ngủ",
   },
   {
     id: 5,
@@ -79,7 +80,7 @@ const WOOD_PRODUCTS = [
     price: 1850000,
     stock: 25,
     image: "/wood_products.png",
-    category: "Ghế",
+    category: "Phòng ăn",
   },
   {
     id: 6,
@@ -88,7 +89,7 @@ const WOOD_PRODUCTS = [
     price: 4500000,
     stock: 10,
     image: "/wood_products.png",
-    category: "Bàn trà",
+    category: "Phòng khách",
   },
   {
     id: 7,
@@ -97,7 +98,7 @@ const WOOD_PRODUCTS = [
     price: 11200000,
     stock: 4,
     image: "/wood_products.png",
-    category: "Kệ / Tủ",
+    category: "Phòng khách",
   },
   {
     id: 8,
@@ -106,7 +107,7 @@ const WOOD_PRODUCTS = [
     price: 15800000,
     stock: 6,
     image: "/wood_products.png",
-    category: "Giường",
+    category: "Phòng ngủ",
   },
   {
     id: 9,
@@ -115,7 +116,7 @@ const WOOD_PRODUCTS = [
     price: 18500000,
     stock: 2,
     image: "/wood_products.png",
-    category: "Kệ / Tủ",
+    category: "Phòng ngủ",
   },
   {
     id: 10,
@@ -124,7 +125,7 @@ const WOOD_PRODUCTS = [
     price: 16200000,
     stock: 0,
     image: "/wood_products.png",
-    category: "Bàn ăn",
+    category: "Phòng ăn",
   },
   {
     id: 11,
@@ -133,7 +134,7 @@ const WOOD_PRODUCTS = [
     price: 1200000,
     stock: 18,
     image: "/wood_products.png",
-    category: "Ghế",
+    category: "Phòng ăn",
   },
   {
     id: 12,
@@ -142,12 +143,270 @@ const WOOD_PRODUCTS = [
     price: 6800000,
     stock: 7,
     image: "/wood_products.png",
-    category: "Bàn trà",
+    category: "Phòng khách",
+  },
+  {
+    id: 13,
+    name: "Sofa da thật góc L chữ U",
+    sku: "SF-DA-13",
+    price: 25000000,
+    stock: 3,
+    image: "/wood_products.png",
+    category: "Phòng khách",
+  },
+  {
+    id: 14,
+    name: "Bàn trà đôi mặt kính khung sắt",
+    sku: "BT-K-14",
+    price: 3200000,
+    stock: 15,
+    image: "/wood_products.png",
+    category: "Phòng khách",
+  },
+  {
+    id: 15,
+    name: "Kệ TV treo tường tối giản",
+    sku: "KTV-TT-15",
+    price: 4100000,
+    stock: 20,
+    image: "/wood_products.png",
+    category: "Phòng khách",
+  },
+  {
+    id: 16,
+    name: "Tủ giày thông minh 3 tầng",
+    sku: "TG-TM-16",
+    price: 2800000,
+    stock: 12,
+    image: "/wood_products.png",
+    category: "Phòng khách",
+  },
+  {
+    id: 17,
+    name: "Ghế đôn sofa bọc nhung",
+    sku: "GD-BN-17",
+    price: 850000,
+    stock: 30,
+    image: "/wood_products.png",
+    category: "Phòng khách",
+  },
+  {
+    id: 18,
+    name: "Vách ngăn phòng khách cnc",
+    sku: "VN-CNC-18",
+    price: 5600000,
+    stock: 5,
+    image: "/wood_products.png",
+    category: "Phòng khách",
+  },
+
+  // Phòng ngủ
+  {
+    id: 19,
+    name: "Giường bọc da đầu giường cao",
+    sku: "GBD-19",
+    price: 18500000,
+    stock: 4,
+    image: "/wood_products.png",
+    category: "Phòng ngủ",
+  },
+  {
+    id: 20,
+    name: "Tủ quần áo cánh lùa kính đen",
+    sku: "TQA-L-20",
+    price: 21000000,
+    stock: 2,
+    image: "/wood_products.png",
+    category: "Phòng ngủ",
+  },
+  {
+    id: 21,
+    name: "Bàn trang điểm gương LED",
+    sku: "BTD-LED-21",
+    price: 5400000,
+    stock: 8,
+    image: "/wood_products.png",
+    category: "Phòng ngủ",
+  },
+  {
+    id: 22,
+    name: "Tab đầu giường gỗ tự nhiên",
+    sku: "TDG-TN-22",
+    price: 1200000,
+    stock: 25,
+    image: "/wood_products.png",
+    category: "Phòng ngủ",
+  },
+  {
+    id: 23,
+    name: "Giường tầng trẻ em gỗ thông",
+    sku: "GT-TE-23",
+    price: 9500000,
+    stock: 6,
+    image: "/wood_products.png",
+    category: "Phòng ngủ",
+  },
+  {
+    id: 24,
+    name: "Ghế thư giãn đọc sách kèm đôn",
+    sku: "GTG-24",
+    price: 6200000,
+    stock: 10,
+    image: "/wood_products.png",
+    category: "Phòng ngủ",
+  },
+  {
+    id: 25,
+    name: "Tủ ngăn kéo để đồ mini",
+    sku: "TNK-25",
+    price: 3100000,
+    stock: 14,
+    image: "/wood_products.png",
+    category: "Phòng ngủ",
+  },
+  {
+    id: 26,
+    name: "Giá treo quần áo khung thép",
+    sku: "GTQA-26",
+    price: 950000,
+    stock: 40,
+    image: "/wood_products.png",
+    category: "Phòng ngủ",
+  },
+
+  // Phòng ăn
+  {
+    id: 27,
+    name: "Bộ bàn ăn mặt đá ceramic",
+    sku: "BCC-27",
+    price: 17800000,
+    stock: 5,
+    image: "/wood_products.png",
+    category: "Phòng ăn",
+  },
+  {
+    id: 28,
+    name: "Tủ lạnh âm tủ đa năng",
+    sku: "TCA-28",
+    price: 12500000,
+    stock: 3,
+    image: "/wood_products.png",
+    category: "Phòng ăn",
+  },
+  {
+    id: 29,
+    name: "Tủ bếp acrylic bóng gương",
+    sku: "TBAC-29",
+    price: 28000000,
+    stock: 1,
+    image: "/wood_products.png",
+    category: "Phòng ăn",
+  },
+  {
+    id: 30,
+    name: "Ghế ăn bọc da PU cao cấp",
+    sku: "GAAP-30",
+    price: 1450000,
+    stock: 50,
+    image: "/wood_products.png",
+    category: "Phòng ăn",
+  },
+  {
+    id: 31,
+    name: "Đảo bếp di động mặt gỗ",
+    sku: "DB-31",
+    price: 8900000,
+    stock: 7,
+    image: "/wood_products.png",
+    category: "Phòng ăn",
+  },
+  {
+    id: 32,
+    name: "Kệ để rượu treo tường",
+    sku: "KDR-32",
+    price: 2100000,
+    stock: 18,
+    image: "/wood_products.png",
+    category: "Phòng ăn",
+  },
+  {
+    id: 33,
+    name: "Bàn ăn tròn xoay thông minh",
+    sku: "BAT-33",
+    price: 15600000,
+    stock: 4,
+    image: "/wood_products.png",
+    category: "Phòng ăn",
+  },
+
+  // Phòng làm việc
+  {
+    id: 34,
+    name: "Ghế công thái học Ergonomic",
+    sku: "GCTH-34",
+    price: 4500000,
+    stock: 22,
+    image: "/wood_products.png",
+    category: "Phòng làm việc",
+  },
+  {
+    id: 35,
+    name: "Bàn nâng hạ chiều cao điện",
+    sku: "BNH-35",
+    price: 8200000,
+    stock: 9,
+    image: "/wood_products.png",
+    category: "Phòng làm việc",
+  },
+  {
+    id: 36,
+    name: "Tủ hồ sơ văn phòng 2 cánh",
+    sku: "THS-36",
+    price: 3600000,
+    stock: 16,
+    image: "/wood_products.png",
+    category: "Phòng làm việc",
+  },
+  {
+    id: 37,
+    name: "Kệ máy in để bàn",
+    sku: "KMI-37",
+    price: 650000,
+    stock: 35,
+    image: "/wood_products.png",
+    category: "Phòng làm việc",
+  },
+  {
+    id: 38,
+    name: "Ghế xoay lưới văn phòng",
+    sku: "GXV-38",
+    price: 1850000,
+    stock: 45,
+    image: "/wood_products.png",
+    category: "Phòng làm việc",
+  },
+  {
+    id: 39,
+    name: "Hộc tủ di động 3 ngăn kéo",
+    sku: "HT-39",
+    price: 1550000,
+    stock: 28,
+    image: "/wood_products.png",
+    category: "Phòng làm việc",
+  },
+  {
+    id: 40,
+    name: "Bàn họp chân sắt chữ U",
+    sku: "BHC-40",
+    price: 9800000,
+    stock: 5,
+    image: "/wood_products.png",
+    category: "Phòng làm việc",
   },
 ];
 
-const ITEMS_PER_PAGE = 9;
-const CATEGORIES = ["Tất cả", ...new Set(WOOD_PRODUCTS.map((p) => p.category))];
+const ITEMS_PER_PAGE = 15;
+const CATEGORIES = ["Phòng khách", "Phòng ngủ", "Phòng ăn", "Phòng làm việc"];
 
 const fmt = (v) => new Intl.NumberFormat("vi-VN").format(v);
 
@@ -175,7 +434,8 @@ export default function InStockInvoicePage() {
   ]);
   const [activeTabId, setActiveTabId] = useState(1);
   const [searchProduct, setSearchProduct] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("Tất cả");
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [toast, setToast] = useState(null);
@@ -205,10 +465,11 @@ export default function InStockInvoicePage() {
         p.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
         p.sku.toLowerCase().includes(searchProduct.toLowerCase());
       const matchCategory =
-        selectedCategory === "Tất cả" || p.category === selectedCategory;
+        selectedCategories.length === 0 ||
+        selectedCategories.includes(p.category);
       return matchSearch && matchCategory;
     });
-  }, [searchProduct, selectedCategory]);
+  }, [searchProduct, selectedCategories]);
 
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
   const paginatedProducts = filteredProducts.slice(
@@ -260,6 +521,7 @@ export default function InStockInvoicePage() {
             stock: product.stock,
             sku: product.sku,
             quantity: 1,
+            note: "",
           },
         ],
       });
@@ -299,6 +561,14 @@ export default function InStockInvoicePage() {
     updateActiveTab({
       cartItems: activeTab.cartItems.map((i) =>
         i.id === id ? { ...i, quantity: val } : i,
+      ),
+    });
+  };
+
+  const updateItemNote = (id, note) => {
+    updateActiveTab({
+      cartItems: activeTab.cartItems.map((i) =>
+        i.id === id ? { ...i, note } : i,
       ),
     });
   };
@@ -474,90 +744,111 @@ export default function InStockInvoicePage() {
                 {activeTab.cartItems.map((item, idx) => (
                   <div
                     key={item.id}
-                    className="flex items-center gap-3 px-4 py-3 group hover:bg-gray-50/50 transition-colors"
+                    className="flex flex-col px-4 py-3 group hover:bg-gray-50/50 transition-colors"
                   >
-                    {/* Index */}
-                    <span
-                      className="text-xs font-medium w-5 text-center shrink-0"
-                      style={{ color: "var(--text-placeholder)" }}
-                    >
-                      {idx + 1}
-                    </span>
-
-                    {/* Product info */}
-                    <div className="flex-1 min-w-0">
-                      <p
-                        className="text-[13px] font-semibold truncate"
-                        style={{ color: "var(--text-main)" }}
+                    <div className="flex items-center gap-3">
+                      {/* Index */}
+                      <span
+                        className="text-xs font-medium w-5 text-center shrink-0"
+                        style={{ color: "var(--text-placeholder)" }}
                       >
-                        {item.name}
-                      </p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span
-                          className="text-[11px] font-mono"
-                          style={{ color: "var(--text-placeholder)" }}
+                        {idx + 1}
+                      </span>
+
+                      {/* Product info */}
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className="text-[13px] font-semibold truncate"
+                          style={{ color: "var(--text-main)" }}
                         >
-                          {item.sku}
-                        </span>
-                        <span
-                          className="text-[11px]"
-                          style={{ color: "var(--text-secondary)" }}
-                        >
-                          × {fmt(item.price)}đ
-                        </span>
+                          {item.name}
+                        </p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span
+                            className="text-[11px] font-mono"
+                            style={{ color: "var(--text-placeholder)" }}
+                          >
+                            {item.sku}
+                          </span>
+                          <span
+                            className="text-[11px]"
+                            style={{ color: "var(--text-secondary)" }}
+                          >
+                            × {fmt(item.price)}đ
+                          </span>
+                        </div>
                       </div>
+
+                      {/* Quantity */}
+                      <div className="flex items-center gap-0.5 shrink-0">
+                        <button
+                          onClick={() => updateQuantity(item.id, -1)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100"
+                          style={{
+                            border: "1px solid var(--grid-border)",
+                            color: "var(--text-secondary)",
+                          }}
+                        >
+                          <Minus size={11} />
+                        </button>
+                        <input
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) => setQuantity(item.id, e.target.value)}
+                          className="w-10 h-7 text-center text-[13px] font-semibold rounded-lg focus:outline-none focus:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          style={{
+                            border: "1px solid var(--grid-border)",
+                            color: "var(--text-main)",
+                          }}
+                        />
+                        <button
+                          onClick={() => updateQuantity(item.id, 1)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100"
+                          style={{
+                            border: "1px solid var(--grid-border)",
+                            color: "var(--text-secondary)",
+                          }}
+                        >
+                          <Plus size={11} />
+                        </button>
+                      </div>
+
+                      {/* Subtotal */}
+                      <span
+                        className="text-[13px] font-bold w-24 text-right shrink-0"
+                        style={{ color: "var(--brand-primary)" }}
+                      >
+                        {fmt(item.price * item.quantity)}đ
+                      </span>
+
+                      {/* Delete */}
+                      <button
+                        onClick={() => removeFromCart(item.id)}
+                        className="w-7 h-7 rounded-lg items-center justify-center transition cursor-pointer opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 hidden group-hover:flex shrink-0"
+                        style={{ color: "var(--text-placeholder)" }}
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     </div>
 
-                    {/* Quantity */}
-                    <div className="flex items-center gap-0.5 shrink-0">
-                      <button
-                        onClick={() => updateQuantity(item.id, -1)}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100"
-                        style={{
-                          border: "1px solid var(--grid-border)",
-                          color: "var(--text-secondary)",
-                        }}
-                      >
-                        <Minus size={11} />
-                      </button>
-                      <input
-                        type="number"
-                        value={item.quantity}
-                        onChange={(e) => setQuantity(item.id, e.target.value)}
-                        className="w-10 h-7 text-center text-[13px] font-semibold rounded-lg focus:outline-none focus:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        style={{
-                          border: "1px solid var(--grid-border)",
-                          color: "var(--text-main)",
-                        }}
+                    {/* Item Note */}
+                    <div className="mt-2 pl-11 flex items-center gap-2">
+                      <Pencil
+                        size={11}
+                        style={{ color: "var(--text-placeholder)" }}
+                        className="shrink-0"
                       />
-                      <button
-                        onClick={() => updateQuantity(item.id, 1)}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100"
-                        style={{
-                          border: "1px solid var(--grid-border)",
-                          color: "var(--text-secondary)",
-                        }}
-                      >
-                        <Plus size={11} />
-                      </button>
+                      <input
+                        type="text"
+                        placeholder="Ghi chú cho sản phẩm này..."
+                        value={item.note || ""}
+                        onChange={(e) =>
+                          updateItemNote(item.id, e.target.value)
+                        }
+                        className="text-[12px] italic focus:outline-none bg-transparent w-full"
+                        style={{ color: "var(--text-secondary)" }}
+                      />
                     </div>
-
-                    {/* Subtotal */}
-                    <span
-                      className="text-[13px] font-bold w-24 text-right shrink-0"
-                      style={{ color: "var(--brand-primary)" }}
-                    >
-                      {fmt(item.price * item.quantity)}đ
-                    </span>
-
-                    {/* Delete */}
-                    <button
-                      onClick={() => removeFromCart(item.id)}
-                      className="w-7 h-7 rounded-lg items-center justify-center transition cursor-pointer opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 hidden group-hover:flex shrink-0"
-                      style={{ color: "var(--text-placeholder)" }}
-                    >
-                      <Trash2 size={13} />
-                    </button>
                   </div>
                 ))}
               </div>
@@ -726,59 +1017,83 @@ export default function InStockInvoicePage() {
             boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
           }}
         >
-          {/* ── Search + Categories ── */}
-          <div className="px-4 pt-4 pb-3 space-y-3">
-            {/* Search */}
-            <div className="relative">
-              <Search
-                size={15}
-                className="absolute left-3 top-1/2 -translate-y-1/2"
-                style={{ color: "var(--text-placeholder)" }}
-              />
-              <input
-                type="text"
-                placeholder="Tìm sản phẩm..."
-                value={searchProduct}
-                onChange={(e) => {
-                  setSearchProduct(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-full h-10 pl-10 pr-4 rounded-xl text-[13px] focus:outline-none focus:ring-2 transition"
+          {/* ── Search + Filter ── */}
+          <div className="px-4 pt-4 pb-3 flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              {/* Search */}
+              <div className="relative flex-1">
+                <Search
+                  size={15}
+                  className="absolute left-3 top-1/2 -translate-y-1/2"
+                  style={{ color: "var(--text-placeholder)" }}
+                />
+                <input
+                  type="text"
+                  placeholder="Tìm sản phẩm..."
+                  value={searchProduct}
+                  onChange={(e) => {
+                    setSearchProduct(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full h-10 pl-10 pr-4 rounded-xl text-[13px] focus:outline-none focus:ring-2 transition"
+                  style={{
+                    border: "1px solid var(--grid-border)",
+                    backgroundColor: "var(--bg-main)",
+                    color: "var(--text-main)",
+                  }}
+                />
+              </div>
+
+              {/* Filter Button */}
+              <button
+                onClick={() => setIsFilterDrawerOpen(true)}
+                className="h-10 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all text-[13px] font-medium"
                 style={{
                   border: "1px solid var(--grid-border)",
                   backgroundColor: "var(--bg-main)",
                   color: "var(--text-main)",
                 }}
-              />
+              >
+                <Filter size={15} />
+                <span>Lọc</span>
+                {selectedCategories.length > 0 && (
+                  <span className="w-2.5 h-2.5 rounded-full bg-green-500 ml-0.5 border-2 border-white"></span>
+                )}
+              </button>
             </div>
 
-            {/* Categories */}
-            <div className="flex gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
-              {CATEGORIES.map((cat) => {
-                const isActive = selectedCategory === cat;
-                return (
-                  <button
+            {/* Active Filters */}
+            {selectedCategories.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {selectedCategories.map((cat) => (
+                  <span
                     key={cat}
-                    onClick={() => {
-                      setSelectedCategory(cat);
-                      setCurrentPage(1);
-                    }}
-                    className="px-3 py-1.5 rounded-lg text-[12px] font-medium whitespace-nowrap transition-all cursor-pointer"
-                    style={{
-                      backgroundColor: isActive
-                        ? "var(--brand-primary)"
-                        : "transparent",
-                      color: isActive ? "#fff" : "var(--text-secondary)",
-                      border: isActive
-                        ? "none"
-                        : "1px solid var(--grid-border)",
-                    }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium bg-green-50 text-green-700 border border-green-200"
                   >
                     {cat}
-                  </button>
-                );
-              })}
-            </div>
+                    <X
+                      size={12}
+                      className="cursor-pointer opacity-60 hover:opacity-100"
+                      onClick={() => {
+                        setSelectedCategories((prev) =>
+                          prev.filter((c) => c !== cat),
+                        );
+                        setCurrentPage(1);
+                      }}
+                    />
+                  </span>
+                ))}
+                <button
+                  onClick={() => {
+                    setSelectedCategories([]);
+                    setCurrentPage(1);
+                  }}
+                  className="text-[11px] font-medium text-gray-400 hover:text-gray-600 ml-2"
+                >
+                  Xóa tất cả
+                </button>
+              </div>
+            )}
           </div>
 
           {/* ── Product Grid ── */}
@@ -938,6 +1253,105 @@ export default function InStockInvoicePage() {
           });
         }}
       />
+
+      {/* ── Filter Drawer ── */}
+      {isFilterDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-[2px] transition-opacity"
+            onClick={() => setIsFilterDrawerOpen(false)}
+          />
+          <div className="relative w-[320px] h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <h2 className="text-[16px] font-bold text-gray-800 flex items-center gap-2">
+                <Filter size={18} className="text-green-500" /> Lọc sản phẩm
+              </h2>
+              <button
+                onClick={() => setIsFilterDrawerOpen(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer hover:bg-gray-100 text-gray-400 transition"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Drawer Content */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-6">
+              <div className="space-y-3">
+                <label className="text-[13px] font-semibold text-gray-600 uppercase tracking-wider block">
+                  Danh mục
+                </label>
+                <div className="flex flex-col gap-2">
+                  {CATEGORIES.map((cat) => {
+                    const isActive = selectedCategories.includes(cat);
+                    return (
+                      <label
+                        key={cat}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-[13px] cursor-pointer transition select-none ${
+                          isActive
+                            ? "border-green-500 bg-green-50/50"
+                            : "border-gray-200 hover:border-green-200 hover:bg-gray-50"
+                        }`}
+                      >
+                        <div
+                          className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                            isActive
+                              ? "bg-green-500 border-green-500 text-white"
+                              : "border-gray-300 bg-white"
+                          }`}
+                        >
+                          {isActive && (
+                            <CheckCircle2 size={12} strokeWidth={3} />
+                          )}
+                        </div>
+                        <span
+                          className={`flex-1 ${isActive ? "font-medium text-green-700" : "text-gray-600"}`}
+                        >
+                          {cat}
+                        </span>
+                        <input
+                          type="checkbox"
+                          className="hidden"
+                          checked={isActive}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedCategories((prev) => [...prev, cat]);
+                            } else {
+                              setSelectedCategories((prev) =>
+                                prev.filter((c) => c !== cat),
+                              );
+                            }
+                            setCurrentPage(1);
+                          }}
+                        />
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Drawer Footer */}
+            <div className="p-4 border-t border-gray-100 flex gap-3">
+              <button
+                onClick={() => {
+                  setSelectedCategories([]);
+                  setCurrentPage(1);
+                }}
+                className="flex-1 py-2.5 rounded-xl text-[13px] font-medium border cursor-pointer border-gray-200 text-gray-600 hover:bg-gray-50 transition"
+              >
+                Thiết lập lại
+              </button>
+              <button
+                onClick={() => setIsFilterDrawerOpen(false)}
+                className="flex-1 py-2.5 rounded-xl text-[13px] cursor-pointer font-medium bg-green-500 text-white hover:bg-green-600 transition shadow-md shadow-green-500/20"
+              >
+                Áp dụng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

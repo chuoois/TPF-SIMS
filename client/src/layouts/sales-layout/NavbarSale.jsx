@@ -5,7 +5,8 @@
  * Created Date: 24/02/2026
  */
 
-import { Bell, Settings, TreePine } from "lucide-react";
+import { Bell, Settings } from "lucide-react";
+import Logo from "@/assets/tp-logo.svg";
 
 export const NavbarSale = () => {
   return (
@@ -33,7 +34,7 @@ export const NavbarSale = () => {
       <div className="relative z-[3] flex items-center gap-3">
         {/* Logo */}
         <div className="flex items-center gap-2 cursor-pointer">
-          <TreePine size={24} style={{ color: "var(--brand-primary)" }} />
+          <img src={Logo} alt="TPF-SIMS" className="h-7 w-7 rounded-md" />
           <span
             className="text-base font-bold whitespace-nowrap"
             style={{ color: "var(--text-main)" }}
