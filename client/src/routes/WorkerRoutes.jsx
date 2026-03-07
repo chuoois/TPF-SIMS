@@ -1,6 +1,7 @@
 import { WorkerLayout } from "@/layouts/worker-layout";
 import WorkerDashboard from "@/pages/worker-page/dashboard";
 import WorkerCompleted from "@/pages/worker-page/completed";
+import TaskDetail from "@/pages/worker-page/dashboard/TaskDetail";
 
 /**
  * Worker Routes
@@ -13,6 +14,10 @@ export const workerRoutes = {
     {
       path: "dashboard",
       element: <WorkerDashboard />,
+    },
+    {
+      path: "dashboard/:id",
+      element: <TaskDetail />,
     },
     {
       path: "completed",

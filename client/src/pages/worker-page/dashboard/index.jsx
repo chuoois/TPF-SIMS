@@ -1,448 +1,473 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  Clock,
-  Play,
-  Pause,
-  CheckCircle2,
-  AlertCircle,
+  Search,
+  Filter,
+  MoreHorizontal,
+  ChevronLeft,
+  ChevronRight,
   X,
-  Camera,
-  Upload,
-  MessageSquare,
-  Box,
-  CornerDownRight,
+  LayoutDashboard,
 } from "lucide-react";
-
-// Mock Data cho Thợ
-const MOCK_TASKS = [
-  {
-    id: "T-1001",
-    productName: "Bàn ăn gỗ sồi 6 ghế",
-    woodType: "Gỗ Sồi",
-    dimensions: "160 x 80 x 75 cm",
-    status: "SANDING", // WAITING, SANDING, QC_PENDING, COMPLETED, REWORK
-    isCustomOrder: true,
-    orderCode: "DH-102",
-    notes: "Bo tròn 4 góc, chà nhẵn mặt dưới bàn.",
-    deadline: "17:00 Hôm nay",
-    image: "/wood_products.png",
-  },
-  {
-    id: "T-1002",
-    productName: "Ghế đôn sofa bọc nhung",
-    woodType: "Khung Gỗ Thông",
-    dimensions: "40 x 40 x 45 cm",
-    status: "WAITING",
-    isCustomOrder: false,
-    orderCode: "NK-09",
-    notes: "",
-    deadline: "",
-    image: "/wood_products.png",
-  },
-  {
-    id: "T-1003",
-    productName: "Kệ TV treo tường tối giản",
-    woodType: "Gỗ Công Nghiệp MDF",
-    dimensions: "200 x 30 x 40 cm",
-    status: "REWORK",
-    isCustomOrder: true,
-    orderCode: "DH-105",
-    notes: "Khách yêu cầu sơn bóng mờ.",
-    qcFeedback: "Chà nhám góc trái chưa mịn, cần làm lại.",
-    deadline: "12:00 Ngày mai",
-    image: "/wood_products.png",
-  },
-];
-
-const STATUS_CONFIG = {
-  WAITING: {
-    label: "Chờ xử lý",
-    color: "bg-gray-100 text-gray-700",
-    icon: Clock,
-  },
-  SANDING: {
-    label: "Đang chà nhám",
-    color: "bg-blue-100 text-blue-700",
-    icon: Play,
-  },
-  PAINTING: {
-    label: "Đang sơn/phủ",
-    color: "bg-indigo-100 text-indigo-700",
-    icon: Play,
-  },
-  QC_PENDING: {
-    label: "Chờ duyệt",
-    color: "bg-orange-100 text-orange-700",
-    icon: AlertCircle,
-  },
-  REWORK: {
-    label: "Làm lại",
-    color: "bg-red-100 text-red-700 font-bold",
-    icon: AlertCircle,
-  },
-  COMPLETED: {
-    label: "Đã xong",
-    color: "bg-green-100 text-green-700",
-    icon: CheckCircle2,
-  },
-};
+import { MOCK_TASKS, STATUS_CONFIG } from "../mock";
 
 export default function WorkerDashboard() {
-  const [tasks, setTasks] = useState(MOCK_TASKS);
-  const [selectedTask, setSelectedTask] = useState(null);
-  const [isDrawerOpen, setDrawerOpen] = useState(false);
-  const [showCameraMode, setShowCameraMode] = useState(false);
+  const navigate = useNavigate();
+  const [tasks, setTasks] = useState([]);
+  const [activeFilter, setActiveFilter] = useState("Hôm nay");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const openTask = (task) => {
-    setSelectedTask(task);
-    setDrawerOpen(true);
-    setShowCameraMode(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(15);
+
+  useEffect(() => {
+    setTasks(MOCK_TASKS);
+  }, []);
+
+  const openTask = (taskId) => {
+    navigate(`/worker/dashboard/${taskId}`);
   };
 
-  const closeTask = () => {
-    setDrawerOpen(false);
-    setTimeout(() => setSelectedTask(null), 300); // Wait for transition
-  };
-
-  const updateTaskStatus = (id, newStatus) => {
-    setTasks(tasks.map((t) => (t.id === id ? { ...t, status: newStatus } : t)));
-    setSelectedTask((prev) => (prev ? { ...prev, status: newStatus } : null));
-
-    if (newStatus === "QC_PENDING") {
-      setShowCameraMode(false);
+  const getPrimaryAction = (status) => {
+    switch (status) {
+      case "WAITING":
+      case "REWORK":
+        return {
+          label: "Bắt đầu làm",
+          color: "bg-blue-600 hover:bg-blue-700 text-white",
+        };
+      case "SANDING":
+      case "PAINTING":
+        return {
+          label: "Tiếp tục",
+          color: "bg-green-500 hover:bg-green-600 text-white",
+        };
+      case "QC_PENDING":
+        return {
+          label: "Đang kiểm duyệt",
+          color: "bg-orange-50 text-orange-600 cursor-default",
+          disabled: true,
+        };
+      case "COMPLETED":
+        return {
+          label: "Đã hoàn thành",
+          color: "bg-gray-100 text-gray-500 cursor-default",
+          disabled: true,
+        };
+      default:
+        return {
+          label: "Xem chi tiết",
+          color: "bg-blue-600 hover:bg-blue-700 text-white",
+        };
     }
   };
 
+  const filters = ["Hôm nay", "Ngày mai", "Tuần này"];
+
+  // Filter tasks
+  const filteredTasks = tasks.filter((t) => {
+    if (!searchTerm.trim()) return true;
+    const q = searchTerm.toLowerCase();
+    return (
+      t.productName.toLowerCase().includes(q) ||
+      t.orderCode.toLowerCase().includes(q) ||
+      t.id.toLowerCase().includes(q)
+    );
+  });
+
+  // Reset page on search or filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeFilter]);
+
+  const totalPages = Math.ceil(filteredTasks.length / itemsPerPage);
+  const paginatedTasks = filteredTasks.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
   return (
-    <div className="h-full relative overflow-hidden flex flex-col">
-      {/* ── Header Area ── */}
-      <div className="mb-4 flex items-center justify-between shrink-0">
+    <div
+      className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 space-y-4"
+      style={{ backgroundColor: "var(--bg-main)" }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between shrink-0">
         <div>
           <h1
-            className="text-lg font-bold mb-0.5"
+            className="text-xl font-bold"
             style={{ color: "var(--text-main)" }}
           >
             Công việc đang chờ
           </h1>
           <p
-            className="text-[13px] font-medium"
-            style={{ color: "var(--text-secondary)" }}
+            className="text-[13px] mt-0.5"
+            style={{ color: "var(--text-placeholder)" }}
           >
-            Bạn có{" "}
-            <span className="text-blue-600 font-bold">
-              {tasks.filter((t) => t.status !== "COMPLETED").length}
-            </span>{" "}
-            công việc cần xử lý
+            {filteredTasks.length} công việc cần xử lý
           </p>
         </div>
-      </div>
-
-      {/* ── Task Grid ── */}
-      <div className="flex-1 overflow-y-auto pb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {tasks.map((task) => {
-            const StatusIcon = STATUS_CONFIG[task.status].icon;
-            return (
-              <div
-                key={task.id}
-                onClick={() => openTask(task)}
-                className="bg-white rounded-xl overflow-hidden cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 group flex flex-col"
-                style={{
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-                  border:
-                    task.status === "REWORK"
-                      ? "1px solid #ef4444"
-                      : "1px solid var(--grid-border)",
-                }}
-              >
-                {/* Image Section */}
-                <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
-                  <img
-                    src={task.image}
-                    alt={task.productName}
-                    className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
-                  />
-                  {/* Source Badge */}
-                  <div className="absolute top-2 left-2 flex gap-1">
-                    <span
-                      className={`px-2 py-0.5 text-[11px] font-bold rounded flex items-center shadow-sm ${
-                        task.isCustomOrder
-                          ? "bg-purple-600 text-white"
-                          : "bg-white text-gray-700"
-                      }`}
-                    >
-                      {task.isCustomOrder ? "⭐ Đặt Riêng" : "📦 Kho"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Content Section */}
-                <div className="p-3 flex-1 flex flex-col">
-                  {/* Status Badge */}
-                  <div className="mb-2">
-                    <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold ${
-                        STATUS_CONFIG[task.status].color
-                      }`}
-                    >
-                      <StatusIcon size={12} />
-                      {STATUS_CONFIG[task.status].label}
-                    </span>
-                  </div>
-
-                  <h3
-                    className="text-[13px] font-bold leading-tight mb-2 line-clamp-2"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    {task.productName}
-                  </h3>
-
-                  <div className="space-y-1 mb-3 flex-1">
-                    <p
-                      className="text-[12px] flex items-center gap-1.5"
-                      style={{ color: "var(--text-secondary)" }}
-                    >
-                      <span className="w-3.5 h-3.5 rounded-sm bg-amber-50 border text-amber-600 flex items-center justify-center text-[9px] font-bold">
-                        G
-                      </span>
-                      {task.woodType}
-                    </p>
-                    <p
-                      className="text-[12px] flex items-center gap-1.5"
-                      style={{ color: "var(--text-secondary)" }}
-                    >
-                      <span className="w-3.5 h-3.5 rounded-sm bg-gray-50 border text-gray-500 flex items-center justify-center text-[9px] font-bold">
-                        K
-                      </span>
-                      {task.dimensions}
-                    </p>
-                  </div>
-
-                  {/* Footer */}
-                  <div
-                    className="pt-2.5 border-t border-dashed flex items-center justify-between"
-                    style={{ borderColor: "var(--grid-border)" }}
-                  >
-                    <span className="text-[11px] font-bold text-red-500">
-                      {task.deadline || "—"}
-                    </span>
-                    <button className="h-6 px-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors rounded text-[11px] font-bold flex items-center gap-1">
-                      Mở <CornerDownRight size={12} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        {/* Date Filters (Moved to header right side for better layout match) */}
+        <div
+          className="flex gap-1 bg-white p-1 rounded-lg border shadow-sm shrink-0"
+          style={{ borderColor: "var(--grid-border)" }}
+        >
+          {filters.map((f) => (
+            <button
+              key={f}
+              onClick={() => setActiveFilter(f)}
+              className={`px-4 py-1.5 rounded-md text-[13px] font-semibold transition-all ${
+                activeFilter === f
+                  ? "bg-[var(--bg-main)] text-[var(--text-main)] shadow-sm border"
+                  : "text-[var(--text-secondary)] hover:text-[var(--text-main)]"
+              }`}
+              style={
+                activeFilter === f ? { borderColor: "var(--grid-border)" } : {}
+              }
+            >
+              {f}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* ═══════════════ SLIDE-OUT TASK DETAILS PANEL ═══════════════ */}
-      {/* Backdrop */}
-      {isDrawerOpen && (
-        <div
-          className="fixed inset-0 bg-black/30 z-40 backdrop-blur-[1px] transition-opacity"
-          onClick={closeTask}
-        />
-      )}
-
-      {/* Drawer */}
+      {/* Search + Table Card */}
       <div
-        className={`fixed top-0 right-0 h-full w-full max-w-[400px] bg-white z-50 transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-2xl flex flex-col ${
-          isDrawerOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden"
+        style={{
+          boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+        }}
       >
-        {selectedTask && (
-          <>
-            {/* Header */}
-            <div
-              className="flex items-center justify-between px-5 py-3 border-b"
-              style={{ borderColor: "var(--grid-border)" }}
-            >
-              <div className="flex items-center gap-2">
-                {(() => {
-                  const DrawerIcon = STATUS_CONFIG[selectedTask.status].icon;
-                  return (
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-bold ${
-                        STATUS_CONFIG[selectedTask.status].color
-                      }`}
-                    >
-                      <DrawerIcon size={12} />
-                      {STATUS_CONFIG[selectedTask.status].label}
-                    </span>
-                  );
-                })()}
-                <span className="font-mono text-[12px] font-medium text-gray-400">
-                  #{selectedTask.id}
-                </span>
-              </div>
+        {/* Search */}
+        <div
+          className="px-4 py-3 border-b shrink-0 flex items-center justify-between gap-4"
+          style={{ borderColor: "var(--grid-border)" }}
+        >
+          <div className="relative max-w-sm w-full">
+            <Search
+              size={15}
+              className="absolute left-3 top-1/2 -translate-y-1/2"
+              style={{ color: "var(--text-placeholder)" }}
+            />
+            <input
+              type="text"
+              placeholder="Tìm tên sản phẩm, mã ĐH..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
+              style={{
+                border: "1px solid var(--grid-border)",
+                backgroundColor: "var(--bg-main)",
+                color: "var(--text-main)",
+              }}
+            />
+            {searchTerm && (
               <button
-                onClick={closeTask}
-                className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-gray-100 text-gray-500 transition-colors"
+                onClick={() => setSearchTerm("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer"
+                style={{ color: "var(--text-placeholder)" }}
               >
-                <X size={16} />
+                <X size={14} />
               </button>
-            </div>
+            )}
+          </div>
+        </div>
 
-            {/* Content Body */}
-            <div className="flex-1 overflow-y-auto px-5 py-5 pb-24">
-              {/* Rework Alert */}
-              {selectedTask.status === "REWORK" && (
-                <div className="mb-4 p-3 bg-red-50 rounded-lg border border-red-100 flex gap-2 text-red-700">
-                  <AlertCircle size={16} className="shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-bold text-[13px] mb-0.5">
-                      Yêu cầu làm lại
-                    </h4>
-                    <p className="text-[12px] font-medium">
-                      {selectedTask.qcFeedback}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <h2
-                className="text-[16px] font-bold leading-tight mb-4"
-                style={{ color: "var(--text-main)" }}
-              >
-                {selectedTask.productName}
-              </h2>
-
-              {/* Origin & Deadline */}
-              <div className="flex flex-wrap gap-2 mb-5">
-                <span
-                  className={`px-2.5 py-1 rounded border text-[12px] font-semibold ${
-                    selectedTask.isCustomOrder
-                      ? "bg-purple-50 text-purple-700 border-purple-100"
-                      : "bg-gray-50 text-gray-600 border-gray-100"
-                  }`}
-                >
-                  Nguồn: {selectedTask.isCustomOrder ? "Đặt Riêng" : "Hàng Kho"}{" "}
-                  ({selectedTask.orderCode})
-                </span>
-                {selectedTask.deadline && (
-                  <span className="px-2.5 py-1 rounded border bg-red-50 border-red-100 text-[12px] font-semibold text-red-600">
-                    Hạn chót: {selectedTask.deadline}
-                  </span>
-                )}
-              </div>
-
-              {/* Specs Grid */}
-              <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-                Thông số kỹ thuật
-              </h3>
-              <div className="grid grid-cols-2 gap-3 mb-5">
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <p className="text-[11px] text-gray-400 mb-0.5 font-medium">
-                    Loại Gỗ
-                  </p>
-                  <p className="font-bold text-[13px] text-gray-800">
-                    {selectedTask.woodType}
-                  </p>
-                </div>
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <p className="text-[11px] text-gray-400 mb-0.5 font-medium">
-                    Kích Thước
-                  </p>
-                  <p className="font-bold text-[13px] text-gray-800 flex items-center justify-between">
-                    {selectedTask.dimensions}
-                    <Box size={14} className="text-gray-300" />
-                  </p>
-                </div>
-              </div>
-
-              {/* Special Notes */}
-              {selectedTask.notes && (
-                <>
-                  <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-                    Lưu ý đặc biệt
-                  </h3>
-                  <div className="p-3.5 rounded-xl bg-yellow-50/80 border border-yellow-200">
-                    <div className="flex gap-2 text-yellow-800">
-                      <MessageSquare
-                        size={14}
-                        className="shrink-0 text-yellow-600 mt-0.5"
-                      />
-                      <p className="font-semibold text-[13px] leading-relaxed italic">
-                        {selectedTask.notes}
-                      </p>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Camera Interface Mockup */}
-              {showCameraMode && (
-                <div className="mt-6 border-t pt-5 border-dashed">
-                  <h3 className="text-[12px] font-bold text-gray-600 mb-2">
-                    Tải ảnh xác nhận
-                  </h3>
-                  <div className="w-full h-40 bg-gray-50 rounded-xl overflow-hidden relative flex flex-col items-center justify-center text-gray-500 border-2 border-dashed border-gray-200 hover:bg-gray-100 transition cursor-pointer">
-                    <Camera size={24} className="mb-2 text-gray-400" />
-                    <p className="text-[12px] font-medium">
-                      Bấm vào đây để chọn ảnh chụp bề mặt
-                    </p>
-                  </div>
-                  <button
-                    onClick={() =>
-                      updateTaskStatus(selectedTask.id, "QC_PENDING")
-                    }
-                    className="w-full mt-3 h-10 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-bold text-[13px] flex items-center justify-center gap-1.5 shadow-md transition-transform active:scale-95"
-                  >
-                    Nộp Ảnh Lên QC <CheckCircle2 size={16} />
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Action Footer (Sticky) */}
-            <div
-              className="absolute bottom-0 left-0 w-full p-4 bg-white border-t"
-              style={{ borderColor: "var(--grid-border)" }}
+        {/* Table Container - Fixed Height Scroll */}
+        <div className="flex-1 overflow-y-auto">
+          <table className="w-full text-left relative">
+            <thead
+              className="sticky top-0 z-10"
+              style={{
+                backgroundColor: "var(--grid-header-bg)",
+                borderBottom: "1px solid var(--grid-border)",
+              }}
             >
-              {/* Controls for WAITING or REWORK */}
-              {(selectedTask.status === "WAITING" ||
-                selectedTask.status === "REWORK") && (
-                <button
-                  onClick={() => updateTaskStatus(selectedTask.id, "SANDING")}
-                  className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-[13px] flex items-center justify-center gap-1.5 shadow-sm transition-transform active:scale-95 uppercase tracking-wide"
-                >
-                  <Play size={16} fill="currentColor" /> Bắt Đầu Làm
-                </button>
-              )}
+              <tr>
+                {[
+                  "#",
+                  "Sản phẩm",
+                  "Mã ĐH",
+                  "Thông số",
+                  "Trạng thái",
+                  "Hạn chót",
+                  "",
+                ].map((h, i) => (
+                  <th
+                    key={i}
+                    className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 6 ? "text-right" : ""}`}
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedTasks.map((task, idx) => {
+                const StatusIcon = STATUS_CONFIG[task.status].icon;
+                const action = getPrimaryAction(task.status);
 
-              {/* Controls for IN PROGRESS (SANDING/PAINTING) */}
-              {(selectedTask.status === "SANDING" ||
-                selectedTask.status === "PAINTING") &&
-                !showCameraMode && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() =>
-                        updateTaskStatus(selectedTask.id, "WAITING")
-                      }
-                      className="w-10 h-10 shrink-0 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg flex items-center justify-center transition-transform active:scale-95 border"
-                      title="Tạm dừng"
+                return (
+                  <tr
+                    key={task.id}
+                    className="hover:bg-gray-50/50 transition-colors cursor-pointer group"
+                    style={{ borderBottom: "1px solid var(--grid-border)" }}
+                    onClick={() => openTask(task.id)}
+                  >
+                    <td
+                      className="px-4 py-3 text-[12px] font-medium"
+                      style={{ color: "var(--text-placeholder)" }}
                     >
-                      <Pause size={16} fill="currentColor" />
-                    </button>
-                    <button
-                      onClick={() => setShowCameraMode(true)}
-                      className="flex-1 h-10 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold text-[13px] flex items-center justify-center gap-1.5 shadow-sm transition-transform active:scale-95 uppercase tracking-wide"
-                    >
-                      Hoàn Thành Bề Mặt <CheckCircle2 size={16} />
-                    </button>
-                  </div>
-                )}
+                      {(currentPage - 1) * itemsPerPage + idx + 1}
+                    </td>
 
-              {/* State for QC Pending */}
-              {selectedTask.status === "QC_PENDING" && (
-                <div className="w-full h-10 bg-orange-50 border border-orange-200 text-orange-600 rounded-lg font-bold text-[13px] flex items-center justify-center gap-1.5">
-                  <AlertCircle size={16} /> Đang Chờ Quản Đốc Duyệt
-                </div>
+                    {/* Product Name & Image */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border overflow-hidden"
+                          style={{
+                            borderColor: "var(--grid-border)",
+                            backgroundColor: "var(--bg-main)",
+                          }}
+                        >
+                          <img
+                            src={task.image}
+                            alt={task.productName}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <p
+                            className="text-[13px] font-semibold group-hover:text-blue-600 transition-colors"
+                            style={{ color: "var(--text-main)" }}
+                          >
+                            {task.productName}
+                          </p>
+                          <p
+                            className="text-[10px] font-mono tracking-wide mt-0.5"
+                            style={{ color: "var(--text-placeholder)" }}
+                          >
+                            #{task.id}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Origin / Order Code */}
+                    <td className="px-4 py-3">
+                      <p
+                        className="text-[12px] font-mono tracking-wide mb-0.5"
+                        style={{ color: "var(--text-main)" }}
+                      >
+                        {task.orderCode}
+                      </p>
+                      <span
+                        className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold border ${
+                          task.isCustomOrder
+                            ? "bg-[var(--status-focus)] text-[var(--brand-primary)] border-[var(--status-focus)]"
+                            : "bg-gray-100 text-gray-500 border-gray-100"
+                        }`}
+                      >
+                        {task.isCustomOrder ? "Đặt riêng" : "Kho"}
+                      </span>
+                    </td>
+
+                    {/* Specs */}
+                    <td className="px-4 py-3">
+                      <p
+                        className="text-[12px] font-medium"
+                        style={{ color: "var(--text-main)" }}
+                      >
+                        {task.woodType}
+                      </p>
+                      <p
+                        className="text-[11px]"
+                        style={{ color: "var(--text-secondary)" }}
+                      >
+                        {task.dimensions}
+                      </p>
+                    </td>
+
+                    {/* Status */}
+                    <td className="px-4 py-3">
+                      <div
+                        className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-bold border ${
+                          task.status === "QC_PENDING"
+                            ? "bg-orange-50 text-orange-600 border-orange-100"
+                            : task.status === "REWORK"
+                              ? "bg-red-50 text-red-600 border-red-100"
+                              : task.status === "WAITING"
+                                ? "bg-gray-50 text-gray-600 border-gray-200"
+                                : task.status === "COMPLETED"
+                                  ? "bg-green-50 text-green-600 border-green-100"
+                                  : "bg-blue-50 text-blue-600 border-blue-100"
+                        }`}
+                      >
+                        <StatusIcon size={12} />
+                        {STATUS_CONFIG[task.status].label}
+                      </div>
+                    </td>
+
+                    {/* Deadline */}
+                    <td className="px-4 py-3">
+                      {task.deadline ? (
+                        <span className="text-[12px] font-bold text-red-600">
+                          {task.deadline}
+                        </span>
+                      ) : (
+                        <span
+                          className="text-[12px]"
+                          style={{ color: "var(--text-placeholder)" }}
+                        >
+                          —
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Action */}
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        disabled={action.disabled}
+                        className={`px-3 py-1.5 rounded-md font-semibold text-[12px] transition-colors ${action.disabled ? "bg-gray-100 text-gray-400" : "bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white"}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!action.disabled) openTask(task.id);
+                        }}
+                      >
+                        {action.label}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {paginatedTasks.length === 0 && (
+                <tr>
+                  <td colSpan="7" className="py-24 text-center">
+                    <div
+                      className="flex flex-col items-center gap-2"
+                      style={{ color: "var(--text-placeholder)" }}
+                    >
+                      <div
+                        className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                        style={{ backgroundColor: "var(--bg-main)" }}
+                      >
+                        <LayoutDashboard size={28} strokeWidth={1.5} />
+                      </div>
+                      <p className="text-sm font-medium mt-1">
+                        {searchTerm
+                          ? `Không tìm thấy bộ lọc cho "${searchTerm}"`
+                          : "Chưa có công việc nào"}
+                      </p>
+                      {searchTerm && (
+                        <button
+                          onClick={() => setSearchTerm("")}
+                          className="text-[13px] font-medium cursor-pointer"
+                          style={{ color: "var(--brand-primary)" }}
+                        >
+                          Xóa bộ lọc
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
               )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination Footer */}
+        {filteredTasks.length > 0 && (
+          <div
+            className="flex items-center justify-between px-6 py-3 border-t shrink-0"
+            style={{
+              borderColor: "var(--grid-border)",
+              backgroundColor: "var(--bg-main)",
+            }}
+          >
+            <div
+              className="text-[13px]"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              Tổng số bản ghi:{" "}
+              <span className="font-bold" style={{ color: "var(--text-main)" }}>
+                {filteredTasks.length}
+              </span>
             </div>
-          </>
+
+            <div className="flex items-center gap-6">
+              {/* Items per page indicator */}
+              <div className="flex items-center gap-2">
+                <span
+                  className="text-[13px]"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  Số bản ghi/trang
+                </span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="h-8 px-2 pr-6 rounded-md text-[13px] border cursor-pointer focus:outline-none focus:ring-1 transition appearance-none"
+                  style={{
+                    borderColor: "var(--grid-border)",
+                    backgroundColor: "#fff",
+                    color: "var(--text-main)",
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 8px center",
+                  }}
+                >
+                  {[10, 15, 30, 50].map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Range Info */}
+              <div
+                className="text-[13px]"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                <span
+                  className="font-bold"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  {(currentPage - 1) * itemsPerPage + 1} -{" "}
+                  {Math.min(currentPage * itemsPerPage, filteredTasks.length)}
+                </span>{" "}
+                bản ghi
+              </div>
+
+              {/* Arrows */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  <ChevronLeft size={16} strokeWidth={2.5} />
+                </button>
+                <button
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  <ChevronRight size={16} strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
