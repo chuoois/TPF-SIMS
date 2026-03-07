@@ -1,19 +1,25 @@
-import { Outlet } from "react-router-dom"
-import { Header } from "./HeaderOwner"
-import { Sidebar } from "./SidebarOwner"
+import { Outlet } from "react-router-dom";
+import { NavbarSale } from "@/layouts/sales-layout/NavbarSale";
+import { SidebarOwner } from "./SidebarOwner";
 
-export const OwnerLayout = () => {
-    return (
-        <>
-            <div className="flex h-dvh flex-col">
-                <Header />
-                <div className="flex flex-1 overflow-hidden">
-                    <Sidebar />
-                    <main className="flex-1 overflow-y-auto p-6 bg-muted/30">
-                        <Outlet />
-                    </main>
-                </div>
-            </div>
-        </>
-    )
-}
+export default function OwnerLayout() {
+  return (
+    <div className="flex flex-col h-screen">
+      {/* Header */}
+      <NavbarSale />
+
+      <div className="flex flex-1 overflow-hidden pt-12">
+        {/* Sidebar */}
+        <SidebarOwner />
+
+        {/* Main Content */}
+        <main
+          className="flex-1 min-h-0 overflow-auto px-6 py-4"
+          style={{ backgroundColor: "var(--bg-main)" }}
+        >
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+};

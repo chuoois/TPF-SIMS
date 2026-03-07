@@ -1,72 +1,101 @@
-import { Link, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { LayoutGrid, Package } from "lucide-react";
-import Logo from "@/assets/tp-logo.svg";
+import { NavLink, useLocation } from "react-router-dom";
+import { LayoutGrid, Package, ArrowDownToLine, ChevronRight, PanelLeftClose } from "lucide-react";
 
 /**
  * Sidebar – Accountant Layout
  * Menu dành cho Kế toán
  *
- * Created By: ThinhBui
+ * Created By: HieuNM
  * Created Date: 27/02/2026
  */
 
-const menus = [
-  {
-    label: "Tổng quan",
-    path: "/accountant/dashboard",
-    icon: LayoutGrid,
-  },
-  {
-    label: "Quản lý sản phẩm",
-    path: "/accountant/products",
-    icon: Package,
-  },
+const menuItems = [
+    {
+        text: "Tổng quan",
+        path: "/accountant/dashboard",
+        icon: LayoutGrid,
+    },
+    {
+        text: "Kho hàng",
+        path: "/accountant/products",
+        icon: Package,
+    },
+    {
+        text: "Nhập hàng",
+        path: "/accountant/imports",
+        icon: ArrowDownToLine,
+    },
 ];
 
 export const SidebarAccountant = () => {
-  const { pathname } = useLocation();
+    const location = useLocation();
 
-  return (
-    <aside className="w-72 border-r bg-background flex flex-col">
-      {/* Logo */}
-      <div className="flex items-center gap-2.5 px-4 py-4 border-b">
-        <img src={Logo} alt="TPF-SIMS" className="h-9 w-9 rounded-lg" />
-        <div className="flex flex-col">
-          <span className="text-sm font-bold text-foreground tracking-tight leading-tight">
-            TPF-SIMS
-          </span>
-          <span className="text-[11px] text-muted-foreground leading-tight">
-            Management System
-          </span>
-        </div>
-      </div>
+    return (
+        <aside
+            className="w-[220px] h-full relative overflow-hidden bg-[#1a1a1b] bg-bottom bg-no-repeat bg-contain"
+            style={{
+                backgroundImage:
+                    "url('https://amisplatform.misacdn.net/apps/recruit/event-sidebar.b836f9e63b28d1c0.png')",
+            }}
+        >
+            {/* Overlay đen */}
+            <div className="absolute inset-0 bg-black/65 z-[1]" />
 
-      <nav className="grid grid-cols-2 gap-3 p-4">
-        {menus.map((item) => {
-          const active = pathname === item.path;
-          const Icon = item.icon;
+            {/* Overlay gradient */}
+            <div
+                className="absolute inset-0 z-[2]"
+                style={{
+                    background:
+                        "linear-gradient(to bottom, rgba(30,30,30,1) 0%, rgba(30,30,30,0.9) 30%, rgba(30,30,30,0.4) 70%, rgba(30,30,30,0) 100%)",
+                }}
+            />
 
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={cn(
-                "flex flex-col items-center justify-center rounded-xl border p-4 text-center transition",
-                active
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "hover:bg-muted",
-              )}
-            >
-              <Icon className="h-6 w-6 mb-2" />
-              <span className="text-xs font-medium">{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-      <div className="mt-auto border-t px-4 py-3 text-center text-xs text-muted-foreground">
-        © 2026 5PGroup
-      </div>
-    </aside>
-  );
+            {/* Menu content */}
+            <div className="relative z-10 flex flex-col h-full px-2.5 py-3">
+                <div className="flex flex-col gap-1.5 pt-4 flex-1">
+                    {menuItems.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = item.path === '/accountant/dashboard'
+                            ? location.pathname === item.path
+                            : location.pathname.startsWith(item.path);
+
+                        return (
+                            <NavLink
+                                key={item.path}
+                                to={item.path}
+                                className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg cursor-pointer transition-all no-underline
+                  ${isActive
+                                        ? "bg-[var(--brand-primary)] text-white font-medium"
+                                        : "text-gray-300 hover:bg-white/[0.08]"
+                                    }`}
+                            >
+                                <Icon
+                                    size={18}
+                                    className={isActive ? "text-white" : "text-gray-400"}
+                                />
+                                <span className="flex-1">{item.text}</span>
+                                {item.hasArrow && (
+                                    <ChevronRight
+                                        size={14}
+                                        className={isActive ? "text-white/70" : "text-gray-500"}
+                                    />
+                                )}
+                            </NavLink>
+                        );
+                    })}
+                </div>
+
+                {/* Collapse button */}
+                <div className="mt-auto">
+                    <div className="mt-auto border-t border-white/10 px-4 py-3 text-center text-xs text-white/50 mb-2">
+                        © 2026 5PGroup
+                    </div>
+                    <div className="flex items-center justify-center gap-2 h-9 rounded-lg cursor-pointer bg-white/[0.12] text-white hover:bg-white/[0.18] transition-colors">
+                        <PanelLeftClose size={16} />
+                        <span className="text-sm">Thu gọn</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    );
 };
