@@ -32,6 +32,7 @@ const MOCK_TASKS = [
     isCustomOrder: true,
     orderCode: "DH-102",
     notes: "Khách khen làm đúng yêu cầu bo tròn viền.",
+    startedAt: "05/03/2026 08:30",
     completedAt: "14:30 Hôm nay",
     rating: 5,
     image: "/wood_products.png",
@@ -45,6 +46,7 @@ const MOCK_TASKS = [
     isCustomOrder: false,
     orderCode: "NK-09",
     notes: "Xử lý bề mặt rất mịn, đạt chuẩn xuất xưởng.",
+    startedAt: "04/03/2026 09:00",
     completedAt: "09:15 Hôm qua",
     rating: 4,
     image: "/wood_products.png",
@@ -58,6 +60,7 @@ const MOCK_TASKS = [
     isCustomOrder: true,
     orderCode: "DH-099",
     notes: "",
+    startedAt: "15/02/2026 14:00",
     completedAt: "Thứ 4, 18/02",
     rating: 5,
     image: "/wood_products.png",
@@ -256,13 +259,14 @@ export default function WorkerCompleted() {
                   "Sản phẩm",
                   "Mã ĐH",
                   "Thông số",
+                  "Ngày bắt đầu",
                   "Bàn giao QC",
                   "Đánh giá",
                   "",
                 ].map((h, i) => (
                   <th
                     key={i}
-                    className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 6 ? "text-right" : ""}`}
+                    className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 7 ? "text-right" : ""}`}
                     style={{ color: "var(--text-placeholder)" }}
                   >
                     {h}
@@ -356,6 +360,25 @@ export default function WorkerCompleted() {
                       </p>
                     </td>
 
+                    {/* Start Date */}
+                    <td className="px-4 py-3">
+                      {task.startedAt ? (
+                        <span
+                          className="text-[12px] font-medium"
+                          style={{ color: "var(--text-main)" }}
+                        >
+                          {task.startedAt}
+                        </span>
+                      ) : (
+                        <span
+                          className="text-[12px]"
+                          style={{ color: "var(--text-placeholder)" }}
+                        >
+                          —
+                        </span>
+                      )}
+                    </td>
+
                     {/* Time */}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-bold bg-green-50 text-green-700 border border-green-100 w-fit">
@@ -392,7 +415,7 @@ export default function WorkerCompleted() {
 
               {paginatedTasks.length === 0 && (
                 <tr>
-                  <td colSpan="7" className="py-24 text-center">
+                    <td colSpan="8" className="py-24 text-center">
                     <div
                       className="flex flex-col items-center gap-2"
                       style={{ color: "var(--text-placeholder)" }}
@@ -581,6 +604,9 @@ export default function WorkerCompleted() {
                 >
                   Nguồn: {selectedTask.isCustomOrder ? "Đặt Riêng" : "Hàng Kho"}{" "}
                   ({selectedTask.orderCode})
+                </span>
+                <span className="px-2.5 py-1 rounded border bg-blue-50 border-blue-100 text-[12px] font-semibold text-blue-700 flex items-center gap-1.5">
+                  <Clock size={12} /> Bắt đầu: {selectedTask.startedAt || "—"}
                 </span>
                 <span className="px-2.5 py-1 rounded border bg-green-50 border-green-100 text-[12px] font-semibold text-green-700 flex items-center gap-1.5">
                   <Clock size={12} /> Hoàn thành: {selectedTask.completedAt}

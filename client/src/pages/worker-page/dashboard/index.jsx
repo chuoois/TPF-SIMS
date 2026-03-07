@@ -14,7 +14,7 @@ import { MOCK_TASKS, STATUS_CONFIG } from "../mock";
 export default function WorkerDashboard() {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
-  const [activeFilter, setActiveFilter] = useState("Hôm nay");
+  const [activeFilter, setActiveFilter] = useState("Tất cả");
   const [searchTerm, setSearchTerm] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -62,10 +62,15 @@ export default function WorkerDashboard() {
     }
   };
 
-  const filters = ["Hôm nay", "Ngày mai", "Tuần này"];
+  const filters = ["Tất cả", "Đặt theo mẫu", "Hàng sẵn"];
 
   // Filter tasks
   const filteredTasks = tasks.filter((t) => {
+    // Filter by order type
+    if (activeFilter === "Đặt theo mẫu" && !t.isCustomOrder) return false;
+    if (activeFilter === "Hàng sẵn" && t.isCustomOrder) return false;
+
+    // Filter by search term
     if (!searchTerm.trim()) return true;
     const q = searchTerm.toLowerCase();
     return (
@@ -190,12 +195,13 @@ export default function WorkerDashboard() {
                   "Mã ĐH",
                   "Thông số",
                   "Trạng thái",
+                  "Ngày bắt đầu",
                   "Hạn chót",
                   "",
                 ].map((h, i) => (
                   <th
                     key={i}
-                    className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 6 ? "text-right" : ""}`}
+                    className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 7 ? "text-right" : ""}`}
                     style={{ color: "var(--text-placeholder)" }}
                   >
                     {h}
@@ -310,6 +316,25 @@ export default function WorkerDashboard() {
                       </div>
                     </td>
 
+                    {/* Start Date */}
+                    <td className="px-4 py-3">
+                      {task.startedAt ? (
+                        <span
+                          className="text-[12px] font-medium"
+                          style={{ color: "var(--text-main)" }}
+                        >
+                          {task.startedAt}
+                        </span>
+                      ) : (
+                        <span
+                          className="text-[12px]"
+                          style={{ color: "var(--text-placeholder)" }}
+                        >
+                          —
+                        </span>
+                      )}
+                    </td>
+
                     {/* Deadline */}
                     <td className="px-4 py-3">
                       {task.deadline ? (
@@ -345,7 +370,7 @@ export default function WorkerDashboard() {
 
               {paginatedTasks.length === 0 && (
                 <tr>
-                  <td colSpan="7" className="py-24 text-center">
+                  <td colSpan="8" className="py-24 text-center">
                     <div
                       className="flex flex-col items-center gap-2"
                       style={{ color: "var(--text-placeholder)" }}

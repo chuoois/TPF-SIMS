@@ -9,16 +9,24 @@ import {
   PackageCheck,
   CircleDashed,
   Clock,
-  Box,
   Image as ImageIcon,
   ChevronRight,
   AlertCircle,
   PenTool,
   Ruler,
   FileSignature,
+  Layers,
+  TreePine,
+  Maximize2,
+  StickyNote,
+  Upload,
+  ChevronLeft,
+  ZoomIn,
+  Palette,
 } from "lucide-react";
-import { MOCK_TASKS, updateMockTaskStatus, getTaskById } from "../mock";
+import { updateMockTaskStatus, getTaskById } from "../mock";
 
+/* ─── Production Steps ─── */
 const STEPS = [
   { id: 1, key: "WAITING", label: "Tiếp nhận", icon: PackageCheck },
   { id: 2, key: "SANDING", label: "Đánh giấy ráp", icon: Play },
@@ -45,12 +53,56 @@ const getStepIndex = (status) => {
   }
 };
 
+/* ─── Status badge helper ─── */
+const getStatusBadge = (status) => {
+  const map = {
+    WAITING: {
+      label: "Chờ xử lý",
+      bg: "rgba(158,158,158,0.1)",
+      color: "var(--text-secondary)",
+      border: "var(--grid-border)",
+    },
+    SANDING: {
+      label: "Đang chà nhám",
+      bg: "rgba(33,164,244,0.08)",
+      color: "#1a8fd4",
+      border: "rgba(33,164,244,0.2)",
+    },
+    PAINTING: {
+      label: "Đang sơn/phủ",
+      bg: "rgba(67,104,224,0.08)",
+      color: "#4368E0",
+      border: "rgba(67,104,224,0.2)",
+    },
+    QC_PENDING: {
+      label: "Chờ QC duyệt",
+      bg: "rgba(255,153,0,0.08)",
+      color: "#e08a00",
+      border: "rgba(255,153,0,0.2)",
+    },
+    REWORK: {
+      label: "Cần làm lại",
+      bg: "rgba(229,72,77,0.08)",
+      color: "var(--status-error)",
+      border: "rgba(229,72,77,0.2)",
+    },
+    COMPLETED: {
+      label: "Hoàn thành",
+      bg: "rgba(52,176,87,0.08)",
+      color: "var(--status-success)",
+      border: "rgba(52,176,87,0.2)",
+    },
+  };
+  return map[status] || map.WAITING;
+};
+
 export default function TaskDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [selectedTask, setSelectedTask] = useState(null);
   const [showCameraMode, setShowCameraMode] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   useEffect(() => {
     const task = getTaskById(id);
@@ -63,7 +115,9 @@ export default function TaskDetail() {
 
   const updateTaskStatus = (taskId, newStatus) => {
     updateMockTaskStatus(taskId, newStatus);
-    setSelectedTask({ ...selectedTask, status: newStatus });
+    // Re-read the task from mock to pick up any changes (e.g. startedAt)
+    const updated = getTaskById(taskId);
+    setSelectedTask(updated);
 
     if (newStatus === "QC_PENDING") {
       setShowCameraMode(false);
@@ -73,16 +127,28 @@ export default function TaskDetail() {
   if (!selectedTask) return null;
 
   const currentStepIndex = getStepIndex(selectedTask.status);
+  const statusBadge = getStatusBadge(selectedTask.status);
+  const progressPercent = Math.round(
+    (currentStepIndex / STEPS.length) * 100
+  );
 
-  // Dynamic Button Render based on status
+  /* ─── Action Button ─── */
   const renderActionButton = () => {
     if (selectedTask.status === "WAITING" || selectedTask.status === "REWORK") {
       return (
         <button
           onClick={() => updateTaskStatus(selectedTask.id, "SANDING")}
-          className="h-11 px-8 bg-[#3B82F6] hover:bg-blue-600 text-white rounded-[10px] font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2"
+          className="h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+          style={{
+            background: "var(--brand-primary)",
+            color: "#fff",
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.filter = "brightness(1.1)")
+          }
+          onMouseLeave={(e) => (e.currentTarget.style.filter = "none")}
         >
-          Bắt đầu sản xuất
+          <Play size={15} /> Bắt đầu sản xuất
         </button>
       );
     }
@@ -97,21 +163,37 @@ export default function TaskDetail() {
             onClick={() =>
               updateTaskStatus(
                 selectedTask.id,
-                selectedTask.status === "SANDING" ? "PAINTING" : "QC_PENDING",
+                selectedTask.status === "SANDING" ? "PAINTING" : "QC_PENDING"
               )
             }
-            className="h-11 px-8 bg-[#10B981] hover:bg-emerald-600 text-white rounded-[10px] font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2"
+            className="h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+            style={{
+              background: "var(--status-success)",
+              color: "#fff",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.filter = "brightness(1.1)")
+            }
+            onMouseLeave={(e) => (e.currentTarget.style.filter = "none")}
           >
-            Nộp ảnh & Tiếp tục <CheckCircle2 size={16} />
+            <CheckCircle2 size={15} /> Nộp ảnh & Tiếp tục
           </button>
         );
       }
       return (
         <button
           onClick={() => setShowCameraMode(true)}
-          className="h-11 px-8 bg-[#3B82F6] hover:bg-blue-600 text-white rounded-[10px] font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2"
+          className="h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
+          style={{
+            background: "var(--brand-primary)",
+            color: "#fff",
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.filter = "brightness(1.1)")
+          }
+          onMouseLeave={(e) => (e.currentTarget.style.filter = "none")}
         >
-          Xác nhận xong công đoạn <Camera size={16} />
+          <Camera size={15} /> Xác nhận xong công đoạn
         </button>
       );
     }
@@ -120,9 +202,14 @@ export default function TaskDetail() {
       return (
         <button
           disabled
-          className="h-11 px-8 bg-amber-50 text-amber-600 border border-amber-200 rounded-[10px] font-semibold text-[14px] cursor-not-allowed flex items-center justify-center gap-2"
+          className="h-11 px-8 rounded-xl font-semibold text-[14px] flex items-center justify-center gap-2 cursor-not-allowed"
+          style={{
+            background: "rgba(255,153,0,0.08)",
+            color: "#e08a00",
+            border: "1px solid rgba(255,153,0,0.2)",
+          }}
         >
-          <Clock size={16} /> Đang chờ QC duyệt
+          <Clock size={15} /> Đang chờ QC duyệt
         </button>
       );
     }
@@ -130,324 +217,818 @@ export default function TaskDetail() {
     return null;
   };
 
+  /* ─── Step Status UI ─── */
   const getStepStatusUI = (index, currentIdx) => {
     if (index < currentIdx) {
       return {
         badge: "Hoàn tất",
-        badgeClasses:
-          "bg-emerald-50 text-emerald-700 border border-emerald-100",
-        iconClasses: "bg-emerald-500 text-white border-emerald-500 shadow-sm",
-        titleClasses: "text-slate-900 font-semibold line-through opacity-60",
+        badgeBg: "rgba(52,176,87,0.08)",
+        badgeColor: "var(--status-success)",
+        badgeBorder: "rgba(52,176,87,0.15)",
+        iconBg: "var(--status-success)",
+        iconColor: "#fff",
+        titleColor: "var(--text-placeholder)",
+        strikethrough: true,
         icon: Check,
       };
     } else if (index === currentIdx) {
       return {
         badge: "Đang xử lý",
-        badgeClasses: "bg-blue-50 text-blue-700 border border-blue-200",
-        iconClasses:
-          "bg-white text-blue-600 border-[#3B82F6] border-[2px] shadow-sm",
-        titleClasses: "text-blue-700 font-bold",
+        badgeBg: "rgba(52,176,87,0.08)",
+        badgeColor: "var(--brand-primary)",
+        badgeBorder: "rgba(52,176,87,0.15)",
+        iconBg: "#fff",
+        iconColor: "var(--brand-primary)",
+        iconBorder: "var(--brand-primary)",
+        titleColor: "var(--brand-primary)",
+        strikethrough: false,
         icon: STEPS[index].icon,
       };
     } else {
       return {
         badge: "Chờ xử lý",
-        badgeClasses: "bg-slate-50 text-slate-500 border border-slate-200",
-        iconClasses: "bg-slate-50 text-slate-400 border-slate-200",
-        titleClasses: "text-slate-500 font-medium",
+        badgeBg: "var(--bg-main)",
+        badgeColor: "var(--text-placeholder)",
+        badgeBorder: "var(--grid-border)",
+        iconBg: "var(--bg-main)",
+        iconColor: "var(--text-placeholder)",
+        titleColor: "var(--text-placeholder)",
+        strikethrough: false,
         icon: CircleDashed,
       };
     }
   };
 
+  /* ─── Mock images array ─── */
+  const productImages = [
+    selectedTask.image,
+    selectedTask.image,
+    selectedTask.image,
+    selectedTask.image,
+  ];
+
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] -m-6 overflow-y-auto bg-[#F8FAFC]">
-      <div className="max-w-[1400px] mx-auto w-full flex flex-col gap-6 min-h-full p-6 lg:p-8">
-        {/* Navigation Breadcrumb */}
-        <div className="flex items-center text-[13px] font-medium text-slate-500">
+    <div
+      className="flex flex-col h-[calc(100vh-64px)] -m-6 overflow-y-auto"
+      style={{ backgroundColor: "var(--bg-main)" }}
+    >
+      <div className="max-w-[1440px] mx-auto w-full flex flex-col gap-5 p-6 lg:p-8">
+        {/* ═══════════ BREADCRUMB ═══════════ */}
+        <div className="flex items-center gap-2 text-[13px]">
           <button
             onClick={() => navigate("/worker/dashboard")}
-            className="hover:text-slate-900 transition-colors flex items-center gap-1.5"
+            className="flex items-center gap-1.5 font-medium transition-colors cursor-pointer"
+            style={{ color: "var(--text-secondary)" }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.color = "var(--text-main)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.color = "var(--text-secondary)")
+            }
           >
+            <ArrowLeft size={14} />
             Quản lý công việc
           </button>
-          <ChevronRight size={14} className="mx-2 opacity-50" />
-          <span className="text-slate-900 font-semibold">
-            Chi tiết lệnh sản xuất #{selectedTask.id}
+          <ChevronRight
+            size={13}
+            style={{ color: "var(--text-placeholder)", opacity: 0.5 }}
+          />
+          <span
+            className="font-semibold"
+            style={{ color: "var(--text-main)" }}
+          >
+            Chi tiết #{selectedTask.id}
           </span>
         </div>
 
-        {/* --- MAIN 2-COLUMN LAYOUT --- */}
-        <div className="flex flex-col lg:flex-row gap-6 items-start w-full">
-          {/* ================= LEFT COLUMN: IMAGES / BLUEPRINTS ================= */}
-          <div className="w-full lg:w-[45%] shrink-0">
-            <div className="bg-white rounded-[12px] p-6 shadow-[0_1px_3px_rgba(0,0,0,0.05)] border border-slate-200">
+        {/* ═══════════ HERO HEADER CARD ═══════════ */}
+        <div
+          className="bg-white rounded-2xl overflow-hidden"
+          style={{
+            border: "1px solid var(--grid-border)",
+            boxShadow:
+              "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02)",
+          }}
+        >
+          <div className="p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            {/* Left: Product title & badges */}
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-bold"
+                  style={{
+                    background: selectedTask.isCustomOrder
+                      ? "rgba(67,104,224,0.08)"
+                      : "var(--bg-main)",
+                    color: selectedTask.isCustomOrder
+                      ? "#4368E0"
+                      : "var(--text-secondary)",
+                    border: `1px solid ${
+                      selectedTask.isCustomOrder
+                        ? "rgba(67,104,224,0.15)"
+                        : "var(--grid-border)"
+                    }`,
+                  }}
+                >
+                  {selectedTask.isCustomOrder
+                    ? "🎯 Đặt riêng"
+                    : "📦 Hàng kho"}
+                </span>
+                <span
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-bold"
+                  style={{
+                    background: statusBadge.bg,
+                    color: statusBadge.color,
+                    border: `1px solid ${statusBadge.border}`,
+                  }}
+                >
+                  {statusBadge.label}
+                </span>
+                <span
+                  className="text-[12px] font-medium"
+                  style={{ color: "var(--text-placeholder)" }}
+                >
+                  Mã ĐH:{" "}
+                  <strong style={{ color: "var(--text-main)" }}>
+                    {selectedTask.orderCode}
+                  </strong>
+                </span>
+              </div>
+              <h1
+                className="text-[22px] lg:text-[26px] font-bold leading-tight"
+                style={{ color: "var(--text-main)" }}
+              >
+                {selectedTask.productName}
+              </h1>
+            </div>
+
+            {/* Right: Progress ring */}
+            <div className="flex items-center gap-4 shrink-0">
+              <div className="relative w-16 h-16">
+                <svg
+                  viewBox="0 0 36 36"
+                  className="w-full h-full -rotate-90"
+                >
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="15.5"
+                    fill="none"
+                    stroke="var(--bg-main)"
+                    strokeWidth="3"
+                  />
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="15.5"
+                    fill="none"
+                    stroke="var(--brand-primary)"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeDasharray={`${progressPercent} 100`}
+                    style={{ transition: "stroke-dasharray 0.6s ease" }}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span
+                    className="text-[14px] font-bold"
+                    style={{ color: "var(--brand-primary)" }}
+                  >
+                    {progressPercent}%
+                  </span>
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <span
+                  className="text-[12px] font-medium"
+                  style={{ color: "var(--text-placeholder)" }}
+                >
+                  Tiến độ
+                </span>
+                <span
+                  className="text-[14px] font-bold"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  {currentStepIndex}/{STEPS.length} bước
+                </span>
+                {selectedTask.deadline && (
+                  <span className="text-[11px] font-semibold mt-0.5 flex items-center gap-1"
+                    style={{ color: "var(--status-error)" }}>
+                    <Clock size={11} />
+                    {selectedTask.deadline}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Thin progress bar */}
+          <div
+            style={{
+              height: 3,
+              background: "var(--bg-main)",
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                width: `${progressPercent}%`,
+                background: "var(--brand-primary)",
+                borderRadius: "0 2px 2px 0",
+                transition: "width 0.6s ease",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* ═══════════ MAIN 2-COLUMN LAYOUT ═══════════ */}
+        <div className="flex flex-col lg:flex-row gap-5 items-start w-full">
+          {/* ────── LEFT COLUMN ────── */}
+          <div className="w-full lg:w-[42%] shrink-0 flex flex-col gap-5">
+            {/* Image / Blueprint Card */}
+            <div
+              className="bg-white rounded-2xl overflow-hidden"
+              style={{
+                border: "1px solid var(--grid-border)",
+                boxShadow:
+                  "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02)",
+              }}
+            >
               {!selectedTask.isCustomOrder ? (
-                /* 1. HIỂN THỊ HÀNG CÓ SẴN (STOCK): GALLERY 2x2 */
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                    <h3 className="text-[14px] font-bold text-slate-800 flex items-center gap-2">
-                      <ImageIcon size={16} className="text-blue-500" /> Hình ảnh
-                      sản phẩm tham khảo
+                /* ── Stock Product Gallery ── */
+                <div className="p-5 flex flex-col gap-4">
+                  <div
+                    className="flex items-center gap-2 pb-3"
+                    style={{
+                      borderBottom: "1px solid var(--grid-border)",
+                    }}
+                  >
+                    <ImageIcon
+                      size={15}
+                      style={{ color: "var(--brand-primary)" }}
+                    />
+                    <h3
+                      className="text-[13px] font-bold"
+                      style={{ color: "var(--text-main)" }}
+                    >
+                      Hình ảnh sản phẩm tham khảo
                     </h3>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div
+                  {/* Main Image */}
+                  <div
+                    className="aspect-[4/3] rounded-xl overflow-hidden relative group cursor-zoom-in"
+                    style={{
+                      background: "var(--bg-main)",
+                      border: "1px solid var(--grid-border)",
+                    }}
+                  >
+                    <img
+                      src={productImages[activeImageIndex]}
+                      alt="Main preview"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center">
+                      <ZoomIn
+                        size={28}
+                        className="text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow-lg"
+                      />
+                    </div>
+                  </div>
+                  {/* Thumbnail strip */}
+                  <div className="flex gap-2">
+                    {productImages.map((img, i) => (
+                      <button
                         key={i}
-                        className="aspect-[4/3] bg-slate-50 rounded-[8px] relative overflow-hidden group border border-slate-100 cursor-zoom-in"
+                        onClick={() => setActiveImageIndex(i)}
+                        className="w-16 h-12 rounded-lg overflow-hidden cursor-pointer transition-all"
+                        style={{
+                          border:
+                            activeImageIndex === i
+                              ? "2px solid var(--brand-primary)"
+                              : "2px solid var(--grid-border)",
+                          opacity: activeImageIndex === i ? 1 : 0.6,
+                        }}
                       >
                         <img
-                          src={selectedTask.image}
-                          alt={`Reference ${i}`}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          src={img}
+                          alt={`Thumb ${i + 1}`}
+                          className="w-full h-full object-cover"
                         />
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>
               ) : (
-                /* 2. HIỂN THỊ HÀNG ĐẶT RIÊNG (CUSTOM): BLUEPRINT PLACEHOLDER */
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                    <h3 className="text-[14px] font-bold text-slate-800 flex items-center gap-2">
-                      <PenTool size={16} className="text-indigo-500" /> Bản vẽ /
-                      Yêu cầu gia công
+                /* ── Custom Order Blueprint ── */
+                <div className="p-5 flex flex-col gap-4">
+                  <div
+                    className="flex items-center gap-2 pb-3"
+                    style={{
+                      borderBottom: "1px solid var(--grid-border)",
+                    }}
+                  >
+                    <PenTool
+                      size={15}
+                      style={{ color: "#4368E0" }}
+                    />
+                    <h3
+                      className="text-[13px] font-bold"
+                      style={{ color: "var(--text-main)" }}
+                    >
+                      Bản vẽ / Yêu cầu gia công
                     </h3>
                   </div>
-
-                  <div className="aspect-square lg:aspect-[4/3] w-full bg-[#F8FAFC] rounded-[8px] border-2 border-dashed border-indigo-200/60 p-8 flex flex-col items-center justify-center text-center relative overflow-hidden group">
-                    {/* Blueprint background pattern */}
+                  <div
+                    className="aspect-[4/3] w-full rounded-xl p-8 flex flex-col items-center justify-center text-center relative overflow-hidden"
+                    style={{
+                      background: "var(--bg-main)",
+                      border: "2px dashed rgba(67,104,224,0.25)",
+                    }}
+                  >
+                    {/* Blueprint grid pattern */}
                     <div
-                      className="absolute inset-0 opacity-[0.03]"
+                      className="absolute inset-0 opacity-[0.04]"
                       style={{
                         backgroundImage:
-                          "linear-gradient(#4f46e5 1px, transparent 1px), linear-gradient(90deg, #4f46e5 1px, transparent 1px)",
-                        backgroundSize: "20px 20px",
+                          "linear-gradient(#4368E0 1px, transparent 1px), linear-gradient(90deg, #4368E0 1px, transparent 1px)",
+                        backgroundSize: "24px 24px",
                       }}
-                    ></div>
-
-                    <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm text-indigo-500 mb-6 relative z-10 border border-indigo-50">
-                      <Ruler size={32} strokeWidth={1.5} />
+                    />
+                    <div
+                      className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 relative z-10"
+                      style={{
+                        background: "#fff",
+                        border: "1px solid var(--grid-border)",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                      }}
+                    >
+                      <Ruler
+                        size={28}
+                        strokeWidth={1.5}
+                        style={{ color: "#4368E0" }}
+                      />
                     </div>
-
-                    <h4 className="text-[18px] font-bold text-slate-800 mb-2 relative z-10">
+                    <h4
+                      className="text-[16px] font-bold mb-1.5 relative z-10"
+                      style={{ color: "var(--text-main)" }}
+                    >
                       Sản phẩm đặt riêng
                     </h4>
-                    <p className="text-[14px] text-slate-500 max-w-[80%] relative z-10">
-                      Sản phẩm này được sản xuất theo thông số tùy chỉnh của đơn
-                      hàng{" "}
-                      <strong className="text-indigo-600">
+                    <p
+                      className="text-[13px] max-w-[85%] relative z-10 leading-relaxed"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
+                      Theo thông số tùy chỉnh đơn hàng{" "}
+                      <strong style={{ color: "#4368E0" }}>
                         {selectedTask.orderCode}
                       </strong>
-                      .
                     </p>
-
-                    {/* Mock Document link */}
-                    <button className="mt-6 px-4 py-2 bg-white border border-slate-200 rounded-[8px] text-[13px] font-semibold text-slate-700 shadow-sm flex items-center gap-2 hover:bg-slate-50 transition-colors relative z-10">
-                      <FileSignature size={14} className="text-blue-500" /> Xem
-                      bản vẽ kỹ thuật PDF
+                    <button
+                      className="mt-5 px-4 py-2 rounded-lg text-[12px] font-semibold flex items-center gap-2 cursor-pointer transition-colors relative z-10"
+                      style={{
+                        background: "#fff",
+                        color: "var(--text-main)",
+                        border: "1px solid var(--grid-border)",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.borderColor =
+                          "var(--brand-primary)")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.borderColor =
+                          "var(--grid-border)")
+                      }
+                    >
+                      <FileSignature
+                        size={13}
+                        style={{ color: "#4368E0" }}
+                      />{" "}
+                      Xem bản vẽ kỹ thuật PDF
                     </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Specs Card */}
+            <div
+              className="bg-white rounded-2xl p-5"
+              style={{
+                border: "1px solid var(--grid-border)",
+                boxShadow:
+                  "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02)",
+              }}
+            >
+              <h3
+                className="text-[13px] font-bold mb-4 flex items-center gap-2"
+                style={{ color: "var(--text-main)" }}
+              >
+                <Layers size={15} style={{ color: "var(--brand-primary)" }} />
+                Thông số kỹ thuật
+              </h3>
+              <div className="grid grid-cols-3 gap-3">
+                {/* Material */}
+                <div
+                  className="rounded-xl p-4 flex items-start gap-3"
+                  style={{
+                    background: "var(--bg-main)",
+                    border: "1px solid var(--grid-border)",
+                  }}
+                >
+                  <div
+                    className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                    style={{
+                      background: "#fff",
+                      border: "1px solid var(--grid-border)",
+                    }}
+                  >
+                    <TreePine size={16} style={{ color: "var(--brand-primary)" }} />
+                  </div>
+                  <div>
+                    <p
+                      className="text-[11px] font-semibold mb-0.5"
+                      style={{ color: "var(--text-placeholder)" }}
+                    >
+                      Vật liệu
+                    </p>
+                    <p
+                      className="text-[14px] font-bold"
+                      style={{ color: "var(--text-main)" }}
+                    >
+                      {selectedTask.woodType}
+                    </p>
+                  </div>
+                </div>
+                {/* Dimensions */}
+                <div
+                  className="rounded-xl p-4 flex items-start gap-3"
+                  style={{
+                    background: "var(--bg-main)",
+                    border: "1px solid var(--grid-border)",
+                  }}
+                >
+                  <div
+                    className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                    style={{
+                      background: "#fff",
+                      border: "1px solid var(--grid-border)",
+                    }}
+                  >
+                    <Maximize2 size={16} style={{ color: "#4368E0" }} />
+                  </div>
+                  <div>
+                    <p
+                      className="text-[11px] font-semibold mb-0.5"
+                      style={{ color: "var(--text-placeholder)" }}
+                    >
+                      Kích thước
+                    </p>
+                    <p
+                      className="text-[14px] font-bold"
+                      style={{ color: "var(--text-main)" }}
+                    >
+                      {selectedTask.dimensions}
+                    </p>
+                  </div>
+                </div>
+                {/* Color */}
+                <div
+                  className="rounded-xl p-4 flex items-start gap-3"
+                  style={{
+                    background: "var(--bg-main)",
+                    border: "1px solid var(--grid-border)",
+                  }}
+                >
+                  <div
+                    className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                    style={{
+                      background: "#fff",
+                      border: "1px solid var(--grid-border)",
+                    }}
+                  >
+                    <Palette size={16} style={{ color: "#EA509D" }} />
+                  </div>
+                  <div>
+                    <p
+                      className="text-[11px] font-semibold mb-0.5"
+                      style={{ color: "var(--text-placeholder)" }}
+                    >
+                      Màu sắc
+                    </p>
+                    <p
+                      className="text-[14px] font-bold"
+                      style={{ color: "var(--text-main)" }}
+                    >
+                      {selectedTask.color || "—"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes */}
+              {selectedTask.notes && (
+                <div
+                  className="mt-3 rounded-xl p-4 flex gap-3"
+                  style={{
+                    background: "rgba(255,153,0,0.04)",
+                    border: "1px solid rgba(255,153,0,0.15)",
+                  }}
+                >
+                  <StickyNote
+                    className="shrink-0 mt-0.5"
+                    size={15}
+                    style={{ color: "var(--status-pending)" }}
+                  />
+                  <div>
+                    <p
+                      className="text-[11px] font-bold mb-1"
+                      style={{ color: "#e08a00" }}
+                    >
+                      GHI CHÚ YÊU CẦU
+                    </p>
+                    <p
+                      className="text-[13px] leading-relaxed"
+                      style={{ color: "var(--text-main)" }}
+                    >
+                      {selectedTask.notes}
+                    </p>
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* ================= RIGHT COLUMN: INFO & PROGRESS ================= */}
-          <div className="flex-1 w-full flex flex-col gap-6">
-            {/* Top Card: Identity & Specs */}
-            <div className="bg-white p-6 rounded-[12px] shadow-[0_1px_3px_rgba(0,0,0,0.05)] border border-slate-200 flex flex-col">
-              {/* Badge Row */}
-              <div className="flex flex-wrap items-center gap-3 mb-4">
-                <span
-                  className={`px-2.5 py-1 rounded-[6px] text-[12px] font-bold flex items-center gap-1.5 ${
-                    selectedTask.isCustomOrder
-                      ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
-                      : "bg-slate-100 text-slate-700 border border-slate-200"
-                  }`}
+          {/* ────── RIGHT COLUMN: PRODUCTION PROGRESS ────── */}
+          <div className="flex-1 w-full flex flex-col gap-5">
+            {/* Progress Timeline Card */}
+            <div
+              className="bg-white rounded-2xl flex flex-col"
+              style={{
+                border: "1px solid var(--grid-border)",
+                boxShadow:
+                  "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02)",
+              }}
+            >
+              {/* Card Header */}
+              <div
+                className="px-6 py-4 flex items-center justify-between"
+                style={{
+                  borderBottom: "1px solid var(--grid-border)",
+                }}
+              >
+                <h3
+                  className="text-[14px] font-bold flex items-center gap-2"
+                  style={{ color: "var(--text-main)" }}
                 >
-                  {selectedTask.isCustomOrder
-                    ? "🎯 Đặt riêng (Custom)"
-                    : "📦 Hàng kho (Stock)"}
-                </span>
-                <span className="text-[13px] font-medium text-slate-500">
-                  Mã ĐH:{" "}
-                  <strong className="text-slate-700">
-                    {selectedTask.orderCode}
-                  </strong>
-                </span>
-              </div>
-
-              <h1 className="text-[24px] lg:text-[28px] font-bold text-slate-900 leading-tight mb-6">
-                {selectedTask.productName}
-              </h1>
-
-              {/* Specs Grid */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-[#F8FAFC] border border-slate-100 rounded-[8px] p-4">
-                  <p className="text-[12px] font-semibold text-slate-500 mb-1">
-                    Vật liệu chính
-                  </p>
-                  <p className="text-[15px] font-bold text-slate-800">
-                    {selectedTask.woodType}
-                  </p>
-                </div>
-                <div className="bg-[#F8FAFC] border border-slate-100 rounded-[8px] p-4">
-                  <p className="text-[12px] font-semibold text-slate-500 mb-1">
-                    Kích thước
-                  </p>
-                  <p className="text-[15px] font-bold text-slate-800">
-                    {selectedTask.dimensions}
-                  </p>
-                </div>
-              </div>
-
-              {/* Customer Notes */}
-              {selectedTask.notes && (
-                <div className="bg-amber-50 border border-amber-100 rounded-[8px] p-4 flex gap-3">
-                  <AlertCircle className="text-amber-600 shrink-0" size={18} />
-                  <div className="text-[13px] text-amber-900 leading-relaxed">
-                    <span className="font-bold">Ghi chú yêu cầu: </span>
-                    {selectedTask.notes}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Bottom Card: Progress Timeline */}
-            <div className="bg-white p-6 rounded-[12px] shadow-[0_1px_3px_rgba(0,0,0,0.05)] border border-slate-200 flex-1 flex flex-col">
-              <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
-                <h3 className="text-[16px] font-bold text-slate-900 flex items-center gap-2.5">
                   Tiến độ sản xuất
                 </h3>
-                <div className="flex items-center gap-2 text-[13px]">
-                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                  <span className="text-slate-500">Deadline:</span>
-                  <span className="font-bold text-slate-800">
-                    {selectedTask.deadline || "Không có"}
-                  </span>
-                </div>
+                {selectedTask.deadline && (
+                  <div
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-semibold"
+                    style={{
+                      background: "rgba(229,72,77,0.06)",
+                      color: "var(--status-error)",
+                      border: "1px solid rgba(229,72,77,0.12)",
+                    }}
+                  >
+                    <Clock size={12} />
+                    Hạn: {selectedTask.deadline}
+                  </div>
+                )}
               </div>
 
-              {/* TIMELINE STEPPER */}
-              <div className="relative pl-2 pb-4 flex-1">
-                {/* Vertical Track line */}
-                <div className="absolute top-4 left-[23px] bottom-6 w-[2px] bg-slate-100 z-0"></div>
+              {/* Timeline */}
+              <div className="p-6 flex-1">
+                <div className="relative pl-1">
+                  {/* Vertical track */}
+                  <div
+                    className="absolute left-[15px] top-4 bottom-4 w-[2px]"
+                    style={{ background: "var(--grid-border)" }}
+                  />
 
-                {STEPS.map((step, index) => {
-                  const statusUI = getStepStatusUI(index, currentStepIndex);
-                  const isCurrent = index === currentStepIndex;
-                  const isCompleted = index < currentStepIndex;
-                  const needsPhoto =
-                    isCurrent &&
-                    (step.key === "SANDING" || step.key === "PAINTING");
-                  const hasMockPhoto =
-                    isCompleted &&
-                    (step.key === "SANDING" || step.key === "PAINTING");
+                  {STEPS.map((step, index) => {
+                    const statusUI = getStepStatusUI(index, currentStepIndex);
+                    const isCurrent = index === currentStepIndex;
+                    const isCompleted = index < currentStepIndex;
+                    const isLast = index === STEPS.length - 1;
+                    const needsPhoto =
+                      isCurrent &&
+                      (step.key === "SANDING" || step.key === "PAINTING");
+                    const hasMockPhoto =
+                      isCompleted &&
+                      (step.key === "SANDING" || step.key === "PAINTING");
 
-                  return (
-                    <div
-                      key={step.id}
-                      className="relative flex gap-5 mb-10 last:mb-0 z-10"
-                    >
-                      {/* Status Icon */}
-                      <div className="flex flex-col items-center shrink-0">
-                        <div
-                          className={`w-[32px] h-[32px] rounded-full flex items-center justify-center transition-colors ${statusUI.iconClasses}`}
-                        >
-                          <statusUI.icon
-                            size={14}
-                            strokeWidth={isCurrent ? 2.5 : 2}
-                          />
-                        </div>
-                        {/* Active green line override */}
-                        {isCompleted && index !== STEPS.length - 1 && (
-                          <div className="absolute top-[32px] left-[15px] w-[2px] h-[calc(100%+8px)] bg-emerald-500 z-10"></div>
-                        )}
-                      </div>
-
-                      {/* Step Details */}
-                      <div className="flex-1 min-w-0 pt-1">
-                        <div className="flex flex-wrap items-center justify-between gap-3 mb-1.5">
-                          <h4
-                            className={`text-[15px] ${statusUI.titleClasses}`}
+                    return (
+                      <div
+                        key={step.id}
+                        className="relative flex gap-4 z-10"
+                        style={{
+                          paddingBottom: isLast ? 0 : 32,
+                        }}
+                      >
+                        {/* Step icon */}
+                        <div className="flex flex-col items-center shrink-0">
+                          <div
+                            className="w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all"
+                            style={{
+                              background: statusUI.iconBg,
+                              color: statusUI.iconColor,
+                              border: statusUI.iconBorder
+                                ? `2px solid ${statusUI.iconBorder}`
+                                : "1px solid var(--grid-border)",
+                              boxShadow: isCurrent
+                                ? "0 0 0 4px rgba(52,176,87,0.1)"
+                                : "none",
+                            }}
                           >
-                            Bước {index + 1}: {step.label}
-                          </h4>
-                          <span
-                            className={`px-2 py-0.5 rounded-[4px] text-[11px] font-bold border ${statusUI.badgeClasses}`}
-                          >
-                            {statusUI.badge}
-                          </span>
+                            <statusUI.icon
+                              size={14}
+                              strokeWidth={isCurrent ? 2.5 : 2}
+                            />
+                          </div>
+                          {/* Green completed line */}
+                          {isCompleted && !isLast && (
+                            <div
+                              className="absolute left-[15px] top-[32px] w-[2px] z-10"
+                              style={{
+                                height: "calc(100% - 0px)",
+                                background: "var(--status-success)",
+                              }}
+                            />
+                          )}
                         </div>
 
-                        {/* CAMERA DROPZONE (For Current Actionable Step) */}
-                        {needsPhoto && showCameraMode && (
-                          <div className="mt-4 max-w-sm rounded-[8px] bg-blue-50/50 border border-dashed border-blue-300 p-5 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 transition-colors animate-in fade-in slide-in-from-top-2">
-                            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-blue-500 border border-blue-100 mb-3">
-                              <Camera size={20} />
-                            </div>
-                            <p className="text-[13px] font-bold text-blue-700">
-                              Tải lên ảnh chứng minh
-                            </p>
-                            <p className="text-[12px] text-blue-600/70 mt-1 text-center font-medium px-2">
-                              Bắt buộc nộp ảnh trước khi sang công đoạn tiếp
-                              theo
-                            </p>
+                        {/* Step details */}
+                        <div className="flex-1 min-w-0 pt-1">
+                          <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                            <h4
+                              className="text-[14px] font-semibold"
+                              style={{
+                                color: statusUI.titleColor,
+                                textDecoration: statusUI.strikethrough
+                                  ? "line-through"
+                                  : "none",
+                                opacity: statusUI.strikethrough ? 0.6 : 1,
+                              }}
+                            >
+                              Bước {index + 1}: {step.label}
+                            </h4>
+                            <span
+                              className="px-2 py-0.5 rounded-md text-[10px] font-bold"
+                              style={{
+                                background: statusUI.badgeBg,
+                                color: statusUI.badgeColor,
+                                border: `1px solid ${statusUI.badgeBorder}`,
+                              }}
+                            >
+                              {statusUI.badge}
+                            </span>
                           </div>
-                        )}
 
-                        {/* THUMBNAIL (For Completed Steps) */}
-                        {hasMockPhoto && (
-                          <div className="mt-3 flex items-center gap-3 p-2 bg-slate-50 rounded-[8px] border border-slate-100 w-fit cursor-zoom-in">
-                            <div className="w-12 h-12 rounded-[6px] bg-slate-200 overflow-hidden relative">
-                              {/* Just a demo placeholder, not real custom image if it was custom */}
-                              <img
-                                src={
-                                  selectedTask.isCustomOrder
-                                    ? "/wood_products.png"
-                                    : selectedTask.image
-                                }
-                                alt="Proof"
-                                className="w-full h-full object-cover grayscale-[30%]"
-                              />
-                            </div>
-                            <div className="flex flex-col pr-2">
-                              <span className="text-[12px] font-bold text-slate-700 flex items-center gap-1.5">
-                                <CheckCircle2
-                                  size={14}
-                                  className="text-emerald-500"
-                                />{" "}
-                                Đã cập nhật ảnh
-                              </span>
-                              <span className="text-[11px] text-slate-500 mt-0.5 font-medium">
-                                Lúc 14:00 hôm nay
-                              </span>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* QC Revision logic if any */}
-                        {isCurrent &&
-                          selectedTask.status === "REWORK" &&
-                          step.key === "SANDING" &&
-                          selectedTask.qcFeedback && (
-                            <div className="mt-3 p-3 bg-red-50 border border-red-100 rounded-[8px] text-[13px] text-red-700">
-                              <span className="font-bold flex items-center gap-1.5 mb-1">
-                                <AlertCircle size={14} /> Lỗi kiểm định QC:
-                              </span>
-                              {selectedTask.qcFeedback}
+                          {/* Photo upload zone */}
+                          {needsPhoto && showCameraMode && (
+                            <div
+                              className="mt-3 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition-colors"
+                              style={{
+                                background: "rgba(52,176,87,0.03)",
+                                border:
+                                  "2px dashed rgba(52,176,87,0.25)",
+                              }}
+                              onMouseEnter={(e) =>
+                                (e.currentTarget.style.background =
+                                  "rgba(52,176,87,0.06)")
+                              }
+                              onMouseLeave={(e) =>
+                                (e.currentTarget.style.background =
+                                  "rgba(52,176,87,0.03)")
+                              }
+                            >
+                              <div
+                                className="w-10 h-10 rounded-xl flex items-center justify-center mb-2.5"
+                                style={{
+                                  background: "#fff",
+                                  border: "1px solid var(--grid-border)",
+                                  boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                                }}
+                              >
+                                <Upload
+                                  size={18}
+                                  style={{
+                                    color: "var(--brand-primary)",
+                                  }}
+                                />
+                              </div>
+                              <p
+                                className="text-[13px] font-bold"
+                                style={{
+                                  color: "var(--brand-primary)",
+                                }}
+                              >
+                                Tải lên ảnh chứng minh
+                              </p>
+                              <p
+                                className="text-[11px] mt-1 text-center font-medium"
+                                style={{
+                                  color: "var(--text-placeholder)",
+                                }}
+                              >
+                                Bắt buộc nộp ảnh trước khi sang công đoạn
+                                tiếp theo
+                              </p>
                             </div>
                           )}
+
+                          {/* Completed photo thumbnail */}
+                          {hasMockPhoto && (
+                            <div
+                              className="mt-2.5 flex items-center gap-3 p-2.5 rounded-lg w-fit cursor-zoom-in"
+                              style={{
+                                background: "var(--bg-main)",
+                                border: "1px solid var(--grid-border)",
+                              }}
+                            >
+                              <div className="w-11 h-11 rounded-lg overflow-hidden shrink-0">
+                                <img
+                                  src={
+                                    selectedTask.isCustomOrder
+                                      ? "/wood_products.png"
+                                      : selectedTask.image
+                                  }
+                                  alt="Proof"
+                                  className="w-full h-full object-cover"
+                                  style={{ filter: "grayscale(20%)" }}
+                                />
+                              </div>
+                              <div className="flex flex-col pr-2">
+                                <span
+                                  className="text-[12px] font-bold flex items-center gap-1.5"
+                                  style={{
+                                    color: "var(--text-main)",
+                                  }}
+                                >
+                                  <CheckCircle2
+                                    size={13}
+                                    style={{
+                                      color: "var(--status-success)",
+                                    }}
+                                  />
+                                  Đã cập nhật ảnh
+                                </span>
+                                <span
+                                  className="text-[11px] mt-0.5 font-medium"
+                                  style={{
+                                    color: "var(--text-placeholder)",
+                                  }}
+                                >
+                                  Lúc 14:00 hôm nay
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* QC Rework feedback */}
+                          {isCurrent &&
+                            selectedTask.status === "REWORK" &&
+                            step.key === "SANDING" &&
+                            selectedTask.qcFeedback && (
+                              <div
+                                className="mt-3 p-3.5 rounded-xl text-[13px] flex gap-2.5"
+                                style={{
+                                  background: "rgba(229,72,77,0.04)",
+                                  border:
+                                    "1px solid rgba(229,72,77,0.12)",
+                                  color: "var(--status-error)",
+                                }}
+                              >
+                                <AlertCircle
+                                  className="shrink-0 mt-0.5"
+                                  size={14}
+                                />
+                                <div>
+                                  <span className="font-bold block mb-0.5">
+                                    Lỗi kiểm định QC:
+                                  </span>
+                                  <span style={{ color: "var(--text-main)" }}>
+                                    {selectedTask.qcFeedback}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Action Footer */}
-              <div className="mt-6 pt-6 border-t border-slate-100 flex justify-end">
+              <div
+                className="px-6 py-4 flex justify-end"
+                style={{
+                  borderTop: "1px solid var(--grid-border)",
+                }}
+              >
                 {renderActionButton()}
               </div>
             </div>

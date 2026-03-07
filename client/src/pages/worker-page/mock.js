@@ -6,6 +6,8 @@ export let MOCK_TASKS = [
     productName: "Bàn ăn gỗ sồi 6 ghế",
     woodType: "Gỗ Sồi",
     dimensions: "160 x 80 x 75 cm",
+    color: "Nâu tự nhiên",
+    startedAt: "07/03/2026 08:30",
     status: "SANDING", // WAITING, SANDING, QC_PENDING, COMPLETED, REWORK
     isCustomOrder: true,
     orderCode: "DH-102",
@@ -18,6 +20,8 @@ export let MOCK_TASKS = [
     productName: "Ghế đôn sofa bọc nhung",
     woodType: "Khung Gỗ Thông",
     dimensions: "40 x 40 x 45 cm",
+    color: "Xám đậm",
+    startedAt: null,
     status: "WAITING",
     isCustomOrder: false,
     orderCode: "NK-09",
@@ -30,6 +34,8 @@ export let MOCK_TASKS = [
     productName: "Kệ TV treo tường tối giản",
     woodType: "Gỗ Công Nghiệp MDF",
     dimensions: "200 x 30 x 40 cm",
+    color: "Trắng bóng mờ",
+    startedAt: "06/03/2026 10:15",
     status: "REWORK",
     isCustomOrder: true,
     orderCode: "DH-105",
@@ -50,7 +56,17 @@ export const STATUS_CONFIG = {
 };
 
 export const updateMockTaskStatus = (id, newStatus) => {
-  MOCK_TASKS = MOCK_TASKS.map((t) => (t.id === id ? { ...t, status: newStatus } : t));
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const timestamp = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  MOCK_TASKS = MOCK_TASKS.map((t) => {
+    if (t.id !== id) return t;
+    const updates = { ...t, status: newStatus };
+    if (newStatus === 'SANDING' && !t.startedAt) {
+      updates.startedAt = timestamp;
+    }
+    return updates;
+  });
 };
 
 export const getTaskById = (id) => {
