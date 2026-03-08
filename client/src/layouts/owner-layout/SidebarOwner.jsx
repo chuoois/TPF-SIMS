@@ -18,19 +18,20 @@ import {
   BarChart3,
   ChevronRight,
   PanelLeftClose,
+  History,
 } from "lucide-react";
 
 const menuItems = [
   { text: "Tổng quan", icon: Home, path: "/owner/dashboard" },
   { text: "Đơn hàng", icon: ClipboardList, path: "/owner/orders" },
-  
+
   { text: "Sản phẩm", icon: Package, path: "/owner/products" },
   { text: "Quản lý sản xuất", icon: Hammer, path: "/owner/production" },
-  { text: "Khách hàng", icon: Users, path: "/owner/customers" },
+  // { text: "Khách hàng", icon: Users, path: "/owner/customers" },
   { text: "Nhà cung cấp", icon: Building2, path: "/owner/suppliers" },
   { text: "Nhân sự", icon: UserCog, path: "/owner/employees" },
   { text: "Báo cáo", icon: BarChart3, path: "/owner/reports" },
-
+  { text: "Nhật ký hệ thống", icon: History, path: "/owner/system-logs" },
 ];
 
 

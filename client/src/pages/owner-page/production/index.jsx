@@ -17,7 +17,12 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-
+  Activity,
+  CheckCircle,
+  XCircle,
+  PackagePlus,
+  Pencil,
+  FileText,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 
@@ -26,13 +31,13 @@ const INITIAL_PRODUCTIONS = [
   {
     id: "LSX001",
     code: "LSX-2603-0001",
-    orderCode: "DH-2603-0010",
+    orderCode: "DH-2603-0001",
     orderId: "DH001",
     productName: "Tủ bếp chữ L",
     variantName: "Gỗ sồi Nga — Sơn PU óc chó",
     quantityPlanned: 1,
     quantityCompleted: 0,
-    status: "Chờ xử lý",
+    status: "Chờ giao thợ",
     subStage: null,
     assignedWorker: null,
     startDate: null,
@@ -42,18 +47,50 @@ const INITIAL_PRODUCTIONS = [
   {
     id: "LSX002",
     code: "LSX-2603-0002",
-    orderCode: "DH-2603-0010",
-    orderId: "DH001",
+    orderCode: "DH-2603-0002",
+    orderId: "DH002",
     productName: "Bàn ăn nguyên tấm",
     variantName: "Gỗ gõ đỏ — Live Edge",
     quantityPlanned: 1,
     quantityCompleted: 0,
-    status: "Chờ xử lý",
+    status: "Chờ giao thợ",
     subStage: null,
     assignedWorker: null,
     startDate: null,
     expectedEndDate: "2026-03-25",
     date: "2026-03-05T16:35:00",
+  },
+  {
+    id: "LSX015",
+    code: "LSX-2603-0015",
+    orderCode: null,
+    orderId: null,
+    productName: "Bàn ăn gỗ sồi 1m6",
+    variantName: "Gỗ sồi Nga — Sơn trần",
+    quantityPlanned: 5,
+    quantityCompleted: 0,
+    status: "Chờ giao thợ",
+    subStage: null,
+    assignedWorker: null,
+    startDate: null,
+    expectedEndDate: "2026-04-10",
+    date: "2026-03-08T15:30:00",
+  },
+  {
+    id: "LSX010",
+    code: "LSX-2603-0010",
+    orderCode: "DH-2603-0025",
+    orderId: "DH025",
+    productName: "Bàn làm việc chữ L",
+    variantName: "Gỗ sồi Mỹ — Sơn PU tự nhiên",
+    quantityPlanned: 1,
+    quantityCompleted: 0,
+    status: "Chờ giao thợ",
+    subStage: null,
+    assignedWorker: null,
+    startDate: null,
+    expectedEndDate: "2026-03-28",
+    date: "2026-03-07T08:30:00",
   },
   {
     id: "LSX003",
@@ -72,22 +109,6 @@ const INITIAL_PRODUCTIONS = [
     date: "2026-03-03T08:00:00",
   },
   {
-    id: "LSX004",
-    code: "LSX-2603-0004",
-    orderCode: "DH-2603-0008",
-    orderId: "DH008",
-    productName: "Kệ tivi nguyên khối",
-    variantName: "Gỗ hương đá — PU đồng màu",
-    quantityPlanned: 1,
-    quantityCompleted: 1,
-    status: "Hoàn thành",
-    subStage: null,
-    assignedWorker: "Trần Minh Tâm",
-    startDate: "2026-03-03",
-    expectedEndDate: "2026-03-15",
-    date: "2026-03-03T08:15:00",
-  },
-  {
     id: "LSX005",
     code: "LSX-2603-0005",
     orderCode: "DH-2603-0012",
@@ -102,6 +123,54 @@ const INITIAL_PRODUCTIONS = [
     startDate: "2026-03-04",
     expectedEndDate: "2026-03-20",
     date: "2026-03-04T09:00:00",
+  },
+  {
+    id: "LSX007",
+    code: "LSX-2603-0007",
+    orderCode: null,
+    orderId: null,
+    productName: "Tủ đầu giường",
+    variantName: "Gỗ sồi — 2 ngăn kéo",
+    quantityPlanned: 20,
+    quantityCompleted: 5,
+    status: "Đang sản xuất",
+    subStage: "danh_rap",
+    assignedWorker: "Trần Minh Tâm",
+    startDate: "2026-03-06",
+    expectedEndDate: "2026-03-15",
+    date: "2026-03-06T09:00:00",
+  },
+  {
+    id: "LSX011",
+    code: "LSX-2603-0011",
+    orderCode: "DH-2603-0028",
+    orderId: "DH028",
+    productName: "Tủ quần áo 4 cánh",
+    variantName: "Gỗ hương — Chạm hoa lá tây",
+    quantityPlanned: 1,
+    quantityCompleted: 0,
+    status: "Đang sản xuất",
+    subStage: "danh_rap",
+    assignedWorker: "Lê Văn Hùng",
+    startDate: "2026-03-07",
+    expectedEndDate: "2026-03-30",
+    date: "2026-03-07T10:00:00",
+  },
+  {
+    id: "LSX004",
+    code: "LSX-2603-0004",
+    orderCode: "DH-2603-0008",
+    orderId: "DH008",
+    productName: "Kệ tivi nguyên khối",
+    variantName: "Gỗ hương đá — PU đồng màu",
+    quantityPlanned: 1,
+    quantityCompleted: 1,
+    status: "Hoàn thành",
+    subStage: null,
+    assignedWorker: "Trần Minh Tâm",
+    startDate: "2026-03-03",
+    expectedEndDate: "2026-03-15",
+    date: "2026-03-03T08:15:00",
   },
   {
     id: "LSX006",
@@ -119,54 +188,21 @@ const INITIAL_PRODUCTIONS = [
     expectedEndDate: "2026-03-10",
     date: "2026-03-01T08:00:00",
   },
-
   {
-    id: "LSX009",
-    code: "LSX-2603-0009",
-    orderCode: "DH-2603-0022",
-    orderId: "DH022",
-    productName: "Kệ sách 5 tầng",
-    variantName: "Gỗ thông — Sơn trắng",
-    quantityPlanned: 3,
-    quantityCompleted: 2,
-    status: "Đang sản xuất",
-    subStage: "phun_son",
-    assignedWorker: "Trần Minh Tâm",
-    startDate: "2026-03-06",
-    expectedEndDate: "2026-03-18",
-    date: "2026-03-06T09:00:00",
-  },
-  {
-    id: "LSX010",
-    code: "LSX-2603-0010",
-    orderCode: "DH-2603-0025",
-    orderId: "DH025",
-    productName: "Bàn làm việc chữ L",
-    variantName: "Gỗ sồi Mỹ — Sơn PU tự nhiên",
-    quantityPlanned: 1,
-    quantityCompleted: 0,
-    status: "Chờ xử lý",
+    id: "LSX016",
+    code: "LSX-2603-0016",
+    orderCode: null,
+    orderId: null,
+    productName: "Ghế đôn gỗ mít",
+    variantName: "Gỗ mít — Đánh bóng",
+    quantityPlanned: 10,
+    quantityCompleted: 10,
+    status: "Hoàn thành",
     subStage: null,
-    assignedWorker: null,
-    startDate: null,
-    expectedEndDate: "2026-03-28",
-    date: "2026-03-07T08:30:00",
-  },
-  {
-    id: "LSX011",
-    code: "LSX-2603-0011",
-    orderCode: "DH-2603-0028",
-    orderId: "DH028",
-    productName: "Tủ quần áo 4 cánh",
-    variantName: "Gỗ hương — Chạm hoa lá tây",
-    quantityPlanned: 1,
-    quantityCompleted: 0,
-    status: "Đang sản xuất",
-    subStage: "danh_rap",
-    assignedWorker: "Lê Văn Hùng",
-    startDate: "2026-03-07",
-    expectedEndDate: "2026-03-30",
-    date: "2026-03-07T10:00:00",
+    assignedWorker: "Nguyễn Văn Đức",
+    startDate: "2026-03-05",
+    expectedEndDate: "2026-03-08",
+    date: "2026-03-05T09:00:00",
   },
   {
     id: "LSX012",
@@ -188,7 +224,7 @@ const INITIAL_PRODUCTIONS = [
 
 const STATUSES = [
   "Tất cả",
-  "Chờ xử lý",
+  "Chờ giao thợ",
   "Đang sản xuất",
   "Hoàn thành",
 ];
@@ -205,15 +241,18 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString("vi-VN");
 };
 
-const getStatusColor = (status) => {
+const getStatusColor = (status, subStage = null) => {
+  if (status === "Đang sản xuất") {
+    if (subStage === "danh_rap") return { bg: "#FDF4FF", text: "#A21CAF", border: "#F5D0FE" }; // Fuchsia for Sanding
+    if (subStage === "phun_son") return { bg: "#FDF2F8", text: "#DB2777", border: "#FBCFE8" }; // Pink for Painting
+    return { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" }; // Purple for general production
+  }
+  
   switch (status) {
-    case "Chờ xử lý":
-      return { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" };
-    case "Đang sản xuất":
-      return { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" };
+    case "Chờ giao thợ":
+      return { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" }; // Orange
     case "Hoàn thành":
-      return { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" };
-
+      return { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" }; // Green
     default:
       return { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
   }
@@ -274,6 +313,17 @@ export default function OwnerProduction() {
     setSearchTerm("");
   };
 
+
+  const statusCounts = useMemo(() => {
+    const counts = { "Tất cả": productions.length };
+    STATUSES.forEach(s => {
+      if (s !== "Tất cả") {
+        counts[s] = productions.filter(p => p.status === s).length;
+      }
+    });
+    return counts;
+  }, [productions]);
+
   // Reset page on filter change
   useEffect(() => {
     setCurrentPage(1);
@@ -295,56 +345,58 @@ export default function OwnerProduction() {
         style={{ backgroundColor: "var(--bg-main)" }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between shrink-0">
+        <div className="flex items-center justify-between shrink-0 px-1">
           <div>
             <h1
-              className="text-xl font-bold flex items-center gap-2"
-              style={{ color: "var(--text-main)" }}
+              className="text-[22px] font-bold flex items-center gap-2.5"
+              style={{ color: "var(--text-main)", letterSpacing: "-0.01em" }}
             >
-              <Hammer size={22} style={{ color: "var(--brand-primary)" }} />
+              <Hammer size={24} style={{ color: "var(--brand-primary)" }} />
               Quản lý sản xuất
             </h1>
             <p
-              className="text-[13px] mt-0.5"
+              className="text-[13px] mt-1 font-medium italic"
               style={{ color: "var(--text-placeholder)" }}
             >
-              {filtered.length} lệnh sản xuất
+              {filtered.length} lệnh sản xuất đang lưu hành
             </p>
           </div>
         </div>
 
-        {/* Status Toolbar */}
         <div className="flex items-center gap-2 shrink-0 px-1 flex-wrap">
           {STATUSES.map((s) => {
             const isActive = statusFilter === s;
-            const statusStyle = s !== "Tất cả" ? getStatusColor(s) : null;
+            const sc = s !== "Tất cả" ? getStatusColor(s) : null;
             return (
               <button
                 key={s}
                 onClick={() => setStatusFilter(s)}
-                className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all cursor-pointer flex items-center gap-1.5"
+                className="px-4 py-1.5 rounded-xl text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border"
                 style={{
                   backgroundColor: isActive
-                    ? (statusStyle ? statusStyle.bg : "#fff")
+                    ? (sc ? sc.bg : "#fff")
                     : "transparent",
                   color: isActive
-                    ? (statusStyle ? statusStyle.text : "var(--text-main)")
+                    ? (sc ? sc.text : "var(--brand-primary)")
                     : "var(--text-secondary)",
-                  border: isActive
-                    ? `1.5px solid ${statusStyle ? statusStyle.border : "var(--grid-border)"}`
-                    : "1.5px solid transparent",
+                  borderColor: isActive
+                    ? (sc ? sc.border : "var(--grid-border)")
+                    : "transparent",
+                  boxShadow: isActive ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
                 }}
               >
                 {s !== "Tất cả" && (
                   <span
                     className="w-1.5 h-1.5 rounded-full"
                     style={{
-                      backgroundColor: statusStyle ? statusStyle.text : "var(--text-secondary)",
-                      opacity: isActive ? 1 : 0.5,
+                      backgroundColor: sc ? sc.text : "var(--brand-primary)",
                     }}
                   />
                 )}
                 {s}
+                <span className="text-[10px] opacity-60 bg-black/5 px-1.5 rounded-md ml-0.5">
+                  {statusCounts[s] || 0}
+                </span>
               </button>
             );
           })}
@@ -357,104 +409,89 @@ export default function OwnerProduction() {
             boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
           }}
         >
-          {/* Search + Filters */}
+          {/* Search Header */}
           <div
-            className="px-4 py-3 border-b shrink-0 flex flex-wrap items-center justify-between gap-3"
-            style={{ borderColor: "var(--grid-border)" }}
+            className="px-4 py-3 shrink-0 flex flex-wrap items-center justify-between gap-4"
+            style={{
+              backgroundColor: "var(--grid-header-bg)",
+              borderBottom: "1px solid var(--grid-border)",
+            }}
           >
-            {/* LEFT — Search */}
-            <div className="relative w-full max-w-md shrink-0">
-              <Search
-                size={15}
-                className="absolute left-3 top-1/2 -translate-y-1/2"
-                style={{ color: "var(--text-placeholder)" }}
-              />
-              <input
-                type="text"
-                placeholder="Tìm mã lệnh, mã đơn, sản phẩm, thợ..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
-                style={{
-                  border: "1px solid var(--grid-border)",
-                  backgroundColor: "var(--bg-main)",
-                  color: "var(--text-main)",
-                }}
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer"
-                  style={{ color: "var(--text-placeholder)" }}
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-
-            {/* RIGHT — Date Filters */}
-            <div className="flex items-center gap-2.5 shrink-0 overflow-x-auto">
-              {/* Date From */}
-              <div className="flex items-center gap-1.5 shrink-0">
-                <Calendar
-                  size={14}
+            <div className="flex items-center gap-4 flex-1 min-w-[300px]">
+              {/* Search */}
+              <div className="relative flex-1 max-w-sm">
+                <Search
+                  size={16}
+                  className="absolute left-3 top-1/2 -translate-y-1/2"
                   style={{ color: "var(--text-placeholder)" }}
                 />
                 <input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  className="h-9 px-3 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
+                  type="text"
+                  placeholder="Tìm lệnh SX, mã đơn, thợ..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] border focus:outline-none focus:ring-1 transition"
                   style={{
-                    border: `1px solid ${dateFrom ? "var(--brand-primary)" : "var(--grid-border)"}`,
-                    backgroundColor: dateFrom
-                      ? "var(--status-focus)"
-                      : "var(--bg-main)",
-                    color: dateFrom
-                      ? "var(--brand-primary)"
-                      : "var(--text-main)",
-                    fontWeight: dateFrom ? 600 : 400,
+                    borderColor: "var(--grid-border)",
+                    backgroundColor: "#fff",
+                    color: "var(--text-main)",
                   }}
-                  title="Từ ngày"
                 />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full cursor-pointer"
+                  >
+                    <X size={14} style={{ color: "var(--text-placeholder)" }} />
+                  </button>
+                )}
               </div>
 
-              <span
-                className="text-[12px] shrink-0"
-                style={{ color: "var(--text-placeholder)" }}
-              >
-                đến
-              </span>
+              {/* Date Filter */}
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Calendar
+                    size={14}
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2"
+                    style={{ color: "var(--text-placeholder)" }}
+                  />
+                  <input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="h-9 pl-9 pr-3 rounded-lg text-[13px] border focus:outline-none shadow-xs"
+                    style={{
+                      borderColor: dateFrom
+                        ? "var(--brand-primary)"
+                        : "var(--grid-border)",
+                      backgroundColor: "#fff",
+                      color: "var(--text-main)",
+                    }}
+                  />
+                </div>
+                <span className="text-gray-400 text-xs font-bold">~</span>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="h-9 px-3 rounded-lg text-[13px] border focus:outline-none shadow-xs"
+                  style={{
+                    borderColor: dateTo
+                      ? "var(--brand-primary)"
+                      : "var(--grid-border)",
+                    backgroundColor: "#fff",
+                    color: "var(--text-main)",
+                  }}
+                />
+              </div>
+            </div>
 
-              {/* Date To */}
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="h-9 px-3 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition shrink-0"
-                style={{
-                  border: `1px solid ${dateTo ? "var(--brand-primary)" : "var(--grid-border)"}`,
-                  backgroundColor: dateTo
-                    ? "var(--status-focus)"
-                    : "var(--bg-main)",
-                  color: dateTo ? "var(--brand-primary)" : "var(--text-main)",
-                  fontWeight: dateTo ? 600 : 400,
-                }}
-                title="Đến ngày"
-              />
-
-              {/* Clear filters */}
+            <div className="flex items-center gap-2">
               {hasActiveFilters && (
                 <button
                   onClick={clearAllFilters}
-                  className="h-9 px-3 rounded-lg text-[13px] font-medium flex-shrink-0 flex items-center gap-1.5 cursor-pointer transition hover:opacity-80"
-                  style={{
-                    color: "var(--status-error)",
-                    backgroundColor: "#FEF2F2",
-                    border: "1px solid #FECACA",
-                  }}
+                  className="h-9 px-3 rounded-lg text-[12px] font-bold text-red-600 hover:bg-red-50 transition border border-transparent hover:border-red-100 cursor-pointer"
                 >
-                  <X size={14} />
                   Xóa bộ lọc
                 </button>
               )}
@@ -463,7 +500,7 @@ export default function OwnerProduction() {
 
           {/* Table */}
           <div className="flex-1 overflow-y-auto">
-            <table className="w-full text-left relative">
+            <table className="w-full text-left relative text-[13px]">
               <thead
                 className="sticky top-0 z-10"
                 style={{
@@ -472,183 +509,248 @@ export default function OwnerProduction() {
                 }}
               >
                 <tr>
-                  {[
-                    "Mã lệnh SX",
-                    "Đơn hàng",
-                    "Sản phẩm",
-                    "SL kế hoạch",
-                    "Đã hoàn thành",
-                    "Trạng thái",
-                    "Thợ phụ trách",
-                    "Thời gian",
-                  ].map((h, i) => (
-                    <th
-                      key={i}
-                      className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 3 || i === 4 ? "text-center" : ""}`}
-                      style={{ color: "var(--text-placeholder)" }}
-                    >
-                      {h}
-                    </th>
-                  ))}
+                  <th
+                    className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 w-16"
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
+                    STT
+                  </th>
+                  <th
+                    className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500"
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
+                    Mã lệnh SX
+                  </th>
+                  <th
+                    className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500"
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
+                    Sản phẩm
+                  </th>
+                  <th
+                    className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 text-center"
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
+                    Tiến độ
+                  </th>
+                  <th
+                    className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500"
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
+                    Trạng thái
+                  </th>
+                  <th
+                    className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500"
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
+                    Thợ phụ trách
+                  </th>
+                  <th
+                    className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500"
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
+                    Ngày tạo
+                  </th>
                 </tr>
               </thead>
-              <tbody>
-                {paginatedItems.map((p) => {
+              <tbody className="divide-y divide-gray-100">
+                {paginatedItems.map((p, idx) => {
                   const sc = getStatusColor(p.status);
-                  const progress = p.quantityPlanned > 0 ? Math.round((p.quantityCompleted / p.quantityPlanned) * 100) : 0;
+                  const progress =
+                    p.quantityPlanned > 0
+                      ? Math.round((p.quantityCompleted / p.quantityPlanned) * 100)
+                      : 0;
                   return (
                     <tr
                       key={p.id}
-                      className="group relative hover:bg-gray-50/50 transition-colors cursor-pointer"
-                      style={{ borderBottom: "1px solid var(--grid-border)" }}
+                      className="group relative hover:bg-gray-50/50 transition-colors"
+                      style={{ 
+                        borderBottom: "1px solid var(--grid-border)",
+                        backgroundColor: p.status === "Chờ xử lý" ? "#FFFBF0" : "transparent"
+                      }}
                     >
-                      <td className="px-4 py-3">
-                        <p
-                          className="text-[13px] font-bold font-mono"
-                          style={{ color: "var(--text-main)" }}
-                        >
-                          {p.code}
-                        </p>
+                      <td className="px-6 py-4 font-medium text-gray-400">
+                        {(currentPage - 1) * itemsPerPage + idx + 1}
                       </td>
-                      <td className="px-4 py-3">
-                        <Link
-                          to={`/owner/orders/${p.orderId}`}
-                          className="text-[13px] font-semibold hover:underline"
-                          style={{ color: "var(--brand-primary)" }}
-                        >
-                          {p.orderCode}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p
-                          className="text-[13px] font-semibold"
-                          style={{ color: "var(--text-main)" }}
-                        >
-                          {p.productName}
-                        </p>
-                        <p
-                          className="text-[11px]"
-                          style={{ color: "var(--text-placeholder)" }}
-                        >
-                          {p.variantName}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span
-                          className="text-[13px] font-bold"
-                          style={{ color: "var(--text-main)" }}
-                        >
-                          {p.quantityPlanned}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <div className="flex flex-col items-center gap-1">
-                          <span
-                            className="text-[13px] font-bold"
-                            style={{ color: progress === 100 ? "#15803D" : "var(--text-main)" }}
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-0.5">
+                          <p
+                            className="text-[13px] font-bold font-mono"
+                            style={{ color: "var(--text-main)" }}
                           >
-                            {p.quantityCompleted}/{p.quantityPlanned}
+                            {p.code}
+                          </p>
+                          {p.orderCode && (
+                            <Link
+                              to={`/owner/orders/${p.orderId}`}
+                              className="text-[11px] font-bold text-blue-600 hover:underline flex items-center gap-1"
+                            >
+                              <FileText size={10} /> {p.orderCode}
+                            </Link>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[13px] font-bold text-gray-900 truncate">
+                              {p.productName}
+                            </span>
+                            {p.status === "Chờ giao thợ" && (
+                              <span className="flex h-2 w-2 rounded-full bg-orange-500 animate-pulse" title="Cần giao việc ngay" />
+                            )}
+                          </div>
+                          <span className="text-[11px] font-medium text-gray-400">
+                            {p.variantName}
                           </span>
-                          {p.status !== "Chờ xử lý" && (
-                            <div className="w-14 h-1.5 rounded-full bg-gray-200 overflow-hidden">
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col items-center gap-1.5">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="text-[12px] font-bold"
+                              style={{
+                                color: progress === 100 ? "#16a34a" : "#1f2937",
+                              }}
+                            >
+                              {p.quantityCompleted}/{p.quantityPlanned}
+                            </span>
+                            <span className="text-[10px] text-gray-400 font-medium">
+                              ({progress}%)
+                            </span>
+                          </div>
+                          {p.status !== "Chờ giao thợ" && (
+                            <div className="w-20 h-1 rounded-full bg-gray-100 overflow-hidden">
                               <div
-                                className="h-full rounded-full transition-all"
+                                className="h-full transition-all duration-500"
                                 style={{
                                   width: `${progress}%`,
-                                  backgroundColor: progress === 100 ? "#15803D" : "#7C3AED",
+                                  backgroundColor:
+                                    progress === 100 ? "#16a34a" : "var(--brand-primary)",
                                 }}
                               />
                             </div>
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         <div className="flex flex-col gap-1">
-                          <span
-                            className="inline-flex items-center px-2.5 py-1 text-[11px] font-bold rounded-md w-fit"
-                            style={{
-                              backgroundColor: sc.bg,
-                              color: sc.text,
-                              border: `1px solid ${sc.border}`,
-                            }}
-                          >
+                          {p.status === "Chờ giao thợ" ? (
                             <span
-                              className="w-1.5 h-1.5 rounded-full mr-1.5"
-                              style={{ backgroundColor: sc.text }}
-                            ></span>
-                            {p.status}
-                          </span>
-                          {p.subStage && p.status === "Đang sản xuất" && (
+                              className="inline-flex items-center px-3 py-1.5 rounded-xl text-[11px] font-black w-fit bg-red-50 text-red-600 border border-red-200 shadow-sm animate-[bounce_2s_infinite]"
+                            >
+                              <Activity size={12} className="mr-1.5" />
+                              CẦN GIAO VIỆC
+                            </span>
+                          ) : p.status === "Đang sản xuất" && p.subStage ? (
                             <span
-                              className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded w-fit"
+                              className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold w-fit"
                               style={{
-                                backgroundColor: p.subStage === "danh_rap" ? "#F5F3FF" : "#ECFEFF",
-                                color: p.subStage === "danh_rap" ? "#7C3AED" : "#0891B2",
+                                backgroundColor: getStatusColor(p.status, p.subStage).bg,
+                                color: getStatusColor(p.status, p.subStage).text,
+                                border: `1px solid ${getStatusColor(p.status, p.subStage).border}`,
                               }}
                             >
-                              {p.subStage === "danh_rap" ? "🔨 Đánh ráp" : "🎨 Phun sơn"}
+                              <span
+                                className="w-1.5 h-1.5 rounded-full mr-1.5"
+                                style={{ backgroundColor: getStatusColor(p.status, p.subStage).text }}
+                              />
+                              {p.subStage === "danh_rap" ? "Gia công ráp" : "Phun sơn PU"}
+                            </span>
+                          ) : (
+                            <span
+                              className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold w-fit"
+                              style={{
+                                backgroundColor: getStatusColor(p.status).bg,
+                                color: getStatusColor(p.status).text,
+                                border: `1px solid ${getStatusColor(p.status).border}`,
+                              }}
+                            >
+                              <span
+                                className="w-1.5 h-1.5 rounded-full mr-1.5"
+                                style={{ backgroundColor: getStatusColor(p.status).text }}
+                              />
+                              {p.status}
                             </span>
                           )}
-
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         {p.assignedWorker ? (
-                          <p
-                            className="text-[13px] font-semibold"
-                            style={{ color: "var(--text-main)" }}
-                          >
-                            {p.assignedWorker}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-500 shrink-0">
+                              {p.assignedWorker.split(" ").pop()[0]}
+                            </div>
+                            <span className="font-bold text-gray-700">
+                              {p.assignedWorker}
+                            </span>
+                          </div>
                         ) : (
-                          <p
-                            className="text-[12px] italic"
-                            style={{ color: "var(--text-placeholder)" }}
-                          >
-                            Chưa giao
-                          </p>
+                          <span className="text-gray-400 italic text-xs">
+                            Chưa phân công
+                          </span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
-                        <div
-                          className="flex items-center gap-1.5 text-[12px]"
-                          style={{ color: "var(--text-secondary)" }}
-                        >
-                          <Calendar
-                            size={13}
-                            style={{ color: "var(--text-placeholder)" }}
-                          />
-                          {formatDateTime(p.date)}
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-gray-700">
+                            {formatDate(p.date)}
+                          </span>
+                          <span className="text-[10px] text-gray-400 font-bold uppercase">
+                            {new Date(p.date).toLocaleTimeString("vi-VN", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
                         </div>
                       </td>
+
                       {/* Hover Actions */}
-                      <td className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        <div className="flex justify-end gap-1.5 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-gray-100">
-                          <Link
-                            to={`/owner/production/${p.id}`}
-                            className="h-8 px-2.5 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100 gap-1.5 text-[12px] font-bold"
-                            style={{ color: "var(--text-secondary)" }}
-                            title="Xem chi tiết"
-                          >
-                            <Eye size={14} /> Xem
-                          </Link>
-
-                          {p.status === "Chờ xử lý" && (
-                            <button
-                              className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg text-[12px] font-bold transition cursor-pointer hover:opacity-80"
-                              style={{
-                                backgroundColor: "#F5F3FF",
-                                color: "#7C3AED",
-                                border: "1px solid #DDD6FE",
-                              }}
-                              title="Giao việc"
+                      <td className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 pointer-events-none group-hover:pointer-events-auto bg-white/90 backdrop-blur-sm px-2 py-1 rounded-xl shadow-sm border border-gray-100">
+                        <Link
+                          to={`/owner/production/${p.id}`}
+                          className="h-8 px-3 rounded-lg bg-white border border-gray-200 shadow-sm flex items-center gap-1.5 text-[12px] font-bold text-gray-600 hover:text-blue-600 hover:border-blue-200 transition cursor-pointer"
+                        >
+                          <Eye size={14} /> Chi tiết
+                        </Link>
+                        
+                        {p.status === "Chờ giao thợ" && (
+                          <>
+                            <Link 
+                              to={`/owner/production/${p.id}`}
+                              className="h-8 px-3 rounded-lg bg-orange-600 border border-orange-600 shadow-sm flex items-center gap-1.5 text-[12px] font-bold text-white hover:bg-orange-700 transition cursor-pointer"
                             >
-                              <UserPlus size={14} /> Giao việc
+                              <UserPlus size={14} /> Giao việc ngay
+                            </Link>
+                            <button className="h-8 px-2 rounded-lg bg-white border border-gray-200 shadow-sm flex items-center text-[12px] font-bold text-gray-600 hover:text-red-600 hover:border-red-200 transition cursor-pointer" title="Hủy lệnh">
+                              <XCircle size={14} />
                             </button>
-                          )}
+                          </>
+                        )}
 
+                        {p.status === "Đang sản xuất" && (
+                          <>
+                            <Link 
+                              to={`/owner/production/${p.id}`}
+                              className="h-8 px-3 rounded-lg bg-white border border-gray-200 shadow-sm flex items-center gap-1.5 text-[12px] font-bold text-gray-600 hover:text-purple-600 hover:border-purple-200 transition cursor-pointer"
+                            >
+                              <Activity size={14} /> Tiến độ
+                            </Link>
+                            <button className="h-8 px-2 rounded-lg bg-white border border-gray-200 shadow-sm flex items-center text-[12px] font-bold text-gray-600 hover:text-emerald-600 hover:border-emerald-200 transition cursor-pointer" title="Đánh dấu hoàn thành">
+                              <CheckCircle size={14} />
+                            </button>
+                          </>
+                        )}
 
-                        </div>
+                        {p.status === "Hoàn thành" && (
+                          <Link 
+                            to={`/owner/production/${p.id}`}
+                            className="h-8 px-3 rounded-lg bg-white border border-gray-200 shadow-sm flex items-center gap-1.5 text-[12px] font-bold text-gray-600 hover:text-emerald-600 hover:border-emerald-200 transition cursor-pointer"
+                          >
+                            <PackagePlus size={14} /> Nhập kho
+                          </Link>
+                        )}
                       </td>
                     </tr>
                   );
@@ -711,7 +813,7 @@ export default function OwnerProduction() {
               </div>
 
               <div className="flex items-center gap-6">
-                {/* Items per page */}
+                {/* Items per page indicator */}
                 <div className="flex items-center gap-2">
                   <span
                     className="text-[13px]"
@@ -723,7 +825,7 @@ export default function OwnerProduction() {
                     value={itemsPerPage}
                     onChange={(e) => {
                       setItemsPerPage(Number(e.target.value));
-                      setCurrentPage(1);
+                      setCurrentPage(1); // Reset to page 1 when changing items per page
                     }}
                     className="h-8 px-2 pr-6 rounded-md text-[13px] border cursor-pointer focus:outline-none focus:ring-1 transition appearance-none"
                     style={{
@@ -761,7 +863,7 @@ export default function OwnerProduction() {
                 {/* Arrows */}
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setCurrentPage((pg) => Math.max(1, pg - 1))}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
                     className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
                     style={{ color: "var(--text-main)" }}
@@ -770,7 +872,7 @@ export default function OwnerProduction() {
                   </button>
                   <button
                     onClick={() =>
-                      setCurrentPage((pg) => Math.min(totalPages, pg + 1))
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
                     }
                     disabled={currentPage === totalPages || totalPages === 0}
                     className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
