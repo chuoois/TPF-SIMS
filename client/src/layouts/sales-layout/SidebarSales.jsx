@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 
 const menuItems = [
-  { text: "Tổng quan", icon: Home, path: "/sales/home" },
   {
     text: "Quản lý đơn hàng",
     icon: Package,

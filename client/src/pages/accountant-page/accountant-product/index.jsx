@@ -66,8 +66,7 @@ const TABS = [
     { id: "custom", label: "Đặt theo mẫu", icon: Ruler },
 ];
 
-const PRODUCT_STATUSES = ["Tất cả", "Đang kinh doanh", "Ngừng kinh doanh"];
-const PRODUCT_TYPES = ["Tất cả", "Hàng Mộc", "Hoàn thiện"];
+const PRODUCT_CATEGORIES = ["Tất cả", ...CATEGORIES.map(c => c.name)];
 
 const fmtCurrency = (n) => new Intl.NumberFormat("vi-VN").format(n) + "₫";
 
@@ -85,8 +84,7 @@ export default function AccountantProductManage() {
 
     // Products filters
     const [productSearch, setProductSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState("Tất cả");
-    const [typeFilter, setTypeFilter] = useState("Tất cả");
+    const [categoryFilter, setCategoryFilter] = useState("Tất cả");
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(15);
 
@@ -99,17 +97,13 @@ export default function AccountantProductManage() {
     // ── Filtered sets ──
     const filteredProducts = useMemo(() => {
         let r = INITIAL_PRODUCTS;
-        if (statusFilter !== "Tất cả") r = r.filter(p => p.status === statusFilter);
-        if (typeFilter !== "Tất cả") {
-            const key = typeFilter === "Hàng Mộc" ? "RAW" : "FINISHED";
-            r = r.filter(p => p.type === key);
-        }
+        if (categoryFilter !== "Tất cả") r = r.filter(p => p.category === categoryFilter);
         if (productSearch.trim()) {
             const q = productSearch.toLowerCase();
             r = r.filter(p => p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q));
         }
         return r;
-    }, [statusFilter, typeFilter, productSearch]);
+    }, [categoryFilter, productSearch]);
 
     const filteredStock = useMemo(() => {
         let r = STOCK_ITEMS;
@@ -128,16 +122,10 @@ export default function AccountantProductManage() {
         return CUSTOM_MODELS.filter(m => m.code.toLowerCase().includes(q) || m.name.toLowerCase().includes(q));
     }, [customSearch]);
 
-    const statusCounts = useMemo(() => {
-        const c = { "Tất cả": INITIAL_PRODUCTS.length, "Đang kinh doanh": 0, "Ngừng kinh doanh": 0 };
-        INITIAL_PRODUCTS.forEach(p => { c[p.status] = (c[p.status] || 0) + 1; });
-        return c;
-    }, []);
+    const hasActiveFilters = categoryFilter !== "Tất cả" || productSearch;
+    const clearFilters = () => { setCategoryFilter("Tất cả"); setProductSearch(""); };
 
-    const hasActiveFilters = statusFilter !== "Tất cả" || typeFilter !== "Tất cả" || productSearch;
-    const clearFilters = () => { setStatusFilter("Tất cả"); setTypeFilter("Tất cả"); setProductSearch(""); };
-
-    useEffect(() => { setCurrentPage(1); }, [productSearch, statusFilter, typeFilter]);
+    useEffect(() => { setCurrentPage(1); }, [productSearch, categoryFilter]);
 
     const totalPages = Math.ceil(filteredProducts.length / itemsPerPage) || 1;
     const paginatedProducts = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -236,51 +224,26 @@ export default function AccountantProductManage() {
                 {/* ════ TAB: SẢN PHẨM ════ */}
                 {activeTab === "products" && (
                     <>
-                        {/* Status pills */}
-                        <div className="flex items-center gap-2 shrink-0 px-1 flex-wrap">
-                            {PRODUCT_STATUSES.map(s => {
-                                const isA = statusFilter === s;
-                                const sc = s !== "Tất cả" ? getStatusColor(s) : null;
-                                return (
-                                    <button key={s} onClick={() => setStatusFilter(s)}
-                                        className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all cursor-pointer flex items-center gap-1.5"
-                                        style={{ backgroundColor: isA ? (sc ? sc.bg : "#fff") : "transparent", color: isA ? (sc ? sc.text : "var(--text-main)") : "var(--text-secondary)", border: isA ? `1.5px solid ${sc ? sc.border : "var(--grid-border)"}` : "1.5px solid transparent" }}>
-                                        {s !== "Tất cả" && <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: sc?.text, opacity: isA ? 1 : 0.5 }} />}
-                                        {s} <span className="text-[11px] opacity-60">({statusCounts[s] || 0})</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-
                         <div className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
                             {/* Toolbar */}
                             <div className="px-4 py-3 border-b shrink-0 flex flex-wrap items-center justify-between gap-3" style={{ borderColor: "var(--grid-border)" }}>
-                                <div className="relative w-full max-w-md shrink-0">
-                                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-placeholder)" }} />
-                                    <input type="text" value={productSearch} onChange={e => setProductSearch(e.target.value)}
-                                        placeholder="Tìm mã sản phẩm, tên sản phẩm..."
-                                        className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
-                                        style={{ border: "1px solid var(--grid-border)", backgroundColor: "var(--bg-main)", color: "var(--text-main)" }} />
-                                    {productSearch && <button onClick={() => setProductSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer" style={{ color: "var(--text-placeholder)" }}><X size={14} /></button>}
+                                <div className="flex items-center gap-3 w-full max-w-2xl">
+                                    <div className="relative w-full max-w-md shrink-0">
+                                        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-placeholder)" }} />
+                                        <input type="text" value={productSearch} onChange={e => setProductSearch(e.target.value)}
+                                            placeholder="Tìm mã sản phẩm, tên sản phẩm..."
+                                            className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
+                                            style={{ border: "1px solid var(--grid-border)", backgroundColor: "var(--bg-main)", color: "var(--text-main)" }} />
+                                        {productSearch && <button onClick={() => setProductSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer" style={{ color: "var(--text-placeholder)" }}><X size={14} /></button>}
+                                    </div>
+                                    {/* Category filter */}
+                                    <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}
+                                        className="h-9 px-3 rounded-lg text-[13px] outline-none cursor-pointer shrink-0"
+                                        style={{ border: "1px solid var(--grid-border)", color: "var(--text-main)" }}>
+                                        {PRODUCT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                    </select>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    {/* Type filter */}
-                                    <div className="flex p-0.5 rounded-lg" style={{ backgroundColor: "var(--bg-main)", border: "1px solid var(--grid-border)" }}>
-                                        {PRODUCT_TYPES.map(t => {
-                                            const isA = typeFilter === t;
-                                            return (
-                                                <button key={t} onClick={() => setTypeFilter(t)}
-                                                    className="px-3 py-1 rounded-md text-[12px] font-semibold transition-all cursor-pointer"
-                                                    style={{
-                                                        backgroundColor: isA ? "#fff" : "transparent",
-                                                        color: isA ? (t === "Hàng Mộc" ? "#C2410C" : t === "Hoàn thiện" ? "#15803D" : "var(--text-main)") : "var(--text-secondary)",
-                                                        boxShadow: isA ? "0 1px 2px rgba(0,0,0,0.08)" : "none"
-                                                    }}>
-                                                    {t}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
                                     {hasActiveFilters && (
                                         <button onClick={clearFilters}
                                             className="h-9 px-3 rounded-lg text-[13px] font-medium flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition"
