@@ -6,7 +6,7 @@
  */
 
 import { useState, useMemo, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   Search,
   Users,
@@ -18,6 +18,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Hammer,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 
@@ -30,12 +31,12 @@ const INITIAL_ORDERS = [
     customerName: "Đinh Quang Hiếu",
     phone: "0989012345",
     type: "Hàng sẵn",
-    total: 1200000,
+    total: 36000000,
     status: "Giao hàng thành công",
     date: "2026-03-05T13:20:00",
   },
   {
-    id: "DH003",
+    id: "DH999",
     code: "DH-2603-0011",
     customerName: "Đinh Quang Hiếu",
     phone: "0989012345",
@@ -281,9 +282,19 @@ const INITIAL_ORDERS = [
     customerName: "Vũ Phương Thảo",
     phone: "0990123456",
     type: "Đặt theo mẫu",
-    total: 95000000,
+    total: null,
     status: "Chờ báo giá",
     date: "2026-03-05T16:05:00",
+  },
+  {
+    id: "DH003",
+    code: "DH-2603-0012",
+    customerName: "Nguyễn Thị Hồng",
+    phone: "0912345678",
+    type: "Đặt theo mẫu",
+    total: 24000000,
+    status: "Xác nhận đơn hàng",
+    date: "2026-03-04T08:15:00",
   },
   {
     id: "DH004",
@@ -445,6 +456,26 @@ const INITIAL_ORDERS = [
     status: "Chờ xác nhận",
     date: "2026-03-08T12:00:00",
   },
+  {
+    id: "DH043",
+    code: "DH-2604-0043",
+    customerName: "Lý Hải Đăng",
+    phone: "0912334455",
+    type: "Đặt theo mẫu",
+    total: 45000000,
+    status: "Xác nhận đơn hàng",
+    date: "2026-03-08T14:20:00",
+  },
+  {
+    id: "DH044",
+    code: "DH-2604-0044",
+    customerName: "Trương Mỹ Lan",
+    phone: "0345678891",
+    type: "Đặt theo mẫu",
+    total: 215000000,
+    status: "Đang sản xuất",
+    date: "2026-03-08T15:10:00",
+  },
 ];
 
 const ORDER_TYPES = ["Hàng sẵn", "Đặt theo mẫu"];
@@ -526,13 +557,31 @@ const getStatusColor = (status) => {
 // ===================== COMPONENT =====================
 export default function OwnerOrders() {
   const [orders] = useState(INITIAL_ORDERS);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Đọc giá trị từ URL, nếu không có thì mặc định
+  const activeTab = searchParams.get("tab") || "Hàng sẵn";
+  const statusFilter = searchParams.get("status") || "Tất cả";
+
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("Hàng sẵn");
-  const [statusFilter, setStatusFilter] = useState("Tất cả");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
+
+  // Helper để cập nhật Search Params mượt mà
+  const updateParams = (newParams) => {
+    const current = Object.fromEntries(searchParams.entries());
+    setSearchParams({ ...current, ...newParams });
+  };
+
+  const setActiveTab = (tab) => {
+    updateParams({ tab, status: "Tất cả" }); // Reset status khi đổi tab
+  };
+
+  const setStatusFilter = (status) => {
+    updateParams({ status });
+  };
 
   // Filter & Search
   const filtered = useMemo(() => {
@@ -575,15 +624,14 @@ export default function OwnerOrders() {
   const hasActiveFilters = statusFilter !== "Tất cả" || dateFrom || dateTo || searchTerm;
 
   const clearAllFilters = () => {
-    setStatusFilter("Tất cả");
+    updateParams({ status: "Tất cả" });
     setDateFrom("");
     setDateTo("");
     setSearchTerm("");
   };
 
-  // Reset status filter when switching tabs
+  // Reset date and search when folder/tab changes
   useEffect(() => {
-    setStatusFilter("Tất cả");
     setDateFrom("");
     setDateTo("");
     setSearchTerm("");
@@ -818,6 +866,7 @@ export default function OwnerOrders() {
               >
                 <tr>
                   {[
+                    "STT",
                     "Mã đơn",
                     "Khách hàng",
                     "Loại đơn",
@@ -827,7 +876,7 @@ export default function OwnerOrders() {
                   ].map((h, i) => (
                     <th
                       key={i}
-                      className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 3 ? "text-right pr-8" : ""}`}
+                      className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 4 ? "text-right pr-8" : ""} ${i === 0 ? "text-center w-[50px]" : ""}`}
                       style={{ color: "var(--text-placeholder)" }}
                     >
                       {h}
@@ -836,7 +885,7 @@ export default function OwnerOrders() {
                 </tr>
               </thead>
               <tbody>
-                {paginatedOrders.map((o) => {
+                {paginatedOrders.map((o, idx) => {
                   const statusConfig = getStatusColor(o.status);
                   return (
                     <tr
@@ -844,6 +893,9 @@ export default function OwnerOrders() {
                       className="group relative hover:bg-gray-50/50 transition-colors cursor-pointer"
                       style={{ borderBottom: "1px solid var(--grid-border)" }}
                     >
+                      <td className="px-4 py-3 text-center text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>
+                        {(currentPage - 1) * itemsPerPage + idx + 1}
+                      </td>
                       <td className="px-4 py-3">
                         <p
                           className="text-[13px] font-bold font-mono"
@@ -930,7 +982,7 @@ export default function OwnerOrders() {
                           {/* Báo giá — chỉ hiện khi Chờ báo giá */}
                           {o.status === "Chờ báo giá" && (
                             <Link
-                              to={`/owner/orders/${o.id}/quote`}
+                              to={`/owner/orders/${o.id}`}
                               className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg text-[12px] font-bold transition cursor-pointer hover:opacity-80"
                               style={{
                                 backgroundColor: "#FFFBEB",
@@ -943,9 +995,26 @@ export default function OwnerOrders() {
                             </Link>
                           )}
 
+                          {/* Duyệt sản xuất — chỉ hiện khi Xác nhận đơn hàng (Đặt theo mẫu) */}
+                          {o.status === "Xác nhận đơn hàng" && o.type === "Đặt theo mẫu" && (
+                            <Link
+                              to={`/owner/orders/${o.id}`}
+                              className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg text-[12px] font-bold transition cursor-pointer hover:opacity-80 shadow-sm"
+                              style={{
+                                backgroundColor: "#EFF6FF",
+                                color: "#1D4ED8",
+                                border: "1px solid #BFDBFE",
+                              }}
+                              title="Duyệt sản xuất"
+                            >
+                              <Hammer size={14} /> Duyệt SX
+                            </Link>
+                          )}
+
                           {/* Duyệt hủy — chỉ hiện khi Chờ duyệt hủy */}
                           {o.status === "Chờ duyệt hủy" && (
-                            <button
+                            <Link
+                              to={`/owner/orders/${o.id}`}
                               className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg text-[12px] font-bold transition cursor-pointer hover:opacity-80"
                               style={{
                                 backgroundColor: "#FEF2F2",
@@ -955,7 +1024,7 @@ export default function OwnerOrders() {
                               title="Duyệt hủy đơn"
                             >
                               <XCircle size={14} /> Duyệt hủy
-                            </button>
+                            </Link>
                           )}
                         </div>
                       </td>
@@ -964,7 +1033,7 @@ export default function OwnerOrders() {
                 })}
                 {paginatedOrders.length === 0 && (
                   <tr>
-                    <td colSpan="6" className="py-24 text-center">
+                    <td colSpan="7" className="py-24 text-center">
                       <div
                         className="flex flex-col items-center gap-2"
                         style={{ color: "var(--text-placeholder)" }}

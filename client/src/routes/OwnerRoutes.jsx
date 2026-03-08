@@ -8,11 +8,11 @@ import OrderDetail from "../pages/owner-page/orders/detail";
 import Production from "../pages/owner-page/production";
 import ProductionDetail from "../pages/owner-page/production/detail";
 import Products from "../pages/owner-page/products";
-import Customers from "../pages/owner-page/customers";
+// import Customers from "../pages/owner-page/customers";
 import Suppliers from "../pages/owner-page/suppliers";
 import Employees from "../pages/owner-page/employees";
 import Reports from "../pages/owner-page/reports";
-
+import SystemLogs from "../pages/owner-page/system-logs";
 
 export const ownerRoutes = {
   path: "/owner",
@@ -43,10 +43,10 @@ export const ownerRoutes = {
       path: "products",
       element: <Products />,
     },
-    {
-      path: "customers",
-      element: <Customers />,
-    },
+    // {
+    //   path: "customers",
+    //   element: <Customers />,
+    // },
 
     {
       path: "suppliers",
@@ -59,6 +59,10 @@ export const ownerRoutes = {
     {
       path: "reports",
       element: <Reports />,
+    },
+    {
+      path: "system-logs",
+      element: <SystemLogs />,
     },
   ],
 };
