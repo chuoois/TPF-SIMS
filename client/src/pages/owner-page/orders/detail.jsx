@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import {
   ArrowLeft,
@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   CheckCircle,
   Calculator,
+  Hammer,
 } from "lucide-react";
 
 // ===================== MOCK DATA =====================
@@ -80,8 +81,8 @@ const MOCK_ORDERS = {
       address: "123 Đường Nam Kỳ Khởi Nghĩa, Quận 1, TP.HCM",
     },
     salesPerson: "Lê Minh Tuấn",
-    total: 1200000,
-    deposit: 1200000,
+    total: 36000000,
+    deposit: 36000000,
     paymentStatus: "full",
     paymentMethod: "Chuyển khoản",
     notes: "Giao hỏa tốc trong ngày",
@@ -103,6 +104,102 @@ const MOCK_ORDERS = {
       { time: "05/03/2026 13:30", label: "Đang chuẩn bị", desc: "Kho xuất hàng, đóng gói", active: false },
       { time: "06/03/2026 09:00", label: "Đang giao hàng", desc: "Giao cho đơn vị vận chuyển", active: false },
       { time: "06/03/2026 14:30", label: "Giao hàng thành công", desc: "Khách đã nhận và thanh toán đủ", active: true },
+    ],
+  },
+  // ĐƠN HÀNG SẴN ĐANG CHUẨN BỊ
+  DH011: {
+    code: "DH-2603-0003",
+    type: "Hàng sẵn",
+    status: "Đang chuẩn bị",
+    date: "2026-03-05T09:15:00",
+    deliveryDate: "2026-03-07",
+    customer: {
+      name: "Lê Minh Tuấn",
+      phone: "0923456789",
+      address: "89 Lê Duẩn, Quận Hoàn Kiếm, Hà Nội",
+    },
+    salesPerson: "Trần Thị Cúc",
+    total: 8900000,
+    deposit: 8900000,
+    paymentStatus: "full",
+    paymentMethod: "Chuyển khoản",
+    notes: "Khách đã thanh toán 100%, yêu cầu bọc chống xước mút xốp 3 lớp.",
+    products: [
+      { 
+        name: "Tủ giày thông minh 3 tầng", 
+        material: "Gỗ MDF chống ẩm", 
+        finish: "Phủ Melamine vân gỗ sồi", 
+        pattern: "Cánh lật tiết kiệm không gian",
+        size: "1m2 x 30cm x 1m1", 
+        warranty: "2 năm",
+        note: null,
+        qty: 1, 
+        price: 2400000 
+      },
+      { 
+        name: "Kệ trang trí góc tường", 
+        material: "Gỗ cao su ghép thanh", 
+        finish: "Sơn PU màu cánh gián", 
+        pattern: "5 tầng 1/4 hình tròn",
+        size: "Cao 1m5, bán kính 40cm", 
+        warranty: "2 năm",
+        note: null,
+        qty: 1, 
+        price: 1500000 
+      },
+      { 
+        name: "Bàn trà Nhật ngồi bệt", 
+        material: "Gỗ hương vân", 
+        finish: "PU bóng mờ giữ vân tự nhiên", 
+        pattern: "Chân gập",
+        size: "90cm x 50cm x 30cm", 
+        warranty: "5 năm",
+        note: null,
+        qty: 1, 
+        price: 5000000 
+      },
+    ],
+    timeline: [
+      { time: "05/03/2026 09:15", label: "Tạo đơn hàng", desc: "NV Trần Thị Cúc tạo đơn hàng sẵn", active: false },
+      { time: "05/03/2026 09:20", label: "Thanh toán", desc: "Khách chuyển khoản thành công 8.900.000đ", active: false },
+      { time: "05/03/2026 10:00", label: "Đang chuẩn bị", desc: "Kho xuất hàng, đang tiến hành đóng gói", active: true },
+    ],
+  },
+  // ĐƠN ĐÃ XÁC NHẬN - CHỜ DUYỆT SẢN XUẤT (TỐI ƯU NGHIỆP VỤ)
+  DH003: {
+    code: "DH-2603-0012",
+    type: "Đặt theo mẫu",
+    status: "Xác nhận đơn hàng",
+    date: "2026-03-04T08:15:00",
+    deliveryDate: "2026-03-20",
+    customer: {
+      name: "Nguyễn Thị Hồng",
+      phone: "0912345678",
+      address: "KĐT Times City, Quận Hai Bà Trưng, Hà Nội",
+    },
+    salesPerson: "Trần Thị Cúc",
+    total: 24000000,
+    deposit: 7200000,
+    paymentStatus: "partial",
+    paymentMethod: "Chuyển khoản",
+    notes: "Khách đã chốt cọc, cần triển khai sản xuất sớm",
+    products: [
+      { 
+        name: "Bàn thờ chạm rồng", 
+        material: "Gỗ mít", 
+        finish: "Sơn PU bóng", 
+        pattern: "Chạm rồng cuốn thủy",
+        size: "217×81×127 cm", 
+        warranty: "20 năm",
+        note: "Sơn 3 lớp PU",
+        qty: 2, 
+        price: 12000000 
+      },
+    ],
+    timeline: [
+      { time: "03/03/2026 14:00", label: "Tạo đơn hàng", desc: "NV Trần Thị Cúc tạo đơn đặt theo mẫu", active: false },
+      { time: "03/03/2026 15:30", label: "Đã báo giá", desc: "Báo giá: 24.000.000đ", active: false },
+      { time: "04/03/2026 08:15", label: "Xác nhận đơn hàng", desc: "Khách đã đặt cọc, chờ duyệt sản xuất", active: true },
     ],
   },
   // ĐƠN CHỜ DUYỆT HỦY
@@ -134,7 +231,7 @@ const MOCK_ORDERS = {
         warranty: "Bảo hành nứt nẻ 1 đổi 1",
         note: null,
         qty: 1, 
-        price: 28000000 
+        price: 3400000 
       },
     ],
     timeline: [
@@ -142,6 +239,79 @@ const MOCK_ORDERS = {
       { time: "03/03/2026 17:00", label: "Đang chuẩn bị", desc: "Xuất kho, đóng gói sản phẩm", active: false },
       { time: "04/03/2026 09:00", label: "Yêu cầu hủy", desc: "Khách yêu cầu hủy — Lý do: đổi ý chọn mẫu khác", active: false },
       { time: "04/03/2026 09:05", label: "Chờ duyệt hủy", desc: "Chờ chủ cửa hàng phê duyệt", active: true },
+    ],
+  },
+  // ĐƠN ĐÃ BÁO GIÁ - CHỜ KHÁCH XÁC NHẬN
+  DH010: {
+    code: "DH-2603-0002",
+    type: "Đặt theo mẫu",
+    status: "Chờ xác nhận",
+    date: "2026-03-02T10:15:00",
+    deliveryDate: null,
+    customer: {
+      name: "Trần Thị Mai",
+      phone: "0912345678",
+      address: "Chung cư Hoàng Anh Gia Lai, Quận 7, TP.HCM",
+    },
+    salesPerson: "Nguyễn Văn Bình",
+    total: 42000000,
+    deposit: null,
+    paymentStatus: null,
+    paymentMethod: null,
+    notes: "Đã gửi bảng báo giá qua Zalo cho khách ngày 05/03, khách hẹn cuối tuần chốt màu.",
+    products: [
+      { 
+        name: "Tủ bếp chữ I", 
+        material: "MDF chống ẩm Hòe Nhai", 
+        finish: "Phủ Melamine An Cường", 
+        pattern: "Trơn, phẳng hiện đại",
+        size: "Dài 4m x Cao 2m2", 
+        warranty: "05 năm",
+        note: "Khách có thể đổi ý sang màu xám vân đá",
+        qty: 1, 
+        price: 42000000 
+      },
+    ],
+    timeline: [
+      { time: "02/03/2026 10:15", label: "Tạo đơn hàng", desc: "NV Nguyễn Văn Bình tạo đơn", active: false },
+      { time: "05/03/2026 09:30", label: "Đã báo giá", desc: "Chủ cửa hàng báo giá: 42.000.000đ", active: false },
+      { time: "05/03/2026 10:00", label: "Chờ xác nhận", desc: "Đã gửi giá cho khách. Đang chờ phản hồi.", active: true },
+    ],
+  },
+  // ĐƠN ĐÃ BÁO GIÁ - CHƯA GỬI CHO KHÁCH
+  DH006: {
+    code: "DH-2603-0006",
+    type: "Đặt theo mẫu",
+    status: "Đã báo giá",
+    date: "2026-03-04T11:10:00",
+    deliveryDate: null,
+    customer: {
+      name: "Đặng Thùy Linh",
+      phone: "0956789012",
+      address: "Biệt thự Vinhomes Riverside, Long Biên, Hà Nội",
+    },
+    salesPerson: "Lê Minh Tuấn",
+    total: 85000000,
+    deposit: null,
+    paymentStatus: null,
+    paymentMethod: null,
+    notes: "Bộ bàn ghế sofa chữ U gỗ gõ đỏ, bọc da Ý",
+    products: [
+      { 
+        name: "Sofa gỗ chữ U", 
+        material: "Gỗ gõ đỏ", 
+        finish: "Sơn PU mờ", 
+        pattern: "Hiện đại, đệm da bò tự nhiên",
+        size: "3m2 x 2m8", 
+        warranty: "15 năm",
+        note: "Đệm tựa lưng may caro rút múi",
+        qty: 1, 
+        price: 85000000 
+      },
+    ],
+    timeline: [
+      { time: "04/03/2026 11:10", label: "Tạo đơn hàng", desc: "NV Lê Minh Tuấn tạo đơn", active: false },
+      { time: "04/03/2026 14:30", label: "Đã báo giá", desc: "Chủ cửa hàng đã tính toán và ra giá: 85.000.000đ", active: true },
     ],
   },
   // ĐƠN ĐANG SẢN XUẤT — có đầy đủ giá
@@ -499,6 +669,36 @@ const StandardOrderView = ({ o, displayTotal, hasPricing, remaining }) => {
           </div>
         </div>
       )}
+      
+      {o.status === "Chờ xác nhận" && (
+        <div
+          className="flex items-start gap-3 p-4 rounded-2xl"
+          style={{ backgroundColor: "#FFF7ED", border: "1px solid #FED7AA" }}
+        >
+          <Phone size={18} className="shrink-0 mt-0.5" style={{ color: "#C2410C" }} />
+          <div>
+            <p className="text-[13px] font-bold" style={{ color: "#9A3412" }}>Đơn hàng Đang chờ Khách xác nhận</p>
+            <p className="text-[12px] mt-0.5" style={{ color: "#B45309" }}>
+              Báo giá đã được chủ cửa hàng chốt. Sales đang trực tiếp trao đổi và làm việc với khách hàng để chốt phương án cuối cùng và tiền cọc. Nhấn "Gửi nhắc nhở tư vấn" nếu đơn treo quá lâu.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {o.status === "Đã báo giá" && (
+        <div
+          className="flex items-start gap-3 p-4 rounded-2xl"
+          style={{ backgroundColor: "#ECFDF5", border: "1px solid #A7F3D0" }}
+        >
+          <FileText size={18} className="shrink-0 mt-0.5" style={{ color: "#047857" }} />
+          <div>
+            <p className="text-[13px] font-bold" style={{ color: "#065F46" }}>Đã ra giá thành công</p>
+            <p className="text-[12px] mt-0.5" style={{ color: "#047857" }}>
+              Bạn đã lên Báo giá xong cho sản phẩm này. Bấm "Chuyển chờ xác nhận" phòng Sale báo cho khách.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* LEFT COL */}
@@ -592,6 +792,61 @@ const StandardOrderView = ({ o, displayTotal, hasPricing, remaining }) => {
               </div>
             )}
           </div>
+
+          {/* ── CARD: Danh sách Lệnh Sản Xuất Liên Kết ── */}
+          {o.type === "Đặt theo mẫu" && o.status === "Đang sản xuất" && (
+            <div
+              className="rounded-2xl overflow-hidden mt-4"
+              style={{ backgroundColor: "var(--background)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
+            >
+              <div
+                className="px-5 py-3 flex items-center justify-between"
+                style={{ borderBottom: "1px solid var(--grid-border)", backgroundColor: "var(--grid-header-bg)" }}
+              >
+                <div className="flex items-center gap-2">
+                  <Hammer size={14} style={{ color: "var(--brand-primary)" }} />
+                  <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-main)" }}>
+                    Lệnh sản xuất liên kết
+                  </span>
+                </div>
+              </div>
+              
+              <div className="divide-y" style={{ borderColor: "var(--grid-border)" }}>
+                {/* Giả lập Lệnh Sản Xuất linked với DH008 */}
+                <div className="px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-4">
+                     <span className="w-2 h-2 rounded-full bg-purple-600 shadow-[0_0_0_4px_#F5F3FF]" />
+                     <div>
+                       <p className="text-[13px] font-bold text-gray-800">LSX-2603-0003</p>
+                       <p className="text-[12px] text-gray-500 mt-0.5">Bộ bàn ghế phòng khách (x1) • Thợ: Nguyễn Văn Đức</p>
+                     </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-purple-100 text-purple-700">
+                      Đang sản xuất (Đánh ráp)
+                    </span>
+                    <Link to="/owner/production/LSX003" className="text-[12px] font-bold text-blue-600 hover:underline">Xem chi tiết</Link>
+                  </div>
+                </div>
+
+                <div className="px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-4">
+                     <span className="w-2 h-2 rounded-full bg-green-600 shadow-[0_0_0_4px_#F0FDF4]" />
+                     <div>
+                       <p className="text-[13px] font-bold text-gray-800">LSX-2603-0004</p>
+                       <p className="text-[12px] text-gray-500 mt-0.5">Kệ tivi nguyên khối (x1) • Thợ: Trần Minh Tâm</p>
+                     </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-green-100 text-green-700">
+                      Hoàn thành
+                    </span>
+                    <Link to="/owner/production/LSX004" className="text-[12px] font-bold text-blue-600 hover:underline">Xem chi tiết</Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* RIGHT COL */}
@@ -639,6 +894,11 @@ const StandardOrderView = ({ o, displayTotal, hasPricing, remaining }) => {
                       <CreditCard size={11} /> Chưa thanh toán
                     </Badge>
                   )}
+                  {o.status === "Chờ xác nhận" && (
+                    <Badge style={{ backgroundColor: "#FFF7ED", color: "#C2410C", border: "1px solid #FED7AA" }}>
+                      <Clock size={11} /> Đang đợi vào tiền cọc
+                    </Badge>
+                  )}
                 </div>
               </div>
             </div>
@@ -683,10 +943,37 @@ const StandardOrderView = ({ o, displayTotal, hasPricing, remaining }) => {
 // ===================== MAIN EXPORT =====================
 export default function OwnerOrderDetail() {
   const { id } = useParams();
+
+  // Fake data fallback logic based on ID
+  const idFallbackMap = {
+     // Chờ báo giá -> DH001
+     "DH001": "DH001", "DH015": "DH001", "DH033": "DH001",
+     // Đã báo giá -> DH006
+     "DH006": "DH006", "DH021": "DH006", "DH041": "DH006",
+     // Chờ xác nhận -> DH010
+     "DH010": "DH010", "DH024": "DH010", "DH042": "DH010",
+     // Xác nhận đơn hàng -> DH003
+     "DH003": "DH003",
+     // Đang sản xuất -> DH008
+     "DH008": "DH008", "DH013": "DH008", "DH036": "DH008",
+     
+     // Hàng sẵn Giao hàng thành công -> DH002
+     "DH002": "DH002", "DH009": "DH002", "DH014": "DH002", "DH020": "DH002", "DH028": "DH002", "DH034": "DH002", "DH018": "DH002", "DH039": "DH002",
+     
+     // Hàng sẵn Chờ xử lý / Đang chuẩn bị / Đang giao hàng -> DH011
+     "DH011": "DH011", "DH999": "DH011", "DH012": "DH011", "DH016": "DH011", "DH017": "DH011", "DH019": "DH011", "DH022": "DH011", "DH023": "DH011", "DH026": "DH011", "DH029": "DH011", "DH031": "DH011", "DH032": "DH011", "DH035": "DH011", "DH038": "DH011", "DH040": "DH011", "DH007": "DH011",
+     
+     // Các trạng thái Hàng sẵn khác (Chờ hủy, Hủy) -> DH005
+     "DH005": "DH005", "DH025": "DH005", "DH027": "DH005", "DH037": "DH005",
+  };
+  
+  const fallbackRef = idFallbackMap[id] || "DH008"; 
+
   const o = MOCK_ORDERS[id] || { 
-    ...MOCK_ORDERS["DH008"], 
+    ...MOCK_ORDERS[fallbackRef], 
     code: `DH-2603-${id?.replace(/\D/g, '') || "9999"}`,
   };
+
   const ss = statusStyle(o.status);
   
   const [quotedPrices, setQuotedPrices] = useState({});
@@ -708,6 +995,8 @@ export default function OwnerOrderDetail() {
   const hasPricing = o.status === "Chờ báo giá" ? displayTotal > 0 : o.total != null;
   const remaining = hasPricing ? displayTotal - (o.deposit || 0) : null;
 
+  const navigate = useNavigate();
+
   return (
     <>
       <PageHelmet title={`${o.code} | Chi tiết đơn hàng`} />
@@ -725,13 +1014,13 @@ export default function OwnerOrderDetail() {
           <div className="flex items-center justify-between">
             {/* Left: Back + Info */}
             <div className="flex items-center gap-3">
-              <Link
-                to="/owner/orders"
-                className="w-8 h-8 rounded-xl flex items-center justify-center transition hover:opacity-70"
+              <button
+                onClick={() => navigate(-1)}
+                className="w-8 h-8 rounded-xl flex items-center justify-center transition hover:opacity-70 cursor-pointer"
                 style={{ color: "var(--text-secondary)", border: "1px solid var(--grid-border)" }}
               >
                 <ArrowLeft size={15} />
-              </Link>
+              </button>
               <div>
                 <div className="flex items-center gap-2.5">
                   <h1 className="text-[16px] font-bold" style={{ color: "var(--text-main)" }}>{o.code}</h1>
@@ -754,6 +1043,36 @@ export default function OwnerOrderDetail() {
 
             {/* Right: Action buttons (Top level actions) */}
             <div className="flex items-center gap-2">
+              {o.status === "Đã báo giá" && (
+                 <button
+                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer shadow-sm"
+                   style={{ backgroundColor: "#059669", color: "#fff" }}
+                 >
+                   <FileText size={14} />
+                   Báo Sale tư vấn & Chuyển chờ XN
+                 </button>
+              )}
+
+              {o.status === "Chờ xác nhận" && (
+                 <button
+                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer shadow-sm"
+                   style={{ backgroundColor: "#FFF7ED", color: "#C2410C", border: "1px solid #FED7AA" }}
+                 >
+                   <Phone size={14} />
+                   Gửi nhắc nhở Sales
+                 </button>
+              )}
+              
+              {o.status === "Xác nhận đơn hàng" && o.type === "Đặt theo mẫu" && (
+                <button
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer shadow-sm"
+                  style={{ backgroundColor: "var(--brand-primary)", color: "#fff" }}
+                >
+                  <Hammer size={14} />
+                  Duyệt triển khai sản xuất
+                </button>
+              )}
+
               {o.status === "Chờ duyệt hủy" && (
                 <button
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer"

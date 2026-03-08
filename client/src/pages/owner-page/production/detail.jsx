@@ -24,10 +24,10 @@ const STAGES = [
 
 // ===================== MOCK DATA =====================
 const MOCK_PRODUCTIONS = {
-  // CHỜ XỬ LÝ
+  // CHỜ GIAO THỢ
   LSX001: {
     code: "LSX-2603-0001",
-    orderCode: "DH-2603-0010",
+    orderCode: "DH-2603-0001",
     orderId: "DH001",
     productName: "Tủ bếp chữ L",
     variantName: "Gỗ sồi Nga — Sơn PU màu óc chó",
@@ -37,7 +37,7 @@ const MOCK_PRODUCTIONS = {
     pattern: "Cánh phẳng hiện đại",
     quantityPlanned: 1,
     quantityCompleted: 0,
-    status: "Chờ xử lý",
+    status: "Chờ giao thợ",
     subStage: null,
     assignedWorker: null,
     startDate: null,
@@ -46,11 +46,11 @@ const MOCK_PRODUCTIONS = {
     customerName: "Vũ Phương Thảo",
     notes: "Khách tự trang bị phụ kiện bếp",
     timeline: [
-      { time: "05/03/2026 16:30", label: "Tạo lệnh sản xuất", desc: "Hệ thống tự tạo từ đơn DH-2603-0010", active: false },
-      { time: "05/03/2026 16:30", label: "Chờ xử lý", desc: "Chờ chủ xưởng giao việc cho thợ", active: true },
+      { time: "05/03/2026 16:30", label: "Tạo lệnh sản xuất", desc: "Hệ thống tự tạo từ đơn DH-2603-0001", active: false },
+      { time: "05/03/2026 16:30", label: "Chờ giao thợ", desc: "Chờ chủ xưởng giao việc cho thợ", active: true },
     ],
   },
-  // ĐANG SẢN XUẤT — GIAI ĐOẠN ĐÁNH RÁP
+  // ĐANG SẢN XUẤT
   LSX003: {
     code: "LSX-2603-0003",
     orderCode: "DH-2603-0008",
@@ -75,35 +75,6 @@ const MOCK_PRODUCTIONS = {
       { time: "03/03/2026 08:00", label: "Tạo lệnh sản xuất", desc: "Hệ thống tự tạo từ đơn DH-2603-0008", active: false },
       { time: "03/03/2026 08:15", label: "Giao việc", desc: "Giao cho thợ Nguyễn Văn Đức", active: false },
       { time: "03/03/2026 09:00", label: "Bắt đầu đánh ráp", desc: "Thợ xác nhận nhận việc, gia công khung sườn", active: true },
-    ],
-  },
-  // ĐANG SẢN XUẤT — GIAI ĐOẠN PHUN SƠN
-  LSX005: {
-    code: "LSX-2603-0005",
-    orderCode: "DH-2603-0012",
-    orderId: "DH012",
-    productName: "Bàn thờ chạm rồng",
-    variantName: "Gỗ mít — Sơn PU bóng",
-    material: "Gỗ mít",
-    finish: "Sơn PU bóng",
-    size: "217×81×127 cm",
-    pattern: "Chạm rồng cuốn thủy",
-    quantityPlanned: 2,
-    quantityCompleted: 1,
-    status: "Đang sản xuất",
-    subStage: "phun_son",
-    assignedWorker: "Lê Văn Hùng",
-    startDate: "2026-03-04",
-    expectedEndDate: "2026-03-20",
-    date: "2026-03-04T09:00:00",
-    customerName: "Nguyễn Thị Hồng",
-    notes: "Sơn 3 lớp PU, hong khô 24h giữa mỗi lớp",
-    timeline: [
-      { time: "04/03/2026 09:00", label: "Tạo lệnh sản xuất", desc: "Hệ thống tự tạo", active: false },
-      { time: "04/03/2026 09:15", label: "Giao việc", desc: "Giao cho thợ Lê Văn Hùng", active: false },
-      { time: "04/03/2026 10:00", label: "Bắt đầu đánh ráp", desc: "Cắt phôi, đục và ráp khung", active: false },
-      { time: "06/03/2026 08:00", label: "Hoàn thành đánh ráp", desc: "Khung sườn và chi tiết chạm hoàn chỉnh", active: false },
-      { time: "06/03/2026 10:00", label: "Bắt đầu phun sơn", desc: "Phun lớp lót PU đầu tiên", active: true },
     ],
   },
   // HOÀN THÀNH
@@ -131,9 +102,7 @@ const MOCK_PRODUCTIONS = {
       { time: "03/03/2026 08:15", label: "Tạo lệnh sản xuất", desc: "Hệ thống tự tạo từ đơn DH-2603-0008", active: false },
       { time: "03/03/2026 08:30", label: "Giao việc", desc: "Giao cho thợ Trần Minh Tâm", active: false },
       { time: "03/03/2026 09:30", label: "Bắt đầu đánh ráp", desc: "Thợ xác nhận nhận việc", active: false },
-      { time: "08/03/2026 16:00", label: "Hoàn thành đánh ráp", desc: "Ráp xong, chuyển phun sơn", active: false },
-      { time: "09/03/2026 08:00", label: "Bắt đầu phun sơn", desc: "Phun PU lót + finish", active: false },
-      { time: "12/03/2026 16:00", label: "Hoàn thành", desc: "Sản phẩm hoàn thiện, chờ kiểm tra chất lượng", active: true },
+      { time: "12/03/2026 16:00", label: "Hoàn thành", desc: "Sản phẩm hoàn thiện, đã nhập kho", active: true },
     ],
   },
 };
@@ -149,7 +118,7 @@ const fmtDateTime = (s) => {
 
 const statusStyle = (status) => {
   const m = {
-    "Chờ xử lý": { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" },
+    "Chờ giao thợ": { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" },
     "Đang sản xuất": { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" },
     "Hoàn thành": { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" },
   };
@@ -273,13 +242,20 @@ const StageProgress = ({ currentStage, status }) => {
 // ===================== MAIN COMPONENT =====================
 export default function ProductionDetail() {
   const { id } = useParams();
+  
+  // Fake data fallback logic
+  const fallbackRef = ["LSX001", "LSX002", "LSX010", "LSX015"].includes(id) ? "LSX001" 
+    : ["LSX004", "LSX006", "LSX012", "LSX016"].includes(id) ? "LSX004"
+    : ["LSX003", "LSX011", "LSX007"].includes(id) ? "LSX003"
+    : "LSX003"; 
+
   const p = MOCK_PRODUCTIONS[id] || {
-    ...MOCK_PRODUCTIONS["LSX003"],
+    ...MOCK_PRODUCTIONS[fallbackRef],
     code: `LSX-2603-${id?.replace(/\D/g, '') || "9999"}`,
   };
   const ss = statusStyle(p.status);
   const progress = p.quantityPlanned > 0 ? Math.round((p.quantityCompleted / p.quantityPlanned) * 100) : 0;
-  const isWaiting = p.status === "Chờ xử lý";
+  const isWaiting = p.status === "Chờ giao thợ";
   const isProducing = p.status === "Đang sản xuất";
   const isDone = p.status === "Hoàn thành";
   const isHold = false;
@@ -369,10 +345,15 @@ export default function ProductionDetail() {
             >
               <ClipboardList size={18} className="shrink-0 mt-0.5" style={{ color: "#C2410C" }} />
               <div>
-                <p className="text-[13px] font-bold" style={{ color: "#9A3412" }}>Lệnh sản xuất chờ giao việc</p>
-                <p className="text-[12px] mt-0.5" style={{ color: "#C2410C" }}>
+                <p className="text-[13px] font-bold text-orange-900">Chờ giao thợ</p>
+                <p className="text-[12px] mt-0.5 text-orange-700">
                   Sản phẩm chưa được phân công cho thợ. Vui lòng chọn thợ phụ trách để bắt đầu sản xuất.
                 </p>
+                <button 
+                  className="mt-3 px-4 py-2 rounded-xl bg-orange-600 text-white text-[12px] font-bold flex items-center gap-2 hover:bg-orange-700 transition-all shadow-sm shadow-orange-200"
+                >
+                  <UserPlus size={14} /> Giao việc cho thợ
+                </button>
               </div>
             </div>
           )}

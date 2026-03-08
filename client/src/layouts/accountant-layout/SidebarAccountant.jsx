@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutGrid, Package, ArrowDownToLine, ChevronRight, PanelLeftClose } from "lucide-react";
+import { LayoutGrid, Package, ArrowDownToLine, ChevronRight, PanelLeftClose, ClipboardList } from "lucide-react";
 
 /**
  * Sidebar – Accountant Layout
@@ -24,6 +24,11 @@ const menuItems = [
         text: "Nhập hàng",
         path: "/accountant/imports",
         icon: ArrowDownToLine,
+    },
+    {
+        text: "ĐH Làm Riêng",
+        path: "/accountant/custom-orders",
+        icon: ClipboardList,
     },
 ];
 

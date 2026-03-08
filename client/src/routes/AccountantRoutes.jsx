@@ -3,6 +3,7 @@ import AccountantLayout from "../layouts/accountant-layout/index";
 import AccountantDashboard from "../pages/accountant-page/accountant-dashboard";
 import AccountantProductManage from "../pages/accountant-page/accountant-product";
 import AccountantImportManage from "../pages/accountant-page/accountant-import";
+import AccountantCustomOrders from "../pages/accountant-page/accountant-custom-orders";
 
 /**
  * Accountant Routes
@@ -26,5 +27,10 @@ export const accountantRoutes = {
             path: "imports",
             element: <AccountantImportManage />,
         },
+        {
+            path: "custom-orders",
+            element: <AccountantCustomOrders />,
+        },
     ],
 };
+

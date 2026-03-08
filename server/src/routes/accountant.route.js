@@ -29,3 +29,4 @@ router.post("/import-stock", accountantController.importStock);
 router.get("/warehouses", accountantController.getWarehouses);
 
 module.exports = router;
+
