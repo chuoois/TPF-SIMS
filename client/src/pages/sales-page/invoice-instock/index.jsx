@@ -30,6 +30,7 @@ import {
   User,
   Receipt,
   Filter,
+  CreditCard,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
@@ -408,6 +409,19 @@ const WOOD_PRODUCTS = [
 const ITEMS_PER_PAGE = 15;
 const CATEGORIES = ["Phòng khách", "Phòng ngủ", "Phòng ăn", "Phòng làm việc"];
 
+const MOCK_CUSTOMERS = [
+  { id: 1, name: "Nguyễn Văn Hoàng", phone: "0901234567" },
+  { id: 2, name: "Trần Thị Mai", phone: "0912345678" },
+  { id: 3, name: "Lê Minh Tuấn", phone: "0923456789" },
+  { id: 4, name: "Phạm Thị Lan", phone: "0934567890" },
+  { id: 5, name: "Võ Đức Anh", phone: "0945678901" },
+  { id: 6, name: "Đặng Thùy Linh", phone: "0956789012" },
+  { id: 7, name: "Bùi Tuấn Anh", phone: "0967890123" },
+  { id: 8, name: "Hoàng Nguyệt Ánh", phone: "0978901234" },
+  { id: 9, name: "Đinh Quang Hiếu", phone: "0989012345" },
+  { id: 10, name: "Vũ Phương Thảo", phone: "0990123456" },
+];
+
 const fmt = (v) => new Intl.NumberFormat("vi-VN").format(v);
 
 let tabIdCounter = 1;
@@ -417,6 +431,7 @@ const createEmptyTab = () => ({
   selectedCustomer: null,
   orderNote: "",
   discount: 0,
+  depositAmount: 0,
 });
 
 // ===================== COMPONENT =====================
@@ -430,6 +445,7 @@ export default function InStockInvoicePage() {
       selectedCustomer: null,
       orderNote: "",
       discount: 0,
+      depositAmount: 0,
     },
   ]);
   const [activeTabId, setActiveTabId] = useState(1);
@@ -440,6 +456,9 @@ export default function InStockInvoicePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const customerSearchRef = useRef(null);
 
   const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0];
 
@@ -470,6 +489,14 @@ export default function InStockInvoicePage() {
       return matchSearch && matchCategory;
     });
   }, [searchProduct, selectedCategories]);
+
+  const customerResults = useMemo(() => {
+    if (!customerSearch.trim()) return [];
+    const q = customerSearch.toLowerCase();
+    return MOCK_CUSTOMERS.filter(
+      (c) => c.name.toLowerCase().includes(q) || c.phone.includes(q),
+    );
+  }, [customerSearch]);
 
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
   const paginatedProducts = filteredProducts.slice(
@@ -577,7 +604,10 @@ export default function InStockInvoicePage() {
     (sum, i) => sum + i.price * i.quantity,
     0,
   );
-  const totalPayable = Math.max(0, subtotal - activeTab.discount);
+  const totalPayable = Math.max(
+    0,
+    subtotal - activeTab.discount - activeTab.depositAmount,
+  );
   const itemCount = activeTab.cartItems.reduce((sum, i) => sum + i.quantity, 0);
 
   const handleCheckout = () => {
@@ -588,6 +618,7 @@ export default function InStockInvoicePage() {
       selectedCustomer: null,
       orderNote: "",
       discount: 0,
+      depositAmount: 0,
     });
   };
 
@@ -866,7 +897,10 @@ export default function InStockInvoicePage() {
               style={{ borderColor: "var(--grid-border)" }}
             >
               {/* Customer */}
-              <div className="flex items-center gap-2 px-4 py-2.5 w-1/2">
+              <div
+                className="relative flex items-center gap-2 px-4 py-2.5 w-1/2"
+                ref={customerSearchRef}
+              >
                 <User
                   size={14}
                   style={{ color: "var(--text-placeholder)" }}
@@ -880,32 +914,120 @@ export default function InStockInvoicePage() {
                     >
                       {activeTab.selectedCustomer.name}
                     </span>
+                    <span
+                      className="text-[11px] shrink-0"
+                      style={{ color: "var(--text-placeholder)" }}
+                    >
+                      {activeTab.selectedCustomer.phone}
+                    </span>
                     <button
-                      onClick={() =>
-                        updateActiveTab({ selectedCustomer: null })
-                      }
-                      className="cursor-pointer shrink-0"
+                      onClick={() => {
+                        updateActiveTab({ selectedCustomer: null });
+                        setCustomerSearch("");
+                      }}
+                      className="cursor-pointer shrink-0 ml-auto"
                       style={{ color: "var(--text-placeholder)" }}
                     >
                       <X size={12} />
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1.5 flex-1">
-                    <span
-                      className="text-[13px]"
-                      style={{ color: "var(--text-placeholder)" }}
-                    >
-                      Khách lẻ
-                    </span>
+                  <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                    <input
+                      type="text"
+                      placeholder="Tìm khách hàng (tên, SĐT)..."
+                      value={customerSearch}
+                      onChange={(e) => {
+                        setCustomerSearch(e.target.value);
+                        setShowCustomerDropdown(true);
+                      }}
+                      onFocus={() => {
+                        if (customerSearch.trim())
+                          setShowCustomerDropdown(true);
+                      }}
+                      onBlur={() => {
+                        setTimeout(() => setShowCustomerDropdown(false), 200);
+                      }}
+                      className="flex-1 text-[13px] focus:outline-none bg-transparent"
+                      style={{ color: "var(--text-main)" }}
+                    />
                     <button
                       onClick={() => setShowAddCustomer(true)}
-                      className="w-6 h-6 rounded-md flex items-center justify-center cursor-pointer transition hover:bg-gray-100"
+                      className="w-6 h-6 rounded-md flex items-center justify-center cursor-pointer transition hover:bg-gray-100 shrink-0"
                       style={{ color: "var(--brand-primary)" }}
-                      title="Thêm khách hàng"
+                      title="Thêm khách hàng mới"
                     >
                       <UserPlus size={12} />
                     </button>
+                  </div>
+                )}
+
+                {/* Customer search dropdown */}
+                {showCustomerDropdown && customerSearch.trim() && (
+                  <div
+                    className="absolute left-0 bottom-full mb-1 w-full bg-white rounded-xl shadow-lg border overflow-hidden z-30"
+                    style={{ borderColor: "var(--grid-border)" }}
+                  >
+                    {customerResults.length > 0 ? (
+                      <div className="max-h-[200px] overflow-y-auto">
+                        {customerResults.map((c) => (
+                          <button
+                            key={c.id}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              updateActiveTab({ selectedCustomer: c });
+                              setCustomerSearch("");
+                              setShowCustomerDropdown(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors cursor-pointer"
+                          >
+                            <div
+                              className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold"
+                              style={{
+                                backgroundColor: "var(--status-focus)",
+                                color: "var(--brand-primary)",
+                              }}
+                            >
+                              {c.name.charAt(0)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p
+                                className="text-[13px] font-semibold truncate"
+                                style={{ color: "var(--text-main)" }}
+                              >
+                                {c.name}
+                              </p>
+                              <p
+                                className="text-[11px]"
+                                style={{ color: "var(--text-placeholder)" }}
+                              >
+                                {c.phone}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="px-4 py-3 text-center">
+                        <p
+                          className="text-[13px]"
+                          style={{ color: "var(--text-placeholder)" }}
+                        >
+                          Không tìm thấy khách hàng
+                        </p>
+                        <button
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            setShowAddCustomer(true);
+                            setShowCustomerDropdown(false);
+                          }}
+                          className="text-[12px] font-semibold mt-1 cursor-pointer"
+                          style={{ color: "var(--brand-primary)" }}
+                        >
+                          + Thêm khách hàng mới
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -959,14 +1081,53 @@ export default function InStockInvoicePage() {
                     ₫
                   </span>
                   <input
-                    type="number"
-                    value={activeTab.discount}
-                    onChange={(e) =>
+                    type="text"
+                    value={activeTab.discount ? fmt(activeTab.discount) : ""}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\D/g, "");
                       updateActiveTab({
-                        discount: Math.max(0, parseInt(e.target.value) || 0),
-                      })
+                        discount: parseInt(raw) || 0,
+                      });
+                    }}
+                    placeholder="0"
+                    className="w-28 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white"
+                    style={{
+                      border: "1px solid var(--grid-border)",
+                      color: "var(--text-main)",
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-between text-[13px] items-center">
+                <span
+                  className="font-medium"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  <CreditCard size={12} className="inline mr-1.5" />
+                  Tiền đặt cọc
+                </span>
+                <div className="flex items-center gap-1">
+                  <span
+                    className="text-[13px]"
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
+                    ₫
+                  </span>
+                  <input
+                    type="text"
+                    value={
+                      activeTab.depositAmount
+                        ? fmt(activeTab.depositAmount)
+                        : ""
                     }
-                    className="w-24 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\D/g, "");
+                      updateActiveTab({
+                        depositAmount: parseInt(raw) || 0,
+                      });
+                    }}
+                    placeholder="0"
+                    className="w-28 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white"
                     style={{
                       border: "1px solid var(--grid-border)",
                       color: "var(--text-main)",
