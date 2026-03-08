@@ -16,8 +16,6 @@ import {
   Plus,
   Minus,
   Trash2,
-  UserPlus,
-  ShoppingCart,
   Pencil,
   MapPin,
   Phone,
@@ -115,7 +113,9 @@ export default function CustomOrderInvoicePage() {
   const [newItem, setNewItem] = useState({
     productName: "",
     woodType: "",
-    size: "",
+    dimLength: "",
+    dimWidth: "",
+    dimHeight: "",
     color: "",
     quantity: 1,
     unitPrice: 0,
@@ -170,12 +170,15 @@ export default function CustomOrderInvoicePage() {
   // Cart
   const addCustomItem = () => {
     if (!newItem.productName.trim()) return;
+    const { dimLength, dimWidth, dimHeight, ...rest } = newItem;
+    const size = [dimLength, dimWidth, dimHeight].filter(Boolean).join("×");
     updateActiveTab({
       cartItems: [
         ...activeTab.cartItems,
         {
           id: `custom-${++itemIdCounter}`,
-          ...newItem,
+          ...rest,
+          size,
           quantity: newItem.quantity || 1,
           unitPrice: newItem.unitPrice || 0,
         },
@@ -184,7 +187,9 @@ export default function CustomOrderInvoicePage() {
     setNewItem({
       productName: "",
       woodType: "",
-      size: "",
+      dimLength: "",
+      dimWidth: "",
+      dimHeight: "",
       color: "",
       quantity: 1,
       unitPrice: 0,
@@ -466,7 +471,7 @@ export default function CustomOrderInvoicePage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-5 gap-3">
                 <div className="relative">
                   <Ruler
                     size={13}
@@ -474,14 +479,30 @@ export default function CustomOrderInvoicePage() {
                     style={{ color: "var(--text-placeholder)" }}
                   />
                   <input
-                    type="text"
-                    placeholder="Kích thước (D×R×C)"
-                    value={newItem.size}
-                    onChange={(e) => updateNewItem("size", e.target.value)}
-                    className={`${inputBase} pl-9`}
+                    type="number"
+                    placeholder="Dài (cm)"
+                    value={newItem.dimLength}
+                    onChange={(e) => updateNewItem("dimLength", e.target.value)}
+                    className={`${inputBase} pl-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                     style={inputStyle}
                   />
                 </div>
+                <input
+                  type="number"
+                  placeholder="Rộng (cm)"
+                  value={newItem.dimWidth}
+                  onChange={(e) => updateNewItem("dimWidth", e.target.value)}
+                  className={`${inputBase} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                  style={inputStyle}
+                />
+                <input
+                  type="number"
+                  placeholder="Cao (cm)"
+                  value={newItem.dimHeight}
+                  onChange={(e) => updateNewItem("dimHeight", e.target.value)}
+                  className={`${inputBase} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                  style={inputStyle}
+                />
                 <input
                   type="number"
                   placeholder="Số lượng"
@@ -765,14 +786,16 @@ export default function CustomOrderInvoicePage() {
                     ₫
                   </span>
                   <input
-                    type="number"
-                    value={activeTab.discount}
-                    onChange={(e) =>
+                    type="text"
+                    value={activeTab.discount ? fmt(activeTab.discount) : ""}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\D/g, "");
                       updateActiveTab({
-                        discount: Math.max(0, parseInt(e.target.value) || 0),
-                      })
-                    }
-                    className="w-24 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        discount: parseInt(raw) || 0,
+                      });
+                    }}
+                    placeholder="0"
+                    className="w-28 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white"
                     style={{
                       border: "1px solid var(--grid-border)",
                       color: "var(--text-main)",
@@ -796,20 +819,23 @@ export default function CustomOrderInvoicePage() {
                     ₫
                   </span>
                   <input
-                    type="number"
-                    value={activeTab.depositAmount}
-                    onChange={(e) =>
-                      updateActiveTab({
-                        depositAmount: Math.max(
-                          0,
-                          parseInt(e.target.value) || 0,
-                        ),
-                      })
+                    type="text"
+                    value={
+                      activeTab.depositAmount
+                        ? fmt(activeTab.depositAmount)
+                        : ""
                     }
-                    className="w-24 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\D/g, "");
+                      updateActiveTab({
+                        depositAmount: parseInt(raw) || 0,
+                      });
+                    }}
+                    placeholder="0"
+                    className="w-28 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white"
                     style={{
                       border: "1px solid var(--grid-border)",
-                      color: "var(--brand-primary)",
+                      color: "var(--text-main)",
                     }}
                   />
                 </div>

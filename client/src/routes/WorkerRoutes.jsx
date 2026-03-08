@@ -1,6 +1,7 @@
 import { WorkerLayout } from "@/layouts/worker-layout";
 import WorkerDashboard from "@/pages/worker-page/dashboard";
 import WorkerCompleted from "@/pages/worker-page/completed";
+import CompletedTaskDetail from "@/pages/worker-page/completed/detail";
 import TaskDetail from "@/pages/worker-page/dashboard/TaskDetail";
 
 /**
@@ -22,6 +23,10 @@ export const workerRoutes = {
     {
       path: "completed",
       element: <WorkerCompleted />,
+    },
+    {
+      path: "completed/:id",
+      element: <CompletedTaskDetail />,
     },
   ],
 };

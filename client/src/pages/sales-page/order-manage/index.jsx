@@ -6,7 +6,7 @@
  * Updated Date: 07/03/2026
  */
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   Search,
@@ -20,8 +20,10 @@ import {
   ChevronRight,
   AlertTriangle,
   CheckCircle2,
+  Printer,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
+import { MOCK_ORDERS_DETAIL, PrintableInvoice } from "./detail";
 
 // ===================== STATIC DATA =====================
 const INITIAL_ORDERS = [
@@ -508,7 +510,11 @@ const getStatusColor = (status) => {
     case "Đang giao hàng":
       return { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" };
     case "Giao hàng thành công":
-      return { bg: "var(--status-focus)", text: "var(--status-success)", border: "var(--brand-primary)" };
+      return {
+        bg: "var(--status-focus)",
+        text: "var(--status-success)",
+        border: "var(--brand-primary)",
+      };
 
     // === ĐẶT THEO MẪU ===
     case "Chờ báo giá":
@@ -529,7 +535,11 @@ const getStatusColor = (status) => {
       return { bg: "#FEF2F2", text: "var(--status-error)", border: "#FECACA" };
 
     default:
-      return { bg: "var(--bg-main)", text: "var(--text-secondary)", border: "var(--grid-border)" };
+      return {
+        bg: "var(--bg-main)",
+        text: "var(--text-secondary)",
+        border: "var(--grid-border)",
+      };
   }
 };
 
@@ -543,6 +553,99 @@ export default function SalesOrderManage() {
   const [dateTo, setDateTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
+  const [selectedOrders, setSelectedOrders] = useState([]);
+
+  // Print
+  const printRef = useRef(null);
+  const [printingOrders, setPrintingOrders] = useState([]); // Array instead of single order
+
+  useEffect(() => {
+    if (printingOrders.length > 0 && printRef.current) {
+      const content = printRef.current;
+      const printWindow = window.open("", "_blank", "width=900,height=700");
+      if (printWindow) {
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>In hóa đơn</title>
+            <style>
+              @page { size: A4; margin: 15mm; }
+              body { margin: 0; padding: 0; }
+              .page-break { page-break-after: always; }
+              .page-break:last-child { page-break-after: auto; }
+            </style>
+          </head>
+          <body>${content.innerHTML}</body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+          printWindow.print();
+          setPrintingOrders([]);
+          setSelectedOrders([]); // Clear selection after print
+        }, 500); // Increased timeout slightly for multiple images/pages
+      } else {
+        setPrintingOrders([]);
+      }
+    }
+  }, [printingOrders]);
+
+  const prepOrderForPrint = (o) => {
+    const fullOrder = MOCK_ORDERS_DETAIL[o.id] || {
+      ...MOCK_ORDERS_DETAIL["DH008"],
+      code: o.code,
+      customer: {
+        name: o.customerName,
+        phone: o.phone,
+        address: "Đang cập nhật...",
+      },
+      total: o.total,
+      deposit: null,
+      status: o.status,
+      type: o.type,
+      date: o.date,
+    };
+    fullOrder.displayTotal =
+      fullOrder.total != null
+        ? fullOrder.total
+        : fullOrder.products?.reduce(
+            (acc, p) => acc + (p.price || 0) * p.qty,
+            0,
+          ) || 0;
+    return fullOrder;
+  };
+
+  const handlePrintClick = (e, o) => {
+    e.stopPropagation();
+    setPrintingOrders([prepOrderForPrint(o)]);
+  };
+
+  const handleBatchPrint = () => {
+    if (selectedOrders.length === 0) return;
+    const ordersToPrint = orders
+      .filter((o) => selectedOrders.includes(o.id))
+      .map(prepOrderForPrint);
+    setPrintingOrders(ordersToPrint);
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedOrders(paginatedOrders.map((o) => o.id));
+    } else {
+      setSelectedOrders([]);
+    }
+  };
+
+  const handleSelectOrder = (e, id) => {
+    e.stopPropagation();
+    if (e.target.checked) {
+      setSelectedOrders((prev) => [...prev, id]);
+    } else {
+      setSelectedOrders((prev) => prev.filter((orderId) => orderId !== id));
+    }
+  };
 
   // Cancel request modal
   const [cancelTarget, setCancelTarget] = useState(null);
@@ -587,7 +690,8 @@ export default function SalesOrderManage() {
     return result.sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [orders, activeTab, searchTerm, statusFilter, dateFrom, dateTo]);
 
-  const hasActiveFilters = statusFilter !== "Tất cả" || dateFrom || dateTo || searchTerm;
+  const hasActiveFilters =
+    statusFilter !== "Tất cả" || dateFrom || dateTo || searchTerm;
 
   const clearAllFilters = () => {
     setStatusFilter("Tất cả");
@@ -607,7 +711,12 @@ export default function SalesOrderManage() {
   // Reset page on filter change
   useEffect(() => {
     setCurrentPage(1);
+    setSelectedOrders([]);
   }, [searchTerm, activeTab, statusFilter, dateFrom, dateTo]);
+
+  useEffect(() => {
+    setSelectedOrders([]);
+  }, [currentPage]);
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginatedOrders = filtered.slice(
@@ -686,10 +795,12 @@ export default function SalesOrderManage() {
             ))}
           </div>
         </div>
-
         {/* Status Toolbar */}
         <div className="flex items-center gap-2 shrink-0 px-1 flex-wrap">
-          {(activeTab === "Hàng sẵn" ? HANG_SAN_STATUSES : DAT_THEO_MAU_STATUSES).map((s) => {
+          {(activeTab === "Hàng sẵn"
+            ? HANG_SAN_STATUSES
+            : DAT_THEO_MAU_STATUSES
+          ).map((s) => {
             const isActive = statusFilter === s;
             const statusStyle = s !== "Tất cả" ? getStatusColor(s) : null;
             return (
@@ -699,10 +810,14 @@ export default function SalesOrderManage() {
                 className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all cursor-pointer flex items-center gap-1.5"
                 style={{
                   backgroundColor: isActive
-                    ? (statusStyle ? statusStyle.bg : "#fff")
+                    ? statusStyle
+                      ? statusStyle.bg
+                      : "#fff"
                     : "transparent",
                   color: isActive
-                    ? (statusStyle ? statusStyle.text : "var(--text-main)")
+                    ? statusStyle
+                      ? statusStyle.text
+                      : "var(--text-main)"
                     : "var(--text-secondary)",
                   border: isActive
                     ? `1.5px solid ${statusStyle ? statusStyle.border : "var(--grid-border)"}`
@@ -713,7 +828,9 @@ export default function SalesOrderManage() {
                   <span
                     className="w-1.5 h-1.5 rounded-full"
                     style={{
-                      backgroundColor: statusStyle ? statusStyle.text : "var(--text-secondary)",
+                      backgroundColor: statusStyle
+                        ? statusStyle.text
+                        : "var(--text-secondary)",
                       opacity: isActive ? 1 : 0.5,
                     }}
                   />
@@ -723,7 +840,48 @@ export default function SalesOrderManage() {
             );
           })}
         </div>
-
+        {/* Batch Print Action Bar - ALWAYS VISIBLE ALONGSIDE FILTERS */}
+        <div className="flex items-center justify-between bg-[#F0FDF4] border border-[#BBF7D0] px-4 py-2.5 rounded-xl mb-4 mt-2 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#166534] text-white text-[11px] font-bold">
+              {selectedOrders.length}
+            </span>
+            <span
+              className="text-[13px] font-bold"
+              style={{ color: "#14532D" }}
+            >
+              đơn hàng được chọn
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {selectedOrders.length > 0 && (
+              <button
+                onClick={() => setSelectedOrders([])}
+                className="px-3 py-1.5 rounded-lg text-[12px] font-bold cursor-pointer transition hover:bg-[#DCFCE7]"
+                style={{ color: "#166534" }}
+              >
+                Hủy chọn
+              </button>
+            )}
+            <button
+              onClick={handleBatchPrint}
+              disabled={selectedOrders.length === 0}
+              className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[12px] font-bold transition shadow-sm ${
+                selectedOrders.length > 0
+                  ? "text-white hover:opacity-90 cursor-pointer"
+                  : "text-gray-400 bg-gray-100 cursor-not-allowed border outline-none"
+              }`}
+              style={
+                selectedOrders.length > 0
+                  ? { backgroundColor: "var(--brand-primary)" }
+                  : {}
+              }
+            >
+              <Printer size={14} />
+              In hóa đơn
+            </button>
+          </div>
+        </div>{" "}
         {/* Search + Table Card */}
         <div
           className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden"
@@ -846,6 +1004,17 @@ export default function SalesOrderManage() {
                 }}
               >
                 <tr>
+                  <th className="px-4 py-3 w-10">
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary cursor-pointer w-4 h-4"
+                      checked={
+                        paginatedOrders.length > 0 &&
+                        selectedOrders.length === paginatedOrders.length
+                      }
+                      onChange={handleSelectAll}
+                    />
+                  </th>
                   {[
                     "Mã đơn",
                     "Khách hàng",
@@ -871,9 +1040,33 @@ export default function SalesOrderManage() {
                   return (
                     <tr
                       key={o.id}
-                      className="group relative hover:bg-gray-50/50 transition-colors cursor-pointer"
+                      className={`group relative transition-colors cursor-pointer ${
+                        selectedOrders.includes(o.id)
+                          ? "bg-[#F0FDF4]"
+                          : "hover:bg-gray-50/50"
+                      }`}
                       style={{ borderBottom: "1px solid var(--grid-border)" }}
+                      onClick={() => {
+                        if (selectedOrders.includes(o.id)) {
+                          setSelectedOrders((prev) =>
+                            prev.filter((id) => id !== o.id),
+                          );
+                        } else {
+                          setSelectedOrders((prev) => [...prev, o.id]);
+                        }
+                      }}
                     >
+                      <td
+                        className="px-4 py-3"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary cursor-pointer w-4 h-4"
+                          checked={selectedOrders.includes(o.id)}
+                          onChange={(e) => handleSelectOrder(e, o.id)}
+                        />
+                      </td>
                       <td className="px-4 py-3">
                         <p
                           className="text-[13px] font-bold font-mono"
@@ -949,7 +1142,7 @@ export default function SalesOrderManage() {
                         <div className="flex justify-end gap-1.5 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-gray-100">
                           {/* Xem chi tiết */}
                           <Link
-                            to={`/sales/orders/${o.id}`}
+                            to={`/sales/dashboard/orders/${o.id}`}
                             className="h-8 px-2.5 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100 gap-1.5 text-[12px] font-bold"
                             style={{ color: "var(--text-secondary)" }}
                             title="Xem chi tiết"
@@ -1144,7 +1337,10 @@ export default function SalesOrderManage() {
                     background: "var(--status-focus)",
                   }}
                 >
-                  <CheckCircle2 size={28} style={{ color: "var(--status-success)" }} />
+                  <CheckCircle2
+                    size={28}
+                    style={{ color: "var(--status-success)" }}
+                  />
                 </div>
                 <h3
                   className="text-[16px] font-bold"
@@ -1156,7 +1352,9 @@ export default function SalesOrderManage() {
                   className="text-[13px]"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  Đơn hàng <strong>{cancelTarget.code}</strong> đã chuyển sang trạng thái "Chờ duyệt hủy". Chủ cửa hàng sẽ xem xét yêu cầu của bạn.
+                  Đơn hàng <strong>{cancelTarget.code}</strong> đã chuyển sang
+                  trạng thái "Chờ duyệt hủy". Chủ cửa hàng sẽ xem xét yêu cầu
+                  của bạn.
                 </p>
               </div>
             ) : (
@@ -1210,7 +1408,9 @@ export default function SalesOrderManage() {
                   >
                     <AlertTriangle className="shrink-0 mt-0.5" size={15} />
                     <span>
-                      Yêu cầu hủy sẽ được gửi đến Chủ cửa hàng để duyệt. Đơn hàng sẽ chuyển sang trạng thái "Chờ duyệt hủy" cho đến khi được xử lý.
+                      Yêu cầu hủy sẽ được gửi đến Chủ cửa hàng để duyệt. Đơn
+                      hàng sẽ chuyển sang trạng thái "Chờ duyệt hủy" cho đến khi
+                      được xử lý.
                     </span>
                   </div>
 
@@ -1219,7 +1419,8 @@ export default function SalesOrderManage() {
                       className="block text-[13px] font-semibold mb-1.5"
                       style={{ color: "var(--text-main)" }}
                     >
-                      Lý do hủy đơn <span style={{ color: "var(--status-error)" }}>*</span>
+                      Lý do hủy đơn{" "}
+                      <span style={{ color: "var(--status-error)" }}>*</span>
                     </label>
                     <textarea
                       value={cancelReason}
@@ -1269,6 +1470,25 @@ export default function SalesOrderManage() {
               </>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Hidden printable invoice */}
+      {printingOrders.length > 0 && (
+        <div
+          ref={printRef}
+          style={{
+            position: "absolute",
+            left: "-9999px",
+            top: 0,
+            width: "800px",
+          }}
+        >
+          {printingOrders.map((o, idx) => (
+            <div key={idx} className="page-break">
+              <PrintableInvoice o={o} displayTotal={o.displayTotal} />
+            </div>
+          ))}
         </div>
       )}
     </>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Clock,
   Play,
@@ -28,6 +29,7 @@ const MOCK_TASKS = [
     productName: "Bàn ăn gỗ sồi 6 ghế",
     woodType: "Gỗ Sồi",
     dimensions: "160 x 80 x 75 cm",
+    colorType: "Nâu tự nhiên",
     status: "COMPLETED",
     isCustomOrder: true,
     orderCode: "DH-102",
@@ -42,6 +44,7 @@ const MOCK_TASKS = [
     productName: "Kệ sách treo tường thông minh",
     woodType: "Gỗ Công Nghiệp MDF",
     dimensions: "120 x 20 x 30 cm",
+    colorType: "Trắng bóng mờ",
     status: "COMPLETED",
     isCustomOrder: false,
     orderCode: "NK-09",
@@ -56,6 +59,7 @@ const MOCK_TASKS = [
     productName: "Giường ngủ tân cổ điển",
     woodType: "Gỗ Gõ Đỏ",
     dimensions: "180 x 200 x 45 cm",
+    colorType: "Nâu đỏ đậm",
     status: "COMPLETED",
     isCustomOrder: true,
     orderCode: "DH-099",
@@ -76,20 +80,63 @@ const STATUS_CONFIG = {
 };
 
 export default function WorkerCompleted() {
+  const navigate = useNavigate();
   const [tasks] = useState(MOCK_TASKS);
-  const [selectedTask, setSelectedTask] = useState(null);
-  const [isDrawerOpen, setDrawerOpen] = useState(false);
 
-  const [activeFilter, setActiveFilter] = useState("Hôm nay");
+  const [activeFilter, setActiveFilter] = useState("Tất cả");
   const [searchTerm, setSearchTerm] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
 
-  const filters = ["Hôm nay", "Ngày mai", "Tuần này"];
+  const filters = ["Tất cả", "Đặt theo mẫu", "Hàng sẵn"];
 
   // Filter tasks
   const filteredTasks = tasks.filter((t) => {
+    // Filter by order type
+    if (activeFilter === "Đặt theo mẫu" && !t.isCustomOrder) return false;
+    if (activeFilter === "Hàng sẵn" && t.isCustomOrder) return false;
+
+    // Filter by date range (mock logic, should use proper timestamps in prod)
+    if (fromDate || toDate) {
+      // In a real app with proper timestamps, we would convert completedAt to Date and compare:
+      // const taskDate = new Date(t.completedAt).getTime();
+      // const start = fromDate ? new Date(fromDate).getTime() : 0;
+      // const end = toDate ? new Date(toDate).setHours(23, 59, 59, 999) : Infinity;
+      // if (taskDate < start || taskDate > end) return false;
+
+      // For mock data, we just check if it matches basic string formats
+      // This is a placeholder since mock data dates are strings like "14:30 Hôm nay"
+      const taskDateStr = t.completedAt.toLowerCase();
+
+      if (fromDate) {
+        const dObj = new Date(fromDate);
+        const df = `${String(dObj.getDate()).padStart(2, "0")}/${String(dObj.getMonth() + 1).padStart(2, "0")}`;
+        // Very basic mock check: if user picked a fromDate, tasks not mentioning it or generic terms are excluded (Demo only)
+        if (
+          !taskDateStr.includes(df) &&
+          !taskDateStr.includes("hôm nay") &&
+          !taskDateStr.includes("hôm qua")
+        ) {
+          return false;
+        }
+      }
+      if (toDate) {
+        const dObj = new Date(toDate);
+        const df = `${String(dObj.getDate()).padStart(2, "0")}/${String(dObj.getMonth() + 1).padStart(2, "0")}`;
+        if (
+          !taskDateStr.includes(df) &&
+          !taskDateStr.includes("hôm nay") &&
+          !taskDateStr.includes("hôm qua")
+        ) {
+          return false;
+        }
+      }
+    }
+
+    // Filter by search term
     if (!searchTerm.trim()) return true;
     const q = searchTerm.toLowerCase();
     return (
@@ -102,7 +149,7 @@ export default function WorkerCompleted() {
   // Reset page on search or filter change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, activeFilter]);
+  }, [searchTerm, activeFilter, fromDate, toDate]);
 
   const totalPages = Math.ceil(filteredTasks.length / itemsPerPage);
   const paginatedTasks = filteredTasks.slice(
@@ -111,13 +158,7 @@ export default function WorkerCompleted() {
   );
 
   const openTask = (task) => {
-    setSelectedTask(task);
-    setDrawerOpen(true);
-  };
-
-  const closeTask = () => {
-    setDrawerOpen(false);
-    setTimeout(() => setSelectedTask(null), 300); // Wait for transition
+    navigate(`/worker/completed/${task.id}`, { state: { task } });
   };
 
   return (
@@ -144,36 +185,27 @@ export default function WorkerCompleted() {
           </p>
         </div>
 
-        {/* Thống kê hiệu suất nhỏ */}
-        <div className="flex gap-4">
-          <div
-            className="px-4 py-2 bg-white rounded-lg border shadow-sm flex items-center gap-3 shrink-0"
-            style={{ borderColor: "var(--grid-border)" }}
-          >
-            <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
-              <TrendingUp size={16} />
-            </div>
-            <div>
-              <p className="text-[11px] text-gray-400 font-medium tracking-wide">
-                Trung bình/ngày
-              </p>
-              <p className="text-[14px] font-bold text-gray-900">4 Sản phẩm</p>
-            </div>
-          </div>
-          <div
-            className="px-4 py-2 bg-white rounded-lg border shadow-sm flex items-center gap-3 shrink-0"
-            style={{ borderColor: "var(--grid-border)" }}
-          >
-            <div className="w-8 h-8 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center">
-              <Award size={16} />
-            </div>
-            <div>
-              <p className="text-[11px] text-gray-400 font-medium tracking-wide">
-                Đánh giá QC
-              </p>
-              <p className="text-[14px] font-bold text-gray-900">4.8 / 5.0</p>
-            </div>
-          </div>
+        {/* Date Filters (Moved to header right side for better layout match) */}
+        <div
+          className="flex gap-1 bg-white p-1 rounded-lg border shadow-sm shrink-0"
+          style={{ borderColor: "var(--grid-border)" }}
+        >
+          {filters.map((f) => (
+            <button
+              key={f}
+              onClick={() => setActiveFilter(f)}
+              className={`px-4 py-1.5 rounded-md text-[13px] font-semibold transition-all ${
+                activeFilter === f
+                  ? "bg-[var(--bg-main)] text-[var(--text-main)] shadow-sm border"
+                  : "text-[var(--text-secondary)] hover:text-[var(--text-main)]"
+              }`}
+              style={
+                activeFilter === f ? { borderColor: "var(--grid-border)" } : {}
+              }
+            >
+              {f}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -217,29 +249,47 @@ export default function WorkerCompleted() {
               </button>
             )}
           </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div
+              className="flex items-center gap-1 border rounded-lg bg-[var(--bg-main)] focus-within:ring-2 focus-within:ring-blue-500/20 transition-all px-1"
+              style={{ borderColor: "var(--grid-border)" }}
+            >
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="h-9 w-[115px] bg-transparent text-[13px] border-none focus:outline-none cursor-pointer text-center"
+                style={{ color: "var(--text-main)" }}
+              />
+            </div>
 
-          <div
-            className="flex gap-1 bg-white p-1 rounded-lg border shadow-sm shrink-0 w-full sm:w-auto"
-            style={{ borderColor: "var(--grid-border)" }}
-          >
-            {filters.map((f) => (
+            <span className="text-[13px] text-gray-400 font-medium">đến</span>
+
+            <div
+              className="flex items-center gap-1 border rounded-lg bg-[var(--bg-main)] focus-within:ring-2 focus-within:ring-blue-500/20 transition-all px-1"
+              style={{ borderColor: "var(--grid-border)" }}
+            >
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="h-9 w-[115px] bg-transparent text-[13px] border-none focus:outline-none cursor-pointer text-center"
+                style={{ color: "var(--text-main)" }}
+              />
+            </div>
+
+            {(fromDate || toDate) && (
               <button
-                key={f}
-                onClick={() => setActiveFilter(f)}
-                className={`flex-1 sm:flex-none px-4 py-1.5 rounded-md text-[13px] font-semibold transition-all ${
-                  activeFilter === f
-                    ? "bg-[var(--bg-main)] text-[var(--text-main)] shadow-sm border"
-                    : "text-[var(--text-secondary)] hover:text-[var(--text-main)]"
-                }`}
-                style={
-                  activeFilter === f
-                    ? { borderColor: "var(--grid-border)" }
-                    : {}
-                }
+                onClick={() => {
+                  setFromDate("");
+                  setToDate("");
+                }}
+                className="p-1.5 rounded-md hover:bg-gray-100 transition-colors text-gray-500"
+                title="Xóa bộ lọc ngày"
               >
-                {f}
+                <X size={16} />
               </button>
-            ))}
+            )}
           </div>
         </div>
 
@@ -260,13 +310,12 @@ export default function WorkerCompleted() {
                   "Mã ĐH",
                   "Thông số",
                   "Ngày bắt đầu",
-                  "Bàn giao QC",
-                  "Đánh giá",
+                  "Thời gian hoàn thành",
                   "",
                 ].map((h, i) => (
                   <th
                     key={i}
-                    className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 7 ? "text-right" : ""}`}
+                    className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 6 ? "text-right" : ""}`}
                     style={{ color: "var(--text-placeholder)" }}
                   >
                     {h}
@@ -387,16 +436,6 @@ export default function WorkerCompleted() {
                       </div>
                     </td>
 
-                    {/* Rating */}
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-0.5 text-amber-500">
-                        <Award size={14} fill="currentColor" />
-                        <span className="text-[12px] font-bold ml-1.5 text-gray-700">
-                          {task.rating}/5
-                        </span>
-                      </div>
-                    </td>
-
                     {/* Action */}
                     <td className="px-4 py-3 text-right">
                       <button
@@ -415,7 +454,7 @@ export default function WorkerCompleted() {
 
               {paginatedTasks.length === 0 && (
                 <tr>
-                    <td colSpan="8" className="py-24 text-center">
+                  <td colSpan="8" className="py-24 text-center">
                     <div
                       className="flex flex-col items-center gap-2"
                       style={{ color: "var(--text-placeholder)" }}
@@ -538,149 +577,6 @@ export default function WorkerCompleted() {
               </div>
             </div>
           </div>
-        )}
-      </div>
-
-      {/* ═══════════════ SLIDE-OUT TASK DETAILS PANEL ═══════════════ */}
-      {/* Backdrop */}
-      {isDrawerOpen && (
-        <div
-          className="fixed inset-0 bg-black/30 z-40 backdrop-blur-[1px] transition-opacity"
-          onClick={closeTask}
-        />
-      )}
-
-      {/* Drawer */}
-      <div
-        className={`fixed top-0 right-0 h-full w-full max-w-[400px] bg-white z-50 transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] shadow-2xl flex flex-col ${
-          isDrawerOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        {selectedTask && (
-          <>
-            {/* Header */}
-            <div
-              className="flex items-center justify-between px-5 py-3 border-b"
-              style={{ borderColor: "var(--grid-border)" }}
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-bold ${
-                    STATUS_CONFIG[selectedTask.status].color
-                  }`}
-                >
-                  <CheckCircle2 size={12} />
-                  {STATUS_CONFIG[selectedTask.status].label}
-                </span>
-                <span className="font-mono text-[12px] font-medium text-gray-400">
-                  #{selectedTask.id}
-                </span>
-              </div>
-              <button
-                onClick={closeTask}
-                className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-gray-100 text-gray-500 transition-colors"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            {/* Content Body */}
-            <div className="flex-1 overflow-y-auto px-5 py-5 pb-8">
-              <h2
-                className="text-[16px] font-bold leading-tight mb-4"
-                style={{ color: "var(--text-main)" }}
-              >
-                {selectedTask.productName}
-              </h2>
-
-              {/* Origin & Time */}
-              <div className="flex flex-wrap gap-2 mb-5">
-                <span
-                  className={`px-2.5 py-1 rounded border text-[12px] font-semibold ${
-                    selectedTask.isCustomOrder
-                      ? "bg-purple-50 text-purple-700 border-purple-100"
-                      : "bg-gray-50 text-gray-600 border-gray-100"
-                  }`}
-                >
-                  Nguồn: {selectedTask.isCustomOrder ? "Đặt Riêng" : "Hàng Kho"}{" "}
-                  ({selectedTask.orderCode})
-                </span>
-                <span className="px-2.5 py-1 rounded border bg-blue-50 border-blue-100 text-[12px] font-semibold text-blue-700 flex items-center gap-1.5">
-                  <Clock size={12} /> Bắt đầu: {selectedTask.startedAt || "—"}
-                </span>
-                <span className="px-2.5 py-1 rounded border bg-green-50 border-green-100 text-[12px] font-semibold text-green-700 flex items-center gap-1.5">
-                  <Clock size={12} /> Hoàn thành: {selectedTask.completedAt}
-                </span>
-              </div>
-
-              {/* Specs Grid */}
-              <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-                Thông số kỹ thuật
-              </h3>
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <p className="text-[11px] text-gray-400 mb-0.5 font-medium">
-                    Loại Gỗ
-                  </p>
-                  <p className="font-bold text-[13px] text-gray-800">
-                    {selectedTask.woodType}
-                  </p>
-                </div>
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <p className="text-[11px] text-gray-400 mb-0.5 font-medium">
-                    Kích Thước
-                  </p>
-                  <p className="font-bold text-[13px] text-gray-800 flex items-center justify-between">
-                    {selectedTask.dimensions}
-                    <Box size={14} className="text-gray-300" />
-                  </p>
-                </div>
-              </div>
-
-              {/* QC Feedback */}
-              <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-                Đánh giá từ Quản Đốc (QC)
-              </h3>
-              <div className="p-4 rounded-xl border border-green-200 bg-green-50 mb-6">
-                <div className="flex items-center gap-1 text-amber-500 mb-2">
-                  {[...Array(5)].map((_, i) => (
-                    <Award
-                      key={i}
-                      size={16}
-                      fill={i < selectedTask.rating ? "currentColor" : "none"}
-                      className={
-                        i >= selectedTask.rating ? "text-gray-300" : ""
-                      }
-                    />
-                  ))}
-                  <span className="text-[12px] font-bold text-green-700 ml-2">
-                    Đạt Chuẩn QC
-                  </span>
-                </div>
-                {selectedTask.notes ? (
-                  <p className="text-[13px] font-medium text-green-800 italic leading-relaxed">
-                    "{selectedTask.notes}"
-                  </p>
-                ) : (
-                  <p className="text-[13px] text-green-600/70 italic">
-                    Chưa có nhận xét thêm.
-                  </p>
-                )}
-              </div>
-
-              {/* Reference Image */}
-              <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-                Ảnh nộp thành phẩm
-              </h3>
-              <div className="aspect-[4/3] rounded-xl overflow-hidden border border-gray-200">
-                <img
-                  src={selectedTask.image}
-                  alt="Thành phẩm"
-                  className="w-full h-full object-cover grayscale-[20%]"
-                />
-              </div>
-            </div>
-          </>
         )}
       </div>
     </div>

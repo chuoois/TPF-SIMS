@@ -30,6 +30,7 @@ import {
   User,
   Receipt,
   Filter,
+  CreditCard,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
@@ -430,6 +431,7 @@ const createEmptyTab = () => ({
   selectedCustomer: null,
   orderNote: "",
   discount: 0,
+  depositAmount: 0,
 });
 
 // ===================== COMPONENT =====================
@@ -443,6 +445,7 @@ export default function InStockInvoicePage() {
       selectedCustomer: null,
       orderNote: "",
       discount: 0,
+      depositAmount: 0,
     },
   ]);
   const [activeTabId, setActiveTabId] = useState(1);
@@ -491,8 +494,7 @@ export default function InStockInvoicePage() {
     if (!customerSearch.trim()) return [];
     const q = customerSearch.toLowerCase();
     return MOCK_CUSTOMERS.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) || c.phone.includes(q),
+      (c) => c.name.toLowerCase().includes(q) || c.phone.includes(q),
     );
   }, [customerSearch]);
 
@@ -602,7 +604,10 @@ export default function InStockInvoicePage() {
     (sum, i) => sum + i.price * i.quantity,
     0,
   );
-  const totalPayable = Math.max(0, subtotal - activeTab.discount);
+  const totalPayable = Math.max(
+    0,
+    subtotal - activeTab.discount - activeTab.depositAmount,
+  );
   const itemCount = activeTab.cartItems.reduce((sum, i) => sum + i.quantity, 0);
 
   const handleCheckout = () => {
@@ -613,6 +618,7 @@ export default function InStockInvoicePage() {
       selectedCustomer: null,
       orderNote: "",
       discount: 0,
+      depositAmount: 0,
     });
   };
 
@@ -891,7 +897,10 @@ export default function InStockInvoicePage() {
               style={{ borderColor: "var(--grid-border)" }}
             >
               {/* Customer */}
-              <div className="relative flex items-center gap-2 px-4 py-2.5 w-1/2" ref={customerSearchRef}>
+              <div
+                className="relative flex items-center gap-2 px-4 py-2.5 w-1/2"
+                ref={customerSearchRef}
+              >
                 <User
                   size={14}
                   style={{ color: "var(--text-placeholder)" }}
@@ -933,7 +942,8 @@ export default function InStockInvoicePage() {
                         setShowCustomerDropdown(true);
                       }}
                       onFocus={() => {
-                        if (customerSearch.trim()) setShowCustomerDropdown(true);
+                        if (customerSearch.trim())
+                          setShowCustomerDropdown(true);
                       }}
                       onBlur={() => {
                         setTimeout(() => setShowCustomerDropdown(false), 200);
@@ -1071,14 +1081,53 @@ export default function InStockInvoicePage() {
                     ₫
                   </span>
                   <input
-                    type="number"
-                    value={activeTab.discount}
-                    onChange={(e) =>
+                    type="text"
+                    value={activeTab.discount ? fmt(activeTab.discount) : ""}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\D/g, "");
                       updateActiveTab({
-                        discount: Math.max(0, parseInt(e.target.value) || 0),
-                      })
+                        discount: parseInt(raw) || 0,
+                      });
+                    }}
+                    placeholder="0"
+                    className="w-28 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white"
+                    style={{
+                      border: "1px solid var(--grid-border)",
+                      color: "var(--text-main)",
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-between text-[13px] items-center">
+                <span
+                  className="font-medium"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  <CreditCard size={12} className="inline mr-1.5" />
+                  Tiền đặt cọc
+                </span>
+                <div className="flex items-center gap-1">
+                  <span
+                    className="text-[13px]"
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
+                    ₫
+                  </span>
+                  <input
+                    type="text"
+                    value={
+                      activeTab.depositAmount
+                        ? fmt(activeTab.depositAmount)
+                        : ""
                     }
-                    className="w-24 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\D/g, "");
+                      updateActiveTab({
+                        depositAmount: parseInt(raw) || 0,
+                      });
+                    }}
+                    placeholder="0"
+                    className="w-28 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white"
                     style={{
                       border: "1px solid var(--grid-border)",
                       color: "var(--text-main)",

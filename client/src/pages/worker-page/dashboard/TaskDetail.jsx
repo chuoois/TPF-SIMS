@@ -101,7 +101,7 @@ export default function TaskDetail() {
   const navigate = useNavigate();
 
   const [selectedTask, setSelectedTask] = useState(null);
-  const [showCameraMode, setShowCameraMode] = useState(false);
+
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   useEffect(() => {
@@ -119,18 +119,14 @@ export default function TaskDetail() {
     const updated = getTaskById(taskId);
     setSelectedTask(updated);
 
-    if (newStatus === "QC_PENDING") {
-      setShowCameraMode(false);
-    }
+    setSelectedTask(updated);
   };
 
   if (!selectedTask) return null;
 
   const currentStepIndex = getStepIndex(selectedTask.status);
   const statusBadge = getStatusBadge(selectedTask.status);
-  const progressPercent = Math.round(
-    (currentStepIndex / STEPS.length) * 100
-  );
+  const progressPercent = Math.round((currentStepIndex / STEPS.length) * 100);
 
   /* ─── Action Button ─── */
   const renderActionButton = () => {
@@ -157,35 +153,17 @@ export default function TaskDetail() {
       selectedTask.status === "SANDING" ||
       selectedTask.status === "PAINTING"
     ) {
-      if (showCameraMode) {
-        return (
-          <button
-            onClick={() =>
-              updateTaskStatus(
-                selectedTask.id,
-                selectedTask.status === "SANDING" ? "PAINTING" : "QC_PENDING"
-              )
-            }
-            className="h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
-            style={{
-              background: "var(--status-success)",
-              color: "#fff",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.filter = "brightness(1.1)")
-            }
-            onMouseLeave={(e) => (e.currentTarget.style.filter = "none")}
-          >
-            <CheckCircle2 size={15} /> Nộp ảnh & Tiếp tục
-          </button>
-        );
-      }
       return (
         <button
-          onClick={() => setShowCameraMode(true)}
+          onClick={() =>
+            updateTaskStatus(
+              selectedTask.id,
+              selectedTask.status === "SANDING" ? "PAINTING" : "COMPLETED",
+            )
+          }
           className="h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
           style={{
-            background: "var(--brand-primary)",
+            background: "var(--status-success)",
             color: "#fff",
           }}
           onMouseEnter={(e) =>
@@ -193,7 +171,7 @@ export default function TaskDetail() {
           }
           onMouseLeave={(e) => (e.currentTarget.style.filter = "none")}
         >
-          <Camera size={15} /> Xác nhận xong công đoạn
+          <CheckCircle2 size={15} /> Xác nhận hoàn thành công đoạn
         </button>
       );
     }
@@ -293,10 +271,7 @@ export default function TaskDetail() {
             size={13}
             style={{ color: "var(--text-placeholder)", opacity: 0.5 }}
           />
-          <span
-            className="font-semibold"
-            style={{ color: "var(--text-main)" }}
-          >
+          <span className="font-semibold" style={{ color: "var(--text-main)" }}>
             Chi tiết #{selectedTask.id}
           </span>
         </div>
@@ -306,8 +281,7 @@ export default function TaskDetail() {
           className="bg-white rounded-2xl overflow-hidden"
           style={{
             border: "1px solid var(--grid-border)",
-            boxShadow:
-              "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02)",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02)",
           }}
         >
           <div className="p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -330,9 +304,7 @@ export default function TaskDetail() {
                     }`,
                   }}
                 >
-                  {selectedTask.isCustomOrder
-                    ? "🎯 Đặt riêng"
-                    : "📦 Hàng kho"}
+                  {selectedTask.isCustomOrder ? "🎯 Đặt riêng" : "📦 Hàng kho"}
                 </span>
                 <span
                   className="px-2.5 py-1 rounded-lg text-[11px] font-bold"
@@ -365,10 +337,7 @@ export default function TaskDetail() {
             {/* Right: Progress ring */}
             <div className="flex items-center gap-4 shrink-0">
               <div className="relative w-16 h-16">
-                <svg
-                  viewBox="0 0 36 36"
-                  className="w-full h-full -rotate-90"
-                >
+                <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
                   <circle
                     cx="18"
                     cy="18"
@@ -412,8 +381,10 @@ export default function TaskDetail() {
                   {currentStepIndex}/{STEPS.length} bước
                 </span>
                 {selectedTask.deadline && (
-                  <span className="text-[11px] font-semibold mt-0.5 flex items-center gap-1"
-                    style={{ color: "var(--status-error)" }}>
+                  <span
+                    className="text-[11px] font-semibold mt-0.5 flex items-center gap-1"
+                    style={{ color: "var(--status-error)" }}
+                  >
                     <Clock size={11} />
                     {selectedTask.deadline}
                   </span>
@@ -527,10 +498,7 @@ export default function TaskDetail() {
                       borderBottom: "1px solid var(--grid-border)",
                     }}
                   >
-                    <PenTool
-                      size={15}
-                      style={{ color: "#4368E0" }}
-                    />
+                    <PenTool size={15} style={{ color: "#4368E0" }} />
                     <h3
                       className="text-[13px] font-bold"
                       style={{ color: "var(--text-main)" }}
@@ -600,10 +568,7 @@ export default function TaskDetail() {
                           "var(--grid-border)")
                       }
                     >
-                      <FileSignature
-                        size={13}
-                        style={{ color: "#4368E0" }}
-                      />{" "}
+                      <FileSignature size={13} style={{ color: "#4368E0" }} />{" "}
                       Xem bản vẽ kỹ thuật PDF
                     </button>
                   </div>
@@ -643,7 +608,10 @@ export default function TaskDetail() {
                       border: "1px solid var(--grid-border)",
                     }}
                   >
-                    <TreePine size={16} style={{ color: "var(--brand-primary)" }} />
+                    <TreePine
+                      size={16}
+                      style={{ color: "var(--brand-primary)" }}
+                    />
                   </div>
                   <div>
                     <p
@@ -720,7 +688,7 @@ export default function TaskDetail() {
                       className="text-[14px] font-bold"
                       style={{ color: "var(--text-main)" }}
                     >
-                      {selectedTask.color || "—"}
+                      {selectedTask.colorType || "—"}
                     </p>
                   </div>
                 </div>
@@ -812,12 +780,6 @@ export default function TaskDetail() {
                     const isCurrent = index === currentStepIndex;
                     const isCompleted = index < currentStepIndex;
                     const isLast = index === STEPS.length - 1;
-                    const needsPhoto =
-                      isCurrent &&
-                      (step.key === "SANDING" || step.key === "PAINTING");
-                    const hasMockPhoto =
-                      isCompleted &&
-                      (step.key === "SANDING" || step.key === "PAINTING");
 
                     return (
                       <div
@@ -886,107 +848,6 @@ export default function TaskDetail() {
                             </span>
                           </div>
 
-                          {/* Photo upload zone */}
-                          {needsPhoto && showCameraMode && (
-                            <div
-                              className="mt-3 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition-colors"
-                              style={{
-                                background: "rgba(52,176,87,0.03)",
-                                border:
-                                  "2px dashed rgba(52,176,87,0.25)",
-                              }}
-                              onMouseEnter={(e) =>
-                                (e.currentTarget.style.background =
-                                  "rgba(52,176,87,0.06)")
-                              }
-                              onMouseLeave={(e) =>
-                                (e.currentTarget.style.background =
-                                  "rgba(52,176,87,0.03)")
-                              }
-                            >
-                              <div
-                                className="w-10 h-10 rounded-xl flex items-center justify-center mb-2.5"
-                                style={{
-                                  background: "#fff",
-                                  border: "1px solid var(--grid-border)",
-                                  boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-                                }}
-                              >
-                                <Upload
-                                  size={18}
-                                  style={{
-                                    color: "var(--brand-primary)",
-                                  }}
-                                />
-                              </div>
-                              <p
-                                className="text-[13px] font-bold"
-                                style={{
-                                  color: "var(--brand-primary)",
-                                }}
-                              >
-                                Tải lên ảnh chứng minh
-                              </p>
-                              <p
-                                className="text-[11px] mt-1 text-center font-medium"
-                                style={{
-                                  color: "var(--text-placeholder)",
-                                }}
-                              >
-                                Bắt buộc nộp ảnh trước khi sang công đoạn
-                                tiếp theo
-                              </p>
-                            </div>
-                          )}
-
-                          {/* Completed photo thumbnail */}
-                          {hasMockPhoto && (
-                            <div
-                              className="mt-2.5 flex items-center gap-3 p-2.5 rounded-lg w-fit cursor-zoom-in"
-                              style={{
-                                background: "var(--bg-main)",
-                                border: "1px solid var(--grid-border)",
-                              }}
-                            >
-                              <div className="w-11 h-11 rounded-lg overflow-hidden shrink-0">
-                                <img
-                                  src={
-                                    selectedTask.isCustomOrder
-                                      ? "/wood_products.png"
-                                      : selectedTask.image
-                                  }
-                                  alt="Proof"
-                                  className="w-full h-full object-cover"
-                                  style={{ filter: "grayscale(20%)" }}
-                                />
-                              </div>
-                              <div className="flex flex-col pr-2">
-                                <span
-                                  className="text-[12px] font-bold flex items-center gap-1.5"
-                                  style={{
-                                    color: "var(--text-main)",
-                                  }}
-                                >
-                                  <CheckCircle2
-                                    size={13}
-                                    style={{
-                                      color: "var(--status-success)",
-                                    }}
-                                  />
-                                  Đã cập nhật ảnh
-                                </span>
-                                <span
-                                  className="text-[11px] mt-0.5 font-medium"
-                                  style={{
-                                    color: "var(--text-placeholder)",
-                                  }}
-                                >
-                                  Lúc 14:00 hôm nay
-                                </span>
-                              </div>
-                            </div>
-                          )}
-
                           {/* QC Rework feedback */}
                           {isCurrent &&
                             selectedTask.status === "REWORK" &&
@@ -996,8 +857,7 @@ export default function TaskDetail() {
                                 className="mt-3 p-3.5 rounded-xl text-[13px] flex gap-2.5"
                                 style={{
                                   background: "rgba(229,72,77,0.04)",
-                                  border:
-                                    "1px solid rgba(229,72,77,0.12)",
+                                  border: "1px solid rgba(229,72,77,0.12)",
                                   color: "var(--status-error)",
                                 }}
                               >
