@@ -26,7 +26,7 @@ import { PageHelmet } from "@/components/seo/PageHelmet";
 import { MOCK_ORDERS_DETAIL, PrintableInvoice } from "./detail";
 
 // ===================== STATIC DATA =====================
-const INITIAL_ORDERS = [
+export const INITIAL_ORDERS = [
   // ========== HÀNG SẴN ==========
   {
     id: "DH002",
