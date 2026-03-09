@@ -9,10 +9,9 @@
  * Created Date: 25/02/2026
  */
 
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef , useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Search,
   X,
   Plus,
   Minus,
@@ -32,6 +31,7 @@ import {
   Filter,
   CreditCard,
 } from "lucide-react";
+import { PrintableInvoice } from "../order-manage/detail";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
 import AddCustomerModal from "@/pages/sales-page/components/AddCustomerModal";
@@ -46,6 +46,7 @@ const WOOD_PRODUCTS = [
     stock: 8,
     image: "/wood_products.png",
     category: "Phòng ăn",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 2,
@@ -55,6 +56,7 @@ const WOOD_PRODUCTS = [
     stock: 5,
     image: "/wood_products.png",
     category: "Phòng làm việc",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 3,
@@ -64,6 +66,7 @@ const WOOD_PRODUCTS = [
     stock: 12,
     image: "/wood_products.png",
     category: "Phòng làm việc",
+    productType: "Hàng thô",
   },
   {
     id: 4,
@@ -73,6 +76,7 @@ const WOOD_PRODUCTS = [
     stock: 3,
     image: "/wood_products.png",
     category: "Phòng ngủ",
+    productType: "Hàng thô",
   },
   {
     id: 5,
@@ -82,6 +86,7 @@ const WOOD_PRODUCTS = [
     stock: 25,
     image: "/wood_products.png",
     category: "Phòng ăn",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 6,
@@ -91,6 +96,7 @@ const WOOD_PRODUCTS = [
     stock: 10,
     image: "/wood_products.png",
     category: "Phòng khách",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 7,
@@ -100,6 +106,7 @@ const WOOD_PRODUCTS = [
     stock: 4,
     image: "/wood_products.png",
     category: "Phòng khách",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 8,
@@ -109,6 +116,7 @@ const WOOD_PRODUCTS = [
     stock: 6,
     image: "/wood_products.png",
     category: "Phòng ngủ",
+    productType: "Hàng thô",
   },
   {
     id: 9,
@@ -118,6 +126,7 @@ const WOOD_PRODUCTS = [
     stock: 2,
     image: "/wood_products.png",
     category: "Phòng ngủ",
+    productType: "Hàng thô",
   },
   {
     id: 10,
@@ -127,6 +136,7 @@ const WOOD_PRODUCTS = [
     stock: 0,
     image: "/wood_products.png",
     category: "Phòng ăn",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 11,
@@ -136,6 +146,7 @@ const WOOD_PRODUCTS = [
     stock: 18,
     image: "/wood_products.png",
     category: "Phòng ăn",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 12,
@@ -145,6 +156,7 @@ const WOOD_PRODUCTS = [
     stock: 7,
     image: "/wood_products.png",
     category: "Phòng khách",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 13,
@@ -154,6 +166,7 @@ const WOOD_PRODUCTS = [
     stock: 3,
     image: "/wood_products.png",
     category: "Phòng khách",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 14,
@@ -163,6 +176,7 @@ const WOOD_PRODUCTS = [
     stock: 15,
     image: "/wood_products.png",
     category: "Phòng khách",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 15,
@@ -172,6 +186,7 @@ const WOOD_PRODUCTS = [
     stock: 20,
     image: "/wood_products.png",
     category: "Phòng khách",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 16,
@@ -181,6 +196,7 @@ const WOOD_PRODUCTS = [
     stock: 12,
     image: "/wood_products.png",
     category: "Phòng khách",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 17,
@@ -190,6 +206,7 @@ const WOOD_PRODUCTS = [
     stock: 30,
     image: "/wood_products.png",
     category: "Phòng khách",
+    productType: "Hàng thô",
   },
   {
     id: 18,
@@ -199,6 +216,7 @@ const WOOD_PRODUCTS = [
     stock: 5,
     image: "/wood_products.png",
     category: "Phòng khách",
+    productType: "Hàng thô",
   },
 
   // Phòng ngủ
@@ -210,6 +228,7 @@ const WOOD_PRODUCTS = [
     stock: 4,
     image: "/wood_products.png",
     category: "Phòng ngủ",
+    productType: "Hàng thô",
   },
   {
     id: 20,
@@ -219,6 +238,7 @@ const WOOD_PRODUCTS = [
     stock: 2,
     image: "/wood_products.png",
     category: "Phòng ngủ",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 21,
@@ -228,6 +248,7 @@ const WOOD_PRODUCTS = [
     stock: 8,
     image: "/wood_products.png",
     category: "Phòng ngủ",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 22,
@@ -237,6 +258,7 @@ const WOOD_PRODUCTS = [
     stock: 25,
     image: "/wood_products.png",
     category: "Phòng ngủ",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 23,
@@ -246,6 +268,7 @@ const WOOD_PRODUCTS = [
     stock: 6,
     image: "/wood_products.png",
     category: "Phòng ngủ",
+    productType: "Hàng thô",
   },
   {
     id: 24,
@@ -255,6 +278,7 @@ const WOOD_PRODUCTS = [
     stock: 10,
     image: "/wood_products.png",
     category: "Phòng ngủ",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 25,
@@ -264,6 +288,7 @@ const WOOD_PRODUCTS = [
     stock: 14,
     image: "/wood_products.png",
     category: "Phòng ngủ",
+    productType: "Hàng thô",
   },
   {
     id: 26,
@@ -273,6 +298,7 @@ const WOOD_PRODUCTS = [
     stock: 40,
     image: "/wood_products.png",
     category: "Phòng ngủ",
+    productType: "Hàng thô",
   },
 
   // Phòng ăn
@@ -284,6 +310,7 @@ const WOOD_PRODUCTS = [
     stock: 5,
     image: "/wood_products.png",
     category: "Phòng ăn",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 28,
@@ -293,6 +320,7 @@ const WOOD_PRODUCTS = [
     stock: 3,
     image: "/wood_products.png",
     category: "Phòng ăn",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 29,
@@ -302,6 +330,7 @@ const WOOD_PRODUCTS = [
     stock: 1,
     image: "/wood_products.png",
     category: "Phòng ăn",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 30,
@@ -311,6 +340,7 @@ const WOOD_PRODUCTS = [
     stock: 50,
     image: "/wood_products.png",
     category: "Phòng ăn",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 31,
@@ -320,6 +350,7 @@ const WOOD_PRODUCTS = [
     stock: 7,
     image: "/wood_products.png",
     category: "Phòng ăn",
+    productType: "Hàng thô",
   },
   {
     id: 32,
@@ -329,6 +360,7 @@ const WOOD_PRODUCTS = [
     stock: 18,
     image: "/wood_products.png",
     category: "Phòng ăn",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 33,
@@ -338,6 +370,7 @@ const WOOD_PRODUCTS = [
     stock: 4,
     image: "/wood_products.png",
     category: "Phòng ăn",
+    productType: "Hàng hoàn thiện",
   },
 
   // Phòng làm việc
@@ -349,6 +382,7 @@ const WOOD_PRODUCTS = [
     stock: 22,
     image: "/wood_products.png",
     category: "Phòng làm việc",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 35,
@@ -358,6 +392,7 @@ const WOOD_PRODUCTS = [
     stock: 9,
     image: "/wood_products.png",
     category: "Phòng làm việc",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 36,
@@ -367,6 +402,7 @@ const WOOD_PRODUCTS = [
     stock: 16,
     image: "/wood_products.png",
     category: "Phòng làm việc",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 37,
@@ -376,6 +412,7 @@ const WOOD_PRODUCTS = [
     stock: 35,
     image: "/wood_products.png",
     category: "Phòng làm việc",
+    productType: "Hàng thô",
   },
   {
     id: 38,
@@ -385,6 +422,7 @@ const WOOD_PRODUCTS = [
     stock: 45,
     image: "/wood_products.png",
     category: "Phòng làm việc",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 39,
@@ -394,6 +432,7 @@ const WOOD_PRODUCTS = [
     stock: 28,
     image: "/wood_products.png",
     category: "Phòng làm việc",
+    productType: "Hàng thô",
   },
   {
     id: 40,
@@ -403,6 +442,7 @@ const WOOD_PRODUCTS = [
     stock: 5,
     image: "/wood_products.png",
     category: "Phòng làm việc",
+    productType: "Hàng hoàn thiện",
   },
 ];
 
@@ -436,6 +476,41 @@ const createEmptyTab = () => ({
 
 // ===================== COMPONENT =====================
 export default function InStockInvoicePage() {
+  const printRef = useRef(null);
+  const [printingOrder, setPrintingOrder] = useState(null);
+
+  useEffect(() => {
+    if (printingOrder && printRef.current) {
+        const content = printRef.current;
+        const printWindow = window.open("", "_blank", "width=900,height=700");
+        if (printWindow) {
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                <title>In hóa đơn</title>
+                <style>
+                    @page { size: A4; margin: 15mm; }
+                    body { margin: 0; padding: 0; }
+                    .page-break { page-break-after: always; }
+                    .page-break:last-child { page-break-after: auto; }
+                </style>
+                </head>
+                <body>${content.innerHTML}</body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => {
+                printWindow.print();
+                setPrintingOrder(null);
+            }, 500); 
+        } else {
+            setPrintingOrder(null);
+        }
+    }
+  }, [printingOrder]);
+
   const navigate = useNavigate();
 
   const [tabs, setTabs] = useState([
@@ -449,7 +524,7 @@ export default function InStockInvoicePage() {
     },
   ]);
   const [activeTabId, setActiveTabId] = useState(1);
-  const [searchProduct, setSearchProduct] = useState("");
+  const [productTypeTab, setProductTypeTab] = useState("Hàng thô");
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [showAddCustomer, setShowAddCustomer] = useState(false);
@@ -479,16 +554,11 @@ export default function InStockInvoicePage() {
 
   const filteredProducts = useMemo(() => {
     return WOOD_PRODUCTS.filter((p) => {
-      const matchSearch =
-        !searchProduct ||
-        p.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
-        p.sku.toLowerCase().includes(searchProduct.toLowerCase());
-      const matchCategory =
-        selectedCategories.length === 0 ||
-        selectedCategories.includes(p.category);
-      return matchSearch && matchCategory;
+      const matchType = p.productType === productTypeTab;
+      const matchCategory = selectedCategories.length === 0 || selectedCategories.includes(p.category);
+      return matchType && matchCategory;
     });
-  }, [searchProduct, selectedCategories]);
+  }, [productTypeTab, selectedCategories]);
 
   const customerResults = useMemo(() => {
     if (!customerSearch.trim()) return [];
@@ -612,7 +682,32 @@ export default function InStockInvoicePage() {
 
   const handleCheckout = () => {
     if (activeTab.cartItems.length === 0) return;
-    showToast("success", `Tạo hóa đơn thành công! Tổng: ${fmt(totalPayable)}đ`);
+    
+    const newOrder = {
+        code: "HD-" + Math.floor(Math.random() * 1000000),
+        customer: {
+            name: activeTab.selectedCustomer?.name || "Khách lẻ",
+            phone: activeTab.selectedCustomer?.phone || "",
+            address: "",
+        },
+        type: "Hàng sẵn",
+        salesPerson: "Nhân viên bán hàng",
+        products: activeTab.cartItems.map(item => ({
+            name: item.name,
+            material: item.category || "Hàng trưng bày",
+            size: "Tiêu chuẩn",
+            qty: item.quantity,
+            price: item.price,
+            note: ""
+        })),
+        total: subtotal,
+        deposit: activeTab.depositAmount,
+        date: new Date().toISOString(),
+    };
+    
+    showToast("success", `Tạo hóa đơn ${newOrder.code} thành công!`);
+    setPrintingOrder(newOrder);
+
     updateActiveTab({
       cartItems: [],
       selectedCustomer: null,
@@ -1178,84 +1273,71 @@ export default function InStockInvoicePage() {
             boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
           }}
         >
-          {/* ── Search + Filter ── */}
-          <div className="px-4 pt-4 pb-3 flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              {/* Search */}
-              <div className="relative flex-1">
-                <Search
-                  size={15}
-                  className="absolute left-3 top-1/2 -translate-y-1/2"
-                  style={{ color: "var(--text-placeholder)" }}
-                />
-                <input
-                  type="text"
-                  placeholder="Tìm sản phẩm..."
-                  value={searchProduct}
-                  onChange={(e) => {
-                    setSearchProduct(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-full h-10 pl-10 pr-4 rounded-xl text-[13px] focus:outline-none focus:ring-2 transition"
+          {/* ── Product Tabs & Filter ── */}
+          <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+            <div className="flex-1 flex rounded-xl overflow-hidden" style={{ border: "1px solid var(--grid-border)", backgroundColor: "var(--bg-main)" }}>
+              {["Hàng thô", "Hàng hoàn thiện"].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => { setProductTypeTab(tab); setCurrentPage(1); }}
+                  className="flex-1 py-2.5 text-[13px] font-semibold transition-all cursor-pointer"
                   style={{
-                    border: "1px solid var(--grid-border)",
-                    backgroundColor: "var(--bg-main)",
-                    color: "var(--text-main)",
+                    backgroundColor: productTypeTab === tab ? "var(--brand-primary)" : "transparent",
+                    color: productTypeTab === tab ? "#fff" : "var(--text-secondary)",
                   }}
-                />
-              </div>
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+            
+            <button
+              onClick={() => setIsFilterDrawerOpen(true)}
+              className="relative p-2.5 rounded-xl transition cursor-pointer flex items-center justify-center bg-white hover:bg-gray-50 active:scale-95"
+              style={{
+                border: "1px solid var(--grid-border)",
+                color: selectedCategories.length > 0 ? "var(--brand-primary)" : "var(--text-secondary)",
+              }}
+            >
+              <Filter size={20} />
+              {selectedCategories.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white" />
+              )}
+            </button>
+          </div>
 
-              {/* Filter Button */}
+          {/* ── Active Filters Display ── */}
+          {selectedCategories.length > 0 && (
+            <div className="px-4 pb-3 flex flex-wrap gap-2">
+              <span className="text-[12px] font-medium text-gray-500 pt-1 mr-1">Đang lọc:</span>
+              {selectedCategories.map((cat) => (
+                <div
+                  key={cat}
+                  className="bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-lg text-[12px] font-medium flex items-center gap-1.5"
+                >
+                  {cat}
+                  <button
+                    onClick={() => {
+                      setSelectedCategories((prev) => prev.filter((c) => c !== cat));
+                      setCurrentPage(1);
+                    }}
+                    className="hover:bg-green-200 rounded-full p-0.5 transition-colors cursor-pointer"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
               <button
-                onClick={() => setIsFilterDrawerOpen(true)}
-                className="h-10 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all text-[13px] font-medium"
-                style={{
-                  border: "1px solid var(--grid-border)",
-                  backgroundColor: "var(--bg-main)",
-                  color: "var(--text-main)",
+                onClick={() => {
+                  setSelectedCategories([]);
+                  setCurrentPage(1);
                 }}
+                className="text-[12px] text-red-500 hover:text-red-700 font-medium px-1 underline cursor-pointer"
               >
-                <Filter size={15} />
-                <span>Lọc</span>
-                {selectedCategories.length > 0 && (
-                  <span className="w-2.5 h-2.5 rounded-full bg-green-500 ml-0.5 border-2 border-white"></span>
-                )}
+                Xóa lọc
               </button>
             </div>
-
-            {/* Active Filters */}
-            {selectedCategories.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {selectedCategories.map((cat) => (
-                  <span
-                    key={cat}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium bg-green-50 text-green-700 border border-green-200"
-                  >
-                    {cat}
-                    <X
-                      size={12}
-                      className="cursor-pointer opacity-60 hover:opacity-100"
-                      onClick={() => {
-                        setSelectedCategories((prev) =>
-                          prev.filter((c) => c !== cat),
-                        );
-                        setCurrentPage(1);
-                      }}
-                    />
-                  </span>
-                ))}
-                <button
-                  onClick={() => {
-                    setSelectedCategories([]);
-                    setCurrentPage(1);
-                  }}
-                  className="text-[11px] font-medium text-gray-400 hover:text-gray-600 ml-2"
-                >
-                  Xóa tất cả
-                </button>
-              </div>
-            )}
-          </div>
+          )}
 
           {/* ── Product Grid ── */}
           <div className="flex-1 overflow-y-auto px-4 pb-3">
@@ -1347,7 +1429,7 @@ export default function InStockInvoicePage() {
           </div>
 
           {/* ── Pagination ── */}
-          {totalPages > 1 && (
+          {totalPages > 0 && (
             <div
               className="flex items-center justify-center gap-2 py-2.5 border-t"
               style={{ borderColor: "var(--grid-border)" }}
@@ -1414,6 +1496,18 @@ export default function InStockInvoicePage() {
           });
         }}
       />
+
+      {/* Hidden Print Area */}
+      <div style={{ display: "none" }}>
+        {printingOrder && (
+          <div ref={printRef}>
+            <PrintableInvoice
+              o={printingOrder}
+              displayTotal={printingOrder.total}
+            />
+          </div>
+        )}
+      </div>
 
       {/* ── Filter Drawer ── */}
       {isFilterDrawerOpen && (

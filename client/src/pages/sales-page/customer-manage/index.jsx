@@ -7,8 +7,7 @@
  */
 
 import { useState, useMemo, useRef, useEffect } from "react";
-import {
-  Plus,
+import { Plus,
   Pencil,
   NotebookPen,
   X,
@@ -25,9 +24,11 @@ import {
   UserPlus,
   ChevronLeft,
   ChevronRight,
-} from "lucide-react";
+  ShoppingCart, Package, ChevronDown } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
+import { INITIAL_ORDERS } from "../order-manage";
+import { MOCK_ORDERS_DETAIL } from "../order-manage/detail";
 
 // ===================== STATIC DATA =====================
 const INITIAL_CUSTOMERS = [
@@ -333,6 +334,8 @@ const INITIAL_CUSTOMERS = [
   },
 ];
 
+
+
 const GENDER_OPTIONS = ["Nam", "Nữ", "Khác"];
 
 // ===================== HELPERS =====================
@@ -358,9 +361,12 @@ export default function SalesCustomerManage() {
 
   // Modal states
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [customerOrders, setCustomerOrders] = useState([]);
   const [isNoteOpen, setIsNoteOpen] = useState(false);
   const [currentCustomer, setCurrentCustomer] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
 
   // Form state
   const [form, setForm] = useState({
@@ -436,6 +442,15 @@ export default function SalesCustomerManage() {
     });
     setFormErrors({});
     setIsFormOpen(true);
+  };
+
+  const handleOpenHistory = (c) => {
+    setCurrentCustomer(c);
+    const matched = INITIAL_ORDERS
+      .filter(o => o.customerName === c.name || o.phone === c.phone)
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+    setCustomerOrders(matched);
+    setIsHistoryOpen(true);
   };
 
   const handleOpenNote = (c) => {
@@ -728,6 +743,14 @@ export default function SalesCustomerManage() {
                           title="Sửa"
                         >
                           <Pencil size={13} />
+                        </button>
+                        <button
+                          onClick={() => handleOpenHistory(c)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-blue-50 hover:text-blue-500"
+                          style={{ color: "var(--text-placeholder)" }}
+                          title="Lịch sử mua hàng"
+                        >
+                          <ShoppingCart size={13} />
                         </button>
                         <button
                           onClick={() => handleOpenNote(c)}
@@ -1258,6 +1281,144 @@ export default function SalesCustomerManage() {
       )}
 
       {/* ═══ MODAL: DELETE ═══ */}
+      {/* ═══ MODAL: HISTORY ═══ */}
+      {isHistoryOpen && currentCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
+            onClick={() => setIsHistoryOpen(false)}
+          />
+          <div
+            className="relative bg-white rounded-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95"
+            style={{ boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
+          >
+            <div
+              className="flex items-center justify-between px-5 py-4 border-b"
+              style={{ borderColor: "var(--grid-border)" }}
+            >
+              <div>
+                <h2
+                  className="text-[15px] font-bold flex items-center gap-2"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  <ShoppingCart
+                    size={16}
+                    style={{ color: "var(--brand-primary)" }}
+                  />{" "}
+                  Lịch sử mua hàng
+                </h2>
+                <p
+                  className="text-[12px] mt-0.5"
+                  style={{ color: "var(--text-placeholder)" }}
+                >
+                  Khách hàng: <strong style={{ color: "var(--text-main)" }}>{currentCustomer.name}</strong> – {currentCustomer.code}
+                </p>
+              </div>
+              <button
+                onClick={() => setIsHistoryOpen(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100"
+                style={{ color: "var(--text-placeholder)" }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+            
+            <div className="p-5 max-h-[60vh] overflow-y-auto">
+              {customerOrders.length > 0 ? (
+                <div className="space-y-3">
+                  {customerOrders.map(order => {
+                    const isExpanded = expandedOrderId === (order.id + order.code);
+                    const detail = MOCK_ORDERS_DETAIL[order.id];
+                    const products = detail?.products || [];
+                    const fmtCurrency = (n) => n != null ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n) : "—";
+
+                    return (
+                      <div key={order.id + order.code} className="border rounded-xl overflow-hidden transition-all" style={{ borderColor: isExpanded ? "var(--brand-primary)" : "var(--grid-border)" }}>
+                        {/* Order header — clickable */}
+                        <div
+                          className="p-4 cursor-pointer transition-colors hover:bg-gray-50"
+                          onClick={() => setExpandedOrderId(isExpanded ? null : order.id + order.code)}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-[13px] font-mono" style={{ color: "var(--brand-primary)" }}>{order.code}</span>
+                              <span className="text-[11px] px-1.5 py-0.5 rounded-md font-medium" style={{
+                                backgroundColor: order.type === "Hàng sẵn" ? "#EFF6FF" : "#F5F3FF",
+                                color: order.type === "Hàng sẵn" ? "#1D4ED8" : "#7C3AED"
+                              }}>{order.type}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ 
+                                backgroundColor: order.status === "Giao hàng thành công" ? "#dcfce7" : order.status === "Đã hủy" ? "#fee2e2" : order.status === "Chờ duyệt hủy" ? "#fef3c7" : "#EFF6FF",
+                                color: order.status === "Giao hàng thành công" ? "#166534" : order.status === "Đã hủy" ? "#991b1b" : order.status === "Chờ duyệt hủy" ? "#92400e" : "#1D4ED8"
+                              }}>
+                                {order.status}
+                              </span>
+                              <ChevronDown size={14} className="transition-transform" style={{ color: "var(--text-placeholder)", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)" }} />
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between mt-2">
+                            <div className="flex gap-2 items-center text-[12px]" style={{ color: "var(--text-placeholder)" }}>
+                              <Calendar size={13} />
+                              <span>{new Date(order.date).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" })}</span>
+                            </div>
+                            <span className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>
+                              {new Intl.NumberFormat("vi-VN").format(order.total)}đ
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Expanded product detail */}
+                        {isExpanded && (
+                          <div style={{ borderTop: "1px solid var(--grid-border)", backgroundColor: "#FAFAFA" }}>
+                            {products.length > 0 ? (
+                              <>
+                                {/* Table header */}
+                                <div className="grid grid-cols-[1fr_40px_80px_90px] gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--text-placeholder)", borderBottom: "1px solid var(--grid-border)" }}>
+                                  <span>Sản phẩm</span>
+                                  <span className="text-center">SL</span>
+                                  <span className="text-right">Đơn giá</span>
+                                  <span className="text-right">Thành tiền</span>
+                                </div>
+                                {/* Rows */}
+                                {products.map((p, i) => (
+                                  <div key={i} className="grid grid-cols-[1fr_40px_80px_90px] gap-2 px-4 py-2.5 items-center" style={{ borderBottom: i < products.length - 1 ? "1px solid var(--grid-border)" : "none" }}>
+                                    <div className="min-w-0">
+                                      <p className="text-[12px] font-semibold truncate" style={{ color: "var(--text-main)" }}>{p.name}</p>
+                                      {p.material && <p className="text-[10px] truncate" style={{ color: "var(--text-placeholder)" }}>{p.material}</p>}
+                                    </div>
+                                    <p className="text-[12px] text-center font-medium" style={{ color: "var(--text-secondary)" }}>{p.qty}</p>
+                                    <p className="text-[11px] text-right font-medium" style={{ color: "var(--text-secondary)" }}>{p.price ? fmtCurrency(p.price) : "—"}</p>
+                                    <p className="text-[12px] text-right font-bold" style={{ color: "var(--text-main)" }}>{p.price ? fmtCurrency(p.price * p.qty) : "—"}</p>
+                                  </div>
+                                ))}
+                              </>
+                            ) : (
+                              <div className="px-4 py-4 text-center">
+                                <p className="text-[12px]" style={{ color: "var(--text-placeholder)" }}>Chưa có dữ liệu chi tiết sản phẩm</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-10">
+                   <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                       <ShoppingCart size={20} style={{ color: "var(--text-placeholder)" }} />
+                   </div>
+                   <p className="text-[13px] font-medium" style={{ color: "var(--text-main)" }}>Chưa có đơn hàng nào</p>
+                   <p className="text-[12px] mt-1" style={{ color: "var(--text-placeholder)" }}>Khách hàng này chưa thực hiện giao dịch nào.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
