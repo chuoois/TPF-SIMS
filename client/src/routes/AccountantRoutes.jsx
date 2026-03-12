@@ -1,9 +1,9 @@
 import { Navigate } from "react-router-dom";
 import AccountantLayout from "../layouts/accountant-layout/index";
+import AccountantHome from "../pages/accountant-page/accountant-home";
 import AccountantDashboard from "../pages/accountant-page/accountant-dashboard";
 import AccountantProductManage from "../pages/accountant-page/accountant-product";
 import AccountantImportManage from "../pages/accountant-page/accountant-import";
-import AccountantCustomOrders from "../pages/accountant-page/accountant-custom-orders";
 
 /**
  * Accountant Routes
@@ -17,6 +17,10 @@ export const accountantRoutes = {
         { index: true, element: <Navigate to="/accountant/dashboard" replace /> },
         {
             path: "dashboard",
+            element: <AccountantHome />,
+        },
+        {
+            path: "old-dashboard",
             element: <AccountantDashboard />,
         },
         {
@@ -26,10 +30,6 @@ export const accountantRoutes = {
         {
             path: "imports",
             element: <AccountantImportManage />,
-        },
-        {
-            path: "custom-orders",
-            element: <AccountantCustomOrders />,
         },
     ],
 };
