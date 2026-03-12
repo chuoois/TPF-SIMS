@@ -11,14 +11,14 @@ import { LayoutGrid, Package, ArrowDownToLine, ChevronRight, PanelLeftClose, Cli
 
 const menuItems = [
     {
-        text: "Tổng quan kho",
+        text: "Tổng quan tài chính",
         path: "/accountant/dashboard",
-        icon: LayoutGrid,
+        icon: BarChart,
     },
     {
-        text: "Tổng quan tài chính",
+        text: "Tổng quan kho hàng",
         path: "/accountant/old-dashboard",
-        icon: BarChart,
+        icon: LayoutGrid,
     },
     {
         text: "Kho hàng",
