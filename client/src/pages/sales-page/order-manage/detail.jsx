@@ -538,88 +538,100 @@ const HistoryCard = ({ o }) => (
   </div>
 );
 
-// ===================== PRINTABLE INVOICE =====================
+function readNumberVN(num) {
+    if (!num) return "";
+    const units = ["", "nghìn", "triệu", "tỷ"];
+    const words = ["không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"];
+    let result = "";
+    let str = String(num);
+    let unitIdx = 0;
+    while (str.length > 0) {
+        let block = parseInt(str.slice(-3), 10);
+        str = str.slice(0, -3);
+        if (block > 0 || (unitIdx === 0 && num === 0)) {
+            let blockStr = "";
+            let h = Math.floor(block / 100);
+            let t = Math.floor((block % 100) / 10);
+            let u = block % 10;
+            if (h > 0 || str.length > 0) blockStr += words[h] + " trăm ";
+            if (t > 1) blockStr += words[t] + " mươi ";
+            else if (t === 1) blockStr += "mười ";
+            else if (t === 0 && u > 0 && (h > 0 || str.length > 0)) blockStr += "linh ";
+            if (u === 1 && t > 1) blockStr += "mốt ";
+            else if (u === 5 && t > 0) blockStr += "lăm ";
+            else if (u > 0) blockStr += words[u] + " ";
+            result = blockStr + units[unitIdx] + " " + result;
+        }
+        unitIdx++;
+    }
+    result = result.replace(/\\s+/g, " ").trim();
+    return result.charAt(0).toUpperCase() + result.slice(1) + " đồng";
+}
+
 export const PrintableInvoice = ({ o, displayTotal }) => {
   const today = new Date();
-  const printDate = `${today.toLocaleDateString("vi-VN")}`;
+  const printDate = `Ngày ${today.getDate()} tháng ${today.getMonth() + 1} năm ${today.getFullYear()}`;
   return (
     <div
       style={{
         fontFamily: "'Times New Roman', serif",
         color: "#000",
-        padding: "20px 0", // Reduced horizontal padding as A4 page margin takes care of it
+        padding: "20px 0",
         width: "100%",
         maxWidth: "800px",
         margin: "0 auto",
-        boxSizing: "border-box", // Fixes horizontal overflow
+        boxSizing: "border-box",
       }}
     >
       {/* Header */}
       <div style={{ textAlign: "center", marginBottom: 24 }}>
         <h1
           style={{
-            fontSize: 22,
+            fontSize: 26,
             fontWeight: "bold",
             marginBottom: 4,
             textTransform: "uppercase",
-            letterSpacing: 2,
+            color: "#d32f2f",
           }}
         >
-          TPF - NỘI THẤT GỖ CAO CẤP
+          ĐỒ GỖ MỸ NGHỆ
         </h1>
-        <p style={{ fontSize: 12, color: "#555", margin: 0 }}>
-          Địa chỉ: 123 Đường Trường Chinh, Quận Tân Bình, TP.HCM
-        </p>
-        <p style={{ fontSize: 12, color: "#555", margin: 0 }}>
-          Hotline: 0909 888 999 &nbsp;|&nbsp; Email: info@tpf-furniture.vn
-        </p>
-        <div
-          style={{ borderBottom: "2px solid #000", margin: "16px 0 12px" }}
-        />
-        <h2 style={{ fontSize: 20, fontWeight: "bold", marginBottom: 4 }}>
-          HÓA ĐƠN BÁN HÀNG
+        <h2
+          style={{
+            fontSize: 36,
+            fontFamily: "'Dancing Script', 'Brush Script MT', cursive, serif",
+            color: "#d32f2f",
+            margin: "4px 0 8px 0",
+            fontWeight: "normal",
+          }}
+        >
+          Trọng Phóng
         </h2>
-        <p style={{ fontSize: 12, color: "#555" }}>
-          Mã đơn: <strong>{o.code}</strong> &nbsp;|&nbsp; Ngày in: {printDate}
+        <p style={{ fontSize: 16, color: "#d32f2f", margin: "4px 0" }}>
+          NHẬN ĐẶT HÀNG THEO YÊU CẦU
         </p>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#d32f2f", fontWeight: "bold", margin: "8px 0 0 0" }}>
+          <span>ĐC: CHỢ BƯƠNG - CẤN HỮU - QUỐC OAI - HÀ NỘI</span>
+          <span>ĐT: 0988.113.995</span>
+        </div>
+        <div
+          style={{ borderBottom: "1px solid #d32f2f", margin: "10px 0 16px" }}
+        />
+        <h2 style={{ fontSize: 22, fontWeight: "bold", marginBottom: 16, color: "#d32f2f" }}>
+          HOÁ ĐƠN BÁN HÀNG
+        </h2>
       </div>
 
       {/* Customer info */}
-      <div
-        style={{
-          marginBottom: 20,
-          padding: "12px 16px",
-          border: "1px solid #ddd",
-          borderRadius: 4,
-        }}
-      >
-        <table
-          style={{ width: "100%", fontSize: 13, borderCollapse: "collapse" }}
-        >
-          <tbody>
-            <tr>
-              <td style={{ padding: "3px 0", width: "50%" }}>
-                <strong>Khách hàng:</strong> {o.customer.name}
-              </td>
-              <td style={{ padding: "3px 0" }}>
-                <strong>Điện thoại:</strong> {o.customer.phone}
-              </td>
-            </tr>
-            <tr>
-              <td colSpan={2} style={{ padding: "3px 0" }}>
-                <strong>Địa chỉ:</strong> {o.customer.address}
-              </td>
-            </tr>
-            <tr>
-              <td style={{ padding: "3px 0" }}>
-                <strong>Loại đơn:</strong> {o.type}
-              </td>
-              <td style={{ padding: "3px 0" }}>
-                <strong>NV bán hàng:</strong> {o.salesPerson}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "flex-end", marginBottom: 12 }}>
+           <span style={{ fontSize: 13, color: "#d32f2f", marginRight: 8, whiteSpace: "nowrap" }}>TÊN KHÁCH HÀNG:</span> 
+           <span style={{ flex: 1, borderBottom: "1px dotted #d32f2f", fontSize: 16, color: "blue", fontFamily: "'Caveat', 'Dancing Script', cursive, serif" }}>{o.customer.name}</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "flex-end", marginBottom: 12 }}>
+           <span style={{ fontSize: 13, color: "#d32f2f", marginRight: 8, whiteSpace: "nowrap" }}>ĐỊA CHỈ:</span> 
+           <span style={{ flex: 1, borderBottom: "1px dotted #d32f2f", fontSize: 16, color: "blue", fontFamily: "'Caveat', 'Dancing Script', cursive, serif", minHeight: 22 }}>{o.customer.address}</span>
+        </div>
       </div>
 
       {/* Products table */}
@@ -627,248 +639,90 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
         style={{
           width: "100%",
           borderCollapse: "collapse",
-          fontSize: 13,
+          fontSize: 14,
           marginBottom: 20,
         }}
       >
         <thead>
-          <tr style={{ backgroundColor: "#f5f5f5" }}>
-            <th
-              style={{
-                border: "1px solid #999",
-                padding: "8px 6px",
-                textAlign: "center",
-                width: 40,
-              }}
-            >
-              STT
-            </th>
-            <th
-              style={{
-                border: "1px solid #999",
-                padding: "8px 6px",
-                textAlign: "left",
-              }}
-            >
-              Sản phẩm
-            </th>
-            <th
-              style={{
-                border: "1px solid #999",
-                padding: "8px 6px",
-                textAlign: "left",
-                width: 160,
-              }}
-            >
-              Quy cách
-            </th>
-            <th
-              style={{
-                border: "1px solid #999",
-                padding: "8px 6px",
-                textAlign: "center",
-                width: 50,
-              }}
-            >
-              SL
-            </th>
-            <th
-              style={{
-                border: "1px solid #999",
-                padding: "8px 6px",
-                textAlign: "right",
-                width: 120,
-              }}
-            >
-              Đơn giá
-            </th>
-            <th
-              style={{
-                border: "1px solid #999",
-                padding: "8px 6px",
-                textAlign: "right",
-                width: 120,
-              }}
-            >
-              Thành tiền
-            </th>
+          <tr>
+            <th style={{ border: "1px solid #d32f2f", padding: "8px 6px", textAlign: "center", width: 40, color: "#d32f2f", fontWeight: "normal" }}>SỐ TT</th>
+            <th style={{ border: "1px solid #d32f2f", padding: "8px 6px", textAlign: "center", color: "#d32f2f", fontWeight: "normal" }}>TÊN MẶT HÀNG</th>
+            <th style={{ border: "1px solid #d32f2f", padding: "8px 6px", textAlign: "center", width: 80, color: "#d32f2f", fontWeight: "normal" }}>SỐ LƯỢNG</th>
+            <th style={{ border: "1px solid #d32f2f", padding: "8px 6px", textAlign: "center", width: 120, color: "#d32f2f", fontWeight: "normal" }}>ĐƠN GIÁ</th>
+            <th style={{ border: "1px solid #d32f2f", padding: "8px 6px", textAlign: "center", width: 140, color: "#d32f2f", fontWeight: "normal" }}>THÀNH TIỀN</th>
           </tr>
         </thead>
         <tbody>
           {o.products.map((p, i) => (
             <tr key={i}>
-              <td
-                style={{
-                  border: "1px solid #ccc",
-                  padding: "6px",
-                  textAlign: "center",
-                }}
-              >
-                {i + 1}
+              <td style={{ border: "1px solid #d32f2f", padding: "6px", textAlign: "center", color: "blue", fontFamily: "'Caveat', 'Dancing Script', cursive, serif", fontSize: 16 }}>{i + 1}</td>
+              <td style={{ border: "1px solid #d32f2f", padding: "6px", color: "blue", fontFamily: "'Caveat', 'Dancing Script', cursive, serif", fontSize: 16 }}>
+                {p.name}
+                {p.note && <div style={{ fontSize: 13, fontStyle: "italic", color: "blue" }}>* {p.note}</div>}
               </td>
-              <td style={{ border: "1px solid #ccc", padding: "6px" }}>
-                <strong>{p.name}</strong>
-                {p.note && (
-                  <div
-                    style={{ fontSize: 11, fontStyle: "italic", color: "#666" }}
-                  >
-                    * {p.note}
-                  </div>
-                )}
-              </td>
-              <td
-                style={{
-                  border: "1px solid #ccc",
-                  padding: "6px",
-                  fontSize: 11,
-                }}
-              >
-                {p.material} — {p.size}
-              </td>
-              <td
-                style={{
-                  border: "1px solid #ccc",
-                  padding: "6px",
-                  textAlign: "center",
-                }}
-              >
+              <td style={{ border: "1px solid #d32f2f", padding: "6px", textAlign: "center", color: "blue", fontFamily: "'Caveat', 'Dancing Script', cursive, serif", fontSize: 16 }}>
                 {p.qty}
               </td>
-              <td
-                style={{
-                  border: "1px solid #ccc",
-                  padding: "6px",
-                  textAlign: "right",
-                }}
-              >
+              <td style={{ border: "1px solid #d32f2f", padding: "6px", textAlign: "right", color: "blue", fontFamily: "'Caveat', 'Dancing Script', cursive, serif", fontSize: 16 }}>
                 {p.price ? fmtCurrency(p.price) : "—"}
               </td>
-              <td
-                style={{
-                  border: "1px solid #ccc",
-                  padding: "6px",
-                  textAlign: "right",
-                  fontWeight: "bold",
-                }}
-              >
+              <td style={{ border: "1px solid #d32f2f", padding: "6px", textAlign: "right", color: "blue", fontFamily: "'Caveat', 'Dancing Script', cursive, serif", fontSize: 16 }}>
                 {p.price ? fmtCurrency(p.price * p.qty) : "—"}
               </td>
             </tr>
           ))}
+          {/* Fill empty rows to make it look like a real receipt pad */}
+          {Array.from({ length: Math.max(0, 5 - o.products.length) }).map((_, i) => (
+            <tr key={"empty-" + i}>
+              <td style={{ border: "1px solid #d32f2f", padding: "14px 6px" }}></td>
+              <td style={{ border: "1px solid #d32f2f", padding: "14px 6px" }}></td>
+              <td style={{ border: "1px solid #d32f2f", padding: "14px 6px" }}></td>
+              <td style={{ border: "1px solid #d32f2f", padding: "14px 6px" }}></td>
+              <td style={{ border: "1px solid #d32f2f", padding: "14px 6px" }}></td>
+            </tr>
+          ))}
+          <tr>
+            <td colSpan={4} style={{ border: "1px solid #d32f2f", padding: "6px 8px", textAlign: "center", color: "#d32f2f", fontWeight: "normal" }}>
+              CỘNG
+            </td>
+            <td style={{ border: "1px solid #d32f2f", padding: "6px 8px", textAlign: "right", color: "blue", fontFamily: "'Caveat', 'Dancing Script', cursive, serif", fontSize: 16 }}>
+              {fmtCurrency(displayTotal)}
+            </td>
+          </tr>
         </tbody>
       </table>
 
-      {/* Totals */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          marginBottom: 30,
-        }}
-      >
-        <table style={{ fontSize: 13, borderCollapse: "collapse", width: 300 }}>
-          <tbody>
-            <tr>
-              <td style={{ padding: "6px 8px", textAlign: "right" }}>
-                Tổng cộng:
-              </td>
-              <td
-                style={{
-                  padding: "6px 8px",
-                  textAlign: "right",
-                  fontWeight: "bold",
-                  fontSize: 14,
-                }}
-              >
-                {fmtCurrency(displayTotal)}
-              </td>
-            </tr>
-            {o.deposit != null && (
-              <tr>
-                <td style={{ padding: "6px 8px", textAlign: "right" }}>
-                  Đã đặt cọc:
-                </td>
-                <td
-                  style={{
-                    padding: "6px 8px",
-                    textAlign: "right",
-                    color: "#15803D",
-                    fontWeight: "bold",
-                  }}
-                >
-                  {fmtCurrency(o.deposit)}
-                </td>
-              </tr>
-            )}
-            {o.deposit != null && (
-              <tr style={{ borderTop: "1px solid #999" }}>
-                <td
-                  style={{
-                    padding: "6px 8px",
-                    textAlign: "right",
-                    fontWeight: "bold",
-                  }}
-                >
-                  Còn lại:
-                </td>
-                <td
-                  style={{
-                    padding: "6px 8px",
-                    textAlign: "right",
-                    fontWeight: "bold",
-                    fontSize: 15,
-                    color:
-                      displayTotal - (o.deposit || 0) > 0
-                        ? "#DC2626"
-                        : "#15803D",
-                  }}
-                >
-                  {fmtCurrency(displayTotal - (o.deposit || 0))}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      {/* Totals in words */}
+      <div style={{ display: "flex", alignItems: "flex-start", marginBottom: 20 }}>
+        <span style={{ fontSize: 13, color: "#d32f2f", marginRight: 8, whiteSpace: "nowrap", textTransform: "uppercase" }}>THÀNH TIỀN BẰNG CHỮ:</span>
+        <span style={{ flex: 1, borderBottom: "1px dotted #d32f2f", fontSize: 16, color: "blue", fontFamily: "'Caveat', 'Dancing Script', cursive, serif" }}>
+          {readNumberVN(displayTotal)}
+        </span>
       </div>
 
       {/* Notes */}
       {o.notes && (
-        <div
-          style={{
-            marginBottom: 20,
-            fontSize: 12,
-            fontStyle: "italic",
-            color: "#555",
-          }}
-        >
-          <strong>Ghi chú:</strong> {o.notes}
+        <div style={{ marginBottom: 20, fontSize: 13, fontStyle: "italic", color: "#555" }}>
+          <strong style={{ color: "#d32f2f" }}>Ghi chú:</strong> {o.notes}
         </div>
       )}
 
       {/* Signatures */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginTop: 40,
-          fontSize: 13,
-          textAlign: "center",
-        }}
-      >
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 40, fontSize: 14, textAlign: "center" }}>
         <div style={{ width: "40%" }}>
-          <p style={{ fontWeight: "bold", marginBottom: 60 }}>Khách hàng</p>
-          <p style={{ fontSize: 11, color: "#999" }}>(Ký, ghi rõ họ tên)</p>
+          <p style={{ color: "#d32f2f", marginBottom: 30 }}>Khách hàng ký nhận</p>
+          <p style={{ fontFamily: "'Caveat', 'Dancing Script', cursive, serif", fontSize: 18, color: "blue" }}>{o.customer.name}</p>
         </div>
         <div style={{ width: "40%" }}>
-          <p style={{ fontWeight: "bold", marginBottom: 60 }}>
-            Nhân viên bán hàng
-          </p>
-          <p style={{ fontSize: 11, color: "#999" }}>(Ký, ghi rõ họ tên)</p>
+          <p style={{ color: "#d32f2f", marginBottom: 4, fontStyle: "italic" }}>{printDate}</p>
+          <p style={{ color: "#d32f2f", marginBottom: 30 }}>Chủ cửa hàng</p>
+          <p style={{ fontFamily: "'Caveat', 'Dancing Script', cursive, serif", fontSize: 18, color: "blue" }}>Nguyễn Trọng Phóng</p>
         </div>
       </div>
     </div>
   );
 };
+
 
 // ===================== MAIN EXPORT =====================
 export default function SalesOrderDetail() {

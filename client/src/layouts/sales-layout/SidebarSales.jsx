@@ -37,6 +37,11 @@ const menuItems = [
     icon: ClipboardList,
     path: "/sales/dashboard/invoice-custom-order",
   },
+  {
+    text: "Yêu cầu đặt riêng",
+    icon: ClipboardList,
+    path: "/sales/dashboard/custom-orders",
+  },
 ];
 
 export const SidebarSales = () => {
