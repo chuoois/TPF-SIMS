@@ -43,21 +43,21 @@ const INITIAL_PRODUCTS = [
 
 // Tab 2 – Hàng sẵn
 const STOCK_ITEMS = [
-    { id: "HS001", code: "HS-PK-001", sku: "BBGND-GH-HS-4821", name: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món", woodType: "Gỗ hương đá", color: "Cánh gián", retailPrice: 55000000, stock: 3, status: "Đang kinh doanh" },
-    { id: "HS002", code: "HS-PK-002", sku: "SNKSCL-GGD-HS-2341", name: "Sofa nguyên khối chữ L", woodType: "Gỗ gõ đỏ", color: "Chưa sơn (Mộc)", retailPrice: 35000000, stock: 8, status: "Đang kinh doanh" },
-    { id: "HS003", code: "HS-PT-001", sku: "STMD-GGM-HS-9102", name: "Sập thờ Mai Điểu chân 20", woodType: "Gỗ gụ mật", color: "Cánh gián", retailPrice: 25000000, stock: 2, status: "Đang kinh doanh" },
-    { id: "HS004", code: "HS-PA-001", sku: "BBA8GNK-GH-HS-6657", name: "Bộ bàn ăn 8 ghế nguyên khối", woodType: "Gỗ hương đá", color: "Cánh gián", retailPrice: 48000000, stock: 3, status: "Đang kinh doanh" },
-    { id: "HS005", code: "HS-PK-003", sku: "KTVNKML-GGD-HS-7723", name: "Kệ tivi nguyên khối mặt liền", woodType: "Gỗ gõ đỏ", color: "Trần (giữ vân)", retailPrice: 32000000, stock: 0, status: "Ngừng kinh doanh" },
-    { id: "HS006", code: "HS-PN-001", sku: "GNHHTCD-GSN-HS-3380", name: "Giường ngủ hoa hồng Tân cổ điển", woodType: "Gỗ sồi Nga", color: "Óc chó", retailPrice: 22000000, stock: 4, status: "Đang kinh doanh" },
+    { id: "HS001", code: "HS-PK-001", name: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món", woodType: "Gỗ hương đá", color: "Cánh gián", retailPrice: 55000000, stock: 3, status: "Đang kinh doanh" },
+    { id: "HS002", code: "HS-PK-002", name: "Sofa nguyên khối chữ L", woodType: "Gỗ gõ đỏ", color: "Chưa sơn (Mộc)", retailPrice: 35000000, stock: 8, status: "Đang kinh doanh" },
+    { id: "HS003", code: "HS-PT-001", name: "Sập thờ Mai Điểu chân 20", woodType: "Gỗ gụ mật", color: "Cánh gián", retailPrice: 25000000, stock: 2, status: "Đang kinh doanh" },
+    { id: "HS004", code: "HS-PA-001", name: "Bộ bàn ăn 8 ghế nguyên khối", woodType: "Gỗ hương đá", color: "Cánh gián", retailPrice: 48000000, stock: 3, status: "Đang kinh doanh" },
+    { id: "HS005", code: "HS-PK-003", name: "Kệ tivi nguyên khối mặt liền", woodType: "Gỗ gõ đỏ", color: "Trần (giữ vân)", retailPrice: 32000000, stock: 0, status: "Ngừng kinh doanh" },
+    { id: "HS006", code: "HS-PN-001", name: "Giường ngủ hoa hồng Tân cổ điển", woodType: "Gỗ sồi Nga", color: "Óc chó", retailPrice: 22000000, stock: 4, status: "Đang kinh doanh" },
 ];
 
-// Tab 3 – Đặt theo mẫu (hàng khách đặt cũng có mã SKU)
+// Tab 3 – Đặt theo mẫu
 const CUSTOM_MODELS = [
-    { id: "DTM001", code: "M-PK-001", sku: "BBGND-GH-KD-1021", name: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món", category: "Phòng khách", minPrice: 42000000, maxPrice: 65000000, leadTime: "25–35 ngày", woodOptions: "Gỗ hương, Gỗ gõ đỏ", status: "Đang nhận đơn" },
-    { id: "DTM002", code: "M-PN-001", sku: "GNHH-GSN-KD-3380", name: "Giường ngủ hoa hồng Tân cổ điển", category: "Phòng ngủ", minPrice: 15000000, maxPrice: 35000000, leadTime: "20–30 ngày", woodOptions: "Gỗ sồi, Gỗ gõ đỏ", status: "Đang nhận đơn" },
-    { id: "DTM003", code: "M-PT-001", sku: "STM-GGM-KD-9102", name: "Sập thờ Mai Điểu", category: "Phòng thờ", minPrice: 18000000, maxPrice: 45000000, leadTime: "30–45 ngày", woodOptions: "Gỗ gụ, Gỗ hương", status: "Đang nhận đơn" },
-    { id: "DTM004", code: "M-PT-002", sku: "BTCR-GM-KD-4492", name: "Bàn thờ chạm rồng cuốn thủy", category: "Phòng thờ", minPrice: 25000000, maxPrice: 55000000, leadTime: "35–50 ngày", woodOptions: "Gỗ mít, Gỗ hương", status: "Đang nhận đơn" },
-    { id: "DTM005", code: "M-PA-001", sku: "BBA8-GH-KD-6657", name: "Bộ bàn ăn 8 ghế nguyên khối", category: "Phòng ăn", minPrice: 35000000, maxPrice: 60000000, leadTime: "25–40 ngày", woodOptions: "Gỗ hương, Gỗ sồi", status: "Tạm ngưng" },
+    { id: "DTM001", code: "M-PK-001", name: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món", category: "Phòng khách", minPrice: 42000000, maxPrice: 65000000, leadTime: "25–35 ngày", woodOptions: "Gỗ hương, Gỗ gõ đỏ", status: "Đang nhận đơn" },
+    { id: "DTM002", code: "M-PN-001", name: "Giường ngủ hoa hồng Tân cổ điển", category: "Phòng ngủ", minPrice: 15000000, maxPrice: 35000000, leadTime: "20–30 ngày", woodOptions: "Gỗ sồi, Gỗ gõ đỏ", status: "Đang nhận đơn" },
+    { id: "DTM003", code: "M-PT-001", name: "Sập thờ Mai Điểu", category: "Phòng thờ", minPrice: 18000000, maxPrice: 45000000, leadTime: "30–45 ngày", woodOptions: "Gỗ gụ, Gỗ hương", status: "Đang nhận đơn" },
+    { id: "DTM004", code: "M-PT-002", name: "Bàn thờ chạm rồng cuốn thủy", category: "Phòng thờ", minPrice: 25000000, maxPrice: 55000000, leadTime: "35–50 ngày", woodOptions: "Gỗ mít, Gỗ hương", status: "Đang nhận đơn" },
+    { id: "DTM005", code: "M-PA-001", name: "Bộ bàn ăn 8 ghế nguyên khối", category: "Phòng ăn", minPrice: 35000000, maxPrice: 60000000, leadTime: "25–40 ngày", woodOptions: "Gỗ hương, Gỗ sồi", status: "Tạm ngưng" },
 ];
 
 const TABS = [
@@ -111,7 +111,7 @@ export default function AccountantProductManage() {
         if (colorFilter) r = r.filter(v => v.color === colorFilter);
         if (stockSearch.trim()) {
             const q = stockSearch.toLowerCase();
-            r = r.filter(v => v.code.toLowerCase().includes(q) || v.name.toLowerCase().includes(q) || v.sku.toLowerCase().includes(q));
+            r = r.filter(v => v.code.toLowerCase().includes(q) || v.name.toLowerCase().includes(q));
         }
         return r;
     }, [woodFilter, colorFilter, stockSearch]);
@@ -317,7 +317,7 @@ export default function AccountantProductManage() {
                         <div className="px-4 py-3 border-b shrink-0 flex flex-wrap items-center gap-3" style={{ borderColor: "var(--grid-border)" }}>
                             <div className="relative w-72">
                                 <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-placeholder)" }} />
-                                <input type="text" value={stockSearch} onChange={e => setStockSearch(e.target.value)} placeholder="Tìm mã, SKU, tên sản phẩm..."
+                                <input type="text" value={stockSearch} onChange={e => setStockSearch(e.target.value)} placeholder="Tìm mã, tên sản phẩm..."
                                     className="w-full h-9 pl-10 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
                                     style={{ border: "1px solid var(--grid-border)", backgroundColor: "var(--bg-main)", color: "var(--text-main)" }} />
                             </div>
@@ -337,7 +337,7 @@ export default function AccountantProductManage() {
                         <div className="flex-1 overflow-y-auto">
                             <table className="w-full text-left relative">
                                 <thead className="sticky top-0 z-10" style={{ backgroundColor: "var(--grid-header-bg)", borderBottom: "1px solid var(--grid-border)" }}>
-                                    <tr><TH>Mã</TH><TH>SKU</TH><TH>Tên sản phẩm</TH><TH>Loại Gỗ</TH><TH>Màu Sơn</TH><TH right>Giá bán</TH><TH center>Tồn kho</TH><TH>Trạng thái</TH></tr>
+                                    <tr><TH>Mã</TH><TH>Tên sản phẩm</TH><TH>Loại Gỗ</TH><TH>Màu Sơn</TH><TH right>Giá bán</TH><TH center>Tồn kho</TH><TH>Trạng thái</TH></tr>
                                 </thead>
                                 <tbody>
                                     {filteredStock.map(v => {
@@ -345,7 +345,6 @@ export default function AccountantProductManage() {
                                         return (
                                             <tr key={v.id} className="group relative hover:bg-gray-50/50 transition-colors" style={{ borderBottom: "1px solid var(--grid-border)", opacity: isStopped ? 0.55 : 1 }}>
                                                 <td className="px-4 py-3"><span className="text-[12px] font-bold font-mono px-2 py-1 rounded" style={{ backgroundColor: "var(--bg-main)", color: "var(--text-main)", border: "1px solid var(--grid-border)" }}>{v.code}</span></td>
-                                                <td className="px-4 py-3"><span className="text-[11px] font-bold font-mono px-2 py-1 rounded" style={{ backgroundColor: "#EEF2FF", color: "#4F46E5" }}>{v.sku}</span></td>
                                                 <td className="px-4 py-3"><p className="text-[13px] font-semibold" style={{ color: "var(--text-main)" }}>{v.name}</p></td>
                                                 <td className="px-4 py-3"><span className="text-[12px] font-bold px-2 py-1 rounded" style={{ backgroundColor: "#FFF7ED", color: "#C2410C" }}>{v.woodType}</span></td>
                                                 <td className="px-4 py-3"><span className="text-[12px] font-bold px-2 py-1 rounded" style={{ backgroundColor: "#F0FDF4", color: "#15803D" }}>{v.color}</span></td>
@@ -383,7 +382,7 @@ export default function AccountantProductManage() {
                         <div className="flex-1 overflow-y-auto">
                             <table className="w-full text-left relative">
                                 <thead className="sticky top-0 z-10" style={{ backgroundColor: "var(--grid-header-bg)", borderBottom: "1px solid var(--grid-border)" }}>
-                                    <tr><TH>Mã mẫu</TH><TH>SKU</TH><TH>Tên sản phẩm</TH><TH>Danh mục</TH><TH>Loại gỗ khả dụng</TH><TH>Mức giá</TH><TH>TG sản xuất</TH><TH>Trạng thái</TH></tr>
+                                    <tr><TH>Mã mẫu</TH><TH>Tên sản phẩm</TH><TH>Danh mục</TH><TH>Loại gỗ khả dụng</TH><TH>Mức giá</TH><TH>TG sản xuất</TH><TH>Trạng thái</TH></tr>
                                 </thead>
                                 <tbody>
                                     {filteredCustom.map(m => {
@@ -391,7 +390,6 @@ export default function AccountantProductManage() {
                                         return (
                                             <tr key={m.id} className="group relative hover:bg-gray-50/50 transition-colors" style={{ borderBottom: "1px solid var(--grid-border)", opacity: isStopped ? 0.55 : 1 }}>
                                                 <td className="px-4 py-3"><span className="text-[12px] font-bold font-mono px-2 py-1 rounded" style={{ backgroundColor: "var(--bg-main)", color: "var(--text-main)", border: "1px solid var(--grid-border)" }}>{m.code}</span></td>
-                                                <td className="px-4 py-3">{m.sku ? <span className="text-[11px] font-bold font-mono px-2 py-1 rounded" style={{ backgroundColor: "#EEF2FF", color: "#4F46E5" }}>{m.sku}</span> : <span className="text-[11px] italic" style={{ color: "var(--text-placeholder)" }}>Chưa có</span>}</td>
                                                 <td className="px-4 py-3"><p className="text-[13px] font-semibold" style={{ color: "var(--text-main)" }}>{m.name}</p></td>
                                                 <td className="px-4 py-3"><span className="inline-block px-2.5 py-1 text-[11px] font-bold rounded-md" style={{ backgroundColor: "var(--bg-main)", color: "var(--text-secondary)", border: "1px solid var(--grid-border)" }}>{m.category}</span></td>
                                                 <td className="px-4 py-3"><p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{m.woodOptions}</p></td>
