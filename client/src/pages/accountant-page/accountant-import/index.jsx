@@ -19,19 +19,86 @@ import {
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { toast } from "react-hot-toast";
 import CreateImportModal from "../accountant-product/CreateImportModal";
+import ViewImportModal from "./ViewImportModal";
 
 // ─────────────────────────────────────────────────────────
 // MOCK DATA
 // ─────────────────────────────────────────────────────────
 const INIT_IMPORTS = [
-    { id: "NK001", code: "NK-0703-001", date: "2026-03-07T08:30:00", product: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món", supplier: "Xưởng Minh Đức", qty: 5, unitPrice: 38000000, totalPrice: 190000000, warehouse: "Kho chính", note: "Nhập theo đơn tháng 3", status: "Đã nhập kho" },
-    { id: "NK002", code: "NK-0703-002", date: "2026-03-07T09:00:00", product: "Sofa nguyên khối chữ L", supplier: "Xưởng Tiến Phát", qty: 3, unitPrice: 25000000, totalPrice: 75000000, warehouse: "Kho chính", note: "", status: "Đang xử lý" },
-    { id: "NK003", code: "NK-0603-001", date: "2026-03-06T14:00:00", product: "Sập thờ Mai Điểu chân 20", supplier: "Xưởng Minh Đức", qty: 2, unitPrice: 18000000, totalPrice: 36000000, warehouse: "Kho phụ", note: "Bổ sung tồn kho", status: "Đã nhập kho" },
-    { id: "NK004", code: "NK-0503-001", date: "2026-03-05T10:30:00", product: "Bộ bàn ăn 8 ghế nguyên khối", supplier: "Xưởng An Bình", qty: 4, unitPrice: 32000000, totalPrice: 128000000, warehouse: "Kho chính", note: "", status: "Đã nhập kho" },
-    { id: "NK005", code: "NK-0403-001", date: "2026-03-04T08:00:00", product: "Tủ quần áo 4 cánh chạm hoa lá tây", supplier: "Xưởng Tiến Phát", qty: 6, unitPrice: 22000000, totalPrice: 132000000, warehouse: "Kho chính", note: "Hàng khách đặt – Gia đình anh Minh", status: "Đang xử lý" },
-    { id: "NK006", code: "NK-0303-001", date: "2026-03-03T15:00:00", product: "Giường ngủ hoa hồng Tân cổ điển", supplier: "Xưởng Minh Đức", qty: 3, unitPrice: 15000000, totalPrice: 45000000, warehouse: "Kho phụ", note: "Hàng khách đặt theo mẫu", status: "Đã nhập kho" },
-    { id: "NK007", code: "NK-0203-001", date: "2026-03-02T09:00:00", product: "Hoành phi câu đối chạm rồng", supplier: "Xưởng An Bình", qty: 8, unitPrice: 9500000, totalPrice: 76000000, warehouse: "Kho chính", note: "", status: "Đã nhập kho" },
-    { id: "NK008", code: "NK-0103-001", date: "2026-03-01T08:30:00", product: "Bàn thờ chạm rồng cuốn thủy", supplier: "Xưởng Tiến Phát", qty: 5, unitPrice: 28000000, totalPrice: 140000000, warehouse: "Kho chính", note: "Nhập đầu tháng", status: "Đã nhập kho" },
+    {
+        id: "NK001", code: "NK-0703-001", date: "2026-03-07T08:30:00",
+        product: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món", supplier: "Xưởng Minh Đức",
+        qty: 5, unitPrice: 38000000, totalPrice: 190000000,
+        warehouse: "Kho chính", note: "Nhập theo đơn tháng 3", status: "Đã nhập kho",
+        lines: [
+            { _id: 1, productName: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món", productCode: "SP-PK-001", formType: "NEW", productType: "FINISHED", category: "Phòng Khách", woodType: "Gỗ Hương", color: "Hương", length: "180", width: "90", height: "75", qty: 3, importPrice: 38000000, sellingPrice: 55000000, location: "Kho A – Tầng 1", details: "Bộ 6 món gồm 1 bàn + 4 ghế + 1 ghế chủ" },
+            { _id: 2, productName: "Bộ bàn ghế Nghê Bảo Đỉnh 4 món", productCode: "SP-PK-002", formType: "NEW", productType: "FINISHED", category: "Phòng Khách", woodType: "Gỗ Hương", color: "Hương", length: "150", width: "80", height: "75", qty: 2, importPrice: 28000000, sellingPrice: 42000000, location: "Kho A – Tầng 1", details: "Bộ 4 món" },
+        ],
+    },
+    {
+        id: "NK002", code: "NK-0703-002", date: "2026-03-07T09:00:00",
+        product: "Sofa nguyên khối chữ L", supplier: "Xưởng Tiến Phát",
+        qty: 3, unitPrice: 25000000, totalPrice: 75000000,
+        warehouse: "Kho chính", note: "", status: "Đang xử lý",
+        lines: [
+            { _id: 1, productName: "Sofa nguyên khối chữ L", productCode: "HS-PK-001", formType: "READY", productType: "FINISHED", category: "Phòng Khách", woodType: "Gỗ Gõ Đỏ", color: "Gõ đỏ", length: "260", width: "160", height: "85", qty: 3, importPrice: 25000000, sellingPrice: 38000000, location: "Kho B – Tầng 2", details: "" },
+        ],
+    },
+    {
+        id: "NK003", code: "NK-0603-001", date: "2026-03-06T14:00:00",
+        product: "Sập thờ Mai Điểu chân 20", supplier: "Xưởng Minh Đức",
+        qty: 2, unitPrice: 18000000, totalPrice: 36000000,
+        warehouse: "Kho phụ", note: "Bổ sung tồn kho", status: "Đã nhập kho",
+        lines: [
+            { _id: 1, productName: "Sập thờ Mai Điểu chân 20", productCode: "SP-PT-001", formType: "NEW", productType: "FINISHED", category: "Phòng Thờ", woodType: "Gỗ Gụ", color: "Chay", length: "200", width: "100", height: "60", qty: 2, importPrice: 18000000, sellingPrice: 27000000, location: "Kho Phụ – Tầng 1", details: "Chạm khắc mai điểu, chân 20" },
+        ],
+    },
+    {
+        id: "NK004", code: "NK-0503-001", date: "2026-03-05T10:30:00",
+        product: "Bộ bàn ăn 8 ghế nguyên khối", supplier: "Xưởng An Bình",
+        qty: 4, unitPrice: 32000000, totalPrice: 128000000,
+        warehouse: "Kho chính", note: "", status: "Đã nhập kho",
+        lines: [
+            { _id: 1, productName: "Bộ bàn ăn 8 ghế nguyên khối", productCode: "HS-PA-001", formType: "READY", productType: "FINISHED", category: "Phòng Ăn", woodType: "Gỗ Hương", color: "Hương", length: "220", width: "100", height: "78", qty: 4, importPrice: 32000000, sellingPrice: 48000000, location: "Kho A – Tầng 2", details: "Gồm 1 bàn + 8 ghế" },
+        ],
+    },
+    {
+        id: "NK005", code: "NK-0403-001", date: "2026-03-04T08:00:00",
+        product: "Tủ quần áo 4 cánh chạm hoa lá tây", supplier: "Xưởng Tiến Phát",
+        qty: 6, unitPrice: 22000000, totalPrice: 132000000,
+        warehouse: "Kho chính", note: "Hàng khách đặt – Gia đình anh Minh", status: "Đang xử lý",
+        lines: [
+            { _id: 1, productName: "Tủ quần áo 4 cánh chạm hoa lá tây", productCode: "SP-PN-002", formType: "NEW", productType: "CUSTOM", category: "Phòng Ngủ", woodType: "Gỗ Gụ", color: "Chay", length: "220", width: "60", height: "240", qty: 6, importPrice: 22000000, sellingPrice: 33000000, location: "Kho A – Tầng 3", details: "Hàng đặt theo mẫu của khách – Gia đình anh Minh" },
+        ],
+    },
+    {
+        id: "NK006", code: "NK-0303-001", date: "2026-03-03T15:00:00",
+        product: "Giường ngủ hoa hồng Tân cổ điển", supplier: "Xưởng Minh Đức",
+        qty: 3, unitPrice: 15000000, totalPrice: 45000000,
+        warehouse: "Kho phụ", note: "Hàng khách đặt theo mẫu", status: "Đã nhập kho",
+        lines: [
+            { _id: 1, productName: "Giường ngủ hoa hồng Tân cổ điển", productCode: "HS-PN-001", formType: "READY", productType: "FINISHED", category: "Phòng Ngủ", woodType: "Gỗ Sồi Nga", color: "Óc chó", length: "200", width: "160", height: "50", qty: 3, importPrice: 15000000, sellingPrice: 24000000, location: "Kho Phụ – Tầng 2", details: "" },
+        ],
+    },
+    {
+        id: "NK007", code: "NK-0203-001", date: "2026-03-02T09:00:00",
+        product: "Hoành phi câu đối chạm rồng", supplier: "Xưởng An Bình",
+        qty: 8, unitPrice: 9500000, totalPrice: 76000000,
+        warehouse: "Kho chính", note: "", status: "Đã nhập kho",
+        lines: [
+            { _id: 1, productName: "Hoành phi chạm rồng", productCode: "SP-PT-002", formType: "NEW", productType: "RAW", category: "Phòng Thờ", woodType: "Gỗ Mít", color: "Trần", length: "120", width: "40", height: "5", qty: 4, importPrice: 9500000, sellingPrice: 15000000, location: "Kho A – Tầng 1", details: "" },
+            { _id: 2, productName: "Câu đối chạm rồng (cặp)", productCode: "SP-PT-003", formType: "NEW", productType: "RAW", category: "Phòng Thờ", woodType: "Gỗ Mít", color: "Trần", length: "30", width: "150", height: "5", qty: 4, importPrice: 9500000, sellingPrice: 15000000, location: "Kho A – Tầng 1", details: "" },
+        ],
+    },
+    {
+        id: "NK008", code: "NK-0103-001", date: "2026-03-01T08:30:00",
+        product: "Bàn thờ chạm rồng cuốn thủy", supplier: "Xưởng Tiến Phát",
+        qty: 5, unitPrice: 28000000, totalPrice: 140000000,
+        warehouse: "Kho chính", note: "Nhập đầu tháng", status: "Đã nhập kho",
+        lines: [
+            { _id: 1, productName: "Bàn thờ chạm rồng cuốn thủy", productCode: "SP-PT-004", formType: "NEW", productType: "FINISHED", category: "Phòng Thờ", woodType: "Gỗ Hương", color: "Hương", length: "180", width: "60", height: "100", qty: 5, importPrice: 28000000, sellingPrice: 42000000, location: "Kho B – Tầng 1", details: "Chạm khắc rồng cuốn thủy, sơn vàng" },
+        ],
+    },
 ];
 
 const STATUSES = ["Tất cả", "Đang xử lý", "Đã nhập kho"];
@@ -67,6 +134,7 @@ export default function AccountantImportManage() {
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(15);
     const [showCreate, setShowCreate] = useState(false);
+    const [viewItem, setViewItem] = useState(null);
 
     const filtered = useMemo(() => {
         let r = imports;
@@ -112,6 +180,7 @@ export default function AccountantImportManage() {
             warehouse: "Kho chính",
             note: "",
             status: "Đang xử lý",
+            lines: data.lines,
         };
         setImports(prev => [newItem, ...prev]);
         toast.success("Tạo phiếu nhập thành công!");
@@ -207,7 +276,8 @@ export default function AccountantImportManage() {
                                         {/* Hover actions */}
                                         <td className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                             <div className="flex gap-1.5 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-gray-100">
-                                                <button className="h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[12px] font-bold hover:bg-gray-100 cursor-pointer transition"
+                                                <button onClick={() => setViewItem(item)}
+                                                    className="h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[12px] font-bold hover:bg-gray-100 cursor-pointer transition"
                                                     style={{ color: "var(--text-secondary)" }}><Eye size={14} /> Xem</button>
                                                 {item.status === "Đang xử lý" && (
                                                     <button onClick={() => markDone(item.id)}
@@ -280,6 +350,14 @@ export default function AccountantImportManage() {
                 <CreateImportModal
                     onClose={() => setShowCreate(false)}
                     onSaved={(data) => { handleSaved(data); setShowCreate(false); }}
+                />
+            )}
+
+            {/* Modal xem chi tiết phiếu */}
+            {viewItem && (
+                <ViewImportModal
+                    item={viewItem}
+                    onClose={() => setViewItem(null)}
                 />
             )}
         </>

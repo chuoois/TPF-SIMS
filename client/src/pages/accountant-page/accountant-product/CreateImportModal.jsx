@@ -26,9 +26,19 @@ const CATEGORIES = [
     "Phòng Làm Việc", "Khác"
 ];
 
+const COLORS = [
+    "Trần", "Chay", "Hương", "Óc chó", "Gõ đỏ", "Nguyên mộc"
+];
+
 const FORM_TYPES = [
+    { value: "NEW", label: "Hàng mới lên", code: "HM" },
     { value: "READY", label: "Hàng sẵn có (nhập thêm)", code: "HS" },
+];
+
+const PRODUCT_TYPES = [
+    { value: "RAW", label: "Hàng thô", code: "THO" },
     { value: "CUSTOM", label: "Hàng khách đặt", code: "KD" },
+    { value: "FINISHED", label: "Hàng hoàn thiện", code: "HT" },
 ];
 
 const MOCK_PRODUCTS = [
@@ -51,7 +61,9 @@ const emptyLine = () => ({
     imagePreview: null,
     category: "",
     woodType: "",
-    formType: "READY",
+    color: "",
+    formType: "NEW",
+    productType: "RAW",
     length: "",
     width: "",
     height: "",
@@ -74,7 +86,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
 
     // Section 2
     const [lines, setLines] = useState([emptyLine()]);
-    const [activeDropdownId, setActiveDropdownId] = useState(null);
+    const [activeDropdown, setActiveDropdown] = useState({ id: null, field: null });
 
     const handleFile = (e) => {
         const f = e.target.files[0];
@@ -125,7 +137,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
         for (const l of lines) {
             if (!l.productName.trim()) { toast.error("Vui lòng nhập tên sản phẩm"); return; }
             if (!l.qty || Number(l.qty) <= 0) { toast.error("Số lượng phải lớn hơn 0"); return; }
-            if (!l.unitPrice || Number(l.unitPrice) <= 0) { toast.error("Đơn giá phải lớn hơn 0"); return; }
+            if (!l.importPrice || Number(l.importPrice) <= 0) { toast.error("Giá gốc phải lớn hơn 0"); return; }
         }
 
         toast.success(
@@ -250,205 +262,308 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                         )}
                                     </div>
 
-                                    {/* Row 1: Tên SP + Mã SP */}
-                                    <div className="grid grid-cols-3 gap-4">
-                                        <div className="col-span-1">
-                                            <label className={lbl} style={lblS}>Mã sản phẩm</label>
-                                            <input value={line.productCode}
-                                                onChange={(e) => updateLine(line._id, "productCode", e.target.value)}
-                                                placeholder="Tự sinh/Nhập tay" className={inp} style={inpS} />
-                                        </div>
-                                        <div className="relative col-span-2">
-                                            <label className={lbl} style={lblS}>Tên sản phẩm *</label>
-                                            <input value={line.productName}
-                                                onChange={(e) => {
-                                                    updateLine(line._id, "productName", e.target.value);
-                                                    if (line.formType === "READY") setActiveDropdownId(line._id);
-                                                }}
-                                                onFocus={() => {
-                                                    if (line.formType === "READY" && line.productName.trim()) setActiveDropdownId(line._id);
-                                                }}
-                                                onBlur={() => setTimeout(() => setActiveDropdownId(null), 200)}
-                                                placeholder="VD: Bàn thờ Kim Tiền..." className={inp} style={inpS} />
-                                            
-                                            {/* Thả xuống tìm kiếm SP */}
-                                            {activeDropdownId === line._id && line.formType === "READY" && line.productName.trim() && (
-                                                <div className="absolute z-50 left-0 right-0 top-[100%] mt-1 max-h-56 overflow-y-auto bg-white rounded-xl shadow-lg border" style={{ borderColor: 'var(--grid-border)' }}>
-                                                    {(() => {
-                                                        const q = line.productName.toLowerCase();
-                                                        const results = MOCK_PRODUCTS.filter(p => p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q));
-                                                        if (results.length === 0) return <div className="p-3 text-[12px] text-gray-500 text-center">Không tìm thấy sản phẩm</div>;
-                                                        return results.map(p => (
-                                                            <div key={p.code} className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b last:border-0 transition-colors"
-                                                                style={{ borderColor: 'var(--grid-border)' }}
-                                                                onMouseDown={(e) => {
-                                                                    e.preventDefault();
-                                                                    updateLine(line._id, "productName", p.name);
-                                                                    updateLine(line._id, "productCode", p.code);
-                                                                    updateLine(line._id, "category", p.category);
-                                                                    updateLine(line._id, "woodType", p.woodType);
-                                                                    setActiveDropdownId(null);
-                                                                }}>
-                                                                <p className="text-[13px] font-semibold text-gray-800 truncate">{p.name}</p>
-                                                                <div className="flex items-center gap-2 mt-1">
-                                                                    <span className="text-[10px] text-gray-500 font-medium">{p.code}</span>
-                                                                    <span className="text-[10px] px-1.5 py-0.5 rounded-md font-medium" style={{ backgroundColor: '#F3E8FF', color: '#7C3AED' }}>{p.category}</span>
-                                                                    <span className="text-[10px] px-1.5 py-0.5 rounded-md font-medium" style={{ backgroundColor: '#F0FDF4', color: '#15803D' }}>{p.woodType}</span>
+                                    {line.formType === "READY" ? (
+                                        <>
+                                            <div className="grid grid-cols-4 gap-4 mb-4">
+                                                <div className="col-span-1">
+                                                    <label className={lbl} style={lblS}>Hình thức</label>
+                                                    <div className="relative">
+                                                        <select value={line.formType}
+                                                            onChange={(e) => updateLine(line._id, "formType", e.target.value)}
+                                                            className={inp + " appearance-none pr-7 cursor-pointer"} style={inpS}>
+                                                            {FORM_TYPES.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
+                                                        </select>
+                                                        <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--text-placeholder)" }} />
+                                                    </div>
+                                                </div>
+                                                <div className="relative col-span-3">
+                                                    <label className={lbl} style={lblS}>Tìm kiếm sản phẩm *</label>
+                                                    <input value={line.productName}
+                                                        onChange={(e) => {
+                                                            updateLine(line._id, "productName", e.target.value);
+                                                            setActiveDropdown({ id: line._id, field: "productName" });
+                                                        }}
+                                                        onFocus={() => { if (line.productName.trim()) setActiveDropdown({ id: line._id, field: "productName" }); }}
+                                                        onBlur={() => setTimeout(() => setActiveDropdown({ id: null, field: null }), 200)}
+                                                        placeholder="Nhập tên hoặc mã sản phẩm để tìm kiếm..." className={inp} style={inpS} />
+                                                    
+                                                    {/* Thả xuống tìm kiếm SP */}
+                                                    {activeDropdown.id === line._id && activeDropdown.field === "productName" && line.productName.trim() && (
+                                                        <div className="absolute z-50 left-0 right-0 top-[100%] mt-1 max-h-56 overflow-y-auto bg-white rounded-xl shadow-lg border" style={{ borderColor: 'var(--grid-border)' }}>
+                                                            {(() => {
+                                                                const q = line.productName.toLowerCase();
+                                                                const results = MOCK_PRODUCTS.filter(p => p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q));
+                                                                if (results.length === 0) return <div className="p-3 text-[12px] text-gray-500 text-center">Không tìm thấy sản phẩm</div>;
+                                                                return results.map(p => (
+                                                                    <div key={p.code} className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b last:border-0 transition-colors"
+                                                                        style={{ borderColor: 'var(--grid-border)' }}
+                                                                        onMouseDown={(e) => {
+                                                                            e.preventDefault();
+                                                                            updateLine(line._id, "productName", p.name);
+                                                                            updateLine(line._id, "productCode", p.code);
+                                                                            updateLine(line._id, "category", p.category);
+                                                                            updateLine(line._id, "woodType", p.woodType);
+                                                                            updateLine(line._id, "importPrice", p.importPrice || "");
+                                                                            updateLine(line._id, "sellingPrice", p.sellingPrice || "");
+                                                                            setActiveDropdown({ id: null, field: null });
+                                                                        }}>
+                                                                        <p className="text-[13px] font-semibold text-gray-800 truncate">{p.name}</p>
+                                                                        <div className="flex items-center gap-2 mt-1">
+                                                                            <span className="text-[10px] text-gray-500 font-medium">{p.code}</span>
+                                                                            <span className="text-[10px] px-1.5 py-0.5 rounded-md font-medium" style={{ backgroundColor: '#F3E8FF', color: '#7C3AED' }}>{p.category}</span>
+                                                                            <span className="text-[10px] px-1.5 py-0.5 rounded-md font-medium" style={{ backgroundColor: '#F0FDF4', color: '#15803D' }}>{p.woodType}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                ))
+                                                            })()}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-4 gap-4 border-t pt-4" style={{ borderColor: "var(--grid-border)" }}>
+                                                <div>
+                                                    <label className={lbl} style={lblS}>Số lượng nhập *</label>
+                                                    <input type="number" min="1" value={line.qty}
+                                                        onChange={(e) => updateLine(line._id, "qty", e.target.value)}
+                                                        placeholder="0" className={inp} style={inpS} />
+                                                </div>
+                                                <div>
+                                                    <label className={lbl} style={lblS}>Giá gốc (₫) *</label>
+                                                    <input type="number" min="0" value={line.importPrice}
+                                                        onChange={(e) => updateLine(line._id, "importPrice", e.target.value)}
+                                                        placeholder="0" className={inp} style={inpS} />
+                                                </div>
+                                                <div>
+                                                    <label className={lbl} style={lblS}>Giá bán (₫)</label>
+                                                    <input type="number" min="0" value={line.sellingPrice}
+                                                        onChange={(e) => updateLine(line._id, "sellingPrice", e.target.value)}
+                                                        placeholder="0" className={inp} style={inpS} />
+                                                </div>
+                                                <div>
+                                                    <label className={lbl} style={lblS}><div className="flex items-center gap-1"><MapPin size={11} />Vị trí cất hàng</div></label>
+                                                    <input type="text" value={line.location}
+                                                        onChange={(e) => updateLine(line._id, "location", e.target.value)}
+                                                        placeholder="VD: Kho A..." className={inp} style={inpS} />
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            {/* Row 1: Tên SP + Mã SP */}
+                                            <div className="grid grid-cols-3 gap-4 mb-4">
+                                                <div className="col-span-1">
+                                                    <label className={lbl} style={lblS}>Mã sản phẩm</label>
+                                                    <input value={line.productCode}
+                                                        onChange={(e) => updateLine(line._id, "productCode", e.target.value)}
+                                                        placeholder="Tự sinh/Nhập tay" className={inp} style={inpS} />
+                                                </div>
+                                                <div className="relative col-span-2">
+                                                    <label className={lbl} style={lblS}>Tên sản phẩm *</label>
+                                                    <input value={line.productName}
+                                                        onChange={(e) => updateLine(line._id, "productName", e.target.value)}
+                                                        placeholder="VD: Bàn thờ Kim Tiền..." className={inp} style={inpS} />
+                                                </div>
+                                            </div>
+
+                                            {/* Row 2: Hình thức + Loại SP + Danh mục + Loại gỗ + Màu sắc */}
+                                            <div className="grid grid-cols-5 gap-4 mb-4">
+                                                <div>
+                                                    <label className={lbl} style={lblS}>Hình thức</label>
+                                                    <div className="relative">
+                                                        <select value={line.formType}
+                                                            onChange={(e) => updateLine(line._id, "formType", e.target.value)}
+                                                            className={inp + " appearance-none pr-7 cursor-pointer"} style={inpS}>
+                                                            {FORM_TYPES.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
+                                                        </select>
+                                                        <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                                                            style={{ color: "var(--text-placeholder)" }} />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className={lbl} style={lblS}>Loại sản phẩm</label>
+                                                    <div className="relative">
+                                                        <select value={line.productType}
+                                                            onChange={(e) => updateLine(line._id, "productType", e.target.value)}
+                                                            className={inp + " appearance-none pr-7 cursor-pointer"} style={inpS}>
+                                                            {PRODUCT_TYPES.map((pt) => <option key={pt.value} value={pt.value}>{pt.label}</option>)}
+                                                        </select>
+                                                        <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                                                            style={{ color: "var(--text-placeholder)" }} />
+                                                    </div>
+                                                </div>
+                                                <div className="relative">
+                                                    <label className={lbl} style={lblS}>Danh mục</label>
+                                                    <input value={line.category}
+                                                        onChange={(e) => {
+                                                            updateLine(line._id, "category", e.target.value);
+                                                            setActiveDropdown({ id: line._id, field: "category" });
+                                                        }}
+                                                        onFocus={() => setActiveDropdown({ id: line._id, field: "category" })}
+                                                        onBlur={() => setTimeout(() => setActiveDropdown({ id: null, field: null }), 200)}
+                                                        placeholder="Tìm hoặc thêm..." className={inp} style={inpS} />
+                                                    {activeDropdown.id === line._id && activeDropdown.field === "category" && (
+                                                        <div className="absolute z-50 left-0 right-0 top-[100%] mt-1 max-h-40 overflow-y-auto bg-white rounded-xl shadow-lg border" style={{ borderColor: 'var(--grid-border)' }}>
+                                                            {CATEGORIES.filter(c => c.toLowerCase().includes(line.category.toLowerCase())).map(c => (
+                                                                <div key={c} className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b last:border-0 text-[13px]"
+                                                                    onMouseDown={(e) => { e.preventDefault(); updateLine(line._id, "category", c); setActiveDropdown({ id: null, field: null }); }}>
+                                                                    {c}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="relative">
+                                                    <label className={lbl} style={lblS}>Loại gỗ</label>
+                                                    <input value={line.woodType}
+                                                        onChange={(e) => {
+                                                            updateLine(line._id, "woodType", e.target.value);
+                                                            setActiveDropdown({ id: line._id, field: "woodType" });
+                                                        }}
+                                                        onFocus={() => setActiveDropdown({ id: line._id, field: "woodType" })}
+                                                        onBlur={() => setTimeout(() => setActiveDropdown({ id: null, field: null }), 200)}
+                                                        placeholder="Tìm hoặc thêm..." className={inp} style={inpS} />
+                                                    {activeDropdown.id === line._id && activeDropdown.field === "woodType" && (
+                                                        <div className="absolute z-50 left-0 right-0 top-[100%] mt-1 max-h-40 overflow-y-auto bg-white rounded-xl shadow-lg border" style={{ borderColor: 'var(--grid-border)' }}>
+                                                            {WOOD_TYPES.filter(w => w.toLowerCase().includes(line.woodType.toLowerCase())).map(w => (
+                                                                <div key={w} className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b last:border-0 text-[13px]"
+                                                                    onMouseDown={(e) => { e.preventDefault(); updateLine(line._id, "woodType", w); setActiveDropdown({ id: null, field: null }); }}>
+                                                                    {w}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="relative">
+                                                    <label className={lbl} style={lblS}>Màu sắc</label>
+                                                    <input value={line.color}
+                                                        onChange={(e) => {
+                                                            updateLine(line._id, "color", e.target.value);
+                                                            setActiveDropdown({ id: line._id, field: "color" });
+                                                        }}
+                                                        onFocus={() => setActiveDropdown({ id: line._id, field: "color" })}
+                                                        onBlur={() => setTimeout(() => setActiveDropdown({ id: null, field: null }), 200)}
+                                                        placeholder="Tìm hoặc thêm..." className={inp} style={inpS} />
+                                                    {activeDropdown.id === line._id && activeDropdown.field === "color" && (
+                                                        <div className="absolute z-50 left-0 right-0 top-[100%] mt-1 max-h-40 overflow-y-auto bg-white rounded-xl shadow-lg border" style={{ borderColor: 'var(--grid-border)' }}>
+                                                            {COLORS.filter(c => c.toLowerCase().includes(line.color.toLowerCase())).map(c => (
+                                                                <div key={c} className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b last:border-0 text-[13px]"
+                                                                    onMouseDown={(e) => { e.preventDefault(); updateLine(line._id, "color", c); setActiveDropdown({ id: null, field: null }); }}>
+                                                                    {c}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Row 3: Kích thước */}
+                                            <div className="grid grid-cols-3 gap-4 mb-4">
+                                                <div>
+                                                    <label className={lbl} style={lblS}>Dài (cm)</label>
+                                                    <input type="number" min="0" value={line.length}
+                                                        onChange={(e) => updateLine(line._id, "length", e.target.value)}
+                                                        placeholder="0" className={inp} style={inpS} />
+                                                </div>
+                                                <div>
+                                                    <label className={lbl} style={lblS}>Rộng (cm)</label>
+                                                    <input type="number" min="0" value={line.width}
+                                                        onChange={(e) => updateLine(line._id, "width", e.target.value)}
+                                                        placeholder="0" className={inp} style={inpS} />
+                                                </div>
+                                                <div>
+                                                    <label className={lbl} style={lblS}>Cao (cm)</label>
+                                                    <input type="number" min="0" value={line.height}
+                                                        onChange={(e) => updateLine(line._id, "height", e.target.value)}
+                                                        placeholder="0" className={inp} style={inpS} />
+                                                </div>
+                                            </div>
+
+                                            {/* Row 4: Số lượng, Giá, Tồn */}
+                                            <div className="grid grid-cols-5 gap-4 mb-4">
+                                                <div>
+                                                    <label className={lbl} style={lblS}>Số lượng *</label>
+                                                    <input type="number" min="1" value={line.qty}
+                                                        onChange={(e) => updateLine(line._id, "qty", e.target.value)}
+                                                        placeholder="0" className={inp} style={inpS} />
+                                                </div>
+                                                <div>
+                                                    <label className={lbl} style={lblS}>Giá gốc (₫) *</label>
+                                                    <input type="number" min="0" value={line.importPrice}
+                                                        onChange={(e) => updateLine(line._id, "importPrice", e.target.value)}
+                                                        placeholder="0" className={inp} style={inpS} />
+                                                </div>
+                                                <div>
+                                                    <label className={lbl} style={lblS}>Giá bán (₫) *</label>
+                                                    <input type="number" min="0" value={line.sellingPrice}
+                                                        onChange={(e) => updateLine(line._id, "sellingPrice", e.target.value)}
+                                                        placeholder="0" className={inp} style={inpS} />
+                                                </div>
+                                                <div>
+                                                    <label className={lbl} style={lblS}><div className="flex items-center gap-1"><BarChart2 size={11} />Tồn thấp nhất</div></label>
+                                                    <input type="number" min="0" value={line.minStock}
+                                                        onChange={(e) => updateLine(line._id, "minStock", e.target.value)}
+                                                        placeholder="0" className={inp} style={inpS} />
+                                                </div>
+                                                <div>
+                                                    <label className={lbl} style={lblS}><div className="flex items-center gap-1"><BarChart2 size={11} />Tồn cao nhất</div></label>
+                                                    <input type="number" min="0" value={line.maxStock}
+                                                        onChange={(e) => updateLine(line._id, "maxStock", e.target.value)}
+                                                        placeholder="0" className={inp} style={inpS} />
+                                                </div>
+                                            </div>
+
+                                            {/* Row 5: Ảnh + Vị trí + Chi tiết */}
+                                            <div className="grid grid-cols-12 gap-4">
+                                                {/* Ảnh */}
+                                                <div className="col-span-3">
+                                                    <label className={lbl} style={lblS}><div className="flex items-center gap-1"><Image size={11} />Hình ảnh</div></label>
+                                                    <div className="relative h-24">
+                                                        {line.imagePreview ? (
+                                                            <div className="relative w-full h-full rounded-lg border overflow-hidden group" style={{ borderColor: 'var(--grid-border)' }}>
+                                                                <img src={line.imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center backdrop-blur-[2px]">
+                                                                    <button type="button" onClick={() => removeLineFile(line._id)}
+                                                                        className="bg-white text-red-500 rounded-full p-1.5 shadow-sm hover:scale-110 transition-transform">
+                                                                        <Trash2 size={13} />
+                                                                    </button>
                                                                 </div>
                                                             </div>
-                                                        ))
-                                                    })()}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Row 2: Danh mục + Loại gỗ + Hình thức */}
-                                    <div className="grid grid-cols-3 gap-4">
-                                        <div>
-                                            <label className={lbl} style={lblS}>Danh mục</label>
-                                            <div className="relative">
-                                                <select value={line.category}
-                                                    onChange={(e) => updateLine(line._id, "category", e.target.value)}
-                                                    className={inp + " appearance-none pr-7 cursor-pointer"} style={inpS}>
-                                                    <option value="">-- Chọn danh mục --</option>
-                                                    {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                                                </select>
-                                                <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                                                    style={{ color: "var(--text-placeholder)" }} />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className={lbl} style={lblS}>Loại gỗ</label>
-                                            <div className="relative">
-                                                <select value={line.woodType}
-                                                    onChange={(e) => updateLine(line._id, "woodType", e.target.value)}
-                                                    className={inp + " appearance-none pr-7 cursor-pointer"} style={inpS}>
-                                                    <option value="">-- Chọn loại gỗ --</option>
-                                                    {WOOD_TYPES.map((w) => <option key={w} value={w}>{w}</option>)}
-                                                </select>
-                                                <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                                                    style={{ color: "var(--text-placeholder)" }} />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className={lbl} style={lblS}>Hình thức</label>
-                                            <div className="relative">
-                                                <select value={line.formType}
-                                                    onChange={(e) => updateLine(line._id, "formType", e.target.value)}
-                                                    className={inp + " appearance-none pr-7 cursor-pointer"} style={inpS}>
-                                                    {FORM_TYPES.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
-                                                </select>
-                                                <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                                                    style={{ color: "var(--text-placeholder)" }} />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Row 3: Kích thước */}
-                                    <div className="grid grid-cols-3 gap-4">
-                                        <div>
-                                            <label className={lbl} style={lblS}>Dài (cm)</label>
-                                            <input type="number" min="0" value={line.length}
-                                                onChange={(e) => updateLine(line._id, "length", e.target.value)}
-                                                placeholder="0" className={inp} style={inpS} />
-                                        </div>
-                                        <div>
-                                            <label className={lbl} style={lblS}>Rộng (cm)</label>
-                                            <input type="number" min="0" value={line.width}
-                                                onChange={(e) => updateLine(line._id, "width", e.target.value)}
-                                                placeholder="0" className={inp} style={inpS} />
-                                        </div>
-                                        <div>
-                                            <label className={lbl} style={lblS}>Cao (cm)</label>
-                                            <input type="number" min="0" value={line.height}
-                                                onChange={(e) => updateLine(line._id, "height", e.target.value)}
-                                                placeholder="0" className={inp} style={inpS} />
-                                        </div>
-                                    </div>
-                                    {/* Row 4: Số lượng, Giá, Tồn */}
-                                    <div className="grid grid-cols-5 gap-4">
-                                        <div>
-                                            <label className={lbl} style={lblS}>Số lượng *</label>
-                                            <input type="number" min="1" value={line.qty}
-                                                onChange={(e) => updateLine(line._id, "qty", e.target.value)}
-                                                placeholder="0" className={inp} style={inpS} />
-                                        </div>
-                                        <div>
-                                            <label className={lbl} style={lblS}>Giá gốc (₫) *</label>
-                                            <input type="number" min="0" value={line.importPrice}
-                                                onChange={(e) => updateLine(line._id, "importPrice", e.target.value)}
-                                                placeholder="0" className={inp} style={inpS} />
-                                        </div>
-                                        <div>
-                                            <label className={lbl} style={lblS}>Giá bán (₫) *</label>
-                                            <input type="number" min="0" value={line.sellingPrice}
-                                                onChange={(e) => updateLine(line._id, "sellingPrice", e.target.value)}
-                                                placeholder="0" className={inp} style={inpS} />
-                                        </div>
-                                        <div>
-                                            <label className={lbl} style={lblS}><div className="flex items-center gap-1"><BarChart2 size={11} />Tồn thấp nhất</div></label>
-                                            <input type="number" min="0" value={line.minStock}
-                                                onChange={(e) => updateLine(line._id, "minStock", e.target.value)}
-                                                placeholder="0" className={inp} style={inpS} />
-                                        </div>
-                                        <div>
-                                            <label className={lbl} style={lblS}><div className="flex items-center gap-1"><BarChart2 size={11} />Tồn cao nhất</div></label>
-                                            <input type="number" min="0" value={line.maxStock}
-                                                onChange={(e) => updateLine(line._id, "maxStock", e.target.value)}
-                                                placeholder="0" className={inp} style={inpS} />
-                                        </div>
-                                    </div>
-
-                                    {/* Row 5: Ảnh + Vị trí + Chi tiết */}
-                                    <div className="grid grid-cols-12 gap-4">
-                                        {/* Ảnh */}
-                                        <div className="col-span-3">
-                                            <label className={lbl} style={lblS}><div className="flex items-center gap-1"><Image size={11} />Hình ảnh</div></label>
-                                            <div className="relative h-24">
-                                                {line.imagePreview ? (
-                                                    <div className="relative w-full h-full rounded-lg border overflow-hidden group" style={{ borderColor: 'var(--grid-border)' }}>
-                                                        <img src={line.imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center backdrop-blur-[2px]">
-                                                            <button type="button" onClick={() => removeLineFile(line._id)}
-                                                                className="bg-white text-red-500 rounded-full p-1.5 shadow-sm hover:scale-110 transition-transform">
-                                                                <Trash2 size={13} />
-                                                            </button>
-                                                        </div>
+                                                        ) : (
+                                                            <label className="flex flex-col items-center justify-center w-full h-full rounded-lg border border-dashed cursor-pointer group transition-all"
+                                                                style={{ borderColor: "var(--brand-primary)", backgroundColor: "rgba(79, 70, 229, 0.03)" }}>
+                                                                <div className="bg-white p-2 rounded-full shadow-sm mt-2 mb-2 group-hover:scale-110 transition-transform">
+                                                                    <FileImage size={16} style={{ color: "var(--brand-primary)" }} />
+                                                                </div>
+                                                                <span className="text-[11px] font-medium px-1" style={{ color: "var(--brand-primary)" }}>Thêm ảnh</span>
+                                                                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleLineFile(line._id, e)} />
+                                                            </label>
+                                                        )}
                                                     </div>
-                                                ) : (
-                                                    <label className="flex flex-col items-center justify-center w-full h-full rounded-lg border border-dashed cursor-pointer group transition-all"
-                                                        style={{ borderColor: "var(--brand-primary)", backgroundColor: "rgba(79, 70, 229, 0.03)" }}>
-                                                        <div className="bg-white p-2 rounded-full shadow-sm mt-2 mb-2 group-hover:scale-110 transition-transform">
-                                                            <FileImage size={16} style={{ color: "var(--brand-primary)" }} />
-                                                        </div>
-                                                        <span className="text-[11px] font-medium px-1" style={{ color: "var(--brand-primary)" }}>Thêm ảnh</span>
-                                                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleLineFile(line._id, e)} />
-                                                    </label>
-                                                )}
-                                            </div>
-                                        </div>
+                                                </div>
 
-                                        {/* Vị trí cất và Chi tiết */}
-                                        <div className="col-span-9 flex flex-col gap-4">
-                                            <div>
-                                                <label className={lbl} style={lblS}><div className="flex items-center gap-1"><MapPin size={11} />Vị trí cất hàng</div></label>
-                                                <input type="text" value={line.location}
-                                                    onChange={(e) => updateLine(line._id, "location", e.target.value)}
-                                                    placeholder="VD: Kho A, Tầng 2, Dãy C..."
-                                                    className={inp}
-                                                    style={inpS} />
+                                                {/* Vị trí cất và Chi tiết */}
+                                                <div className="col-span-9 flex flex-col gap-4">
+                                                    <div>
+                                                        <label className={lbl} style={lblS}><div className="flex items-center gap-1"><MapPin size={11} />Vị trí cất hàng</div></label>
+                                                        <input type="text" value={line.location}
+                                                            onChange={(e) => updateLine(line._id, "location", e.target.value)}
+                                                            placeholder="VD: Kho A, Tầng 2, Dãy C..."
+                                                            className={inp}
+                                                            style={inpS} />
+                                                    </div>
+                                                    <div className="flex-1 flex flex-col">
+                                                        <label className={lbl} style={lblS}><div className="flex items-center gap-1"><AlignLeft size={11} />Chi tiết sản phẩm</div></label>
+                                                        <textarea value={line.details}
+                                                            onChange={(e) => updateLine(line._id, "details", e.target.value)}
+                                                            placeholder="Ghi chú thêm thông tin chi tiết..."
+                                                            className={`w-full p-2.5 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-purple-300 transition resize-none flex-1`}
+                                                            style={{ ...inpS, lineHeight: 1.4, minHeight: '3.5rem' }} />
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="flex-1 flex flex-col">
-                                                <label className={lbl} style={lblS}><div className="flex items-center gap-1"><AlignLeft size={11} />Chi tiết sản phẩm</div></label>
-                                                <textarea value={line.details}
-                                                    onChange={(e) => updateLine(line._id, "details", e.target.value)}
-                                                    placeholder="Ghi chú thêm thông tin chi tiết..."
-                                                    className={`w-full p-2.5 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-purple-300 transition resize-none flex-1`}
-                                                    style={{ ...inpS, lineHeight: 1.4, minHeight: '3.5rem' }} />
-                                            </div>
-                                        </div>
-                                    </div>
+                                        </>
+                                    )}
 
                                     {/* Line total */}
                                     <div className="flex items-center justify-end">
