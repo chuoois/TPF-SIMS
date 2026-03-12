@@ -25,12 +25,9 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
 
-    children: [],
-
-
-
-
+    children: [ownerRoutes, accountantRoutes, workerRoutes],
   },
+  salesRoutes,
   { path: "/404", element: <NotFoundPage /> },
   { path: "/403", element: <NoPermissionPage /> },
   { path: "*", element: <Navigate to="/404" replace /> },
