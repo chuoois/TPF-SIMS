@@ -711,7 +711,7 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 40, fontSize: 14, textAlign: "center" }}>
         <div style={{ width: "40%" }}>
           <p style={{ color: "#d32f2f", marginBottom: 30 }}>Khách hàng ký nhận</p>
-          <p style={{ fontFamily: "'Caveat', 'Dancing Script', cursive, serif", fontSize: 18, color: "blue" }}>{o.customer.name}</p>
+
         </div>
         <div style={{ width: "40%" }}>
           <p style={{ color: "#d32f2f", marginBottom: 4, fontStyle: "italic" }}>{printDate}</p>

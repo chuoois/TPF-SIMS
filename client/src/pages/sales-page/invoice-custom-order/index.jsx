@@ -1213,8 +1213,7 @@ export default function CustomOrderInvoicePage() {
                   style={{ color: "var(--status-pending)" }}
                 >
                   💡 <strong>Yêu cầu đặt hàng:</strong> Sales chỉ ghi nhận thông
-                  tin và chuyển yêu cầu. Việc tạo hóa đơn và thu tiền cọc do Chủ
-                  cửa hàng thực hiện.
+                  tin và chuyển yêu cầu.
                 </p>
               </div>
             </div>
