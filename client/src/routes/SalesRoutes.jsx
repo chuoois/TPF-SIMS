@@ -3,6 +3,7 @@ import SalesCustomerManage from "@/pages/sales-page/customer-manage";
 import InStockInvoicePage from "@/pages/sales-page/invoice-instock";
 import CustomOrderInvoicePage from "@/pages/sales-page/invoice-custom-order";
 import OrderManagePage from "@/pages/sales-page/order-manage";
+import SalesCustomOrderManage from "@/pages/sales-page/custom-order-manage";
 import SalesOrderDetail from "@/pages/sales-page/order-manage/detail";
 import SalesDashboardHome from "@/pages/sales-page/home";
 
@@ -33,6 +34,10 @@ export const salesRoutes = {
     {
       path: "dashboard/invoice-custom-order",
       element: <CustomOrderInvoicePage />,
+    },
+    {
+      path: "dashboard/custom-orders",
+      element: <SalesCustomOrderManage />,
     },
     {
       path: "dashboard/orders",

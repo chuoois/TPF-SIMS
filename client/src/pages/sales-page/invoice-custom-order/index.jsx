@@ -9,8 +9,7 @@
  * Created Date: 25/02/2026
  */
 
-import { useState, useCallback, useRef, useMemo , useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useCallback, useRef, useMemo } from "react";
 import {
   X,
   Plus,
@@ -99,9 +98,6 @@ const createEmptyTab = () => ({
   id: ++tabIdCounter,
   cartItems: [],
   orderNote: "",
-  discount: 0,
-  depositAmount: 0,
-  vatRate: 0,
   selectedCustomer: null,
   customerName: "",
   customerPhone: "",
@@ -109,7 +105,6 @@ const createEmptyTab = () => ({
     address: "",
     district: "",
     ward: "",
-    expectedDate: "",
     shippingNote: "",
   },
 });
@@ -124,51 +119,15 @@ const inputStyle = {
 
 // ===================== COMPONENT =====================
 export default function CustomOrderInvoicePage() {
-  const printRef = useRef(null);
-  const [printingOrder, setPrintingOrder] = useState(null);
-
-  useEffect(() => {
-    if (printingOrder && printRef.current) {
-        const content = printRef.current;
-        const printWindow = window.open("", "_blank", "width=900,height=700");
-        if (printWindow) {
-            printWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                <title>In hóa đơn</title>
-                <style>
-                    @page { size: A4; margin: 15mm; }
-                    body { margin: 0; padding: 0; }
-                    .page-break { page-break-after: always; }
-                    .page-break:last-child { page-break-after: auto; }
-                </style>
-                </head>
-                <body>${content.innerHTML}</body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.focus();
-            setTimeout(() => {
-                printWindow.print();
-                setPrintingOrder(null);
-            }, 500); 
-        } else {
-            setPrintingOrder(null);
-        }
-    }
-  }, [printingOrder]);
-
-  const navigate = useNavigate();
-
   const [tabs, setTabs] = useState([createEmptyTab()]);
   const [activeTabId, setActiveTabId] = useState(tabs[0].id);
+  const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0];
   const [showAddForm, setShowAddForm] = useState(false);
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const [customerSearch, setCustomerSearch] = useState("");
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const customerSearchRef = useRef(null);
-  
+
   const customerResults = useMemo(() => {
     if (!customerSearch.trim()) return [];
     const q = customerSearch.toLowerCase();
@@ -177,22 +136,20 @@ export default function CustomOrderInvoicePage() {
     );
   }, [customerSearch]);
 
+  const [showWoodDropdown, setShowWoodDropdown] = useState(false);
+  const [showColorDropdown, setShowColorDropdown] = useState(false);
+
   const [newItem, setNewItem] = useState({
     productName: "",
     woodType: "",
-    dimLength: "",
-    dimWidth: "",
-    dimHeight: "",
+    size: "",
     color: "",
     quantity: 1,
-    unitPrice: 0,
     note: "",
     images: [],
   });
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
-
-  const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0];
 
   const updateActiveTab = useCallback(
     (updates) => {
@@ -238,17 +195,14 @@ export default function CustomOrderInvoicePage() {
   // Cart
   const addCustomItem = () => {
     if (!newItem.productName.trim()) return;
-    const { dimLength, dimWidth, dimHeight, ...rest } = newItem;
-    const size = [dimLength, dimWidth, dimHeight].filter(Boolean).join("×");
+    const { ...rest } = newItem;
     updateActiveTab({
       cartItems: [
         ...activeTab.cartItems,
         {
           id: `custom-${++itemIdCounter}`,
           ...rest,
-          size,
           quantity: newItem.quantity || 1,
-          unitPrice: newItem.unitPrice || 0,
           images: newItem.images || [],
         },
       ],
@@ -256,12 +210,9 @@ export default function CustomOrderInvoicePage() {
     setNewItem({
       productName: "",
       woodType: "",
-      dimLength: "",
-      dimWidth: "",
-      dimHeight: "",
+      size: "",
       color: "",
       quantity: 1,
-      unitPrice: 0,
       note: "",
       images: [],
     });
@@ -293,20 +244,9 @@ export default function CustomOrderInvoicePage() {
     });
   };
 
-  // Totals
-  const subtotal = activeTab.cartItems.reduce(
-    (sum, i) => sum + i.unitPrice * i.quantity,
-    0,
-  );
-  const vatAmount = Math.round(subtotal * (activeTab.vatRate / 100));
-  const totalBeforeDeposit = subtotal + vatAmount - activeTab.discount;
-  const totalPayable = Math.max(
-    0,
-    totalBeforeDeposit - activeTab.depositAmount,
-  );
+  // Checkout
   const itemCount = activeTab.cartItems.reduce((sum, i) => sum + i.quantity, 0);
 
-  // Checkout
   const handleCreateOrder = () => {
     if (activeTab.cartItems.length === 0) return;
     if (!activeTab.customerName.trim()) {
@@ -317,14 +257,21 @@ export default function CustomOrderInvoicePage() {
       showToast("error", "Vui lòng nhập số điện thoại");
       return;
     }
-    showToast("success", `Tạo đơn đặt hàng ${generateOrderCode()} thành công!`);
-    updateActiveTab(createEmptyTab());
+    showToast(
+      "success",
+      `Tạo yêu cầu đặt hàng ${generateOrderCode()} thành công!`,
+    );
+    if (tabs.length <= 1) {
+      updateActiveTab(createEmptyTab());
+    } else {
+      closeTab(activeTabId, { stopPropagation: () => {} });
+    }
   };
 
   // ===================== RENDER =====================
   return (
     <>
-      <PageHelmet title="Đặt hàng riêng - TPF-SIMS" />
+      <PageHelmet title="Yêu cầu đặt riêng - TPF-SIMS" />
 
       {/* Toast */}
       {toast && (
@@ -388,7 +335,7 @@ export default function CustomOrderInvoicePage() {
                 }}
               >
                 <Receipt size={13} />
-                <span>ĐH {idx + 1}</span>
+                <span>YC {idx + 1}</span>
                 {tab.cartItems.length > 0 && (
                   <span
                     className="text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none"
@@ -419,44 +366,21 @@ export default function CustomOrderInvoicePage() {
               onClick={addTab}
               className="w-7 h-7 rounded-lg flex items-center justify-center transition shrink-0 cursor-pointer hover:bg-gray-50"
               style={{ color: "var(--text-placeholder)" }}
-              title="Thêm đơn hàng mới"
+              title="Thêm yêu cầu mới"
             >
               <Plus size={14} />
             </button>
 
-            {/* Order type switch */}
-            <div
-              className="ml-auto flex rounded-lg overflow-hidden text-[12px] font-medium shrink-0"
-              style={{ border: "1px solid var(--grid-border)" }}
-            >
-              <button
-                onClick={() => navigate("/sales/dashboard/invoice-instock")}
-                className="flex items-center gap-1 px-3 py-1.5 cursor-pointer transition hover:bg-gray-50"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                <PackageCheck size={12} /> Có sẵn
-              </button>
-              <button
-                className="flex items-center gap-1 px-3 py-1.5 cursor-pointer transition"
-                style={{
-                  backgroundColor: "var(--brand-primary)",
-                  color: "#fff",
-                }}
-              >
-                <Hammer size={12} /> Đặt riêng
-              </button>
-            </div>
-
-            {/* Add product */}
+            {/* Add product pushed to right */}
             <button
               onClick={() => setShowAddForm(true)}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition shrink-0 ml-2 cursor-pointer"
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition shrink-0 ml-auto cursor-pointer"
               style={{
                 backgroundColor: "var(--status-focus)",
                 color: "var(--brand-primary)",
               }}
             >
-              <Plus size={13} /> Thêm SP
+              <Plus size={13} /> Yêu cầu đặt riêng
             </button>
           </div>
 
@@ -478,7 +402,7 @@ export default function CustomOrderInvoicePage() {
                     size={14}
                     style={{ color: "var(--brand-primary)" }}
                   />
-                  Thêm sản phẩm đặt riêng
+                  Thêm yêu cầu đặt riêng
                 </h4>
                 <button
                   onClick={() => setShowAddForm(false)}
@@ -505,117 +429,160 @@ export default function CustomOrderInvoicePage() {
                     className="absolute left-3 top-1/2 -translate-y-1/2"
                     style={{ color: "var(--text-placeholder)" }}
                   />
-                  <select
+                  <input
+                    type="text"
+                    placeholder="Loại gỗ"
                     value={newItem.woodType}
-                    onChange={(e) => updateNewItem("woodType", e.target.value)}
-                    className={`${inputBase} pl-9 appearance-none bg-white`}
+                    onChange={(e) => {
+                      updateNewItem("woodType", e.target.value);
+                      setShowWoodDropdown(true);
+                    }}
+                    onFocus={() => setShowWoodDropdown(true)}
+                    onBlur={() =>
+                      setTimeout(() => setShowWoodDropdown(false), 200)
+                    }
+                    className={`${inputBase} pl-9`}
                     style={inputStyle}
-                  >
-                    <option value="">Loại gỗ</option>
-                    {WOOD_TYPES.map((w) => (
-                      <option key={w} value={w}>
-                        {w}
-                      </option>
-                    ))}
-                  </select>
+                  />
+                  {showWoodDropdown && (
+                    <div
+                      className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-xl shadow-lg z-50 overflow-hidden"
+                      style={{ borderColor: "var(--grid-border)" }}
+                    >
+                      <div className="max-h-48 overflow-y-auto">
+                        {WOOD_TYPES.filter((w) =>
+                          w
+                            .toLowerCase()
+                            .includes(newItem.woodType.toLowerCase()),
+                        ).map((w) => (
+                          <div
+                            key={w}
+                            className="px-3 py-2 text-[13px] cursor-pointer transition hover:bg-gray-50 font-medium"
+                            style={{ color: "var(--text-main)" }}
+                            onMouseDown={(e) => {
+                              e.preventDefault(); // Ngăn focus bị mất khi chọn
+                              updateNewItem("woodType", w);
+                              setShowWoodDropdown(false);
+                            }}
+                          >
+                            {w}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
+
                 <div className="relative">
                   <Palette
                     size={13}
                     className="absolute left-3 top-1/2 -translate-y-1/2"
                     style={{ color: "var(--text-placeholder)" }}
                   />
-                  <select
+                  <input
+                    type="text"
+                    placeholder="Màu sắc"
                     value={newItem.color}
-                    onChange={(e) => updateNewItem("color", e.target.value)}
-                    className={`${inputBase} pl-9 appearance-none bg-white`}
+                    onChange={(e) => {
+                      updateNewItem("color", e.target.value);
+                      setShowColorDropdown(true);
+                    }}
+                    onFocus={() => setShowColorDropdown(true)}
+                    onBlur={() =>
+                      setTimeout(() => setShowColorDropdown(false), 200)
+                    }
+                    className={`${inputBase} pl-9`}
                     style={inputStyle}
-                  >
-                    <option value="">Màu sắc</option>
-                    {COLORS.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
+                  />
+                  {showColorDropdown && (
+                    <div
+                      className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-xl shadow-lg z-50 overflow-hidden"
+                      style={{ borderColor: "var(--grid-border)" }}
+                    >
+                      <div className="max-h-48 overflow-y-auto">
+                        {COLORS.filter((c) =>
+                          c.toLowerCase().includes(newItem.color.toLowerCase()),
+                        ).map((c) => (
+                          <div
+                            key={c}
+                            className="px-3 py-2 text-[13px] cursor-pointer transition hover:bg-gray-50 font-medium"
+                            style={{ color: "var(--text-main)" }}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              updateNewItem("color", c);
+                              setShowColorDropdown(false);
+                            }}
+                          >
+                            {c}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-5 gap-3">
+              <div className="relative">
+                <Ruler
+                  size={13}
+                  className="absolute left-3 top-1/2 -translate-y-1/2"
+                  style={{ color: "var(--text-placeholder)" }}
+                />
+                <input
+                  type="text"
+                  placeholder="Kích thước yêu cầu (Ví dụ: D120 R60 C75 cm)"
+                  value={newItem.size}
+                  onChange={(e) => updateNewItem("size", e.target.value)}
+                  className={`${inputBase} pl-9`}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
                 <div className="relative">
-                  <Ruler
+                  <Package
                     size={13}
                     className="absolute left-3 top-1/2 -translate-y-1/2"
                     style={{ color: "var(--text-placeholder)" }}
                   />
                   <input
                     type="number"
-                    placeholder="Dài (cm)"
-                    value={newItem.dimLength}
-                    onChange={(e) => updateNewItem("dimLength", e.target.value)}
+                    placeholder="Số lượng"
+                    value={newItem.quantity}
+                    onChange={(e) =>
+                      updateNewItem(
+                        "quantity",
+                        Math.max(1, parseInt(e.target.value) || 1),
+                      )
+                    }
                     className={`${inputBase} pl-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                     style={inputStyle}
                   />
                 </div>
                 <input
-                  type="number"
-                  placeholder="Rộng (cm)"
-                  value={newItem.dimWidth}
-                  onChange={(e) => updateNewItem("dimWidth", e.target.value)}
-                  className={`${inputBase} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
-                  style={inputStyle}
-                />
-                <input
-                  type="number"
-                  placeholder="Cao (cm)"
-                  value={newItem.dimHeight}
-                  onChange={(e) => updateNewItem("dimHeight", e.target.value)}
-                  className={`${inputBase} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
-                  style={inputStyle}
-                />
-                <input
-                  type="number"
-                  placeholder="Số lượng"
-                  value={newItem.quantity}
-                  onChange={(e) =>
-                    updateNewItem(
-                      "quantity",
-                      Math.max(1, parseInt(e.target.value) || 1),
-                    )
-                  }
-                  className={`${inputBase} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
-                  style={inputStyle}
-                />
-                <input
                   type="text"
-                  placeholder="Đơn giá (VNĐ)"
-                  value={newItem.unitPrice ? fmt(newItem.unitPrice) : ""}
-                  onChange={(e) => {
-                    const raw = e.target.value.replace(/\D/g, "");
-                    updateNewItem("unitPrice", parseInt(raw) || 0);
-                  }}
+                  placeholder="Ghi chú (sơn màu, chạm khắc, ...)"
+                  value={newItem.note}
+                  onChange={(e) => updateNewItem("note", e.target.value)}
                   className={inputBase}
                   style={inputStyle}
                 />
               </div>
-
-              <input
-                type="text"
-                placeholder="Ghi chú yêu cầu đặc biệt (sơn màu, chạm khắc, ...)"
-                value={newItem.note}
-                onChange={(e) => updateNewItem("note", e.target.value)}
-                className={inputBase}
-                style={inputStyle}
-              />
 
               {/* Image upload */}
               <div>
                 <div className="flex items-center gap-3">
                   <label
                     className="flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-medium cursor-pointer transition hover:bg-gray-100"
-                    style={{ border: "1px dashed var(--grid-border)", color: "var(--text-secondary)" }}
+                    style={{
+                      border: "1px dashed var(--grid-border)",
+                      color: "var(--text-secondary)",
+                    }}
                   >
-                    <ImagePlus size={14} style={{ color: "var(--brand-primary)" }} />
+                    <ImagePlus
+                      size={14}
+                      style={{ color: "var(--brand-primary)" }}
+                    />
                     Thêm ảnh mẫu
                     <input
                       type="file"
@@ -624,10 +591,13 @@ export default function CustomOrderInvoicePage() {
                       className="hidden"
                       onChange={(e) => {
                         const files = Array.from(e.target.files || []);
-                        files.forEach(file => {
+                        files.forEach((file) => {
                           const reader = new FileReader();
                           reader.onload = (ev) => {
-                            setNewItem(prev => ({ ...prev, images: [...prev.images, ev.target.result] }));
+                            setNewItem((prev) => ({
+                              ...prev,
+                              images: [...prev.images, ev.target.result],
+                            }));
                           };
                           reader.readAsDataURL(file);
                         });
@@ -636,16 +606,31 @@ export default function CustomOrderInvoicePage() {
                     />
                   </label>
                   {newItem.images.length > 0 && (
-                    <span className="text-[11px]" style={{ color: "var(--text-placeholder)" }}>{newItem.images.length} ảnh</span>
+                    <span
+                      className="text-[11px]"
+                      style={{ color: "var(--text-placeholder)" }}
+                    >
+                      {newItem.images.length} ảnh
+                    </span>
                   )}
                 </div>
                 {newItem.images.length > 0 && (
                   <div className="flex gap-2 mt-2 flex-wrap">
                     {newItem.images.map((img, i) => (
                       <div key={i} className="relative group/img">
-                        <img src={img} alt="" className="w-16 h-16 object-cover rounded-lg" style={{ border: "1px solid var(--grid-border)" }} />
+                        <img
+                          src={img}
+                          alt=""
+                          className="w-16 h-16 object-cover rounded-lg"
+                          style={{ border: "1px solid var(--grid-border)" }}
+                        />
                         <button
-                          onClick={() => setNewItem(prev => ({ ...prev, images: prev.images.filter((_, idx) => idx !== i) }))}
+                          onClick={() =>
+                            setNewItem((prev) => ({
+                              ...prev,
+                              images: prev.images.filter((_, idx) => idx !== i),
+                            }))
+                          }
                           className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition cursor-pointer"
                           style={{ fontSize: 10 }}
                         >
@@ -673,7 +658,7 @@ export default function CustomOrderInvoicePage() {
                   className="text-xs font-bold text-white rounded-lg cursor-pointer"
                   style={{ backgroundColor: "var(--brand-primary)" }}
                 >
-                  <Plus size={13} className="mr-1" /> Thêm vào đơn
+                  <Plus size={13} className="mr-1" /> Tạo yêu cầu
                 </Button>
               </div>
             </div>
@@ -696,7 +681,7 @@ export default function CustomOrderInvoicePage() {
                   Chưa có sản phẩm đặt nào
                 </p>
                 <p className="text-xs">
-                  Nhấn "Thêm SP" để mô tả hàng đặt riêng
+                  Nhấn "Thêm yêu cầu" để mô tả hàng đặt riêng
                 </p>
                 <button
                   onClick={() => setShowAddForm(true)}
@@ -706,7 +691,7 @@ export default function CustomOrderInvoicePage() {
                     color: "var(--brand-primary)",
                   }}
                 >
-                  <Plus size={14} /> Thêm sản phẩm đặt
+                  <Plus size={14} /> Yêu cầu đặt riêng
                 </button>
               </div>
             ) : (
@@ -780,7 +765,15 @@ export default function CustomOrderInvoicePage() {
                         {item.images && item.images.length > 0 && (
                           <div className="flex gap-1.5 mt-2">
                             {item.images.map((img, i) => (
-                              <img key={i} src={img} alt="" className="w-10 h-10 object-cover rounded-md" style={{ border: "1px solid var(--grid-border)" }} />
+                              <img
+                                key={i}
+                                src={img}
+                                alt=""
+                                className="w-10 h-10 object-cover rounded-md"
+                                style={{
+                                  border: "1px solid var(--grid-border)",
+                                }}
+                              />
                             ))}
                           </div>
                         )}
@@ -818,22 +811,6 @@ export default function CustomOrderInvoicePage() {
                         >
                           <Plus size={11} />
                         </button>
-                      </div>
-
-                      {/* Price */}
-                      <div className="text-right w-24 shrink-0">
-                        <p
-                          className="text-[11px]"
-                          style={{ color: "var(--text-placeholder)" }}
-                        >
-                          × {fmt(item.unitPrice)}đ
-                        </p>
-                        <p
-                          className="text-[13px] font-bold"
-                          style={{ color: "var(--brand-primary)" }}
-                        >
-                          {fmt(item.unitPrice * item.quantity)}đ
-                        </p>
                       </div>
 
                       <button
@@ -875,7 +852,7 @@ export default function CustomOrderInvoicePage() {
               />
               <input
                 type="text"
-                placeholder="Ghi chú đơn hàng..."
+                placeholder="Ghi chú ..."
                 value={activeTab.orderNote}
                 onChange={(e) => updateActiveTab({ orderNote: e.target.value })}
                 className="flex-1 text-[13px] focus:outline-none bg-transparent"
@@ -883,105 +860,23 @@ export default function CustomOrderInvoicePage() {
               />
             </div>
 
-            {/* Summary */}
-            <div
-              className="px-4 py-3 space-y-2 border-b"
-              style={{
-                borderColor: "var(--grid-border)",
-                backgroundColor: "var(--grid-header-bg)",
-              }}
-            >
-              <div className="flex justify-between text-[13px]">
-                <span style={{ color: "var(--text-secondary)" }}>
-                  Tổng ({itemCount} sản phẩm)
-                </span>
-                <span
-                  className="font-medium"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  {fmt(subtotal)}đ
-                </span>
-              </div>
-              <div className="flex justify-between text-[13px] items-center">
-                <span style={{ color: "var(--text-secondary)" }}>Giảm giá</span>
-                <div className="flex items-center gap-1">
-                  <span
-                    className="text-[13px]"
-                    style={{ color: "var(--text-placeholder)" }}
-                  >
-                    ₫
-                  </span>
-                  <input
-                    type="text"
-                    value={activeTab.discount ? fmt(activeTab.discount) : ""}
-                    onChange={(e) => {
-                      const raw = e.target.value.replace(/\D/g, "");
-                      updateActiveTab({
-                        discount: parseInt(raw) || 0,
-                      });
-                    }}
-                    placeholder="0"
-                    className="w-28 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white"
-                    style={{
-                      border: "1px solid var(--grid-border)",
-                      color: "var(--text-main)",
-                    }}
-                  />
-                </div>
-              </div>
-              <div className="flex justify-between text-[13px] items-center">
-                <span
-                  className="font-medium"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  <CreditCard size={12} className="inline mr-1.5" />
-                  Tiền đặt cọc
-                </span>
-                <div className="flex items-center gap-1">
-                  <span
-                    className="text-[13px]"
-                    style={{ color: "var(--text-placeholder)" }}
-                  >
-                    ₫
-                  </span>
-                  <input
-                    type="text"
-                    value={
-                      activeTab.depositAmount
-                        ? fmt(activeTab.depositAmount)
-                        : ""
-                    }
-                    onChange={(e) => {
-                      const raw = e.target.value.replace(/\D/g, "");
-                      updateActiveTab({
-                        depositAmount: parseInt(raw) || 0,
-                      });
-                    }}
-                    placeholder="0"
-                    className="w-28 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white"
-                    style={{
-                      border: "1px solid var(--grid-border)",
-                      color: "var(--text-main)",
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-
             {/* Checkout bar */}
-            <div className="flex items-center justify-between px-4 py-3">
+            <div
+              className="flex items-center justify-between px-4 py-3 border-t"
+              style={{ borderColor: "var(--grid-border)" }}
+            >
               <div>
                 <p
                   className="text-xs uppercase tracking-wider font-medium"
                   style={{ color: "var(--text-placeholder)" }}
                 >
-                  Còn phải trả
+                  Số lượng
                 </p>
                 <p
                   className="text-xl font-bold tracking-tight"
                   style={{ color: "var(--brand-primary)" }}
                 >
-                  {fmt(totalPayable)}đ
+                  {itemCount} SP
                 </p>
               </div>
               <Button
@@ -996,7 +891,7 @@ export default function CustomOrderInvoicePage() {
                 disabled={activeTab.cartItems.length === 0}
                 onClick={handleCreateOrder}
               >
-                Tạo đơn đặt hàng
+                Gửi yêu cầu
               </Button>
             </div>
           </div>
@@ -1043,7 +938,7 @@ export default function CustomOrderInvoicePage() {
                 color: "var(--status-pending)",
               }}
             >
-              Đơn đặt
+              Yêu cầu
             </span>
           </div>
 
@@ -1068,7 +963,7 @@ export default function CustomOrderInvoicePage() {
                   ref={customerSearchRef}
                 >
                   {activeTab.selectedCustomer ? (
-                    <div 
+                    <div
                       className="flex items-center gap-1.5 px-3 py-1.5 flex-1 min-w-0 rounded-lg bg-gray-50 border"
                       style={{ borderColor: "var(--grid-border)" }}
                     >
@@ -1091,10 +986,10 @@ export default function CustomOrderInvoicePage() {
                       </span>
                       <button
                         onClick={() => {
-                          updateActiveTab({ 
-                            selectedCustomer: null, 
-                            customerName: "", 
-                            customerPhone: "" 
+                          updateActiveTab({
+                            selectedCustomer: null,
+                            customerName: "",
+                            customerPhone: "",
                           });
                           setCustomerSearch("");
                         }}
@@ -1105,7 +1000,7 @@ export default function CustomOrderInvoicePage() {
                       </button>
                     </div>
                   ) : (
-                    <div 
+                    <div
                       className="flex items-center gap-1.5 px-3 flex-1 min-w-0 rounded-lg bg-white box-border border"
                       style={{ borderColor: "var(--grid-border)" }}
                     >
@@ -1123,7 +1018,8 @@ export default function CustomOrderInvoicePage() {
                           setShowCustomerDropdown(true);
                         }}
                         onFocus={() => {
-                          if (customerSearch.trim()) setShowCustomerDropdown(true);
+                          if (customerSearch.trim())
+                            setShowCustomerDropdown(true);
                         }}
                         onBlur={() => {
                           setTimeout(() => setShowCustomerDropdown(false), 200);
@@ -1155,10 +1051,10 @@ export default function CustomOrderInvoicePage() {
                               key={c.id}
                               onMouseDown={(e) => {
                                 e.preventDefault();
-                                updateActiveTab({ 
+                                updateActiveTab({
                                   selectedCustomer: c,
-                                  customerName: c.name, 
-                                  customerPhone: c.phone 
+                                  customerName: c.name,
+                                  customerPhone: c.phone,
                                 });
                                 setCustomerSearch("");
                                 setShowCustomerDropdown(false);
@@ -1214,7 +1110,8 @@ export default function CustomOrderInvoicePage() {
                       )}
                     </div>
                   )}
-                </div></div>
+                </div>
+              </div>
 
               <div className="space-y-2.5">
                 <div className="relative">
@@ -1302,26 +1199,6 @@ export default function CustomOrderInvoicePage() {
               </div>
             </div>
 
-            {/* Expected Date */}
-            <div
-              className="p-4 space-y-3 border-b"
-              style={{ borderColor: "var(--grid-border)" }}
-            >
-              <p
-                className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5"
-                style={{ color: "var(--text-placeholder)" }}
-              >
-                <CalendarDays size={12} /> Ngày giao dự kiến
-              </p>
-              <input
-                type="date"
-                value={activeTab.deliveryInfo.expectedDate}
-                onChange={(e) => updateDelivery("expectedDate", e.target.value)}
-                className={inputBase}
-                style={inputStyle}
-              />
-            </div>
-
             {/* Tip box */}
             <div className="p-4">
               <div
@@ -1335,9 +1212,9 @@ export default function CustomOrderInvoicePage() {
                   className="text-[12px] leading-relaxed"
                   style={{ color: "var(--status-pending)" }}
                 >
-                  💡 <strong>Đơn đặt hàng riêng:</strong> Sản phẩm sẽ được sản
-                  xuất theo yêu cầu. Vui lòng xác nhận đặt cọc và ngày giao hàng
-                  dự kiến với khách.
+                  💡 <strong>Yêu cầu đặt hàng:</strong> Sales chỉ ghi nhận thông
+                  tin và chuyển yêu cầu. Việc tạo hóa đơn và thu tiền cọc do Chủ
+                  cửa hàng thực hiện.
                 </p>
               </div>
             </div>
@@ -1359,17 +1236,6 @@ export default function CustomOrderInvoicePage() {
           });
         }}
       />
-          {/* Hidden Print Area */}
-      <div style={{ display: "none" }}>
-        {printingOrder && (
-          <div ref={printRef}>
-            <PrintableInvoice
-              o={printingOrder}
-              displayTotal={printingOrder.total}
-            />
-          </div>
-        )}
-      </div>
     </>
   );
 }
