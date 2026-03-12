@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import {
@@ -17,350 +17,198 @@ import {
   CheckCircle,
   Calculator,
   Hammer,
+  Camera,
+  Eye,
+  UserPlus,
+  Info,
 } from "lucide-react";
 
 // ===================== MOCK DATA =====================
 const MOCK_ORDERS = {
-  // ĐƠN CHỜ BÁO GIÁ — chưa có giá
-  DH001: {
-    code: "DH-2603-0010",
-    type: "Đặt theo mẫu",
-    status: "Chờ báo giá",
-    date: "2026-03-05T16:05:00",
-    deliveryDate: null,
-    customer: {
-      name: "Vũ Phương Thảo",
-      phone: "0990123456",
-      address: "123 Đường Lê Lợi, Quận 1, TP.HCM",
-    },
-    salesPerson: "Nguyễn Văn Bình",
-    total: null,
-    deposit: null,
-    paymentStatus: null,
-    paymentMethod: null,
-    notes: "Khách yêu cầu gỗ sồi Mỹ, hoàn thiện sơn PU",
+  // ========== NHÓM 1: HÀNG SẴN ==========
+  "DH-S01": {
+    code: "DH-SAN-001", type: "Hàng sẵn", status: "Chờ xử lý",
+    date: "2026-03-12T08:30:00", deliveryDate: "2026-03-14", fulfillmentType: "Giao tận nhà",
+    customer: { name: "Nguyễn Văn Hùng", phone: "0912345678", address: "45 Đường Giải Phóng, Q. Hai Bà Trưng, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 12500000, deposit: 12500000, paymentStatus: "full",
+    notes: "Khách yêu cầu giao trước 10h sáng.",
     products: [
-      { 
-        name: "Tủ bếp chữ L", 
-        material: "Gỗ sồi Nga", 
-        finish: "Sơn PU màu óc chó", 
-        pattern: "Cánh phẳng hiện đại",
-        size: "Dài 3.5m x Cao 2.2m", 
-        warranty: "5 năm",
-        note: "Khách tự trang bị phụ kiện bếp",
-        qty: 1, 
-        price: null 
-      },
-      { 
-        name: "Bàn ăn nguyên tấm", 
-        material: "Gỗ gõ đỏ pachy", 
-        finish: "PU trần, lau dầu", 
-        pattern: "Cạnh tự nhiên (Live edge)",
-        size: "D220 x R90 x Dày 10cm", 
-        warranty: "Trọn đời",
-        note: null,
-        qty: 1, 
-        price: null 
-      },
+      { name: "Ghế sofa đơn nỉ xanh rêu", material: "Khung gỗ sồi, nỉ Hàn Quốc", size: "80×85×95 cm", finish: "Chân gỗ óc chó tự nhiên", pattern: "Trơn hiện đại", qty: 2, price: 6250000 },
     ],
     timeline: [
-      { time: "05/03/2026 16:05", label: "Tạo đơn hàng", desc: "NV Nguyễn Văn Bình tạo đơn đặt theo mẫu", active: false },
-      { time: "05/03/2026 16:10", label: "Chờ báo giá", desc: "Đơn chờ chủ cửa hàng báo giá", active: true },
+      { time: "12/03/2026 08:30", label: "Tiếp nhận đơn hàng", desc: "Hệ thống ghi nhận đơn hàng sẵn. Chờ xác nhận kho.", active: true },
     ],
   },
-  // ĐƠN GIAO HÀNG THÀNH CÔNG (Hoàn thành)
-  DH002: {
-    code: "DH-2603-0009",
-    type: "Hàng sẵn",
-    status: "Giao hàng thành công",
-    date: "2026-03-05T13:20:00",
-    deliveryDate: "2026-03-06",
-    customer: {
-      name: "Đinh Quang Hiếu",
-      phone: "0989012345",
-      address: "123 Đường Nam Kỳ Khởi Nghĩa, Quận 1, TP.HCM",
-    },
-    salesPerson: "Lê Minh Tuấn",
-    total: 36000000,
-    deposit: 36000000,
-    paymentStatus: "full",
-    paymentMethod: "Chuyển khoản",
-    notes: "Giao hỏa tốc trong ngày",
-    products: [
-      { 
-        name: "Sập thờ mai điểu", 
-        material: "Gỗ gụ mật", 
-        finish: "Đánh vecni thủ công", 
-        pattern: "Chạm mai điểu sắc nét",
-        size: "197×107×127 cm", 
-        warranty: "10 năm",
-        note: "Kèm 1 bàn cơm nhỏ",
-        qty: 1, 
-        price: 36000000 
-      },
-    ],
-    timeline: [
-      { time: "05/03/2026 13:20", label: "Tạo đơn hàng", desc: "NV Lê Minh Tuấn tạo đơn", active: false },
-      { time: "05/03/2026 13:30", label: "Đang chuẩn bị", desc: "Kho xuất hàng, đóng gói", active: false },
-      { time: "06/03/2026 09:00", label: "Đang giao hàng", desc: "Giao cho đơn vị vận chuyển", active: false },
-      { time: "06/03/2026 14:30", label: "Giao hàng thành công", desc: "Khách đã nhận và thanh toán đủ", active: true },
-    ],
-  },
-  // ĐƠN HÀNG SẴN ĐANG CHUẨN BỊ
-  DH011: {
-    code: "DH-2603-0003",
-    type: "Hàng sẵn",
-    status: "Đang chuẩn bị",
-    date: "2026-03-05T09:15:00",
-    deliveryDate: "2026-03-07",
-    customer: {
-      name: "Lê Minh Tuấn",
-      phone: "0923456789",
-      address: "89 Lê Duẩn, Quận Hoàn Kiếm, Hà Nội",
-    },
-    salesPerson: "Trần Thị Cúc",
-    total: 8900000,
-    deposit: 8900000,
-    paymentStatus: "full",
-    paymentMethod: "Chuyển khoản",
-    notes: "Khách đã thanh toán 100%, yêu cầu bọc chống xước mút xốp 3 lớp.",
-    products: [
-      { 
-        name: "Tủ giày thông minh 3 tầng", 
-        material: "Gỗ MDF chống ẩm", 
-        finish: "Phủ Melamine vân gỗ sồi", 
-        pattern: "Cánh lật tiết kiệm không gian",
-        size: "1m2 x 30cm x 1m1", 
-        warranty: "2 năm",
-        note: null,
-        qty: 1, 
-        price: 2400000 
-      },
-      { 
-        name: "Kệ trang trí góc tường", 
-        material: "Gỗ cao su ghép thanh", 
-        finish: "Sơn PU màu cánh gián", 
-        pattern: "5 tầng 1/4 hình tròn",
-        size: "Cao 1m5, bán kính 40cm", 
-        warranty: "2 năm",
-        note: null,
-        qty: 1, 
-        price: 1500000 
-      },
-      { 
-        name: "Bàn trà Nhật ngồi bệt", 
-        material: "Gỗ hương vân", 
-        finish: "PU bóng mờ giữ vân tự nhiên", 
-        pattern: "Chân gập",
-        size: "90cm x 50cm x 30cm", 
-        warranty: "5 năm",
-        note: null,
-        qty: 1, 
-        price: 5000000 
-      },
-    ],
-    timeline: [
-      { time: "05/03/2026 09:15", label: "Tạo đơn hàng", desc: "NV Trần Thị Cúc tạo đơn hàng sẵn", active: false },
-      { time: "05/03/2026 09:20", label: "Thanh toán", desc: "Khách chuyển khoản thành công 8.900.000đ", active: false },
-      { time: "05/03/2026 10:00", label: "Đang chuẩn bị", desc: "Kho xuất hàng, đang tiến hành đóng gói", active: true },
-    ],
-  },
-  // ĐƠN ĐÃ XÁC NHẬN - CHỜ DUYỆT SẢN XUẤT (TỐI ƯU NGHIỆP VỤ)
-  DH003: {
-    code: "DH-2603-0012",
-    type: "Đặt theo mẫu",
-    status: "Xác nhận đơn hàng",
-    date: "2026-03-04T08:15:00",
-    deliveryDate: "2026-03-20",
-    customer: {
-      name: "Nguyễn Thị Hồng",
-      phone: "0912345678",
-      address: "KĐT Times City, Quận Hai Bà Trưng, Hà Nội",
-    },
-    salesPerson: "Trần Thị Cúc",
-    total: 24000000,
-    deposit: 7200000,
-    paymentStatus: "partial",
-    paymentMethod: "Chuyển khoản",
-    notes: "Khách đã chốt cọc, cần triển khai sản xuất sớm",
-    products: [
-      { 
-        name: "Bàn thờ chạm rồng", 
-        material: "Gỗ mít", 
-        finish: "Sơn PU bóng", 
-        pattern: "Chạm rồng cuốn thủy",
-        size: "217×81×127 cm", 
-        warranty: "20 năm",
-        note: "Sơn 3 lớp PU",
-        qty: 2, 
-        price: 12000000 
-      },
-    ],
-    timeline: [
-      { time: "03/03/2026 14:00", label: "Tạo đơn hàng", desc: "NV Trần Thị Cúc tạo đơn đặt theo mẫu", active: false },
-      { time: "03/03/2026 15:30", label: "Đã báo giá", desc: "Báo giá: 24.000.000đ", active: false },
-      { time: "04/03/2026 08:15", label: "Xác nhận đơn hàng", desc: "Khách đã đặt cọc, chờ duyệt sản xuất", active: true },
-    ],
-  },
-  // ĐƠN CHỜ DUYỆT HỦY
-  DH005: {
-    code: "DH-2603-0005",
-    type: "Hàng sẵn",
-    status: "Chờ duyệt hủy",
-    date: "2026-03-03T16:20:00",
-    deliveryDate: "2026-03-10",
-    cancelReason: "Khách đổi ý, muốn chọn mẫu khác",
-    customer: {
-      name: "Võ Đức Anh",
-      phone: "0945678901",
-      address: "456 Đường Nguyễn Huệ, Quận 3, TP.HCM",
-    },
-    salesPerson: "Trần Thị Cúc",
-    total: 3400000,
-    deposit: 3400000,
-    paymentStatus: "full",
-    paymentMethod: "Tiền mặt",
+  "DH-S02": {
+    code: "DH-SAN-002", type: "Hàng sẵn", status: "Đang giao hàng",
+    date: "2026-03-11T14:20:00", deliveryDate: "2026-03-12", fulfillmentType: "Lấy ngay",
+    customer: { name: "Lê Thị Lan", phone: "0345678901", address: "Căn 1204, Tòa C, Vinhomes Ocean Park, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 3500000, deposit: 3500000, paymentStatus: "full",
     notes: "",
     products: [
-      { 
-        name: "Lục bình phong thủy", 
-        material: "Gỗ cẩm lai", 
-        finish: "PU bóng mờ giữ vân", 
-        pattern: "Tiện trơn nguyên khối",
-        size: "Cao 1m6, đường kính 45cm", 
-        warranty: "Bảo hành nứt nẻ 1 đổi 1",
-        note: null,
-        qty: 1, 
-        price: 3400000 
-      },
+      { name: "Bàn trà kim loại sơn tĩnh điện", material: "Sắt nghệ thuật uốn thủ công", size: "70×70×40 cm", finish: "Sơn tĩnh điện màu đen mờ", pattern: "Chân chữ X", qty: 1, price: 3500000 },
     ],
     timeline: [
-      { time: "03/03/2026 16:20", label: "Tạo đơn hàng", desc: "NV Trần Thị Cúc tạo đơn hàng sẵn", active: false },
-      { time: "03/03/2026 17:00", label: "Đang chuẩn bị", desc: "Xuất kho, đóng gói sản phẩm", active: false },
-      { time: "04/03/2026 09:00", label: "Yêu cầu hủy", desc: "Khách yêu cầu hủy — Lý do: đổi ý chọn mẫu khác", active: false },
-      { time: "04/03/2026 09:05", label: "Chờ duyệt hủy", desc: "Chờ chủ cửa hàng phê duyệt", active: true },
+      { time: "11/03/2026 14:20", label: "Tạo đơn", desc: "Khách thanh toán đủ tại quầy.", active: false },
+      { time: "12/03/2026 09:00", label: "Đang giao hàng", desc: "Shipper đã lấy hàng tại kho và đang trên đường giao.", active: true },
     ],
   },
-  // ĐƠN ĐÃ BÁO GIÁ - CHỜ KHÁCH XÁC NHẬN
-  DH010: {
-    code: "DH-2603-0002",
-    type: "Đặt theo mẫu",
-    status: "Chờ xác nhận",
-    date: "2026-03-02T10:15:00",
-    deliveryDate: null,
-    customer: {
-      name: "Trần Thị Mai",
-      phone: "0912345678",
-      address: "Chung cư Hoàng Anh Gia Lai, Quận 7, TP.HCM",
-    },
-    salesPerson: "Nguyễn Văn Bình",
-    total: 42000000,
-    deposit: null,
-    paymentStatus: null,
-    paymentMethod: null,
-    notes: "Đã gửi bảng báo giá qua Zalo cho khách ngày 05/03, khách hẹn cuối tuần chốt màu.",
+  "DH-S03": {
+    code: "DH-SAN-003", type: "Hàng sẵn", status: "Giao hàng thành công",
+    date: "2026-03-10T09:15:00", deliveryDate: "2026-03-11", fulfillmentType: "Lấy luôn",
+    deliveryImage: "https://images.unsplash.com/photo-1595246140625-573b715d11dc?auto=format&fit=crop&q=80&w=400",
+    customer: { name: "Trần Minh Quang", phone: "0909123456", address: "12 Lý Thường Kiệt, Q. Hoàn Kiếm, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 45000000, deposit: 45000000, paymentStatus: "full",
+    notes: "",
     products: [
-      { 
-        name: "Tủ bếp chữ I", 
-        material: "MDF chống ẩm Hòe Nhai", 
-        finish: "Phủ Melamine An Cường", 
-        pattern: "Trơn, phẳng hiện đại",
-        size: "Dài 4m x Cao 2m2", 
-        warranty: "05 năm",
-        note: "Khách có thể đổi ý sang màu xám vân đá",
-        qty: 1, 
-        price: 42000000 
-      },
+      { name: "Sập thờ gỗ gụ mật", material: "Gỗ gụ mật cao cấp", size: "197×107×127 cm", finish: "Đánh vecni thủ công 5 lớp", pattern: "Chạm mai điểu sắc nét", qty: 1, price: 45000000 },
     ],
     timeline: [
-      { time: "02/03/2026 10:15", label: "Tạo đơn hàng", desc: "NV Nguyễn Văn Bình tạo đơn", active: false },
-      { time: "05/03/2026 09:30", label: "Đã báo giá", desc: "Chủ cửa hàng báo giá: 42.000.000đ", active: false },
-      { time: "05/03/2026 10:00", label: "Chờ xác nhận", desc: "Đã gửi giá cho khách. Đang chờ phản hồi.", active: true },
+      { time: "10/03/2026 09:15", label: "Tạo đơn", desc: "Khách chọn hàng tại showroom, thanh toán 100%.", active: false },
+      { time: "11/03/2026 08:00", label: "Chuẩn bị giao hàng", desc: "Xuất kho, đóng gói, lau bụi.", active: false },
+      { time: "11/03/2026 14:30", label: "Giao hàng thành công", desc: "Khách đã xác nhận nhận hàng. Hoàn tất.", active: true },
     ],
   },
-  // ĐƠN ĐÃ BÁO GIÁ - CHƯA GỬI CHO KHÁCH
-  DH006: {
-    code: "DH-2603-0006",
-    type: "Đặt theo mẫu",
-    status: "Đã báo giá",
-    date: "2026-03-04T11:10:00",
-    deliveryDate: null,
-    customer: {
-      name: "Đặng Thùy Linh",
-      phone: "0956789012",
-      address: "Biệt thự Vinhomes Riverside, Long Biên, Hà Nội",
-    },
-    salesPerson: "Lê Minh Tuấn",
-    total: 85000000,
-    deposit: null,
-    paymentStatus: null,
-    paymentMethod: null,
-    notes: "Bộ bàn ghế sofa chữ U gỗ gõ đỏ, bọc da Ý",
+  "DH-S04": {
+    code: "DH-SAN-004", type: "Hàng sẵn", status: "Chờ duyệt hủy",
+    date: "2026-03-11T16:45:00", deliveryDate: "2026-03-13",
+    cancelReason: "Khách đổi mẫu khác",
+    customer: { name: "Phạm Thành Nam", phone: "0987654321", address: "456 Đường Nguyễn Huệ, Q. 1, TP.HCM" },
+    salesPerson: "Bình Nguyễn", total: 8900000, deposit: 8900000, paymentStatus: "full",
+    notes: "",
     products: [
-      { 
-        name: "Sofa gỗ chữ U", 
-        material: "Gỗ gõ đỏ", 
-        finish: "Sơn PU mờ", 
-        pattern: "Hiện đại, đệm da bò tự nhiên",
-        size: "3m2 x 2m8", 
-        warranty: "15 năm",
-        note: "Đệm tựa lưng may caro rút múi",
-        qty: 1, 
-        price: 85000000 
-      },
+      { name: "Kệ tivi gỗ công nghiệp 3 cánh", material: "Gỗ MDF chống ẩm", size: "180×40×60 cm", finish: "Phủ melamine vân gỗ óc chó", pattern: "Trơn hiện đại, tay nắm ẩn", qty: 1, price: 8900000 },
     ],
     timeline: [
-      { time: "04/03/2026 11:10", label: "Tạo đơn hàng", desc: "NV Lê Minh Tuấn tạo đơn", active: false },
-      { time: "04/03/2026 14:30", label: "Đã báo giá", desc: "Chủ cửa hàng đã tính toán và ra giá: 85.000.000đ", active: true },
+      { time: "11/03/2026 16:45", label: "Tạo đơn hàng", desc: "Khách đặt mua tại showroom.", active: false },
+      { time: "12/03/2026 09:00", label: "Yêu cầu hủy", desc: "Lý do: Khách đổi mẫu khác.", active: false },
+      { time: "12/03/2026 09:05", label: "Chờ duyệt hủy", desc: "Chờ chủ cửa hàng phê duyệt hủy đơn.", active: true },
     ],
   },
-  // ĐƠN ĐANG SẢN XUẤT — có đầy đủ giá
-  DH008: {
-    code: "DH-2603-0008",
-    type: "Đặt theo mẫu",
-    status: "Đang sản xuất",
-    date: "2026-03-05T08:45:00",
-    deliveryDate: "2026-03-25",
-    customer: {
-      name: "Hoàng Nguyệt Ánh",
-      phone: "0978901234",
-      address: "789 Đường Võ Văn Tần, Quận 3, TP.HCM",
-    },
-    salesPerson: "Lê Minh Tuấn",
-    total: 56000000,
-    deposit: 16800000,
-    paymentStatus: "partial",
-    paymentMethod: "Chuyển khoản",
-    notes: "Ghế bọc da nhập khẩu",
+  "DH-S05": {
+    code: "DH-SAN-005", type: "Hàng sẵn", status: "Đã hủy",
+    date: "2026-03-09T10:00:00", deliveryDate: "2026-03-10",
+    cancelReason: "Khách không còn nhu cầu",
+    customer: { name: "Đinh Công Vinh", phone: "0944556677", address: "789 Trần Hưng Đạo, Q. 5, TP.HCM" },
+    salesPerson: "Bình Nguyễn", total: 2100000, deposit: 0, paymentStatus: "none",
+    notes: "",
     products: [
-      { 
-        name: "Bộ bàn ghế phòng khách", 
-        material: "Gỗ hương đá Nam Phi", 
-        finish: "Sơn PU trần bóng mờ", 
-        pattern: "Chạm nghê bảo đỉnh",
-        size: "Bàn 200×80×45cm, Đoản 220cm", 
-        warranty: "15 năm mối mọt",
-        note: "Mặt bàn đục nguyên khối không ghép",
-        qty: 1, 
-        price: 35000000 
-      },
-      { 
-        name: "Kệ tivi nguyên khối", 
-        material: "Gỗ hương đá", 
-        finish: "PU đồng màu bộ bàn ghế", 
-        pattern: "Trơn, phẳng",
-        size: "240×45×60 cm", 
-        warranty: "10 năm",
-        note: null,
-        qty: 1, 
-        price: 21000000 
-      },
+      { name: "Ghế gỗ tần bì phòng ăn", material: "Gỗ tần bì Nga", size: "45×50×92 cm", finish: "Sơn PU bóng mờ tự nhiên", pattern: "Đơn giản, chắc chắn", qty: 2, price: 1050000 },
     ],
     timeline: [
-      { time: "01/03/2026 08:30", label: "Tạo đơn hàng", desc: "NV Lê Minh Tuấn tạo đơn đặt theo mẫu", active: false },
-      { time: "01/03/2026 10:00", label: "Đã báo giá", desc: "Chủ cửa hàng báo giá 56.000.000đ", active: false },
-      { time: "02/03/2026 14:00", label: "Xác nhận đơn hàng", desc: "Khách xác nhận, đặt cọc 30%", active: false },
-      { time: "03/03/2026 08:00", label: "Đang sản xuất", desc: "Bắt đầu gia công tại xưởng", active: true },
+      { time: "09/03/2026 10:00", label: "Tạo đơn hàng", desc: "Khách đặt hàng qua điện thoại.", active: false },
+      { time: "09/03/2026 15:00", label: "Đã hủy", desc: "Chủ cửa hàng duyệt hủy. Lý do: Khách không còn nhu cầu.", active: true },
+    ],
+  },
+
+  // ========== NHÓM 2: HÀNG THÔ ==========
+  "DH-T01": {
+    code: "DH-THO-001", type: "Hàng thô", status: "Chờ gia công",
+    date: "2026-03-12T10:00:00", deliveryDate: "2026-03-20",
+    customer: { name: "Hoàng Nguyệt Ánh", phone: "0978901234", address: "789 Võ Văn Tần, Q. 3, TP.HCM" },
+    salesPerson: "Bình Nguyễn", total: 56000000, deposit: 15000000, paymentStatus: "partial",
+    notes: "Khách yêu cầu đánh ráp kỹ, sơn PU bóng, không bị lỗi bề mặt.",
+    products: [
+      { name: "Sập thờ gỗ mít (Mộc thô)", material: "Gỗ mít ta nguyên khối", size: "220×110×130 cm", finish: "Chờ gia công sơn PU", pattern: "Chạm tứ linh truyền thống", qty: 1, price: 56000000 },
+    ],
+    timeline: [
+      { time: "12/03/2026 10:00", label: "Tiếp nhận mộc thô", desc: "Khách chọn bộ mộc tại kho. Đã đặt cọc 15tr.", active: false },
+      { time: "12/03/2026 11:00", label: "Chờ gia công", desc: "Đã ghi nhận yêu cầu gia công. Chờ phân công thợ.", active: true },
+    ],
+  },
+  "DH-T02": {
+    code: "DH-THO-002", type: "Hàng thô", status: "Đang gia công",
+    date: "2026-03-11T15:30:00", deliveryDate: "2026-03-15",
+    customer: { name: "Đặng Tuấn Kiệt", phone: "0931234567", address: "123 Trần Hưng Đạo, Q. 5, TP.HCM" },
+    salesPerson: "Bình Nguyễn", total: 8200000, deposit: 2000000, paymentStatus: "partial",
+    notes: "Cần đánh ráp kỹ, sơn bóng mờ, không bị lỗi bề mặt.",
+    products: [
+      { name: "Trường kỷ gỗ lim (Mộc thô)", material: "Gỗ lim Lào cao cấp", size: "Dài 2m1, ngồi 3 người", finish: "Đang đánh ráp + sơn PU mờ", pattern: "Tứ quý chạm nổi", qty: 1, price: 8200000 },
+    ],
+    timeline: [
+      { time: "11/03/2026 15:30", label: "Tiếp nhận mộc thô", desc: "Khách chọn bộ tại showroom.", active: false },
+      { time: "11/03/2026 16:00", label: "Đặt cọc", desc: "Khách cọc 2tr, bắt đầu gia công.", active: false },
+      { time: "12/03/2026 08:00", label: "Đang gia công", desc: "Thợ Nguyễn Văn Đức tiếp nhận, đang đánh ráp.", active: true },
+    ],
+  },
+  "DH-T03": {
+    code: "DH-THO-003", type: "Hàng thô", status: "Hoàn thiện sản phẩm",
+    date: "2026-03-10T08:00:00", deliveryDate: "2026-03-14",
+    finishedImage: "https://images.unsplash.com/photo-1599690924032-4e55e5108bb6?auto=format&fit=crop&q=80&w=400",
+    customer: { name: "Vũ Hải Đăng", phone: "0966778899", address: "34 Lê Lợi, Q. Hoàn Kiếm, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 12500000, deposit: 4000000, paymentStatus: "partial",
+    notes: "Màu sơn: nâu vân gỗ tự nhiên. Sơn 3 lớp PU.",
+    products: [
+      { name: "Bộ bàn ghế gỗ gụ phòng trà", material: "Gỗ gụ mật Bắc Kạn", size: "Bàn: 90×50×45 cm, Ghế: 2 chiếc", finish: "PU bóng 3 lớp đã hoàn thiện", pattern: "Trơn, kết hợp đường chỉ nổi", qty: 1, price: 12500000 },
+    ],
+    timeline: [
+      { time: "10/03/2026 08:00", label: "Tiếp nhận mộc", desc: "Nhận mộc từ xưởng ngoài.", active: false },
+      { time: "11/03/2026 09:00", label: "Đang gia công", desc: "Thợ sơn tiến hành đánh ráp lần 1.", active: false },
+      { time: "12/03/2026 15:00", label: "Hoàn thiện sản phẩm", desc: "Sơn xong, đang phơi khô. Chờ kiểm tra QC.", active: true },
+    ],
+  },
+  "DH-T04": {
+    code: "DH-THO-004", type: "Hàng thô", status: "Đang giao hàng",
+    date: "2026-03-09T11:20:00", deliveryDate: "2026-03-12",
+    customer: { name: "Bùi Tiến Dũng", phone: "0922334455", address: "56 Nguyễn Trãi, Q. Thanh Xuân, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 28000000, deposit: 10000000, paymentStatus: "partial",
+    notes: "Giao trước 12h. Gọi trước khi đến.",
+    products: [
+      { name: "Tủ thờ gỗ hương đỏ", material: "Gỗ hương đỏ Lào nguyên khối", size: "120×45×180 cm", finish: "PU cánh gián bóng nhẹ", pattern: "Chạm tứ linh + câu đối", qty: 1, price: 28000000 },
+    ],
+    timeline: [
+      { time: "09/03/2026 11:20", label: "Tạo đơn", desc: "Khách đặt gia công tại cửa hàng.", active: false },
+      { time: "10/03/2026 08:00", label: "Đang gia công", desc: "Thợ Trần Minh Tâm tiến hành.", active: false },
+      { time: "12/03/2026 08:00", label: "Hoàn thiện sản phẩm", desc: "QC thông qua, đóng gói xong.", active: false },
+      { time: "12/03/2026 10:00", label: "Đang giao hàng", desc: "Xe tải đang trên đường tới địa chỉ khách.", active: true },
+    ],
+  },
+  "DH-T05": {
+    code: "DH-THO-005", type: "Hàng thô", status: "Giao hàng thành công",
+    date: "2026-03-08T14:45:00", deliveryDate: "2026-03-11",
+    deliveryImage: "https://images.unsplash.com/photo-1617806118233-ef203e91122b?auto=format&fit=crop&q=80&w=400",
+    customer: { name: "Đinh Công Thành", phone: "0988776655", address: "78 Hai Bà Trưng, Q. 1, TP.HCM" },
+    salesPerson: "Bình Nguyễn", total: 15400000, deposit: 15400000, paymentStatus: "full",
+    notes: "",
+    products: [
+      { name: "Bộ salon gỗ nu xà cừ", material: "Gỗ nu xà cừ", size: "Bàn: 120×65×45 cm, Ghế đơn ×2", finish: "PU bóng giữ vân gỗ tự nhiên", pattern: "Trơn hiện đại", qty: 1, price: 15400000 },
+    ],
+    timeline: [
+      { time: "08/03/2026 14:45", label: "Tạo đơn", desc: "Khách đặt gia công.", active: false },
+      { time: "09/03/2026 08:00", label: "Đang gia công", desc: "Bắt đầu đánh ráp và sơn PU.", active: false },
+      { time: "10/03/2026 16:00", label: "Hoàn thiện sản phẩm", desc: "Sơn hoàn thiện, QC thông qua.", active: false },
+      { time: "11/03/2026 10:00", label: "Giao hàng thành công", desc: "Khách đã nhận và thanh toán đủ tiền hàng.", active: true },
+    ],
+  },
+
+  // ========== NHÓM 3: HÀNG ĐẶT ==========
+  "DH-D01": {
+    code: "DH-DAT-001", type: "Hàng đặt", status: "Chờ nhập hàng",
+    date: "2026-03-12T11:15:00", deliveryDate: "2026-03-30",
+    customer: { name: "Nguyễn Thị Hồng", phone: "0912123123", address: "KĐT Times City, Q. Hai Bà Trưng, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 75000000, deposit: 25000000, paymentStatus: "partial",
+    notes: "Yêu cầu gỗ hương đá đặc, đục tay kỹ lưỡng, sơn PU bóng 5 lớp.",
+    products: [
+      { name: "Tủ thờ đục kỹ gỗ hương đá", material: "Gỗ hương đá nguyên khối", size: "160×50×220 cm", finish: "Sơn PU bóng 5 lớp", pattern: "Chạm tứ linh cuốn thư thủ công", qty: 1, price: 75000000 },
+    ],
+    timeline: [
+      { time: "12/03/2026 11:15", label: "Chờ nhập hàng", desc: "Khách chốt bản vẽ, đặt cọc 25tr. Cửa hàng đang đi nhập mộc.", active: true },
+    ],
+  },
+  "DH-D02": {
+    code: "DH-DAT-002", type: "Hàng đặt", status: "Đang gia công",
+    date: "2026-03-05T09:00:00", deliveryDate: "2026-03-25",
+    customer: { name: "Lê Văn Tám", phone: "0321654987", address: "Biệt thự 12, Khu compound Thảo Điền, Q. 2, TP.HCM" },
+    salesPerson: "Bình Nguyễn", total: 120000000, deposit: 40000000, paymentStatus: "partial",
+    notes: "Bộ phòng khách full gỗ hương đá. Khách yêu cầu tiến độ cập nhật hàng tuần.",
+    products: [
+      { name: "Bộ Salon gỗ hương đá 5 món", material: "Gỗ hương đá Nam Phi", size: "Bàn: 150×80×45 cm, Trường kỷ: 220 cm, Ghế đơn ×2, Đôn ×2", finish: "Sơn PU trần bóng mờ", pattern: "Chạm nghê bảo đỉnh + triện cổ", qty: 1, price: 90000000 },
+      { name: "Kệ tivi gỗ hương đá nguyên khối", material: "Gỗ hương đá", size: "240×45×60 cm", finish: "PU đồng màu bộ bàn ghế", pattern: "Trơn, phẳng hiện đại", qty: 1, price: 30000000 },
+    ],
+    timeline: [
+      { time: "05/03/2026 09:00", label: "Ký hợp đồng", desc: "Khách ký HĐ và cọc 40tr.", active: false },
+      { time: "06/03/2026 08:00", label: "Phân công thợ", desc: "Thợ Nguyễn Văn Đức + Lê Văn Hùng phụ trách.", active: false },
+      { time: "07/03/2026 08:00", label: "Đang gia công", desc: "Đang gia công tại xưởng. Dự kiến hoàn thiện 20/03.", active: true },
     ],
   },
 };
@@ -380,14 +228,13 @@ const fmtDateTime = (s) => {
 const statusStyle = (status) => {
   const m = {
     "Chờ xử lý":           { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" },
-    "Đang chuẩn bị":       { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" },
+    "Chờ nhập hàng":       { bg: "#FFFBEB", text: "#B45309", border: "#FDE68A" },
+    "Chờ gia công":        { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" },
+    "Đang gia công":       { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" },
+    "Hoàn thiện sản phẩm": { bg: "#ECFDF5", text: "#047857", border: "#A7F3D0" },
+    "Chuẩn bị giao hàng":  { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" },
     "Đang giao hàng":      { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" },
     "Giao hàng thành công": { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" },
-    "Chờ báo giá":         { bg: "#FFFBEB", text: "#B45309", border: "#FDE68A" },
-    "Đã báo giá":          { bg: "#ECFDF5", text: "#047857", border: "#A7F3D0" },
-    "Chờ xác nhận":        { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" },
-    "Xác nhận đơn hàng":   { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" },
-    "Đang sản xuất":       { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" },
     "Chờ duyệt hủy":      { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" },
     "Đã hủy":              { bg: "#FEF2F2", text: "#DC2626", border: "#FECACA" },
   };
@@ -638,10 +485,82 @@ const QuoteBuilderView = ({ o, quotedPrices, handlePriceChange, displayTotal }) 
 
 // --- KIỂU HIỂN THỊ ĐƠN HÀNG THÔNG THƯỜNG ---
 // Chuyên dụng để theo dõi đơn (Đã chốt giá, Đang sản xuất, Giao hàng...)
-const StandardOrderView = ({ o, displayTotal, hasPricing, remaining }) => {
+const StandardOrderView = ({ o, displayTotal, hasPricing, remaining, deliveryImage, onDeliveryImageChange }) => {
   return (
     <div className="flex-1 overflow-y-auto p-6 space-y-4">
       {/* ── BANNER ── */}
+      {o.status === "Hoàn thiện sản phẩm" && (
+        <div
+          className="flex flex-col md:flex-row items-stretch md:items-start gap-4 p-5 rounded-2xl"
+          style={{ backgroundColor: "#F0FDF4", border: "1px solid #BBF7D0" }}
+        >
+          <div className="shrink-0 relative group cursor-pointer w-full md:w-40 h-32 md:h-auto object-cover rounded-xl overflow-hidden border-2 border-green-200">
+            {o.finishedImage ? (
+              <img src={o.finishedImage} alt="Sản phẩm hoàn thiện" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-green-50 flex items-center justify-center text-green-300">
+                <Camera size={24} />
+              </div>
+            )}
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+              <Eye size={20} className="text-white" />
+            </div>
+          </div>
+          <div className="flex-1 space-y-2">
+            <div className="flex items-start gap-2">
+              <CheckCircle size={18} className="shrink-0 mt-0.5" style={{ color: "#166534" }} />
+              <div>
+                <p className="text-[14px] font-bold" style={{ color: "#14532D" }}>Thợ đã báo cáo Hoàn thiện!</p>
+                <p className="text-[13px] mt-0.5" style={{ color: "#15803D" }}>
+                  Bạn và QC có thể xem ảnh sản phẩm hoàn thiện. Nếu đạt chuẩn, hãy duyệt để chuyển xếp lịch giao hàng.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {o.status === "Đang giao hàng" && (
+        <div
+          className="flex items-start gap-3 p-4 rounded-2xl"
+          style={{ backgroundColor: "#EFF6FF", border: "1px solid #BFDBFE" }}
+        >
+          <Truck size={18} className="shrink-0 mt-0.5" style={{ color: "#1D4ED8" }} />
+          <div className="flex-1">
+            <p className="text-[13px] font-bold" style={{ color: "#1E40AF" }}>Đơn hàng đang được giao</p>
+            <p className="text-[12px] mt-0.5" style={{ color: "#1D4ED8" }}>
+              Vui lòng chụp ảnh giao hàng để xác nhận hoàn tất. Bắt buộc có ảnh mới được chuyển trạng thái.
+            </p>
+            <div className="mt-3 flex items-center gap-3 flex-wrap">
+              {!deliveryImage ? (
+                <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[12px] font-bold cursor-pointer transition hover:opacity-90 shadow-sm"
+                  style={{ backgroundColor: "#1D4ED8", color: "#fff" }}
+                >
+                  <Camera size={14} />
+                  Tải ảnh giao hàng
+                  <input type="file" accept="image/*" className="hidden" onChange={onDeliveryImageChange} />
+                </label>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <img src={deliveryImage} alt="Ảnh giao hàng" className="w-20 h-20 rounded-xl object-cover border-2 border-blue-300 shadow-sm" />
+                    <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                      <CheckCircle size={12} className="text-white" />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[12px] font-bold text-green-700">Đã tải ảnh lên</p>
+                    <label className="text-[11px] text-blue-600 cursor-pointer hover:underline font-semibold">
+                      Đổi ảnh khác
+                      <input type="file" accept="image/*" className="hidden" onChange={onDeliveryImageChange} />
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {o.status === "Chờ duyệt hủy" && o.cancelReason && (
         <div
           className="flex items-start gap-3 p-4 rounded-2xl"
@@ -930,6 +849,24 @@ const StandardOrderView = ({ o, displayTotal, hasPricing, remaining }) => {
                   <p className="text-[12px] font-semibold mt-0.5" style={{ color: "var(--text-main)" }}>{fmtDate(o.deliveryDate)}</p>
                 </div>
               </div>
+              {o.deliveryImage && (
+                <div className="flex items-start gap-2.5 pt-2" style={{ borderTop: "1px solid var(--grid-border)" }}>
+                  <Camera size={13} className="mt-0.5 shrink-0" style={{ color: "var(--text-placeholder)" }} />
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "var(--text-placeholder)" }}>Ảnh giao hàng</p>
+                    <img src={o.deliveryImage} alt="Ảnh giao hàng" className="w-28 h-28 rounded-xl object-cover mt-1 border border-gray-200 shadow-sm" />
+                  </div>
+                </div>
+              )}
+              {deliveryImage && !o.deliveryImage && (
+                <div className="flex items-start gap-2.5 pt-2" style={{ borderTop: "1px solid var(--grid-border)" }}>
+                  <Camera size={13} className="mt-0.5 shrink-0" style={{ color: "var(--text-placeholder)" }} />
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "var(--text-placeholder)" }}>Ảnh giao hàng (đã tải lên)</p>
+                    <img src={deliveryImage} alt="Ảnh giao hàng" className="w-28 h-28 rounded-xl object-cover mt-1 border-2 border-green-300 shadow-sm" />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -977,6 +914,16 @@ export default function OwnerOrderDetail() {
   const ss = statusStyle(o.status);
   
   const [quotedPrices, setQuotedPrices] = useState({});
+  const [deliveryImage, setDeliveryImage] = useState(null);
+
+  const handleDeliveryImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setDeliveryImage(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handlePriceChange = (index, val) => {
     const num = val.replace(/\D/g, "");
@@ -1082,6 +1029,46 @@ export default function OwnerOrderDetail() {
                   Duyệt hủy đơn
                 </button>
               )}
+
+              {o.status === "Hoàn thiện sản phẩm" && (
+                <button
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer shadow-sm"
+                  style={{ backgroundColor: "#059669", color: "#fff" }}
+                  onClick={() => alert("Đã duyệt chuyển sang Chuẩn bị giao hàng!")}
+                >
+                  <Package size={14} />
+                  Duyệt & Chuẩn bị giao
+                </button>
+              )}
+
+              {o.status === "Đang giao hàng" && (
+                <button
+                  disabled={!deliveryImage}
+                  onClick={() => {
+                    const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
+                    let needsAdd = true;
+                    const updated = saved.map(order => {
+                      if (order.code === o.code || order.id === id) { // fallback check
+                        needsAdd = false;
+                        return { ...order, status: "Giao hàng thành công", deliveryImage };
+                      }
+                      return order;
+                    });
+                    if (needsAdd) {
+                       updated.push({ ...o, status: "Giao hàng thành công", deliveryImage, id });
+                    }
+                    localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
+                    alert("Hoàn tất giao hàng thành công!");
+                    navigate("/owner/orders");
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: deliveryImage ? "#15803D" : "#9CA3AF", color: "#fff" }}
+                  title={!deliveryImage ? "Vui lòng tải ảnh giao hàng trước" : ""}
+                >
+                  <CheckCircle size={14} />
+                  Xác nhận giao thành công
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -1089,7 +1076,7 @@ export default function OwnerOrderDetail() {
         {/* ╔══════════ SCROLLABLE CONTENT ══════════╗ */}
         {o.status === "Chờ báo giá" 
           ? <QuoteBuilderView o={o} quotedPrices={quotedPrices} handlePriceChange={handlePriceChange} displayTotal={displayTotal} />
-          : <StandardOrderView o={o} displayTotal={displayTotal} hasPricing={hasPricing} remaining={remaining} />
+          : <StandardOrderView o={o} displayTotal={displayTotal} hasPricing={hasPricing} remaining={remaining} deliveryImage={deliveryImage} onDeliveryImageChange={handleDeliveryImageChange} />
         }
       </div>
     </>
