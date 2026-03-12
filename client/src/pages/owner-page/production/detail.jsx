@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import {
   ArrowLeft,
@@ -14,6 +14,7 @@ import {
   Paintbrush,
   Wrench,
   ChevronRight,
+  X,
 } from "lucide-react";
 
 // ===================== CONSTANTS =====================
@@ -106,6 +107,13 @@ const MOCK_PRODUCTIONS = {
     ],
   },
 };
+
+const MOCK_WORKERS = [
+  { id: "W001", name: "Nguyễn Văn Đức", role: "Thợ sản xuất", avatar: "Đ" },
+  { id: "W002", name: "Trần Minh Tâm", role: "Thợ sản xuất", avatar: "T" },
+  { id: "W003", name: "Lê Văn Hùng", role: "Thợ sơn", avatar: "H" },
+  { id: "W004", name: "Phạm Quốc Bảo", role: "Thợ mộc", avatar: "B" },
+];
 
 // ===================== HELPERS =====================
 const fmtDate = (s) => (s ? new Date(s).toLocaleDateString("vi-VN") : "Chưa xác định");
@@ -242,6 +250,11 @@ const StageProgress = ({ currentStage, status }) => {
 // ===================== MAIN COMPONENT =====================
 export default function ProductionDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  
+  // States
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [selectedWorker, setSelectedWorker] = useState(null);
   
   // Fake data fallback logic
   const fallbackRef = ["LSX001", "LSX002", "LSX010", "LSX015"].includes(id) ? "LSX001" 
@@ -311,6 +324,7 @@ export default function ProductionDetail() {
             <div className="flex items-center gap-2">
               {isWaiting && (
                 <button
+                  onClick={() => setShowAssignModal(true)}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer"
                   style={{ backgroundColor: "#7C3AED", color: "#fff" }}
                 >
@@ -350,6 +364,7 @@ export default function ProductionDetail() {
                   Sản phẩm chưa được phân công cho thợ. Vui lòng chọn thợ phụ trách để bắt đầu sản xuất.
                 </p>
                 <button 
+                  onClick={() => setShowAssignModal(true)}
                   className="mt-3 px-4 py-2 rounded-xl bg-orange-600 text-white text-[12px] font-bold flex items-center gap-2 hover:bg-orange-700 transition-all shadow-sm shadow-orange-200"
                 >
                   <UserPlus size={14} /> Giao việc cho thợ
@@ -544,6 +559,7 @@ export default function ProductionDetail() {
                       <p className="text-[13px] font-bold" style={{ color: "var(--text-secondary)" }}>Chưa phân công</p>
                       <p className="text-[11px] mt-0.5" style={{ color: "var(--text-placeholder)" }}>Bạn cần giao việc cho thợ</p>
                       <button
+                        onClick={() => setShowAssignModal(true)}
                         className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer"
                         style={{ backgroundColor: "#7C3AED", color: "#fff" }}
                       >
@@ -623,6 +639,71 @@ export default function ProductionDetail() {
             </div>
           </div>
         </div>
+
+        {/* ── MODAL: GIAO VIỆC ── */}
+        {showAssignModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden">
+               <div className="px-6 py-4 border-b flex items-center justify-between">
+                  <h3 className="text-base font-bold text-gray-900">Giao việc cho thợ</h3>
+                  <button onClick={() => setShowAssignModal(false)} className="p-2 hover:bg-gray-100 rounded-lg transition text-gray-400">
+                    <X size={20} />
+                  </button>
+               </div>
+               
+               <div className="p-6">
+                  <div className="space-y-4">
+                     <p className="text-[13px] text-gray-600">Chọn thợ phụ trách cho lệnh sản xuất <span className="font-bold text-indigo-600">{p.code}</span>:</p>
+                     
+                     <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                        {MOCK_WORKERS.map(worker => (
+                           <label 
+                             key={worker.id}
+                             className={`flex items-center gap-3 p-3 rounded-xl border-2 transition cursor-pointer hover:border-indigo-200 ${selectedWorker === worker.id ? 'border-indigo-500 bg-indigo-50' : 'border-gray-100'}`}
+                           >
+                              <input 
+                                type="radio" 
+                                name="worker" 
+                                className="hidden" 
+                                onChange={() => setSelectedWorker(worker.id)}
+                                checked={selectedWorker === worker.id}
+                              />
+                              <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
+                                 {worker.avatar}
+                              </div>
+                              <div className="flex-1">
+                                 <p className="text-[14px] font-bold text-gray-900">{worker.name}</p>
+                                 <p className="text-[11px] text-gray-500">{worker.role}</p>
+                              </div>
+                              {selectedWorker === worker.id && <CheckCircle size={18} className="text-indigo-600" />}
+                           </label>
+                        ))}
+                     </div>
+                  </div>
+
+                  <div className="mt-6 flex gap-3">
+                     <button 
+                       onClick={() => setShowAssignModal(false)}
+                       className="flex-1 h-11 rounded-xl text-[13px] font-bold text-gray-400 hover:bg-gray-50 transition"
+                     >
+                        Hủy bỏ
+                     </button>
+                     <button 
+                       disabled={!selectedWorker}
+                       onClick={() => {
+                         alert(`Đã giao việc cho thợ ${MOCK_WORKERS.find(w => w.id === selectedWorker).name}. Trạng thái lệnh chuyển sang Đang sản xuất.`);
+                         setShowAssignModal(false);
+                         navigate("/owner/production");
+                       }}
+                       className="flex-1 h-11 rounded-xl text-[13px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-indigo-100"
+                     >
+                        Xác nhận giao việc
+                     </button>
+                  </div>
+               </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

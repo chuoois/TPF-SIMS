@@ -23,6 +23,7 @@ import {
 
 const menuItems = [
   { text: "Tổng quan", icon: Home, path: "/owner/dashboard" },
+  { text: "Yêu cầu khách hàng", icon: ClipboardList, path: "/owner/requirements" },
   { text: "Đơn hàng", icon: ClipboardList, path: "/owner/orders" },
 
   { text: "Sản phẩm", icon: Package, path: "/owner/products" },

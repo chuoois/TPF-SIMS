@@ -8,6 +8,7 @@ import OrderDetail from "../pages/owner-page/orders/detail";
 import Production from "../pages/owner-page/production";
 import ProductionDetail from "../pages/owner-page/production/detail";
 import Products from "../pages/owner-page/products";
+import OwnerRequirements from "../pages/owner-page/customer-requirements";
 // import Customers from "../pages/owner-page/customers";
 import Suppliers from "../pages/owner-page/suppliers";
 import Employees from "../pages/owner-page/employees";
@@ -30,6 +31,10 @@ export const ownerRoutes = {
     {
       path: "orders/:id",
       element: <OrderDetail />,
+    },
+    {
+      path: "requirements",
+      element: <OwnerRequirements />,
     },
     {
       path: "production",
