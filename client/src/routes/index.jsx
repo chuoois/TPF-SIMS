@@ -5,6 +5,7 @@ import { authRoutes } from "./AuthRoutes";
 import { ownerRoutes } from "./OwnerRoutes";
 import { salesRoutes } from "./SalesRoutes";
 import { accountantRoutes } from "./AccountantRoutes";
+import { workerRoutes } from "./WorkerRoutes";
 import ProtectedRoute from "./ProtectedRoute";
 
 /**
@@ -23,7 +24,12 @@ export const router = createBrowserRouter([
   // Protected Routes
   {
     element: <ProtectedRoute />,
-    children: [ownerRoutes, salesRoutes, accountantRoutes],
+
+    children: [],
+
+
+
+
   },
   { path: "/404", element: <NotFoundPage /> },
   { path: "/403", element: <NoPermissionPage /> },

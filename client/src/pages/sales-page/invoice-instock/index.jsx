@@ -9,10 +9,9 @@
  * Created Date: 25/02/2026
  */
 
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Search,
   X,
   Plus,
   Minus,
@@ -30,7 +29,13 @@ import {
   User,
   Receipt,
   Filter,
+  Search,
+  CreditCard,
+  MapPin,
+  Phone,
+  Calendar,
 } from "lucide-react";
+import { PrintableInvoice } from "../order-manage/detail";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
 import AddCustomerModal from "@/pages/sales-page/components/AddCustomerModal";
@@ -45,6 +50,7 @@ const WOOD_PRODUCTS = [
     stock: 8,
     image: "/wood_products.png",
     category: "Phòng ăn",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 2,
@@ -54,6 +60,7 @@ const WOOD_PRODUCTS = [
     stock: 5,
     image: "/wood_products.png",
     category: "Phòng làm việc",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 3,
@@ -63,6 +70,7 @@ const WOOD_PRODUCTS = [
     stock: 12,
     image: "/wood_products.png",
     category: "Phòng làm việc",
+    productType: "Hàng thô",
   },
   {
     id: 4,
@@ -72,6 +80,7 @@ const WOOD_PRODUCTS = [
     stock: 3,
     image: "/wood_products.png",
     category: "Phòng ngủ",
+    productType: "Hàng thô",
   },
   {
     id: 5,
@@ -81,60 +90,77 @@ const WOOD_PRODUCTS = [
     stock: 25,
     image: "/wood_products.png",
     category: "Phòng ăn",
+    productType: "Hàng hoàn thiện",
   },
   {
     id: 6,
-    name: "Bàn trà gỗ tần bì",
-    sku: "BT-TB-01",
-    price: 4500000,
-    stock: 10,
+    name: "Bàn trà đôi mặt đá Marble",
+    sku: "BT-MD-06",
+    price: 4200000,
+    stock: 8,
     image: "/wood_products.png",
     category: "Phòng khách",
+    productType: "Hàng hoàn thiện",
+    size: "Tròn 80 + 60",
+    color: "Chân mạ vàng",
   },
   {
     id: 7,
-    name: "Kệ TV gỗ óc chó 1m8",
-    sku: "KTV-OC-18",
-    price: 11200000,
-    stock: 4,
+    name: "Tủ rượu góc gỗ hương",
+    sku: "TR-HU-07",
+    price: 8900000,
+    stock: 0,
     image: "/wood_products.png",
     category: "Phòng khách",
+    productType: "Hàng thô",
+    size: "Cao 220",
   },
   {
     id: 8,
-    name: "Giường ngủ gỗ sồi 1m6",
-    sku: "GN-SOI-16",
-    price: 15800000,
-    stock: 6,
+    name: "Vách ngăn lam gỗ trang trí",
+    sku: "VN-LG-08",
+    price: 2500000,
+    stock: 15,
     image: "/wood_products.png",
-    category: "Phòng ngủ",
+    category: "Phòng khách",
+    productType: "Hàng hoàn thiện",
+    size: "Module 100 x 240",
+    color: "Nâu cà phê",
   },
   {
     id: 9,
-    name: "Tủ quần áo 3 cánh gỗ sồi",
-    sku: "TQA-SOI-3C",
-    price: 18500000,
-    stock: 2,
+    name: "Sofa nỉ chữ L cỡ lớn",
+    sku: "SF-NL-09",
+    price: 15800000,
+    stock: 4,
     image: "/wood_products.png",
-    category: "Phòng ngủ",
+    category: "Phòng khách",
+    productType: "Hàng hoàn thiện",
+    size: "280 x 160",
+    color: "Xanh Navy",
   },
   {
     id: 10,
-    name: "Bàn ăn gỗ tần bì 6 ghế",
-    sku: "BA-TB-6G",
-    price: 16200000,
-    stock: 0,
+    name: "Tủ giày gỗ thông ghép",
+    sku: "TG-GT-10",
+    price: 1200000,
+    stock: 30,
     image: "/wood_products.png",
-    category: "Phòng ăn",
+    category: "Phòng khách",
+    productType: "Hàng thô",
+    size: "80 x 120 x 30",
   },
   {
     id: 11,
-    name: "Ghế bar gỗ cao su",
-    sku: "GB-CS-01",
-    price: 1200000,
+    name: "Tủ giày MDF phủ Melamine",
+    sku: "TG-MDF-11",
+    price: 1850000,
     stock: 18,
     image: "/wood_products.png",
-    category: "Phòng ăn",
+    category: "Phòng khách",
+    productType: "Hàng hoàn thiện",
+    size: "100 x 110 x 35",
+    color: "Trắng + Vân gỗ",
   },
   {
     id: 12,
@@ -144,6 +170,9 @@ const WOOD_PRODUCTS = [
     stock: 7,
     image: "/wood_products.png",
     category: "Phòng khách",
+    productType: "Hàng hoàn thiện",
+    size: "140 x 40 x 85",
+    color: "Gỗ tự nhiên",
   },
   {
     id: 13,
@@ -153,6 +182,9 @@ const WOOD_PRODUCTS = [
     stock: 3,
     image: "/wood_products.png",
     category: "Phòng khách",
+    productType: "Hàng hoàn thiện",
+    size: "320 x 200",
+    color: "Đen tuyền",
   },
   {
     id: 14,
@@ -162,6 +194,9 @@ const WOOD_PRODUCTS = [
     stock: 15,
     image: "/wood_products.png",
     category: "Phòng khách",
+    productType: "Hàng hoàn thiện",
+    size: "Tròn 70",
+    color: "Đen mờ",
   },
   {
     id: 15,
@@ -171,6 +206,9 @@ const WOOD_PRODUCTS = [
     stock: 20,
     image: "/wood_products.png",
     category: "Phòng khách",
+    productType: "Hàng hoàn thiện",
+    size: "180 x 35",
+    color: "Xám chì",
   },
   {
     id: 16,
@@ -180,6 +218,9 @@ const WOOD_PRODUCTS = [
     stock: 12,
     image: "/wood_products.png",
     category: "Phòng khách",
+    productType: "Hàng hoàn thiện",
+    size: "90 x 120 x 24",
+    color: "Vân sồi",
   },
   {
     id: 17,
@@ -189,6 +230,8 @@ const WOOD_PRODUCTS = [
     stock: 30,
     image: "/wood_products.png",
     category: "Phòng khách",
+    productType: "Hàng thô",
+    size: "Tròn 40",
   },
   {
     id: 18,
@@ -198,6 +241,8 @@ const WOOD_PRODUCTS = [
     stock: 5,
     image: "/wood_products.png",
     category: "Phòng khách",
+    productType: "Hàng thô",
+    size: "Module 120x260",
   },
 
   // Phòng ngủ
@@ -209,6 +254,8 @@ const WOOD_PRODUCTS = [
     stock: 4,
     image: "/wood_products.png",
     category: "Phòng ngủ",
+    productType: "Hàng thô",
+    size: "180 x 200",
   },
   {
     id: 20,
@@ -218,6 +265,9 @@ const WOOD_PRODUCTS = [
     stock: 2,
     image: "/wood_products.png",
     category: "Phòng ngủ",
+    productType: "Hàng hoàn thiện",
+    size: "240 x 220 x 60",
+    color: "Khung đen",
   },
   {
     id: 21,
@@ -227,6 +277,9 @@ const WOOD_PRODUCTS = [
     stock: 8,
     image: "/wood_products.png",
     category: "Phòng ngủ",
+    productType: "Hàng hoàn thiện",
+    size: "100 x 40 x 75",
+    color: "Trắng sứ",
   },
   {
     id: 22,
@@ -236,6 +289,9 @@ const WOOD_PRODUCTS = [
     stock: 25,
     image: "/wood_products.png",
     category: "Phòng ngủ",
+    productType: "Hàng hoàn thiện",
+    size: "45 x 40 x 45",
+    color: "Gỗ dẻ gai nguyên bản",
   },
   {
     id: 23,
@@ -245,6 +301,8 @@ const WOOD_PRODUCTS = [
     stock: 6,
     image: "/wood_products.png",
     category: "Phòng ngủ",
+    productType: "Hàng thô",
+    size: "120 x 200",
   },
   {
     id: 24,
@@ -254,6 +312,9 @@ const WOOD_PRODUCTS = [
     stock: 10,
     image: "/wood_products.png",
     category: "Phòng ngủ",
+    productType: "Hàng hoàn thiện",
+    size: "Ghế: 85x85, Đôn: 50x40",
+    color: "Ghi sáng",
   },
   {
     id: 25,
@@ -263,6 +324,8 @@ const WOOD_PRODUCTS = [
     stock: 14,
     image: "/wood_products.png",
     category: "Phòng ngủ",
+    productType: "Hàng thô",
+    size: "60 x 80 x 40",
   },
   {
     id: 26,
@@ -272,6 +335,8 @@ const WOOD_PRODUCTS = [
     stock: 40,
     image: "/wood_products.png",
     category: "Phòng ngủ",
+    productType: "Hàng thô",
+    size: "150 x 40",
   },
 
   // Phòng ăn
@@ -283,6 +348,9 @@ const WOOD_PRODUCTS = [
     stock: 5,
     image: "/wood_products.png",
     category: "Phòng ăn",
+    productType: "Hàng hoàn thiện",
+    size: "160 x 80",
+    color: "Mặt đá xám vân xoáy",
   },
   {
     id: 28,
@@ -292,6 +360,9 @@ const WOOD_PRODUCTS = [
     stock: 3,
     image: "/wood_products.png",
     category: "Phòng ăn",
+    productType: "Hàng hoàn thiện",
+    size: "Module 60x60x220",
+    color: "Đen nhám",
   },
   {
     id: 29,
@@ -301,6 +372,9 @@ const WOOD_PRODUCTS = [
     stock: 1,
     image: "/wood_products.png",
     category: "Phòng ăn",
+    productType: "Hàng hoàn thiện",
+    size: "Theo mặt bằng thực tế",
+    color: "Xanh ngọc / Trắng",
   },
   {
     id: 30,
@@ -310,6 +384,9 @@ const WOOD_PRODUCTS = [
     stock: 50,
     image: "/wood_products.png",
     category: "Phòng ăn",
+    productType: "Hàng hoàn thiện",
+    size: "Chân 45cm",
+    color: "Da bò",
   },
   {
     id: 31,
@@ -319,6 +396,8 @@ const WOOD_PRODUCTS = [
     stock: 7,
     image: "/wood_products.png",
     category: "Phòng ăn",
+    productType: "Hàng thô",
+    size: "120 x 80",
   },
   {
     id: 32,
@@ -328,6 +407,9 @@ const WOOD_PRODUCTS = [
     stock: 18,
     image: "/wood_products.png",
     category: "Phòng ăn",
+    productType: "Hàng hoàn thiện",
+    size: "80 x 110 x 20",
+    color: "Nâu cánh gián",
   },
   {
     id: 33,
@@ -337,6 +419,9 @@ const WOOD_PRODUCTS = [
     stock: 4,
     image: "/wood_products.png",
     category: "Phòng ăn",
+    productType: "Hàng hoàn thiện",
+    size: "Đường kính 1.4m",
+    color: "Mặt đá vân mây trắng",
   },
 
   // Phòng làm việc
@@ -348,6 +433,9 @@ const WOOD_PRODUCTS = [
     stock: 22,
     image: "/wood_products.png",
     category: "Phòng làm việc",
+    productType: "Hàng hoàn thiện",
+    size: "Tiêu chuẩn Adult",
+    color: "Đen / Trắng xám",
   },
   {
     id: 35,
@@ -357,6 +445,9 @@ const WOOD_PRODUCTS = [
     stock: 9,
     image: "/wood_products.png",
     category: "Phòng làm việc",
+    productType: "Hàng hoàn thiện",
+    size: "160 x 75",
+    color: "Mặt óc chó / Chân đen",
   },
   {
     id: 36,
@@ -366,6 +457,9 @@ const WOOD_PRODUCTS = [
     stock: 16,
     image: "/wood_products.png",
     category: "Phòng làm việc",
+    productType: "Hàng hoàn thiện",
+    size: "120 x 200 x 40",
+    color: "Ghi chì",
   },
   {
     id: 37,
@@ -375,6 +469,8 @@ const WOOD_PRODUCTS = [
     stock: 35,
     image: "/wood_products.png",
     category: "Phòng làm việc",
+    productType: "Hàng thô",
+    size: "50 x 40 x 30",
   },
   {
     id: 38,
@@ -384,6 +480,9 @@ const WOOD_PRODUCTS = [
     stock: 45,
     image: "/wood_products.png",
     category: "Phòng làm việc",
+    productType: "Hàng hoàn thiện",
+    size: "Size L",
+    color: "Đen",
   },
   {
     id: 39,
@@ -393,6 +492,7 @@ const WOOD_PRODUCTS = [
     stock: 28,
     image: "/wood_products.png",
     category: "Phòng làm việc",
+    productType: "Hàng thô",
   },
   {
     id: 40,
@@ -402,11 +502,25 @@ const WOOD_PRODUCTS = [
     stock: 5,
     image: "/wood_products.png",
     category: "Phòng làm việc",
+    productType: "Hàng hoàn thiện",
   },
 ];
 
 const ITEMS_PER_PAGE = 15;
 const CATEGORIES = ["Phòng khách", "Phòng ngủ", "Phòng ăn", "Phòng làm việc"];
+
+const MOCK_CUSTOMERS = [
+  { id: 1, name: "Nguyễn Văn Hoàng", phone: "0901234567" },
+  { id: 2, name: "Trần Thị Mai", phone: "0912345678" },
+  { id: 3, name: "Lê Minh Tuấn", phone: "0923456789" },
+  { id: 4, name: "Phạm Thị Lan", phone: "0934567890" },
+  { id: 5, name: "Võ Đức Anh", phone: "0945678901" },
+  { id: 6, name: "Đặng Thùy Linh", phone: "0956789012" },
+  { id: 7, name: "Bùi Tuấn Anh", phone: "0967890123" },
+  { id: 8, name: "Hoàng Nguyệt Ánh", phone: "0978901234" },
+  { id: 9, name: "Đinh Quang Hiếu", phone: "0989012345" },
+  { id: 10, name: "Vũ Phương Thảo", phone: "0990123456" },
+];
 
 const fmt = (v) => new Intl.NumberFormat("vi-VN").format(v);
 
@@ -417,10 +531,48 @@ const createEmptyTab = () => ({
   selectedCustomer: null,
   orderNote: "",
   discount: 0,
+  depositAmount: 0,
+  deliveryMethod: "store", // "store" hoặc "delivery"
+  deliveryDate: "",
 });
 
 // ===================== COMPONENT =====================
 export default function InStockInvoicePage() {
+  const printRef = useRef(null);
+  const [printingOrder, setPrintingOrder] = useState(null);
+
+  useEffect(() => {
+    if (printingOrder && printRef.current) {
+      const content = printRef.current;
+      const printWindow = window.open("", "_blank", "width=900,height=700");
+      if (printWindow) {
+        printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                <title>In hóa đơn</title>
+                <style>
+                    @page { size: A4; margin: 15mm; }
+                    body { margin: 0; padding: 0; }
+                    .page-break { page-break-after: always; }
+                    .page-break:last-child { page-break-after: auto; }
+                </style>
+                </head>
+                <body>${content.innerHTML}</body>
+                </html>
+            `);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+          printWindow.print();
+          setPrintingOrder(null);
+        }, 500);
+      } else {
+        setPrintingOrder(null);
+      }
+    }
+  }, [printingOrder]);
+
   const navigate = useNavigate();
 
   const [tabs, setTabs] = useState([
@@ -430,16 +582,25 @@ export default function InStockInvoicePage() {
       selectedCustomer: null,
       orderNote: "",
       discount: 0,
+      depositAmount: 0,
+      deliveryMethod: "store",
+      deliveryDate: "",
     },
   ]);
   const [activeTabId, setActiveTabId] = useState(1);
-  const [searchProduct, setSearchProduct] = useState("");
+  const [productTypeTab, setProductTypeTab] = useState("Hàng thô");
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedProductTypes, setSelectedProductTypes] = useState([]);
+  const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [productSearch, setProductSearch] = useState(""); // Thêm state tìm kiếm sản phẩm
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const customerSearchRef = useRef(null);
 
   const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0];
 
@@ -460,16 +621,45 @@ export default function InStockInvoicePage() {
 
   const filteredProducts = useMemo(() => {
     return WOOD_PRODUCTS.filter((p) => {
-      const matchSearch =
-        !searchProduct ||
-        p.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
-        p.sku.toLowerCase().includes(searchProduct.toLowerCase());
+      const matchType = p.productType === productTypeTab;
       const matchCategory =
         selectedCategories.length === 0 ||
         selectedCategories.includes(p.category);
-      return matchSearch && matchCategory;
+
+      const pNameLower = p.name.toLowerCase();
+      let pType = "Khác";
+      if (pNameLower.includes("bàn") || pNameLower.includes("tab")) pType = "Bàn";
+      else if (pNameLower.includes("ghế") || pNameLower.includes("sofa") || pNameLower.includes("đôn")) pType = "Ghế";
+      else if (pNameLower.includes("tủ") || pNameLower.includes("kệ") || pNameLower.includes("hộc") || pNameLower.includes("giá")) pType = "Tủ";
+      else if (pNameLower.includes("giường")) pType = "Giường";
+
+      const matchProductType =
+        selectedProductTypes.length === 0 ||
+        selectedProductTypes.includes(pType);
+
+      const minP = parseInt(priceRange.min);
+      const maxP = parseInt(priceRange.max);
+      const matchPrice =
+        (isNaN(minP) || p.price >= minP) &&
+        (isNaN(maxP) || p.price <= maxP);
+
+      // Lọc theo từ khóa tìm kiếm
+      const matchSearch =
+        !productSearch.trim() ||
+        p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+        p.sku.toLowerCase().includes(productSearch.toLowerCase());
+
+      return matchType && matchCategory && matchProductType && matchPrice && matchSearch;
     });
-  }, [searchProduct, selectedCategories]);
+  }, [productTypeTab, selectedCategories, selectedProductTypes, priceRange, productSearch]);
+
+  const customerResults = useMemo(() => {
+    if (!customerSearch.trim()) return [];
+    const q = customerSearch.toLowerCase();
+    return MOCK_CUSTOMERS.filter(
+      (c) => c.name.toLowerCase().includes(q) || c.phone.includes(q),
+    );
+  }, [customerSearch]);
 
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
   const paginatedProducts = filteredProducts.slice(
@@ -577,17 +767,53 @@ export default function InStockInvoicePage() {
     (sum, i) => sum + i.price * i.quantity,
     0,
   );
-  const totalPayable = Math.max(0, subtotal - activeTab.discount);
+  const totalPayable = Math.max(
+    0,
+    subtotal - activeTab.discount - activeTab.depositAmount,
+  );
   const itemCount = activeTab.cartItems.reduce((sum, i) => sum + i.quantity, 0);
 
   const handleCheckout = () => {
     if (activeTab.cartItems.length === 0) return;
-    showToast("success", `Tạo hóa đơn thành công! Tổng: ${fmt(totalPayable)}đ`);
+
+    if (!activeTab.selectedCustomer) {
+      showToast("error", "Vui lòng nhập hoặc chọn Khách hàng trước khi thanh toán!");
+      return;
+    }
+
+    const newOrder = {
+      code: "HD-" + Math.floor(Math.random() * 1000000),
+      customer: {
+        name: activeTab.selectedCustomer?.name || "Khách lẻ",
+        phone: activeTab.selectedCustomer?.phone || "",
+        address: "",
+      },
+      type: "Hàng sẵn",
+      salesPerson: "Nhân viên bán hàng",
+      products: activeTab.cartItems.map((item) => ({
+        name: item.name,
+        material: item.category || "Hàng trưng bày",
+        size: "Tiêu chuẩn",
+        qty: item.quantity,
+        price: item.price,
+        note: "",
+      })),
+      total: subtotal,
+      deposit: activeTab.depositAmount,
+      date: new Date().toISOString(),
+    };
+
+    showToast("success", `Tạo hóa đơn ${newOrder.code} thành công!`);
+    setPrintingOrder(newOrder);
+
     updateActiveTab({
       cartItems: [],
       selectedCustomer: null,
       orderNote: "",
       discount: 0,
+      depositAmount: 0,
+      deliveryMethod: "store",
+      deliveryDate: "",
     });
   };
 
@@ -695,29 +921,6 @@ export default function InStockInvoicePage() {
             </button>
 
             {/* Order type switch — pushed to right */}
-            <div
-              className="ml-auto flex rounded-lg overflow-hidden text-[12px] font-medium shrink-0"
-              style={{ border: "1px solid var(--grid-border)" }}
-            >
-              <button
-                className="flex items-center gap-1 px-3 py-1.5 cursor-pointer transition"
-                style={{
-                  backgroundColor: "var(--brand-primary)",
-                  color: "#fff",
-                }}
-              >
-                <PackageCheck size={12} /> Có sẵn
-              </button>
-              <button
-                onClick={() =>
-                  navigate("/sales/dashboard/invoice-custom-order")
-                }
-                className="flex items-center gap-1 px-3 py-1.5 cursor-pointer transition hover:bg-gray-50"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                <Hammer size={12} /> Đặt riêng
-              </button>
-            </div>
           </div>
 
           {/* ── Cart Content ── */}
@@ -866,7 +1069,10 @@ export default function InStockInvoicePage() {
               style={{ borderColor: "var(--grid-border)" }}
             >
               {/* Customer */}
-              <div className="flex items-center gap-2 px-4 py-2.5 w-1/2">
+              <div
+                className="relative flex items-center gap-2 px-4 py-2.5 w-1/2"
+                ref={customerSearchRef}
+              >
                 <User
                   size={14}
                   style={{ color: "var(--text-placeholder)" }}
@@ -880,32 +1086,120 @@ export default function InStockInvoicePage() {
                     >
                       {activeTab.selectedCustomer.name}
                     </span>
+                    <span
+                      className="text-[11px] shrink-0"
+                      style={{ color: "var(--text-placeholder)" }}
+                    >
+                      {activeTab.selectedCustomer.phone}
+                    </span>
                     <button
-                      onClick={() =>
-                        updateActiveTab({ selectedCustomer: null })
-                      }
-                      className="cursor-pointer shrink-0"
+                      onClick={() => {
+                        updateActiveTab({ selectedCustomer: null });
+                        setCustomerSearch("");
+                      }}
+                      className="cursor-pointer shrink-0 ml-auto"
                       style={{ color: "var(--text-placeholder)" }}
                     >
                       <X size={12} />
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1.5 flex-1">
-                    <span
-                      className="text-[13px]"
-                      style={{ color: "var(--text-placeholder)" }}
-                    >
-                      Khách lẻ
-                    </span>
+                  <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                    <input
+                      type="text"
+                      placeholder="Tìm khách hàng (tên, SĐT)..."
+                      value={customerSearch}
+                      onChange={(e) => {
+                        setCustomerSearch(e.target.value);
+                        setShowCustomerDropdown(true);
+                      }}
+                      onFocus={() => {
+                        if (customerSearch.trim())
+                          setShowCustomerDropdown(true);
+                      }}
+                      onBlur={() => {
+                        setTimeout(() => setShowCustomerDropdown(false), 200);
+                      }}
+                      className="flex-1 text-[13px] focus:outline-none bg-transparent"
+                      style={{ color: "var(--text-main)" }}
+                    />
                     <button
                       onClick={() => setShowAddCustomer(true)}
-                      className="w-6 h-6 rounded-md flex items-center justify-center cursor-pointer transition hover:bg-gray-100"
+                      className="w-6 h-6 rounded-md flex items-center justify-center cursor-pointer transition hover:bg-gray-100 shrink-0"
                       style={{ color: "var(--brand-primary)" }}
-                      title="Thêm khách hàng"
+                      title="Thêm khách hàng mới"
                     >
                       <UserPlus size={12} />
                     </button>
+                  </div>
+                )}
+
+                {/* Customer search dropdown */}
+                {showCustomerDropdown && customerSearch.trim() && (
+                  <div
+                    className="absolute left-0 bottom-full mb-1 w-full bg-white rounded-xl shadow-lg border overflow-hidden z-30"
+                    style={{ borderColor: "var(--grid-border)" }}
+                  >
+                    {customerResults.length > 0 ? (
+                      <div className="max-h-[200px] overflow-y-auto">
+                        {customerResults.map((c) => (
+                          <button
+                            key={c.id}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              updateActiveTab({ selectedCustomer: c });
+                              setCustomerSearch("");
+                              setShowCustomerDropdown(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors cursor-pointer"
+                          >
+                            <div
+                              className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold"
+                              style={{
+                                backgroundColor: "var(--status-focus)",
+                                color: "var(--brand-primary)",
+                              }}
+                            >
+                              {c.name.charAt(0)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p
+                                className="text-[13px] font-semibold truncate"
+                                style={{ color: "var(--text-main)" }}
+                              >
+                                {c.name}
+                              </p>
+                              <p
+                                className="text-[11px]"
+                                style={{ color: "var(--text-placeholder)" }}
+                              >
+                                {c.phone}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="px-4 py-3 text-center">
+                        <p
+                          className="text-[13px]"
+                          style={{ color: "var(--text-placeholder)" }}
+                        >
+                          Không tìm thấy khách hàng
+                        </p>
+                        <button
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            setShowAddCustomer(true);
+                            setShowCustomerDropdown(false);
+                          }}
+                          className="text-[12px] font-semibold mt-1 cursor-pointer"
+                          style={{ color: "var(--brand-primary)" }}
+                        >
+                          + Thêm khách hàng mới
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -928,6 +1222,89 @@ export default function InStockInvoicePage() {
                   style={{ color: "var(--text-secondary)" }}
                 />
               </div>
+            </div>
+
+            {/* Delivery Method */}
+            <div
+              className="px-4 py-3 space-y-2 border-t"
+              style={{
+                borderColor: "var(--grid-border)",
+              }}
+            >
+              <p
+                className="text-[12px] font-semibold uppercase tracking-wider"
+                style={{ color: "var(--text-placeholder)" }}
+              >
+                Phương thức nhận hàng
+              </p>
+              <div className="flex items-center gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name={`deliveryMethod-${activeTab.id}`}
+                    value="store"
+                    checked={activeTab.deliveryMethod === "store"}
+                    onChange={() =>
+                      updateActiveTab({ deliveryMethod: "store" })
+                    }
+                    className="w-3.5 h-3.5 text-green-600 focus:ring-green-500"
+                  />
+                  <span
+                    className="text-[13px]"
+                    style={{ color: "var(--text-main)" }}
+                  >
+                    Lấy ngay tại cửa hàng
+                  </span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name={`deliveryMethod-${activeTab.id}`}
+                    value="delivery"
+                    checked={activeTab.deliveryMethod === "delivery"}
+                    onChange={() =>
+                      updateActiveTab({ deliveryMethod: "delivery" })
+                    }
+                    className="w-3.5 h-3.5 text-green-600 focus:ring-green-500"
+                  />
+                  <span
+                    className="text-[13px]"
+                    style={{ color: "var(--text-main)" }}
+                  >
+                    Giao hàng
+                  </span>
+                </label>
+              </div>
+
+              {activeTab.deliveryMethod === "delivery" && (
+                <div className="flex items-center gap-2 mt-2">
+                  <span
+                    className="text-[13px] shrink-0"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    Giao vào ngày:
+                  </span>
+                  <div className="relative flex-1">
+                    <Calendar
+                      size={14}
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2"
+                      style={{ color: "var(--text-placeholder)" }}
+                    />
+                    <input
+                      type="date"
+                      value={activeTab.deliveryDate || ""}
+                      onChange={(e) =>
+                        updateActiveTab({ deliveryDate: e.target.value })
+                      }
+                      className="w-full text-[13px] pl-8 pr-2 py-1.5 focus:outline-none focus:ring-1 rounded-lg bg-white"
+                      style={{
+                        border: "1px solid var(--grid-border)",
+                        color: "var(--text-main)",
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Summary */}
@@ -959,14 +1336,53 @@ export default function InStockInvoicePage() {
                     ₫
                   </span>
                   <input
-                    type="number"
-                    value={activeTab.discount}
-                    onChange={(e) =>
+                    type="text"
+                    value={activeTab.discount ? fmt(activeTab.discount) : ""}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\D/g, "");
                       updateActiveTab({
-                        discount: Math.max(0, parseInt(e.target.value) || 0),
-                      })
+                        discount: parseInt(raw) || 0,
+                      });
+                    }}
+                    placeholder="0"
+                    className="w-28 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white"
+                    style={{
+                      border: "1px solid var(--grid-border)",
+                      color: "var(--text-main)",
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-between text-[13px] items-center">
+                <span
+                  className="font-medium"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  <CreditCard size={12} className="inline mr-1.5" />
+                  Tiền đặt cọc
+                </span>
+                <div className="flex items-center gap-1">
+                  <span
+                    className="text-[13px]"
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
+                    ₫
+                  </span>
+                  <input
+                    type="text"
+                    value={
+                      activeTab.depositAmount
+                        ? fmt(activeTab.depositAmount)
+                        : ""
                     }
-                    className="w-24 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\D/g, "");
+                      updateActiveTab({
+                        depositAmount: parseInt(raw) || 0,
+                      });
+                    }}
+                    placeholder="0"
+                    className="w-28 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white"
                     style={{
                       border: "1px solid var(--grid-border)",
                       color: "var(--text-main)",
@@ -1017,84 +1433,164 @@ export default function InStockInvoicePage() {
             boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
           }}
         >
-          {/* ── Search + Filter ── */}
-          <div className="px-4 pt-4 pb-3 flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              {/* Search */}
-              <div className="relative flex-1">
-                <Search
-                  size={15}
-                  className="absolute left-3 top-1/2 -translate-y-1/2"
-                  style={{ color: "var(--text-placeholder)" }}
-                />
-                <input
-                  type="text"
-                  placeholder="Tìm sản phẩm..."
-                  value={searchProduct}
-                  onChange={(e) => {
-                    setSearchProduct(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-full h-10 pl-10 pr-4 rounded-xl text-[13px] focus:outline-none focus:ring-2 transition"
-                  style={{
-                    border: "1px solid var(--grid-border)",
-                    backgroundColor: "var(--bg-main)",
-                    color: "var(--text-main)",
-                  }}
-                />
+          {/* ── Product Tabs & Filter ── */}
+          <div className="flex flex-col gap-3 px-4 pt-4 pb-3">
+            <div className="flex gap-2">
+              <div
+                className="flex-1 flex rounded-xl overflow-hidden"
+                style={{
+                  border: "1px solid var(--grid-border)",
+                  backgroundColor: "var(--bg-main)",
+                }}
+              >
+                {["Hàng thô", "Hàng hoàn thiện"].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => {
+                      setProductTypeTab(tab);
+                      setCurrentPage(1);
+                    }}
+                    className="flex-1 py-2.5 text-[13px] font-semibold transition-all cursor-pointer whitespace-nowrap"
+                    style={{
+                      backgroundColor:
+                        productTypeTab === tab
+                          ? "var(--brand-primary)"
+                          : "transparent",
+                      color:
+                        productTypeTab === tab
+                          ? "#fff"
+                          : "var(--text-secondary)",
+                    }}
+                  >
+                    {tab}
+                  </button>
+                ))}
               </div>
 
-              {/* Filter Button */}
               <button
                 onClick={() => setIsFilterDrawerOpen(true)}
-                className="h-10 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all text-[13px] font-medium"
+                className="relative p-2.5 rounded-xl transition cursor-pointer flex items-center justify-center bg-white hover:bg-gray-50 active:scale-95"
+                style={{
+                  border: "1px solid var(--grid-border)",
+                  color:
+                    selectedCategories.length > 0 || selectedProductTypes.length > 0 || priceRange.min || priceRange.max
+                      ? "var(--brand-primary)"
+                      : "var(--text-secondary)",
+                }}
+              >
+                <Filter size={20} />
+                {(selectedCategories.length > 0 || selectedProductTypes.length > 0 || priceRange.min || priceRange.max) && (
+                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white" />
+                )}
+              </button>
+            </div>
+
+            {/* Thanh tìm kiếm */}
+            <div className="relative w-full">
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2"
+                style={{ color: "var(--text-placeholder)" }}
+              />
+              <input
+                type="text"
+                placeholder="Tên sản phẩm..."
+                value={productSearch}
+                onChange={(e) => {
+                  setProductSearch(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full text-[13px] pl-8 py-2 rounded-lg focus:outline-none focus:ring-1"
                 style={{
                   border: "1px solid var(--grid-border)",
                   backgroundColor: "var(--bg-main)",
                   color: "var(--text-main)",
                 }}
+              />
+              {productSearch && (
+                <button
+                  onClick={() => setProductSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100 transition cursor-pointer"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* ── Active Filters Display ── */}
+          {(selectedCategories.length > 0 || selectedProductTypes.length > 0 || priceRange.min || priceRange.max) && (
+            <div className="px-4 pb-3 flex flex-wrap gap-2 items-center">
+              <span className="text-[12px] font-medium text-gray-500 mr-1">
+                Đang lọc:
+              </span>
+              {selectedCategories.map((cat) => (
+                <div
+                  key={cat}
+                  className="bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-lg text-[12px] font-medium flex items-center gap-1.5"
+                >
+                  {cat}
+                  <button
+                    onClick={() => {
+                      setSelectedCategories((prev) =>
+                        prev.filter((c) => c !== cat),
+                      );
+                      setCurrentPage(1);
+                    }}
+                    className="hover:bg-green-200 rounded-full p-0.5 transition-colors cursor-pointer"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+              {selectedProductTypes.map((type) => (
+                <div
+                  key={type}
+                  className="bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-lg text-[12px] font-medium flex items-center gap-1.5"
+                >
+                  {type}
+                  <button
+                    onClick={() => {
+                      setSelectedProductTypes((prev) =>
+                        prev.filter((t) => t !== type),
+                      );
+                      setCurrentPage(1);
+                    }}
+                    className="hover:bg-blue-200 rounded-full p-0.5 transition-colors cursor-pointer"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+              {(priceRange.min || priceRange.max) && (
+                <div
+                 className="bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-1 rounded-lg text-[12px] font-medium flex items-center gap-1.5"
+                >
+                  {priceRange.min ? fmt(priceRange.min) : 0}đ - {priceRange.max ? fmt(priceRange.max) : "∞"}
+                  <button
+                    onClick={() => {
+                      setPriceRange({ min: "", max: "" });
+                      setCurrentPage(1);
+                    }}
+                    className="hover:bg-purple-200 rounded-full p-0.5 transition-colors cursor-pointer"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  setSelectedCategories([]);
+                  setSelectedProductTypes([]);
+                  setPriceRange({ min: "", max: "" });
+                  setCurrentPage(1);
+                }}
+                className="text-[12px] text-red-500 hover:text-red-700 font-medium px-1 underline cursor-pointer ml-1"
               >
-                <Filter size={15} />
-                <span>Lọc</span>
-                {selectedCategories.length > 0 && (
-                  <span className="w-2.5 h-2.5 rounded-full bg-green-500 ml-0.5 border-2 border-white"></span>
-                )}
+                Xóa tất cả
               </button>
             </div>
-
-            {/* Active Filters */}
-            {selectedCategories.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {selectedCategories.map((cat) => (
-                  <span
-                    key={cat}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium bg-green-50 text-green-700 border border-green-200"
-                  >
-                    {cat}
-                    <X
-                      size={12}
-                      className="cursor-pointer opacity-60 hover:opacity-100"
-                      onClick={() => {
-                        setSelectedCategories((prev) =>
-                          prev.filter((c) => c !== cat),
-                        );
-                        setCurrentPage(1);
-                      }}
-                    />
-                  </span>
-                ))}
-                <button
-                  onClick={() => {
-                    setSelectedCategories([]);
-                    setCurrentPage(1);
-                  }}
-                  className="text-[11px] font-medium text-gray-400 hover:text-gray-600 ml-2"
-                >
-                  Xóa tất cả
-                </button>
-              </div>
-            )}
-          </div>
+          )}
 
           {/* ── Product Grid ── */}
           <div className="flex-1 overflow-y-auto px-4 pb-3">
@@ -1165,12 +1661,24 @@ export default function InStockInvoicePage() {
                         >
                           {product.name}
                         </p>
-                        <p
-                          className="text-[10px] font-mono tracking-wide"
-                          style={{ color: "var(--text-placeholder)" }}
-                        >
-                          {product.sku}
-                        </p>
+                        {/* Hiển thị Kích thước và Màu sắc */}
+                        <div className="flex flex-col gap-0.5 mt-1">
+                          <span
+                            className="text-[10px] font-medium truncate"
+                            style={{ color: "var(--text-placeholder)" }}
+                          >
+                            Kích thước: {product.size || "Tiêu chuẩn"}
+                          </span>
+                          <span
+                            className="text-[10px] font-medium truncate"
+                            style={{ color: "var(--text-placeholder)" }}
+                          >
+                            Màu sắc:{" "}
+                            {product.productType === "Hàng thô"
+                              ? "Gỗ mộc"
+                              : product.color || "Theo mẫu"}
+                          </span>
+                        </div>
                         <p
                           className="text-[13px] font-bold"
                           style={{ color: "var(--brand-primary)" }}
@@ -1186,7 +1694,7 @@ export default function InStockInvoicePage() {
           </div>
 
           {/* ── Pagination ── */}
-          {totalPages > 1 && (
+          {totalPages > 0 && (
             <div
               className="flex items-center justify-center gap-2 py-2.5 border-t"
               style={{ borderColor: "var(--grid-border)" }}
@@ -1253,6 +1761,18 @@ export default function InStockInvoicePage() {
           });
         }}
       />
+
+      {/* Hidden Print Area */}
+      <div style={{ display: "none" }}>
+        {printingOrder && (
+          <div ref={printRef}>
+            <PrintableInvoice
+              o={printingOrder}
+              displayTotal={printingOrder.total}
+            />
+          </div>
+        )}
+      </div>
 
       {/* ── Filter Drawer ── */}
       {isFilterDrawerOpen && (
@@ -1329,6 +1849,102 @@ export default function InStockInvoicePage() {
                   })}
                 </div>
               </div>
+
+              <div className="space-y-3">
+                <label className="text-[13px] font-semibold text-gray-600 uppercase tracking-wider block">
+                  Loại sản phẩm
+                </label>
+                <div className="flex flex-col gap-2">
+                  {["Bàn", "Ghế", "Tủ", "Giường", "Khác"].map((type) => {
+                    const isActive = selectedProductTypes.includes(type);
+                    return (
+                      <label
+                        key={type}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-[13px] cursor-pointer transition select-none ${
+                          isActive
+                            ? "border-blue-500 bg-blue-50/50"
+                            : "border-gray-200 hover:border-blue-200 hover:bg-gray-50"
+                        }`}
+                      >
+                        <div
+                          className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                            isActive
+                              ? "bg-blue-500 border-blue-500 text-white"
+                              : "border-gray-300 bg-white"
+                          }`}
+                        >
+                          {isActive && (
+                            <CheckCircle2 size={12} strokeWidth={3} />
+                          )}
+                        </div>
+                        <span
+                          className={`flex-1 ${isActive ? "font-medium text-blue-700" : "text-gray-600"}`}
+                        >
+                          {type}
+                        </span>
+                        <input
+                          type="checkbox"
+                          className="hidden"
+                          checked={isActive}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedProductTypes((prev) => [...prev, type]);
+                            } else {
+                              setSelectedProductTypes((prev) =>
+                                prev.filter((t) => t !== type),
+                              );
+                            }
+                            setCurrentPage(1);
+                          }}
+                        />
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[13px] font-semibold text-gray-600 uppercase tracking-wider block">
+                  Khoảng giá (VNĐ)
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 relative">
+                    <input
+                        type="text"
+                        placeholder="Từ..."
+                        value={priceRange.min ? fmt(priceRange.min) : ""}
+                        onChange={(e) => {
+                            const raw = e.target.value.replace(/\D/g, "");
+                            setPriceRange(p => ({...p, min: raw}));
+                            setCurrentPage(1);
+                        }}
+                        className="w-full text-[13px] pl-3 pr-2 py-2.5 rounded-xl transition-all focus:outline-none focus:ring-1 bg-white"
+                        style={{
+                            border: "1px solid var(--grid-border)",
+                            color: "var(--text-main)",
+                        }}
+                    />
+                  </div>
+                  <span className="text-gray-400 font-medium">-</span>
+                  <div className="flex-1 relative">
+                    <input
+                        type="text"
+                        placeholder="Đến..."
+                        value={priceRange.max ? fmt(priceRange.max) : ""}
+                        onChange={(e) => {
+                            const raw = e.target.value.replace(/\D/g, "");
+                            setPriceRange(p => ({...p, max: raw}));
+                            setCurrentPage(1);
+                        }}
+                        className="w-full text-[13px] pl-3 pr-2 py-2.5 rounded-xl transition-all focus:outline-none focus:ring-1 bg-white"
+                        style={{
+                            border: "1px solid var(--grid-border)",
+                            color: "var(--text-main)",
+                        }}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Drawer Footer */}
@@ -1336,6 +1952,8 @@ export default function InStockInvoicePage() {
               <button
                 onClick={() => {
                   setSelectedCategories([]);
+                  setSelectedProductTypes([]);
+                  setPriceRange({ min: "", max: "" });
                   setCurrentPage(1);
                 }}
                 className="flex-1 py-2.5 rounded-xl text-[13px] font-medium border cursor-pointer border-gray-200 text-gray-600 hover:bg-gray-50 transition"

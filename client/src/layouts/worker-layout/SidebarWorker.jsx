@@ -1,50 +1,22 @@
-/**
- * Component Name: SidebarSales
- * Description: Sidebar dành cho Sales Layout
- * Created By: ThinhBui
- * Created Date: 24/02/2026
- */
-
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
-  Home,
-  Users,
-  ShoppingBag,
   ClipboardList,
+  CheckCircle,
   ChevronRight,
   PanelLeftClose,
-  Package,
 } from "lucide-react";
 
+/**
+ * Component Name: SidebarWorker
+ * Description: Sidebar dành cho Worker Layout (Đồng bộ UI với Sales Layout)
+ */
+
 const menuItems = [
-  {
-    text: "Quản lý đơn hàng",
-    icon: Package,
-    path: "/sales/dashboard/orders",
-  },
-  {
-    text: "Quản lý khách hàng",
-    icon: Users,
-    path: "/sales/dashboard/customers",
-  },
-  {
-    text: "Hàng có sẵn",
-    icon: ShoppingBag,
-    path: "/sales/dashboard/invoice-instock",
-  },
-  {
-    text: "Đặt hàng theo mẫu",
-    icon: ClipboardList,
-    path: "/sales/dashboard/invoice-custom-order",
-  },
-  {
-    text: "Yêu cầu đặt riêng",
-    icon: ClipboardList,
-    path: "/sales/dashboard/custom-orders",
-  },
+  { text: "Công việc của tôi", icon: ClipboardList, path: "/worker/dashboard" },
+  { text: "Đã hoàn thành", icon: CheckCircle, path: "/worker/completed" },
 ];
 
-export const SidebarSales = () => {
+export const SidebarWorker = () => {
   const location = useLocation();
 
   return (
@@ -72,7 +44,7 @@ export const SidebarSales = () => {
         <div className="flex flex-col gap-1.5 pt-4 flex-1">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.path;
+            const isActive = location.pathname.startsWith(item.path);
 
             return (
               <NavLink
