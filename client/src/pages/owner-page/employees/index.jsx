@@ -1,13 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Search,
   Plus,
   Pencil,
-  UserCog,
   Lock,
   Unlock,
   Mail,
@@ -21,9 +19,8 @@ import {
   Calendar,
   Users,
   XCircle,
-  FileText,
-  Factory,
   Layers,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
@@ -41,8 +38,6 @@ const ROLES = [
   { value: "ACCOUNTANT", label: "Kế toán" },
   { value: "WORKER", label: "Thợ" },
 ];
-
-const STATUS_OPTIONS = ["Tất cả", "Hoạt động", "Nghỉ", "Khóa"];
 
 const INITIAL_ACCOUNTS = [
   {
@@ -87,9 +82,6 @@ const INITIAL_ACCOUNTS = [
   }
 ];
 
-/**
- * Common Modal Container
- */
 const ModalContainer = ({ title, onClose, children, maxWidth = "max-w-md" }) => (
   <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
     <div className={cn("bg-white rounded-2xl w-full shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200", maxWidth)}>
@@ -105,14 +97,9 @@ const ModalContainer = ({ title, onClose, children, maxWidth = "max-w-md" }) => 
     </div>
   </div>
 );
-//       </div>
-//     </div>
-//   </div>
-// );
 
 export default function OwnerEmployees() {
-  const [activeTab, setActiveTab] = useState("Tất cả"); // Roles as tabs
-  const [statusFilter, setStatusFilter] = useState("Tất cả");
+  const [activeTab, setActiveTab] = useState("Tất cả"); // Roles filter
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -121,7 +108,6 @@ export default function OwnerEmployees() {
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ page: 1, limit: 15, total: 0 });
 
-  // Modal states
   const [showAddEditModal, setShowAddEditModal] = useState(false);
   const [editingAccount, setEditingAccount] = useState(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
@@ -129,7 +115,6 @@ export default function OwnerEmployees() {
 
   const fetchAccounts = () => {
     setLoading(true);
-    // Mimic API delay
     setTimeout(() => {
       if (accounts.length === 0) {
         setAccounts(INITIAL_ACCOUNTS);
@@ -143,9 +128,7 @@ export default function OwnerEmployees() {
     fetchAccounts();
   }, []);
 
-  const handleSearch = () => {
-    // Search is handled via processedAccounts useMemo
-  };
+  const handleSearch = () => {};
 
   const handleSaveAccount = (formData) => {
     if (editingAccount) {
@@ -180,11 +163,16 @@ export default function OwnerEmployees() {
     setShowStatusModal(false);
   };
 
-  // Client-side filtering for active tab (Role) and horizontal status marker
+  const handleDeleteAccount = (id) => {
+    if (window.confirm("Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản này? Thao tác này không thể hoàn tác.")) {
+      setAccounts(prev => prev.filter(a => a.pk_user_account_id !== id));
+      toast.success("Đã xóa tài khoản thành công");
+    }
+  };
+
   const processedAccounts = useMemo(() => {
     let result = accounts;
 
-    // Search filter
     if (search) {
       const s = search.toLowerCase();
       result = result.filter(a =>
@@ -194,18 +182,13 @@ export default function OwnerEmployees() {
       );
     }
 
-    // Filter by Role (Tabs)
+    // Hide OWNER accounts
+    result = result.filter(a => (a.role?.role_code || a.role_id) !== "OWNER");
+
     if (activeTab !== "Tất cả") {
       result = result.filter(a => (a.role?.role_code || a.role_id) === activeTab);
     }
 
-    // Filter by Status (Horizontal marker)
-    if (statusFilter !== "Tất cả") {
-      const statusValue = statusFilter === "Hoạt động" ? 1 : statusFilter === "Nghỉ" ? 0 : -1;
-      result = result.filter(a => a.status === statusValue);
-    }
-
-    // Filter by date range (Account creation)
     if (dateFrom) {
       const from = new Date(dateFrom);
       from.setHours(0, 0, 0, 0);
@@ -218,17 +201,15 @@ export default function OwnerEmployees() {
     }
 
     return result;
-  }, [accounts, activeTab, statusFilter, dateFrom, dateTo, search]);
+  }, [accounts, activeTab, dateFrom, dateTo, search]);
 
-  const hasActiveFilters = statusFilter !== "Tất cả" || dateFrom || dateTo || search;
+  const hasActiveFilters = activeTab !== "Tất cả" || dateFrom || dateTo || search;
 
   const clearAllFilters = () => {
     setActiveTab("Tất cả");
-    setStatusFilter("Tất cả");
     setDateFrom("");
     setDateTo("");
     setSearch("");
-    handleSearch();
   };
 
   return (
@@ -236,112 +217,40 @@ export default function OwnerEmployees() {
       <PageHelmet title="Quản lý nhân sự | TPF-SIMS" />
 
       <div className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 space-y-4" style={{ backgroundColor: "var(--bg-main)" }}>
-        {/* Header */}
         <div className="flex items-center justify-between shrink-0 mb-1">
           <div>
-            <h1
-              className="text-[22px] font-bold flex items-center gap-2.5"
-              style={{ color: "var(--text-main)", letterSpacing: "-0.01em" }}
-            >
+            <h1 className="text-[22px] font-bold flex items-center gap-2.5" style={{ color: "var(--text-main)", letterSpacing: "-0.01em" }}>
               <Users size={24} style={{ color: "var(--brand-primary)" }} />
               Quản lý tài khoản & Nhân sự
             </h1>
-            <p
-              className="text-[13px] mt-1 font-medium italic"
-              style={{ color: "var(--text-placeholder)" }}
-            >
+            <p className="text-[13px] mt-1 font-medium italic" style={{ color: "var(--text-placeholder)" }}>
               {processedAccounts.length} nhân viên ({activeTab === "Tất cả" ? "tất cả vai trò" : ROLES.find(r => r.value === activeTab)?.label.toLowerCase()})
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-             <button 
-               onClick={() => {
-                 setEditingAccount(null);
-                 setShowAddEditModal(true);
-               }}
-               className="h-10 px-4 rounded-xl flex items-center gap-2 text-[13px] font-bold text-white shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 hover:-translate-y-0.5 cursor-pointer"
-               style={{ backgroundColor: "var(--brand-primary)", boxShadow: "0 4px 10px rgba(11, 87, 208, 0.2)" }}
-             >
-                <Plus size={18} />
-                Thêm tài khoản
-             </button>
-          </div>
-        </div>
-
-
-
-        {/* Status Toolbar */}
-        <div className="flex items-center gap-2 shrink-0 px-1 flex-wrap">
-          {STATUS_OPTIONS.map((s) => {
-            const isActive = statusFilter === s;
-            const statusValue = s === "Hoạt động" ? 1 : s === "Nghỉ" ? 0 : s === "Khóa" ? -1 : null;
-            const statusStyle = statusValue !== null ? STATUS_MAP[statusValue] : null;
-
-            return (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all cursor-pointer flex items-center gap-1.5"
-                style={{
-                  backgroundColor: isActive
-                    ? (statusStyle ? statusStyle.bg : "#fff")
-                    : "transparent",
-                  color: isActive
-                    ? (statusStyle ? statusStyle.text : "var(--text-main)")
-                    : "var(--text-secondary)",
-                  border: isActive
-                    ? `1.5px solid ${statusStyle ? statusStyle.border : "var(--grid-border)"}`
-                    : "1.5px solid transparent",
-                }}
-              >
-                {s !== "Tất cả" && (
-                  <span
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{
-                      backgroundColor: statusStyle ? statusStyle.text : "var(--text-secondary)",
-                      opacity: isActive ? 1 : 0.5,
-                    }}
-                  />
-                )}
-                {s}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Search & Table Card */}
-        <div className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}>
-          {/* Search Header */}
-          <div
-            className="px-4 py-3 border-b shrink-0 flex flex-wrap items-center justify-between gap-3"
-            style={{ borderColor: "var(--grid-border)" }}
+          <button 
+            onClick={() => { setEditingAccount(null); setShowAddEditModal(true); }}
+            className="h-10 px-4 rounded-xl flex items-center gap-2 text-[13px] font-bold text-white shadow-sm hover:-translate-y-0.5 transition cursor-pointer"
+            style={{ backgroundColor: "var(--brand-primary)", boxShadow: "0 4px 10px rgba(16, 185, 129, 0.2)" }}
           >
+            <Plus size={18} /> Thêm tài khoản
+          </button>
+        </div>
+
+        <div className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+          <div className="px-4 py-3 border-b shrink-0 flex flex-wrap items-center justify-between gap-3" style={{ borderColor: "var(--grid-border)" }}>
             <div className="relative w-full max-w-md shrink-0">
-              <Search
-                size={15}
-                className="absolute left-3 top-1/2 -translate-y-1/2"
-                style={{ color: "var(--text-placeholder)" }}
-              />
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-placeholder)" }} />
               <input
                 type="text"
-                placeholder="Tìm mã, email, tên nhân viên..."
+                placeholder="Tìm email, tên nhân viên..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
-                style={{
-                  border: "1px solid var(--grid-border)",
-                  backgroundColor: "var(--bg-main)",
-                  color: "var(--text-main)",
-                }}
+                className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] focus:outline-none transition"
+                style={{ border: "1px solid var(--grid-border)", backgroundColor: "var(--bg-main)" }}
               />
               {search && (
-                <button
-                  onClick={() => { setSearch(""); handleSearch(); }}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer"
-                  style={{ color: "var(--text-placeholder)" }}
-                >
+                <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400">
                   <X size={14} />
                 </button>
               )}
@@ -353,198 +262,93 @@ export default function OwnerEmployees() {
                  <select
                     value={activeTab}
                     onChange={(e) => setActiveTab(e.target.value)}
-                    className="h-9 px-3 pr-8 rounded-lg text-[13px] focus:outline-none focus:ring-1 transition appearance-none cursor-pointer"
-                    style={{
-                      border: `1px solid ${activeTab !== "Tất cả" ? "var(--brand-primary)" : "var(--grid-border)"}`,
-                      backgroundColor: activeTab !== "Tất cả" ? "var(--status-focus)" : "var(--bg-main)",
-                      color: activeTab !== "Tất cả" ? "var(--brand-primary)" : "var(--text-main)",
-                      fontWeight: activeTab !== "Tất cả" ? 600 : 400,
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-                      backgroundRepeat: "no-repeat",
-                      backgroundPosition: "right 8px center",
-                    }}
-                    title="Lọc theo vai trò"
+                    className="h-9 px-3 pr-8 rounded-lg text-[13px] border cursor-pointer focus:outline-none appearance-none"
+                    style={{ backgroundColor: activeTab !== "Tất cả" ? "var(--status-focus)" : "var(--bg-main)", color: activeTab !== "Tất cả" ? "var(--brand-primary)" : "var(--text-main)" }}
                  >
-                    {ROLES.map(r => (
-                       <option key={r.value} value={r.value}>{r.label}</option>
-                    ))}
+                    {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                  </select>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                <Calendar
-                  size={14}
-                  style={{ color: "var(--text-placeholder)" }}
-                />
+                <Calendar size={14} style={{ color: "var(--text-placeholder)" }} />
                 <input
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  className="h-9 px-3 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
-                  style={{
-                    border: `1px solid ${dateFrom ? "var(--brand-primary)" : "var(--grid-border)"}`,
-                    backgroundColor: dateFrom
-                      ? "var(--status-focus)"
-                      : "var(--bg-main)",
-                    color: dateFrom
-                      ? "var(--brand-primary)"
-                      : "var(--text-main)",
-                    fontWeight: dateFrom ? 600 : 400,
-                  }}
-                  title="Từ ngày"
+                  className="h-9 px-3 rounded-lg text-[13px] border focus:outline-none"
+                />
+                <span className="text-[12px] text-gray-400">đến</span>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="h-9 px-3 rounded-lg text-[13px] border focus:outline-none"
                 />
               </div>
-
-              <span
-                className="text-[12px] shrink-0"
-                style={{ color: "var(--text-placeholder)" }}
-              >
-                đến
-              </span>
-
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="h-9 px-3 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition shrink-0"
-                style={{
-                  border: `1px solid ${dateTo ? "var(--brand-primary)" : "var(--grid-border)"}`,
-                  backgroundColor: dateTo
-                    ? "var(--status-focus)"
-                    : "var(--bg-main)",
-                  color: dateTo ? "var(--brand-primary)" : "var(--text-main)",
-                  fontWeight: dateTo ? 600 : 400,
-                }}
-                title="Đến ngày"
-              />
 
               {hasActiveFilters && (
                 <button
                   onClick={clearAllFilters}
-                  className="h-9 px-3 rounded-lg text-[13px] font-medium flex-shrink-0 flex items-center gap-1.5 cursor-pointer transition hover:opacity-80"
-                  style={{
-                    color: "var(--status-error)",
-                    backgroundColor: "#FEF2F2",
-                    border: "1px solid #FECACA",
-                  }}
+                  className="h-9 px-3 rounded-lg text-[13px] font-medium text-red-500 bg-red-50 border border-red-100 flex items-center gap-1.5 cursor-pointer hover:bg-red-100 transition"
                 >
-                  <XCircle size={14} />
-                  Xóa bộ lọc
+                  <XCircle size={14} /> Xóa bộ lọc
                 </button>
               )}
             </div>
           </div>
 
-          {/* Table */}
           <div className="flex-1 overflow-y-auto">
             <table className="w-full text-left relative text-[13px]">
-              <thead
-                className="sticky top-0 z-10"
-                style={{
-                  backgroundColor: "var(--grid-header-bg)",
-                  borderBottom: "1px solid var(--grid-border)",
-                }}
-              >
+              <thead className="sticky top-0 z-10" style={{ backgroundColor: "var(--grid-header-bg)", borderBottom: "1px solid var(--grid-border)" }}>
                 <tr>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-center w-[50px]" style={{ color: "var(--text-placeholder)" }}>STT</th>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-placeholder)" }}>Nhân viên</th>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-placeholder)" }}>Liên hệ</th>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-placeholder)" }}>Vai trò</th>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-placeholder)" }}>Trạng thái</th>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-placeholder)" }}>Ngày tạo</th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-center w-[50px] text-gray-400">STT</th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">Nhân viên</th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">Liên hệ</th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">Vai trò</th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">Ngày tạo</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {loading ? (
-                  <tr>
-                    <td colSpan={6} className="py-20 text-center">
-                      <div className="flex flex-col items-center gap-2">
-                        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-                        <span className="text-gray-500 font-medium">Đang tải dữ liệu...</span>
-                      </div>
-                    </td>
-                  </tr>
+                  <tr><td colSpan={5} className="py-20 text-center text-gray-400"><Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" /> Đang tải dữ liệu...</td></tr>
                 ) : processedAccounts.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-20 text-center">
-                      <div className="flex flex-col items-center gap-3">
-                        <div
-                          className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                          style={{ backgroundColor: "var(--bg-main)" }}
-                        >
-                          <Users size={28} strokeWidth={1.5} style={{ color: "var(--text-placeholder)" }} />
-                        </div>
-                        <p className="text-gray-400 font-bold">Không tìm thấy nhân viên nào phù hợp</p>
-                      </div>
-                    </td>
-                  </tr>
+                  <tr><td colSpan={5} className="py-20 text-center text-gray-400"><Users size={28} className="mx-auto mb-3 opacity-20" /> Không tìm thấy nhân viên nào</td></tr>
                 ) : (
                   processedAccounts.slice((pagination.page - 1) * pagination.limit, pagination.page * pagination.limit).map((a, idx) => {
-                    const st = STATUS_MAP[String(a.status)] ?? STATUS_MAP[1];
                     const roleLabel = ROLES.find(r => r.value === (a.role?.role_code || a.role_id))?.label || a.role?.role_name || a.role_id;
 
                     return (
-                      <tr key={a.pk_user_account_id} className="hover:bg-gray-50/50 transition-all group relative" style={{ borderBottom: "1px solid var(--grid-border)" }}>
-                        <td className="px-4 py-3 text-center text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>
-                          {(pagination.page - 1) * pagination.limit + idx + 1}
-                        </td>
+                      <tr key={a.pk_user_account_id} className="group hover:bg-emerald-50/30 transition-all border-b border-gray-100 relative">
+                        <td className="px-4 py-3 text-center text-gray-500">{(pagination.page - 1) * pagination.limit + idx + 1}</td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold overflow-hidden border border-blue-100">
-                              {a.profile?.full_name ? a.profile.full_name.charAt(0).toUpperCase() : <User size={18} />}
+                            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold border border-emerald-100 uppercase">
+                              {a.profile?.full_name?.charAt(0) || <User size={18} />}
                             </div>
                             <div>
-                              <p className="font-bold text-[13px] mb-0.5" style={{ color: "var(--text-main)" }}>{a.profile?.full_name || "Chưa cập nhật"}</p>
-                              <p className="text-[11px] flex items-center gap-1 font-mono" style={{ color: "var(--text-placeholder)" }}>
-                                <Mail size={12} className="opacity-50" /> {a.email}
-                              </p>
+                              <p className="font-bold text-gray-900">{a.profile?.full_name || "Chưa cập nhật"}</p>
+                              <p className="text-[11px] text-gray-400 flex items-center gap-1"><Mail size={12} /> {a.email}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-[13px] font-medium whitespace-nowrap" style={{ color: "var(--text-main)" }}>
-                          <div className="flex items-center gap-1.5">
-                            <Phone size={13} style={{ color: "var(--text-placeholder)" }} /> {a.profile?.phone_number || "—"}
-                          </div>
-                        </td>
+                        <td className="px-4 py-3 text-gray-700 whitespace-nowrap"><div className="flex items-center gap-1.5"><Phone size={13} className="text-gray-400" /> {a.profile?.phone_number || "—"}</div></td>
                         <td className="px-4 py-3">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-100 uppercase tracking-tighter">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 uppercase tracking-tighter">
                             <Shield size={12} /> {roleLabel}
                           </span>
                         </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold"
-                            style={{ backgroundColor: st.bg, color: st.text, border: `1px solid ${st.border}` }}
-                          >
-                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: st.text }} />
-                            {st.label}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-[13px] font-medium relative overflow-visible" style={{ color: "var(--text-secondary)" }}>
+                        <td className="px-4 py-3 text-gray-500 relative">
                           {a.timestamp ? new Date(a.timestamp).toLocaleDateString("vi-VN") : "—"}
-
-                          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none group-hover:pointer-events-auto">
-                            <div className="flex justify-end gap-1.5 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-gray-100 pointer-events-auto">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 px-2.5 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100 gap-1.5 text-[12px] font-bold text-gray-600"
-                                onClick={() => { setEditingAccount(a); setShowAddEditModal(true); }}
-                                title="Chỉnh sửa"
-                              >
-                                <Pencil size={14} /> Sửa
+                          
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5">
+                            <div className="flex gap-1.5 p-1 bg-white border border-gray-100 rounded-xl shadow-sm">
+                              <Button variant="ghost" size="sm" className="h-8 px-2.5 rounded-lg text-[12px] font-bold text-gray-600 hover:bg-gray-100" onClick={() => { setEditingAccount(a); setShowAddEditModal(true); }}>
+                                <Pencil size={14} className="mr-1.5" /> Sửa
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className={cn(
-                                  "h-8 px-2.5 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100 gap-1.5 text-[12px] font-bold",
-                                  String(a.status) === "-1" ? "text-emerald-600" : "text-red-500"
-                                )}
-                                onClick={() => { setSelectedAccount(a); setShowStatusModal(true); }}
-                                title={String(a.status) === "-1" ? "Mở khóa" : "Khóa/Tạm nghỉ"}
-                              >
-                                {String(a.status) === "-1" ? <Unlock size={14} /> : <Lock size={14} />}
-                                {String(a.status) === "-1" ? "Mở khóa" : "Khóa"}
+                              <Button variant="ghost" size="sm" className={cn("h-8 px-2.5 rounded-lg text-[12px] font-bold hover:bg-gray-100", String(a.status) === "-1" ? "text-emerald-600" : "text-amber-500")} onClick={() => { setSelectedAccount(a); setShowStatusModal(true); }}>
+                                {String(a.status) === "-1" ? <Unlock size={14} /> : <Lock size={14} />} {String(a.status) === "-1" ? "Mở khóa" : "Trạng thái"}
+                              </Button>
+                              <Button variant="ghost" size="sm" className="h-8 px-2.5 rounded-lg text-[12px] font-bold text-red-500 hover:bg-red-50" onClick={() => handleDeleteAccount(a.pk_user_account_id)}>
+                                <Trash2 size={14} className="mr-1.5" /> Xóa
                               </Button>
                             </div>
                           </div>
@@ -557,93 +361,14 @@ export default function OwnerEmployees() {
             </table>
           </div>
 
-          {/* Pagination Footer */}
           {processedAccounts.length > 0 && (
-            <div
-              className="flex items-center justify-between px-6 py-3 border-t shrink-0"
-              style={{
-                borderColor: "var(--grid-border)",
-                backgroundColor: "var(--bg-main)",
-              }}
-            >
-              <div
-                className="text-[13px]"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                Tổng số bản ghi:{" "}
-                <span
-                  className="font-bold"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  {processedAccounts.length}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-6">
-                {/* Items per page indicator */}
+            <div className="flex items-center justify-between px-6 py-3 border-t bg-gray-50/30" style={{ borderColor: "var(--grid-border)" }}>
+              <div className="text-[13px] text-gray-500">Tổng số: <span className="font-bold text-gray-900">{processedAccounts.length}</span> nhân sự</div>
+              <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <span
-                    className="text-[13px]"
-                    style={{ color: "var(--text-secondary)" }}
-                  >
-                    Số bản ghi/trang
-                  </span>
-                  <select
-                    value={pagination.limit}
-                    onChange={(e) => {
-                      setPagination((p) => ({ ...p, limit: Number(e.target.value), page: 1 }));
-                    }}
-                    className="h-8 px-2 pr-6 rounded-md text-[13px] border cursor-pointer focus:outline-none focus:ring-1 transition appearance-none"
-                    style={{
-                      borderColor: "var(--grid-border)",
-                      backgroundColor: "#fff",
-                      color: "var(--text-main)",
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-                      backgroundRepeat: "no-repeat",
-                      backgroundPosition: "right 8px center",
-                    }}
-                  >
-                    {[15, 30, 50, 100].map((size) => (
-                      <option key={size} value={size}>
-                        {size}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Range Info */}
-                <div
-                  className="text-[13px]"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  <span
-                    className="font-bold"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    {(pagination.page - 1) * pagination.limit + 1} -{" "}
-                    {Math.min(pagination.page * pagination.limit, processedAccounts.length)}
-                  </span>{" "}
-                  bản ghi
-                </div>
-
-                {/* Arrows */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setPagination((p) => ({ ...p, page: Math.max(1, p.page - 1) }))}
-                    disabled={pagination.page === 1}
-                    className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    <ChevronLeft size={16} strokeWidth={2.5} />
-                  </button>
-                  <button
-                    onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
-                    disabled={pagination.page * pagination.limit >= processedAccounts.length}
-                    className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    <ChevronRight size={16} strokeWidth={2.5} />
-                  </button>
+                  <button onClick={() => setPagination(p => ({ ...p, page: Math.max(1, p.page - 1) }))} disabled={pagination.page === 1} className="p-1 disabled:opacity-20 cursor-pointer hover:bg-gray-200 rounded"><ChevronLeft size={16} /></button>
+                  <span className="text-[13px] font-bold">{pagination.page}</span>
+                  <button onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))} disabled={pagination.page * pagination.limit >= processedAccounts.length} className="p-1 disabled:opacity-20 cursor-pointer hover:bg-gray-200 rounded"><ChevronRight size={16} /></button>
                 </div>
               </div>
             </div>
@@ -651,30 +376,12 @@ export default function OwnerEmployees() {
         </div>
       </div>
 
-      {/* Add/Edit Modal */}
-      {showAddEditModal && (
-        <AccountFormModal
-          account={editingAccount}
-          onClose={() => setShowAddEditModal(false)}
-          onSave={handleSaveAccount}
-        />
-      )}
-
-      {/* Status Modal */}
-      {showStatusModal && (
-        <StatusModal
-          account={selectedAccount}
-          onClose={() => setShowStatusModal(false)}
-          onUpdate={handleUpdateStatus}
-        />
-      )}
+      {showAddEditModal && <AccountFormModal account={editingAccount} onClose={() => setShowAddEditModal(false)} onSave={handleSaveAccount} />}
+      {showStatusModal && <StatusModal account={selectedAccount} onClose={() => setShowStatusModal(false)} onUpdate={handleUpdateStatus} />}
     </>
   );
 }
 
-/**
- * Account Form Modal Component
- */
 function AccountFormModal({ account, onClose, onSave }) {
   const [formData, setFormData] = useState({
     email: account?.email || "",
@@ -684,130 +391,64 @@ function AccountFormModal({ account, onClose, onSave }) {
     role_id: account?.role?.role_code || account?.role_id || "SALES",
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave(formData);
-  };
-
   return (
-    <ModalContainer title={account ? "Cập nhật tài khoản nhân sự" : "Tạo tài khoản nhân viên mới"} onClose={onClose} maxWidth="max-w-md">
-      <form onSubmit={handleSubmit} className="space-y-5">
+    <ModalContainer title={account ? "Cập nhật tài khoản" : "Thêm tài khoản mới"} onClose={onClose}>
+      <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
         <div className="space-y-1.5">
-          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Họ tên nhân viên</label>
-          <div className="relative">
-            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              required
-              className="pl-11 h-11 rounded-xl border-gray-200 focus:ring-blue-500/20 shadow-none bg-gray-50/50"
-              placeholder="Nhập họ và tên đầy đủ..."
-              value={formData.full_name}
-              onChange={e => setFormData({ ...formData, full_name: e.target.value })}
-            />
-          </div>
+          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Họ tên</label>
+          <Input required className="rounded-xl h-11" placeholder="Họ và tên..." value={formData.full_name} onChange={e => setFormData({ ...formData, full_name: e.target.value })} />
         </div>
-
-        <div className="grid grid-cols-1 gap-5">
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Email (Dùng để đăng nhập)</label>
-            <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                required
-                type="email"
-                disabled={!!account}
-                className="pl-11 h-11 rounded-xl disabled:bg-gray-100 border-gray-200 shadow-none bg-gray-50/50"
-                placeholder="example@gmail.com"
-                value={formData.email}
-                onChange={e => setFormData({ ...formData, email: e.target.value })}
-              />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Mật khẩu truy cập</label>
-            <Input
-              required={!account}
-              type="password"
-              className="h-11 rounded-xl border-gray-200 shadow-none bg-gray-50/50"
-              placeholder={account ? "Để trống nếu không muốn đổi" : "••••••••"}
-              value={formData.password}
-              onChange={e => setFormData({ ...formData, password: e.target.value })}
-            />
-          </div>
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Email đăng nhập</label>
+          <Input required type="email" disabled={!!account} className="rounded-xl h-11 disabled:opacity-50" placeholder="email@tpf.vn" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
         </div>
-
+        {!account && (
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Mật khẩu</label>
+            <Input required type="password" placeholder="••••••••" className="rounded-xl h-11" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Số điện thoại</label>
-            <div className="relative">
-              <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                className="pl-11 h-11 rounded-xl border-gray-200 shadow-none bg-gray-50/50"
-                placeholder="09xx..."
-                value={formData.phone_number}
-                onChange={e => setFormData({ ...formData, phone_number: e.target.value })}
-              />
-            </div>
+            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Số điện thoại</label>
+            <Input className="rounded-xl h-11" placeholder="09xxxxxx" value={formData.phone_number} onChange={e => setFormData({ ...formData, phone_number: e.target.value })} />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest ml-1">Vai trò hệ thống</label>
-            <select
-              value={formData.role_id}
-              onChange={e => setFormData({ ...formData, role_id: e.target.value })}
-              className="flex h-11 w-full rounded-xl border border-gray-200 bg-gray-50/50 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition-all shadow-none"
-            >
-              <option value="SALES">Nhân viên kinh doanh</option>
+            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Vai trò</label>
+            <select value={formData.role_id} onChange={e => setFormData({ ...formData, role_id: e.target.value })} className="flex h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm focus:outline-none">
+              <option value="SALES">Kinh doanh</option>
               <option value="ACCOUNTANT">Kế toán</option>
               <option value="WORKER">Thợ</option>
-              <option value="OWNER">Chủ cửa hàng</option>
             </select>
           </div>
         </div>
-
         <div className="pt-4 flex gap-3">
-          <Button type="button" variant="ghost" onClick={onClose} className="flex-1 rounded-full h-12 font-bold text-gray-400 hover:bg-gray-50">Hủy</Button>
-          <Button type="submit" className="flex-1 rounded-full h-12 font-bold bg-green-600 hover:bg-green-700 shadow-md">
-            {account ? "Cập nhật" : "Tạo tài khoản"}
-          </Button>
+          <Button type="button" variant="ghost" onClick={onClose} className="flex-1 h-12 rounded-xl font-bold">Hủy</Button>
+          <Button type="submit" className="flex-1 h-12 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">Lưu tài khoản</Button>
         </div>
       </form>
     </ModalContainer>
   );
 }
 
-/**
- * Status / Lock Modal Component
- */
 function StatusModal({ account, onClose, onUpdate }) {
   return (
-    <ModalContainer title="Quản lý trạng thái tài khoản" onClose={onClose} maxWidth="max-w-sm">
+    <ModalContainer title="Trạng thái tài khoản" onClose={onClose} maxWidth="max-w-sm">
       <div className="text-center space-y-4">
-        <div className={cn(
-          "w-16 h-16 rounded-3xl mx-auto flex items-center justify-center shadow-sm border rotate-3",
-          String(account.status) === "-1" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-red-50 text-red-600 border-red-100"
-        )}>
-          {String(account.status) === "-1" ? <Unlock size={30} /> : <Lock size={30} />}
+        <div className={cn("w-16 h-16 rounded-3xl mx-auto flex items-center justify-center border-2", String(account.status) === "-1" ? "bg-red-50 text-red-600 border-red-100" : "bg-emerald-50 text-emerald-600 border-emerald-100")}>
+          {String(account.status) === "-1" ? <Lock size={30} /> : <Unlock size={30} />}
         </div>
-        <div>
-          <h4 className="font-bold text-gray-900 text-lg">
-            {String(account.status) === "-1" ? "Mở khóa tài khoản?" : "Thay đổi trạng thái?"}
-          </h4>
-          <p className="text-[13px] text-gray-500 mt-2 leading-relaxed px-4">
-            {String(account.status) === "-1"
-              ? "Tài khoản nhân viên này sẽ được khôi phục quyền truy cập vào hệ thống ngay lập tức."
-              : "Chọn trạng thái mới cho nhân viên. Khi bị khóa, nhân viên sẽ không thể đăng nhập."}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-2 pt-4">
+        <h4 className="font-bold text-gray-900">{String(account.status) === "-1" ? "Mở khóa tài khoản?" : "Cập nhật trạng thái?"}</h4>
+        <div className="grid grid-cols-1 gap-2">
           {String(account.status) === "-1" ? (
-            <Button onClick={() => onUpdate(1)} className="w-full rounded-full h-12 bg-green-600 hover:bg-green-700 font-bold shadow-sm text-white">Mở khóa tài khoản</Button>
+            <Button onClick={() => onUpdate(1)} className="h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold">Mở khóa tài khoản</Button>
           ) : (
             <>
-              <Button onClick={() => onUpdate(-1)} variant="destructive" className="w-full rounded-full h-12 font-bold shadow-sm">Khóa vĩnh viễn</Button>
-              <Button onClick={() => onUpdate(0)} variant="secondary" className="w-full rounded-full h-12 font-bold bg-gray-100 border-gray-200">Nghỉ (Tạm khóa)</Button>
+              <Button onClick={() => onUpdate(-1)} className="h-12 rounded-xl border-red-100 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-200 border bg-red-50/50 font-bold">Khóa truy cập</Button>
+              <Button onClick={() => onUpdate(0)} className="h-12 rounded-xl border-gray-200 text-gray-600 hover:bg-gray-50 border bg-white font-bold">Tạm nghỉ</Button>
             </>
           )}
-          <Button onClick={onClose} variant="ghost" className="w-full rounded-full h-10 font-bold text-gray-400 mt-2">Đóng</Button>
+          <Button onClick={onClose} variant="ghost" className="h-10 rounded-xl text-gray-400 font-medium">Đóng</Button>
         </div>
       </div>
     </ModalContainer>
