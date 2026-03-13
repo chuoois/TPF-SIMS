@@ -4,6 +4,9 @@ import AccountantHome from "../pages/accountant-page/accountant-home";
 import AccountantDashboard from "../pages/accountant-page/accountant-dashboard";
 import AccountantProductManage from "../pages/accountant-page/accountant-product";
 import AccountantImportManage from "../pages/accountant-page/accountant-import";
+import AccountantCustomerDebt from "../pages/accountant-page/customer-debt";
+import AccountantSupplierDebt from "../pages/accountant-page/supplier-debt";
+import AccountantEmployeeSalary from "../pages/accountant-page/employee-salary";
 
 /**
  * Accountant Routes
@@ -30,6 +33,18 @@ export const accountantRoutes = {
         {
             path: "imports",
             element: <AccountantImportManage />,
+        },
+        {
+            path: "customer-debt",
+            element: <AccountantCustomerDebt />,
+        },
+        {
+            path: "supplier-debt",
+            element: <AccountantSupplierDebt />,
+        },
+        {
+            path: "employee-salary",
+            element: <AccountantEmployeeSalary />,
         },
     ],
 };
