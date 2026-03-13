@@ -23,6 +23,10 @@ import {
   PackagePlus,
   Pencil,
   FileText,
+  AlertTriangle,
+  RotateCcw,
+  Camera,
+  Paintbrush,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 
@@ -102,7 +106,9 @@ const INITIAL_PRODUCTIONS = [
     quantityPlanned: 1,
     quantityCompleted: 0,
     status: "Đang sản xuất",
-    subStage: "danh_rap",
+    subStage: "gia_cong_moc",
+    needsRedo: true,
+    redoReason: "Mặt bàn bị xước nhỏ ở góc trái",
     assignedWorker: "Nguyễn Văn Đức",
     startDate: "2026-03-03",
     expectedEndDate: "2026-03-25",
@@ -118,7 +124,9 @@ const INITIAL_PRODUCTIONS = [
     quantityPlanned: 2,
     quantityCompleted: 1,
     status: "Đang sản xuất",
-    subStage: "phun_son",
+    subStage: "son_hoan_thien",
+    needsRedo: true,
+    redoReason: "Lớp sơn phủ chưa bóng đều, cần xả nhám nhẹ và phun lại lớp cuối.",
     assignedWorker: "Lê Văn Hùng",
     startDate: "2026-03-04",
     expectedEndDate: "2026-03-20",
@@ -134,7 +142,7 @@ const INITIAL_PRODUCTIONS = [
     quantityPlanned: 20,
     quantityCompleted: 5,
     status: "Đang sản xuất",
-    subStage: "danh_rap",
+    subStage: "gia_cong_moc",
     assignedWorker: "Trần Minh Tâm",
     startDate: "2026-03-06",
     expectedEndDate: "2026-03-15",
@@ -222,10 +230,18 @@ const INITIAL_PRODUCTIONS = [
   },
 ];
 
+const MOCK_WORKERS = [
+  { id: "W001", name: "Nguyễn Văn Đức", role: "Thợ sản xuất", avatar: "Đ" },
+  { id: "W002", name: "Trần Minh Tâm", role: "Thợ sản xuất", avatar: "T" },
+  { id: "W003", name: "Lê Văn Hùng", role: "Thợ sơn", avatar: "H" },
+  { id: "W004", name: "Phạm Quốc Bảo", role: "Thợ mộc", avatar: "B" },
+];
+
 const STATUSES = [
   "Tất cả",
   "Chờ giao thợ",
   "Đang sản xuất",
+  "Chờ nghiệm thu",
   "Hoàn thành",
 ];
 
@@ -243,14 +259,16 @@ const formatDate = (dateString) => {
 
 const getStatusColor = (status, subStage = null) => {
   if (status === "Đang sản xuất") {
-    if (subStage === "danh_rap") return { bg: "#FDF4FF", text: "#A21CAF", border: "#F5D0FE" }; // Fuchsia for Sanding
-    if (subStage === "phun_son") return { bg: "#FDF2F8", text: "#DB2777", border: "#FBCFE8" }; // Pink for Painting
+    if (subStage === "gia_cong_moc") return { bg: "#FDF4FF", text: "#A21CAF", border: "#F5D0FE" }; // Woodworking
+    if (subStage === "son_hoan_thien") return { bg: "#FDF2F8", text: "#DB2777", border: "#FBCFE8" }; // Finishing
     return { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" }; // Purple for general production
   }
   
   switch (status) {
     case "Chờ giao thợ":
       return { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" }; // Orange
+    case "Chờ nghiệm thu":
+      return { bg: "#EFF6FF", text: "#1D4ED8", border: "#DBEAFE" }; // Blue
     case "Hoàn thành":
       return { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" }; // Green
     default:
@@ -267,6 +285,12 @@ export default function OwnerProduction() {
   const [dateTo, setDateTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
+  const [showRedoModal, setShowRedoModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedWorker, setSelectedWorker] = useState(null);
+
+  const navigate = () => {}; // Dummy for now since we're using static data update alerts
 
   // Filter & Search
   const filtered = useMemo(() => {
@@ -313,6 +337,33 @@ export default function OwnerProduction() {
     setSearchTerm("");
   };
 
+  const handleQuickComplete = (item) => {
+    if (item.status === "Chờ nghiệm thu") {
+      const confirm = window.confirm(`Phê duyệt & Chốt hoàn thiện mã lệnh ${item.code}?`);
+      if (confirm) {
+        alert(`Lệnh sản xuất ${item.code} đã hoàn thành xuất sắc! Đơn hàng ${item.orderCode} đã chuyển sang trạng thái Sẵn sàng giao.`);
+      }
+    } else {
+      const mockPhoto = window.confirm(`Xác nhận báo xong việc cho ${item.code}? Hệ thống sẽ gửi yêu cầu nghiệm thu tới chủ xưởng.`);
+      if (mockPhoto) {
+        alert(`Đã báo xong việc cho ${item.code}! Trạng thái chuyển sang Chờ nghiệm thu.`);
+      }
+    }
+  };
+
+  const handleQuickRedo = (reason, backToStage) => {
+    alert(`Đã gửi yêu cầu sửa lại lệnh ${selectedItem.code}: ${reason}. Quay lại: ${backToStage === "gia_cong_moc" ? "Mộc" : "Sơn"}`);
+    setShowRedoModal(false);
+  };
+
+  const handleAssignWorker = () => {
+    if (!selectedWorker || !selectedItem) return;
+    const worker = MOCK_WORKERS.find(w => w.id === selectedWorker);
+    alert(`Đã giao lệnh ${selectedItem.code} cho thợ ${worker.name}. Trạng thái chuyển sang Đang sản xuất.`);
+    setShowAssignModal(false);
+    setSelectedWorker(null);
+  };
+
 
   const statusCounts = useMemo(() => {
     const counts = { "Tất cả": productions.length };
@@ -351,7 +402,7 @@ export default function OwnerProduction() {
               className="text-[22px] font-bold flex items-center gap-2.5"
               style={{ color: "var(--text-main)", letterSpacing: "-0.01em" }}
             >
-              <Hammer size={24} style={{ color: "var(--brand-primary)" }} />
+              <Hammer size={24} style={{ color: "#10B981" }} />
               Quản lý sản xuất
             </h1>
             <p
@@ -374,13 +425,13 @@ export default function OwnerProduction() {
                 className="px-4 py-1.5 rounded-xl text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border"
                 style={{
                   backgroundColor: isActive
-                    ? (sc ? sc.bg : "#fff")
+                    ? (sc ? sc.bg : "#ECFDF5")
                     : "transparent",
                   color: isActive
-                    ? (sc ? sc.text : "var(--brand-primary)")
+                    ? (sc ? sc.text : "#059669")
                     : "var(--text-secondary)",
                   borderColor: isActive
-                    ? (sc ? sc.border : "var(--grid-border)")
+                    ? (sc ? sc.border : "#A7F3D0")
                     : "transparent",
                   boxShadow: isActive ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
                 }}
@@ -389,7 +440,7 @@ export default function OwnerProduction() {
                   <span
                     className="w-1.5 h-1.5 rounded-full"
                     style={{
-                      backgroundColor: sc ? sc.text : "var(--brand-primary)",
+                      backgroundColor: sc ? sc.text : "#10B981",
                     }}
                   />
                 )}
@@ -563,7 +614,7 @@ export default function OwnerProduction() {
                   return (
                     <tr
                       key={p.id}
-                      className="group relative hover:bg-gray-50/50 transition-colors"
+                      className="group relative border-b hover:bg-gray-50/50 transition-colors"
                       style={{ 
                         borderBottom: "1px solid var(--grid-border)",
                         backgroundColor: p.status === "Chờ xử lý" ? "#FFFBF0" : "transparent"
@@ -574,16 +625,13 @@ export default function OwnerProduction() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col gap-0.5">
-                          <p
-                            className="text-[13px] font-bold font-mono"
-                            style={{ color: "var(--text-main)" }}
-                          >
+                          <p className="text-[13px] font-bold font-mono text-gray-900">
                             {p.code}
                           </p>
                           {p.orderCode && (
                             <Link
                               to={`/owner/orders/${p.orderId}`}
-                              className="text-[11px] font-bold text-blue-600 hover:underline flex items-center gap-1"
+                              className="text-[11px] font-bold text-gray-400 hover:text-blue-600 hover:underline flex items-center gap-1 w-fit"
                             >
                               <FileText size={10} /> {p.orderCode}
                             </Link>
@@ -635,45 +683,55 @@ export default function OwnerProduction() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex flex-col gap-1">
-                          {p.status === "Chờ giao thợ" ? (
-                            <span
-                              className="inline-flex items-center px-3 py-1.5 rounded-xl text-[11px] font-black w-fit bg-red-50 text-red-600 border border-red-200 shadow-sm animate-[bounce_2s_infinite]"
-                            >
-                              <Activity size={12} className="mr-1.5" />
-                              CẦN GIAO VIỆC
-                            </span>
-                          ) : p.status === "Đang sản xuất" && p.subStage ? (
-                            <span
-                              className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold w-fit"
-                              style={{
-                                backgroundColor: getStatusColor(p.status, p.subStage).bg,
-                                color: getStatusColor(p.status, p.subStage).text,
-                                border: `1px solid ${getStatusColor(p.status, p.subStage).border}`,
-                              }}
-                            >
+                        <div className="flex flex-col gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {p.status === "Chờ giao thợ" ? (
                               <span
-                                className="w-1.5 h-1.5 rounded-full mr-1.5"
-                                style={{ backgroundColor: getStatusColor(p.status, p.subStage).text }}
-                              />
-                              {p.subStage === "danh_rap" ? "Gia công ráp" : "Phun sơn PU"}
-                            </span>
+                                className="inline-flex items-center px-3 py-1.5 rounded-xl text-[11px] font-black w-fit bg-red-50 text-red-600 border border-red-200 shadow-sm animate-[bounce_2s_infinite]"
+                              >
+                                <Activity size={12} className="mr-1.5" />
+                                CẦN GIAO VIỆC
+                              </span>
+                            ) : p.status === "Đang sản xuất" && p.subStage ? (
+                              <>
+                                <span
+                                  className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold w-fit"
+                                style={{
+                                  backgroundColor: getStatusColor(p.status, p.subStage).bg,
+                                  color: getStatusColor(p.status, p.subStage).text,
+                                  border: `1px solid ${getStatusColor(p.status, p.subStage).border}`,
+                                }}
+                              >
+                                <span
+                                  className="w-1.5 h-1.5 rounded-full mr-1.5"
+                                  style={{ backgroundColor: getStatusColor(p.status, p.subStage).text }}
+                                />
+                                {p.subStage === "gia_cong_moc" ? "Gia công Mộc" : "Sơn hoàn thiện"}
+                              </span>
+                              {p.needsRedo && (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 border border-red-100 text-[10px] font-bold text-red-600 shadow-sm animate-pulse">
+                                  <AlertTriangle size={12} className="shrink-0" />
+                                  CẦN SỬA LẠI
+                                </span>
+                              )}
+                            </>
                           ) : (
-                            <span
-                              className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold w-fit"
-                              style={{
-                                backgroundColor: getStatusColor(p.status).bg,
-                                color: getStatusColor(p.status).text,
-                                border: `1px solid ${getStatusColor(p.status).border}`,
-                              }}
-                            >
                               <span
-                                className="w-1.5 h-1.5 rounded-full mr-1.5"
-                                style={{ backgroundColor: getStatusColor(p.status).text }}
-                              />
-                              {p.status}
-                            </span>
-                          )}
+                                className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold w-fit"
+                                style={{
+                                  backgroundColor: getStatusColor(p.status).bg,
+                                  color: getStatusColor(p.status).text,
+                                  border: `1px solid ${getStatusColor(p.status).border}`,
+                                }}
+                              >
+                                <span
+                                  className="w-1.5 h-1.5 rounded-full mr-1.5"
+                                  style={{ backgroundColor: getStatusColor(p.status).text }}
+                                />
+                                {p.status}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -692,8 +750,8 @@ export default function OwnerProduction() {
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex flex-col items-center">
                           <span className="font-medium text-gray-700">
                             {formatDate(p.date)}
                           </span>
@@ -704,53 +762,58 @@ export default function OwnerProduction() {
                             })}
                           </span>
                         </div>
-                      </td>
 
-                      {/* Hover Actions */}
-                      <td className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 pointer-events-none group-hover:pointer-events-auto bg-white/90 backdrop-blur-sm px-2 py-1 rounded-xl shadow-sm border border-gray-100">
-                        <Link
-                          to={`/owner/production/${p.id}`}
-                          className="h-8 px-3 rounded-lg bg-white border border-gray-200 shadow-sm flex items-center gap-1.5 text-[12px] font-bold text-gray-600 hover:text-blue-600 hover:border-blue-200 transition cursor-pointer"
-                        >
-                          <Eye size={14} /> Chi tiết
-                        </Link>
-                        
-                        {p.status === "Chờ giao thợ" && (
-                          <>
-                            <Link 
+                        {/* HOVER QUICK ACTIONS BAR */}
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 flex items-center gap-2 bg-white border border-gray-100 shadow-2xl rounded-2xl p-1.5 z-10">
+                           <Link
                               to={`/owner/production/${p.id}`}
-                              className="h-8 px-3 rounded-lg bg-orange-600 border border-orange-600 shadow-sm flex items-center gap-1.5 text-[12px] font-bold text-white hover:bg-orange-700 transition cursor-pointer"
+                              className="inline-flex items-center gap-1.5 px-4 h-9 rounded-xl bg-emerald-50 text-emerald-700 text-[12px] font-bold hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
                             >
-                              <UserPlus size={14} /> Giao việc ngay
+                              <Eye size={14} />
+                              Chi tiết
                             </Link>
-                            <button className="h-8 px-2 rounded-lg bg-white border border-gray-200 shadow-sm flex items-center text-[12px] font-bold text-gray-600 hover:text-red-600 hover:border-red-200 transition cursor-pointer" title="Hủy lệnh">
-                              <XCircle size={14} />
-                            </button>
-                          </>
-                        )}
 
-                        {p.status === "Đang sản xuất" && (
-                          <>
-                            <Link 
-                              to={`/owner/production/${p.id}`}
-                              className="h-8 px-3 rounded-lg bg-white border border-gray-200 shadow-sm flex items-center gap-1.5 text-[12px] font-bold text-gray-600 hover:text-purple-600 hover:border-purple-200 transition cursor-pointer"
-                            >
-                              <Activity size={14} /> Tiến độ
-                            </Link>
-                            <button className="h-8 px-2 rounded-lg bg-white border border-gray-200 shadow-sm flex items-center text-[12px] font-bold text-gray-600 hover:text-emerald-600 hover:border-emerald-200 transition cursor-pointer" title="Đánh dấu hoàn thành">
-                              <CheckCircle size={14} />
-                            </button>
-                          </>
-                        )}
+                            {p.status === "Chờ giao thợ" && (
+                              <button 
+                                onClick={() => {
+                                  setSelectedItem(p);
+                                  setShowAssignModal(true);
+                                }}
+                                className="h-9 px-4 rounded-xl bg-emerald-600 flex items-center gap-2 text-[12px] font-bold text-white hover:bg-emerald-700 transition-all shadow-md active:scale-95"
+                              >
+                                <UserPlus size={16} /> Giao việc
+                              </button>
+                            )}
 
-                        {p.status === "Hoàn thành" && (
-                          <Link 
-                            to={`/owner/production/${p.id}`}
-                            className="h-8 px-3 rounded-lg bg-white border border-gray-200 shadow-sm flex items-center gap-1.5 text-[12px] font-bold text-gray-600 hover:text-emerald-600 hover:border-emerald-200 transition cursor-pointer"
-                          >
-                            <PackagePlus size={14} /> Nhập kho
-                          </Link>
-                        )}
+                            {p.status === "Đang sản xuất" && !p.needsRedo && p.subStage === "son_hoan_thien" && (
+                               <>
+                                 <button 
+                                    onClick={() => {
+                                      setSelectedItem(p);
+                                      setShowRedoModal(true);
+                                    }}
+                                    className="h-9 px-3 rounded-xl bg-white border border-red-200 flex items-center gap-1.5 text-[12px] font-bold text-red-500 hover:bg-red-50 transition-all shadow-sm"
+                                  >
+                                    <RotateCcw size={16} /> Sửa lại
+                                  </button>
+                                  <button 
+                                    onClick={() => handleQuickComplete(p)}
+                                    className="h-9 px-4 rounded-xl bg-emerald-600 flex items-center gap-2 text-[12px] font-bold text-white hover:bg-emerald-700 transition-all shadow-md active:scale-95"
+                                  >
+                                    <CheckCircle size={16} /> Xong việc
+                                  </button>
+                               </>
+                            )}
+
+                            {p.status === "Chờ nghiệm thu" && (
+                                <button 
+                                  onClick={() => handleQuickComplete(p)}
+                                  className="h-9 px-5 rounded-xl bg-emerald-600 flex items-center gap-2 text-[12px] font-bold text-white hover:bg-emerald-700 transition-all shadow-lg active:scale-95 animate-[pulse_2s_infinite]"
+                                >
+                                  <Camera size={16} /> Duyệt sản phẩm
+                                </button>
+                            )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -885,6 +948,131 @@ export default function OwnerProduction() {
             </div>
           )}
         </div>
+        {/* Redo Modal */}
+        {showRedoModal && selectedItem && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-emerald-50/30">
+                  <div className="flex items-center gap-2 text-emerald-600">
+                    <AlertTriangle size={18} />
+                    <h3 className="text-[15px] font-bold uppercase tracking-tight">Yêu cầu sửa lại sản phẩm</h3>
+                  </div>
+                  <button onClick={() => setShowRedoModal(false)} className="text-gray-400 hover:text-gray-600 transition p-1 hover:bg-white rounded-lg">
+                    <X size={20} />
+                  </button>
+               </div>
+               
+               <div className="p-6 space-y-5">
+                  <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200">
+                    <p className="text-[11px] text-gray-400 font-bold uppercase mb-1">Đang xử lý lệnh</p>
+                    <p className="text-[13px] font-bold text-gray-900">{selectedItem.code} - {selectedItem.productName}</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-[12px] font-bold text-gray-400 uppercase mb-2 ml-1">Nguyên nhân lỗi / Dặn dò thợ</label>
+                    <textarea 
+                      id="redoReasonQuick"
+                      className="w-full h-24 p-4 rounded-2xl border border-gray-200 text-[13px] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300 transition resize-none"
+                      placeholder="Ví dụ: Màu sơn chưa đều, còn xước ở cạnh bàn..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[12px] font-bold text-gray-400 uppercase mb-2 ml-1">Quay lại công đoạn</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button 
+                        onClick={() => handleQuickRedo(document.getElementById('redoReasonQuick').value, 'gia_cong_moc')}
+                        className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50 transition group"
+                      >
+                        <Hammer size={20} className="text-gray-400 group-hover:text-emerald-600" />
+                        <span className="text-[12px] font-bold text-gray-600 group-hover:text-emerald-700">Gia công Mộc</span>
+                      </button>
+                      <button 
+                        onClick={() => handleQuickRedo(document.getElementById('redoReasonQuick').value, 'son_hoan_thien')}
+                        className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50 transition group"
+                      >
+                        <Paintbrush size={20} className="text-gray-400 group-hover:text-emerald-600" />
+                        <span className="text-[12px] font-bold text-gray-600 group-hover:text-emerald-700">Sơn hoàn thiện</span>
+                      </button>
+                    </div>
+                  </div>
+               </div>
+
+               <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+                  <button 
+                    onClick={() => setShowRedoModal(false)}
+                    className="px-5 py-2 rounded-xl text-[13px] font-bold text-gray-400 hover:text-gray-600 transition"
+                  >
+                    Hủy bỏ
+                  </button>
+               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Assign Modal */}
+        {showAssignModal && selectedItem && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-emerald-50/30">
+                  <div className="flex items-center gap-2 text-emerald-600">
+                    <UserPlus size={18} />
+                    <h3 className="text-[15px] font-bold uppercase tracking-tight">Giao việc cho thợ</h3>
+                  </div>
+                  <button onClick={() => setShowAssignModal(false)} className="text-gray-400 hover:text-gray-600 transition p-1 hover:bg-white rounded-lg">
+                    <X size={20} />
+                  </button>
+               </div>
+               
+               <div className="p-6">
+                  <div className="space-y-4">
+                     <p className="text-[13px] text-gray-600">Chọn thợ phụ trách cho lệnh sản xuất <span className="font-bold text-emerald-600">{selectedItem.code}</span>:</p>
+                     
+                     <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                        {MOCK_WORKERS.map(worker => (
+                           <label 
+                             key={worker.id}
+                             className={`flex items-center gap-3 p-3 rounded-xl border-2 transition cursor-pointer hover:border-emerald-200 ${selectedWorker === worker.id ? 'border-emerald-500 bg-emerald-50' : 'border-gray-50 bg-white'}`}
+                           >
+                              <input 
+                                type="radio" 
+                                name="worker" 
+                                className="hidden" 
+                                onChange={() => setSelectedWorker(worker.id)}
+                                checked={selectedWorker === worker.id}
+                              />
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-[14px] transition-colors ${selectedWorker === worker.id ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                                 {worker.avatar}
+                              </div>
+                              <div className="flex-1">
+                                 <p className="text-[14px] font-bold text-gray-900">{worker.name}</p>
+                                 <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{worker.role}</p>
+                              </div>
+                              {selectedWorker === worker.id && <CheckCircle size={18} className="text-emerald-600" />}
+                           </label>
+                        ))}
+                     </div>
+                  </div>
+
+                  <div className="mt-6 flex gap-3">
+                     <button 
+                       onClick={() => setShowAssignModal(false)}
+                       className="flex-1 h-11 rounded-xl text-[13px] font-bold text-gray-400 hover:bg-gray-50 transition"
+                     >
+                        Hủy bỏ
+                     </button>
+                     <button 
+                       disabled={!selectedWorker}
+                       onClick={handleAssignWorker}
+                       className="flex-1 h-11 rounded-xl text-[13px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-100 active:scale-95"
+                     >
+                        Bắt đầu sản xuất
+                     </button>
+                  </div>
+               </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

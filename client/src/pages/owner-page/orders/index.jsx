@@ -14,170 +14,132 @@ import {
   ChevronLeft,
   ChevronRight,
   Hammer,
-  Camera,
   Clock,
-  AlertTriangle,
   CheckCircle,
-  UserPlus,
-  ClipboardList,
-  Info,
   RefreshCw,
+  Camera,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 
 
 const INITIAL_ORDERS = [
-  // ========== NHÓM 1: HÀNG SẴN (In-stock) ==========
+  // ========== NHÓM 1: HÀNG SẴN (6 trạng thái) ==========
   {
-    id: "DH-S01",
-    code: "DH-SAN-001",
-    customerName: "Nguyễn Văn Hùng",
-    phone: "0912345678",
-    type: "Hàng sẵn",
-    fulfillmentType: "Giao tận nhà",
-    total: 12500000,
-    status: "Chờ xử lý",
-    date: "2026-03-12T08:30:00",
-    salesPerson: "Bình Nguyễn",
-    deliveryDate: "2026-03-14"
+    id: "DH-S01", code: "DH-SAN-001", customerName: "Nguyễn Văn Hùng", phone: "0912345678",
+    type: "Hàng sẵn", total: 12500000, status: "Chờ xử lý",
+    date: "2026-03-12T08:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-14"
   },
   {
-    id: "DH-S02",
-    code: "DH-SAN-002",
-    customerName: "Lê Thị Lan",
-    phone: "0345678901",
-    type: "Hàng sẵn",
-    fulfillmentType: "Lấy ngay",
-    total: 3500000,
-    status: "Đang giao hàng",
-    date: "2026-03-11T14:20:00",
-    salesPerson: "Bình Nguyễn",
-    deliveryDate: "2026-03-12"
+    id: "DH-S02", code: "DH-SAN-002", customerName: "Lê Thị Lan", phone: "0345678901",
+    type: "Hàng sẵn", total: 3500000, status: "Chờ giao hàng",
+    date: "2026-03-11T14:20:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-12"
   },
   {
-    id: "DH-S03",
-    code: "DH-SAN-003",
-    customerName: "Trần Minh Quang",
-    phone: "0909123456",
-    type: "Hàng sẵn",
-    fulfillmentType: "Lấy luôn",
-    total: 45000000,
-    status: "Giao hàng thành công",
-    date: "2026-03-10T09:15:00",
-    salesPerson: "Bình Nguyễn",
-    deliveryDate: "2026-03-11"
+    id: "DH-S03", code: "DH-SAN-003", customerName: "Trần Minh Quang", phone: "0909123456",
+    type: "Hàng sẵn", total: 45000000, status: "Đang giao hàng",
+    date: "2026-03-10T09:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-11"
   },
   {
-    id: "DH-S04",
-    code: "DH-SAN-004",
-    customerName: "Phạm Thành Nam",
-    phone: "0987654321",
-    type: "Hàng sẵn",
-    total: 8900000,
-    date: "2026-03-11T16:45:00",
-    salesPerson: "Bình Nguyễn",
-    deliveryDate: "2026-03-13",
-    cancelReason: "Khách đổi mẫu khác"
+    id: "DH-S04", code: "DH-SAN-004", customerName: "Phạm Thành Nam", phone: "0987654321",
+    type: "Hàng sẵn", total: 8900000, status: "Hoàn thành",
+    date: "2026-03-09T16:45:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-10"
   },
   {
-    id: "DH-S05",
-    code: "DH-SAN-005",
-    customerName: "Đinh Công Vinh",
-    phone: "0944556677",
-    type: "Hàng sẵn",
-    total: 2100000,
-    status: "Đã hủy",
-    date: "2026-03-09T10:00:00",
-    salesPerson: "Bình Nguyễn",
-    deliveryDate: "2026-03-10"
+    id: "DH-S05", code: "DH-SAN-005", customerName: "Đinh Công Vinh", phone: "0944556677",
+    type: "Hàng sẵn", total: 2100000, status: "Chờ duyệt hủy",
+    date: "2026-03-11T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-13",
+    cancelReason: "Khách đổi ý"
+  },
+  {
+    id: "DH-S06", code: "DH-SAN-006", customerName: "Võ Thị Bảy", phone: "0966778899",
+    type: "Hàng sẵn", total: 1500000, status: "Đã hủy",
+    date: "2026-03-08T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-09",
   },
 
-  // ========== NHÓM 2: HÀNG THÔ (Raw Goods) ==========
+  // ========== NHÓM 2: HÀNG THÔ (8 trạng thái) ==========
   {
-    id: "DH-T01",
-    code: "DH-THO-001",
-    customerName: "Hoàng Nguyệt Ánh",
-    phone: "0978901234",
-    type: "Hàng thô",
-    total: 56000000,
-    status: "Chờ gia công",
-    date: "2026-03-12T10:00:00",
-    salesPerson: "Bình Nguyễn",
-    deliveryDate: "2026-03-20"
+    id: "DH-T01", code: "DH-THO-001", customerName: "Hoàng Nguyệt Ánh", phone: "0978901234",
+    type: "Hàng thô", total: 56000000, status: "Chờ xử lý",
+    date: "2026-03-12T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-20"
   },
   {
-    id: "DH-T02",
-    code: "DH-THO-002",
-    customerName: "Đặng Tuấn Kiệt",
-    phone: "0931234567",
-    type: "Hàng thô",
-    total: 8200000,
-    status: "Đang gia công",
-    date: "2026-03-11T15:30:00",
-    salesPerson: "Bình Nguyễn",
-    deliveryDate: "2026-03-15"
+    id: "DH-T02", code: "DH-THO-002", customerName: "Đặng Tuấn Kiệt", phone: "0931234567",
+    type: "Hàng thô", total: 8200000, status: "Đang sản xuất",
+    date: "2026-03-11T15:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-15"
   },
   {
-    id: "DH-T03",
-    code: "DH-THO-003",
-    customerName: "Vũ Hải Đăng",
-    phone: "0966778899",
-    type: "Hàng thô",
-    total: 12500000,
-    status: "Hoàn thiện sản phẩm",
-    date: "2026-03-10T08:00:00",
-    salesPerson: "Bình Nguyễn",
-    deliveryDate: "2026-03-14"
+    id: "DH-T03", code: "DH-THO-003", customerName: "Vũ Hải Đăng", phone: "0922334455",
+    type: "Hàng thô", total: 12500000, status: "Đang sản xuất",
+    date: "2026-03-10T08:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-14"
   },
   {
-    id: "DH-T04",
-    code: "DH-THO-004",
-    customerName: "Bùi Tiến Dũng",
-    phone: "0922334455",
-    type: "Hàng thô",
-    total: 28000000,
-    status: "Đang giao hàng",
-    date: "2026-03-09T11:20:00",
-    salesPerson: "Bình Nguyễn",
-    deliveryDate: "2026-03-12"
+    id: "DH-T04", code: "DH-THO-004", customerName: "Bùi Tiến Dũng", phone: "0911223344",
+    type: "Hàng thô", total: 28000000, status: "Chờ giao hàng",
+    date: "2026-03-09T11:20:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-12"
   },
   {
-    id: "DH-T05",
-    code: "DH-THO-005",
-    customerName: "Đinh Công Thành",
-    phone: "0988776655",
-    type: "Hàng thô",
-    total: 15400000,
-    status: "Giao hàng thành công",
-    date: "2026-03-08T14:45:00",
-    salesPerson: "Bình Nguyễn",
-    deliveryImage: "https://example.com/delivery3.jpg"
+    id: "DH-T05", code: "DH-THO-005", customerName: "Đinh Công Thành", phone: "0988776655",
+    type: "Hàng thô", total: 15400000, status: "Đang giao hàng",
+    date: "2026-03-08T14:45:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-10"
+  },
+  {
+    id: "DH-T06", code: "DH-THO-006", customerName: "Trần Anh Tú", phone: "0900112233",
+    type: "Hàng thô", total: 32000000, status: "Hoàn thành",
+    date: "2026-03-07T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-09"
+  },
+  {
+    id: "DH-T07", code: "DH-THO-007", customerName: "Lý Quí Chung", phone: "0933445566",
+    type: "Hàng thô", total: 18000000, status: "Chờ duyệt hủy",
+    date: "2026-03-11T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-15",
+    cancelReason: "Mua nhầm hàng"
+  },
+  {
+    id: "DH-T08", code: "DH-THO-008", customerName: "Nguyễn Kim Ngân", phone: "0977889900",
+    type: "Hàng thô", total: 9000000, status: "Đã hủy",
+    date: "2026-03-05T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-08"
   },
 
-  // ========== NHÓM 3: HÀNG ĐẶT (Custom Orders) ==========
+  // ========== NHÓM 3: HÀNG ĐẶT (8 trạng thái) ==========
   {
-    id: "DH-D01",
-    code: "DH-DAT-001",
-    customerName: "Nguyễn Thị Hồng",
-    phone: "0912123123",
-    type: "Hàng đặt",
-    total: 75000000,
-    status: "Chờ nhập hàng",
-    date: "2026-03-12T11:15:00",
-    salesPerson: "Bình Nguyễn",
-    deliveryDate: "2026-03-30"
+    id: "DH-D01", code: "DH-DAT-001", customerName: "Nguyễn Thị Hồng", phone: "0912123123",
+    type: "Hàng đặt", total: 75000000, status: "Chờ xử lý",
+    date: "2026-03-12T11:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-30"
   },
   {
-    id: "DH-D02",
-    code: "DH-DAT-002",
-    customerName: "Lê Văn Tám",
-    phone: "0321654987",
-    type: "Hàng đặt",
-    total: 120000000,
-    status: "Đang gia công",
-    date: "2026-03-05T09:00:00",
-    salesPerson: "Bình Nguyễn",
-    deliveryDate: "2026-03-25"
+    id: "DH-D02", code: "DH-DAT-002", customerName: "Lê Văn Tám", phone: "0321654987",
+    type: "Hàng đặt", total: 120000000, status: "Đang sản xuất",
+    date: "2026-03-11T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-25"
+  },
+  {
+    id: "DH-D03", code: "DH-DAT-003", customerName: "Phan Văn Trị", phone: "0944123123",
+    type: "Hàng đặt", total: 45000000, status: "Đang sản xuất",
+    date: "2026-03-10T10:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-28"
+  },
+  {
+    id: "DH-D04", code: "DH-DAT-004", customerName: "Hoàng Thanh Sơn", phone: "0988123123",
+    type: "Hàng đặt", total: 95000000, status: "Chờ giao hàng",
+    date: "2026-03-09T14:20:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-22"
+  },
+  {
+    id: "DH-D05", code: "DH-DAT-005", customerName: "Lưu Bích Thủy", phone: "0909123123",
+    type: "Hàng đặt", total: 34000000, status: "Đang giao hàng",
+    date: "2026-03-08T11:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-20"
+  },
+  {
+    id: "DH-D06", code: "DH-DAT-006", customerName: "Trương Vô Kỵ", phone: "0977123123",
+    type: "Hàng đặt", total: 210000000, status: "Hoàn thành",
+    date: "2026-03-05T08:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-15"
+  },
+  {
+    id: "DH-D07", code: "DH-DAT-007", customerName: "Triệu Mẫn", phone: "0911123123",
+    type: "Hàng đặt", total: 85000000, status: "Chờ duyệt hủy",
+    date: "2026-03-11T13:45:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-26",
+    cancelReason: "Khách đổi kích thước nhà"
+  },
+  {
+    id: "DH-D08", code: "DH-DAT-008", customerName: "Chu Chỉ Nhược", phone: "0933123123",
+    type: "Hàng đặt", total: 42000000, status: "Đã hủy",
+    date: "2026-03-01T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-10"
   },
 ];
 
@@ -185,32 +147,29 @@ const ORDER_TYPES = ["Hàng sẵn", "Hàng thô", "Hàng đặt"];
 
 const HANG_SAN_STATUSES = [
   "Chờ xử lý",
-  "Chuẩn bị giao hàng",
+  "Chờ giao hàng",
   "Đang giao hàng",
-  "Giao hàng thành công",
+  "Hoàn thành",
   "Chờ duyệt hủy",
   "Đã hủy",
 ];
 
 const HANG_THO_STATUSES = [
-  "Chờ gia công",
-  "Đang gia công",
-  "Hoàn thiện sản phẩm",
-  "Chuẩn bị giao hàng",
+  "Chờ xử lý",
+  "Đang sản xuất",
+  "Chờ giao hàng",
   "Đang giao hàng",
-  "Giao hàng thành công",
+  "Hoàn thành",
   "Chờ duyệt hủy",
   "Đã hủy",
 ];
 
 const HANG_DAT_STATUSES = [
-  "Chờ nhập hàng",
-  "Chờ gia công",
-  "Đang gia công",
-  "Hoàn thiện sản phẩm",
-  "Chuẩn bị giao hàng",
+  "Chờ xử lý",
+  "Đang sản xuất",
+  "Chờ giao hàng",
   "Đang giao hàng",
-  "Giao hàng thành công",
+  "Hoàn thành",
   "Chờ duyệt hủy",
   "Đã hủy",
 ];
@@ -239,150 +198,28 @@ const formatDateTime = (dateString) => {
 
 const getStatusColor = (status) => {
   switch (status) {
-    // === NHÓM 1: HÀNG SẴN ===
     case "Chờ xử lý":
-      return { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" };
-
-    // === NHÓM 2: HÀNG GIA CÔNG / SX ===
-    case "Chờ nhập hàng":
-      return { bg: "#FFFBEB", text: "#B45309", border: "#FDE68A" };
-    case "Chờ gia công":
-      return { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" };
-    case "Đang gia công":
-      return { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" };
-    case "Hoàn thiện sản phẩm":
-      return { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" };
-
-    // === CHUNG ===
-    case "Chuẩn bị giao hàng":
-      return { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" };
+      return { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" }; // Blue
+    case "Đang xử lý":
+      return { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" }; // Orange
+    case "Đang sản xuất":
+      return { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" }; // Amber
+    case "Chờ giao hàng":
+      return { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" }; // Purple
     case "Đang giao hàng":
-      return { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" };
-    case "Giao hàng thành công":
-      return { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" };
+      return { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" }; // Deep Blue
+    case "Hoàn thành":
+      return { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" }; // Green
     case "Chờ duyệt hủy":
-      return { bg: "#FEF2F2", text: "#B91C1C", border: "#FECACA" };
+      return { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" }; // Amber/Yellow
     case "Đã hủy":
-      return { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
+      return { bg: "#FEF2F2", text: "#B91C1C", border: "#FECACA" }; // Red
 
     default:
       return { bg: "var(--bg-main)", text: "var(--text-secondary)", border: "var(--grid-border)" };
   }
 };
 
-// --- MOCK WORKERS (Same as Detail) ---
-const MOCK_WORKERS = [
-  { id: "W001", name: "Nguyễn Văn Đức", role: "Thợ sản xuất", avatar: "Đ", status: "online" },
-  { id: "W002", name: "Trần Minh Tâm", role: "Thợ sản xuất", avatar: "T", status: "busy" },
-  { id: "W003", name: "Lê Văn Hùng", role: "Thợ sơn", avatar: "H", status: "online" },
-  { id: "W004", name: "Phạm Quốc Bảo", role: "Thợ mộc", avatar: "B", status: "online" },
-];
-
-// --- ASSIGN WORKER MODAL (Consolidated) ---
-const AssignWorkerModal = ({ isOpen, onClose, onConfirm, order }) => {
-  const [selectedWorkerId, setSelectedWorkerId] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
-
-  if (!isOpen) return null;
-
-  const filteredWorkers = MOCK_WORKERS.filter(w => 
-    w.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    w.role.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  return (
-    <div 
-      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
-      onClick={onClose}
-    >
-      <div 
-        className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh] animate-in zoom-in-95 duration-200"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-          <div>
-            <h3 className="text-[17px] font-bold text-gray-900">Giao việc cho thợ</h3>
-            <p className="text-[12px] text-gray-500 mt-0.5">Mã đơn: <span className="font-mono font-bold text-indigo-600">{order?.code}</span></p>
-          </div>
-          <button onClick={onClose} className="p-2 hover:bg-white hover:shadow-md rounded-xl transition-all text-gray-400 hover:text-gray-600 border border-transparent hover:border-gray-100">
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2">
-            {/* Left: Summary */}
-            <div className="p-6 bg-gray-50/30 border-r border-gray-100">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
-                  <ClipboardList size={16} className="text-indigo-600" />
-                </div>
-                <h4 className="text-[14px] font-bold text-gray-800 uppercase tracking-wider">Thông tin sản xuất</h4>
-              </div>
-              <div className="space-y-3">
-                <div className="p-3 rounded-2xl bg-white border border-gray-100 shadow-sm text-[13px]">
-                   <p className="font-bold text-gray-900">Chi tiết sản phẩm</p>
-                   <p className="text-gray-600 mt-1 italic">Sản phẩm theo file đính kèm/phác thảo kỹ thuật.</p>
-                </div>
-                <div className="p-3 rounded-2xl bg-amber-50 border border-amber-100 border-dashed">
-                  <div className="flex items-start gap-2">
-                    <Info size={14} className="text-amber-600 mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-[11px] font-bold text-amber-900">Ghi chú kỹ thuật</p>
-                      <p className="text-[11px] text-amber-800/80 mt-0.5 italic">Gỗ hương đá, finish sơn PU mờ.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right: Workers */}
-            <div className="p-6">
-              <div className="relative mb-3">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input 
-                  type="text" 
-                  placeholder="Tìm thợ..." 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-10 pl-9 pr-4 rounded-xl border border-gray-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
-              </div>
-              <div className="space-y-2 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
-                {filteredWorkers.map(worker => (
-                  <label 
-                    key={worker.id}
-                    className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition-all cursor-pointer ${selectedWorkerId === worker.id ? 'border-indigo-500 bg-indigo-50' : 'border-gray-50'}`}
-                  >
-                    <input type="radio" value={worker.id} checked={selectedWorkerId === worker.id} onChange={() => setSelectedWorkerId(worker.id)} className="hidden" />
-                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-[14px]">{worker.avatar}</div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-bold text-gray-900 truncate">{worker.name}</p>
-                      <p className="text-[11px] text-gray-500">{worker.role}</p>
-                    </div>
-                    {selectedWorkerId === worker.id && <CheckCircle size={16} className="text-indigo-600" />}
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="px-6 py-4 border-t border-gray-100 flex gap-3 bg-gray-50/50">
-          <button onClick={onClose} className="flex-1 h-11 rounded-2xl text-[13px] font-bold text-gray-500 border border-gray-200">Hủy</button>
-          <button 
-            disabled={!selectedWorkerId}
-            onClick={() => onConfirm(selectedWorkerId)}
-            className="flex-[2] h-11 rounded-2xl text-[13px] font-bold text-white bg-indigo-600 disabled:opacity-40"
-          >
-            Bàn giao sản xuất
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // ===================== COMPONENT =====================
 export default function OwnerOrders() {
@@ -391,7 +228,6 @@ export default function OwnerOrders() {
     const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
     return [...saved, ...INITIAL_ORDERS];
   });
-  const [assignModal, setAssignModal] = useState({ isOpen: false, order: null });
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Đọc giá trị từ URL, nếu không có thì mặc định
@@ -885,63 +721,43 @@ export default function OwnerOrders() {
                             {/* FLOW THEO LOẠI HÀNG */}
                             {o.type === "Hàng sẵn" ? (
                               <>
-                                {/* Hàng sẵn sales quyết, chủ không cần duyệt nút chuẩn bị giao ở đây */}
+                                {/* Hàng sẵn: Chờ xử lý -> Chờ giao hàng - ĐÃ GỠ THEO YÊU CẦU (Sales làm) */}
+                                {o.status === "Chờ xử lý" && (
+                                   <div className="text-[10px] text-gray-400 italic">Sales đang xử lý...</div>
+                                )}
                               </>
                             ) : (
                               <>
-                                {/* HÀNG SX: QUY TRÌNH XƯỞNG */}
-                                {o.status === "Chờ xử lý" && (
-                                  <button
-                                    onClick={(e) => { 
-                                      e.stopPropagation(); 
-                                      handleUpdateStatus(o.id, "Chờ gia công");
-                                    }}
-                                    className="h-9 px-4 rounded-xl bg-orange-600 text-white text-[12px] font-black hover:bg-orange-700 transition-all shadow-lg shadow-orange-200 flex items-center gap-2 active:scale-95"
-                                  >
-                                    <FileText size={16} /> XÁC NHẬN ĐƠN (KẾ HOẠCH)
-                                  </button>
-                                )}
-
-                                {o.status === "Chờ gia công" && (
+                                {/* HÀNG THÔ VÀ ĐẶT */}
+                                
+                                {/* Nút Bàn giao sản xuất (Hàng thô, Hàng đặt nhảy thẳng từ Chờ xử lý -> Đang sản xuất) */}
+                                {o.status === "Chờ xử lý" && (o.type === "Hàng thô" || o.type === "Hàng đặt") && (
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setAssignModal({ isOpen: true, order: o });
+                                      if(window.confirm("Bàn giao đơn hàng này sang Xưởng sản xuất?")) {
+                                        handleUpdateStatus(o.id, "Đang sản xuất");
+                                        // Deep link to specific production detail and auto-open assignment modal
+                                        navigate("/owner/production/LSX001", { state: { autoOpenAssign: true } });
+                                      }
                                     }}
                                     className="h-9 px-4 rounded-xl bg-indigo-600 text-white text-[12px] font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2 active:scale-95"
                                   >
-                                    <UserPlus size={16} /> GIAO VIỆC CHO THỢ
+                                    <Hammer size={16} /> BÀN GIAO SẢN XUẤT
                                   </button>
                                 )}
 
-                                {o.status === "Đang gia công" && (
-                                  <button
-                                    onClick={(e) => { 
-                                      e.stopPropagation(); 
-                                      handleUpdateStatus(o.id, "Hoàn thiện sản phẩm");
-                                    }}
-                                    className="h-9 px-4 rounded-xl bg-emerald-600 text-white text-[12px] font-black hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center gap-2 active:scale-95"
-                                  >
-                                    <CheckCircle size={16} /> XÁC NHẬN XONG
-                                  </button>
-                                )}
-
-                                {o.status === "Hoàn thiện sản phẩm" && (
-                                  <button
-                                    onClick={(e) => { 
-                                      e.stopPropagation(); 
-                                      handleUpdateStatus(o.id, "Chuẩn bị giao hàng");
-                                    }}
-                                    className="h-9 px-4 rounded-xl bg-blue-600 text-white text-[12px] font-black hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 flex items-center gap-2 active:scale-95"
-                                  >
-                                    <Package size={16} /> Chuẩn bị giao hàng
-                                  </button>
+                                {o.status === "Đang sản xuất" && (
+                                   <div className="flex flex-col items-center">
+                                      <div className="text-[10px] text-indigo-600 font-bold uppercase tracking-tight">Đang sản xuất...</div>
+                                      <div className="text-[9px] text-gray-400 italic mt-0.5">Xử lý tại mục Sản xuất</div>
+                                   </div>
                                 )}
                               </>
                             )}
 
                             {/* CHUNG PHẦN GIAO VẬN */}
-                            {o.status === "Chuẩn bị giao hàng" && (
+                            {o.status === "Chờ giao hàng" && (
                               <button
                                 onClick={(e) => { 
                                   e.stopPropagation(); 
@@ -1112,16 +928,7 @@ export default function OwnerOrders() {
           )}
         </div>
       </div>
-      {/* Modal Selection */}
-      <AssignWorkerModal 
-        isOpen={assignModal.isOpen}
-        onClose={() => setAssignModal({ isOpen: false, order: null })}
-        order={assignModal.order}
-        onConfirm={(workerId) => {
-          handleUpdateStatus(assignModal.order.id, "Đang sản xuất");
-          setAssignModal({ isOpen: false, order: null });
-        }}
-      />
+      {/* Modal Selection đã được gỡ bỏ để tránh chồng chéo logic với màn hình Sản xuất */}
     </>
   );
 }
