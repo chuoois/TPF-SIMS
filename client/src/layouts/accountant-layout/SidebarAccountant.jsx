@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutGrid, Package, ArrowDownToLine, ChevronRight, PanelLeftClose, ClipboardList, Users, Truck, BarChart } from "lucide-react";
+import { LayoutGrid, Package, ArrowDownToLine, ChevronRight, PanelLeftClose, ClipboardList, Users, Truck, BarChart, Wallet } from "lucide-react";
 
 /**
  * Sidebar – Accountant Layout
@@ -39,6 +39,11 @@ const menuItems = [
         text: "Công nợ thu mua",
         path: "/accountant/supplier-debt",
         icon: Truck,
+    },
+    {
+        text: "Lương nhân viên",
+        path: "/accountant/employee-salary",
+        icon: Wallet,
     },
 ];
 
