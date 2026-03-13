@@ -5,7 +5,7 @@
  * Created Date: 06/03/2026
  */
 
-import { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Search,
@@ -32,13 +32,15 @@ import { PageHelmet } from "@/components/seo/PageHelmet";
 
 // ===================== STATIC DATA =====================
 const INITIAL_PRODUCTIONS = [
+  // Order 1: Multi-product (Kitchen)
   {
     id: "LSX001",
     code: "LSX-2603-0001",
     orderCode: "DH-2603-0001",
     orderId: "DH001",
+    customerName: "Nguyễn Văn A",
     productName: "Tủ bếp chữ L",
-    variantName: "Gỗ sồi Nga — Sơn PU óc chó",
+    variantName: "Gỗ sồi Nga — Sơn PU",
     quantityPlanned: 1,
     quantityCompleted: 0,
     status: "Chờ giao thợ",
@@ -49,10 +51,29 @@ const INITIAL_PRODUCTIONS = [
     date: "2026-03-05T16:30:00",
   },
   {
+    id: "LSX021",
+    code: "LSX-2603-0021",
+    orderCode: "DH-2603-0001",
+    orderId: "DH001",
+    customerName: "Nguyễn Văn A",
+    productName: "Đảo bếp",
+    variantName: "Đồng bộ tủ bếp",
+    quantityPlanned: 1,
+    quantityCompleted: 0,
+    status: "Chờ giao thợ",
+    subStage: null,
+    assignedWorker: null,
+    startDate: null,
+    expectedEndDate: "2026-03-22",
+    date: "2026-03-05T16:32:00",
+  },
+  // Order 2: Single product (Dining room)
+  {
     id: "LSX002",
     code: "LSX-2603-0002",
     orderCode: "DH-2603-0002",
     orderId: "DH002",
+    customerName: "Trần Thị B",
     productName: "Bàn ăn nguyên tấm",
     variantName: "Gỗ gõ đỏ — Live Edge",
     quantityPlanned: 1,
@@ -64,112 +85,33 @@ const INITIAL_PRODUCTIONS = [
     expectedEndDate: "2026-03-25",
     date: "2026-03-05T16:35:00",
   },
-  {
-    id: "LSX015",
-    code: "LSX-2603-0015",
-    orderCode: null,
-    orderId: null,
-    productName: "Bàn ăn gỗ sồi 1m6",
-    variantName: "Gỗ sồi Nga — Sơn trần",
-    quantityPlanned: 5,
-    quantityCompleted: 0,
-    status: "Chờ giao thợ",
-    subStage: null,
-    assignedWorker: null,
-    startDate: null,
-    expectedEndDate: "2026-04-10",
-    date: "2026-03-08T15:30:00",
-  },
-  {
-    id: "LSX010",
-    code: "LSX-2603-0010",
-    orderCode: "DH-2603-0025",
-    orderId: "DH025",
-    productName: "Bàn làm việc chữ L",
-    variantName: "Gỗ sồi Mỹ — Sơn PU tự nhiên",
-    quantityPlanned: 1,
-    quantityCompleted: 0,
-    status: "Chờ giao thợ",
-    subStage: null,
-    assignedWorker: null,
-    startDate: null,
-    expectedEndDate: "2026-03-28",
-    date: "2026-03-07T08:30:00",
-  },
+  // Order 3: Multi-product (Living room - Mixed Status)
   {
     id: "LSX003",
     code: "LSX-2603-0003",
     orderCode: "DH-2603-0008",
     orderId: "DH008",
-    productName: "Bộ bàn ghế phòng khách",
-    variantName: "Gỗ hương đá — Chạm nghê bảo đỉnh",
+    customerName: "Lê Văn C",
+    productName: "Bàn trà phòng khách",
+    variantName: "Gỗ hương đá — Chạm nghê",
     quantityPlanned: 1,
     quantityCompleted: 0,
     status: "Đang sản xuất",
     subStage: "gia_cong_moc",
     needsRedo: true,
-    redoReason: "Mặt bàn bị xước nhỏ ở góc trái",
+    redoReason: "Mặt bàn bị xước nhỏ",
     assignedWorker: "Nguyễn Văn Đức",
     startDate: "2026-03-03",
     expectedEndDate: "2026-03-25",
     date: "2026-03-03T08:00:00",
   },
   {
-    id: "LSX005",
-    code: "LSX-2603-0005",
-    orderCode: "DH-2603-0012",
-    orderId: "DH012",
-    productName: "Bàn thờ chạm rồng",
-    variantName: "Gỗ mít — Sơn PU bóng",
-    quantityPlanned: 2,
-    quantityCompleted: 1,
-    status: "Đang sản xuất",
-    subStage: "son_hoan_thien",
-    needsRedo: true,
-    redoReason: "Lớp sơn phủ chưa bóng đều, cần xả nhám nhẹ và phun lại lớp cuối.",
-    assignedWorker: "Lê Văn Hùng",
-    startDate: "2026-03-04",
-    expectedEndDate: "2026-03-20",
-    date: "2026-03-04T09:00:00",
-  },
-  {
-    id: "LSX007",
-    code: "LSX-2603-0007",
-    orderCode: null,
-    orderId: null,
-    productName: "Tủ đầu giường",
-    variantName: "Gỗ sồi — 2 ngăn kéo",
-    quantityPlanned: 20,
-    quantityCompleted: 5,
-    status: "Đang sản xuất",
-    subStage: "gia_cong_moc",
-    assignedWorker: "Trần Minh Tâm",
-    startDate: "2026-03-06",
-    expectedEndDate: "2026-03-15",
-    date: "2026-03-06T09:00:00",
-  },
-  {
-    id: "LSX011",
-    code: "LSX-2603-0011",
-    orderCode: "DH-2603-0028",
-    orderId: "DH028",
-    productName: "Tủ quần áo 4 cánh",
-    variantName: "Gỗ hương — Chạm hoa lá tây",
-    quantityPlanned: 1,
-    quantityCompleted: 0,
-    status: "Đang sản xuất",
-    subStage: "danh_rap",
-    assignedWorker: "Lê Văn Hùng",
-    startDate: "2026-03-07",
-    expectedEndDate: "2026-03-30",
-    date: "2026-03-07T10:00:00",
-  },
-  {
     id: "LSX004",
     code: "LSX-2603-0004",
     orderCode: "DH-2603-0008",
     orderId: "DH008",
-    productName: "Kệ tivi nguyên khối",
+    customerName: "Lê Văn C",
+    productName: "Kệ tivi",
     variantName: "Gỗ hương đá — PU đồng màu",
     quantityPlanned: 1,
     quantityCompleted: 1,
@@ -180,53 +122,59 @@ const INITIAL_PRODUCTIONS = [
     expectedEndDate: "2026-03-15",
     date: "2026-03-03T08:15:00",
   },
+  // Order 4: Pending Approval (was Chờ nghiệm thu)
+  {
+    id: "LSX005",
+    code: "LSX-2603-0005",
+    orderCode: "DH-2603-0012",
+    orderId: "DH012",
+    customerName: "Phạm Văn D",
+    productName: "Tủ quần áo 4 cánh",
+    variantName: "Gỗ công nghiệp MDF — Phủ Melamine",
+    quantityPlanned: 1,
+    quantityCompleted: 1,
+    status: "Đang sản xuất",
+    isPendingApproval: true,
+    completionPhoto: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=3000&auto=format&fit=crop",
+    assignedWorker: "Lê Văn Hùng",
+    startDate: "2026-03-01",
+    expectedEndDate: "2026-03-10",
+    date: "2026-03-01T09:00:00",
+  },
+  // Order 5: High Priority / Delayed
   {
     id: "LSX006",
     code: "LSX-2603-0006",
-    orderCode: "DH-2603-0014",
-    orderId: "DH014",
-    productName: "Sập thờ mai điểu",
-    variantName: "Gỗ gụ mật — Vecni thủ công",
+    orderCode: "DH-2603-0015",
+    orderId: "DH015",
+    customerName: "Hoàng Anh Tuấn",
+    productName: "Giường ngủ 1m8",
+    variantName: "Gỗ xoan đào — Kiểu hiện đại",
     quantityPlanned: 1,
-    quantityCompleted: 1,
-    status: "Hoàn thành",
-    subStage: null,
-    assignedWorker: "Nguyễn Văn Đức",
-    startDate: "2026-03-01",
-    expectedEndDate: "2026-03-10",
-    date: "2026-03-01T08:00:00",
-  },
-  {
-    id: "LSX016",
-    code: "LSX-2603-0016",
-    orderCode: null,
-    orderId: null,
-    productName: "Ghế đôn gỗ mít",
-    variantName: "Gỗ mít — Đánh bóng",
-    quantityPlanned: 10,
-    quantityCompleted: 10,
-    status: "Hoàn thành",
-    subStage: null,
-    assignedWorker: "Nguyễn Văn Đức",
-    startDate: "2026-03-05",
-    expectedEndDate: "2026-03-08",
-    date: "2026-03-05T09:00:00",
-  },
-  {
-    id: "LSX012",
-    code: "LSX-2603-0012",
-    orderCode: "DH-2603-0031",
-    orderId: "DH031",
-    productName: "Ghế bành cổ điển",
-    variantName: "Gỗ óc chó — Bọc da bò",
-    quantityPlanned: 4,
-    quantityCompleted: 4,
-    status: "Hoàn thành",
-    subStage: null,
+    quantityCompleted: 0,
+    status: "Đang sản xuất",
+    subStage: "son_hoan_thien",
     assignedWorker: "Phạm Quốc Bảo",
     startDate: "2026-03-02",
     expectedEndDate: "2026-03-12",
-    date: "2026-03-02T14:00:00",
+    date: "2026-03-02T10:00:00",
+  },
+  // Order 6: Completed
+  {
+    id: "LSX007",
+    code: "LSX-2603-0007",
+    orderCode: "DH-2603-0018",
+    orderId: "DH018",
+    customerName: "Nguyễn Thu Hà",
+    productName: "Bộ bàn ghế ăn 6 ghế",
+    variantName: "Gỗ sồi — Màu óc chó",
+    quantityPlanned: 1,
+    quantityCompleted: 1,
+    status: "Hoàn thành",
+    assignedWorker: "Trần Minh Tâm",
+    startDate: "2026-02-28",
+    expectedEndDate: "2026-03-08",
+    date: "2026-02-27T14:20:00",
   },
 ];
 
@@ -241,7 +189,6 @@ const STATUSES = [
   "Tất cả",
   "Chờ giao thợ",
   "Đang sản xuất",
-  "Chờ nghiệm thu",
   "Hoàn thành",
 ];
 
@@ -257,28 +204,31 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString("vi-VN");
 };
 
-const getStatusColor = (status, subStage = null) => {
-  if (status === "Đang sản xuất") {
-    if (subStage === "gia_cong_moc") return { bg: "#FDF4FF", text: "#A21CAF", border: "#F5D0FE" }; // Woodworking
-    if (subStage === "son_hoan_thien") return { bg: "#FDF2F8", text: "#DB2777", border: "#FBCFE8" }; // Finishing
-    return { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" }; // Purple for general production
+const getStatusColor = (status, subStage = null, isPendingApproval = false, needsRedo = false) => {
+  // 1. Primary Status (Matching the Tabs)
+  const primaryBadge = {
+    "Chờ giao thợ": { label: "Chờ giao thợ", bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" },
+    "Đang sản xuất": { label: "Đang sản xuất", bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" },
+    "Hoàn thành": { label: "Hoàn thành", bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" },
+  }[status] || { label: status, bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
+
+  // 2. Detail Status (The Nuance)
+  let detailBadge = null;
+  if (isPendingApproval && subStage === "son_hoan_thien") {
+    detailBadge = { label: "Chờ duyệt", bg: "#EFF6FF", text: "#1D4ED8", border: "#DBEAFE" };
+  } else if (needsRedo) {
+    detailBadge = { label: "Sửa lại", bg: "#FEF2F2", text: "#EF4444", border: "#FEE2E2" };
+  } else if (status === "Đang sản xuất") {
+    if (subStage === "gia_cong_moc") detailBadge = { label: "Gia công Mộc", bg: "#FDF4FF", text: "#A21CAF", border: "#F5D0FE" };
+    if (subStage === "son_hoan_thien") detailBadge = { label: "Sơn hoàn thiện", bg: "#FDF2F8", text: "#DB2777", border: "#FBCFE8" };
   }
-  
-  switch (status) {
-    case "Chờ giao thợ":
-      return { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" }; // Orange
-    case "Chờ nghiệm thu":
-      return { bg: "#EFF6FF", text: "#1D4ED8", border: "#DBEAFE" }; // Blue
-    case "Hoàn thành":
-      return { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" }; // Green
-    default:
-      return { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
-  }
+
+  return { primaryBadge, detailBadge };
 };
 
 // ===================== COMPONENT =====================
 export default function OwnerProduction() {
-  const [productions] = useState(INITIAL_PRODUCTIONS);
+  const [productions, setProductions] = useState(INITIAL_PRODUCTIONS);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("Tất cả");
   const [dateFrom, setDateFrom] = useState("");
@@ -287,6 +237,7 @@ export default function OwnerProduction() {
   const [itemsPerPage, setItemsPerPage] = useState(15);
   const [showRedoModal, setShowRedoModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showInspectModal, setShowInspectModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedWorker, setSelectedWorker] = useState(null);
 
@@ -319,7 +270,7 @@ export default function OwnerProduction() {
       result = result.filter(
         (p) =>
           p.code.toLowerCase().includes(q) ||
-          p.orderCode.toLowerCase().includes(q) ||
+          p.orderCode?.toLowerCase().includes(q) ||
           p.productName.toLowerCase().includes(q) ||
           (p.assignedWorker && p.assignedWorker.toLowerCase().includes(q)),
       );
@@ -328,38 +279,58 @@ export default function OwnerProduction() {
     return result.sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [productions, searchTerm, statusFilter, dateFrom, dateTo]);
 
-  const hasActiveFilters = statusFilter !== "Tất cả" || dateFrom || dateTo || searchTerm;
+  const hasActiveFilters =
+    statusFilter !== "Tất cả" || searchTerm !== "" || dateFrom !== "" || dateTo !== "";
 
   const clearAllFilters = () => {
     setStatusFilter("Tất cả");
+    setSearchTerm("");
     setDateFrom("");
     setDateTo("");
-    setSearchTerm("");
   };
 
   const handleQuickComplete = (item) => {
-    if (item.status === "Chờ nghiệm thu") {
-      const confirm = window.confirm(`Phê duyệt & Chốt hoàn thiện mã lệnh ${item.code}?`);
-      if (confirm) {
-        alert(`Lệnh sản xuất ${item.code} đã hoàn thành xuất sắc! Đơn hàng ${item.orderCode} đã chuyển sang trạng thái Sẵn sàng giao.`);
-      }
+    if (item.isPendingApproval) {
+      setSelectedItem(item);
+      setShowInspectModal(true);
     } else {
-      const mockPhoto = window.confirm(`Xác nhận báo xong việc cho ${item.code}? Hệ thống sẽ gửi yêu cầu nghiệm thu tới chủ xưởng.`);
-      if (mockPhoto) {
-        alert(`Đã báo xong việc cho ${item.code}! Trạng thái chuyển sang Chờ nghiệm thu.`);
+      const confirmed = window.confirm(`Xác nhận báo xong việc cho ${item.code}? Hệ thống sẽ gửi yêu cầu nghiệm thu tới chủ xưởng.`);
+      if (confirmed) {
+        setProductions(prev => prev.map(p => 
+          p.id === item.id 
+            ? { ...p, isPendingApproval: true, quantityCompleted: p.quantityPlanned } 
+            : p
+        ));
       }
     }
   };
 
+  const handleApprove = (item) => {
+    setProductions(prev => prev.map(p => 
+      p.id === item.id 
+        ? { ...p, status: "Hoàn thành", isPendingApproval: false } 
+        : p
+    ));
+    setShowInspectModal(false);
+  };
+
   const handleQuickRedo = (reason, backToStage) => {
-    alert(`Đã gửi yêu cầu sửa lại lệnh ${selectedItem.code}: ${reason}. Quay lại: ${backToStage === "gia_cong_moc" ? "Mộc" : "Sơn"}`);
+    setProductions(prev => prev.map(p => 
+      p.id === selectedItem.id 
+        ? { ...p, status: "Đang sản xuất", isPendingApproval: false, needsRedo: true, redoReason: reason, subStage: backToStage } 
+        : p
+    ));
     setShowRedoModal(false);
   };
 
   const handleAssignWorker = () => {
     if (!selectedWorker || !selectedItem) return;
     const worker = MOCK_WORKERS.find(w => w.id === selectedWorker);
-    alert(`Đã giao lệnh ${selectedItem.code} cho thợ ${worker.name}. Trạng thái chuyển sang Đang sản xuất.`);
+    setProductions(prev => prev.map(p => 
+      p.id === selectedItem.id 
+        ? { ...p, status: "Đang sản xuất", assignedWorker: worker.name, startDate: new Date().toISOString() } 
+        : p
+    ));
     setShowAssignModal(false);
     setSelectedWorker(null);
   };
@@ -535,6 +506,7 @@ export default function OwnerProduction() {
                   }}
                 />
               </div>
+
             </div>
 
             <div className="flex items-center gap-2">
@@ -584,7 +556,7 @@ export default function OwnerProduction() {
                   >
                     Tiến độ
                   </th>
-                  <th
+                   <th
                     className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500"
                     style={{ color: "var(--text-placeholder)" }}
                   >
@@ -606,34 +578,48 @@ export default function OwnerProduction() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {paginatedItems.map((p, idx) => {
-                  const sc = getStatusColor(p.status);
+                  const sc = getStatusColor(p.status, p.subStage, p.isPendingApproval, p.needsRedo);
                   const progress =
                     p.quantityPlanned > 0
                       ? Math.round((p.quantityCompleted / p.quantityPlanned) * 100)
                       : 0;
+                  
+                  // Check if this item belongs to a group (same order) on this page
+                  const sameOrderItems = paginatedItems.filter(item => item.orderId === p.orderId && p.orderId !== null);
+                  const isFirstInGroup = sameOrderItems.length > 1 && sameOrderItems[0].id === p.id;
+                  const isLastInGroup = sameOrderItems.length > 1 && sameOrderItems[sameOrderItems.length - 1].id === p.id;
+                  const isInGroup = sameOrderItems.length > 1;
+
                   return (
                     <tr
                       key={p.id}
-                      className="group relative border-b hover:bg-gray-50/50 transition-colors"
+                      className="group relative border-b hover:bg-emerald-50/10 transition-colors"
                       style={{ 
                         borderBottom: "1px solid var(--grid-border)",
-                        backgroundColor: p.status === "Chờ xử lý" ? "#FFFBF0" : "transparent"
                       }}
                     >
                       <td className="px-6 py-4 font-medium text-gray-400">
                         {(currentPage - 1) * itemsPerPage + idx + 1}
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col gap-0.5">
-                          <p className="text-[13px] font-bold font-mono text-gray-900">
+                      <td className="px-6 py-4 relative">
+                        {/* Group Indicator Line */}
+                        {isInGroup && (
+                          <div 
+                            className={`absolute left-0 w-1 bg-blue-400/30 ${isFirstInGroup ? 'top-4 rounded-t-full' : 'top-0'} ${isLastInGroup ? 'bottom-4 rounded-b-full' : 'bottom-0'}`}
+                          />
+                        )}
+                        
+                        <div className="flex flex-col gap-1.5">
+                          <p className="text-[13px] font-bold font-mono text-gray-900 tracking-tight">
                             {p.code}
                           </p>
                           {p.orderCode && (
                             <Link
                               to={`/owner/orders/${p.orderId}`}
-                              className="text-[11px] font-bold text-gray-400 hover:text-blue-600 hover:underline flex items-center gap-1 w-fit"
+                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-blue-50 border border-blue-100 text-[10px] font-bold text-blue-600 hover:bg-blue-600 hover:text-white transition-all w-fit group/order"
                             >
-                              <FileText size={10} /> {p.orderCode}
+                              <FileText size={10} className="text-blue-400 group-hover/order:text-white" /> 
+                              {p.orderCode}
                             </Link>
                           )}
                         </div>
@@ -648,13 +634,20 @@ export default function OwnerProduction() {
                               <span className="flex h-2 w-2 rounded-full bg-orange-500 animate-pulse" title="Cần giao việc ngay" />
                             )}
                           </div>
-                          <span className="text-[11px] font-medium text-gray-400">
-                            {p.variantName}
-                          </span>
+                          <div className="flex flex-col">
+                            <span className="text-[11px] font-medium text-gray-400">
+                              {p.variantName}
+                            </span>
+                            {p.customerName && (
+                              <span className="text-[10px] font-bold text-slate-400 uppercase mt-0.5">
+                                Khách: {p.customerName}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex flex-col items-center gap-1.5">
+                        <div className="flex flex-col items-center gap-2">
                           <div className="flex items-center gap-2">
                             <span
                               className="text-[12px] font-bold"
@@ -680,59 +673,35 @@ export default function OwnerProduction() {
                               />
                             </div>
                           )}
+                          {/* Operational Detail inside Progress Cell */}
+                          {sc.detailBadge && (
+                            <span
+                              className="px-2 py-0.5 rounded text-[10px] font-bold"
+                              style={{
+                                backgroundColor: sc.detailBadge.bg,
+                                color: sc.detailBadge.text,
+                              }}
+                            >
+                              {sc.detailBadge.label}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex flex-col gap-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            {p.status === "Chờ giao thợ" ? (
-                              <span
-                                className="inline-flex items-center px-3 py-1.5 rounded-xl text-[11px] font-black w-fit bg-red-50 text-red-600 border border-red-200 shadow-sm animate-[bounce_2s_infinite]"
-                              >
-                                <Activity size={12} className="mr-1.5" />
-                                CẦN GIAO VIỆC
-                              </span>
-                            ) : p.status === "Đang sản xuất" && p.subStage ? (
-                              <>
-                                <span
-                                  className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold w-fit"
-                                style={{
-                                  backgroundColor: getStatusColor(p.status, p.subStage).bg,
-                                  color: getStatusColor(p.status, p.subStage).text,
-                                  border: `1px solid ${getStatusColor(p.status, p.subStage).border}`,
-                                }}
-                              >
-                                <span
-                                  className="w-1.5 h-1.5 rounded-full mr-1.5"
-                                  style={{ backgroundColor: getStatusColor(p.status, p.subStage).text }}
-                                />
-                                {p.subStage === "gia_cong_moc" ? "Gia công Mộc" : "Sơn hoàn thiện"}
-                              </span>
-                              {p.needsRedo && (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 border border-red-100 text-[10px] font-bold text-red-600 shadow-sm animate-pulse">
-                                  <AlertTriangle size={12} className="shrink-0" />
-                                  CẦN SỬA LẠI
-                                </span>
-                              )}
-                            </>
-                          ) : (
-                              <span
-                                className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold w-fit"
-                                style={{
-                                  backgroundColor: getStatusColor(p.status).bg,
-                                  color: getStatusColor(p.status).text,
-                                  border: `1px solid ${getStatusColor(p.status).border}`,
-                                }}
-                              >
-                                <span
-                                  className="w-1.5 h-1.5 rounded-full mr-1.5"
-                                  style={{ backgroundColor: getStatusColor(p.status).text }}
-                                />
-                                {p.status}
-                              </span>
-                            )}
-                          </div>
-                        </div>
+                        <span
+                          className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold whitespace-nowrap"
+                          style={{
+                            backgroundColor: sc.primaryBadge.bg,
+                            color: sc.primaryBadge.text,
+                            border: `1px solid ${sc.primaryBadge.border}`,
+                          }}
+                        >
+                          <span
+                             className="w-1.5 h-1.5 rounded-full mr-1.5"
+                             style={{ backgroundColor: sc.primaryBadge.text }}
+                          />
+                          {sc.primaryBadge.label}
+                        </span>
                       </td>
                       <td className="px-6 py-4">
                         {p.assignedWorker ? (
@@ -755,65 +724,58 @@ export default function OwnerProduction() {
                           <span className="font-medium text-gray-700">
                             {formatDate(p.date)}
                           </span>
-                          <span className="text-[10px] text-gray-400 font-bold uppercase">
-                            {new Date(p.date).toLocaleTimeString("vi-VN", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
                         </div>
 
                         {/* HOVER QUICK ACTIONS BAR */}
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 flex items-center gap-2 bg-white border border-gray-100 shadow-2xl rounded-2xl p-1.5 z-10">
-                           <Link
-                              to={`/owner/production/${p.id}`}
-                              className="inline-flex items-center gap-1.5 px-4 h-9 rounded-xl bg-emerald-50 text-emerald-700 text-[12px] font-bold hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
-                            >
-                              <Eye size={14} />
-                              Chi tiết
-                            </Link>
+                               <Link
+                                  to={`/owner/production/${p.id}`}
+                                  className="inline-flex items-center gap-1.5 px-4 h-9 rounded-xl bg-emerald-50 text-emerald-700 text-[12px] font-bold hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                                >
+                                  <Eye size={14} />
+                                  Chi tiết
+                                </Link>
 
-                            {p.status === "Chờ giao thợ" && (
-                              <button 
-                                onClick={() => {
-                                  setSelectedItem(p);
-                                  setShowAssignModal(true);
-                                }}
-                                className="h-9 px-4 rounded-xl bg-emerald-600 flex items-center gap-2 text-[12px] font-bold text-white hover:bg-emerald-700 transition-all shadow-md active:scale-95"
-                              >
-                                <UserPlus size={16} /> Giao việc
-                              </button>
-                            )}
-
-                            {p.status === "Đang sản xuất" && !p.needsRedo && p.subStage === "son_hoan_thien" && (
-                               <>
-                                 <button 
+                                {p.status === "Chờ giao thợ" && (
+                                  <button 
                                     onClick={() => {
                                       setSelectedItem(p);
-                                      setShowRedoModal(true);
+                                      setShowAssignModal(true);
                                     }}
-                                    className="h-9 px-3 rounded-xl bg-white border border-red-200 flex items-center gap-1.5 text-[12px] font-bold text-red-500 hover:bg-red-50 transition-all shadow-sm"
-                                  >
-                                    <RotateCcw size={16} /> Sửa lại
-                                  </button>
-                                  <button 
-                                    onClick={() => handleQuickComplete(p)}
                                     className="h-9 px-4 rounded-xl bg-emerald-600 flex items-center gap-2 text-[12px] font-bold text-white hover:bg-emerald-700 transition-all shadow-md active:scale-95"
                                   >
-                                    <CheckCircle size={16} /> Xong việc
+                                    <UserPlus size={16} /> Giao việc
                                   </button>
-                               </>
-                            )}
+                                )}
 
-                            {p.status === "Chờ nghiệm thu" && (
-                                <button 
-                                  onClick={() => handleQuickComplete(p)}
-                                  className="h-9 px-5 rounded-xl bg-emerald-600 flex items-center gap-2 text-[12px] font-bold text-white hover:bg-emerald-700 transition-all shadow-lg active:scale-95 animate-[pulse_2s_infinite]"
-                                >
-                                  <Camera size={16} /> Duyệt sản phẩm
-                                </button>
-                            )}
-                        </div>
+                                {p.status === "Đang sản xuất" && (
+                                   <>
+                                      {p.isPendingApproval ? (
+                                        <button 
+                                          onClick={() => {
+                                            setSelectedItem(p);
+                                            setShowInspectModal(true);
+                                          }}
+                                          className="h-9 px-5 rounded-xl bg-blue-600 flex items-center gap-2 text-[12px] font-bold text-white hover:bg-blue-700 transition-all shadow-lg active:scale-95"
+                                        >
+                                          <Camera size={16} /> Xem & Duyệt
+                                        </button>
+                                      ) : (
+                                        <>
+                                          <button 
+                                            onClick={() => {
+                                              setSelectedItem(p);
+                                              setShowRedoModal(true);
+                                            }}
+                                            className="h-9 px-3 rounded-xl bg-white border border-red-200 flex items-center gap-1.5 text-[12px] font-bold text-red-500 hover:bg-red-50 transition-all shadow-sm"
+                                          >
+                                            <RotateCcw size={16} /> Sửa lại
+                                          </button>
+                                        </>
+                                      )}
+                                   </>
+                                )}
+                            </div>
                       </td>
                     </tr>
                   );
@@ -1070,6 +1032,80 @@ export default function OwnerProduction() {
                      </button>
                   </div>
                </div>
+            </div>
+          </div>
+        )}
+        {/* Photo Inspection Modal */}
+        {showInspectModal && selectedItem && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+              <div className="flex items-center justify-between px-8 py-5 border-b border-gray-100 bg-blue-50/30">
+                <div className="flex items-center gap-3 text-blue-600">
+                  <Camera size={22} />
+                  <h3 className="text-[17px] font-bold uppercase tracking-tight">Nghiệm thu sản phẩm qua ảnh</h3>
+                </div>
+                <button 
+                  onClick={() => setShowInspectModal(false)} 
+                  className="text-gray-400 hover:text-gray-600 transition p-2 hover:bg-white rounded-xl"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="p-8 space-y-6">
+                <div className="flex flex-col md:flex-row gap-6">
+                  {/* Photo Preview */}
+                  <div className="flex-1 aspect-square rounded-3xl overflow-hidden border border-gray-100 shadow-inner bg-gray-50">
+                    <img 
+                      src={selectedItem.completionPhoto} 
+                      alt="Ảnh hoàn thiện" 
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+                  
+                  {/* Details & Decision */}
+                  <div className="flex-1 flex flex-col justify-between py-2">
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                        <p className="text-[11px] text-gray-400 font-bold uppercase mb-1">Thông tin lệnh</p>
+                        <p className="text-[15px] font-bold text-gray-900">{selectedItem.code}</p>
+                        <p className="text-[13px] text-gray-600 mt-1">{selectedItem.productName}</p>
+                      </div>
+                      
+                      <div className="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100">
+                        <p className="text-[11px] text-emerald-600/60 font-bold uppercase mb-1">Người báo xong</p>
+                        <p className="text-[14px] font-bold text-emerald-900">{selectedItem.assignedWorker}</p>
+                        <p className="text-[12px] text-emerald-600 mt-0.5">Thời gian: {formatDateTime(new Date())}</p>
+                      </div>
+
+                      <div className="flex items-start gap-2 text-amber-600 bg-amber-50 p-4 rounded-2xl border border-amber-100">
+                         <AlertTriangle size={18} className="shrink-0 mt-0.5" />
+                         <p className="text-[12px] leading-relaxed">
+                            Hãy kiểm tra kỹ các góc cạnh, màu sơn và quy cách so với yêu cầu khách hàng trước khi phê duyệt.
+                         </p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-3 mt-6">
+                       <button 
+                        onClick={() => handleApprove(selectedItem)}
+                        className="w-full h-14 rounded-2xl bg-emerald-600 text-white font-bold flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-lg active:scale-95"
+                      >
+                         <CheckCircle size={20} /> Duyệt & Hoàn thành
+                       </button>
+                       <button 
+                        onClick={() => {
+                          setShowInspectModal(false);
+                          setShowRedoModal(true);
+                        }}
+                        className="w-full h-14 rounded-2xl bg-white border-2 border-red-200 text-red-600 font-bold flex items-center justify-center gap-2 hover:bg-red-50 transition-all active:scale-95"
+                      >
+                         <RotateCcw size={20} /> Sai mẫu - Yêu cầu sửa lại
+                       </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
