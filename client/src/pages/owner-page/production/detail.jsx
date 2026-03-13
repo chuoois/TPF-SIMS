@@ -34,15 +34,10 @@ const MOCK_PRODUCTIONS = {
     orderCode: "DH-2603-0001",
     orderId: "DH001",
     productName: "Tủ bếp chữ L",
-    variantName: "Gỗ sồi Nga — Sơn PU màu óc chó",
-    material: "Gỗ sồi Nga",
-    finish: "Sơn PU màu óc chó",
-    size: "Dài 3.5m x Cao 2.2m",
-    pattern: "Cánh phẳng hiện đại",
-    quantityPlanned: 1,
-    quantityCompleted: 0,
     status: "Chờ giao thợ",
     subStage: null,
+    isPendingApproval: false,
+    needsRedo: false,
     assignedWorker: null,
     startDate: null,
     expectedEndDate: "2026-03-20",
@@ -60,15 +55,9 @@ const MOCK_PRODUCTIONS = {
     orderCode: "DH-2603-0008",
     orderId: "DH008",
     productName: "Bộ bàn ghế phòng khách",
-    variantName: "Gỗ hương đá — Chạm nghê bảo đỉnh",
-    material: "Gỗ hương đá Nam Phi",
-    finish: "Sơn PU trần bóng mờ",
-    size: "Bàn 200×80×45cm, Đoản 220cm",
-    pattern: "Chạm nghê bảo đỉnh",
-    quantityPlanned: 1,
-    quantityCompleted: 0,
     status: "Đang sản xuất",
     subStage: "gia_cong_moc",
+    isPendingApproval: false,
     needsRedo: true,
     redoReason: "Mặt bàn bị xước nhỏ ở góc trái. Bác chủ yêu cầu sơn lại và xử lý kỹ khâu Mộc.",
     assignedWorker: "Nguyễn Văn Đức",
@@ -77,72 +66,24 @@ const MOCK_PRODUCTIONS = {
     date: "2026-03-03T08:00:00",
     customerName: "Hoàng Nguyệt Ánh",
     notes: "Mặt bàn đục nguyên khối không ghép",
-    // Expanded data
-    images: [
-      "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=800",
-      "https://images.unsplash.com/photo-1551133990-792200be649c?q=80&w=800"
-    ],
-    progressPhotos: [
-      { url: "https://images.unsplash.com/photo-1504148455328-c376907d081c?q=80&w=800", time: "05/03/2026 14:20", stage: "Mộc" },
-      { url: "https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=800", time: "08/03/2026 09:15", stage: "Sơn" }
-    ],
-    specs: {
-      hardware: "Bản lề Hafele giảm chấn",
-      notes: "Sơn kỹ các khe đục chạm",
-      accessory: "Kèm theo 6 gối tựa thêu hoa văn"
-    },
+    images: ["https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=800"],
+    progressPhotos: [],
     timeline: [
       { time: "03/03/2026 08:00", label: "Tạo lệnh sản xuất", desc: "Hệ thống tự tạo từ đơn DH-2603-0008", active: false },
       { time: "03/03/2026 08:15", label: "Giao việc", desc: "Giao cho thợ Nguyễn Văn Đức", active: false },
-      { time: "03/03/2026 09:00", label: "Bắt đầu làm Mộc", desc: "Thợ xác nhận nhận việc, gia công khung sườn", active: true },
+      { time: "03/03/2026 09:00", label: "Bắt đầu làm Mộc", desc: "Thợ xác nhận nhận việc", active: true },
     ],
   },
-  // HOÀN THÀNH
-  LSX004: {
-    code: "LSX-2603-0004",
-    orderCode: "DH-2603-0008",
-    orderId: "DH008",
-    productName: "Kệ tivi nguyên khối",
-    variantName: "Gỗ hương đá — PU đồng màu",
-    material: "Gỗ hương đá",
-    finish: "PU đồng màu bộ bàn ghế",
-    size: "240×45×60 cm",
-    pattern: "Trơn, phẳng",
-    quantityPlanned: 1,
-    quantityCompleted: 1,
-    status: "Hoàn thành",
-    subStage: null,
-    assignedWorker: "Trần Minh Tâm",
-    startDate: "2026-03-03",
-    expectedEndDate: "2026-03-15",
-    date: "2026-03-03T08:15:00",
-    customerName: "Hoàng Nguyệt Ánh",
-    notes: null,
-    images: ["https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=800"],
-    progressPhotos: [],
-    timeline: [
-      { time: "03/03/2026 08:15", label: "Tạo lệnh sản xuất", desc: "Hệ thống tự tạo từ đơn DH-2603-0008", active: false },
-      { time: "03/03/2026 08:30", label: "Giao việc", desc: "Giao cho thợ Trần Minh Tâm", active: false },
-      { time: "03/03/2026 09:30", label: "Bắt đầu làm Mộc", desc: "Thợ xác nhận nhận việc", active: false },
-      { time: "12/03/2026 16:00", label: "Hoàn thành", desc: "Sản phẩm hoàn thiện, đã nhập kho", active: true },
-    ],
-  },
+  // CHỜ DUYỆT (Merged into Đang sản xuất)
   LSX005: {
-    code: "LSX-2603-0005",
+    code: "LSX-2603-0012",
     orderCode: "DH-2603-0012",
     orderId: "DH012",
     productName: "Bàn thờ chạm rồng",
-    variantName: "Gỗ mít — Sơn PU bóng",
-    material: "Gỗ mít",
-    finish: "Sơn PU bóng",
-    size: "155×67×127 cm",
-    pattern: "Chạm rồng phượng",
-    quantityPlanned: 2,
-    quantityCompleted: 1,
     status: "Đang sản xuất",
     subStage: "son_hoan_thien",
-    needsRedo: true,
-    redoReason: "Lớp sơn phủ chưa bóng đều, cần xả nhám nhẹ và phun lại lớp cuối.",
+    isPendingApproval: true,
+    needsRedo: false,
     assignedWorker: "Lê Văn Hùng",
     startDate: "2026-03-04",
     expectedEndDate: "2026-03-20",
@@ -151,12 +92,26 @@ const MOCK_PRODUCTIONS = {
     notes: "Hàng tâm linh, làm kỹ khâu hoàn thiện",
     images: ["https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=800"],
     progressPhotos: [
-        { url: "https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=800", time: "06/03/2026 10:00", stage: "Mộc" }
+      { url: "https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=800", time: "12/03/2026 15:30", stage: "Sơn" }
     ],
     timeline: [
-      { time: "04/03/2026 09:00", label: "Tạo lệnh sản xuất", desc: "Hệ thống tự tạo từ đơn DH-2603-0012", active: false },
-      { time: "04/03/2026 09:30", label: "Giao việc", desc: "Giao cho thợ Lê Văn Hùng", active: false },
-      { time: "10/03/2026 14:00", label: "Bắt đầu làm Sơn", desc: "Đang xả nhám chuẩn bị lót", active: true },
+      { time: "04/03/2026 09:00", label: "Tạo lệnh sản xuất", active: false },
+      { time: "12/03/2026 15:30", label: "Báo cáo hoàn thành", desc: "Thợ báo xong, chờ chủ xưởng nghiệm thu", active: true },
+    ],
+  },
+  // HOÀN THÀNH
+  LSX004: {
+    code: "LSX-2603-0004",
+    status: "Hoàn thành",
+    subStage: null,
+    isPendingApproval: false,
+    needsRedo: false,
+    assignedWorker: "Trần Minh Tâm",
+    productName: "Kệ tivi nguyên khối",
+    orderCode: "DH-2603-0008",
+    customerName: "Hoàng Nguyệt Ánh",
+    timeline: [
+      { time: "12/03/2026 16:00", label: "Đã nghiệm thu", desc: "Chủ xưởng đã duyệt sản phẩm", active: true },
     ],
   },
 };
@@ -177,13 +132,26 @@ const fmtDateTime = (s) => {
   return `${d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })} — ${d.toLocaleDateString("vi-VN")}`;
 };
 
-const statusStyle = (status) => {
-  const m = {
-    "Chờ giao thợ": { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" },
-    "Đang sản xuất": { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" },
-    "Hoàn thành": { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" },
-  };
-  return m[status] || { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
+const getStatusColor = (status, subStage = null, isPendingApproval = false, needsRedo = false) => {
+  // 1. Primary Status
+  const primaryBadge = {
+    "Chờ giao thợ": { label: "Chờ giao thợ", bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" },
+    "Đang sản xuất": { label: "Đang sản xuất", bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" },
+    "Hoàn thành": { label: "Hoàn thành", bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" },
+  }[status] || { label: status, bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
+
+  // 2. Detail Status
+  let detailBadge = null;
+  if (isPendingApproval && subStage === "son_hoan_thien") {
+    detailBadge = { label: "Chờ duyệt", bg: "#EFF6FF", text: "#1D4ED8", border: "#DBEAFE" };
+  } else if (needsRedo) {
+    detailBadge = { label: "Sửa lại", bg: "#FEF2F2", text: "#EF4444", border: "#FEE2E2" };
+  } else if (status === "Đang sản xuất") {
+    if (subStage === "gia_cong_moc") detailBadge = { label: "Gia công Mộc", bg: "#FDF4FF", text: "#A21CAF", border: "#F5D0FE" };
+    if (subStage === "son_hoan_thien") detailBadge = { label: "Sơn hoàn thiện", bg: "#FDF2F8", text: "#DB2777", border: "#FBCFE8" };
+  }
+
+  return { primaryBadge, detailBadge };
 };
 
 // ===================== SUB-COMPONENTS =====================
@@ -207,20 +175,20 @@ const PhotoCard = ({ url, time, stage, isDesign = false }) => (
   <div className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-100 transition hover:shadow-lg">
     <img src={url} alt="Progress" className="w-full h-full object-cover transition duration-300 group-hover:scale-110" />
     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2.5">
-       {isDesign ? (
-         <span className="text-[10px] font-bold text-white uppercase bg-emerald-600 self-start px-2 py-0.5 rounded-full mb-1">Thiết kế</span>
-       ) : (
-         <div className="flex items-center gap-1.5 mb-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span className="text-[10px] font-bold text-white uppercase">{stage}</span>
-         </div>
-       )}
-       <p className="text-[10px] text-gray-200">{time || "Bản vẽ kỹ thuật"}</p>
+      {isDesign ? (
+        <span className="text-[10px] font-bold text-white uppercase bg-emerald-600 self-start px-2 py-0.5 rounded-full mb-1">Thiết kế</span>
+      ) : (
+        <div className="flex items-center gap-1.5 mb-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          <span className="text-[10px] font-bold text-white uppercase">{stage}</span>
+        </div>
+      )}
+      <p className="text-[10px] text-gray-200">{time || "Bản vẽ kỹ thuật"}</p>
     </div>
     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-       <button className="w-7 h-7 rounded-full bg-white/90 text-gray-900 flex items-center justify-center shadow-md hover:bg-white active:scale-95 transition">
-          <Camera size={14} />
-       </button>
+      <button className="w-7 h-7 rounded-full bg-white/90 text-gray-900 flex items-center justify-center shadow-md hover:bg-white active:scale-95 transition">
+        <Camera size={14} />
+      </button>
     </div>
   </div>
 );
@@ -327,23 +295,25 @@ export default function ProductionDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // States
   const [showAssignModal, setShowAssignModal] = useState(location.state?.autoOpenAssign || false);
   const [showRedoModal, setShowRedoModal] = useState(false);
   const [selectedWorker, setSelectedWorker] = useState(null);
-  
+
   // Fake data fallback logic
-  const fallbackRef = ["LSX001", "LSX002", "LSX010", "LSX015"].includes(id) ? "LSX001" 
+  const fallbackRef = ["LSX001", "LSX002", "LSX010", "LSX015"].includes(id) ? "LSX001"
     : ["LSX004", "LSX006", "LSX012", "LSX016"].includes(id) ? "LSX004"
-    : ["LSX003", "LSX011", "LSX007"].includes(id) ? "LSX003"
-    : "LSX003"; 
+      : ["LSX003", "LSX011", "LSX007"].includes(id) ? "LSX003"
+        : "LSX003";
 
   const p = MOCK_PRODUCTIONS[id] || {
     ...MOCK_PRODUCTIONS[fallbackRef],
     code: `LSX-2603-${id?.replace(/\D/g, '') || "9999"}`,
+    needsRedo: false,
+    isPendingApproval: false,
   };
-  const ss = statusStyle(p.status);
+  const sc = getStatusColor(p.status, p.subStage, p.isPendingApproval, p.needsRedo);
   const progress = p.quantityPlanned > 0 ? Math.round((p.quantityCompleted / p.quantityPlanned) * 100) : 0;
   const isWaiting = p.status === "Chờ giao thợ";
   const isProducing = p.status === "Đang sản xuất";
@@ -357,38 +327,13 @@ export default function ProductionDetail() {
   // Handlers
   const handleNextStage = () => {
     alert("Xong phần Mộc! Lệnh này sẽ chuyển sang khâu Sơn hoàn thiện.");
-    // simulated update
     navigate(0);
-  };
-
-  const handleWorkerDone = () => {
-    // Simulated photo upload
-    const mockPhoto = window.confirm("Xác nhận đã báo xong việc? Hệ thống sẽ gửi yêu cầu nghiệm thu tới chủ xưởng.");
-    
-    if (mockPhoto) {
-      alert("Đã báo xong việc! Trạng thái chuyển sang Chờ nghiệm thu.");
-      navigate(0); // Refresh to show new status/actions
-    }
   };
 
   const handleOwnerApprove = () => {
     const confirm = window.confirm(`Phê duyệt & Chốt hoàn thành mã lệnh ${p.code}?`);
-    
     if (confirm) {
       alert(`Lệnh sản xuất ${p.code} đã hoàn thành xuất sắc!`);
-      
-      // Link back to Order
-      if (p.orderId) {
-        const savedOrders = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
-        const updatedOrders = savedOrders.map(order => 
-          (order.id === p.orderId || order.id === p.orderCode)
-            ? { ...order, status: "Chờ giao hàng" } 
-            : order
-        );
-        localStorage.setItem("tpf_simulated_orders", JSON.stringify(updatedOrders));
-        alert(`Đơn hàng ${p.orderCode} đã chuyển sang trạng thái Sẵn sàng giao.`);
-      }
-
       navigate("/owner/production");
     }
   };
@@ -430,14 +375,13 @@ export default function ProductionDetail() {
               <div>
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <h1 className="text-[16px] font-bold" style={{ color: "var(--text-main)" }}>{p.code}</h1>
-                  <Badge style={{ backgroundColor: ss.bg, color: ss.text, border: `1px solid ${ss.border}` }}>
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: ss.text }} />
-                    {p.status}
+                  <Badge style={{ backgroundColor: sc.primaryBadge.bg, color: sc.primaryBadge.text, border: `1px solid ${sc.primaryBadge.border}` }}>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: sc.primaryBadge.text }} />
+                    {sc.primaryBadge.label}
                   </Badge>
-                  {isProducing && currentStageInfo && (
-                    <Badge style={{ backgroundColor: currentStageInfo.bg, color: currentStageInfo.color, border: `1px solid ${currentStageInfo.color}30` }}>
-                      {(() => { const Icon = currentStageInfo.icon; return <Icon size={11} />; })()}
-                      {currentStageInfo.label}
+                  {sc.detailBadge && (
+                    <Badge style={{ backgroundColor: sc.detailBadge.bg, color: sc.detailBadge.text, border: `1px solid ${sc.detailBadge.border}` }}>
+                      {sc.detailBadge.label}
                     </Badge>
                   )}
                 </div>
@@ -449,74 +393,45 @@ export default function ProductionDetail() {
 
             {/* Action buttons */}
             <div className="flex items-center gap-2">
-              {p.needsRedo && !isDone && (
-                 <button
-                   onClick={handleClearRedo}
-                   className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-[12px] font-bold transition hover:bg-emerald-700 cursor-pointer shadow-lg active:scale-95"
-                   style={{ backgroundColor: "#10B981", color: "#fff" }}
-                 >
-                   <CheckCircle size={14} />
-                   Xác nhận đã sửa xong
-                 </button>
+              {p.isPendingApproval && p.subStage === "son_hoan_thien" && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowRedoModal(true)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer border shadow-sm"
+                    style={{ backgroundColor: "#fff", color: "#EF4444", borderColor: "#FCA5A5" }}
+                  >
+                    <RotateCcw size={14} />
+                    Yêu cầu sửa lại
+                  </button>
+                  <button
+                    onClick={handleOwnerApprove}
+                    className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-[13px] font-bold transition hover:bg-emerald-700 cursor-pointer shadow-xl"
+                    style={{ backgroundColor: "#10B981", color: "#fff" }}
+                  >
+                    <CheckCircle size={18} />
+                    Phê duyệt & Hoàn thiện
+                  </button>
+                </div>
               )}
 
-              {(!p.needsRedo || isDone) && (
-                <>
-                  {isWaiting && (
-                    <button
-                      onClick={() => setShowAssignModal(true)}
-                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-[12px] font-bold transition hover:bg-emerald-700 cursor-pointer shadow-md active:scale-95"
-                      style={{ backgroundColor: "#10B981", color: "#fff" }}
-                    >
-                      <UserPlus size={14} />
-                      Giao việc ngay
-                    </button>
-                  )}
-              
-                  {isProducing && !isLastStage && (
-                    <button
-                      onClick={handleNextStage}
-                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-[12px] font-bold transition hover:bg-emerald-700 cursor-pointer shadow-md active:scale-95"
-                      style={{ backgroundColor: "#10B981", color: "#fff" }}
-                    >
-                      <Paintbrush size={14} />
-                      Xong Mộc - Chuyển sang Sơn
-                    </button>
-                  )}
 
-                  {isProducing && isLastStage && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setShowRedoModal(true)}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer border shadow-sm"
-                        style={{ backgroundColor: "#fff", color: "#EF4444", borderColor: "#FCA5A5" }}
-                      >
-                        <RotateCcw size={14} />
-                        Yêu cầu sửa lại
-                      </button>
-                      <button
-                        onClick={handleWorkerDone}
-                        className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-[12px] font-bold transition hover:bg-emerald-700 cursor-pointer shadow-lg active:scale-95"
-                        style={{ backgroundColor: "#10B981", color: "#fff" }}
-                      >
-                        <CheckCircle size={14} />
-                        Báo xong việc
-                      </button>
-                    </div>
-                  )}
 
-                  {p.status === "Chờ nghiệm thu" && (
-                    <button
-                      onClick={handleOwnerApprove}
-                      className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-[13px] font-bold transition hover:bg-emerald-700 cursor-pointer shadow-xl animate-bounce"
-                      style={{ backgroundColor: "#10B981", color: "#fff" }}
-                    >
-                      <CheckCircle size={18} />
-                      Phê duyệt & Hoàn thiện
-                    </button>
-                  )}
-                </>
+
+
+
+              {isWaiting && (
+                <button
+                  onClick={() => setShowAssignModal(true)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-[12px] font-bold transition hover:bg-emerald-700 cursor-pointer shadow-md active:scale-95"
+                  style={{ backgroundColor: "#10B981", color: "#fff" }}
+                >
+                  <UserPlus size={14} />
+                  Giao việc ngay
+                </button>
               )}
+
+
+
             </div>
           </div>
         </div>
@@ -670,18 +585,18 @@ export default function ProductionDetail() {
                   </span>
                 </div>
                 <div className="p-5">
-                   {p.images && p.images.length > 0 ? (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                         {p.images.map((img, idx) => (
-                            <PhotoCard key={idx} url={img} isDesign={true} />
-                         ))}
-                      </div>
-                   ) : (
-                      <div className="flex flex-col items-center justify-center py-8 text-gray-400 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
-                         <Camera size={24} className="mb-2 opacity-20" />
-                         <p className="text-[13px] font-medium">Chưa có ảnh bản vẽ thiết kế</p>
-                      </div>
-                   )}
+                  {p.images && p.images.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {p.images.map((img, idx) => (
+                        <PhotoCard key={idx} url={img} isDesign={true} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-gray-400 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
+                      <Camera size={24} className="mb-2 opacity-20" />
+                      <p className="text-[13px] font-medium">Chưa có ảnh bản vẽ thiết kế</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -691,7 +606,7 @@ export default function ProductionDetail() {
                   className="rounded-2xl overflow-hidden"
                   style={{ backgroundColor: "var(--background)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
                 >
-                   <div
+                  <div
                     className="px-5 py-3 flex items-center justify-between"
                     style={{ borderBottom: "1px solid var(--grid-border)", backgroundColor: "var(--grid-header-bg)" }}
                   >
@@ -706,28 +621,28 @@ export default function ProductionDetail() {
                     </button>
                   </div>
                   <div className="p-5">
-                     {p.progressPhotos && p.progressPhotos.length > 0 ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                           {p.progressPhotos.map((photo, idx) => (
-                              <PhotoCard 
-                                key={idx} 
-                                url={photo.url} 
-                                time={photo.time} 
-                                stage={photo.stage} 
-                              />
-                           ))}
-                           {/* Upload placeholder */}
-                           <div className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1.5 hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer group">
-                              <Camera size={20} className="text-gray-300 group-hover:text-blue-500" />
-                              <span className="text-[10px] font-bold text-gray-400 group-hover:text-blue-600 uppercase">Thêm ảnh</span>
-                           </div>
+                    {p.progressPhotos && p.progressPhotos.length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                        {p.progressPhotos.map((photo, idx) => (
+                          <PhotoCard
+                            key={idx}
+                            url={photo.url}
+                            time={photo.time}
+                            stage={photo.stage}
+                          />
+                        ))}
+                        {/* Upload placeholder */}
+                        <div className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1.5 hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer group">
+                          <Camera size={20} className="text-gray-300 group-hover:text-blue-500" />
+                          <span className="text-[10px] font-bold text-gray-400 group-hover:text-blue-600 uppercase">Thêm ảnh</span>
                         </div>
-                     ) : (
-                        <div className="flex flex-col items-center justify-center py-8 text-gray-400 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
-                           <Camera size={24} className="mb-2 opacity-20" />
-                           <p className="text-[13px] font-medium">Thợ chưa cập nhật ảnh tiến độ</p>
-                        </div>
-                     )}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-8 text-gray-400 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
+                        <Camera size={24} className="mb-2 opacity-20" />
+                        <p className="text-[13px] font-medium">Thợ chưa cập nhật ảnh tiến độ</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -900,66 +815,66 @@ export default function ProductionDetail() {
         {showAssignModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-               <div className="px-6 py-4 border-b flex items-center justify-between bg-emerald-50/30">
-                  <div className="flex items-center gap-2 text-emerald-600">
-                    <UserPlus size={18} />
-                    <h3 className="text-[15px] font-bold uppercase tracking-tight">Giao việc cho thợ</h3>
-                  </div>
-                  <button onClick={() => setShowAssignModal(false)} className="p-2 hover:bg-white rounded-lg transition text-gray-400 hover:text-gray-600">
-                    <X size={20} />
-                  </button>
-               </div>
-               
-               <div className="p-6">
-                  <div className="space-y-4">
-                     <p className="text-[13px] text-gray-600">Chọn thợ phụ trách cho lệnh sản xuất <span className="font-bold text-emerald-600">{p.code}</span>:</p>
-                     
-                     <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-                        {MOCK_WORKERS.map(worker => (
-                           <label 
-                             key={worker.id}
-                             className={`flex items-center gap-3 p-3 rounded-xl border-2 transition cursor-pointer hover:border-emerald-200 ${selectedWorker === worker.id ? 'border-emerald-500 bg-emerald-50' : 'border-gray-50 bg-white'}`}
-                           >
-                              <input 
-                                type="radio" 
-                                name="worker" 
-                                className="hidden" 
-                                onChange={() => setSelectedWorker(worker.id)}
-                                checked={selectedWorker === worker.id}
-                              />
-                              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-[14px] transition-colors ${selectedWorker === worker.id ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
-                                 {worker.avatar}
-                              </div>
-                              <div className="flex-1">
-                                 <p className="text-[14px] font-bold text-gray-900">{worker.name}</p>
-                                 <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{worker.role}</p>
-                              </div>
-                              {selectedWorker === worker.id && <CheckCircle size={18} className="text-emerald-600" />}
-                           </label>
-                        ))}
-                     </div>
-                  </div>
+              <div className="px-6 py-4 border-b flex items-center justify-between bg-emerald-50/30">
+                <div className="flex items-center gap-2 text-emerald-600">
+                  <UserPlus size={18} />
+                  <h3 className="text-[15px] font-bold uppercase tracking-tight">Giao việc cho thợ</h3>
+                </div>
+                <button onClick={() => setShowAssignModal(false)} className="p-2 hover:bg-white rounded-lg transition text-gray-400 hover:text-gray-600">
+                  <X size={20} />
+                </button>
+              </div>
 
-                  <div className="mt-6 flex gap-3">
-                     <button 
-                       onClick={() => setShowAssignModal(false)}
-                       className="flex-1 h-11 rounded-xl text-[13px] font-bold text-gray-400 hover:bg-gray-50 transition"
-                     >
-                        Hủy bỏ
-                     </button>
-                     <button 
-                       disabled={!selectedWorker}
-                       onClick={() => {
-                         alert(`Đã giao việc cho thợ ${MOCK_WORKERS.find(w => w.id === selectedWorker).name}. Trạng thái lệnh chuyển sang Đang sản xuất.`);
-                         setShowAssignModal(false);
-                         navigate("/owner/production");
-                       }}
-                       className="flex-1 h-11 rounded-xl text-[13px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-100 active:scale-95"
-                     >
-                        Xác nhận giao việc
-                     </button>
+              <div className="p-6">
+                <div className="space-y-4">
+                  <p className="text-[13px] text-gray-600">Chọn thợ phụ trách cho lệnh sản xuất <span className="font-bold text-emerald-600">{p.code}</span>:</p>
+
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                    {MOCK_WORKERS.map(worker => (
+                      <label
+                        key={worker.id}
+                        className={`flex items-center gap-3 p-3 rounded-xl border-2 transition cursor-pointer hover:border-emerald-200 ${selectedWorker === worker.id ? 'border-emerald-500 bg-emerald-50' : 'border-gray-50 bg-white'}`}
+                      >
+                        <input
+                          type="radio"
+                          name="worker"
+                          className="hidden"
+                          onChange={() => setSelectedWorker(worker.id)}
+                          checked={selectedWorker === worker.id}
+                        />
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-[14px] transition-colors ${selectedWorker === worker.id ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                          {worker.avatar}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-[14px] font-bold text-gray-900">{worker.name}</p>
+                          <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{worker.role}</p>
+                        </div>
+                        {selectedWorker === worker.id && <CheckCircle size={18} className="text-emerald-600" />}
+                      </label>
+                    ))}
                   </div>
-               </div>
+                </div>
+
+                <div className="mt-6 flex gap-3">
+                  <button
+                    onClick={() => setShowAssignModal(false)}
+                    className="flex-1 h-11 rounded-xl text-[13px] font-bold text-gray-400 hover:bg-gray-50 transition"
+                  >
+                    Hủy bỏ
+                  </button>
+                  <button
+                    disabled={!selectedWorker}
+                    onClick={() => {
+                      alert(`Đã giao việc cho thợ ${MOCK_WORKERS.find(w => w.id === selectedWorker).name}. Trạng thái lệnh chuyển sang Đang sản xuất.`);
+                      setShowAssignModal(false);
+                      navigate("/owner/production");
+                    }}
+                    className="flex-1 h-11 rounded-xl text-[13px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-100 active:scale-95"
+                  >
+                    Xác nhận giao việc
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -968,60 +883,60 @@ export default function ProductionDetail() {
         {showRedoModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-emerald-50/30">
-                  <div className="flex items-center gap-2 text-emerald-600">
-                    <AlertTriangle size={18} />
-                    <h3 className="text-[15px] font-bold uppercase tracking-tight">Yêu cầu sửa lại sản phẩm</h3>
-                  </div>
-                  <button onClick={() => setShowRedoModal(false)} className="text-gray-400 hover:text-gray-600 transition p-1 hover:bg-white rounded-lg">
-                    <X size={20} />
-                  </button>
-               </div>
-               
-               <div className="p-6 space-y-5">
-                  <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200">
-                    <p className="text-[11px] text-gray-400 font-bold uppercase mb-1">Đang xử lý lệnh</p>
-                    <p className="text-[13px] font-bold text-gray-900">{p.code} - {p.productName}</p>
-                  </div>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-emerald-50/30">
+                <div className="flex items-center gap-2 text-emerald-600">
+                  <AlertTriangle size={18} />
+                  <h3 className="text-[15px] font-bold uppercase tracking-tight">Yêu cầu sửa lại sản phẩm</h3>
+                </div>
+                <button onClick={() => setShowRedoModal(false)} className="text-gray-400 hover:text-gray-600 transition p-1 hover:bg-white rounded-lg">
+                  <X size={20} />
+                </button>
+              </div>
 
-                  <div>
-                    <label className="block text-[12px] font-bold text-gray-400 uppercase mb-2 ml-1">Nguyên nhân lỗi / Dặn dò thợ</label>
-                    <textarea 
-                      id="redoReason"
-                      className="w-full h-24 p-4 rounded-2xl border border-gray-200 text-[13px] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300 transition resize-none"
-                      placeholder="Ví dụ: Màu sơn chưa đều, còn xước ở cạnh bàn..."
-                    />
-                  </div>
+              <div className="p-6 space-y-5">
+                <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200">
+                  <p className="text-[11px] text-gray-400 font-bold uppercase mb-1">Đang xử lý lệnh</p>
+                  <p className="text-[13px] font-bold text-gray-900">{p.code} - {p.productName}</p>
+                </div>
 
-                  <div>
-                    <label className="block text-[12px] font-bold text-gray-400 uppercase mb-2 ml-1">Quay lại công đoạn</label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button 
-                        onClick={() => handleRedo(document.getElementById('redoReason').value, 'gia_cong_moc')}
-                        className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50 transition group"
-                      >
-                        <Hammer size={20} className="text-gray-400 group-hover:text-emerald-600" />
-                        <span className="text-[12px] font-bold text-gray-600 group-hover:text-emerald-700">Gia công Mộc</span>
-                      </button>
-                      <button 
-                        onClick={() => handleRedo(document.getElementById('redoReason').value, 'son_hoan_thien')}
-                        className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50 transition group"
-                      >
-                        <Paintbrush size={20} className="text-gray-400 group-hover:text-emerald-600" />
-                        <span className="text-[12px] font-bold text-gray-600 group-hover:text-emerald-700">Sơn hoàn thiện</span>
-                      </button>
-                    </div>
-                  </div>
-               </div>
+                <div>
+                  <label className="block text-[12px] font-bold text-gray-400 uppercase mb-2 ml-1">Nguyên nhân lỗi / Dặn dò thợ</label>
+                  <textarea
+                    id="redoReason"
+                    className="w-full h-24 p-4 rounded-2xl border border-gray-200 text-[13px] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300 transition resize-none"
+                    placeholder="Ví dụ: Màu sơn chưa đều, còn xước ở cạnh bàn..."
+                  />
+                </div>
 
-               <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
-                  <button 
-                    onClick={() => setShowRedoModal(false)}
-                    className="px-5 py-2 rounded-xl text-[13px] font-bold text-gray-400 hover:text-gray-600 transition"
-                  >
-                    Hủy bỏ
-                  </button>
-               </div>
+                <div>
+                  <label className="block text-[12px] font-bold text-gray-400 uppercase mb-2 ml-1">Quay lại công đoạn</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => handleRedo(document.getElementById('redoReason').value, 'gia_cong_moc')}
+                      className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50 transition group"
+                    >
+                      <Hammer size={20} className="text-gray-400 group-hover:text-emerald-600" />
+                      <span className="text-[12px] font-bold text-gray-600 group-hover:text-emerald-700">Gia công Mộc</span>
+                    </button>
+                    <button
+                      onClick={() => handleRedo(document.getElementById('redoReason').value, 'son_hoan_thien')}
+                      className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50 transition group"
+                    >
+                      <Paintbrush size={20} className="text-gray-400 group-hover:text-emerald-600" />
+                      <span className="text-[12px] font-bold text-gray-600 group-hover:text-emerald-700">Sơn hoàn thiện</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+                <button
+                  onClick={() => setShowRedoModal(false)}
+                  className="px-5 py-2 rounded-xl text-[13px] font-bold text-gray-400 hover:text-gray-600 transition"
+                >
+                  Hủy bỏ
+                </button>
+              </div>
             </div>
           </div>
         )}
