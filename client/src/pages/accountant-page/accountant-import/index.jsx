@@ -6,9 +6,8 @@
  *  - Kế toán tạo phiếu nhập → lưu kho
  *  - Không cần bước duyệt trên hệ thống
  *
- * Trạng thái: Đang xử lý → Đã nhập kho
- *
  * Created By: HieuNM – 07/03/2026
+ * Updated: 14/03/2026 – Đổi ghi chú thành ngày nhập, bỏ trạng thái
  */
 
 import { useState, useMemo, useEffect } from "react";
@@ -29,7 +28,7 @@ const INIT_IMPORTS = [
         id: "NK001", code: "NK-0703-001", date: "2026-03-07T08:30:00",
         product: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món", supplier: "Xưởng Minh Đức",
         qty: 5, unitPrice: 38000000, totalPrice: 190000000,
-        warehouse: "Kho chính", note: "Nhập theo đơn tháng 3", status: "Đã nhập kho",
+        warehouse: "Kho chính",
         lines: [
             { _id: 1, productName: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món", productCode: "SP-PK-001", formType: "NEW", productType: "FINISHED", category: "Phòng Khách", woodType: "Gỗ Hương", color: "Hương", length: "180", width: "90", height: "75", qty: 3, importPrice: 38000000, sellingPrice: 55000000, location: "Kho A – Tầng 1", details: "Bộ 6 món gồm 1 bàn + 4 ghế + 1 ghế chủ" },
             { _id: 2, productName: "Bộ bàn ghế Nghê Bảo Đỉnh 4 món", productCode: "SP-PK-002", formType: "NEW", productType: "FINISHED", category: "Phòng Khách", woodType: "Gỗ Hương", color: "Hương", length: "150", width: "80", height: "75", qty: 2, importPrice: 28000000, sellingPrice: 42000000, location: "Kho A – Tầng 1", details: "Bộ 4 món" },
@@ -39,7 +38,7 @@ const INIT_IMPORTS = [
         id: "NK002", code: "NK-0703-002", date: "2026-03-07T09:00:00",
         product: "Sofa nguyên khối chữ L", supplier: "Xưởng Tiến Phát",
         qty: 3, unitPrice: 25000000, totalPrice: 75000000,
-        warehouse: "Kho chính", note: "", status: "Đang xử lý",
+        warehouse: "Kho chính",
         lines: [
             { _id: 1, productName: "Sofa nguyên khối chữ L", productCode: "HS-PK-001", formType: "READY", productType: "FINISHED", category: "Phòng Khách", woodType: "Gỗ Gõ Đỏ", color: "Gõ đỏ", length: "260", width: "160", height: "85", qty: 3, importPrice: 25000000, sellingPrice: 38000000, location: "Kho B – Tầng 2", details: "" },
         ],
@@ -48,7 +47,7 @@ const INIT_IMPORTS = [
         id: "NK003", code: "NK-0603-001", date: "2026-03-06T14:00:00",
         product: "Sập thờ Mai Điểu chân 20", supplier: "Xưởng Minh Đức",
         qty: 2, unitPrice: 18000000, totalPrice: 36000000,
-        warehouse: "Kho phụ", note: "Bổ sung tồn kho", status: "Đã nhập kho",
+        warehouse: "Kho phụ",
         lines: [
             { _id: 1, productName: "Sập thờ Mai Điểu chân 20", productCode: "SP-PT-001", formType: "NEW", productType: "FINISHED", category: "Phòng Thờ", woodType: "Gỗ Gụ", color: "Chay", length: "200", width: "100", height: "60", qty: 2, importPrice: 18000000, sellingPrice: 27000000, location: "Kho Phụ – Tầng 1", details: "Chạm khắc mai điểu, chân 20" },
         ],
@@ -57,7 +56,7 @@ const INIT_IMPORTS = [
         id: "NK004", code: "NK-0503-001", date: "2026-03-05T10:30:00",
         product: "Bộ bàn ăn 8 ghế nguyên khối", supplier: "Xưởng An Bình",
         qty: 4, unitPrice: 32000000, totalPrice: 128000000,
-        warehouse: "Kho chính", note: "", status: "Đã nhập kho",
+        warehouse: "Kho chính",
         lines: [
             { _id: 1, productName: "Bộ bàn ăn 8 ghế nguyên khối", productCode: "HS-PA-001", formType: "READY", productType: "FINISHED", category: "Phòng Ăn", woodType: "Gỗ Hương", color: "Hương", length: "220", width: "100", height: "78", qty: 4, importPrice: 32000000, sellingPrice: 48000000, location: "Kho A – Tầng 2", details: "Gồm 1 bàn + 8 ghế" },
         ],
@@ -66,7 +65,7 @@ const INIT_IMPORTS = [
         id: "NK005", code: "NK-0403-001", date: "2026-03-04T08:00:00",
         product: "Tủ quần áo 4 cánh chạm hoa lá tây", supplier: "Xưởng Tiến Phát",
         qty: 6, unitPrice: 22000000, totalPrice: 132000000,
-        warehouse: "Kho chính", note: "Hàng khách đặt – Gia đình anh Minh", status: "Đang xử lý",
+        warehouse: "Kho chính",
         lines: [
             { _id: 1, productName: "Tủ quần áo 4 cánh chạm hoa lá tây", productCode: "SP-PN-002", formType: "NEW", productType: "CUSTOM", category: "Phòng Ngủ", woodType: "Gỗ Gụ", color: "Chay", length: "220", width: "60", height: "240", qty: 6, importPrice: 22000000, sellingPrice: 33000000, location: "Kho A – Tầng 3", details: "Hàng đặt theo mẫu của khách – Gia đình anh Minh" },
         ],
@@ -75,7 +74,7 @@ const INIT_IMPORTS = [
         id: "NK006", code: "NK-0303-001", date: "2026-03-03T15:00:00",
         product: "Giường ngủ hoa hồng Tân cổ điển", supplier: "Xưởng Minh Đức",
         qty: 3, unitPrice: 15000000, totalPrice: 45000000,
-        warehouse: "Kho phụ", note: "Hàng khách đặt theo mẫu", status: "Đã nhập kho",
+        warehouse: "Kho phụ",
         lines: [
             { _id: 1, productName: "Giường ngủ hoa hồng Tân cổ điển", productCode: "HS-PN-001", formType: "READY", productType: "FINISHED", category: "Phòng Ngủ", woodType: "Gỗ Sồi Nga", color: "Óc chó", length: "200", width: "160", height: "50", qty: 3, importPrice: 15000000, sellingPrice: 24000000, location: "Kho Phụ – Tầng 2", details: "" },
         ],
@@ -84,7 +83,7 @@ const INIT_IMPORTS = [
         id: "NK007", code: "NK-0203-001", date: "2026-03-02T09:00:00",
         product: "Hoành phi câu đối chạm rồng", supplier: "Xưởng An Bình",
         qty: 8, unitPrice: 9500000, totalPrice: 76000000,
-        warehouse: "Kho chính", note: "", status: "Đã nhập kho",
+        warehouse: "Kho chính",
         lines: [
             { _id: 1, productName: "Hoành phi chạm rồng", productCode: "SP-PT-002", formType: "NEW", productType: "RAW", category: "Phòng Thờ", woodType: "Gỗ Mít", color: "Trần", length: "120", width: "40", height: "5", qty: 4, importPrice: 9500000, sellingPrice: 15000000, location: "Kho A – Tầng 1", details: "" },
             { _id: 2, productName: "Câu đối chạm rồng (cặp)", productCode: "SP-PT-003", formType: "NEW", productType: "RAW", category: "Phòng Thờ", woodType: "Gỗ Mít", color: "Trần", length: "30", width: "150", height: "5", qty: 4, importPrice: 9500000, sellingPrice: 15000000, location: "Kho A – Tầng 1", details: "" },
@@ -94,19 +93,12 @@ const INIT_IMPORTS = [
         id: "NK008", code: "NK-0103-001", date: "2026-03-01T08:30:00",
         product: "Bàn thờ chạm rồng cuốn thủy", supplier: "Xưởng Tiến Phát",
         qty: 5, unitPrice: 28000000, totalPrice: 140000000,
-        warehouse: "Kho chính", note: "Nhập đầu tháng", status: "Đã nhập kho",
+        warehouse: "Kho chính",
         lines: [
             { _id: 1, productName: "Bàn thờ chạm rồng cuốn thủy", productCode: "SP-PT-004", formType: "NEW", productType: "FINISHED", category: "Phòng Thờ", woodType: "Gỗ Hương", color: "Hương", length: "180", width: "60", height: "100", qty: 5, importPrice: 28000000, sellingPrice: 42000000, location: "Kho B – Tầng 1", details: "Chạm khắc rồng cuốn thủy, sơn vàng" },
         ],
     },
 ];
-
-const STATUSES = ["Tất cả", "Đang xử lý", "Đã nhập kho"];
-
-const STATUS_STYLES = {
-    "Đang xử lý": { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" },
-    "Đã nhập kho": { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" },
-};
 
 const fmtCurrency = (n) => new Intl.NumberFormat("vi-VN").format(n) + "₫";
 const fmtDateTime = (s) => {
@@ -115,22 +107,11 @@ const fmtDateTime = (s) => {
     return `${d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })} - ${d.toLocaleDateString("vi-VN")}`;
 };
 
-const StatusPill = ({ status }) => {
-    const s = STATUS_STYLES[status] || { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
-    return (
-        <span className="inline-flex items-center px-2.5 py-1 text-[11px] font-bold rounded-md whitespace-nowrap"
-            style={{ backgroundColor: s.bg, color: s.text, border: `1px solid ${s.border}` }}>
-            <span className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: s.text }} />
-            {status}
-        </span>
-    );
-};
-
 // ─────────────────────────────────────────────────────────
 export default function AccountantImportManage() {
     const [imports, setImports] = useState(INIT_IMPORTS);
     const [search, setSearch] = useState("");
-    const [statusFilter, setStatus] = useState("Tất cả");
+    const [dateFilter, setDateFilter] = useState("");
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(15);
     const [showCreate, setShowCreate] = useState(false);
@@ -138,7 +119,12 @@ export default function AccountantImportManage() {
 
     const filtered = useMemo(() => {
         let r = imports;
-        if (statusFilter !== "Tất cả") r = r.filter(i => i.status === statusFilter);
+        if (dateFilter) {
+            r = r.filter(i => {
+                const dateOnly = i.date.split("T")[0]; // YYYY-MM-DD
+                return dateOnly === dateFilter;
+            });
+        }
         if (search.trim()) {
             const q = search.toLowerCase();
             r = r.filter(i =>
@@ -148,24 +134,12 @@ export default function AccountantImportManage() {
             );
         }
         return r;
-    }, [imports, statusFilter, search]);
+    }, [imports, dateFilter, search]);
 
-    useEffect(() => setPage(1), [search, statusFilter]);
+    useEffect(() => setPage(1), [search, dateFilter]);
 
     const paginated = filtered.slice((page - 1) * perPage, page * perPage);
     const totalPages = Math.ceil(filtered.length / perPage) || 1;
-
-    const counts = useMemo(() => {
-        const c = { "Tất cả": imports.length, "Đang xử lý": 0, "Đã nhập kho": 0 };
-        imports.forEach(i => { c[i.status] = (c[i.status] || 0) + 1; });
-        return c;
-    }, [imports]);
-
-    // Kế toán xác nhận hoàn tất nhập kho
-    const markDone = (id) => {
-        setImports(prev => prev.map(i => i.id === id ? { ...i, status: "Đã nhập kho" } : i));
-        toast.success("Đã ghi nhận nhập kho thành công!");
-    };
 
     const handleSaved = (data) => {
         const newItem = {
@@ -178,8 +152,6 @@ export default function AccountantImportManage() {
             unitPrice: Number(data.lines[0]?.importPrice || 0),
             totalPrice: data.grandTotal,
             warehouse: "Kho chính",
-            note: "",
-            status: "Đang xử lý",
             lines: data.lines,
         };
         setImports(prev => [newItem, ...prev]);
@@ -210,23 +182,17 @@ export default function AccountantImportManage() {
                 </div>
 
                 {/* Status toolbar */}
-                <div className="flex items-center gap-2 shrink-0 px-1 flex-wrap">
-                    {STATUSES.map(s => {
-                        const isA = statusFilter === s;
-                        const sc = STATUS_STYLES[s] || null;
-                        return (
-                            <button key={s} onClick={() => setStatus(s)}
-                                className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all cursor-pointer flex items-center gap-1.5"
-                                style={{ backgroundColor: isA ? (sc ? sc.bg : "#fff") : "transparent", color: isA ? (sc ? sc.text : "var(--text-main)") : "var(--text-secondary)", border: isA ? `1.5px solid ${sc ? sc.border : "var(--grid-border)"}` : "1.5px solid transparent" }}>
-                                {s !== "Tất cả" && (
-                                    s === "Đã nhập kho"
-                                        ? <CheckCircle2 size={12} style={{ opacity: isA ? 1 : 0.5 }} />
-                                        : <Clock size={12} style={{ opacity: isA ? 1 : 0.5 }} />
-                                )}
-                                {s} <span className="text-[11px] opacity-60">({counts[s] ?? 0})</span>
+                <div className="flex items-center gap-2 shrink-0 px-1">
+                    <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border" style={{ borderColor: "var(--grid-border)" }}>
+                        <Calendar size={14} style={{ color: "var(--text-secondary)" }} />
+                        <input type="date" value={dateFilter} onChange={e => setDateFilter(e.target.value)}
+                            className="bg-transparent text-[13px] font-medium outline-none text-gray-700" />
+                        {dateFilter && (
+                            <button onClick={() => setDateFilter("")} className="p-0.5 hover:bg-gray-100 rounded-full transition-colors ml-1">
+                                <X size={12} style={{ color: "var(--text-secondary)" }} />
                             </button>
-                        );
-                    })}
+                        )}
+                    </div>
                 </div>
 
                 {/* Table card */}
@@ -248,10 +214,11 @@ export default function AccountantImportManage() {
                         <table className="w-full text-left relative">
                             <thead className="sticky top-0 z-10" style={{ backgroundColor: "var(--grid-header-bg)", borderBottom: "1px solid var(--grid-border)" }}>
                                 <tr>
-                                    {["Mã phiếu", "Ngày nhập", "Sản phẩm", "Xưởng cung cấp", "SL", "Thành tiền", "Ghi chú", "Trạng thái"].map((h, i) => (
+                                    {["Mã phiếu", "Ngày nhập", "Sản phẩm", "Xưởng cung cấp", "SL", "Thành tiền"].map((h, i) => (
                                         <th key={i} className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 4 || i === 5 ? "text-right" : ""}`}
                                             style={{ color: "var(--text-placeholder)" }}>{h}</th>
                                     ))}
+                                    <th className="w-24 px-4 py-3"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -271,27 +238,21 @@ export default function AccountantImportManage() {
                                         <td className="px-4 py-3"><p className="text-[13px]" style={{ color: "var(--text-secondary)" }}>{item.supplier}</p></td>
                                         <td className="px-4 py-3 text-right"><span className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>{item.qty}</span></td>
                                         <td className="px-4 py-3 text-right"><span className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>{fmtCurrency(item.totalPrice)}</span></td>
-                                        <td className="px-4 py-3"><p className="text-[12px] italic max-w-[140px] truncate" style={{ color: "var(--text-placeholder)" }}>{item.note || "—"}</p></td>
-                                        <td className="px-4 py-3"><StatusPill status={item.status} /></td>
+                                        
+                                        {/* Spacer */}
+                                        <td className="px-4 py-3"></td>
                                         {/* Hover actions */}
                                         <td className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                             <div className="flex gap-1.5 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-gray-100">
                                                 <button onClick={() => setViewItem(item)}
                                                     className="h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[12px] font-bold hover:bg-gray-100 cursor-pointer transition"
                                                     style={{ color: "var(--text-secondary)" }}><Eye size={14} /> Xem</button>
-                                                {item.status === "Đang xử lý" && (
-                                                    <button onClick={() => markDone(item.id)}
-                                                        className="h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[12px] font-bold cursor-pointer transition hover:opacity-80"
-                                                        style={{ backgroundColor: "#F0FDF4", color: "#15803D", border: "1px solid #BBF7D0" }}>
-                                                        <CheckCircle2 size={14} /> Hoàn tất nhập kho
-                                                    </button>
-                                                )}
                                             </div>
                                         </td>
                                     </tr>
                                 ))}
                                 {paginated.length === 0 && (
-                                    <tr><td colSpan={9} className="py-24 text-center">
+                                    <tr><td colSpan={7} className="py-24 text-center">
                                         <div className="flex flex-col items-center gap-2" style={{ color: "var(--text-placeholder)" }}>
                                             <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ backgroundColor: "var(--bg-main)" }}>
                                                 <ArrowDownToLine size={28} strokeWidth={1.5} />

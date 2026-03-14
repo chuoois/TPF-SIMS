@@ -1,19 +1,18 @@
 /**
- * ViewProductModal – Xem Chi Tiết Sản Phẩm trong Kho (Read-Only)
+ * EditProductModal – Chỉnh Sửa Sản Phẩm (Giá nhập, Giá bán, Tồn tối thiểu)
  *
- * Created By: HieuNM – 12/03/2026
+ * Created By: AI
  */
 
+import { useState } from "react";
 import {
     X, Package, Tag, Layers, Palette, Ruler, MapPin,
     BarChart2, DollarSign, CheckCircle, Hammer, Users,
     Image as ImageIcon, TrendingDown, TrendingUp, ArrowDownToLine,
+    Save
 } from "lucide-react";
 
 // ── Helpers ──────────────────────────────────────────────
-const fmtCurrency = (n) =>
-    n != null && n !== "" ? new Intl.NumberFormat("vi-VN").format(n) + "₫" : "—";
-
 const TYPE_CONFIG = {
     FINISHED: {
         label: "Hàng có sẵn",
@@ -35,12 +34,6 @@ const TYPE_CONFIG = {
     },
 };
 
-const STATUS_COLOR = {
-    "Đang kinh doanh": { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" },
-    "Đang sản xuất": { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" },
-    "Hoàn thành": { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" },
-};
-
 const InfoRow = ({ icon: Icon, label, value, valueStyle }) => (
     <div className="flex items-start gap-3 py-2.5 border-b last:border-0" style={{ borderColor: "var(--grid-border)" }}>
         <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
@@ -58,17 +51,33 @@ const InfoRow = ({ icon: Icon, label, value, valueStyle }) => (
 );
 
 // ─────────────────────────────────────────────────────────
-export default function ViewProductModal({ product, onClose }) {
+export default function EditProductModal({ product, onClose, onSave }) {
     if (!product) return null;
+
+    const [importPrice, setImportPrice] = useState(product.importPrice || "");
+    const [sellingPrice, setSellingPrice] = useState(product.sellingPrice || "");
+    const [minStock, setMinStock] = useState(product.minStock || "");
 
     const cfg = TYPE_CONFIG[product.type] || TYPE_CONFIG.FINISHED;
     const TypeIcon = cfg.icon;
 
     const dims = [product.length, product.width, product.height].filter(Boolean);
-    const hasPrice = product.sellingPrice != null;
+
+    const handleSave = (e) => {
+        e.preventDefault();
+        onSave({
+            ...product, // giữ nguyên các field khác
+            importPrice: importPrice === "" ? null : Number(importPrice),
+            sellingPrice: sellingPrice === "" ? null : Number(sellingPrice),
+            minStock: minStock === "" ? null : Number(minStock),
+        });
+    };
+
+    const inpStr = "w-full h-9 px-3 mt-1 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-purple-300 transition font-bold";
+    const inpS = { borderColor: "var(--grid-border)", backgroundColor: "#fff", color: "var(--text-main)" };
 
     return (
-        <div
+        <form onSubmit={handleSave}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
             onClick={e => { if (e.target === e.currentTarget) onClose(); }}
         >
@@ -78,7 +87,7 @@ export default function ViewProductModal({ product, onClose }) {
                 {/* ── Gradient Header by Type ── */}
                 <div className="px-6 py-5 shrink-0 relative" style={{ background: cfg.headerBg }}>
                     {/* Close */}
-                    <button onClick={onClose}
+                    <button type="button" onClick={onClose}
                         className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-black/5 cursor-pointer transition"
                         style={{ color: cfg.text }}>
                         <X size={18} />
@@ -93,24 +102,23 @@ export default function ViewProductModal({ product, onClose }) {
                         </span>
                         <span className="text-[11px] font-mono font-bold px-2 py-1 rounded-lg bg-white/70"
                             style={{ color: cfg.text }}>
-                            {product.code}
+                            {product.code || product.sku}
                         </span>
                     </div>
 
                     {/* Product name */}
                     <h2 className="text-[17px] font-black leading-snug pr-8"
                         style={{ color: cfg.text }}>
-                        {product.name}
+                        Chỉnh sửa: {product.name}
                     </h2>
-
-                    </div>
+                </div>
 
                 {/* ── Scrollable Body ── */}
                 <div className="flex-1 overflow-y-auto">
-                    {/* Ảnh + Tồn kho nổi bật */}
-                    <div className="flex gap-0 border-b" style={{ borderColor: "var(--grid-border)" }}>
+                    {/* Ảnh + Chỉnh sửa số liệu nổi bật */}
+                    <div className="flex gap-0 border-b flex-col sm:flex-row" style={{ borderColor: "var(--grid-border)" }}>
                         {/* Ảnh */}
-                        <div className="w-40 shrink-0 flex items-center justify-center border-r p-4"
+                        <div className="w-full sm:w-40 shrink-0 flex items-center justify-center border-b sm:border-b-0 sm:border-r p-4"
                             style={{ borderColor: "var(--grid-border)", backgroundColor: "var(--bg-main)" }}>
                             {product.img
                                 ? <img src={product.img} alt={product.name}
@@ -124,74 +132,49 @@ export default function ViewProductModal({ product, onClose }) {
                             }
                         </div>
 
-                        {/* Stats nhanh – hàng trên: Tồn / Giá nhập / Giá bán */}
-                        <div className="flex-1 flex flex-col divide-y" style={{ borderColor: "var(--grid-border)" }}>
-                            <div className="grid grid-cols-3 divide-x" style={{ borderColor: "var(--grid-border)" }}>
-                                {/* Tồn kho */}
-                                <div className="p-4 flex flex-col gap-1">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1"
-                                        style={{ color: "var(--text-placeholder)" }}>
-                                        <BarChart2 size={10} /> Tồn kho
-                                    </span>
-                                    <span className="text-[26px] font-black leading-none"
-                                        style={{ color: product.stock === 0 ? "#DC2626" : product.stock <= 3 ? "#D97706" : "#15803D" }}>
-                                        {product.stock}
-                                    </span>
-                                    <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
-                                        {product.stock === 0 ? "Hết hàng" : product.stock <= 3 ? "Sắp hết" : "Còn hàng"}
-                                    </span>
-                                </div>
-
+                        {/* Input form for Prices and MinStock */}
+                        <div className="flex-1 flex flex-col divide-y bg-gray-50/30" style={{ borderColor: "var(--grid-border)" }}>
+                            <div className="grid grid-cols-2 lg:grid-cols-2 divide-x" style={{ borderColor: "var(--grid-border)" }}>
                                 {/* Giá nhập */}
                                 <div className="p-4 flex flex-col gap-1">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1"
+                                    <label className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1"
                                         style={{ color: "var(--text-placeholder)" }}>
-                                        <ArrowDownToLine size={10} /> Giá nhập
-                                    </span>
-                                    {product.importPrice != null
-                                        ? <>
-                                            <span className="text-[16px] font-black leading-none" style={{ color: "#C2410C" }}>
-                                                {new Intl.NumberFormat("vi-VN").format(product.importPrice)}
-                                            </span>
-                                            <span className="text-[11px] font-bold" style={{ color: "#C2410C" }}>₫</span>
-                                        </>
-                                        : <span className="text-[13px] italic" style={{ color: "var(--text-placeholder)" }}>—</span>
-                                    }
+                                        <ArrowDownToLine size={10} /> Giá nhập (₫)
+                                    </label>
+                                    <input type="number" min="0" step="1000"
+                                        value={importPrice} onChange={e => setImportPrice(e.target.value)}
+                                        className={inpStr} style={inpS} placeholder="0" />
                                 </div>
 
                                 {/* Giá bán */}
                                 <div className="p-4 flex flex-col gap-1">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1"
+                                    <label className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1"
                                         style={{ color: "var(--text-placeholder)" }}>
-                                        <DollarSign size={10} /> Giá bán
-                                    </span>
-                                    {hasPrice
-                                        ? <>
-                                            <span className="text-[16px] font-black leading-none" style={{ color: "var(--brand-primary)" }}>
-                                                {new Intl.NumberFormat("vi-VN").format(product.sellingPrice)}
-                                            </span>
-                                            <span className="text-[11px] font-bold" style={{ color: "var(--brand-primary)" }}>₫</span>
-                                        </>
-                                        : <span className="text-[13px] italic" style={{ color: "var(--text-placeholder)" }}>Chưa định giá</span>
-                                    }
+                                        <DollarSign size={10} /> Giá bán (₫)
+                                    </label>
+                                    <input type="number" min="0" step="1000"
+                                        value={sellingPrice} onChange={e => setSellingPrice(e.target.value)}
+                                        className={inpStr} style={inpS} placeholder="0" />
                                 </div>
                             </div>
 
-                            {/* Hàng dưới: Tồn min */}
-                            <div className="p-3 flex items-center gap-3">
-                                <TrendingDown size={14} style={{ color: "var(--text-placeholder)" }} />
-                                <div>
-                                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--text-placeholder)" }}>Tồn tối thiểu</p>
-                                    <p className="text-[15px] font-bold" style={{ color: "var(--text-main)" }}>{product.minStock ?? "—"}</p>
-                                </div>
+                            {/* Tồn min */}
+                            <div className="p-4 flex flex-col gap-1">
+                                <label className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1"
+                                    style={{ color: "var(--text-placeholder)" }}>
+                                    <TrendingDown size={10} /> Tồn kho tối thiểu
+                                </label>
+                                <input type="number" min="0"
+                                    value={minStock} onChange={e => setMinStock(e.target.value)}
+                                    className={inpStr} style={inpS} placeholder="0" />
                             </div>
                         </div>
                     </div>
 
-                    {/* ── Chi tiết ── */}
-                    <div className="px-6 py-2">
+                    {/* ── Chi tiết (Read-only) ── */}
+                    <div className="px-6 py-2 pb-6">
                         <InfoRow icon={Layers} label="Danh mục" value={product.category} />
-                        <InfoRow icon={Tag} label="Loại" value={product.materialType} />
+                        <InfoRow icon={Tag} label="Loại" value={product.materialType || product.woodType} />
                         <InfoRow icon={Palette} label="Màu sắc" value={product.color} />
                         {dims.length > 0 && (
                             <InfoRow icon={Ruler} label="Kích thước (Dài × Rộng × Cao)"
@@ -218,15 +201,20 @@ export default function ViewProductModal({ product, onClose }) {
                 </div>
 
                 {/* ── Footer ── */}
-                <div className="px-6 py-4 border-t shrink-0 flex items-center justify-end"
+                <div className="px-6 py-4 border-t shrink-0 flex items-center justify-end gap-3"
                     style={{ borderColor: "var(--grid-border)", backgroundColor: "var(--bg-main)" }}>
-                    <button onClick={onClose}
-                        className="h-10 px-8 rounded-xl text-[13px] font-bold border cursor-pointer hover:bg-gray-50 transition"
+                    <button type="button" onClick={onClose}
+                        className="h-10 px-6 rounded-xl text-[13px] font-bold border cursor-pointer hover:bg-gray-50 transition"
                         style={{ borderColor: "var(--grid-border)", color: "var(--text-secondary)" }}>
-                        Đóng
+                        Trở lại
+                    </button>
+                    <button type="submit"
+                        className="h-10 px-6 rounded-xl text-[13px] font-bold cursor-pointer hover:opacity-90 transition flex items-center gap-2"
+                        style={{ backgroundColor: "var(--brand-primary)", color: "#fff" }}>
+                        <Save size={14} /> Lưu Thay Đổi
                     </button>
                 </div>
             </div>
-        </div>
+        </form>
     );
 }

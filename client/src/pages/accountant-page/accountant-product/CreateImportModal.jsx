@@ -36,9 +36,9 @@ const FORM_TYPES = [
 ];
 
 const PRODUCT_TYPES = [
-    { value: "RAW", label: "Hàng thô", code: "THO" },
+    { value: "RAW", label: "Hàng mộc", code: "HM" },
     { value: "CUSTOM", label: "Hàng khách đặt", code: "KD" },
-    { value: "FINISHED", label: "Hàng hoàn thiện", code: "HT" },
+    { value: "FINISHED", label: "Hàng có sẵn", code: "HS" },
 ];
 
 const MOCK_PRODUCTS = [
@@ -71,8 +71,6 @@ const emptyLine = () => ({
     importPrice: "",
     sellingPrice: "",
     minStock: "",
-    maxStock: "",
-    location: "",
     details: "",
 });
 
@@ -80,6 +78,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
     // Section 1
     const [supplier, setSupplier] = useState("");
     const [importDate, setImportDate] = useState(new Date().toISOString().slice(0, 10));
+    const [note, setNote] = useState("");
     const [invoiceFile, setInvoiceFile] = useState(null);
     const [invoicePreview, setInvoicePreview] = useState(null);
     const fileRef = useRef(null);
@@ -137,7 +136,11 @@ export default function CreateImportModal({ onClose, onSaved }) {
         for (const l of lines) {
             if (!l.productName.trim()) { toast.error("Vui lòng nhập tên sản phẩm"); return; }
             if (!l.qty || Number(l.qty) <= 0) { toast.error("Số lượng phải lớn hơn 0"); return; }
-            if (!l.importPrice || Number(l.importPrice) <= 0) { toast.error("Giá gốc phải lớn hơn 0"); return; }
+            
+            // Validate prices only if form requires them (NEW form type)
+            if (l.formType !== "READY") {
+                if (!l.importPrice || Number(l.importPrice) <= 0) { toast.error("Giá gốc phải lớn hơn 0"); return; }
+            }
         }
 
         toast.success(
@@ -145,7 +148,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
             { duration: 4000, style: { fontSize: "13px" } }
         );
 
-        onSaved?.({ supplier, importDate, invoiceFile, lines, grandTotal });
+        onSaved?.({ supplier, importDate, invoiceFile, note, lines, grandTotal });
         onClose();
     };
 
@@ -204,6 +207,14 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                     <input type="date" value={importDate} onChange={(e) => setImportDate(e.target.value)}
                                         className={inp} style={inpS} />
                                 </div>
+                            </div>
+                            
+                            <div>
+                                <label className={lbl} style={lblS}><AlignLeft size={11} className="inline mr-1" />Ghi chú về đơn</label>
+                                <textarea value={note} onChange={(e) => setNote(e.target.value)}
+                                    placeholder="Ghi chú thêm thông tin về đơn nhập (tùy chọn)..." 
+                                    className={`w-full p-2.5 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-purple-300 transition resize-none`}
+                                    style={{ ...inpS, minHeight: '60px' }} />
                             </div>
 
                             {/* Invoice upload */}
@@ -321,30 +332,19 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                                 </div>
                                             </div>
 
-                                            <div className="grid grid-cols-4 gap-4 border-t pt-4" style={{ borderColor: "var(--grid-border)" }}>
+                                            <div className="grid grid-cols-2 gap-4 border-t pt-4" style={{ borderColor: "var(--grid-border)" }}>
                                                 <div>
                                                     <label className={lbl} style={lblS}>Số lượng nhập *</label>
                                                     <input type="number" min="1" value={line.qty}
                                                         onChange={(e) => updateLine(line._id, "qty", e.target.value)}
                                                         placeholder="0" className={inp} style={inpS} />
                                                 </div>
-                                                <div>
-                                                    <label className={lbl} style={lblS}>Giá gốc (₫) *</label>
-                                                    <input type="number" min="0" value={line.importPrice}
-                                                        onChange={(e) => updateLine(line._id, "importPrice", e.target.value)}
-                                                        placeholder="0" className={inp} style={inpS} />
-                                                </div>
-                                                <div>
-                                                    <label className={lbl} style={lblS}>Giá bán (₫)</label>
-                                                    <input type="number" min="0" value={line.sellingPrice}
-                                                        onChange={(e) => updateLine(line._id, "sellingPrice", e.target.value)}
-                                                        placeholder="0" className={inp} style={inpS} />
-                                                </div>
-                                                <div>
-                                                    <label className={lbl} style={lblS}><div className="flex items-center gap-1"><MapPin size={11} />Vị trí cất hàng</div></label>
-                                                    <input type="text" value={line.location}
-                                                        onChange={(e) => updateLine(line._id, "location", e.target.value)}
-                                                        placeholder="VD: Kho A..." className={inp} style={inpS} />
+                                                <div className="flex flex-col">
+                                                    <label className={lbl} style={lblS}><div className="flex items-center gap-1"><AlignLeft size={11} />Chi tiết sản phẩm</div></label>
+                                                    <input type="text" value={line.details}
+                                                        onChange={(e) => updateLine(line._id, "details", e.target.value)}
+                                                        placeholder="Ghi chú thêm thông tin chi tiết mặt hàng..."
+                                                        className={inp} style={inpS} />
                                                 </div>
                                             </div>
                                         </>
@@ -414,7 +414,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                                     )}
                                                 </div>
                                                 <div className="relative">
-                                                    <label className={lbl} style={lblS}>Loại gỗ</label>
+                                                    <label className={lbl} style={lblS}>Loại</label>
                                                     <input value={line.woodType}
                                                         onChange={(e) => {
                                                             updateLine(line._id, "woodType", e.target.value);
@@ -479,8 +479,8 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                                 </div>
                                             </div>
 
-                                            {/* Row 4: Số lượng, Giá, Tồn */}
-                                            <div className="grid grid-cols-5 gap-4 mb-4">
+                                            {/* Row 4: Số lượng, Giá, Tồn min */}
+                                            <div className="grid grid-cols-4 gap-4 mb-4">
                                                 <div>
                                                     <label className={lbl} style={lblS}>Số lượng *</label>
                                                     <input type="number" min="1" value={line.qty}
@@ -505,63 +505,46 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                                         onChange={(e) => updateLine(line._id, "minStock", e.target.value)}
                                                         placeholder="0" className={inp} style={inpS} />
                                                 </div>
-                                                <div>
-                                                    <label className={lbl} style={lblS}><div className="flex items-center gap-1"><BarChart2 size={11} />Tồn cao nhất</div></label>
-                                                    <input type="number" min="0" value={line.maxStock}
-                                                        onChange={(e) => updateLine(line._id, "maxStock", e.target.value)}
-                                                        placeholder="0" className={inp} style={inpS} />
-                                                </div>
                                             </div>
 
-                                            {/* Row 5: Ảnh + Vị trí + Chi tiết */}
-                                            <div className="grid grid-cols-12 gap-4">
-                                                {/* Ảnh */}
-                                                <div className="col-span-3">
-                                                    <label className={lbl} style={lblS}><div className="flex items-center gap-1"><Image size={11} />Hình ảnh</div></label>
-                                                    <div className="relative h-24">
-                                                        {line.imagePreview ? (
-                                                            <div className="relative w-full h-full rounded-lg border overflow-hidden group" style={{ borderColor: 'var(--grid-border)' }}>
-                                                                <img src={line.imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center backdrop-blur-[2px]">
-                                                                    <button type="button" onClick={() => removeLineFile(line._id)}
-                                                                        className="bg-white text-red-500 rounded-full p-1.5 shadow-sm hover:scale-110 transition-transform">
-                                                                        <Trash2 size={13} />
-                                                                    </button>
+                                                {/* Ảnh và Chi tiết */}
+                                                <div className="grid grid-cols-12 gap-4">
+                                                    {/* Ảnh SP */}
+                                                    <div className="col-span-3 lg:col-span-2">
+                                                        <label className={lbl} style={lblS}>Ảnh sản phẩm</label>
+                                                        <div className="relative w-full aspect-square rounded-xl border-dashed border-2 flex items-center justify-center cursor-pointer transition overflow-hidden group hover:border-purple-400"
+                                                            style={{ borderColor: "var(--grid-border)", backgroundColor: "var(--bg-main)" }}>
+                                                            {line.imagePreview ? (
+                                                                <>
+                                                                    <img src={line.imagePreview} alt="SP" className="w-full h-full object-cover" />
+                                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                                        <button type="button" onClick={(e) => { e.stopPropagation(); removeLineFile(line._id); }}
+                                                                            className="p-1.5 bg-red-500 rounded-lg text-white hover:bg-red-600 transition">
+                                                                            <Trash2 size={14} />
+                                                                        </button>
+                                                                    </div>
+                                                                </>
+                                                            ) : (
+                                                                <div className="flex flex-col items-center gap-1.5" style={{ color: "var(--text-placeholder)" }}>
+                                                                    <Image size={24} strokeWidth={1.5} />
+                                                                    <span className="text-[10px] font-medium uppercase">Tải ảnh lên</span>
                                                                 </div>
-                                                            </div>
-                                                        ) : (
-                                                            <label className="flex flex-col items-center justify-center w-full h-full rounded-lg border border-dashed cursor-pointer group transition-all"
-                                                                style={{ borderColor: "var(--brand-primary)", backgroundColor: "rgba(79, 70, 229, 0.03)" }}>
-                                                                <div className="bg-white p-2 rounded-full shadow-sm mt-2 mb-2 group-hover:scale-110 transition-transform">
-                                                                    <FileImage size={16} style={{ color: "var(--brand-primary)" }} />
-                                                                </div>
-                                                                <span className="text-[11px] font-medium px-1" style={{ color: "var(--brand-primary)" }}>Thêm ảnh</span>
-                                                                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleLineFile(line._id, e)} />
-                                                            </label>
-                                                        )}
+                                                            )}
+                                                            <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                                                onChange={(e) => handleLineFile(line._id, e)} title="" />
+                                                        </div>
                                                     </div>
-                                                </div>
 
-                                                {/* Vị trí cất và Chi tiết */}
-                                                <div className="col-span-9 flex flex-col gap-4">
-                                                    <div>
-                                                        <label className={lbl} style={lblS}><div className="flex items-center gap-1"><MapPin size={11} />Vị trí cất hàng</div></label>
-                                                        <input type="text" value={line.location}
-                                                            onChange={(e) => updateLine(line._id, "location", e.target.value)}
-                                                            placeholder="VD: Kho A, Tầng 2, Dãy C..."
-                                                            className={inp}
-                                                            style={inpS} />
-                                                    </div>
-                                                    <div className="flex-1 flex flex-col">
+                                                    {/* Ghi chú */}
+                                                    <div className="col-span-9 lg:col-span-10 flex flex-col">
                                                         <label className={lbl} style={lblS}><div className="flex items-center gap-1"><AlignLeft size={11} />Chi tiết sản phẩm</div></label>
                                                         <textarea value={line.details}
                                                             onChange={(e) => updateLine(line._id, "details", e.target.value)}
-                                                            placeholder="Ghi chú thêm thông tin chi tiết..."
+                                                            placeholder="Ghi chú thêm thông tin chi tiết mặt hàng..."
                                                             className={`w-full p-2.5 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-purple-300 transition resize-none flex-1`}
                                                             style={{ ...inpS, lineHeight: 1.4, minHeight: '3.5rem' }} />
                                                     </div>
                                                 </div>
-                                            </div>
                                         </>
                                     )}
 
