@@ -31,7 +31,7 @@ const sendNewPasswordEmail = async (toEmail, newPassword) => {
           <p style="margin: 0; font-size: 14px; color: #666;">Mật khẩu mới của bạn:</p>
           <p style="margin: 10px 0 0; font-size: 22px; font-weight: bold; color: #333; letter-spacing: 2px;">${newPassword}</p>
         </div>
-        <p style="color: #e74c3c; font-size: 13px;">⚠️ Vui lòng đăng nhập và đổi mật khẩu ngay sau khi nhận được email này.</p>
+        <p style="color: #e74c3c; font-size: 13px;">Vui lòng đăng nhập và đổi mật khẩu ngay sau khi nhận được email này.</p>
         <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
         <p style="font-size: 12px; color: #999;">Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng liên hệ quản trị viên.</p>
       </div>
