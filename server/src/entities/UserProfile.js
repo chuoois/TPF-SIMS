@@ -1,57 +1,45 @@
-const { EntitySchema } = require("typeorm");
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/db");
 
-module.exports = new EntitySchema({
-  name: "UserProfile",
-  tableName: "user_profile",
-
-  columns: {
-    pk_user_profile_id: {
-      type: "varchar",
-      length: 36,
-      primary: true,
+/**
+ * Model UserProfile
+ * Bảng thông tin người dùng
+ * Created By: ThinhBui
+ * Created Date: 14/03/2026
+ */
+const UserProfile = sequelize.define(
+  "UserProfile",
+  {
+    user_profile_id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    user_account_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
     full_name: {
-      type: "varchar",
-      length: 255,
+      type: DataTypes.STRING(150),
     },
     phone_number: {
-      type: "varchar",
-      length: 20,
-      nullable: true,
+      type: DataTypes.STRING(20),
     },
     dob: {
-      type: "date",
-      nullable: true,
+      type: DataTypes.DATEONLY,
     },
     gender: {
-      type: "tinyint",
-      nullable: true,
+      type: DataTypes.TINYINT,
     },
-    salary_type: {
-      type: "tinyint",
-      nullable: true,
-    },
-    timestamp: {
-      type: "datetime",
-      createDate: true,
+    created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
     },
   },
+  {
+    tableName: "user_profile",
+    timestamps: false,
+  }
+);
 
-  relations: {
-    account: {
-      type: "one-to-one",
-      target: "UserAccount",
-      joinColumn: {
-        name: "fk_user_account_id",
-      },
-      onDelete: "CASCADE",
-      onUpdate: "CASCADE",
-    },
-
-    salaries: {
-      type: "one-to-many",
-      target: "EmployeeSalary",
-      inverseSide: "userProfile",
-    },
-  },
-});
+module.exports = UserProfile;

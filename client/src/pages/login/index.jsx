@@ -1,10 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
 import Logo from "@/assets/tp-logo.svg";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "react-hot-toast";
 
 /**
  * Component LoginPage
@@ -17,8 +19,22 @@ import * as Yup from "yup";
 
 export const LoginPage = () => {
   const navigate = useNavigate();
+  const { login, isAuthenticated, user } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Tự động chuyển hướng nếu đã đăng nhập
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const roleRedirectMap = {
+        OWNER: "/owner/dashboard",
+        SALES: "/sales/home",
+        ACCOUNTANT: "/accountant/dashboard",
+        WORKER: "/worker/home",
+      };
+      navigate(roleRedirectMap[user.role] || "/");
+    }
+  }, [isAuthenticated, user, navigate]);
 
   const validationSchema = Yup.object({
     email: Yup.string()
@@ -40,15 +56,9 @@ export const LoginPage = () => {
       try {
         setLoading(true);
 
-        /**
-         * Backend sẽ:
-         * - Set accessToken cookie
-         * - Set refreshToken cookie
-         * - Trả về { message, role }
-         */
-        const data = await authService.login(values.email, values.password);
-        const role = data.role;
-        localStorage.setItem("user", JSON.stringify(data.user));
+        const data = await login(values.email, values.password);
+        const role = data.user.role;
+
         const roleRedirectMap = {
           OWNER: "/owner/dashboard",
           SALES: "/sales/home",
@@ -60,14 +70,15 @@ export const LoginPage = () => {
 
         navigate(roleRedirectMap[role] || "/");
       } catch (error) {
-        console.error(error);
+        console.error("Login Error:", error);
 
-        toast.error(
-          error?.response?.data?.message || "Sai email hoặc mật khẩu",
-        );
+        const message = error?.response?.data?.message || "Sai email hoặc mật khẩu";
+        toast.error(message);
+
+        // Throw error để Formik biết là submit thất bại, tránh reset form (nếu có config)
+        throw error;
       } finally {
         setLoading(false);
-        // navigate("/sales/home"); 
       }
     },
   });
@@ -203,13 +214,14 @@ export const LoginPage = () => {
                     id="email"
                     name="email"
                     type="email"
-                    placeholder="you@company.com"
+                    placeholder="Nhập email..."
                     value={formik.values.email}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     className="w-full h-11 pl-10 pr-4 rounded-xl text-sm transition-all duration-200 outline-none"
                     style={{
                       border: `1.5px solid ${formik.touched.email && formik.errors.email ? "#ef4444" : "#e2e8f0"}`,
+                      boxShadow: formik.touched.email && formik.errors.email ? "0 0 0 4px rgba(239, 68, 68, 0.15)" : "none",
                       color: "#0f172a",
                       backgroundColor: "#f8fafc",
                     }}
@@ -217,13 +229,21 @@ export const LoginPage = () => {
                       if (!(formik.touched.email && formik.errors.email)) {
                         e.target.style.borderColor = "#22c55e";
                         e.target.style.boxShadow =
-                          "0 0 0 3px rgba(34,197,94,0.1)";
+                          "0 0 0 4px rgba(34,197,94,0.15)";
+                      } else {
+                        e.target.style.borderColor = "#ef4444";
+                        e.target.style.boxShadow =
+                          "0 0 0 4px rgba(239, 68, 68, 0.2)";
                       }
                     }}
                     onBlurCapture={(e) => {
                       if (!(formik.touched.email && formik.errors.email)) {
                         e.target.style.borderColor = "#e2e8f0";
                         e.target.style.boxShadow = "none";
+                      } else {
+                        e.target.style.borderColor = "#ef4444";
+                        e.target.style.boxShadow =
+                          "0 0 0 4px rgba(239, 68, 68, 0.15)";
                       }
                     }}
                   />
@@ -270,24 +290,29 @@ export const LoginPage = () => {
                     className="w-full h-11 pl-10 pr-11 rounded-xl text-sm transition-all duration-200 outline-none"
                     style={{
                       border: `1.5px solid ${formik.touched.password && formik.errors.password ? "#ef4444" : "#e2e8f0"}`,
+                      boxShadow: formik.touched.password && formik.errors.password ? "0 0 0 4px rgba(239, 68, 68, 0.15)" : "none",
                       color: "#0f172a",
                       backgroundColor: "#f8fafc",
                     }}
                     onFocus={(e) => {
-                      if (
-                        !(formik.touched.password && formik.errors.password)
-                      ) {
+                      if (!(formik.touched.password && formik.errors.password)) {
                         e.target.style.borderColor = "#22c55e";
                         e.target.style.boxShadow =
-                          "0 0 0 3px rgba(34,197,94,0.1)";
+                          "0 0 0 4px rgba(34,197,94,0.15)";
+                      } else {
+                        e.target.style.borderColor = "#ef4444";
+                        e.target.style.boxShadow =
+                          "0 0 0 4px rgba(239, 68, 68, 0.2)";
                       }
                     }}
                     onBlurCapture={(e) => {
-                      if (
-                        !(formik.touched.password && formik.errors.password)
-                      ) {
+                      if (!(formik.touched.password && formik.errors.password)) {
                         e.target.style.borderColor = "#e2e8f0";
                         e.target.style.boxShadow = "none";
+                      } else {
+                        e.target.style.borderColor = "#ef4444";
+                        e.target.style.boxShadow =
+                          "0 0 0 4px rgba(239, 68, 68, 0.15)";
                       }
                     }}
                   />

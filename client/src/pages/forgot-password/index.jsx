@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { Mail, ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
 import Logo from "@/assets/tp-logo.svg";
 import { PageHelmet } from "@/components/seo/PageHelmet";
+import authService from "@/services/auth.service";
+import { toast } from "react-hot-toast";
 
 /**
  * Component ForgotPasswordPage
@@ -19,15 +21,24 @@ export const ForgotPasswordPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!email) return;
+
     setError("");
     setLoading(true);
-    // Fake submit – không gọi API
-    setTimeout(() => {
-      setLoading(false);
+    
+    try {
+      await authService.forgotPassword(email);
       setSubmitted(true);
-    }, 800);
+    } catch (err) {
+      console.error("Forgot password error:", err);
+      const msg = err?.response?.data?.message || "Lỗi hệ thống khi gửi yêu cầu";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
