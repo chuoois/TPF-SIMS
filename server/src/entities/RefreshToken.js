@@ -1,36 +1,41 @@
-const { EntitySchema } = require("typeorm");
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/db");
 
-module.exports = new EntitySchema({
-  name: "RefreshToken",
-  tableName: "refresh_token",
-
-  columns: {
-    pk_refresh_token_id: {
-      type: "varchar",
-      length: 36,
-      primary: true,
+/**
+ * Model RefreshToken
+ * Bảng lưu trữ token làm mới
+ * Created By: ThinhBui
+ * Created Date: 14/03/2026
+ */
+const RefreshToken = sequelize.define(
+  "RefreshToken",
+  {
+    refresh_token_id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
     },
-    token_hash: {
-      type: "text",
+    user_account_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    token: {
+      type: DataTypes.STRING(500),
+      allowNull: false,
     },
     expires_at: {
-      type: "datetime",
+      type: DataTypes.DATE,
+      allowNull: false,
     },
-    timestamp: {
-      type: "datetime",
-      createDate: true,
+    created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
     },
   },
+  {
+    tableName: "refresh_token",
+    timestamps: false,
+  }
+);
 
-  relations: {
-    userAccount: {
-      type: "many-to-one",
-      target: "UserAccount",
-      joinColumn: {
-        name: "fk_user_account_id",
-      },
-      onDelete: "CASCADE",
-      onUpdate: "CASCADE",
-    },
-  },
-});
+module.exports = RefreshToken;

@@ -1,61 +1,49 @@
-const { EntitySchema } = require("typeorm");
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/db");
 
-module.exports = new EntitySchema({
-  name: "UserAccount",
-  tableName: "user_account",
-
-  columns: {
-    pk_user_account_id: {
-      type: "varchar",
-      length: 36,
-      primary: true,
+/**
+ * Model UserAccount
+ * Bảng tài khoản người dùng
+ * Created By: ThinhBui
+ * Created Date: 14/03/2026
+ */
+const UserAccount = sequelize.define(
+  "UserAccount",
+  {
+    user_account_id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    role_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
     email: {
-      type: "varchar",
-      length: 255,
+      type: DataTypes.STRING(255),
+      allowNull: false,
       unique: true,
+      validate: {
+        isEmail: true,
+      },
     },
     password_hash: {
-      type: "varchar",
-      length: 255,
+      type: DataTypes.STRING(255),
+      allowNull: false,
     },
     status: {
-      type: "tinyint",
-      default: 1,
+      type: DataTypes.TINYINT,
+      defaultValue: 1, // 1: Active, 0: Inactive
     },
-    timestamp: {
-      type: "datetime",
-      createDate: true,
-    },
-  },
-
-  relations: {
-    role: {
-      type: "many-to-one",
-      target: "UserRole",
-      joinColumn: {
-        name: "fk_role_id",
-      },
-      onDelete: "RESTRICT",
-      onUpdate: "CASCADE",
-    },
-
-    profile: {
-      type: "one-to-one",
-      target: "UserProfile",
-      inverseSide: "account",
-    },
-
-    systemLogs: {
-      type: "one-to-many",
-      target: "SystemLog",
-      inverseSide: "userAccount",
-    },
-
-    refreshTokens: {
-      type: "one-to-many",
-      target: "RefreshToken",
-      inverseSide: "userAccount",
+    created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
     },
   },
-});
+  {
+    tableName: "user_account",
+    timestamps: false,
+  }
+);
+
+module.exports = UserAccount;

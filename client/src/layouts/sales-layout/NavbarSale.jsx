@@ -1,14 +1,34 @@
-/**
- * Component Name: NavbarSale
- * Description: Navbar chính dành cho Sales Layout
- * Created By: ThinhBui
- * Created Date: 24/02/2026
- */
-
-import { Bell, Settings } from "lucide-react";
+import { Bell, Settings, LogOut } from "lucide-react";
 import Logo from "@/assets/tp-logo.svg";
+import { useAuth } from "@/context/AuthContext";
+import { useState, useRef, useEffect } from "react";
+import { toast } from "react-hot-toast";
 
 export const NavbarSale = () => {
+  const { logout } = useAuth();
+  const [showSettings, setShowSettings] = useState(false);
+  const settingsRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (settingsRef.current && !settingsRef.current.contains(event.target)) {
+        setShowSettings(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Đã đăng xuất");
+    } catch (error) {
+      toast.error("Lỗi khi đăng xuất");
+    }
+  };
+
   return (
     <nav
       className="fixed top-0 left-0 right-0 h-12 z-[4] flex items-center justify-between px-3 bg-white border-b"
@@ -53,15 +73,47 @@ export const NavbarSale = () => {
           <Bell size={18} />
         </button>
 
-        <button
-          className="relative flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
-          title="Cài đặt"
-        >
-          <Settings size={18} />
-        </button>
+        <div className="relative" ref={settingsRef}>
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className={`relative flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 transition-colors cursor-pointer ${showSettings ? "bg-gray-100 text-green-600" : "text-gray-500 hover:text-gray-700"}`}
+            title="Cài đặt"
+          >
+            <Settings size={18} />
+          </button>
+
+          {/* Settings Dropdown */}
+          {showSettings && (
+            <div
+              className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+              style={{ boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)" }}
+            >
+              <div className="px-4 py-2 border-b border-gray-100">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Cài đặt hệ thống</p>
+              </div>
+              
+              <button
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-600 transition-colors cursor-pointer"
+              >
+                <Settings size={16} />
+                <span>Cấu hình hồ sơ</span>
+              </button>
+
+              <div className="border-t border-gray-100 my-1"></div>
+
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+              >
+                <LogOut size={16} />
+                <span>Đăng xuất</span>
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Avatar */}
-        <div className="w-8 h-8 rounded-full overflow-hidden cursor-pointer ml-1 shrink-0">
+        <div className="w-8 h-8 rounded-full overflow-hidden cursor-pointer ml-1 shrink-0 border border-gray-100">
           <img
             src="https://i.pravatar.cc/100"
             alt="Avatar"

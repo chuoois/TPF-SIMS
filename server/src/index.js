@@ -1,32 +1,28 @@
 require("dotenv").config();
-require("reflect-metadata");
-
 const express = require("express");
-const { AppDataSource } = require("./config/db");
-const router = require("./routes");
 const cookieParser = require("cookie-parser");
-const app = express();
 const cors = require("cors");
+const sequelize = require("./config/db");
+const authRoutes = require("./routes/auth.routes");
 
-app.use(express.json());
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-  }),
-);
+const app = express();
+
+// Middleware
+app.use(cors({
+  origin: true, // Allow all origins for dev, or specify your client URL
+  credentials: true
+}));
 app.use(cookieParser());
+app.use(express.json());
 
-AppDataSource.initialize()
-  .then(() => {
-    console.log("Database connected");
+// Routes
+app.use("/api/auth", authRoutes);
 
-    app.use("/api", router);
+sequelize.authenticate().then(() => {
+  console.log("Database connected");
 
-    app.listen(3000, () => {
-      console.log("Server running at http://localhost:3000");
-    });
-  })
-  .catch((err) => {
-    console.error("Database connection failed:", err);
-  });
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});
+});

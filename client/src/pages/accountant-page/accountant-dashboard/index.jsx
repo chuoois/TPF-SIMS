@@ -19,8 +19,8 @@ import {
  * AccountantDashboard
  * Trang tổng quan dành cho kế toán (static mock data – không gọi backend)
  *
- * Created By: ThinhBui
- * Updated: 07/03/2026
+ * Created By: HieuNM
+ * Updated: 12/03/2026
  */
 
 const StatCard = ({ icon: Icon, label, value, sub, color, to }) => {
@@ -44,11 +44,9 @@ const StatCard = ({ icon: Icon, label, value, sub, color, to }) => {
 // ── Mock data ──────────────────────────────────────────────────────────────
 const STATS = {
     totalProducts: 48,
-    totalSkus: 137,
     totalInventoryQty: 3_840,
     lowStockCount: 6,
     totalCategories: 9,
-    totalWarehouses: 2,
 };
 
 const RECENT_IMPORTS = [
@@ -67,13 +65,6 @@ export default function AccountantDashboard() {
             value: STATS.totalProducts.toLocaleString(),
             color: "bg-blue-500",
             sub: "Toàn bộ sản phẩm trong hệ thống",
-        },
-        {
-            icon: Layers,
-            label: "Tổng SKU",
-            value: STATS.totalSkus.toLocaleString(),
-            color: "bg-indigo-500",
-            sub: "Phân loại theo kích thước, màu, gỗ",
         },
         {
             icon: BarChart3,
@@ -96,13 +87,6 @@ export default function AccountantDashboard() {
             value: STATS.totalCategories.toLocaleString(),
             color: "bg-violet-500",
             sub: "Danh mục sản phẩm đang hoạt động",
-        },
-        {
-            icon: Warehouse,
-            label: "Kho hàng",
-            value: STATS.totalWarehouses.toLocaleString(),
-            color: "bg-amber-500",
-            sub: "Số kho trong hệ thống",
         },
     ];
 
@@ -128,7 +112,7 @@ export default function AccountantDashboard() {
                     <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
                         <TrendingDown className="text-red-500 shrink-0" size={18} />
                         <p className="text-sm text-red-700 font-medium">
-                            Có <span className="font-bold">{STATS.lowStockCount}</span> SKU đang sắp hết hàng.{" "}
+                            Có <span className="font-bold">{STATS.lowStockCount}</span> sản phẩm đang sắp hết hàng.{" "}
                             <Link to="/accountant/products" className="underline font-bold">
                                 Xem danh sách sản phẩm
                             </Link>
@@ -200,7 +184,6 @@ export default function AccountantDashboard() {
                         <CardContent className="space-y-1">
                             {[
                                 { to: "/accountant/products", label: "Quản lý sản phẩm", icon: Package },
-                                { to: "/accountant/products", label: "Danh sách SKU", icon: Layers },
                                 { to: "/accountant/products", label: "Kho hàng", icon: Warehouse },
                                 { to: "/accountant/products", label: "Báo cáo tồn kho", icon: BarChart3 },
                             ].map(({ to, label, icon: Icon }) => (

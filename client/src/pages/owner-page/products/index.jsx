@@ -31,25 +31,38 @@ import {
   Utensils,
   Palette,
   Flower2,
-  Briefcase
+  Briefcase,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 
 // ===================== STATIC DATA =====================
 const CATEGORIES = [
-  "Phòng khách", "Phòng thờ", "Phòng ngủ", "Trang trí", "Phòng làm việc", "Phòng ăn"
+  "Phòng khách",
+  "Phòng thờ",
+  "Phòng ngủ",
+  "Trang trí",
+  "Phòng làm việc",
+  "Phòng ăn",
 ];
 
 const WOOD_TYPES = [
-  "Gỗ Hương", "Gỗ Gụ", "Gỗ Mít", "Gỗ Trắc", "Gỗ Gõ đỏ", "Gỗ Sồi", "Gỗ Óc chó"
+  "Gỗ Hương",
+  "Gỗ Gụ",
+  "Gỗ Mít",
+  "Gỗ Trắc",
+  "Gỗ Gõ đỏ",
+  "Gỗ Sồi",
+  "Gỗ Óc chó",
 ];
 
-const COLORS = [
-  "Cánh gián", "Hạt dẻ", "Mun", "Tự nhiên", "Sơn PU", "Để mộc"
-];
+const COLORS = ["Cánh gián", "Hạt dẻ", "Mun", "Tự nhiên", "Sơn PU", "Để mộc"];
 
 const PRODUCT_STATUSES = [
-  "Hàng sẵn", "Đặt theo mẫu", "Hết hàng", "Ngừng kinh doanh", "Quà tặng"
+  "Hàng sẵn",
+  "Đặt theo mẫu",
+  "Hết hàng",
+  "Ngừng kinh doanh",
+  "Quà tặng",
 ];
 
 const INITIAL_PRODUCTS = [
@@ -68,7 +81,8 @@ const INITIAL_PRODUCTS = [
     status: "Hàng sẵn",
     stock: 2,
     img: "https://placehold.co/100x100?text=SapTho",
-    description: "Sập thờ trạm khắc tỉ mỉ tinh xảo, chất liệu gỗ mít lõi liền khối."
+    description:
+      "Sập thờ trạm khắc tỉ mỉ tinh xảo, chất liệu gỗ mít lõi liền khối.",
   },
   {
     id: "SP002",
@@ -85,7 +99,7 @@ const INITIAL_PRODUCTS = [
     status: "Đặt theo mẫu",
     stock: 0,
     img: "https://placehold.co/100x100?text=QuocVoi",
-    description: "Hàng đặt theo kích thước riêng, tay 12 vách 4 phân."
+    description: "Hàng đặt theo kích thước riêng, tay 12 vách 4 phân.",
   },
   {
     id: "SP003",
@@ -102,7 +116,7 @@ const INITIAL_PRODUCTS = [
     status: "Hàng sẵn",
     stock: 5,
     img: "https://placehold.co/100x100?text=Sofa",
-    description: "Bộ L mặt nguyên tấm dày 10cm."
+    description: "Bộ L mặt nguyên tấm dày 10cm.",
   },
   {
     id: "SP004",
@@ -119,7 +133,7 @@ const INITIAL_PRODUCTS = [
     status: "Hết hàng",
     stock: 0,
     img: null,
-    description: "Tiện liền khối."
+    description: "Tiện liền khối.",
   },
   {
     id: "SP005",
@@ -136,7 +150,7 @@ const INITIAL_PRODUCTS = [
     status: "Ngừng kinh doanh",
     stock: 0,
     img: "https://placehold.co/100x100?text=GiuongNgu",
-    description: "Mẫu cũ năm ngoái."
+    description: "Mẫu cũ năm ngoái.",
   },
   {
     id: "SP006",
@@ -153,7 +167,7 @@ const INITIAL_PRODUCTS = [
     status: "Quà tặng",
     stock: 1,
     img: "https://placehold.co/100x100?text=DatMa",
-    description: "Hàng đục kỹ."
+    description: "Hàng đục kỹ.",
   },
   {
     id: "SP007",
@@ -170,8 +184,8 @@ const INITIAL_PRODUCTS = [
     status: "Đặt theo mẫu",
     stock: 0,
     img: "https://placehold.co/100x100?text=BanAn",
-    description: "Nguyên tấm nguyên khối."
-  }
+    description: "Nguyên tấm nguyên khối.",
+  },
 ];
 
 // ===================== HELPERS =====================
@@ -199,27 +213,39 @@ const getStatusConfig = (status) => {
 const CategoriesTab = ({ categories, onAdd, onEdit, onDelete }) => {
   const getCategoryIcon = (name) => {
     const n = name.toLowerCase();
-    if (n.includes("phòng khách")) return <Armchair size={18} className="text-orange-500" />;
-    if (n.includes("phòng thờ")) return <Monitor size={18} className="text-red-500" />;
-    if (n.includes("phòng ngủ")) return <Bed size={18} className="text-blue-500" />;
-    if (n.includes("trang trí")) return <Flower2 size={18} className="text-purple-500" />;
-    if (n.includes("làm việc")) return <Briefcase size={18} className="text-gray-600" />;
-    if (n.includes("phòng ăn") || n.includes("bếp")) return <Utensils size={18} className="text-emerald-500" />;
+    if (n.includes("phòng khách"))
+      return <Armchair size={18} className="text-orange-500" />;
+    if (n.includes("phòng thờ"))
+      return <Monitor size={18} className="text-red-500" />;
+    if (n.includes("phòng ngủ"))
+      return <Bed size={18} className="text-blue-500" />;
+    if (n.includes("trang trí"))
+      return <Flower2 size={18} className="text-purple-500" />;
+    if (n.includes("làm việc"))
+      return <Briefcase size={18} className="text-gray-600" />;
+    if (n.includes("phòng ăn") || n.includes("bếp"))
+      return <Utensils size={18} className="text-emerald-500" />;
     return <Box size={18} className="text-blue-500" />;
   };
 
   return (
     <div
       className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden"
-      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
+      style={{
+        boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+      }}
     >
       <div
         className="px-6 py-4 border-b flex items-center justify-between shrink-0"
         style={{ borderColor: "var(--grid-border)" }}
       >
         <div>
-          <h2 className="text-[15px] font-bold text-gray-900">Danh mục sản phẩm</h2>
-          <p className="text-[12px] text-gray-400 mt-0.5 font-medium">Quản lý các nhóm hàng hóa trong kho</p>
+          <h2 className="text-[15px] font-bold text-gray-900">
+            Danh mục sản phẩm
+          </h2>
+          <p className="text-[12px] text-gray-400 mt-0.5 font-medium">
+            Quản lý các nhóm hàng hóa trong kho
+          </p>
         </div>
         <button
           onClick={onAdd}
@@ -239,10 +265,18 @@ const CategoriesTab = ({ categories, onAdd, onEdit, onDelete }) => {
             }}
           >
             <tr>
-              <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 w-16">STT</th>
-              <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Tên nhóm</th>
-              <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 text-center w-32">Số hàng</th>
-              <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 text-right w-32">Thao tác</th>
+              <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 w-16">
+                STT
+              </th>
+              <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                Tên nhóm
+              </th>
+              <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 text-center w-32">
+                Số hàng
+              </th>
+              <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 text-right w-32">
+                Thao tác
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -252,18 +286,22 @@ const CategoriesTab = ({ categories, onAdd, onEdit, onDelete }) => {
                 className="hover:bg-gray-50/50 transition-colors group"
                 style={{ borderBottom: "1px solid var(--grid-border)" }}
               >
-                <td className="px-6 py-4 font-medium text-gray-400">{String(i + 1).padStart(2, '0')}</td>
+                <td className="px-6 py-4 font-medium text-gray-400">
+                  {String(i + 1).padStart(2, "0")}
+                </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100 group-hover:scale-110 transition-transform">
                       {getCategoryIcon(c)}
                     </div>
-                    <span className="font-bold text-gray-900 text-[14px]">{c}</span>
+                    <span className="font-bold text-gray-900 text-[14px]">
+                      {c}
+                    </span>
                   </div>
                 </td>
                 <td className="px-6 py-4 text-center">
                   <span className="inline-flex px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-50 text-gray-500 border border-gray-100">
-                    {Math.floor(Math.random() * 15) + 5} món
+                    10 món
                   </span>
                 </td>
                 <td className="px-6 py-4 relative">
@@ -306,7 +344,9 @@ const PropertiesTab = ({
       {/* Loại gỗ */}
       <div
         className="flex-1 flex flex-col bg-white rounded-2xl overflow-hidden"
-        style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
+        style={{
+          boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+        }}
       >
         <div
           className="px-6 py-4 border-b flex items-center justify-between shrink-0"
@@ -314,7 +354,9 @@ const PropertiesTab = ({
         >
           <div>
             <h2 className="text-[15px] font-bold text-gray-900">Loại gỗ</h2>
-            <p className="text-[12px] text-gray-400 mt-0.5 font-medium">Danh sách các chất liệu gỗ</p>
+            <p className="text-[12px] text-gray-400 mt-0.5 font-medium">
+              Danh sách các chất liệu gỗ
+            </p>
           </div>
           <button
             onClick={onAddWood}
@@ -333,9 +375,15 @@ const PropertiesTab = ({
               }}
             >
               <tr>
-                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 w-16">STT</th>
-                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Tên loại gỗ</th>
-                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 text-right w-28">Thao tác</th>
+                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 w-16">
+                  STT
+                </th>
+                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                  Tên loại gỗ
+                </th>
+                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 text-right w-28">
+                  Thao tác
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -345,7 +393,9 @@ const PropertiesTab = ({
                   className="hover:bg-gray-50/50 transition-colors group"
                   style={{ borderBottom: "1px solid var(--grid-border)" }}
                 >
-                  <td className="px-6 py-4 font-medium text-gray-400">{i + 1}</td>
+                  <td className="px-6 py-4 font-medium text-gray-400">
+                    {i + 1}
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center border border-emerald-100/50">
@@ -380,7 +430,9 @@ const PropertiesTab = ({
       {/* Màu sắc */}
       <div
         className="flex-1 flex flex-col bg-white rounded-2xl overflow-hidden"
-        style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
+        style={{
+          boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+        }}
       >
         <div
           className="px-6 py-4 border-b flex items-center justify-between shrink-0"
@@ -388,7 +440,9 @@ const PropertiesTab = ({
         >
           <div>
             <h2 className="text-[15px] font-bold text-gray-900">Màu sắc</h2>
-            <p className="text-[12px] text-gray-400 mt-0.5 font-medium">Bảng màu hoàn thiện sản phẩm</p>
+            <p className="text-[12px] text-gray-400 mt-0.5 font-medium">
+              Bảng màu hoàn thiện sản phẩm
+            </p>
           </div>
           <button
             onClick={onAddColor}
@@ -407,9 +461,15 @@ const PropertiesTab = ({
               }}
             >
               <tr>
-                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 w-16">STT</th>
-                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">Tên màu</th>
-                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 text-right w-28">Thao tác</th>
+                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 w-16">
+                  STT
+                </th>
+                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                  Tên màu
+                </th>
+                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 text-right w-28">
+                  Thao tác
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -419,7 +479,9 @@ const PropertiesTab = ({
                   className="hover:bg-gray-50/50 transition-colors group"
                   style={{ borderBottom: "1px solid var(--grid-border)" }}
                 >
-                  <td className="px-6 py-4 font-medium text-gray-400">{i + 1}</td>
+                  <td className="px-6 py-4 font-medium text-gray-400">
+                    {i + 1}
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center border border-orange-100/50">
@@ -454,7 +516,6 @@ const PropertiesTab = ({
   );
 };
 
-
 // ===================== COMPONENT =====================
 export default function OwnerProducts() {
   const [activeTab, setActiveTab] = useState("products"); // products | categories | properties
@@ -466,10 +527,22 @@ export default function OwnerProducts() {
   const [colors, setColors] = useState(COLORS);
 
   // Simple Input Modal State
-  const [simpleModal, setSimpleModal] = useState({ isOpen: false, type: "", title: "", value: "", originalValue: null });
+  const [simpleModal, setSimpleModal] = useState({
+    isOpen: false,
+    type: "",
+    title: "",
+    value: "",
+    originalValue: null,
+  });
 
   const handleOpenSimpleModal = (type, title, originalValue = null) => {
-    setSimpleModal({ isOpen: true, type, title, value: originalValue || "", originalValue });
+    setSimpleModal({
+      isOpen: true,
+      type,
+      title,
+      value: originalValue || "",
+      originalValue,
+    });
   };
 
   const handleSaveSimpleModal = () => {
@@ -478,53 +551,63 @@ export default function OwnerProducts() {
 
     if (type === "category") {
       if (originalValue) {
-        setCategories(categories.map(c => c === originalValue ? value : c));
+        setCategories(categories.map((c) => (c === originalValue ? value : c)));
       } else {
         setCategories([...categories, value]);
       }
     } else if (type === "wood") {
       if (originalValue) {
-        setWoods(woods.map(w => w === originalValue ? value : w));
+        setWoods(woods.map((w) => (w === originalValue ? value : w)));
       } else {
         setWoods([...woods, value]);
       }
     } else if (type === "color") {
       if (originalValue) {
-        setColors(colors.map(c => c === originalValue ? value : c));
+        setColors(colors.map((c) => (c === originalValue ? value : c)));
       } else {
         setColors([...colors, value]);
       }
     }
-    setSimpleModal({ isOpen: false, type: "", title: "", value: "", originalValue: null });
+    setSimpleModal({
+      isOpen: false,
+      type: "",
+      title: "",
+      value: "",
+      originalValue: null,
+    });
   };
 
   const handleDeleteCategory = (c) => {
-    if (products.some(p => p.category === c)) {
+    if (products.some((p) => p.category === c)) {
       alert(`Không thể xóa nhóm "${c}" vì đang có sản phẩm thuộc nhóm này.`);
       return;
     }
     if (window.confirm(`Bạn có chắc chắn muốn xóa nhóm "${c}"?`)) {
-      setCategories(categories.filter(x => x !== c));
+      setCategories(categories.filter((x) => x !== c));
     }
   };
 
   const handleDeleteWood = (w) => {
-    if (products.some(p => p.woodType === w)) {
-      alert(`Không thể xóa loại gỗ "${w}" vì đang có sản phẩm sử dụng chất liệu này.`);
+    if (products.some((p) => p.woodType === w)) {
+      alert(
+        `Không thể xóa loại gỗ "${w}" vì đang có sản phẩm sử dụng chất liệu này.`,
+      );
       return;
     }
     if (window.confirm(`Bạn có chắc chắn muốn xóa loại gỗ "${w}"?`)) {
-      setWoods(woods.filter(x => x !== w));
+      setWoods(woods.filter((x) => x !== w));
     }
   };
 
   const handleDeleteColor = (c) => {
-    if (products.some(p => p.color === c)) {
-      alert(`Không thể xóa màu sắc "${c}" vì đang có sản phẩm áp dụng màu này.`);
+    if (products.some((p) => p.color === c)) {
+      alert(
+        `Không thể xóa màu sắc "${c}" vì đang có sản phẩm áp dụng màu này.`,
+      );
       return;
     }
     if (window.confirm(`Bạn có chắc chắn muốn xóa màu sắc "${c}"?`)) {
-      setColors(colors.filter(x => x !== c));
+      setColors(colors.filter((x) => x !== c));
     }
   };
 
@@ -551,13 +634,8 @@ export default function OwnerProducts() {
   // Actions
   const toggleStatus = (id, newStatus) => {
     setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status: newStatus } : p))
+      prev.map((p) => (p.id === id ? { ...p, status: newStatus } : p)),
     );
-  };
-
-  const handleOpenAdd = () => {
-    setEditItem(null);
-    setShowAddEditModal(true);
   };
 
   const handleOpenEdit = (product, e) => {
@@ -580,8 +658,17 @@ export default function OwnerProducts() {
 
   // Filter logic
   const statusCounts = useMemo(() => {
-    const counts = { "Tất cả": products.length, "Hàng sẵn": 0, "Đặt theo mẫu": 0, "Hết hàng": 0, "Ngừng kinh doanh": 0, "Quà tặng": 0 };
-    products.forEach((p) => { counts[p.status] = (counts[p.status] || 0) + 1; });
+    const counts = {
+      "Tất cả": products.length,
+      "Hàng sẵn": 0,
+      "Đặt theo mẫu": 0,
+      "Hết hàng": 0,
+      "Ngừng kinh doanh": 0,
+      "Quà tặng": 0,
+    };
+    products.forEach((p) => {
+      counts[p.status] = (counts[p.status] || 0) + 1;
+    });
     return counts;
   }, [products]);
 
@@ -600,14 +687,16 @@ export default function OwnerProducts() {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
-        (p) => p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q)
+        (p) =>
+          p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q),
       );
     }
 
     return result;
   }, [products, statusFilter, categoryFilter, woodFilter, searchQuery]);
 
-  const hasActiveFilters = categoryFilter !== "Tất cả" || woodFilter !== "Tất cả" || searchQuery;
+  const hasActiveFilters =
+    categoryFilter !== "Tất cả" || woodFilter !== "Tất cả" || searchQuery;
 
   const clearFilters = () => {
     setCategoryFilter("Tất cả");
@@ -615,14 +704,15 @@ export default function OwnerProducts() {
     setSearchQuery("");
   };
 
-  useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter, categoryFilter, woodFilter]);
+  useEffect(() => {
+    setTimeout(() => setCurrentPage(1), 0);
+  }, [searchQuery, statusFilter, categoryFilter, woodFilter]);
 
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const paginatedProducts = filteredProducts.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
-
 
   // ===================== RENDER MODALS =====================
 
@@ -633,7 +723,10 @@ export default function OwnerProducts() {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
         <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
           <div className="px-6 py-4 border-b flex items-center justify-between bg-gray-50/80">
-            <h2 className="text-lg font-bold" style={{ color: "var(--text-main)" }}>
+            <h2
+              className="text-lg font-bold"
+              style={{ color: "var(--text-main)" }}
+            >
               {editItem ? "Sửa sản phẩm" : "Thêm mới sản phẩm"}
             </h2>
             <button
@@ -646,30 +739,38 @@ export default function OwnerProducts() {
 
           <div className="flex-1 overflow-y-auto p-6">
             <div className="grid grid-cols-3 gap-6">
-
               {/* Left Column: Image & Barcode */}
               <div className="col-span-1 space-y-4">
                 <div className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center bg-gray-50 hover:bg-blue-50 hover:border-blue-300 transition cursor-pointer relative overflow-hidden group">
                   {editItem?.img ? (
                     <>
-                      <img src={editItem.img} alt="Product" className="w-full h-full object-cover" />
+                      <img
+                        src={editItem.img}
+                        alt="Product"
+                        className="w-full h-full object-cover"
+                      />
                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="text-white text-sm font-semibold flex items-center gap-2"><Pencil size={14} /> Đổi ảnh</span>
+                        <span className="text-white text-sm font-semibold flex items-center gap-2">
+                          <Pencil size={14} /> Đổi ảnh
+                        </span>
                       </div>
                     </>
                   ) : (
                     <>
-                      <ImageIcon size={40} className="text-gray-400 mb-2 group-hover:text-blue-500 transition-colors" />
-                      <span className="text-sm font-medium text-gray-500 group-hover:text-blue-600 transition-colors">Tải ảnh lên (Max 5MB)</span>
+                      <ImageIcon
+                        size={40}
+                        className="text-gray-400 mb-2 group-hover:text-blue-500 transition-colors"
+                      />
+                      <span className="text-sm font-medium text-gray-500 group-hover:text-blue-600 transition-colors">
+                        Tải ảnh lên (Max 5MB)
+                      </span>
                     </>
                   )}
                 </div>
-
               </div>
 
               {/* Right Column: Form */}
               <div className="col-span-2 space-y-6">
-
                 {/* Section 1: Thông tin cơ bản */}
                 <div className="space-y-4">
                   <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
@@ -677,91 +778,186 @@ export default function OwnerProducts() {
                   </h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">Mã SP (SKU) <span className="text-red-500">*</span></label>
-                      <input type="text" className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="VD: SP001" defaultValue={editItem?.code || ""} />
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">
+                        Mã SP (SKU) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        placeholder="VD: SP001"
+                        defaultValue={editItem?.code || ""}
+                      />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">Tên sản phẩm <span className="text-red-500">*</span></label>
-                      <input type="text" className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Nhập tên sản phẩm" defaultValue={editItem?.name || ""} />
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">
+                        Tên sản phẩm <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        placeholder="Nhập tên sản phẩm"
+                        defaultValue={editItem?.name || ""}
+                      />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">Nhóm sản phẩm <span className="text-red-500">*</span></label>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">
+                        Danh mục sản phẩm{" "}
+                        <span className="text-red-500">*</span>
+                      </label>
                       <select className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
-                        <option value="">Chọn nhóm SP</option>
-                        {CATEGORIES.map(c => <option key={c} value={c} selected={editItem?.category === c}>{c}</option>)}
+                        <option value="">Chọn danh mục SP</option>
+                        {CATEGORIES.map((c) => (
+                          <option
+                            key={c}
+                            value={c}
+                            selected={editItem?.category === c}
+                          >
+                            {c}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">Đơn vị tính</label>
-                      <input type="text" className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="VD: Chiếc, Bộ" defaultValue={editItem?.unit || ""} />
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">
+                        Đơn vị tính
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        placeholder="VD: Chiếc, Bộ"
+                        defaultValue={editItem?.unit || ""}
+                      />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">Mô tả chi tiết</label>
-                    <textarea className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none min-h-[80px]" placeholder="Nhập mô tả sản phẩm..." defaultValue={editItem?.description || ""}></textarea>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">
+                      Mô tả chi tiết
+                    </label>
+                    <textarea
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none min-h-[80px]"
+                      placeholder="Nhập mô tả sản phẩm..."
+                      defaultValue={editItem?.description || ""}
+                    ></textarea>
                   </div>
                 </div>
 
                 {/* Section 2: Thuộc tính hàng mộc */}
                 <div className="space-y-4">
-
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">Loại gỗ</label>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">
+                        Loại gỗ
+                      </label>
                       <select className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
                         <option value="">Chọn loại gỗ</option>
-                        {WOOD_TYPES.map(w => <option key={w} value={w} selected={editItem?.woodType === w}>{w}</option>)}
+                        {WOOD_TYPES.map((w) => (
+                          <option
+                            key={w}
+                            value={w}
+                            selected={editItem?.woodType === w}
+                          >
+                            {w}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">Màu sắc</label>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">
+                        Màu sắc
+                      </label>
                       <select className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
                         <option value="">Chọn màu sắc</option>
-                        {COLORS.map(c => <option key={c} value={c} selected={editItem?.color === c}>{c}</option>)}
+                        {COLORS.map((c) => (
+                          <option
+                            key={c}
+                            value={c}
+                            selected={editItem?.color === c}
+                          >
+                            {c}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div className="col-span-2">
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">Kích thước (D×R×C)</label>
-                      <input type="text" className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Dài x Rộng x Cao (cm)" defaultValue={editItem?.dimensions || ""} />
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">
+                        Kích thước (D×R×C)
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        placeholder="Dài x Rộng x Cao (cm)"
+                        defaultValue={editItem?.dimensions || ""}
+                      />
                     </div>
                   </div>
                 </div>
 
                 {/* Section 3: Thương mại */}
                 <div className="space-y-4">
-
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">Giá nhập (VNĐ)</label>
-                      <input type="number" className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" defaultValue={editItem?.costPrice || ""} />
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">
+                        Giá nhập (VNĐ)
+                      </label>
+                      <input
+                        type="number"
+                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        defaultValue={editItem?.costPrice || ""}
+                      />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">Giá bán (VNĐ) <span className="text-red-500">*</span></label>
-                      <input type="number" className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" defaultValue={editItem?.retailPrice || ""} />
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">
+                        Giá bán (VNĐ) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        defaultValue={editItem?.retailPrice || ""}
+                      />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">Loại sản phẩm</label>
-                      <select className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white" defaultValue={editItem?.productType || "Hàng sẵn"}>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">
+                        Loại sản phẩm
+                      </label>
+                      <select
+                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                        defaultValue={editItem?.productType || "Hàng sẵn"}
+                      >
                         <option value="Hàng sẵn">Hàng sẵn</option>
                         <option value="Đặt theo mẫu">Đặt theo mẫu</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">Tồn kho ban đầu</label>
-                      <input type="number" className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" defaultValue={editItem ? editItem.stock : 0} disabled={editItem?.productType === "Đặt theo mẫu"} title="Chỉ áp dụng cho hàng sẵn" />
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">
+                        Tồn kho ban đầu
+                      </label>
+                      <input
+                        type="number"
+                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100"
+                        defaultValue={editItem ? editItem.stock : 0}
+                        disabled={editItem?.productType === "Đặt theo mẫu"}
+                        title="Chỉ áp dụng cho hàng sẵn"
+                      />
                     </div>
                   </div>
                 </div>
-
               </div>
             </div>
           </div>
 
           <div className="px-6 py-4 border-t flex items-center justify-end gap-3 bg-gray-50/80">
-            <button onClick={() => setShowAddEditModal(false)} className="px-5 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-200 transition cursor-pointer">
+            <button
+              onClick={() => setShowAddEditModal(false)}
+              className="px-5 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-200 transition cursor-pointer"
+            >
               Hủy bỏ
             </button>
-            <button onClick={() => { setShowAddEditModal(false); /* mock submit */ }} className="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition cursor-pointer flex items-center gap-2">
+            <button
+              onClick={() => {
+                setShowAddEditModal(false); /* mock submit */
+              }}
+              className="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition cursor-pointer flex items-center gap-2"
+            >
               Lưu
             </button>
           </div>
@@ -780,12 +976,20 @@ export default function OwnerProducts() {
             <div className="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <Gift size={32} />
             </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Chuyển thành Quà tặng?</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              Chuyển thành Quà tặng?
+            </h3>
             <p className="text-sm text-gray-500 mb-6">
-              Bạn có chắc chắn muốn chuyển sản phẩm <strong>"{giftItem.name}"</strong> thành Quà tặng không? Các sản phẩm quà tặng sẽ không được bán trực tiếp mà dùng để tặng kèm đơn hàng khác.
+              Bạn có chắc chắn muốn chuyển sản phẩm{" "}
+              <strong>"{giftItem.name}"</strong> thành Quà tặng không? Các sản
+              phẩm quà tặng sẽ không được bán trực tiếp mà dùng để tặng kèm đơn
+              hàng khác.
             </p>
             <div className="flex items-center gap-3">
-              <button onClick={() => setShowGiftModal(false)} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition cursor-pointer">
+              <button
+                onClick={() => setShowGiftModal(false)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition cursor-pointer"
+              >
                 Hủy
               </button>
               <button
@@ -814,9 +1018,14 @@ export default function OwnerProducts() {
           <div className="px-6 py-4 border-b flex items-center justify-between">
             <h2 className="text-lg font-bold flex items-center gap-2">
               Chi tiết sản phẩm
-              <span className="text-blue-600 font-mono text-sm tracking-wider px-2 py-0.5 bg-blue-50 rounded-md ml-2">{detailItem.code}</span>
+              <span className="text-blue-600 font-mono text-sm tracking-wider px-2 py-0.5 bg-blue-50 rounded-md ml-2">
+                {detailItem.code}
+              </span>
             </h2>
-            <button onClick={() => setShowDetailModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition cursor-pointer">
+            <button
+              onClick={() => setShowDetailModal(false)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition cursor-pointer"
+            >
               <X size={18} />
             </button>
           </div>
@@ -824,7 +1033,11 @@ export default function OwnerProducts() {
             <div className="flex gap-6">
               <div className="w-1/3 shrink-0 space-y-3">
                 {detailItem.img ? (
-                  <img src={detailItem.img} alt={detailItem.name} className="w-full aspect-square object-cover rounded-xl border" />
+                  <img
+                    src={detailItem.img}
+                    alt={detailItem.name}
+                    className="w-full aspect-square object-cover rounded-xl border"
+                  />
                 ) : (
                   <div className="w-full aspect-square bg-gray-100 rounded-xl border flex flex-col items-center justify-center text-gray-400">
                     <ImageIcon size={40} className="mb-2" />
@@ -833,58 +1046,98 @@ export default function OwnerProducts() {
                 )}
 
                 <div className="flex justify-center">
-                  <span className="inline-flex items-center px-3 py-1 text-[13px] font-bold rounded-lg" style={{ backgroundColor: sc.bg, color: sc.text, border: `1px solid ${sc.border}` }}>
-                    <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: sc.text }} />
+                  <span
+                    className="inline-flex items-center px-3 py-1 text-[13px] font-bold rounded-lg"
+                    style={{
+                      backgroundColor: sc.bg,
+                      color: sc.text,
+                      border: `1px solid ${sc.border}`,
+                    }}
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full mr-2"
+                      style={{ backgroundColor: sc.text }}
+                    />
                     Trạng thái: {detailItem.status}
                   </span>
                 </div>
               </div>
               <div className="flex-1 space-y-5">
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900 mb-1">{detailItem.name}</h1>
+                  <h1 className="text-xl font-bold text-gray-900 mb-1">
+                    {detailItem.name}
+                  </h1>
                   <p className="text-sm text-gray-500">{detailItem.category}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
                   <div>
-                    <span className="text-gray-500 block text-xs">Phân loại</span>
-                    <span className="font-semibold text-gray-900">{detailItem.productType}</span>
+                    <span className="text-gray-500 block text-xs">
+                      Phân loại
+                    </span>
+                    <span className="font-semibold text-gray-900">
+                      {detailItem.productType}
+                    </span>
                   </div>
                   <div>
                     <span className="text-gray-500 block text-xs">Loại gỗ</span>
-                    <span className="font-semibold text-gray-900">{detailItem.woodType}</span>
+                    <span className="font-semibold text-gray-900">
+                      {detailItem.woodType}
+                    </span>
                   </div>
                   <div>
                     <span className="text-gray-500 block text-xs">Màu sắc</span>
-                    <span className="font-semibold text-gray-900">{detailItem.color}</span>
+                    <span className="font-semibold text-gray-900">
+                      {detailItem.color}
+                    </span>
                   </div>
                   <div>
-                    <span className="text-gray-500 block text-xs">Kích thước</span>
-                    <span className="font-semibold text-gray-900">{detailItem.dimensions}</span>
+                    <span className="text-gray-500 block text-xs">
+                      Kích thước
+                    </span>
+                    <span className="font-semibold text-gray-900">
+                      {detailItem.dimensions}
+                    </span>
                   </div>
                 </div>
 
                 <div className="p-4 bg-gray-50 rounded-xl grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-gray-500 block text-xs mb-1">Giá bán</span>
-                    <span className="text-lg font-bold text-blue-600">{fmtCurrency(detailItem.retailPrice)}</span>
+                    <span className="text-gray-500 block text-xs mb-1">
+                      Giá bán
+                    </span>
+                    <span className="text-lg font-bold text-blue-600">
+                      {fmtCurrency(detailItem.retailPrice)}
+                    </span>
                   </div>
                   {detailItem.costPrice && (
                     <div>
-                      <span className="text-gray-500 block text-xs mb-1">Giá nhập</span>
-                      <span className="text-lg font-bold text-gray-700">{fmtCurrency(detailItem.costPrice)}</span>
+                      <span className="text-gray-500 block text-xs mb-1">
+                        Giá nhập
+                      </span>
+                      <span className="text-lg font-bold text-gray-700">
+                        {fmtCurrency(detailItem.costPrice)}
+                      </span>
                     </div>
                   )}
                   <div className="col-span-2 border-t border-gray-100 mt-2 pt-4">
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-500 text-xs">Tồn kho hiện tại</span>
-                      <span className="text-lg font-bold text-gray-900">{detailItem.productType === "Hàng sẵn" ? detailItem.stock : "—"}</span>
+                      <span className="text-gray-500 text-xs">
+                        Tồn kho hiện tại
+                      </span>
+                      <span className="text-lg font-bold text-gray-900">
+                        {detailItem.productType === "Hàng sẵn"
+                          ? detailItem.stock
+                          : "—"}
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <span className="text-gray-500 block text-xs font-semibold mb-1">Mô tả chi tiết</span>
+                  <span className="text-gray-500 block text-xs font-semibold mb-1">
+                    Mô tả chi tiết
+                  </span>
                   <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg leading-relaxed">
                     {detailItem.description || "Chưa có mô tả."}
                   </p>
@@ -896,7 +1149,6 @@ export default function OwnerProducts() {
       </div>
     );
   };
-
 
   // ===================== MAIN UI =====================
   return (
@@ -921,8 +1173,15 @@ export default function OwnerProducts() {
               <Package size={22} style={{ color: "var(--brand-primary)" }} />
               Quản lý danh mục hàng hóa
             </h1>
-            <p className="text-[13px] mt-0.5" style={{ color: "var(--text-placeholder)" }}>
-              {activeTab === "products" ? `${filteredProducts.length} sản phẩm` : activeTab === "categories" ? `${categories.length} danh mục` : `${woods.length + colors.length} thuộc tính`}
+            <p
+              className="text-[13px] mt-0.5"
+              style={{ color: "var(--text-placeholder)" }}
+            >
+              {activeTab === "products"
+                ? `${filteredProducts.length} sản phẩm`
+                : activeTab === "categories"
+                  ? `${categories.length} danh mục`
+                  : `${woods.length + colors.length} thuộc tính`}
             </p>
           </div>
 
@@ -938,16 +1197,23 @@ export default function OwnerProducts() {
               {[
                 { id: "products", label: "Danh sách sản phẩm" },
                 { id: "categories", label: "Danh mục" },
-                { id: "properties", label: "Thuộc tính" }
-              ].map(tab => (
+                { id: "properties", label: "Thuộc tính" },
+              ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className="px-4 py-1.5 rounded-lg text-[13px] font-semibold transition-all cursor-pointer"
                   style={{
-                    backgroundColor: activeTab === tab.id ? "#fff" : "transparent",
-                    color: activeTab === tab.id ? "var(--text-main)" : "var(--text-secondary)",
-                    boxShadow: activeTab === tab.id ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                    backgroundColor:
+                      activeTab === tab.id ? "#fff" : "transparent",
+                    color:
+                      activeTab === tab.id
+                        ? "var(--text-main)"
+                        : "var(--text-secondary)",
+                    boxShadow:
+                      activeTab === tab.id
+                        ? "0 1px 3px rgba(0,0,0,0.1)"
+                        : "none",
                   }}
                 >
                   {tab.label}
@@ -955,11 +1221,9 @@ export default function OwnerProducts() {
               ))}
             </div>
 
-            <div className="flex items-center gap-2">
-            </div>
+            <div className="flex items-center gap-2"></div>
           </div>
         </div>
-
 
         {activeTab === "products" && (
           <>
@@ -974,17 +1238,30 @@ export default function OwnerProducts() {
                     onClick={() => setStatusFilter(s)}
                     className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all cursor-pointer flex items-center gap-1.5"
                     style={{
-                      backgroundColor: isActive ? (sc ? sc.bg : "#fff") : "transparent",
-                      color: isActive ? (sc ? sc.text : "var(--brand-primary)") : "var(--text-secondary)",
+                      backgroundColor: isActive
+                        ? sc
+                          ? sc.bg
+                          : "#fff"
+                        : "transparent",
+                      color: isActive
+                        ? sc
+                          ? sc.text
+                          : "var(--brand-primary)"
+                        : "var(--text-secondary)",
                       border: isActive
                         ? `1.5px solid ${sc ? sc.border : "var(--grid-border)"}`
-                        : "1.5px solid transparent"
+                        : "1.5px solid transparent",
                     }}
                   >
                     {s !== "Tất cả" && (
                       <span
                         className="w-1.5 h-1.5 rounded-full"
-                        style={{ backgroundColor: sc ? sc.text : "var(--text-secondary)", opacity: isActive ? 1 : 0.5 }}
+                        style={{
+                          backgroundColor: sc
+                            ? sc.text
+                            : "var(--text-secondary)",
+                          opacity: isActive ? 1 : 0.5,
+                        }}
                       />
                     )}
                     {s}
@@ -999,7 +1276,10 @@ export default function OwnerProducts() {
             {/* SEARCH & FILTER LIST CARD */}
             <div
               className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden"
-              style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
+              style={{
+                boxShadow:
+                  "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+              }}
             >
               {/* Search Header */}
               <div
@@ -1037,7 +1317,10 @@ export default function OwnerProducts() {
 
                 <div className="flex items-center gap-2.5 shrink-0 overflow-x-auto">
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <Filter size={14} style={{ color: "var(--text-placeholder)" }} />
+                    <Filter
+                      size={14}
+                      style={{ color: "var(--text-placeholder)" }}
+                    />
 
                     {/* Category Filter */}
                     <select
@@ -1045,15 +1328,24 @@ export default function OwnerProducts() {
                       onChange={(e) => setCategoryFilter(e.target.value)}
                       className="h-9 px-3 pr-8 rounded-lg text-[13px] font-medium outline-none cursor-pointer focus:ring-2 transition appearance-none"
                       style={{
-                        border: categoryFilter !== "Tất cả" ? "1px solid var(--brand-primary)" : "1px solid var(--grid-border)",
-                        backgroundColor: categoryFilter !== "Tất cả" ? "var(--status-focus)" : "var(--bg-main)",
-                        color: categoryFilter !== "Tất cả" ? "var(--brand-primary)" : "var(--text-main)",
+                        border:
+                          categoryFilter !== "Tất cả"
+                            ? "1px solid var(--brand-primary)"
+                            : "1px solid var(--grid-border)",
+                        backgroundColor:
+                          categoryFilter !== "Tất cả"
+                            ? "var(--status-focus)"
+                            : "var(--bg-main)",
+                        color:
+                          categoryFilter !== "Tất cả"
+                            ? "var(--brand-primary)"
+                            : "var(--text-main)",
                         backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
                         backgroundRepeat: "no-repeat",
                         backgroundPosition: "right 8px center",
                       }}
                     >
-                      <option value="Tất cả">Nhóm sản phẩm</option>
+                      <option value="Tất cả">Danh mục sản phẩm</option>
                       {CATEGORIES.map((c) => (
                         <option key={c} value={c}>
                           {c}
@@ -1067,9 +1359,18 @@ export default function OwnerProducts() {
                       onChange={(e) => setWoodFilter(e.target.value)}
                       className="h-9 px-3 pr-8 rounded-lg text-[13px] font-medium outline-none cursor-pointer focus:ring-2 transition appearance-none"
                       style={{
-                        border: woodFilter !== "Tất cả" ? "1px solid var(--brand-primary)" : "1px solid var(--grid-border)",
-                        backgroundColor: woodFilter !== "Tất cả" ? "var(--status-focus)" : "var(--bg-main)",
-                        color: woodFilter !== "Tất cả" ? "var(--brand-primary)" : "var(--text-main)",
+                        border:
+                          woodFilter !== "Tất cả"
+                            ? "1px solid var(--brand-primary)"
+                            : "1px solid var(--grid-border)",
+                        backgroundColor:
+                          woodFilter !== "Tất cả"
+                            ? "var(--status-focus)"
+                            : "var(--bg-main)",
+                        color:
+                          woodFilter !== "Tất cả"
+                            ? "var(--brand-primary)"
+                            : "var(--text-main)",
                         backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
                         backgroundRepeat: "no-repeat",
                         backgroundPosition: "right 8px center",
@@ -1111,15 +1412,60 @@ export default function OwnerProducts() {
                     }}
                   >
                     <tr>
-                      <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-center w-[50px]" style={{ color: "var(--text-placeholder)" }}>STT</th>
-                      <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-placeholder)" }}>Ảnh</th>
-                      <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-placeholder)" }}>Mã SP</th>
-                      <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-placeholder)" }}>Tên sản phẩm</th>
-                      <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-placeholder)" }}>Thông tin KT</th>
-                      <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-placeholder)" }}>Loại SP</th>
-                      <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-right" style={{ color: "var(--text-placeholder)" }}>Giá bán</th>
-                      <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-right" style={{ color: "var(--text-placeholder)" }}>Tồn</th>
-                      <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-placeholder)" }}>Trạng thái</th>
+                      <th
+                        className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-center w-[50px]"
+                        style={{ color: "var(--text-placeholder)" }}
+                      >
+                        STT
+                      </th>
+                      <th
+                        className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider"
+                        style={{ color: "var(--text-placeholder)" }}
+                      >
+                        Ảnh
+                      </th>
+                      <th
+                        className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider"
+                        style={{ color: "var(--text-placeholder)" }}
+                      >
+                        Mã SP
+                      </th>
+                      <th
+                        className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider"
+                        style={{ color: "var(--text-placeholder)" }}
+                      >
+                        Tên sản phẩm
+                      </th>
+                      <th
+                        className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider"
+                        style={{ color: "var(--text-placeholder)" }}
+                      >
+                        Thông tin KT
+                      </th>
+                      <th
+                        className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider"
+                        style={{ color: "var(--text-placeholder)" }}
+                      >
+                        Loại SP
+                      </th>
+                      <th
+                        className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-right"
+                        style={{ color: "var(--text-placeholder)" }}
+                      >
+                        Giá bán
+                      </th>
+                      <th
+                        className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-right"
+                        style={{ color: "var(--text-placeholder)" }}
+                      >
+                        Tồn
+                      </th>
+                      <th
+                        className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider"
+                        style={{ color: "var(--text-placeholder)" }}
+                      >
+                        Trạng thái
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -1136,7 +1482,10 @@ export default function OwnerProducts() {
                             borderBottom: "1px solid var(--grid-border)",
                           }}
                         >
-                          <td className="px-4 py-4 text-center text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>
+                          <td
+                            className="px-4 py-4 text-center text-[13px] font-medium"
+                            style={{ color: "var(--text-secondary)" }}
+                          >
                             {(currentPage - 1) * itemsPerPage + idx + 1}
                           </td>
                           <td className="px-6 py-4 w-16">
@@ -1146,7 +1495,9 @@ export default function OwnerProducts() {
                                 alt={p.name}
                                 className="w-12 h-12 rounded-lg object-cover border bg-white shadow-sm"
                                 style={{
-                                  filter: isStopped ? "grayscale(100%)" : "none",
+                                  filter: isStopped
+                                    ? "grayscale(100%)"
+                                    : "none",
                                 }}
                               />
                             ) : (
@@ -1167,12 +1518,17 @@ export default function OwnerProducts() {
                             <p
                               className="text-[13px] font-semibold text-gray-900 line-clamp-1 mb-0.5"
                               style={{
-                                textDecoration: isStopped ? "line-through" : "none",
+                                textDecoration: isStopped
+                                  ? "line-through"
+                                  : "none",
                               }}
                             >
                               {p.name}
                             </p>
-                            <span className="text-[11px] font-medium" style={{ color: "var(--text-placeholder)" }}>
+                            <span
+                              className="text-[11px] font-medium"
+                              style={{ color: "var(--text-placeholder)" }}
+                            >
                               {p.category}
                             </span>
                           </td>
@@ -1189,7 +1545,10 @@ export default function OwnerProducts() {
                             </span>
                           </td>
                           <td className="px-4 py-4 text-right">
-                            <p className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>
+                            <p
+                              className="text-[13px] font-bold"
+                              style={{ color: "var(--text-main)" }}
+                            >
                               {fmtCurrency(p.retailPrice)}
                             </p>
                           </td>
@@ -1261,7 +1620,7 @@ export default function OwnerProducts() {
                                           ? p.stock > 0
                                             ? "Hàng sẵn"
                                             : "Hết hàng"
-                                          : "Đặt theo mẫu"
+                                          : "Đặt theo mẫu",
                                       );
                                     }}
                                     className="h-8 px-2.5 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-green-50 text-[12px] font-bold text-green-700"
@@ -1329,7 +1688,10 @@ export default function OwnerProducts() {
                     style={{ color: "var(--text-secondary)" }}
                   >
                     Tổng số bản ghi:{" "}
-                    <span className="font-bold" style={{ color: "var(--text-main)" }}>
+                    <span
+                      className="font-bold"
+                      style={{ color: "var(--text-main)" }}
+                    >
                       {filteredProducts.length}
                     </span>
                   </div>
@@ -1369,15 +1731,24 @@ export default function OwnerProducts() {
                       className="text-[13px]"
                       style={{ color: "var(--text-secondary)" }}
                     >
-                      <span className="font-bold" style={{ color: "var(--text-main)" }}>
-                        {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredProducts.length)}
+                      <span
+                        className="font-bold"
+                        style={{ color: "var(--text-main)" }}
+                      >
+                        {(currentPage - 1) * itemsPerPage + 1} -{" "}
+                        {Math.min(
+                          currentPage * itemsPerPage,
+                          filteredProducts.length,
+                        )}
                       </span>{" "}
                       bản ghi
                     </div>
 
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => setCurrentPage((pg) => Math.max(1, pg - 1))}
+                        onClick={() =>
+                          setCurrentPage((pg) => Math.max(1, pg - 1))
+                        }
                         disabled={currentPage === 1}
                         className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
                         style={{ color: "var(--text-main)" }}
@@ -1385,8 +1756,12 @@ export default function OwnerProducts() {
                         <ChevronLeft size={16} strokeWidth={2.5} />
                       </button>
                       <button
-                        onClick={() => setCurrentPage((pg) => Math.min(totalPages, pg + 1))}
-                        disabled={currentPage === totalPages || totalPages === 0}
+                        onClick={() =>
+                          setCurrentPage((pg) => Math.min(totalPages, pg + 1))
+                        }
+                        disabled={
+                          currentPage === totalPages || totalPages === 0
+                        }
                         className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
                         style={{ color: "var(--text-main)" }}
                       >
@@ -1404,8 +1779,12 @@ export default function OwnerProducts() {
         {activeTab === "categories" && (
           <CategoriesTab
             categories={categories}
-            onAdd={() => handleOpenSimpleModal("category", "Thêm danh mục sản phẩm")}
-            onEdit={(c) => handleOpenSimpleModal("category", "Sửa danh mục sản phẩm", c)}
+            onAdd={() =>
+              handleOpenSimpleModal("category", "Thêm danh mục sản phẩm")
+            }
+            onEdit={(c) =>
+              handleOpenSimpleModal("category", "Sửa danh mục sản phẩm", c)
+            }
             onDelete={handleDeleteCategory}
           />
         )}
@@ -1415,42 +1794,58 @@ export default function OwnerProducts() {
             onAddWood={() => handleOpenSimpleModal("wood", "Thêm loại gỗ")}
             onEditWood={(w) => handleOpenSimpleModal("wood", "Sửa loại gỗ", w)}
             onDeleteWood={handleDeleteWood}
-
             colors={colors}
             onAddColor={() => handleOpenSimpleModal("color", "Thêm màu sắc")}
-            onEditColor={(c) => handleOpenSimpleModal("color", "Sửa màu sắc", c)}
+            onEditColor={(c) =>
+              handleOpenSimpleModal("color", "Sửa màu sắc", c)
+            }
             onDeleteColor={handleDeleteColor}
           />
         )}
-
       </div>
 
       {/* SIMPLE INPUT MODAL (MỚI) */}
       {simpleModal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setSimpleModal({ ...simpleModal, isOpen: false })}></div>
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setSimpleModal({ ...simpleModal, isOpen: false })}
+          ></div>
           <div className="relative bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-spin-in p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[17px] font-bold text-gray-900">{simpleModal.title}</h3>
-              <button onClick={() => setSimpleModal({ ...simpleModal, isOpen: false })} className="p-2 text-gray-400 hover:bg-gray-100 rounded-full transition">
+              <h3 className="text-[17px] font-bold text-gray-900">
+                {simpleModal.title}
+              </h3>
+              <button
+                onClick={() =>
+                  setSimpleModal({ ...simpleModal, isOpen: false })
+                }
+                className="p-2 text-gray-400 hover:bg-gray-100 rounded-full transition"
+              >
                 <X size={20} />
               </button>
             </div>
             <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Tên</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Tên
+              </label>
               <input
                 type="text"
                 autoFocus
                 className="w-full h-11 px-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-medium text-[15px]"
                 placeholder="Nhập tên..."
                 value={simpleModal.value}
-                onChange={(e) => setSimpleModal({ ...simpleModal, value: e.target.value })}
-                onKeyDown={(e) => e.key === 'Enter' && handleSaveSimpleModal()}
+                onChange={(e) =>
+                  setSimpleModal({ ...simpleModal, value: e.target.value })
+                }
+                onKeyDown={(e) => e.key === "Enter" && handleSaveSimpleModal()}
               />
             </div>
             <div className="flex gap-3 justify-end">
               <button
-                onClick={() => setSimpleModal({ ...simpleModal, isOpen: false })}
+                onClick={() =>
+                  setSimpleModal({ ...simpleModal, isOpen: false })
+                }
                 className="px-5 py-2.5 rounded-xl text-[13px] font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition"
               >
                 Hủy

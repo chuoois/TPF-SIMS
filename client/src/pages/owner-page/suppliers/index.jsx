@@ -1,10 +1,3 @@
-/**
- * Component OwnerSuppliers
- * Quản lý Nhà cung cấp — Chủ cửa hàng
- *
- * Đồng bộ UI với trang Orders/Customers
- * Created Date: 07/03/2026
- */
 
 import { useState, useMemo } from "react";
 import {
@@ -33,9 +26,9 @@ import { cn } from "@/lib/utils";
 
 // ===================== STATIC DATA =====================
 const INITIAL_SUPPLIERS = [
-  { id: "NCC001", code: "NCC-TAM", name: "Xưởng gỗ mỹ nghệ Thành Tâm", contactPerson: "Nguyễn Văn Tâm", phone: "0901234567", email: "thanhtam@wood.com", address: "Làng nghề Đồng Kỵ, Từ Sơn, Bắc Ninh", totalImport: 1250000000, debt: 350000000, group: "Xưởng nội thất mỹ nghệ" },
-  { id: "NCC002", code: "NCC-HAI", name: "Tổng kho gỗ nguyên liệu Nam Hải", contactPerson: "Trần Thế Hải", phone: "0912345678", email: "namhai@timber.vn", address: "Khu CN Thạch Thất, Hà Nội", totalImport: 4500000000, debt: 0, group: "Tổng kho gỗ nguyên liệu" },
-  { id: "NCC003", code: "NCC-PHAT", name: "Xưởng mộc nội thất Gia Phát", contactPerson: "Lê Văn Phát", phone: "0987654321", email: "giaphat@furniture.com", address: "Làng mộc Hữu Bằng, Thạch Thất, Hà Nội", totalImport: 890000000, debt: 120000000, group: "Xưởng mộc gia công" }
+  { id: "NCC001", code: "NCC-TAM", name: "Xưởng gỗ mỹ nghệ Thành Tâm", contactPerson: "Nguyễn Văn Tâm", phone: "0901234567", email: "thanhtam@wood.com", address: "Làng nghề Đồng Kỵ, Từ Sơn, Bắc Ninh", totalImport: 1250000000, debt: 350000000, group: "Xưởng nội thất mỹ nghệ", notes: ["Đối tác chiến lược khu vực phía Bắc", "Cung cấp gỗ sồi chất lượng loại 1"] },
+  { id: "NCC002", code: "NCC-HAI", name: "Tổng kho gỗ nguyên liệu Nam Hải", contactPerson: "Trần Thế Hải", phone: "0912345678", email: "namhai@timber.vn", address: "Khu CN Thạch Thất, Hà Nội", totalImport: 4500000000, debt: 0, group: "Tổng kho gỗ nguyên liệu", notes: ["Chuyên gỗ lim và gỗ hương Nam Phi"] },
+  { id: "NCC003", code: "NCC-PHAT", name: "Xưởng mộc nội thất Gia Phát", contactPerson: "Lê Văn Phát", phone: "0987654321", email: "giaphat@furniture.com", address: "Làng mộc Hữu Bằng, Thạch Thất, Hà Nội", totalImport: 890000000, debt: 120000000, group: "Xưởng mộc gia công", notes: [] }
 ];
 
 const MOCK_IMPORT_HISTORY = [
@@ -89,7 +82,7 @@ const ModalContainer = ({ title, onClose, children, maxWidth = "max-w-2xl" }) =>
 );
 
 const SupplierDashboardModal = ({ supplier, onClose }) => {
-  const [activeTab, setActiveTab] = useState("profile"); // 'profile' | 'history' | 'ledger'
+  const [activeTab, setActiveTab] = useState("profile");
   const [activeShipment, setActiveShipment] = useState(null);
 
   const shipmentItems = activeShipment ? MOCK_SHIPMENT_ITEMS[activeShipment.code] || [] : [];
@@ -200,6 +193,25 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
                           <p className="text-[13px] font-bold text-gray-900">{supplier.email}</p>
                         </div>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Notes Section in Dashboard */}
+                  <div className="p-7 rounded-2xl border border-gray-100 bg-white shadow-xs">
+                    <h5 className="text-[12px] font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <FileText size={16} className="text-gray-400" />
+                      Ghi chú nội bộ
+                    </h5>
+                    <div className="space-y-3">
+                      {supplier.notes && supplier.notes.length > 0 ? (
+                        supplier.notes.map((note, idx) => (
+                          <div key={idx} className="p-3 rounded-xl bg-gray-50 border border-gray-100 text-[13px] text-gray-700 font-medium">
+                            {note}
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-[13px] text-gray-400 italic">Chưa có ghi chú nào.</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -429,11 +441,266 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
   );
 };
 
+const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
+  const [formData, setFormData] = useState(
+    supplier || {
+      id: `NCC${Date.now()}`,
+      code: "NCC-NEW",
+      name: "",
+      contactPerson: "",
+      phone: "",
+      email: "",
+      address: "",
+      group: "",
+      totalImport: 0,
+      debt: 0,
+      notes: [],
+    }
+  );
+
+  const [newNote, setNewNote] = useState("");
+  const [editingNoteIndex, setEditingNoteIndex] = useState(null);
+  const [editingNoteText, setEditingNoteText] = useState("");
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddNote = () => {
+    if (!newNote.trim()) return;
+    setFormData((prev) => ({
+      ...prev,
+      notes: [...(prev.notes || []), newNote.trim()],
+    }));
+    setNewNote("");
+  };
+
+  const handleStartEditNote = (index) => {
+    setEditingNoteIndex(index);
+    setEditingNoteText(formData.notes[index]);
+  };
+
+  const handleSaveEditNote = () => {
+    if (!editingNoteText.trim()) return;
+    const updatedNotes = [...formData.notes];
+    updatedNotes[editingNoteIndex] = editingNoteText.trim();
+    setFormData((prev) => ({ ...prev, notes: updatedNotes }));
+    setEditingNoteIndex(null);
+  };
+
+  const handleDeleteNote = (index) => {
+    const updatedNotes = formData.notes.filter((_, i) => i !== index);
+    setFormData((prev) => ({ ...prev, notes: updatedNotes }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <ModalContainer
+      title={supplier ? "Chỉnh sửa nhà cung cấp" : "Thêm nhà cung cấp mới"}
+      onClose={onClose}
+      maxWidth="max-w-3xl"
+    >
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-[12px] font-bold text-gray-500 uppercase tracking-widest">Mã nhà cung cấp</label>
+            <input
+              name="code"
+              value={formData.code}
+              onChange={handleChange}
+              placeholder="NCC-XXX"
+              className="w-full h-11 px-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 font-mono text-[13px] font-bold"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[12px] font-bold text-gray-500 uppercase tracking-widest">Tên nhà cung cấp</label>
+            <input
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Nhập tên xưởng, tổng kho..."
+              className="w-full h-11 px-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[13px] font-bold"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[12px] font-bold text-gray-500 uppercase tracking-widest">Người liên hệ</label>
+            <input
+              name="contactPerson"
+              value={formData.contactPerson}
+              onChange={handleChange}
+              placeholder="Tên đại diện kinh doanh"
+              className="w-full h-11 px-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[13px] font-medium"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[12px] font-bold text-gray-500 uppercase tracking-widest">Nhóm nhà cung cấp</label>
+            <select
+              name="group"
+              value={formData.group}
+              onChange={handleChange}
+              className="w-full h-11 px-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[13px] font-medium appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236b7280%22 stroke-width=%222%22%3E%3Cpath d=%22m6 9 6 6 6-6%22/%3E%3C/svg%3E')] bg-[length:14px] bg-[right_1rem_center] bg-no-repeat"
+            >
+              <option value="">-- Chọn nhóm --</option>
+              <option value="Xưởng mộc gia công">Xưởng mộc gia công</option>
+              <option value="Tổng kho gỗ nguyên liệu">Tổng kho gỗ nguyên liệu</option>
+              <option value="Xưởng nội thất mỹ nghệ">Xưởng nội thất mỹ nghệ</option>
+              <option value="Cửa hàng kim khí">Cửa hàng kim khí</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[12px] font-bold text-gray-500 uppercase tracking-widest">Số điện thoại</label>
+            <div className="relative">
+              <Phone size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="09xx xxx xxx"
+                className="w-full h-11 pl-10 pr-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[13px] font-medium"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-[12px] font-bold text-gray-500 uppercase tracking-widest">Email</label>
+            <div className="relative">
+              <Mail size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="example@gmail.com"
+                className="w-full h-11 pl-10 pr-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[13px] font-medium"
+              />
+            </div>
+          </div>
+          <div className="md:col-span-2 space-y-2">
+            <label className="text-[12px] font-bold text-gray-500 uppercase tracking-widest">Địa chỉ</label>
+            <div className="relative">
+              <MapPin size={14} className="absolute left-4 top-3.5 text-gray-400" />
+              <textarea
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                rows={2}
+                placeholder="Địa chỉ cụ thể của xưởng/kho..."
+                className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[13px] font-medium resize-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Note Management Section */}
+        <div className="border-t pt-6 space-y-4">
+          <h5 className="text-[12px] font-bold text-gray-900 flex items-center gap-2">
+            <FileText size={16} className="text-gray-400" />
+            Quản lý ghi chú nội bộ
+          </h5>
+
+          <div className="flex gap-2">
+            <input
+              value={newNote}
+              onChange={(e) => setNewNote(e.target.value)}
+              placeholder="Thêm ghi chú mới về nhà cung cấp này..."
+              className="flex-1 h-10 px-4 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none text-[13px]"
+              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddNote())}
+            />
+            <Button
+              type="button"
+              onClick={handleAddNote}
+              className="h-10 px-4 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2"
+            >
+              <Plus size={16} /> Thêm
+            </Button>
+          </div>
+
+          <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
+            {formData.notes && formData.notes.length > 0 ? (
+              formData.notes.map((note, index) => (
+                <div key={index} className="group flex items-center justify-between p-3 rounded-lg bg-white border border-gray-100 hover:border-gray-200 transition-all">
+                  {editingNoteIndex === index ? (
+                    <div className="flex-1 flex gap-2">
+                      <input
+                        value={editingNoteText}
+                        onChange={(e) => setEditingNoteText(e.target.value)}
+                        className="flex-1 h-8 px-2 rounded border focus:outline-none text-[13px]"
+                        autoFocus
+                      />
+                      <button onClick={handleSaveEditNote} className="text-green-600 font-bold text-[12px]">Lưu</button>
+                      <button onClick={() => setEditingNoteIndex(null)} className="text-gray-400 font-bold text-[12px]">Hủy</button>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-[13px] text-gray-700 font-medium">{note}</p>
+                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          type="button"
+                          onClick={() => handleStartEditNote(index)}
+                          className="p-1 hover:text-blue-600 transition"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteNote(index)}
+                          className="p-1 hover:text-red-600 transition"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-4 text-gray-400 text-[12px] italic border-2 border-dashed border-gray-100 rounded-xl">
+                Chưa có ghi chú nào về đối tác này
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-6 border-t">
+          {supplier ? (
+            <button
+              type="button"
+              onClick={() => onDelete(supplier.id)}
+              className="px-6 py-2.5 text-red-600 font-bold text-[13px] hover:bg-red-50 rounded-xl transition cursor-pointer"
+            >
+              Xoá nhà cung cấp
+            </button>
+          ) : <div />}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2.5 text-gray-500 font-bold text-[13px] hover:bg-gray-100 rounded-xl transition cursor-pointer"
+            >
+              Đóng
+            </button>
+            <button
+              type="submit"
+              className="px-8 py-2.5 bg-green-600 text-white font-bold text-[13px] rounded-xl hover:bg-green-700 shadow-lg shadow-green-100 transition cursor-pointer"
+            >
+              {supplier ? "Cập nhật thông tin" : "Tạo mới nhà cung cấp"}
+            </button>
+          </div>
+        </div>
+      </form>
+    </ModalContainer>
+  );
+};
 
 
 // ===================== MAIN COMPONENT =====================
 export default function OwnerSuppliers() {
-  const [suppliers] = useState(INITIAL_SUPPLIERS);
+  const [suppliers, setSuppliers] = useState(INITIAL_SUPPLIERS);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -442,7 +709,7 @@ export default function OwnerSuppliers() {
 
   // Modals state
   const [selectedSupplier, setSelectedSupplier] = useState(null);
-  const [modalType, setModalType] = useState(null); // 'details' | 'debt'
+  const [modalType, setModalType] = useState(null); // 'dashboard' | 'action'
 
   // Filter & Search
   const filtered = useMemo(() => {
@@ -488,6 +755,22 @@ export default function OwnerSuppliers() {
     currentPage * itemsPerPage
   );
 
+  const handleSaveSupplier = (data) => {
+    if (selectedSupplier) {
+      setSuppliers(suppliers.map(s => s.id === data.id ? data : s));
+    } else {
+      setSuppliers([...suppliers, data]);
+    }
+    closeModal();
+  };
+
+  const handleDeleteSupplier = (id) => {
+    if (window.confirm("Bạn có chắc chắn muốn xoá nhà cung cấp này?")) {
+      setSuppliers(suppliers.filter(s => s.id !== id));
+      closeModal();
+    }
+  };
+
   const openModal = (supplier, type) => {
     setSelectedSupplier(supplier);
     setModalType(type);
@@ -521,55 +804,17 @@ export default function OwnerSuppliers() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <Button
+              onClick={() => openModal(null, "action")}
+              className="h-10 px-6 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-green-100 transition transform hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <Plus size={18} />
+              Thêm nhà cung cấp
+            </Button>
           </div>
         </div>
 
-        {/* Summary Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 shrink-0 px-1">
-          <div
-            className="bg-white p-5 rounded-2xl flex items-center gap-4 border border-gray-100 shadow-xs"
-          >
-            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
-              <Users size={22} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                Tổng nhà cung cấp
-              </p>
-              <h3 className="text-xl font-bold text-gray-900">{filtered.length}</h3>
-            </div>
-          </div>
-          <div
-            className="bg-white p-5 rounded-2xl flex items-center gap-4 border border-gray-100 shadow-xs"
-          >
-            <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600 shrink-0">
-              <FileText size={22} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                Nợ phải trả đối tác
-              </p>
-              <h3 className="text-xl font-bold text-red-600">
-                {formatCurrency(filtered.reduce((acc, s) => acc + s.debt, 0))}
-              </h3>
-            </div>
-          </div>
-          <div
-            className="bg-white p-5 rounded-2xl flex items-center gap-4 border border-gray-100 shadow-xs"
-          >
-            <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-green-600 shrink-0">
-              <Package size={22} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                Giá trị nhập tháng
-              </p>
-              <h3 className="text-xl font-bold text-gray-900">
-                {formatCurrency(1850000000)}
-              </h3>
-            </div>
-          </div>
-        </div>
+
 
         {/* Main Content Card */}
         <div className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden" style={{ boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)" }}>
@@ -698,16 +943,10 @@ export default function OwnerSuppliers() {
                     Thông tin liên hệ
                   </th>
                   <th
-                    className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-right"
+                    className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider"
                     style={{ color: "var(--text-placeholder)" }}
                   >
-                    Giá trị nhập
-                  </th>
-                  <th
-                    className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-right pr-8"
-                    style={{ color: "var(--text-placeholder)" }}
-                  >
-                    Nợ hiện tại
+                    Ghi chú
                   </th>
                 </tr>
               </thead>
@@ -720,7 +959,7 @@ export default function OwnerSuppliers() {
                       style={{ borderBottom: "1px solid var(--grid-border)" }}
                     >
                       <td className="px-4 py-3" style={{ color: "var(--text-placeholder)" }}>
-                        <p className="text-[13px] font-bold">{ (currentPage - 1) * itemsPerPage + idx + 1 }</p>
+                        <p className="text-[13px] font-bold">{(currentPage - 1) * itemsPerPage + idx + 1}</p>
                       </td>
                       <td className="px-4 py-3">
                         <p
@@ -758,38 +997,10 @@ export default function OwnerSuppliers() {
                           {s.address}
                         </p>
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        <p
-                          className="text-[13px] font-bold"
-                          style={{ color: "var(--text-main)" }}
-                        >
-                          {formatCurrency(s.totalImport)}
+                      <td className="px-4 py-3">
+                        <p className="text-[13px] text-gray-500 truncate max-w-[200px]" title={s.notes && s.notes.length > 0 ? s.notes[s.notes.length - 1] : ""}>
+                          {s.notes && s.notes.length > 0 ? s.notes[s.notes.length - 1] : <span className="text-gray-300 italic">—</span>}
                         </p>
-                      </td>
-                      <td className="px-4 py-3 text-right pr-8">
-                        {s.debt > 0 ? (
-                           <p
-                             className="text-[13px] font-bold"
-                             style={{ color: "#DC2626" }}
-                           >
-                             {formatCurrency(s.debt)}
-                           </p>
-                        ) : (
-                           <span
-                            className="inline-flex items-center px-2.5 py-1 text-[11px] font-bold rounded-md"
-                            style={{
-                              backgroundColor: "#F0FDF4",
-                              color: "#166534",
-                              border: "1px solid #BBF7D0",
-                            }}
-                          >
-                           <span
-                              className="w-1.5 h-1.5 rounded-full mr-1.5"
-                              style={{ backgroundColor: "#166534" }}
-                           ></span>
-                            Đã thanh toán
-                          </span>
-                        )}
                       </td>
 
                       {/* Hover Actions */}
@@ -800,7 +1011,10 @@ export default function OwnerSuppliers() {
                         >
                           <Eye size={14} /> Hồ sơ
                         </button>
-                        <button className="h-8 w-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 shadow-sm text-gray-600 hover:text-green-600 hover:border-green-200 transition cursor-pointer">
+                        <button
+                          onClick={() => openModal(s, "action")}
+                          className="h-8 w-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 shadow-sm text-gray-600 hover:text-green-600 hover:border-green-200 transition cursor-pointer"
+                        >
                           <Pencil size={14} />
                         </button>
                       </td>
@@ -810,7 +1024,7 @@ export default function OwnerSuppliers() {
 
                 {paginatedSuppliers.length === 0 && (
                   <tr>
-                    <td colSpan="6" className="py-24 text-center">
+                    <td colSpan="5" className="py-24 text-center">
                       <div
                         className="flex flex-col items-center gap-2"
                         style={{ color: "var(--text-placeholder)" }}
@@ -943,6 +1157,14 @@ export default function OwnerSuppliers() {
       {/* Modals */}
       {modalType === "dashboard" && selectedSupplier && (
         <SupplierDashboardModal supplier={selectedSupplier} onClose={closeModal} />
+      )}
+      {modalType === "action" && (
+        <SupplierActionModal
+          supplier={selectedSupplier}
+          onClose={closeModal}
+          onSave={handleSaveSupplier}
+          onDelete={handleDeleteSupplier}
+        />
       )}
     </>
   );
