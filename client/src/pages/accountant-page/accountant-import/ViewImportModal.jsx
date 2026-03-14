@@ -24,22 +24,7 @@ const fmtDate = (s) => {
     return `${d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })} · ${d.toLocaleDateString("vi-VN")}`;
 };
 
-const STATUS_STYLES = {
-    "Đang xử lý": { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" },
-    "Đã nhập kho": { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" },
-};
-
-const StatusPill = ({ status }) => {
-    const s = STATUS_STYLES[status] || { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
-    const Icon = status === "Đã nhập kho" ? CheckCircle2 : Clock;
-    return (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold"
-            style={{ backgroundColor: s.bg, color: s.text, border: `1px solid ${s.border}` }}>
-            <Icon size={13} />
-            {status}
-        </span>
-    );
-};
+// Removed StatusPill because it's no longer used
 
 const InfoBlock = ({ icon: Icon, label, value, className = "" }) => (
     <div className={`flex flex-col gap-1 ${className}`}>
@@ -106,10 +91,9 @@ export default function ViewImportModal({ item, onClose }) {
                             Thông tin chứng từ
                         </p>
 
-                        <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+                        <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-2">
                             <InfoBlock icon={Calendar} label="Ngày nhập" value={fmtDate(item.date)} />
                             <InfoBlock icon={Building2} label="Xưởng cung cấp" value={item.supplier} />
-                            <InfoBlock icon={Warehouse} label="Kho nhận" value={item.warehouse} />
                         </div>
 
                         <div className="flex items-center justify-between border-t pt-4"
@@ -123,7 +107,6 @@ export default function ViewImportModal({ item, onClose }) {
                                     {item.note || "Không có ghi chú"}
                                 </span>
                             </div>
-                            <StatusPill status={item.status} />
                         </div>
                     </div>
 
@@ -169,9 +152,9 @@ export default function ViewImportModal({ item, onClose }) {
                                     const lineTotal = Number(line.qty || 0) * Number(line.importPrice || 0);
                                     const formLabel = line.formType === "READY" ? "Hàng sẵn có" : "Hàng mới lên";
                                     const productTypeLabel = {
-                                        RAW: "Hàng thô",
+                                        RAW: "Hàng mộc",
                                         CUSTOM: "Hàng khách đặt",
-                                        FINISHED: "Hàng hoàn thiện",
+                                        FINISHED: "Hàng có sẵn",
                                     }[line.productType] || line.productType || "";
 
                                     const dims = [line.length, line.width, line.height]
@@ -231,8 +214,8 @@ export default function ViewImportModal({ item, onClose }) {
                                                 {/* Danh mục */}
                                                 {line.category && <InfoBlock icon={Layers} label="Danh mục" value={line.category} />}
 
-                                                {/* Loại gỗ */}
-                                                {line.woodType && <InfoBlock label="Loại gỗ" value={line.woodType} />}
+                                                {/* Loại */}
+                                                {line.woodType && <InfoBlock label="Loại" value={line.woodType} />}
 
                                                 {/* Màu sắc */}
                                                 {line.color && <InfoBlock label="Màu sắc" value={line.color} />}
@@ -242,15 +225,17 @@ export default function ViewImportModal({ item, onClose }) {
                                                     <InfoBlock icon={Ruler} label="Kích thước (cm)" value={`${dims} cm`} />
                                                 )}
 
-                                                {/* Vị trí */}
-                                                {line.location && <InfoBlock label="Vị trí cất hàng" value={line.location} />}
-
                                                 {/* SL + Giá */}
                                                 <InfoBlock label="Số lượng" value={line.qty ? `${line.qty} cái` : "—"} />
-                                                <InfoBlock label="Giá gốc" value={fmtCurrency(Number(line.importPrice))} />
-                                                {line.sellingPrice && (
+                                                
+                                                {line.formType !== "READY" && line.importPrice > 0 && (
+                                                    <InfoBlock label="Giá gốc" value={fmtCurrency(Number(line.importPrice))} />
+                                                )}
+                                                
+                                                {line.formType !== "READY" && line.sellingPrice > 0 && (
                                                     <InfoBlock label="Giá bán" value={fmtCurrency(Number(line.sellingPrice))} />
                                                 )}
+
 
                                                 {/* Chi tiết */}
                                                 {line.details && (

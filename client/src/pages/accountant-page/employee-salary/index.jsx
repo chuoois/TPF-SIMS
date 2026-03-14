@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
-import { Search, X, Users, Wallet, Calendar, Hammer, Paintbrush } from "lucide-react";
+import { Search, X, Users, Wallet, Calendar, Hammer, Paintbrush, Plus, Eye, Trash2 } from "lucide-react";
+import { toast } from "react-hot-toast";
+import EmployeeModal from "./EmployeeModal";
 
 /**
  * Accountant Employee Salary
@@ -116,6 +118,13 @@ export default function AccountantEmployeeSalary() {
     const [search, setSearch] = useState("");
     const [roleFilter, setRoleFilter] = useState("ALL");
 
+    // Modal state
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [employeeToEdit, setEmployeeToEdit] = useState(null);
+
+    // Delete confirm modal state
+    const [employeeToDelete, setEmployeeToDelete] = useState(null);
+
     const filteredEmployees = useMemo(() => {
         let r = employees;
         if (roleFilter !== "ALL") {
@@ -131,6 +140,25 @@ export default function AccountantEmployeeSalary() {
         }
         return r;
     }, [employees, search, roleFilter]);
+
+    const handleSaveEmployee = (empData) => {
+        if (employeeToEdit) {
+            setEmployees(prev => prev.map(e => e.id === empData.id ? empData : e));
+            toast.success("Cập nhật thông tin nhân viên thành công!", { style: { fontSize: "14px", fontWeight: "bold" } });
+        } else {
+            setEmployees(prev => [empData, ...prev]);
+            toast.success("Thêm nhân viên mới thành công!", { style: { fontSize: "14px", fontWeight: "bold" } });
+        }
+        setIsModalOpen(false);
+        setEmployeeToEdit(null);
+    };
+
+    const handleDeleteEmployee = () => {
+        if (!employeeToDelete) return;
+        setEmployees(prev => prev.filter(e => e.id !== employeeToDelete.id));
+        toast.success(`Đã xóa nhân viên ${employeeToDelete.name}`, { style: { fontSize: "14px", fontWeight: "bold" } });
+        setEmployeeToDelete(null);
+    };
 
     const TH = ({ children, right, center }) => (
         <th className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${right ? "text-right" : center ? "text-center" : ""}`}
@@ -160,17 +188,24 @@ export default function AccountantEmployeeSalary() {
                     
                     {/* Toolbar: filter & search */}
                     <div className="px-4 py-3 border-b shrink-0 flex flex-wrap items-center gap-3" style={{ borderColor: "var(--grid-border)" }}>
-                        <div className="relative w-full max-w-sm">
-                            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-placeholder)" }} />
-                            <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-                                placeholder="Tìm kiếm theo mã NV, tên..."
-                                className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
-                                style={{ border: "1px solid var(--grid-border)", backgroundColor: "var(--bg-main)", color: "var(--text-main)" }} />
-                            {search && (
-                                <button onClick={() => setSearch("")}
-                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer"
-                                    style={{ color: "var(--text-placeholder)" }}><X size={14} /></button>
-                            )}
+                        <div className="flex-1 flex gap-3 w-full max-w-sm">
+                            <button onClick={() => { setEmployeeToEdit(null); setIsModalOpen(true); }}
+                                className="h-9 px-3.5 rounded-lg flex items-center gap-1.5 text-[13px] font-bold cursor-pointer hover:opacity-90 transition shrink-0"
+                                style={{ backgroundColor: "var(--brand-primary)", color: "#fff" }}>
+                                <Plus size={15} strokeWidth={2.5} /> Thêm nhân viên
+                            </button>
+                            <div className="relative w-full">
+                                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-placeholder)" }} />
+                                <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+                                    placeholder="Tìm kiếm theo mã NV, tên..."
+                                    className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
+                                    style={{ border: "1px solid var(--grid-border)", backgroundColor: "var(--bg-main)", color: "var(--text-main)" }} />
+                                {search && (
+                                    <button onClick={() => setSearch("")}
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer"
+                                        style={{ color: "var(--text-placeholder)" }}><X size={14} /></button>
+                                )}
+                            </div>
                         </div>
                         
                         <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
@@ -197,6 +232,7 @@ export default function AccountantEmployeeSalary() {
                                     <TH right>Phụ Cấp / Thưởng</TH>
                                     <TH right>Tổng Lương</TH>
                                     <TH center>Trạng Thái</TH>
+                                    <th className="w-24 px-4 py-3"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -278,6 +314,25 @@ export default function AccountantEmployeeSalary() {
                                                     {emp.status}
                                                 </span>
                                             </td>
+
+                                            {/* Spacer */}
+                                            <td className="px-4 py-3"></td>
+
+                                            {/* Hover action */}
+                                            <td className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                                <div className="flex gap-1 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-gray-100">
+                                                    <button onClick={() => { setEmployeeToEdit(emp); setIsModalOpen(true); }}
+                                                        className="h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[12px] font-bold hover:bg-blue-50 cursor-pointer transition"
+                                                        style={{ color: "var(--brand-primary)" }}>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22h6"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                                        Sửa
+                                                    </button>
+                                                    <button onClick={() => setEmployeeToDelete(emp)}
+                                                        className="h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[12px] font-bold cursor-pointer transition text-red-600 hover:bg-red-50">
+                                                        <Trash2 size={14} /> Xóa
+                                                    </button>
+                                                </div>
+                                            </td>
                                         </tr>
                                     );
                                 })}
@@ -315,6 +370,41 @@ export default function AccountantEmployeeSalary() {
                     </div>
                 </div>
             </div>
+
+            <EmployeeModal 
+                isOpen={isModalOpen} 
+                onClose={() => {setIsModalOpen(false); setEmployeeToEdit(null)}} 
+                onSave={handleSaveEmployee} 
+                employeeToEdit={employeeToEdit} 
+            />
+
+            {/* Confirm Delete Modal */}
+            {employeeToDelete && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setEmployeeToDelete(null)}>
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+                        <div className="p-6 space-y-3">
+                            <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                                <Trash2 size={24} className="text-red-600" />
+                            </div>
+                            <h2 className="text-xl font-black text-gray-900">Xóa nhân viên?</h2>
+                            <p className="text-[13px] text-gray-500">
+                                Bạn có chắc chắn muốn xóa nhân viên <span className="font-bold text-gray-900">{employeeToDelete.name}</span> khỏi danh sách lương? 
+                                Hành động này không thể hoàn tác.
+                            </p>
+                        </div>
+                        <div className="px-6 py-4 flex items-center justify-end gap-3 bg-gray-50 border-t border-gray-100">
+                            <button onClick={() => setEmployeeToDelete(null)}
+                                className="h-10 px-5 rounded-xl text-[13px] font-bold border border-gray-200 text-gray-600 hover:bg-white cursor-pointer transition">
+                                Hủy
+                            </button>
+                            <button onClick={handleDeleteEmployee}
+                                className="h-10 px-5 rounded-xl text-[13px] font-bold bg-red-600 cursor-pointer text-white hover:bg-red-700 transition">
+                                Có, xóa nhân viên
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
