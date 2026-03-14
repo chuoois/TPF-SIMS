@@ -630,11 +630,11 @@ export default function SalesOrderManage() {
     setPrintingOrders(ordersToPrint);
   };
 
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      setSelectedOrders(paginatedOrders.map((o) => o.id));
-    } else {
+  const handleSelectAll = () => {
+    if (selectedOrders.length === paginatedOrders.length && paginatedOrders.length > 0) {
       setSelectedOrders([]);
+    } else {
+      setSelectedOrders(paginatedOrders.map((o) => o.id));
     }
   };
 
@@ -1005,15 +1005,21 @@ export default function SalesOrderManage() {
               >
                 <tr>
                   <th className="px-4 py-3 w-10">
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary cursor-pointer w-4 h-4"
-                      checked={
-                        paginatedOrders.length > 0 &&
-                        selectedOrders.length === paginatedOrders.length
-                      }
-                      onChange={handleSelectAll}
-                    />
+                    <div 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectAll();
+                      }}
+                      className={`w-4 h-4 rounded border flex items-center justify-center transition-colors cursor-pointer ${
+                        paginatedOrders.length > 0 && selectedOrders.length === paginatedOrders.length
+                          ? "bg-green-500 border-green-500 text-white"
+                          : "border-gray-300 bg-white"
+                      }`}
+                    >
+                      {paginatedOrders.length > 0 && selectedOrders.length === paginatedOrders.length && (
+                        <CheckCircle2 size={12} strokeWidth={3} />
+                      )}
+                    </div>
                   </th>
                   {[
                     "Mã đơn",
@@ -1060,12 +1066,25 @@ export default function SalesOrderManage() {
                         className="px-4 py-3"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <input
-                          type="checkbox"
-                          className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary cursor-pointer w-4 h-4"
-                          checked={selectedOrders.includes(o.id)}
-                          onChange={(e) => handleSelectOrder(e, o.id)}
-                        />
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (selectedOrders.includes(o.id)) {
+                              setSelectedOrders(prev => prev.filter(id => id !== o.id));
+                            } else {
+                              setSelectedOrders(prev => [...prev, o.id]);
+                            }
+                          }}
+                          className={`w-4 h-4 rounded border flex items-center justify-center transition-colors cursor-pointer ${
+                            selectedOrders.includes(o.id)
+                              ? "bg-green-500 border-green-500 text-white"
+                              : "border-gray-300 bg-white"
+                          }`}
+                        >
+                          {selectedOrders.includes(o.id) && (
+                            <CheckCircle2 size={12} strokeWidth={3} />
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <p

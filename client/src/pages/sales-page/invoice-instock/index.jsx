@@ -628,9 +628,21 @@ export default function InStockInvoicePage() {
 
       const pNameLower = p.name.toLowerCase();
       let pType = "Khác";
-      if (pNameLower.includes("bàn") || pNameLower.includes("tab")) pType = "Bàn";
-      else if (pNameLower.includes("ghế") || pNameLower.includes("sofa") || pNameLower.includes("đôn")) pType = "Ghế";
-      else if (pNameLower.includes("tủ") || pNameLower.includes("kệ") || pNameLower.includes("hộc") || pNameLower.includes("giá")) pType = "Tủ";
+      if (pNameLower.includes("bàn") || pNameLower.includes("tab"))
+        pType = "Bàn";
+      else if (
+        pNameLower.includes("ghế") ||
+        pNameLower.includes("sofa") ||
+        pNameLower.includes("đôn")
+      )
+        pType = "Ghế";
+      else if (
+        pNameLower.includes("tủ") ||
+        pNameLower.includes("kệ") ||
+        pNameLower.includes("hộc") ||
+        pNameLower.includes("giá")
+      )
+        pType = "Tủ";
       else if (pNameLower.includes("giường")) pType = "Giường";
 
       const matchProductType =
@@ -640,8 +652,7 @@ export default function InStockInvoicePage() {
       const minP = parseInt(priceRange.min);
       const maxP = parseInt(priceRange.max);
       const matchPrice =
-        (isNaN(minP) || p.price >= minP) &&
-        (isNaN(maxP) || p.price <= maxP);
+        (isNaN(minP) || p.price >= minP) && (isNaN(maxP) || p.price <= maxP);
 
       // Lọc theo từ khóa tìm kiếm
       const matchSearch =
@@ -649,9 +660,21 @@ export default function InStockInvoicePage() {
         p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
         p.sku.toLowerCase().includes(productSearch.toLowerCase());
 
-      return matchType && matchCategory && matchProductType && matchPrice && matchSearch;
+      return (
+        matchType &&
+        matchCategory &&
+        matchProductType &&
+        matchPrice &&
+        matchSearch
+      );
     });
-  }, [productTypeTab, selectedCategories, selectedProductTypes, priceRange, productSearch]);
+  }, [
+    productTypeTab,
+    selectedCategories,
+    selectedProductTypes,
+    priceRange,
+    productSearch,
+  ]);
 
   const customerResults = useMemo(() => {
     if (!customerSearch.trim()) return [];
@@ -777,7 +800,10 @@ export default function InStockInvoicePage() {
     if (activeTab.cartItems.length === 0) return;
 
     if (!activeTab.selectedCustomer) {
-      showToast("error", "Vui lòng nhập hoặc chọn Khách hàng trước khi thanh toán!");
+      showToast(
+        "error",
+        "Vui lòng nhập hoặc chọn Khách hàng trước khi thanh toán!",
+      );
       return;
     }
 
@@ -1473,13 +1499,19 @@ export default function InStockInvoicePage() {
                 style={{
                   border: "1px solid var(--grid-border)",
                   color:
-                    selectedCategories.length > 0 || selectedProductTypes.length > 0 || priceRange.min || priceRange.max
+                    selectedCategories.length > 0 ||
+                    selectedProductTypes.length > 0 ||
+                    priceRange.min ||
+                    priceRange.max
                       ? "var(--brand-primary)"
                       : "var(--text-secondary)",
                 }}
               >
                 <Filter size={20} />
-                {(selectedCategories.length > 0 || selectedProductTypes.length > 0 || priceRange.min || priceRange.max) && (
+                {(selectedCategories.length > 0 ||
+                  selectedProductTypes.length > 0 ||
+                  priceRange.min ||
+                  priceRange.max) && (
                   <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white" />
                 )}
               </button>
@@ -1519,7 +1551,10 @@ export default function InStockInvoicePage() {
           </div>
 
           {/* ── Active Filters Display ── */}
-          {(selectedCategories.length > 0 || selectedProductTypes.length > 0 || priceRange.min || priceRange.max) && (
+          {(selectedCategories.length > 0 ||
+            selectedProductTypes.length > 0 ||
+            priceRange.min ||
+            priceRange.max) && (
             <div className="px-4 pb-3 flex flex-wrap gap-2 items-center">
               <span className="text-[12px] font-medium text-gray-500 mr-1">
                 Đang lọc:
@@ -1546,7 +1581,7 @@ export default function InStockInvoicePage() {
               {selectedProductTypes.map((type) => (
                 <div
                   key={type}
-                  className="bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-lg text-[12px] font-medium flex items-center gap-1.5"
+                  className="bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-lg text-[12px] font-medium flex items-center gap-1.5"
                 >
                   {type}
                   <button
@@ -1556,17 +1591,16 @@ export default function InStockInvoicePage() {
                       );
                       setCurrentPage(1);
                     }}
-                    className="hover:bg-blue-200 rounded-full p-0.5 transition-colors cursor-pointer"
+                    className="hover:bg-green-200 rounded-full p-0.5 transition-colors cursor-pointer"
                   >
                     <X size={12} />
                   </button>
                 </div>
               ))}
               {(priceRange.min || priceRange.max) && (
-                <div
-                 className="bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-1 rounded-lg text-[12px] font-medium flex items-center gap-1.5"
-                >
-                  {priceRange.min ? fmt(priceRange.min) : 0}đ - {priceRange.max ? fmt(priceRange.max) : "∞"}
+                <div className="bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-1 rounded-lg text-[12px] font-medium flex items-center gap-1.5">
+                  {priceRange.min ? fmt(priceRange.min) : 0}đ -{" "}
+                  {priceRange.max ? fmt(priceRange.max) : "∞"}
                   <button
                     onClick={() => {
                       setPriceRange({ min: "", max: "" });
@@ -1862,14 +1896,14 @@ export default function InStockInvoicePage() {
                         key={type}
                         className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-[13px] cursor-pointer transition select-none ${
                           isActive
-                            ? "border-blue-500 bg-blue-50/50"
-                            : "border-gray-200 hover:border-blue-200 hover:bg-gray-50"
+                            ? "border-green-500 bg-green-50/50"
+                            : "border-gray-200 hover:border-green-200 hover:bg-gray-50"
                         }`}
                       >
                         <div
                           className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
                             isActive
-                              ? "bg-blue-500 border-blue-500 text-white"
+                              ? "bg-green-500 border-green-500 text-white"
                               : "border-gray-300 bg-white"
                           }`}
                         >
@@ -1878,7 +1912,7 @@ export default function InStockInvoicePage() {
                           )}
                         </div>
                         <span
-                          className={`flex-1 ${isActive ? "font-medium text-blue-700" : "text-gray-600"}`}
+                          className={`flex-1 ${isActive ? "font-medium text-green-700" : "text-gray-600"}`}
                         >
                           {type}
                         </span>
@@ -1888,7 +1922,10 @@ export default function InStockInvoicePage() {
                           checked={isActive}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setSelectedProductTypes((prev) => [...prev, type]);
+                              setSelectedProductTypes((prev) => [
+                                ...prev,
+                                type,
+                              ]);
                             } else {
                               setSelectedProductTypes((prev) =>
                                 prev.filter((t) => t !== type),
@@ -1910,37 +1947,37 @@ export default function InStockInvoicePage() {
                 <div className="flex items-center gap-3">
                   <div className="flex-1 relative">
                     <input
-                        type="text"
-                        placeholder="Từ..."
-                        value={priceRange.min ? fmt(priceRange.min) : ""}
-                        onChange={(e) => {
-                            const raw = e.target.value.replace(/\D/g, "");
-                            setPriceRange(p => ({...p, min: raw}));
-                            setCurrentPage(1);
-                        }}
-                        className="w-full text-[13px] pl-3 pr-2 py-2.5 rounded-xl transition-all focus:outline-none focus:ring-1 bg-white"
-                        style={{
-                            border: "1px solid var(--grid-border)",
-                            color: "var(--text-main)",
-                        }}
+                      type="text"
+                      placeholder="Từ..."
+                      value={priceRange.min ? fmt(priceRange.min) : ""}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/\D/g, "");
+                        setPriceRange((p) => ({ ...p, min: raw }));
+                        setCurrentPage(1);
+                      }}
+                      className="w-full text-[13px] pl-3 pr-2 py-2.5 rounded-xl transition-all focus:outline-none focus:ring-1 bg-white"
+                      style={{
+                        border: "1px solid var(--grid-border)",
+                        color: "var(--text-main)",
+                      }}
                     />
                   </div>
                   <span className="text-gray-400 font-medium">-</span>
                   <div className="flex-1 relative">
                     <input
-                        type="text"
-                        placeholder="Đến..."
-                        value={priceRange.max ? fmt(priceRange.max) : ""}
-                        onChange={(e) => {
-                            const raw = e.target.value.replace(/\D/g, "");
-                            setPriceRange(p => ({...p, max: raw}));
-                            setCurrentPage(1);
-                        }}
-                        className="w-full text-[13px] pl-3 pr-2 py-2.5 rounded-xl transition-all focus:outline-none focus:ring-1 bg-white"
-                        style={{
-                            border: "1px solid var(--grid-border)",
-                            color: "var(--text-main)",
-                        }}
+                      type="text"
+                      placeholder="Đến..."
+                      value={priceRange.max ? fmt(priceRange.max) : ""}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/\D/g, "");
+                        setPriceRange((p) => ({ ...p, max: raw }));
+                        setCurrentPage(1);
+                      }}
+                      className="w-full text-[13px] pl-3 pr-2 py-2.5 rounded-xl transition-all focus:outline-none focus:ring-1 bg-white"
+                      style={{
+                        border: "1px solid var(--grid-border)",
+                        color: "var(--text-main)",
+                      }}
                     />
                   </div>
                 </div>
