@@ -52,6 +52,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng ăn",
     productType: "Hàng hoàn thiện",
+    size: "180 x 90 x 75 cm",
+    color: "Sồi tự nhiên",
   },
   {
     id: 2,
@@ -62,6 +64,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng làm việc",
     productType: "Hàng hoàn thiện",
+    size: "120 x 35 x 180 cm",
+    color: "Óc chó đậm",
   },
   {
     id: 3,
@@ -71,7 +75,9 @@ const WOOD_PRODUCTS = [
     stock: 12,
     image: "/wood_products.png",
     category: "Phòng làm việc",
-    productType: "Hàng thô",
+    productType: "Hàng mộc",
+    size: "140 x 70 x 75 cm",
+    color: "Trắng sồi",
   },
   {
     id: 4,
@@ -81,7 +87,9 @@ const WOOD_PRODUCTS = [
     stock: 3,
     image: "/wood_products.png",
     category: "Phòng ngủ",
-    productType: "Hàng thô",
+    productType: "Hàng mộc",
+    size: "100 x 45 x 120 cm",
+    color: "Nguyên mộc",
   },
   {
     id: 5,
@@ -92,6 +100,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng ăn",
     productType: "Hàng hoàn thiện",
+    size: "45 x 48 x 90 cm",
+    color: "Sồi sáng",
   },
   {
     id: 6,
@@ -102,8 +112,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng khách",
     productType: "Hàng hoàn thiện",
-    size: "Tròn 80 + 60",
-    color: "Chân mạ vàng",
+    size: "D80 & D60 cm",
+    color: "Trắng vân mây",
   },
   {
     id: 7,
@@ -113,7 +123,7 @@ const WOOD_PRODUCTS = [
     stock: 0,
     image: "/wood_products.png",
     category: "Phòng khách",
-    productType: "Hàng thô",
+    productType: "Hàng mộc",
     size: "Cao 220",
   },
   {
@@ -148,8 +158,9 @@ const WOOD_PRODUCTS = [
     stock: 30,
     image: "/wood_products.png",
     category: "Phòng khách",
-    productType: "Hàng thô",
-    size: "80 x 120 x 30",
+    productType: "Hàng mộc",
+    size: "80 x 120 x 30 cm",
+    color: "Nguyên mộc",
   },
   {
     id: 11,
@@ -231,7 +242,7 @@ const WOOD_PRODUCTS = [
     stock: 30,
     image: "/wood_products.png",
     category: "Phòng khách",
-    productType: "Hàng thô",
+    productType: "Hàng mộc",
     size: "Tròn 40",
   },
   {
@@ -242,7 +253,7 @@ const WOOD_PRODUCTS = [
     stock: 5,
     image: "/wood_products.png",
     category: "Phòng khách",
-    productType: "Hàng thô",
+    productType: "Hàng mộc",
     size: "Module 120x260",
   },
 
@@ -255,7 +266,7 @@ const WOOD_PRODUCTS = [
     stock: 4,
     image: "/wood_products.png",
     category: "Phòng ngủ",
-    productType: "Hàng thô",
+    productType: "Hàng mộc",
     size: "180 x 200",
   },
   {
@@ -302,7 +313,7 @@ const WOOD_PRODUCTS = [
     stock: 6,
     image: "/wood_products.png",
     category: "Phòng ngủ",
-    productType: "Hàng thô",
+    productType: "Hàng mộc",
     size: "120 x 200",
   },
   {
@@ -325,7 +336,7 @@ const WOOD_PRODUCTS = [
     stock: 14,
     image: "/wood_products.png",
     category: "Phòng ngủ",
-    productType: "Hàng thô",
+    productType: "Hàng mộc",
     size: "60 x 80 x 40",
   },
   {
@@ -336,7 +347,7 @@ const WOOD_PRODUCTS = [
     stock: 40,
     image: "/wood_products.png",
     category: "Phòng ngủ",
-    productType: "Hàng thô",
+    productType: "Hàng mộc",
     size: "150 x 40",
   },
 
@@ -397,7 +408,7 @@ const WOOD_PRODUCTS = [
     stock: 7,
     image: "/wood_products.png",
     category: "Phòng ăn",
-    productType: "Hàng thô",
+    productType: "Hàng mộc",
     size: "120 x 80",
   },
   {
@@ -470,7 +481,7 @@ const WOOD_PRODUCTS = [
     stock: 35,
     image: "/wood_products.png",
     category: "Phòng làm việc",
-    productType: "Hàng thô",
+    productType: "Hàng mộc",
     size: "50 x 40 x 30",
   },
   {
@@ -493,7 +504,33 @@ const WOOD_PRODUCTS = [
     stock: 28,
     image: "/wood_products.png",
     category: "Phòng làm việc",
-    productType: "Hàng thô",
+    productType: "Hàng mộc",
+    size: "50 x 40 x 30 cm",
+    color: "Gỗ thông mộc",
+  },
+  {
+    id: 38,
+    name: "Ghế xoay lưới văn phòng",
+    sku: "GXV-38",
+    price: 1850000,
+    stock: 45,
+    image: "/wood_products.png",
+    category: "Phòng làm việc",
+    productType: "Hàng hoàn thiện",
+    size: "60 x 60 x 110 cm",
+    color: "Đen",
+  },
+  {
+    id: 39,
+    name: "Hộc tủ di động 3 ngăn kéo",
+    sku: "HT-39",
+    price: 1550000,
+    stock: 28,
+    image: "/wood_products.png",
+    category: "Phòng làm việc",
+    productType: "Hàng mộc",
+    size: "40 x 50 x 65 cm",
+    color: "Gỗ cao su mộc",
   },
   {
     id: 40,
@@ -504,6 +541,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng làm việc",
     productType: "Hàng hoàn thiện",
+    size: "240 x 120 x 75 cm",
+    color: "Vàng vân gỗ / Chân ghi",
   },
 ];
 
@@ -591,7 +630,7 @@ export default function InStockInvoicePage() {
     },
   ]);
   const [activeTabId, setActiveTabId] = useState(1);
-  const [productTypeTab, setProductTypeTab] = useState("Hàng thô");
+  const [productTypeTab, setProductTypeTab] = useState("Hàng mộc");
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedProductTypes, setSelectedProductTypes] = useState([]);
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
@@ -814,7 +853,7 @@ export default function InStockInvoicePage() {
       products: activeTab.cartItems.map((item) => ({
         name: item.name,
         material: item.category || "Hàng trưng bày",
-        size: "Tiêu chuẩn",
+        size: "",
         qty: item.quantity,
         price: item.price,
         note: "",
@@ -1290,8 +1329,7 @@ export default function InStockInvoicePage() {
                       style={{ color: "var(--text-placeholder)" }}
                     />
                     <input
-                      type="text"
-                      placeholder="dd/mm/yy"
+                      type="date"
                       value={activeTab.deliveryDate || ""}
                       onChange={(e) =>
                         updateActiveTab({ deliveryDate: e.target.value })
@@ -1708,16 +1746,16 @@ export default function InStockInvoicePage() {
                             className="text-[10px] font-medium truncate"
                             style={{ color: "var(--text-placeholder)" }}
                           >
-                            Kích thước: {product.size || "Tiêu chuẩn"}
+                            Kích thước: {product.size}
                           </span>
                           <span
                             className="text-[10px] font-medium truncate"
                             style={{ color: "var(--text-placeholder)" }}
                           >
                             Màu sắc:{" "}
-                            {product.productType === "Hàng thô"
-                              ? "Gỗ mộc"
-                              : product.color || "Theo mẫu"}
+                            {product.productType === "Hàng mộc"
+                              ? "Nguyên mộc"
+                              : product.color}
                           </span>
                         </div>
                         <p

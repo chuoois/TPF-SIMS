@@ -38,6 +38,8 @@ import {
   ImagePlus,
   Lightbulb,
   Clock,
+  Type,
+  ClipboardEdit,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
@@ -143,7 +145,9 @@ export default function CustomOrderRequirementsPage() {
   const [newItem, setNewItem] = useState({
     productName: "",
     woodType: "",
-    size: "",
+    length: "",
+    width: "",
+    height: "",
     color: "",
     quantity: 1,
     note: "",
@@ -190,11 +194,25 @@ export default function CustomOrderRequirementsPage() {
   // Cart
   const addCustomItem = () => {
     if (!newItem.productName.trim()) return;
-    
+
+    // Combine dimensions into a size string for display
+    const sizeStr = [
+      newItem.length ? `D${newItem.length}` : "",
+      newItem.width ? `R${newItem.width}` : "",
+      newItem.height ? `C${newItem.height}` : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    const itemToSave = {
+      ...newItem,
+      size: sizeStr,
+    };
+
     if (editingItemId) {
       updateActiveTab({
         cartItems: activeTab.cartItems.map((i) =>
-          i.id === editingItemId ? { ...newItem, id: editingItemId } : i
+          i.id === editingItemId ? { ...itemToSave, id: editingItemId } : i,
         ),
       });
       setEditingItemId(null);
@@ -204,7 +222,7 @@ export default function CustomOrderRequirementsPage() {
           ...activeTab.cartItems,
           {
             id: `custom-${++itemIdCounter}`,
-            ...newItem,
+            ...itemToSave,
           },
         ],
       });
@@ -213,7 +231,9 @@ export default function CustomOrderRequirementsPage() {
     setNewItem({
       productName: "",
       woodType: "",
-      size: "",
+      length: "",
+      width: "",
+      height: "",
       color: "",
       quantity: 1,
       note: "",
@@ -394,7 +414,9 @@ export default function CustomOrderRequirementsPage() {
                     setNewItem({
                       productName: "",
                       woodType: "",
-                      size: "",
+                      length: "",
+                      width: "",
+                      height: "",
                       color: "",
                       quantity: 1,
                       note: "",
@@ -407,161 +429,227 @@ export default function CustomOrderRequirementsPage() {
                 </button>
               </div>
 
-              <input
-                type="text"
-                placeholder="Tên sản phẩm *"
-                value={newItem.productName}
-                onChange={(e) => updateNewItem("productName", e.target.value)}
-                className={inputBase}
-                style={inputStyle}
-              />
-
-              <div className="grid grid-cols-2 gap-3">
+              {/* Product Name */}
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+                  Tên sản phẩm *
+                </label>
                 <div className="relative">
-                  <TreePine
+                  <Type
                     size={13}
                     className="absolute left-3 top-1/2 -translate-y-1/2"
                     style={{ color: "var(--text-placeholder)" }}
                   />
                   <input
                     type="text"
-                    placeholder="Loại"
-                    value={newItem.woodType}
-                    onChange={(e) => {
-                      updateNewItem("woodType", e.target.value);
-                      setShowWoodDropdown(true);
-                    }}
-                    onFocus={() => setShowWoodDropdown(true)}
-                    onBlur={() =>
-                      setTimeout(() => setShowWoodDropdown(false), 200)
-                    }
+                    placeholder="Nhập tên sản phẩm..."
+                    value={newItem.productName}
+                    onChange={(e) => updateNewItem("productName", e.target.value)}
                     className={`${inputBase} pl-9`}
                     style={inputStyle}
                   />
-                  {showWoodDropdown && (
-                    <div
-                      className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-xl shadow-lg z-50 overflow-hidden"
-                      style={{ borderColor: "var(--grid-border)" }}
-                    >
-                      <div className="max-h-48 overflow-y-auto">
-                        {WOOD_TYPES.filter((w) =>
-                          w
-                            .toLowerCase()
-                            .includes(newItem.woodType.toLowerCase()),
-                        ).map((w) => (
-                          <div
-                            key={w}
-                            className="px-3 py-2 text-[13px] cursor-pointer transition hover:bg-gray-50 font-medium"
-                            style={{ color: "var(--text-main)" }}
-                            onMouseDown={(e) => {
-                              e.preventDefault(); // Ngăn focus bị mất khi chọn
-                              updateNewItem("woodType", w);
-                              setShowWoodDropdown(false);
-                            }}
-                          >
-                            {w}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
-
-                <div className="relative">
-                  <Palette
-                    size={13}
-                    className="absolute left-3 top-1/2 -translate-y-1/2"
-                    style={{ color: "var(--text-placeholder)" }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Màu sắc"
-                    value={newItem.color}
-                    onChange={(e) => {
-                      updateNewItem("color", e.target.value);
-                      setShowColorDropdown(true);
-                    }}
-                    onFocus={() => setShowColorDropdown(true)}
-                    onBlur={() =>
-                      setTimeout(() => setShowColorDropdown(false), 200)
-                    }
-                    className={`${inputBase} pl-9`}
-                    style={inputStyle}
-                  />
-                  {showColorDropdown && (
-                    <div
-                      className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-xl shadow-lg z-50 overflow-hidden"
-                      style={{ borderColor: "var(--grid-border)" }}
-                    >
-                      <div className="max-h-48 overflow-y-auto">
-                        {COLORS.filter((c) =>
-                          c.toLowerCase().includes(newItem.color.toLowerCase()),
-                        ).map((c) => (
-                          <div
-                            key={c}
-                            className="px-3 py-2 text-[13px] cursor-pointer transition hover:bg-gray-50 font-medium"
-                            style={{ color: "var(--text-main)" }}
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              updateNewItem("color", c);
-                              setShowColorDropdown(false);
-                            }}
-                          >
-                            {c}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="relative">
-                <Ruler
-                  size={13}
-                  className="absolute left-3 top-1/2 -translate-y-1/2"
-                  style={{ color: "var(--text-placeholder)" }}
-                />
-                <input
-                  type="text"
-                  placeholder="Kích thước yêu cầu (Ví dụ: D120 R60 C75 cm)"
-                  value={newItem.size}
-                  onChange={(e) => updateNewItem("size", e.target.value)}
-                  className={`${inputBase} pl-9`}
-                  style={inputStyle}
-                />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="relative">
-                  <Package
-                    size={13}
-                    className="absolute left-3 top-1/2 -translate-y-1/2"
-                    style={{ color: "var(--text-placeholder)" }}
-                  />
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+                    Loại 
+                  </label>
+                  <div className="relative">
+                    <TreePine
+                      size={13}
+                      className="absolute left-3 top-1/2 -translate-y-1/2"
+                      style={{ color: "var(--text-placeholder)" }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Chọn hoặc nhập loại ..."
+                      value={newItem.woodType}
+                      onChange={(e) => {
+                        updateNewItem("woodType", e.target.value);
+                        setShowWoodDropdown(true);
+                      }}
+                      onFocus={() => setShowWoodDropdown(true)}
+                      onBlur={() =>
+                        setTimeout(() => setShowWoodDropdown(false), 200)
+                      }
+                      className={`${inputBase} pl-9`}
+                      style={inputStyle}
+                    />
+                    {showWoodDropdown && (
+                      <div
+                        className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-xl shadow-lg z-50 overflow-hidden"
+                        style={{ borderColor: "var(--grid-border)" }}
+                      >
+                        <div className="max-h-48 overflow-y-auto">
+                          {WOOD_TYPES.filter((w) =>
+                            w
+                              .toLowerCase()
+                              .includes(newItem.woodType.toLowerCase()),
+                          ).map((w) => (
+                            <div
+                              key={w}
+                              className="px-3 py-2 text-[13px] cursor-pointer transition hover:bg-gray-50 font-medium"
+                              style={{ color: "var(--text-main)" }}
+                              onMouseDown={(e) => {
+                                e.preventDefault(); // Ngăn focus bị mất khi chọn
+                                updateNewItem("woodType", w);
+                                setShowWoodDropdown(false);
+                              }}
+                            >
+                              {w}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+                    Màu sắc
+                  </label>
+                  <div className="relative">
+                    <Palette
+                      size={13}
+                      className="absolute left-3 top-1/2 -translate-y-1/2"
+                      style={{ color: "var(--text-placeholder)" }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Chọn màu sắc..."
+                      value={newItem.color}
+                      onChange={(e) => {
+                        updateNewItem("color", e.target.value);
+                        setShowColorDropdown(true);
+                      }}
+                      onFocus={() => setShowColorDropdown(true)}
+                      onBlur={() =>
+                        setTimeout(() => setShowColorDropdown(false), 200)
+                      }
+                      className={`${inputBase} pl-9`}
+                      style={inputStyle}
+                    />
+                    {showColorDropdown && (
+                      <div
+                        className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-xl shadow-lg z-50 overflow-hidden"
+                        style={{ borderColor: "var(--grid-border)" }}
+                      >
+                        <div className="max-h-48 overflow-y-auto">
+                          {COLORS.filter((c) =>
+                            c.toLowerCase().includes(newItem.color.toLowerCase()),
+                          ).map((c) => (
+                            <div
+                              key={c}
+                              className="px-3 py-2 text-[13px] cursor-pointer transition hover:bg-gray-50 font-medium"
+                              style={{ color: "var(--text-main)" }}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                updateNewItem("color", c);
+                                setShowColorDropdown(false);
+                              }}
+                            >
+                              {c}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+                    Dài (cm)
+                  </label>
                   <input
                     type="number"
-                    placeholder="Số lượng"
-                    value={newItem.quantity}
-                    onChange={(e) =>
-                      updateNewItem(
-                        "quantity",
-                        Math.max(1, parseInt(e.target.value) || 1),
-                      )
-                    }
-                    className={`${inputBase} pl-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
-                    style={inputStyle}
+                    placeholder="0"
+                    value={newItem.length}
+                    onChange={(e) => updateNewItem("length", e.target.value)}
+                    className={`${inputBase} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                    style={{ ...inputStyle, paddingLeft: 12 }}
                   />
                 </div>
-               
-                <input
-                  type="text"
-                  placeholder="Ghi chú (sơn màu, chạm khắc, ...)"
-                  value={newItem.note}
-                  onChange={(e) => updateNewItem("note", e.target.value)}
-                  className={inputBase}
-                  style={inputStyle}
-                />
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+                    Rộng (cm)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="0"
+                    value={newItem.width}
+                    onChange={(e) => updateNewItem("width", e.target.value)}
+                    className={`${inputBase} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                    style={{ ...inputStyle, paddingLeft: 12 }}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+                    Cao (cm)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="0"
+                    value={newItem.height}
+                    onChange={(e) => updateNewItem("height", e.target.value)}
+                    className={`${inputBase} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                    style={{ ...inputStyle, paddingLeft: 12 }}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+                    Số lượng
+                  </label>
+                  <div className="relative">
+                    <Package
+                      size={13}
+                      className="absolute left-3 top-1/2 -translate-y-1/2"
+                      style={{ color: "var(--text-placeholder)" }}
+                    />
+                    <input
+                      type="number"
+                      placeholder="0"
+                      value={newItem.quantity}
+                      onChange={(e) =>
+                        updateNewItem(
+                          "quantity",
+                          e.target.value === "" ? "" : parseInt(e.target.value)
+                        )
+                      }
+                      className={`${inputBase} pl-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+                    Ghi chú
+                  </label>
+                  <div className="relative">
+                    <ClipboardEdit
+                      size={13}
+                      className="absolute left-3 top-1/2 -translate-y-1/2"
+                      style={{ color: "var(--text-placeholder)" }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Chạm khắc,..."
+                      value={newItem.note}
+                      onChange={(e) => updateNewItem("note", e.target.value)}
+                      className={`${inputBase} pl-9`}
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Image upload */}
@@ -647,7 +735,9 @@ export default function CustomOrderRequirementsPage() {
                     setNewItem({
                       productName: "",
                       woodType: "",
-                      size: "",
+                      length: "",
+                      width: "",
+                      height: "",
                       color: "",
                       quantity: 1,
                       note: "",

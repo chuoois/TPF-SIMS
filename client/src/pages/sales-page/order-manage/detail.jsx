@@ -281,15 +281,8 @@ const fmtCurrency = (n) =>
       }).format(n)
     : "—";
 
-const fmtDate = (s) => {
-  if (!s) return "Chưa xác định";
-  const d = new Date(s);
-  if (isNaN(d)) return s; // If it's already a formatted string or invalid
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = String(d.getFullYear()).slice(-2);
-  return `${day}/${month}/${year}`;
-};
+const fmtDate = (s) =>
+  s ? new Date(s).toLocaleDateString("vi-VN") : "Chưa xác định";
 
 const fmtDateTime = (s) => {
   if (!s) return "—";
