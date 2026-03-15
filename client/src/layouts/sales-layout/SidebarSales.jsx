@@ -35,12 +35,12 @@ const menuItems = [
   {
     text: "Tạo yêu cầu đặt hàng",
     icon: ClipboardList,
-    path: "/sales/dashboard/invoice-custom-order",
+    path: "/sales/dashboard/requirements-custom-order",
   },
   {
-    text: "Quản lý yêu cầu đặt hàng",
+    text: "Yêu cầu từ khách hàng",
     icon: ClipboardList,
-    path: "/sales/dashboard/custom-orders",
+    path: "/sales/dashboard/requirements",
   },
 ];
 
