@@ -1,11 +1,10 @@
 import { SalesLayout } from "@/layouts/sales-layout/index";
 import SalesCustomerManage from "@/pages/sales-page/customer-manage";
 import InStockInvoicePage from "@/pages/sales-page/invoice-instock";
-import CustomOrderInvoicePage from "@/pages/sales-page/invoice-custom-order";
+import CustomOrderInvoicePage from "@/pages/sales-page/requirement-custom-order";
 import OrderManagePage from "@/pages/sales-page/order-manage";
-import SalesCustomOrderManage from "@/pages/sales-page/custom-order-manage";
 import SalesOrderDetail from "@/pages/sales-page/order-manage/detail";
-import SalesDashboardHome from "@/pages/sales-page/home";
+import SalesRequirements from "@/pages/sales-page/sales-requirements";
 
 /**
  * Sales Routes
@@ -20,10 +19,6 @@ export const salesRoutes = {
   element: <SalesLayout />,
   children: [
     {
-      path: "home",
-      element: <SalesDashboardHome />,
-    },
-    {
       path: "dashboard/customers",
       element: <SalesCustomerManage />,
     },
@@ -32,12 +27,8 @@ export const salesRoutes = {
       element: <InStockInvoicePage />,
     },
     {
-      path: "dashboard/invoice-custom-order",
+      path: "dashboard/requirements-custom-order",
       element: <CustomOrderInvoicePage />,
-    },
-    {
-      path: "dashboard/custom-orders",
-      element: <SalesCustomOrderManage />,
     },
     {
       path: "dashboard/orders",
@@ -46,6 +37,10 @@ export const salesRoutes = {
     {
       path: "dashboard/orders/:id",
       element: <SalesOrderDetail />,
+    },
+    {
+      path: "dashboard/requirements",
+      element: <SalesRequirements />,
     },
   ],
 };

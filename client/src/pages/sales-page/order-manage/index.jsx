@@ -21,461 +21,140 @@ import {
   AlertTriangle,
   CheckCircle2,
   Printer,
+  Clock,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { MOCK_ORDERS_DETAIL, PrintableInvoice } from "./detail";
 
 // ===================== STATIC DATA =====================
 export const INITIAL_ORDERS = [
-  // ========== HÀNG SẴN ==========
+  // ========== NHÓM 1: HÀNG SẴN ==========
   {
-    id: "DH002",
-    code: "DH-2603-0009",
-    customerName: "Đinh Quang Hiếu",
-    phone: "0989012345",
-    type: "Hàng sẵn",
-    total: 1200000,
-    status: "Giao hàng thành công",
-    date: "2026-03-05T13:20:00",
+    id: "DH-S01", code: "DH-SAN-001", type: "Hàng sẵn", status: "Chờ xử lý",
+    customerName: "Nguyễn Văn Hùng", phone: "0912345678", total: 12500000,
+    date: "2026-03-12T08:30:00", deliveryDate: "2026-03-14", fulfillmentType: "Giao tận nhà",
   },
   {
-    id: "DH003",
-    code: "DH-2603-0011",
-    customerName: "Đinh Quang Hiếu",
-    phone: "0989012345",
-    type: "Hàng sẵn",
-    total: 1200000,
-    status: "Đang chuẩn bị",
-    date: "2026-03-05T13:20:00",
+    id: "DH-S02", code: "DH-SAN-002", type: "Hàng sẵn", status: "Chờ giao hàng",
+    customerName: "Lê Thị Lan", phone: "0345678901", total: 3500000,
+    date: "2026-03-11T14:20:00", deliveryDate: "2026-03-12", fulfillmentType: "Lấy ngay",
   },
   {
-    id: "DH005",
-    code: "DH-2603-0005",
-    customerName: "Võ Đức Anh",
-    phone: "0945678901",
-    type: "Hàng sẵn",
-    total: 3400000,
-    status: "Chờ duyệt hủy",
-    date: "2026-03-03T16:20:00",
+    id: "DH-S03", code: "DH-SAN-003", type: "Hàng sẵn", status: "Đang giao hàng",
+    customerName: "Trần Minh Quang", phone: "0909123456", total: 45000000,
+    date: "2026-03-10T09:15:00", deliveryDate: "2026-03-11", fulfillmentType: "Giao nhà",
   },
   {
-    id: "DH007",
-    code: "DH-2603-0007",
-    customerName: "Bùi Tuấn Anh",
-    phone: "0967890123",
-    type: "Hàng sẵn",
-    total: 21000000,
-    status: "Đang giao hàng",
-    date: "2026-03-04T15:30:00",
+    id: "DH-S04", code: "DH-SAN-004", type: "Hàng sẵn", status: "Hoàn thành",
+    customerName: "Phạm Thành Nam", phone: "0987654321", total: 8900000,
+    date: "2026-03-09T16:45:00", deliveryDate: "2026-03-10", fulfillmentType: "Giao nhà",
+    deliveryImage: "https://images.unsplash.com/photo-1595246140625-573b715d11dc?auto=format&fit=crop&q=80&w=400",
   },
   {
-    id: "DH009",
-    code: "DH-2603-0001",
-    customerName: "Nguyễn Văn Hoàng",
-    phone: "0901234567",
-    type: "Hàng sẵn",
-    total: 15500000,
-    status: "Giao hàng thành công",
-    date: "2026-03-01T08:30:00",
+    id: "DH-S05", code: "DH-SAN-005", type: "Hàng sẵn", status: "Chờ duyệt hủy",
+    customerName: "Đinh Công Vinh", phone: "0944556677", total: 2100000,
+    date: "2026-03-11T10:00:00", deliveryDate: "2026-03-13", fulfillmentType: "Giao nhà",
   },
   {
-    id: "DH011",
-    code: "DH-2603-0003",
-    customerName: "Lê Minh Tuấn",
-    phone: "0923456789",
-    type: "Hàng sẵn",
-    total: 8900000,
-    status: "Chờ xử lý",
-    date: "2026-03-02T14:45:00",
+    id: "DH-S06", code: "DH-SAN-006", type: "Hàng sẵn", status: "Đã hủy",
+    customerName: "Võ Thị Bảy", phone: "0966778899", total: 1500000,
+    date: "2026-03-08T10:00:00", deliveryDate: "2026-03-09", fulfillmentType: "Lấy ngay",
+  },
+
+  // ========== NHÓM 2: HÀNG THÔ ==========
+  {
+    id: "DH-T01", code: "DH-THO-001", type: "Hàng thô", status: "Chờ xử lý",
+    customerName: "Hoàng Nguyệt Ánh", phone: "0978901234", total: 56000000,
+    date: "2026-03-12T10:00:00", deliveryDate: "2026-03-20", fulfillmentType: "Giao nhà",
   },
   {
-    id: "DH012",
-    code: "DH-2603-0012",
-    customerName: "Nguyễn Thị Hồng",
-    phone: "0931234567",
-    type: "Hàng sẵn",
-    total: 4500000,
-    status: "Đang giao hàng",
-    date: "2026-03-06T09:15:00",
+    id: "DH-T02", code: "DH-THO-002", type: "Hàng thô", status: "Đang sản xuất",
+    customerName: "Đặng Tuấn Kiệt", phone: "0931234567", total: 8200000,
+    date: "2026-03-11T15:30:00", deliveryDate: "2026-03-15", fulfillmentType: "Giao nhà",
   },
   {
-    id: "DH014",
-    code: "DH-2603-0014",
-    customerName: "Lê Thị Phương",
-    phone: "0953456789",
-    type: "Hàng sẵn",
-    total: 6700000,
-    status: "Giao hàng thành công",
-    date: "2026-03-06T11:45:00",
+    id: "DH-T03", code: "DH-THO-003", type: "Hàng thô", status: "Đang sản xuất",
+    customerName: "Vũ Hải Đăng", phone: "0922334455", total: 12500000,
+    date: "2026-03-10T08:00:00", deliveryDate: "2026-03-14", fulfillmentType: "Giao nhà",
   },
   {
-    id: "DH016",
-    code: "DH-2603-0016",
-    customerName: "Hoàng Văn Sơn",
-    phone: "0975678901",
-    type: "Hàng sẵn",
-    total: 2300000,
-    status: "Đang chuẩn bị",
-    date: "2026-03-06T15:20:00",
+    id: "DH-T04", code: "DH-THO-004", type: "Hàng thô", status: "Chờ giao hàng",
+    customerName: "Bùi Tiến Dũng", phone: "0911223344", total: 28000000,
+    date: "2026-03-09T11:20:00", deliveryDate: "2026-03-12", fulfillmentType: "Giao nhà",
   },
   {
-    id: "DH017",
-    code: "DH-2603-0017",
-    customerName: "Nguyễn Thanh Tùng",
-    phone: "0986789012",
-    type: "Hàng sẵn",
-    total: 3800000,
-    status: "Chờ xử lý",
-    date: "2026-03-06T16:00:00",
+    id: "DH-T05", code: "DH-THO-005", type: "Hàng thô", status: "Đang giao hàng",
+    customerName: "Đinh Công Thành", phone: "0988776655", total: 15400000,
+    date: "2026-03-08T14:45:00", deliveryDate: "2026-03-10", fulfillmentType: "Giao nhà",
   },
   {
-    id: "DH019",
-    code: "DH-2603-0019",
-    customerName: "Lê Hoàng Nam",
-    phone: "0908901234",
-    type: "Hàng sẵn",
-    total: 5200000,
-    status: "Đang giao hàng",
-    date: "2026-03-07T08:00:00",
+    id: "DH-T06", code: "DH-THO-006", type: "Hàng thô", status: "Hoàn thành",
+    customerName: "Trần Anh Tú", phone: "0900112233", total: 32000000,
+    date: "2026-03-07T09:00:00", deliveryDate: "2026-03-09", fulfillmentType: "Giao nhà",
+    deliveryImage: "https://images.unsplash.com/photo-1617806118233-ef203e91122b",
+  },
+
+  // ========== NHÓM 3: HÀNG ĐẶT ==========
+  {
+    id: "DH-D01", code: "DH-DAT-001", type: "Hàng đặt", status: "Chờ xử lý",
+    customerName: "Nguyễn Thị Hồng", phone: "0912123123", total: 75000000,
+    date: "2026-03-12T11:15:00", deliveryDate: "2026-03-30", fulfillmentType: "Giao nhà",
   },
   {
-    id: "DH020",
-    code: "DH-2603-0020",
-    customerName: "Phạm Ngọc Ánh",
-    phone: "0919012345",
-    type: "Hàng sẵn",
-    total: 9100000,
-    status: "Giao hàng thành công",
-    date: "2026-03-07T08:45:00",
+    id: "DH-D02", code: "DH-DAT-002", type: "Hàng đặt", status: "Đang sản xuất",
+    customerName: "Lê Văn Tám", phone: "0321654987", total: 120000000,
+    date: "2026-03-11T09:00:00", deliveryDate: "2026-03-25", fulfillmentType: "Giao nhà",
   },
   {
-    id: "DH022",
-    code: "DH-2603-0022",
-    customerName: "Đặng Hữu Phúc",
-    phone: "0931234567",
-    type: "Hàng sẵn",
-    total: 7400000,
-    status: "Đang chuẩn bị",
-    date: "2026-03-07T10:00:00",
+    id: "DH-D03", code: "DH-DAT-003", type: "Hàng đặt", status: "Đang sản xuất",
+    customerName: "Phan Trị", phone: "0944123789", total: 45000000,
+    date: "2026-03-10T10:15:00", deliveryDate: "2026-03-28", fulfillmentType: "Giao nhà",
   },
   {
-    id: "DH023",
-    code: "DH-2603-0023",
-    customerName: "Bùi Thị Hạnh",
-    phone: "0942345678",
-    type: "Hàng sẵn",
-    total: 4600000,
-    status: "Chờ xử lý",
-    date: "2026-03-07T10:30:00",
-  },
-  {
-    id: "DH025",
-    code: "DH-2603-0025",
-    customerName: "Đinh Thị Mai Anh",
-    phone: "0964567890",
-    type: "Hàng sẵn",
-    total: 2800000,
-    status: "Chờ duyệt hủy",
-    date: "2026-03-07T11:30:00",
-  },
-  {
-    id: "DH026",
-    code: "DH-2603-0026",
-    customerName: "Vũ Minh Khoa",
-    phone: "0975678901",
-    type: "Hàng sẵn",
-    total: 6300000,
-    status: "Đang giao hàng",
-    date: "2026-03-07T12:00:00",
-  },
-  {
-    id: "DH028",
-    code: "DH-2603-0028",
-    customerName: "Trần Quốc Đạt",
-    phone: "0997890123",
-    type: "Hàng sẵn",
-    total: 11500000,
-    status: "Giao hàng thành công",
-    date: "2026-03-07T13:30:00",
-  },
-  {
-    id: "DH029",
-    code: "DH-2603-0029",
-    customerName: "Lê Thị Thanh Hằng",
-    phone: "0908901234",
-    type: "Hàng sẵn",
-    total: 1800000,
-    status: "Đang chuẩn bị",
-    date: "2026-03-07T14:00:00",
-  },
-  {
-    id: "DH031",
-    code: "DH-2603-0031",
-    customerName: "Võ Thị Bích Ngọc",
-    phone: "0920123456",
-    type: "Hàng sẵn",
-    total: 5700000,
-    status: "Chờ xử lý",
-    date: "2026-03-07T15:00:00",
-  },
-  {
-    id: "DH032",
-    code: "DH-2603-0032",
-    customerName: "Đặng Tuấn Kiệt",
-    phone: "0931234567",
-    type: "Hàng sẵn",
-    total: 8200000,
-    status: "Đang giao hàng",
-    date: "2026-03-07T15:30:00",
-  },
-  {
-    id: "DH034",
-    code: "DH-2603-0034",
-    customerName: "Hoàng Thị Diệu Linh",
-    phone: "0953456789",
-    type: "Hàng sẵn",
-    total: 3100000,
-    status: "Giao hàng thành công",
-    date: "2026-03-07T16:30:00",
-  },
-  {
-    id: "DH035",
-    code: "DH-2603-0035",
-    customerName: "Đinh Công Vinh",
-    phone: "0964567890",
-    type: "Hàng sẵn",
-    total: 4900000,
-    status: "Đang chuẩn bị",
-    date: "2026-03-08T08:00:00",
-  },
-  {
-    id: "DH037",
-    code: "DH-2603-0037",
-    customerName: "Nguyễn Đình Trọng",
-    phone: "0986789012",
-    type: "Hàng sẵn",
-    total: 7800000,
-    status: "Đã hủy",
-    date: "2026-03-08T09:00:00",
-  },
-  {
-    id: "DH038",
-    code: "DH-2603-0038",
-    customerName: "Trần Thị Phương Thảo",
-    phone: "0997890123",
-    type: "Hàng sẵn",
-    total: 10200000,
-    status: "Chờ xử lý",
-    date: "2026-03-08T09:30:00",
-  },
-  {
-    id: "DH040",
-    code: "DH-2603-0040",
-    customerName: "Phạm Thị Ngọc Trâm",
-    phone: "0919012345",
-    type: "Hàng sẵn",
-    total: 6100000,
-    status: "Đang chuẩn bị",
-    date: "2026-03-08T10:30:00",
-  },
-  // ========== ĐẶT THEO MẪU ==========
-  {
-    id: "DH001",
-    code: "DH-2603-0010",
-    customerName: "Vũ Phương Thảo",
-    phone: "0990123456",
-    type: "Đặt theo mẫu",
-    total: 95000000,
-    status: "Chờ báo giá",
-    date: "2026-03-05T16:05:00",
-  },
-  {
-    id: "DH004",
-    code: "DH-2603-0004",
-    customerName: "Phạm Thị Lan",
-    phone: "0934567890",
-    type: "Đặt theo mẫu",
-    total: 125000000,
-    status: "Đang giao hàng",
-    date: "2026-03-03T09:00:00",
-  },
-  {
-    id: "DH006",
-    code: "DH-2603-0006",
-    customerName: "Đặng Thùy Linh",
-    phone: "0956789012",
-    type: "Đặt theo mẫu",
-    total: 85000000,
-    status: "Đã báo giá",
-    date: "2026-03-04T11:10:00",
-  },
-  {
-    id: "DH008",
-    code: "DH-2603-0008",
-    customerName: "Hoàng Nguyệt Ánh",
-    phone: "0978901234",
-    type: "Đặt theo mẫu",
-    total: 56000000,
-    status: "Đang sản xuất",
-    date: "2026-03-05T08:45:00",
-  },
-  {
-    id: "DH010",
-    code: "DH-2603-0002",
-    customerName: "Trần Thị Mai",
-    phone: "0912345678",
-    type: "Đặt theo mẫu",
-    total: 42000000,
-    status: "Chờ xác nhận",
-    date: "2026-03-02T10:15:00",
-  },
-  {
-    id: "DH013",
-    code: "DH-2603-0013",
-    customerName: "Trần Văn Đức",
-    phone: "0942345678",
-    type: "Đặt theo mẫu",
-    total: 78000000,
-    status: "Đang sản xuất",
-    date: "2026-03-06T10:30:00",
-  },
-  {
-    id: "DH015",
-    code: "DH-2603-0015",
-    customerName: "Phạm Minh Quân",
-    phone: "0964567890",
-    type: "Đặt theo mẫu",
-    total: 110000000,
-    status: "Chờ báo giá",
-    date: "2026-03-06T14:00:00",
-  },
-  {
-    id: "DH018",
-    code: "DH-2603-0018",
-    customerName: "Trần Minh Châu",
-    phone: "0997890123",
-    type: "Đặt theo mẫu",
-    total: 67000000,
-    status: "Giao hàng thành công",
-    date: "2026-03-06T16:30:00",
-  },
-  {
-    id: "DH021",
-    code: "DH-2603-0021",
-    customerName: "Võ Quốc Bảo",
-    phone: "0920123456",
-    type: "Đặt theo mẫu",
-    total: 135000000,
-    status: "Đã báo giá",
-    date: "2026-03-07T09:15:00",
-  },
-  {
-    id: "DH024",
-    code: "DH-2603-0024",
-    customerName: "Hoàng Đức Thịnh",
-    phone: "0953456789",
-    type: "Đặt theo mẫu",
-    total: 88000000,
-    status: "Chờ xác nhận",
-    date: "2026-03-07T11:00:00",
-  },
-  {
-    id: "DH027",
-    code: "DH-2603-0027",
-    customerName: "Nguyễn Thị Kim Ngân",
-    phone: "0986789012",
-    type: "Đặt theo mẫu",
-    total: 72000000,
-    status: "Chờ duyệt hủy",
-    date: "2026-03-07T13:00:00",
-  },
-  {
-    id: "DH030",
-    code: "DH-2603-0030",
-    customerName: "Phạm Văn Hùng",
-    phone: "0919012345",
-    type: "Đặt theo mẫu",
-    total: 105000000,
-    status: "Đang giao hàng",
-    date: "2026-03-07T14:30:00",
-  },
-  {
-    id: "DH033",
-    code: "DH-2603-0033",
-    customerName: "Bùi Hoàng Long",
-    phone: "0942345678",
-    type: "Đặt theo mẫu",
-    total: 92000000,
-    status: "Chờ báo giá",
-    date: "2026-03-07T16:00:00",
-  },
-  {
-    id: "DH036",
-    code: "DH-2603-0036",
-    customerName: "Vũ Thị Hương Giang",
-    phone: "0975678901",
-    type: "Đặt theo mẫu",
-    total: 58000000,
-    status: "Đang sản xuất",
-    date: "2026-03-08T08:30:00",
-  },
-  {
-    id: "DH039",
-    code: "DH-2603-0039",
-    customerName: "Lê Quang Huy",
-    phone: "0908901234",
-    type: "Đặt theo mẫu",
-    total: 145000000,
-    status: "Giao hàng thành công",
-    date: "2026-03-08T10:00:00",
-  },
-  {
-    id: "DH041",
-    code: "DH-2603-0041",
-    customerName: "Trần Đình Phú",
-    phone: "0932456789",
-    type: "Đặt theo mẫu",
-    total: 68000000,
-    status: "Đã báo giá",
-    date: "2026-03-08T11:00:00",
-  },
-  {
-    id: "DH042",
-    code: "DH-2603-0042",
-    customerName: "Nguyễn Thị Hạ",
-    phone: "0943567890",
-    type: "Đặt theo mẫu",
-    total: 120000000,
-    status: "Chờ xác nhận",
-    date: "2026-03-08T12:00:00",
+    id: "DH-D04", code: "DH-DAT-004", type: "Hàng đặt", status: "Chờ giao hàng",
+    customerName: "Sơn", phone: "0988", total: 95000000,
+    date: "2026-03-09T14:20:00", deliveryDate: "2026-03-22", fulfillmentType: "Giao nhà",
   },
 ];
 
-const ORDER_TYPES = ["Hàng sẵn", "Đặt theo mẫu"];
 
-// Hàng sẵn: chờ xử lý → đang chuẩn bị → đang giao hàng → giao hàng thành công | chờ duyệt hủy → đã hủy
+const ORDER_TYPES = ["Hàng sẵn", "Hàng thô", "Hàng đặt"];
+
 const HANG_SAN_STATUSES = [
-  "Tất cả",
   "Chờ xử lý",
-  "Đang chuẩn bị",
+  "Chờ giao hàng",
   "Đang giao hàng",
-  "Giao hàng thành công",
+  "Hoàn thành",
   "Chờ duyệt hủy",
   "Đã hủy",
 ];
 
-// Đặt theo mẫu: chờ báo giá → đã báo giá → chờ xác nhận → xác nhận → đang sản xuất → đang giao hàng → thành công | chờ duyệt hủy → đã hủy
-const DAT_THEO_MAU_STATUSES = [
-  "Tất cả",
-  "Chờ báo giá",
-  "Đã báo giá",
-  "Chờ xác nhận",
-  "Xác nhận đơn hàng",
+const HANG_THO_STATUSES = [
+  "Chờ xử lý",
   "Đang sản xuất",
+  "Chờ giao hàng",
   "Đang giao hàng",
-  "Giao hàng thành công",
+  "Hoàn thành",
   "Chờ duyệt hủy",
   "Đã hủy",
+];
+
+const HANG_DAT_STATUSES = [
+  "Chờ xử lý",
+  "Đang sản xuất",
+  "Chờ giao hàng",
+  "Đang giao hàng",
+  "Hoàn thành",
+  "Chờ duyệt hủy",
+  "Đã hủy",
+];
+
+const ALL_STATUSES = [
+  ...new Set([
+    ...HANG_SAN_STATUSES,
+    ...HANG_THO_STATUSES,
+    ...HANG_DAT_STATUSES,
+  ]),
 ];
 
 // Trạng thái cho phép gửi yêu cầu hủy (sale chỉ được gửi khi đơn chưa hoàn thành / chưa hủy / chưa gửi hủy rồi)
@@ -485,6 +164,7 @@ const CANCELLABLE_STATUSES = [
   "Chờ báo giá",
   "Đã báo giá",
   "Chờ xác nhận",
+  "Đang sản xuất", // Có thể cho phép gửi YC hủy khi đang sx nếu chính sách cho phép
 ];
 
 // ===================== HELPERS =====================
@@ -502,44 +182,25 @@ const formatDateTime = (dateString) => {
 
 const getStatusColor = (status) => {
   switch (status) {
-    // === HÀNG SẴN ===
     case "Chờ xử lý":
-      return { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" };
-    case "Đang chuẩn bị":
-      return { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" };
-    case "Đang giao hàng":
-      return { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" };
-    case "Giao hàng thành công":
-      return {
-        bg: "var(--status-focus)",
-        text: "var(--status-success)",
-        border: "var(--brand-primary)",
-      };
-
-    // === ĐẶT THEO MẪU ===
-    case "Chờ báo giá":
-      return { bg: "#FFFBEB", text: "#B45309", border: "#FDE68A" };
-    case "Đã báo giá":
-      return { bg: "#ECFDF5", text: "#047857", border: "#A7F3D0" };
-    case "Chờ xác nhận":
-      return { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" };
-    case "Xác nhận đơn hàng":
-      return { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" };
+      return { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" }; // Blue
+    case "Đang xử lý":
+      return { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" }; // Orange
     case "Đang sản xuất":
-      return { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" };
-
-    // === CHUNG ===
+      return { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" }; // Amber
+    case "Chờ giao hàng":
+      return { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" }; // Purple
+    case "Đang giao hàng":
+      return { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" }; // Deep Blue
+    case "Hoàn thành":
+      return { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" }; // Green
     case "Chờ duyệt hủy":
-      return { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" };
+      return { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" }; // Amber/Yellow
     case "Đã hủy":
-      return { bg: "#FEF2F2", text: "var(--status-error)", border: "#FECACA" };
+      return { bg: "#FEF2F2", text: "#B91C1C", border: "#FECACA" }; // Red
 
     default:
-      return {
-        bg: "var(--bg-main)",
-        text: "var(--text-secondary)",
-        border: "var(--grid-border)",
-      };
+      return { bg: "var(--bg-main)", text: "var(--text-secondary)", border: "var(--grid-border)" };
   }
 };
 
@@ -630,11 +291,11 @@ export default function SalesOrderManage() {
     setPrintingOrders(ordersToPrint);
   };
 
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      setSelectedOrders(paginatedOrders.map((o) => o.id));
-    } else {
+  const handleSelectAll = () => {
+    if (selectedOrders.length === paginatedOrders.length && paginatedOrders.length > 0) {
       setSelectedOrders([]);
+    } else {
+      setSelectedOrders(paginatedOrders.map((o) => o.id));
     }
   };
 
@@ -797,41 +458,39 @@ export default function SalesOrderManage() {
         </div>
         {/* Status Toolbar */}
         <div className="flex items-center gap-2 shrink-0 px-1 flex-wrap">
-          {(activeTab === "Hàng sẵn"
-            ? HANG_SAN_STATUSES
-            : DAT_THEO_MAU_STATUSES
-          ).map((s) => {
+          {useMemo(() => {
+            let statuses = [];
+            if (activeTab === "Hàng sẵn") statuses = HANG_SAN_STATUSES;
+            else if (activeTab === "Hàng thô") statuses = HANG_THO_STATUSES;
+            else if (activeTab === "Hàng đặt") statuses = HANG_DAT_STATUSES;
+            else statuses = ALL_STATUSES;
+            return ["Tất cả", ...statuses];
+          }, [activeTab]).map((s) => {
             const isActive = statusFilter === s;
-            const statusStyle = s !== "Tất cả" ? getStatusColor(s) : null;
+            const sc = s !== "Tất cả" ? getStatusColor(s) : null;
             return (
               <button
                 key={s}
                 onClick={() => setStatusFilter(s)}
-                className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all cursor-pointer flex items-center gap-1.5"
+                className="px-4 py-1.5 rounded-xl text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border"
                 style={{
                   backgroundColor: isActive
-                    ? statusStyle
-                      ? statusStyle.bg
-                      : "#fff"
+                    ? (sc ? sc.bg : "#fff")
                     : "transparent",
                   color: isActive
-                    ? statusStyle
-                      ? statusStyle.text
-                      : "var(--text-main)"
+                    ? (sc ? sc.text : "var(--brand-primary)")
                     : "var(--text-secondary)",
-                  border: isActive
-                    ? `1.5px solid ${statusStyle ? statusStyle.border : "var(--grid-border)"}`
-                    : "1.5px solid transparent",
+                  borderColor: isActive
+                    ? (sc ? sc.border : "var(--grid-border)")
+                    : "transparent",
+                  boxShadow: isActive ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
                 }}
               >
                 {s !== "Tất cả" && (
                   <span
                     className="w-1.5 h-1.5 rounded-full"
                     style={{
-                      backgroundColor: statusStyle
-                        ? statusStyle.text
-                        : "var(--text-secondary)",
-                      opacity: isActive ? 1 : 0.5,
+                      backgroundColor: sc ? sc.text : "var(--brand-primary)",
                     }}
                   />
                 )}
@@ -1005,27 +664,36 @@ export default function SalesOrderManage() {
               >
                 <tr>
                   <th className="px-4 py-3 w-10">
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary cursor-pointer w-4 h-4"
-                      checked={
-                        paginatedOrders.length > 0 &&
-                        selectedOrders.length === paginatedOrders.length
-                      }
-                      onChange={handleSelectAll}
-                    />
+                    <div 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectAll();
+                      }}
+                      className={`w-4 h-4 rounded border flex items-center justify-center transition-colors cursor-pointer ${
+                        paginatedOrders.length > 0 && selectedOrders.length === paginatedOrders.length
+                          ? "bg-green-500 border-green-500 text-white"
+                          : "border-gray-300 bg-white"
+                      }`}
+                    >
+                      {paginatedOrders.length > 0 && selectedOrders.length === paginatedOrders.length && (
+                        <CheckCircle2 size={12} strokeWidth={3} />
+                      )}
+                    </div>
                   </th>
                   {[
+                    "STT",
                     "Mã đơn",
                     "Khách hàng",
                     "Loại đơn",
                     "Tổng tiền",
                     "Trạng thái",
-                    "Thời gian",
+                    "Hình thức giao",
+                    "Ngày giao dự kiến",
+                    "Ảnh giao hàng"
                   ].map((h, i) => (
                     <th
                       key={i}
-                      className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 3 ? "text-right pr-8" : ""}`}
+                      className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 4 ? "text-right pr-6" : ""} ${i === 0 ? "text-center w-[50px]" : ""} ${i >= 7 && i < 9 ? "text-center whitespace-nowrap" : ""}`}
                       style={{ color: "var(--text-placeholder)" }}
                     >
                       {h}
@@ -1060,12 +728,28 @@ export default function SalesOrderManage() {
                         className="px-4 py-3"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <input
-                          type="checkbox"
-                          className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary cursor-pointer w-4 h-4"
-                          checked={selectedOrders.includes(o.id)}
-                          onChange={(e) => handleSelectOrder(e, o.id)}
-                        />
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (selectedOrders.includes(o.id)) {
+                              setSelectedOrders(prev => prev.filter(id => id !== o.id));
+                            } else {
+                              setSelectedOrders(prev => [...prev, o.id]);
+                            }
+                          }}
+                          className={`w-4 h-4 rounded border flex items-center justify-center transition-colors cursor-pointer ${
+                            selectedOrders.includes(o.id)
+                              ? "bg-green-500 border-green-500 text-white"
+                              : "border-gray-300 bg-white"
+                          }`}
+                        >
+                          {selectedOrders.includes(o.id) && (
+                            <CheckCircle2 size={12} strokeWidth={3} />
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>
+                        {(currentPage - 1) * itemsPerPage + paginatedOrders.indexOf(o) + 1}
                       </td>
                       <td className="px-4 py-3">
                         <p
@@ -1101,7 +785,7 @@ export default function SalesOrderManage() {
                           {o.type}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right pr-8">
+                      <td className="px-4 py-3 text-right pr-6">
                         <p
                           className="text-[13px] font-bold"
                           style={{ color: "var(--text-main)" }}
@@ -1126,64 +810,65 @@ export default function SalesOrderManage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <div
-                          className="flex items-center gap-1.5 text-[12px]"
-                          style={{ color: "var(--text-secondary)" }}
-                        >
-                          <Calendar
-                            size={13}
-                            style={{ color: "var(--text-placeholder)" }}
-                          />
-                          {formatDateTime(o.date)}
+                        <span className="text-[12px] font-medium text-gray-500">
+                          {o.fulfillmentType || "Chưa xác định"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1.5 text-gray-600">
+                          <Clock size={12} className="text-gray-400" />
+                          <span className="text-[13px] font-bold">
+                            {o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString("vi-VN") : "---"}
+                          </span>
                         </div>
                       </td>
-                      {/* Group Buttons Hover (Floating Right) */}
-                      <td className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        <div className="flex justify-end gap-1.5 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-gray-100">
-                          {/* Xem chi tiết */}
-                          <Link
-                            to={`/sales/dashboard/orders/${o.id}`}
-                            className="h-8 px-2.5 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100 gap-1.5 text-[12px] font-bold"
-                            style={{ color: "var(--text-secondary)" }}
-                            title="Xem chi tiết"
-                          >
-                            <Eye size={14} /> Xem
-                          </Link>
+                      <td className="px-4 py-3 text-center">
+                        {o.deliveryImage ? (
+                          <div className="w-10 h-10 rounded-lg overflow-hidden border border-green-200 mx-auto">
+                            <img src={o.deliveryImage} alt="delivery" className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <p className="text-[11px] text-gray-300 italic">Chưa có ảnh</p>
+                        )}
 
-                          {/* Gửi yêu cầu hủy — chỉ hiện khi trạng thái cho phép */}
-                          {canCancel && (
+                        {/* ===================== HOVER ACTIONS AREA ===================== */}
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-300 translate-x-4 group-hover:translate-x-0 z-20">
+                          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200 shadow-2xl">
+                            <Link
+                              to={`/sales/dashboard/orders/${o.id}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="h-9 px-4 rounded-xl bg-white border border-slate-200 text-slate-600 text-[12px] font-black hover:bg-slate-50 transition-all flex items-center gap-2 active:scale-95"
+                            >
+                              <Eye size={16} /> XEM CHI TIẾT
+                            </Link>
+
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setCancelTarget(o);
-                                setCancelReason("");
-                                setCancelSuccess(false);
-                              }}
-                              className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg text-[12px] font-bold transition cursor-pointer hover:opacity-80"
-                              style={{
-                                backgroundColor: "#FEF2F2",
-                                color: "#DC2626",
-                                border: "1px solid #FECACA",
-                              }}
-                              title="Gửi yêu cầu hủy đơn"
+                              onClick={(e) => handlePrintClick(e, o)}
+                              className="h-9 px-4 rounded-xl bg-emerald-600 text-white text-[12px] font-black hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 flex items-center gap-2 active:scale-95"
                             >
-                              <XCircle size={14} /> Yêu cầu hủy
+                              <Printer size={16} /> IN HÓA ĐƠN
                             </button>
-                          )}
 
-                          {/* Đã gửi yêu cầu hủy */}
-                          {o.status === "Chờ duyệt hủy" && (
-                            <span
-                              className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg text-[12px] font-bold"
-                              style={{
-                                backgroundColor: "#FEF3C7",
-                                color: "#D97706",
-                                border: "1px solid #FDE68A",
-                              }}
-                            >
-                              <AlertTriangle size={14} /> Chờ duyệt hủy
-                            </span>
-                          )}
+                            {canCancel && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCancelTarget(o);
+                                  setCancelReason("");
+                                  setCancelSuccess(false);
+                                }}
+                                className="h-9 px-4 rounded-xl bg-red-50 text-red-600 text-[12px] font-black hover:bg-red-100 transition-all flex items-center gap-2 active:scale-95 border border-red-100"
+                              >
+                                <XCircle size={16} /> YÊU CẦU HỦY
+                              </button>
+                            )}
+
+                            {o.status === "Chờ duyệt hủy" && (
+                              <div className="h-9 px-4 rounded-xl bg-amber-50 text-amber-600 text-[11px] font-black flex items-center gap-2 border border-amber-100 uppercase tracking-tight">
+                                <AlertTriangle size={14} /> Chờ duyệt hủy
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </td>
                     </tr>

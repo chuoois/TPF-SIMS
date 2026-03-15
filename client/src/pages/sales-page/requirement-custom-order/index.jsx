@@ -35,8 +35,9 @@ import {
   FileText,
   CreditCard,
   ImagePlus,
+  Lightbulb,
+  Clock,
 } from "lucide-react";
-import { PrintableInvoice } from "../order-manage/detail";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
 import AddCustomerModal from "@/pages/sales-page/components/AddCustomerModal";
@@ -111,14 +112,13 @@ const createEmptyTab = () => ({
 
 // ===================== SHARED INPUT STYLE =====================
 const inputBase =
-  "w-full text-[13px] rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 transition bg-transparent";
+  "w-full text-[13px] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all bg-white border border-gray-200 hover:border-gray-300";
 const inputStyle = {
-  border: "1px solid var(--grid-border)",
   color: "var(--text-main)",
 };
 
 // ===================== COMPONENT =====================
-export default function CustomOrderInvoicePage() {
+export default function CustomOrderRequirementsPage() {
   const [tabs, setTabs] = useState([createEmptyTab()]);
   const [activeTabId, setActiveTabId] = useState(tabs[0].id);
   const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0];
@@ -148,6 +148,7 @@ export default function CustomOrderInvoicePage() {
     note: "",
     images: [],
   });
+  const [editingItemId, setEditingItemId] = useState(null);
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
 
@@ -195,18 +196,26 @@ export default function CustomOrderInvoicePage() {
   // Cart
   const addCustomItem = () => {
     if (!newItem.productName.trim()) return;
-    const { ...rest } = newItem;
-    updateActiveTab({
-      cartItems: [
-        ...activeTab.cartItems,
-        {
-          id: `custom-${++itemIdCounter}`,
-          ...rest,
-          quantity: newItem.quantity || 1,
-          images: newItem.images || [],
-        },
-      ],
-    });
+    
+    if (editingItemId) {
+      updateActiveTab({
+        cartItems: activeTab.cartItems.map((i) =>
+          i.id === editingItemId ? { ...newItem, id: editingItemId } : i
+        ),
+      });
+      setEditingItemId(null);
+    } else {
+      updateActiveTab({
+        cartItems: [
+          ...activeTab.cartItems,
+          {
+            id: `custom-${++itemIdCounter}`,
+            ...newItem,
+          },
+        ],
+      });
+    }
+
     setNewItem({
       productName: "",
       woodType: "",
@@ -217,6 +226,12 @@ export default function CustomOrderInvoicePage() {
       images: [],
     });
     setShowAddForm(false);
+  };
+
+  const handleEditItem = (item) => {
+    setNewItem({ ...item });
+    setEditingItemId(item.id);
+    setShowAddForm(true);
   };
 
   const updateQuantity = (id, delta) => {
@@ -374,13 +389,13 @@ export default function CustomOrderInvoicePage() {
             {/* Add product pushed to right */}
             <button
               onClick={() => setShowAddForm(true)}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition shrink-0 ml-auto cursor-pointer"
+              className="flex items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-bold transition-all shrink-0 ml-auto cursor-pointer shadow-sm hover:translate-y-[-1px] active:translate-y-[0px]"
               style={{
-                backgroundColor: "var(--status-focus)",
-                color: "var(--brand-primary)",
+                backgroundColor: "var(--brand-primary)",
+                color: "white",
               }}
             >
-              <Plus size={13} /> Yêu cầu đặt riêng
+              <Plus size={14} /> Yêu cầu mới
             </button>
           </div>
 
@@ -393,23 +408,35 @@ export default function CustomOrderInvoicePage() {
                 backgroundColor: "var(--grid-header-bg)",
               }}
             >
-              <div className="flex items-center justify-between">
-                <h4
-                  className="text-[13px] font-bold flex items-center gap-2"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  <Package
-                    size={14}
-                    style={{ color: "var(--brand-primary)" }}
-                  />
-                  Thêm yêu cầu đặt riêng
-                </h4>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center">
+                    <Package size={16} className="text-green-600" />
+                  </div>
+                  <div>
+                    <h4 className="text-[14px] font-bold text-gray-900">
+                      {editingItemId ? "Cập nhật sản phẩm" : "Thông tin sản phẩm"}
+                    </h4>
+                    <p className="text-[11px] text-gray-500">Mô tả chi tiết sản phẩm khách muốn đặt riêng</p>
+                  </div>
+                </div>
                 <button
-                  onClick={() => setShowAddForm(false)}
-                  className="cursor-pointer"
-                  style={{ color: "var(--text-placeholder)" }}
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setEditingItemId(null);
+                    setNewItem({
+                      productName: "",
+                      woodType: "",
+                      size: "",
+                      color: "",
+                      quantity: 1,
+                      note: "",
+                      images: [],
+                    });
+                  }}
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition cursor-pointer text-gray-400"
                 >
-                  <X size={16} />
+                  <X size={18} />
                 </button>
               </div>
 
@@ -559,6 +586,7 @@ export default function CustomOrderInvoicePage() {
                     style={inputStyle}
                   />
                 </div>
+               
                 <input
                   type="text"
                   placeholder="Ghi chú (sơn màu, chạm khắc, ...)"
@@ -646,7 +674,19 @@ export default function CustomOrderInvoicePage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowAddForm(false)}
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setEditingItemId(null);
+                    setNewItem({
+                      productName: "",
+                      woodType: "",
+                      size: "",
+                      color: "",
+                      quantity: 1,
+                      note: "",
+                      images: [],
+                    });
+                  }}
                   className="text-xs cursor-pointer rounded-lg"
                 >
                   Hủy
@@ -658,7 +698,15 @@ export default function CustomOrderInvoicePage() {
                   className="text-xs font-bold text-white rounded-lg cursor-pointer"
                   style={{ backgroundColor: "var(--brand-primary)" }}
                 >
-                  <Plus size={13} className="mr-1" /> Tạo yêu cầu
+                  {editingItemId ? (
+                    <>
+                      <Pencil size={13} className="mr-1" /> Lưu thay đổi
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={13} className="mr-1" /> Tạo yêu cầu
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -672,26 +720,21 @@ export default function CustomOrderInvoicePage() {
                 style={{ color: "var(--text-placeholder)" }}
               >
                 <div
-                  className="w-20 h-20 rounded-2xl flex items-center justify-center"
-                  style={{ backgroundColor: "var(--bg-main)" }}
+                  className="w-20 h-20 rounded-2xl flex items-center justify-center bg-gray-50 text-gray-300"
                 >
                   <Package size={32} strokeWidth={1.5} />
                 </div>
-                <p className="text-sm font-medium mt-2">
-                  Chưa có sản phẩm đặt nào
+                <p className="text-sm font-bold text-gray-900 mt-2">
+                  Chưa có sản phẩm
                 </p>
-                <p className="text-xs">
-                  Nhấn "Thêm yêu cầu" để mô tả hàng đặt riêng
+                <p className="text-xs text-gray-400">
+                  Nhấn "Yêu cầu mới" để thêm thông tin hàng đặt riêng
                 </p>
                 <button
                   onClick={() => setShowAddForm(true)}
-                  className="mt-3 flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-medium transition cursor-pointer"
-                  style={{
-                    backgroundColor: "var(--status-focus)",
-                    color: "var(--brand-primary)",
-                  }}
+                  className="mt-3 flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-[13px] font-bold transition-all cursor-pointer bg-green-50 text-green-600 hover:bg-green-100 shadow-sm"
                 >
-                  <Plus size={14} /> Yêu cầu đặt riêng
+                  <Plus size={16} /> Thêm ngay
                 </button>
               </div>
             ) : (
@@ -714,53 +757,41 @@ export default function CustomOrderInvoicePage() {
 
                       <div className="flex-1 min-w-0">
                         <p
-                          className="text-[13px] font-semibold truncate"
+                          className="text-[14px] font-bold"
                           style={{ color: "var(--text-main)" }}
                         >
                           {item.productName}
                         </p>
-                        <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
                           {item.woodType && (
-                            <span
-                              className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md"
-                              style={{
-                                backgroundColor: "var(--status-focus)",
-                                color: "var(--status-success)",
-                              }}
-                            >
-                              <TreePine size={9} /> {item.woodType}
-                            </span>
-                          )}
-                          {item.size && (
-                            <span
-                              className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md"
-                              style={{
-                                backgroundColor: "#F3E8FF",
-                                color: "#7C3AED",
-                              }}
-                            >
-                              <Ruler size={9} /> {item.size}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] text-gray-400 w-14">Loại gỗ:</span>
+                              <span className="text-[11px] font-medium text-gray-700">{item.woodType}</span>
+                            </div>
                           )}
                           {item.color && (
-                            <span
-                              className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md"
-                              style={{
-                                backgroundColor: "#FFF7ED",
-                                color: "#EA580C",
-                              }}
-                            >
-                              <Palette size={9} /> {item.color}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] text-gray-400 w-14">Màu sắc:</span>
+                              <span className="text-[11px] font-medium text-gray-700">{item.color}</span>
+                            </div>
+                          )}
+                          {item.size && (
+                            <div className="flex items-center gap-2 col-span-2">
+                              <span className="text-[11px] text-gray-400 w-14">Kích thước:</span>
+                              <span className="text-[11px] font-medium text-gray-700">{item.size}</span>
+                            </div>
                           )}
                         </div>
+
                         {item.note && (
-                          <p
-                            className="text-[11px] italic mt-1 truncate"
-                            style={{ color: "var(--text-placeholder)" }}
+                          <div
+                            className="text-[11px] mt-2 flex items-start gap-1.5 p-2 rounded-lg bg-gray-50 border border-gray-100"
+                            style={{ color: "var(--text-secondary)" }}
                           >
-                            📝 {item.note}
-                          </p>
+                            <FileText size={12} className="shrink-0 mt-0.5 opacity-60" />
+                            <span className="italic">{item.note}</span>
+                          </div>
                         )}
                         {item.images && item.images.length > 0 && (
                           <div className="flex gap-1.5 mt-2">
@@ -813,13 +844,25 @@ export default function CustomOrderInvoicePage() {
                         </button>
                       </div>
 
-                      <button
-                        onClick={() => removeFromCart(item.id)}
-                        className="w-7 h-7 rounded-lg items-center justify-center transition cursor-pointer opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 hidden group-hover:flex shrink-0 mt-0.5"
-                        style={{ color: "var(--text-placeholder)" }}
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                      {/* Actions */}
+                      <div className="flex items-center gap-1 shrink-0 mt-0.5 group-hover:flex hidden">
+                        <button
+                          onClick={() => handleEditItem(item)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-indigo-50 hover:text-indigo-500"
+                          style={{ color: "var(--text-placeholder)" }}
+                          title="Sửa"
+                        >
+                          <Pencil size={13} />
+                        </button>
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-red-50 hover:text-red-500"
+                          style={{ color: "var(--text-placeholder)" }}
+                          title="Xóa"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -865,33 +908,25 @@ export default function CustomOrderInvoicePage() {
               className="flex items-center justify-between px-4 py-3 border-t"
               style={{ borderColor: "var(--grid-border)" }}
             >
-              <div>
-                <p
-                  className="text-xs uppercase tracking-wider font-medium"
-                  style={{ color: "var(--text-placeholder)" }}
-                >
-                  Số lượng
+              <div className="flex flex-col">
+                <p className="text-[10px] uppercase tracking-[0.1em] font-bold text-gray-400">
+                  Tổng sản phẩm
                 </p>
-                <p
-                  className="text-xl font-bold tracking-tight"
-                  style={{ color: "var(--brand-primary)" }}
-                >
-                  {itemCount} SP
-                </p>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-black text-green-600 leading-none">{itemCount}</span>
+                  <span className="text-[12px] font-bold text-gray-400 uppercase">Món</span>
+                </div>
               </div>
               <Button
-                className="h-11 px-8 text-sm font-bold text-white rounded-xl transition-all duration-200 active:scale-[0.97] cursor-pointer disabled:opacity-40"
+                className="h-12 px-10 text-[14px] font-black uppercase tracking-wider text-white rounded-xl transition-all duration-300 active:scale-[0.95] cursor-pointer disabled:opacity-30 flex items-center gap-2 group shadow-[0_8px_20px_-6px_rgba(34,197,94,0.4)] hover:shadow-[0_12px_25px_-4px_rgba(34,197,94,0.5)]"
                 style={{
                   backgroundColor: "var(--brand-primary)",
-                  boxShadow:
-                    activeTab.cartItems.length > 0
-                      ? "0 4px 14px rgba(52, 176, 87, 0.25)"
-                      : "none",
                 }}
                 disabled={activeTab.cartItems.length === 0}
                 onClick={handleCreateOrder}
               >
-                Gửi yêu cầu
+                Gửi yêu cầu ngay
+                <CheckCircle2 size={18} className="transition-transform group-hover:scale-110" />
               </Button>
             </div>
           </div>
@@ -932,12 +967,13 @@ export default function CustomOrderInvoicePage() {
               </span>
             </div>
             <span
-              className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md"
+              className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md flex items-center gap-1.5"
               style={{
                 backgroundColor: "#FFF7ED",
                 color: "var(--status-pending)",
               }}
             >
+              <Clock size={11} strokeWidth={3} />
               Yêu cầu
             </span>
           </div>
@@ -964,26 +1000,19 @@ export default function CustomOrderInvoicePage() {
                 >
                   {activeTab.selectedCustomer ? (
                     <div
-                      className="flex items-center gap-1.5 px-3 py-1.5 flex-1 min-w-0 rounded-lg bg-gray-50 border"
-                      style={{ borderColor: "var(--grid-border)" }}
+                      className="flex items-center gap-2.5 px-3 py-2 flex-1 min-w-0 rounded-xl bg-green-50/50 border border-green-100"
                     >
-                      <User
-                        size={14}
-                        style={{ color: "var(--text-placeholder)" }}
-                        className="shrink-0"
-                      />
-                      <span
-                        className="text-[13px] font-medium truncate"
-                        style={{ color: "var(--brand-primary)" }}
-                      >
-                        {activeTab.selectedCustomer.name}
-                      </span>
-                      <span
-                        className="text-[11px] shrink-0"
-                        style={{ color: "var(--text-placeholder)" }}
-                      >
-                        {activeTab.selectedCustomer.phone}
-                      </span>
+                      <div className="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                        <User size={14} className="text-green-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-bold text-green-700 truncate leading-tight">
+                          {activeTab.selectedCustomer.name}
+                        </p>
+                        <p className="text-[10px] text-green-600/70 font-medium">
+                          {activeTab.selectedCustomer.phone}
+                        </p>
+                      </div>
                       <button
                         onClick={() => {
                           updateActiveTab({
@@ -993,25 +1022,24 @@ export default function CustomOrderInvoicePage() {
                           });
                           setCustomerSearch("");
                         }}
-                        className="cursor-pointer shrink-0 ml-auto"
-                        style={{ color: "var(--text-placeholder)" }}
+                        className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-green-100 transition cursor-pointer text-green-600"
                       >
-                        <X size={12} />
+                        <X size={14} />
                       </button>
                     </div>
                   ) : (
                     <div
-                      className="flex items-center gap-1.5 px-3 flex-1 min-w-0 rounded-lg bg-white box-border border"
-                      style={{ borderColor: "var(--grid-border)" }}
+                      className={`flex items-center gap-1.5 px-3 flex-1 min-w-0 rounded-xl bg-white border transition-all ${
+                        showCustomerDropdown ? "ring-4 ring-green-500/10 border-green-500/30" : "border-gray-200 hover:border-gray-300"
+                      }`}
                     >
-                      <User
+                      <Search
                         size={14}
-                        style={{ color: "var(--text-placeholder)" }}
-                        className="shrink-0"
+                        className="text-gray-400 shrink-0"
                       />
                       <input
                         type="text"
-                        placeholder="Tìm khách hàng (tên, SĐT)..."
+                        placeholder="Tìm khách hàng..."
                         value={customerSearch}
                         onChange={(e) => {
                           setCustomerSearch(e.target.value);
@@ -1024,16 +1052,15 @@ export default function CustomOrderInvoicePage() {
                         onBlur={() => {
                           setTimeout(() => setShowCustomerDropdown(false), 200);
                         }}
-                        className="flex-1 text-[13px] py-1.5 focus:outline-none bg-transparent min-w-0 border-none"
+                        className="flex-1 text-[13px] py-2.5 focus:outline-none bg-transparent min-w-0"
                         style={{ color: "var(--text-main)" }}
                       />
                       <button
                         onClick={() => setShowAddCustomer(true)}
-                        className="w-6 h-6 rounded-md flex items-center justify-center cursor-pointer transition hover:bg-gray-100 shrink-0"
-                        style={{ color: "var(--brand-primary)" }}
-                        title="Thêm khách hàng mới"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer transition bg-green-50 text-green-600 hover:bg-green-100 shrink-0"
+                        title="Thêm mới"
                       >
-                        <UserPlus size={12} />
+                        <UserPlus size={14} />
                       </button>
                     </div>
                   )}
@@ -1152,16 +1179,15 @@ export default function CustomOrderInvoicePage() {
             </div>
 
             {/* Delivery Info */}
-            <div
-              className="p-4 space-y-3 border-b"
-              style={{ borderColor: "var(--grid-border)" }}
-            >
-              <p
-                className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5"
-                style={{ color: "var(--text-placeholder)" }}
-              >
-                <Truck size={12} /> Thông tin giao hàng
-              </p>
+            <div className="p-4 space-y-4 border-b">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-blue-50 flex items-center justify-center">
+                  <Truck size={12} className="text-blue-600" />
+                </div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                  Thông tin giao hàng
+                </p>
+              </div>
               <div className="space-y-2.5">
                 <div className="relative">
                   <MapPin
@@ -1209,12 +1235,14 @@ export default function CustomOrderInvoicePage() {
                 }}
               >
                 <p
-                  className="text-[12px] leading-relaxed"
+                  className="text-[12px] leading-relaxed flex items-start gap-2"
                   style={{ color: "var(--status-pending)" }}
                 >
-                  💡 <strong>Yêu cầu đặt hàng:</strong> Sales chỉ ghi nhận thông
-                  tin và chuyển yêu cầu. Việc tạo hóa đơn và thu tiền cọc do Chủ
-                  cửa hàng thực hiện.
+                  <Lightbulb size={14} className="mt-0.5 shrink-0" />
+                  <span>
+                    <strong>Yêu cầu đặt hàng:</strong> Sales chỉ ghi nhận thông
+                    tin và chuyển yêu cầu.
+                  </span>
                 </p>
               </div>
             </div>
