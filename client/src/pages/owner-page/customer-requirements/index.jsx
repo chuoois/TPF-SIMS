@@ -1,6 +1,8 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 import { PageHelmet } from "@/components/seo/PageHelmet";
+import { Button } from "@/components/ui/button";
 import {
   Search,
   Phone,
@@ -27,7 +29,8 @@ import {
   Settings,
   Activity,
   RefreshCw,
-  MapPin, // Added MapPin icon
+  MapPin,
+  ChevronDown, // Added ChevronDown for dropdown
 } from "lucide-react";
 
 // ===================== MOCK DATA =====================
@@ -45,6 +48,7 @@ const MOCK_REQUIREMENTS = [
     surveyNotes: "",
     proposedSolution: "",
     estimatedPrice: 0,
+    estimatedDeliveryDate: "2026-04-10",
     items: [
       {
         id: "ITM-001",
@@ -55,7 +59,7 @@ const MOCK_REQUIREMENTS = [
           note: "Hộc kéo 2 bên hông giường",
         },
         customerImages: [
-          "https://images.unsplash.com/photo-1505693419173-42b9218a5c81?auto=format&fit=crop&q=80&w=600",
+          "https://scontent.fhan15-1.fna.fbcdn.net/v/t39.30808-6/637459691_1977013123217579_6531168230899229053_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=1d70fc&_nc_ohc=HOM3FFuOUaEQ7kNvwF0Or8M&_nc_oc=AdlPq2yOHwV4yoeTTB1yyX6uN-SlODZh2T7HU8FBUl5IKzJ9UtupGabqX5HIHRdAG1dTYgwmvnvFh0AeaEj0ZfYC&_nc_zt=23&_nc_ht=scontent.fhan15-1.fna&_nc_gid=jadTa4V6nf_sWyNQtwAVXw&_nc_ss=8&oh=00_AfxV5mxqXC-Q0Z3pylSWXN4aVjrVQk7jD1C0CITFUeZnrw&oe=69BC9542",
         ],
         quotedPrice: 0,
       },
@@ -87,6 +91,7 @@ const MOCK_REQUIREMENTS = [
     surveyNotes: "",
     proposedSolution: "",
     estimatedPrice: 0,
+    estimatedDeliveryDate: "2026-04-15",
     items: [
       {
         id: "ITM-002",
@@ -118,6 +123,7 @@ const MOCK_REQUIREMENTS = [
     surveyNotes: "Khách yêu cầu độ hoàn thiện bóng kính.",
     proposedSolution: "Tủ rượu âm tường gỗ Hương, LED cảm ứng.",
     estimatedPrice: 45000000,
+    estimatedDeliveryDate: "2026-04-05",
     items: [
       {
         id: "ITM-003",
@@ -165,6 +171,37 @@ const MOCK_REQUIREMENTS = [
       },
     ],
   },
+];
+
+const MATERIAL_SAMPLES = [
+  "Gỗ Sồi Mỹ",
+  "Gỗ Gõ Đỏ Pachy",
+  "Gỗ Hương",
+  "Gỗ Công nghiệp An Cường",
+  "Gỗ Ash (Tần bì)",
+  "Gỗ Walnut (Óc chó)",
+  "MDF Phủ Melamine",
+  "MDF Phủ Acrylic",
+  "Nhựa Picomat",
+  "Đá Marble tự nhiên",
+  "Đá Quartz nhân tạo",
+  "Kính cường lực",
+  "Mây mắt cáo tự nhiên",
+];
+
+const COLOR_SAMPLES = [
+  "Sơn trắng S8",
+  "Sơn đen mờ",
+  "Màu gỗ Sồi tự nhiên",
+  "Màu gỗ Óc chó (Walnut)",
+  "Màu gỗ Gõ Đỏ",
+  "Xám xi măng",
+  "Xám chì",
+  "Vàng sồi",
+  "Trắng gương (Acrylic)",
+  "Xanh mint",
+  "Gỗ An Cường MS 402",
+  "Gỗ An Cường MS 201",
 ];
 
 const STATUS_CONFIG = {
@@ -223,41 +260,212 @@ const ImageViewer = ({ src, onClose }) => {
   );
 };
 
+// ===================== HELPER COMPONENTS =====================
+const AutocompleteSelector = ({
+  value,
+  onChange,
+  disabled,
+  options = [],
+  placeholder = "Chọn...",
+  className = ""
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const dropdownRef = useRef(null);
+
+  const filteredOptions = useMemo(() => {
+    const q = searchTerm.toLowerCase();
+    return options.filter(o => o.toLowerCase().includes(q));
+  }, [searchTerm, options]);
+
+  // Handle outside click to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className={`relative ${className}`} ref={dropdownRef}>
+      <div className="relative group">
+        <input
+          type="text"
+          value={isOpen ? searchTerm : value}
+          onChange={(e) => {
+            if (!isOpen) setIsOpen(true);
+            setSearchTerm(e.target.value);
+            onChange(e.target.value);
+          }}
+          onFocus={() => {
+            setIsOpen(true);
+            setSearchTerm("");
+          }}
+          disabled={disabled}
+          placeholder={placeholder}
+          className="w-full h-9 px-3 pr-8 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-700 transition-all font-medium"
+        />
+        <ChevronDown
+          size={14}
+          className={`absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none transition-transform ${isOpen ? "rotate-180" : ""}`}
+        />
+      </div>
+
+      {isOpen && !disabled && (
+        <div className="absolute z-[60] left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="max-h-[200px] overflow-y-auto pt-1 pb-1">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((o, i) => (
+                <button
+                  key={i}
+                  className="w-full text-left px-3 py-2 text-[13px] hover:bg-indigo-50 hover:text-indigo-700 transition-colors flex items-center justify-between font-medium"
+                  onClick={() => {
+                    onChange(o);
+                    setIsOpen(false);
+                  }}
+                >
+                  {o}
+                  {value === o && <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />}
+                </button>
+              ))
+            ) : (
+              <div className="px-3 py-4 text-center">
+                <p className="text-[12px] text-gray-400 italic">Nhấn để dùng giá trị mới:</p>
+                <button
+                  className="mt-1 text-[13px] font-bold text-indigo-600 hover:underline"
+                  onClick={() => setIsOpen(false)}
+                >
+                  "{searchTerm}"
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- Price Formatting Helpers ---
+const formatVND = (val) => {
+  if (val === null || val === undefined || val === "" || isNaN(val)) return "";
+  return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
+
+const PriceInput = ({ value, onChange, disabled, placeholder = "0", className = "" }) => {
+  const [displayValue, setDisplayValue] = useState(formatVND(value));
+
+  useEffect(() => {
+    // Only update if the external value actually changed and doesn't match current display
+    const formatted = formatVND(value);
+    if (formatted !== displayValue) {
+      setDisplayValue(formatted);
+    }
+  }, [value]);
+
+  const handleChange = (e) => {
+    const rawValue = e.target.value.replace(/\D/g, ""); // Keep only digits
+    const numericValue = rawValue === "" ? 0 : Number(rawValue);
+    setDisplayValue(formatVND(numericValue));
+    onChange(numericValue);
+  };
+
+  return (
+    <input
+      type="text"
+      value={displayValue}
+      onChange={handleChange}
+      disabled={disabled}
+      placeholder={placeholder}
+      className={className}
+    />
+  );
+};
+
+const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black/30 backdrop-blur-[2px] animate-in fade-in duration-200"
+        onClick={onCancel}
+      />
+      <div
+        className="relative bg-white w-full max-w-sm rounded-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+        style={{ boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
+      >
+        <div className="p-6 space-y-4">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto bg-red-50 text-red-600">
+            <AlertCircle size={22} />
+          </div>
+          <div className="text-center">
+            <h3 className="text-[15px] font-bold text-gray-900">{title}</h3>
+            <p className="text-[13px] text-gray-500 mt-2 leading-relaxed">
+              {message}
+            </p>
+          </div>
+          <div className="flex gap-2.5 pt-2">
+            <Button
+              variant="outline"
+              onClick={onCancel}
+              className="flex-1 rounded-lg cursor-pointer text-[13px] h-10"
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={onConfirm}
+              className="flex-1 rounded-lg text-[13px] font-bold text-white cursor-pointer h-10"
+              style={{ backgroundColor: "var(--status-error)" }}
+            >
+              Xác nhận
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
   const [surveyNotes, setSurveyNotes] = useState("");
   const [proposedSolution, setProposedSolution] = useState("");
   const [estimatedPrice, setEstimatedPrice] = useState("");
+  const [estimatedDeliveryDate, setEstimatedDeliveryDate] = useState("");
   const [ownerNotes, setOwnerNotes] = useState("");
   // Local state for technical specs (mocking per item for simplicity)
   const [itemSpecs, setItemSpecs] = useState([]);
+  const [showConfirmCancel, setShowConfirmCancel] = useState(false);
 
   const handleAddDesignImage = (itemId) => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
-    input.multiple = true; 
-    
+    input.multiple = true;
+
     input.onchange = (e) => {
       const files = Array.from(e.target.files);
       if (files.length > 0) {
-       
+
         const newUrls = files.map(file => URL.createObjectURL(file));
-        
-        setItemSpecs(prev => prev.map(item => 
-          item.id === itemId 
-            ? { ...item, designImages: [...(item.designImages || []), ...newUrls] } 
+
+        setItemSpecs(prev => prev.map(item =>
+          item.id === itemId
+            ? { ...item, designImages: [...(item.designImages || []), ...newUrls] }
             : item
         ));
       }
     };
-    
+
     input.click();
   };
 
   const handleRemoveDesignImage = (itemId, index) => {
-    setItemSpecs(prev => prev.map(item => 
-      item.id === itemId 
-        ? { ...item, designImages: item.designImages.filter((_, i) => i !== index) } 
+    setItemSpecs(prev => prev.map(item =>
+      item.id === itemId
+        ? { ...item, designImages: item.designImages.filter((_, i) => i !== index) }
         : item
     ));
   };
@@ -269,11 +477,13 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
       setSurveyNotes(req.surveyNotes || "");
       setProposedSolution(req.proposedSolution || "");
       setEstimatedPrice(isNewProcessing ? 0 : (req.estimatedPrice || 0));
+      setEstimatedDeliveryDate(req.estimatedDeliveryDate || "");
       setOwnerNotes(req.ownerNotes || "");
-      
+
       setItemSpecs(req.items.map(item => ({
         id: item.id,
         material: item.material || "",
+        color: item.specs?.color || item.color || "", // Added color
         dimensions: item.specs?.dimensions || "",
         hardware: item.specs?.hardware || "",
         note: item.specs?.note || "",
@@ -307,26 +517,35 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
       surveyNotes,
       proposedSolution,
       estimatedPrice: Number(estimatedPrice),
+      estimatedDeliveryDate,
       ownerNotes,
       itemSpecs // Passing these back for persistence
     });
   };
 
   const handleFixPrice = () => {
-    if (!estimatedPrice) return alert("Vui lòng nhập giá dự kiến trước khi chốt.");
+    if (!estimatedPrice) return toast.error("Vui lòng nhập giá dự kiến trước khi chốt.");
     onAction("fix_price", req.id, {
       surveyNotes,
       proposedSolution,
       estimatedPrice: Number(estimatedPrice),
+      estimatedDeliveryDate,
       ownerNotes,
       itemSpecs
     });
   };
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-xl flex flex-col overflow-hidden relative">
-        
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6">
+      <div
+        className="absolute inset-0 bg-black/30 backdrop-blur-[2px] animate-in fade-in duration-200"
+        onClick={onClose}
+      />
+      <div
+        className="relative bg-white w-full max-w-5xl h-full max-h-[90vh] rounded-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+        style={{ boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
+      >
+
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0 bg-gray-50">
           <div className="flex items-center gap-4">
@@ -338,7 +557,7 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                 <span className="px-2.5 py-1 bg-white border border-gray-200 text-gray-600 rounded-md text-[12px] font-medium font-mono shadow-sm">
                   {req.code}
                 </span>
-                <span 
+                <span
                   className="px-2.5 py-1 rounded-md text-[12px] font-medium border"
                   style={{ backgroundColor: statusConfig.bg, color: statusConfig.text, borderColor: statusConfig.border }}
                 >
@@ -355,242 +574,279 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
           </button>
         </div>
 
-        
+
         <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-white">
-          
+
           {/* Section 1: Thông tin chung */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
-               <div>
-                  <h3 className="text-[13px] font-bold text-gray-800 uppercase tracking-wider mb-2 flex items-center gap-2">
-                     <User size={16} className="text-gray-400" /> Khách hàng
-                  </h3>
-                  <div className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 space-y-2">
-                     <p className="text-[14px] font-bold text-gray-900">{req.customer}</p>
-                     <p className="text-[13px] text-gray-600 flex items-center gap-2">
-                        <Phone size={13} className="text-gray-400 shrink-0" /> {req.phone}
-                     </p>
-                     <p className="text-[13px] text-gray-600 flex items-start gap-2">
-                        <MapPin size={13} className="text-gray-400 mt-0.5 shrink-0" /> <span className="flex-1 leading-snug">{req.address || "Chưa cung cấp địa chỉ"}</span>
-                     </p>
-                  </div>
-               </div>
+              <div>
+                <h3 className="text-[13px] font-bold text-gray-800 uppercase tracking-wider mb-2 flex items-center gap-2">
+                  <User size={16} className="text-gray-400" /> Khách hàng
+                </h3>
+                <div className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 space-y-2">
+                  <p className="text-[14px] font-bold text-gray-900">{req.customer}</p>
+                  <p className="text-[13px] text-gray-600 flex items-center gap-2">
+                    <Phone size={13} className="text-gray-400 shrink-0" /> {req.phone}
+                  </p>
+                  <p className="text-[13px] text-gray-600 flex items-start gap-2">
+                    <MapPin size={13} className="text-gray-400 mt-0.5 shrink-0" /> <span className="flex-1 leading-snug">{req.address || "Chưa cung cấp địa chỉ"}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-[13px] font-bold text-gray-800 uppercase tracking-wider mb-2 flex items-center gap-2">
+                  <Calendar size={16} className="text-gray-400" /> Ngày giao dự kiến
+                </h3>
+                <div className="relative">
+                  <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  <input
+                    type="date"
+                    value={estimatedDeliveryDate}
+                    onChange={(e) => setEstimatedDeliveryDate(e.target.value)}
+                    disabled={!isProcessing}
+                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-600 transition-shadow"
+                  />
+                </div>
+              </div>
             </div>
-            
+
             {(isProcessing || surveyNotes || req.notes) && (
-            <div className="space-y-4">
-               <div>
+              <div className="space-y-4">
+                <div>
                   <h3 className="text-[13px] font-bold text-gray-800 uppercase tracking-wider mb-2 flex items-center gap-2">
-                     <FileText size={16} className="text-gray-400" /> Ghi chú
+                    <FileText size={16} className="text-gray-400" /> Ghi chú
                   </h3>
-                   <textarea
-                     value={surveyNotes || req.notes || ""}
-                     onChange={(e) => setSurveyNotes(e.target.value)}
-                     disabled={!isProcessing}
-                     placeholder="Ghi chú lại các nhu cầu ban đầu của khách và thông tin khảo sát thực tế..."
-                     className="w-full h-[104px] p-4 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-600 transition-shadow resize-none"
-                   />
-               </div>
-            </div>
+                  <textarea
+                    value={surveyNotes || req.notes || ""}
+                    onChange={(e) => setSurveyNotes(e.target.value)}
+                    disabled={!isProcessing}
+                    placeholder="Ghi chú lại các nhu cầu ban đầu của khách và thông tin khảo sát thực tế..."
+                    className="w-full h-[104px] p-4 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-600 transition-shadow resize-none"
+                  />
+                </div>
+              </div>
             )}
           </div>
+
 
           {/* Section 3: Chi tiết Sản phẩm & Thông số kỹ thuật */}
           <div className="border-t border-gray-100 pt-6">
             <h3 className="text-[14px] font-bold text-gray-900 flex items-center gap-2 mb-4">
-               <Package size={18} className="text-indigo-600" /> Danh sách Sản phẩm Yêu cầu
+              <Package size={18} className="text-indigo-600" /> Danh sách Sản phẩm Yêu cầu
             </h3>
-            
+
             <div className="space-y-6">
               {itemSpecs.map((spec, index) => {
                 const originalItem = req.items[index] || {};
                 return (
                   <div key={spec.id} className="p-5 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-                     {/* Item Header */}
-                     <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
-                        <div className="flex items-center gap-3">
-                           <span className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-[12px] font-bold">
-                              {index + 1}
-                           </span>
-                           <h4 className="text-[15px] font-bold text-gray-900">{originalItem.name || "Sản phẩm"}</h4>
+                    {/* Item Header */}
+                    <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
+                      <div className="flex items-center gap-3">
+                        <span className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-[12px] font-bold">
+                          {index + 1}
+                        </span>
+                        <h4 className="text-[15px] font-bold text-gray-900">{originalItem.name || "Sản phẩm"}</h4>
+                      </div>
+                      {/* Price Input (Inline for cleaner look) */}
+                      <div className="flex items-center gap-2">
+                        <label className="text-[12px] font-medium text-gray-500">Giá:</label>
+                        <div className="relative w-40">
+                          <PriceInput
+                            value={spec.price || ""}
+                            onChange={(val) => handleUpdateItemSpec(spec.id, "price", val)}
+                            disabled={!isProcessing}
+                            placeholder="0"
+                            className="w-full h-9 pl-3 pr-10 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[14px] font-medium disabled:bg-gray-50 text-right"
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-gray-400">đ</span>
                         </div>
-                        {/* Price Input (Inline for cleaner look) */}
-                        <div className="flex items-center gap-2">
-                           <label className="text-[12px] font-medium text-gray-500">Giá:</label>
-                           <div className="relative w-40">
-                              <input
-                                 type="number"
-                                 value={spec.price || ""}
-                                 onChange={(e) => handleUpdateItemSpec(spec.id, "price", e.target.value)}
-                                 disabled={!isProcessing}
-                                 placeholder="0"
-                                 className="w-full h-9 pl-3 pr-10 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[14px] font-medium disabled:bg-gray-50 text-right"
-                              />
-                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-gray-400"></span>
-                           </div>
-                        </div>
-                     </div>
+                      </div>
+                    </div>
 
-                     {/* Item Specs Grid */}
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                           <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">Chất liệu</label>
-                           <input
-                              type="text"
-                              value={spec.material}
-                              onChange={(e) => handleUpdateItemSpec(spec.id, "material", e.target.value)}
-                              disabled={!isProcessing}
-                              placeholder="VD: Gỗ Sồi"
-                              className="w-full h-9 px-3 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-700"
-                           />
-                        </div>
-                        <div>
-                           <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">Kích thước</label>
-                           <input
-                              type="text"
-                              value={spec.dimensions}
-                              onChange={(e) => handleUpdateItemSpec(spec.id, "dimensions", e.target.value)}
-                              disabled={!isProcessing}
-                              placeholder="D x R x C"
-                              className="w-full h-9 px-3 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-700"
-                           />
-                        </div>
-                        <div className="md:col-span-2">
-                           <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">Yêu cầu sản xuất (Note)</label>
-                           <input
-                              type="text"
-                              value={spec.note}
-                              onChange={(e) => handleUpdateItemSpec(spec.id, "note", e.target.value)}
-                              disabled={!isProcessing}
-                              placeholder="Ghi chú kỹ thuật cho xưởng..."
-                              className="w-full h-9 px-3 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-700"
-                           />
-                        </div>
-                     </div>
+                    {/* Item Specs Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <div>
+                        <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">Chất liệu</label>
+                        <AutocompleteSelector
+                          value={spec.material}
+                          onChange={(val) => handleUpdateItemSpec(spec.id, "material", val)}
+                          disabled={!isProcessing}
+                          options={MATERIAL_SAMPLES}
+                          placeholder="VD: Gỗ Sồi"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">Màu sắc</label>
+                        <AutocompleteSelector
+                          value={spec.color}
+                          onChange={(val) => handleUpdateItemSpec(spec.id, "color", val)}
+                          disabled={!isProcessing}
+                          options={COLOR_SAMPLES}
+                          placeholder="VD: Sơn trắng"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">Kích thước</label>
+                        <input
+                          type="text"
+                          value={spec.dimensions}
+                          onChange={(e) => handleUpdateItemSpec(spec.id, "dimensions", e.target.value)}
+                          disabled={!isProcessing}
+                          placeholder="D x R x C"
+                          className="w-full h-9 px-3 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-700 font-medium"
+                        />
+                      </div>
+                    </div>
 
-                     {/* Item Images Grid */}
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50/50 rounded-xl border border-gray-100">
-                        {/* Customer Images */}
-                        <div>
-                           <p className="text-[12px] font-bold text-gray-700 mb-2 flex items-center gap-1.5">
-                              <Camera size={14} className="text-gray-500"/> Ảnh mẫu khách gửi
-                           </p>
-                           <div className="flex gap-2 overflow-x-auto pb-1">
-                              {originalItem.customerImages?.length > 0 ? (
-                                 originalItem.customerImages.map((img, i) => (
-                                    <div 
-                                       key={i}
-                                       onClick={() => onEnlarge(img)}
-                                       className="w-16 h-16 shrink-0 rounded-lg overflow-hidden border border-gray-200 cursor-pointer hover:border-gray-400 transition-colors"
-                                    >
-                                       <img src={img} alt="Mẫu" className="w-full h-full object-cover" />
-                                    </div>
-                                 ))
-                              ) : (
-                                 <span className="text-[12px] text-gray-400 italic">Không có ảnh</span>
-                              )}
-                           </div>
-                        </div>
+                    <div className="grid grid-cols-1 gap-4 mb-4">
+                      <div>
+                        <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">Yêu cầu sản xuất (Note)</label>
+                        <input
+                          type="text"
+                          value={spec.note}
+                          onChange={(e) => handleUpdateItemSpec(spec.id, "note", e.target.value)}
+                          disabled={!isProcessing}
+                          placeholder="Ghi chú kỹ thuật cho xưởng..."
+                          className="w-full h-9 px-3 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-700 font-medium"
+                        />
+                      </div>
+                    </div>
 
-                        {/* Owner Designs */}
-                        <div>
-                           <div className="flex items-center justify-between mb-2">
-                              <p className="text-[12px] font-bold text-indigo-700 flex items-center gap-1.5">
-                                 <Layers size={14} className="text-indigo-500"/> Bản vẽ kỹ thuật / 3D
-                              </p>
-                              {isProcessing && (
-                                 <button 
-                                    onClick={() => handleAddDesignImage(spec.id)}
-                                    className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800"
-                                 >
-                                    + THÊM ẢNH
-                                 </button>
-                              )}
-                           </div>
-                           <div className="flex gap-2 overflow-x-auto pb-1 min-h-[64px]">
-                              {spec.designImages?.length > 0 ? (
-                                 spec.designImages.map((img, i) => (
-                                    <div 
-                                       key={i}
-                                       className="w-16 h-16 shrink-0 rounded-lg overflow-hidden border border-indigo-200 relative group"
-                                    >
-                                       <img src={img} onClick={() => onEnlarge(img)} alt="Bản vẽ" className="w-full h-full object-cover cursor-pointer" />
-                                       {isProcessing && (
-                                          <button 
-                                             onClick={(e) => { e.stopPropagation(); handleRemoveDesignImage(spec.id, i); }}
-                                             className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 shadow-sm"
-                                          >
-                                             <X size={10} />
-                                          </button>
-                                       )}
-                                    </div>
-                                 ))
-                              ) : (
-                                 <span className="text-[12px] text-gray-400 italic self-center">Chưa có bản vẽ</span>
-                              )}
-                           </div>
+                    {/* Item Images Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50/50 rounded-xl border border-gray-100">
+                      {/* Customer Images */}
+                      <div>
+                        <p className="text-[12px] font-bold text-gray-700 mb-2 flex items-center gap-1.5">
+                          <Camera size={14} className="text-gray-500" /> Ảnh mẫu khách gửi
+                        </p>
+                        <div className="flex gap-2 overflow-x-auto pb-1">
+                          {originalItem.customerImages?.length > 0 ? (
+                            originalItem.customerImages.map((img, i) => (
+                              <div
+                                key={i}
+                                onClick={() => onEnlarge(img)}
+                                className="w-16 h-16 shrink-0 rounded-lg overflow-hidden border border-gray-200 cursor-pointer hover:border-gray-400 transition-colors"
+                              >
+                                <img src={img} alt="Mẫu" className="w-full h-full object-cover" />
+                              </div>
+                            ))
+                          ) : (
+                            <span className="text-[12px] text-gray-400 italic">Không có ảnh</span>
+                          )}
                         </div>
-                     </div>
+                      </div>
+
+                      {/* Owner Designs */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-[12px] font-bold text-indigo-700 flex items-center gap-1.5">
+                            <Layers size={14} className="text-indigo-500" /> Bản vẽ kỹ thuật / 3D
+                          </p>
+                          {isProcessing && (
+                            <button
+                              onClick={() => handleAddDesignImage(spec.id)}
+                              className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800"
+                            >
+                              + THÊM ẢNH
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex gap-2 overflow-x-auto pb-1 min-h-[64px]">
+                          {spec.designImages?.length > 0 ? (
+                            spec.designImages.map((img, i) => (
+                              <div
+                                key={i}
+                                className="w-16 h-16 shrink-0 rounded-lg overflow-hidden border border-indigo-200 relative group"
+                              >
+                                <img src={img} onClick={() => onEnlarge(img)} alt="Bản vẽ" className="w-full h-full object-cover cursor-pointer" />
+                                {isProcessing && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleRemoveDesignImage(spec.id, i); }}
+                                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 shadow-sm"
+                                  >
+                                    <X size={10} />
+                                  </button>
+                                )}
+                              </div>
+                            ))
+                          ) : (
+                            <span className="text-[12px] text-gray-400 italic self-center">Chưa có bản vẽ</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 );
               })}
             </div>
           </div>
 
-       
+
 
         </div>
 
         {/* Footer Actions */}
         <div className="p-4 border-t border-gray-100 bg-gray-50 shrink-0">
-            <div className="flex items-center justify-between">
-               {/* Total Price Display */}
-               <div className="flex flex-col">
-                  <span className="text-[11px] font-medium text-gray-500 uppercase">Tổng giá trị đơn hàng</span>
-                  <span className="text-[18px] font-bold text-indigo-700">
-                     {Number(estimatedPrice || 0).toLocaleString('vi-VN')} <span className="text-[14px]">VND</span>
-                  </span>
-               </div>
-
-               {/* Action Buttons */}
-               <div className="flex items-center gap-3">
-                  {isProcessing && (
-                     <>
-                        <button
-                           onClick={handleSave}
-                           className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg text-[13px] font-bold hover:bg-gray-50 transition-colors shadow-sm"
-                        >
-                           Lưu nháp
-                        </button>
-                        <button
-                           onClick={() => onAction("create_order", req.id)}
-                           className="px-5 py-2 bg-emerald-600 text-white rounded-lg text-[13px] font-bold hover:bg-emerald-700 transition-colors shadow-sm flex items-center gap-2"
-                        >
-                           <Package size={16} /> Tạo Đơn Hàng
-                        </button>
-                     </>
-                  )}
-
-                  {isOrderCreated && (
-                     <span className="px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-[13px] font-bold flex items-center gap-2">
-                        <CheckCircle2 size={16} /> Đã chuyển sản xuất
-                     </span>
-                  )}
-
-                  {/* Cancel Button */}
-                  {(isProcessing || isPriceFixed) && (
-                     <button
-                        onClick={() => {
-                           if(window.confirm("Bạn có chắc muốn hủy yêu cầu này?")) onAction("cancel_req", req.id);
-                        }}
-                        className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg text-[13px] font-medium transition-colors"
-                     >
-                        Hủy bỏ
-                     </button>
-                  )}
-               </div>
+          <div className="flex items-center justify-between">
+            {/* Total Price Display */}
+            <div className="flex flex-col">
+              <span className="text-[11px] font-medium text-gray-500 uppercase">Tổng giá trị đơn hàng</span>
+              <span className="text-[18px] font-bold text-indigo-700">
+                {Number(estimatedPrice || 0).toLocaleString('vi-VN')} <span className="text-[14px]">đ</span>
+              </span>
             </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3">
+              {isProcessing && (
+                <>
+                  <button
+                    onClick={handleSave}
+                    className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg text-[13px] font-bold hover:bg-gray-50 transition-colors shadow-sm"
+                  >
+                    Lưu nháp
+                  </button>
+                  <button
+                    onClick={() => onAction("create_order", req.id)}
+                    className="px-5 py-2 bg-emerald-600 text-white rounded-lg text-[13px] font-bold hover:bg-emerald-700 transition-colors shadow-sm flex items-center gap-2"
+                  >
+                    <Package size={16} /> Tạo Đơn Hàng
+                  </button>
+                </>
+              )}
+
+              {isOrderCreated && (
+                <span className="px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-[13px] font-bold flex items-center gap-2">
+                  <CheckCircle2 size={16} /> Đã chuyển sản xuất
+                </span>
+              )}
+
+              {/* Cancel Button */}
+              {(isProcessing || isPriceFixed) && (
+                <button
+                  onClick={() => setShowConfirmCancel(true)}
+                  className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg text-[13px] font-medium transition-colors"
+                >
+                  Hủy bỏ
+                </button>
+              )}
+            </div>
+          </div>
         </div>
+
+        <ConfirmModal
+          isOpen={showConfirmCancel}
+          title="Xác nhận hủy yêu cầu"
+          message="Bạn có chắc chắn muốn hủy yêu cầu này không? Hành động này không thể hoàn tác."
+          onCancel={() => setShowConfirmCancel(false)}
+          onConfirm={() => {
+            setShowConfirmCancel(false);
+            onAction("cancel_req", req.id);
+          }}
+        />
       </div>
     </div>
   );
@@ -607,7 +863,7 @@ export default function OwnerRequirements() {
   const [requirements, setRequirements] = useState(MOCK_REQUIREMENTS);
   const [selectedReqId, setSelectedReqId] = useState(null);
   const [enlargedImg, setEnlargedImg] = useState(null);
-  
+
   const statusFilter = searchParams.get("status") || "Tất cả";
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
@@ -675,13 +931,13 @@ export default function OwnerRequirements() {
         if (type === "cancel_req") return { ...r, status: "Đã hủy" };
         if (type === "restore") return { ...r, status: "Đang xử lý" };
         if (type === "view_production") {
-            alert("Chuyển hướng tới chi tiết sản xuất...");
-            return r;
+          toast.success("Chuyển hướng tới chi tiết sản xuất...");
+          return r;
         }
         return r;
       })
     );
-    if (type === "save_progress") alert("Đã lưu tiến độ & thông số kỹ thuật!");
+    if (type === "save_progress") toast.success("Đã lưu tiến độ & thông số kỹ thuật!");
     if (type === "create_order") {
       // Find the finalized requirement data
       const finalizingReq = requirements.find(r => r.id === reqId);
@@ -736,7 +992,7 @@ export default function OwnerRequirements() {
       );
       localStorage.setItem("tpf_simulated_orders", JSON.stringify([newOrder, ...filteredExisting]));
 
-      alert(`Đã tạo đơn hàng thành công với tổng tiền ${Number(newOrder.total).toLocaleString('vi-VN')} VND! Hệ thống sẽ chuyển bạn tới danh sách Hàng đặt.`);
+      toast.success(`Đã tạo đơn hàng thành công`);
       setSelectedReqId(null);
       navigate("/owner/orders?tab=Hàng đặt");
     }
@@ -771,7 +1027,7 @@ export default function OwnerRequirements() {
               style={{ color: "var(--text-main)" }}
             >
               <Package size={22} style={{ color: "var(--brand-primary)" }} />
-               Danh sách yêu cầu khách hàng
+              Danh sách yêu cầu khách hàng
             </h1>
             <p
               className="text-[13px] mt-0.5"
@@ -837,37 +1093,37 @@ export default function OwnerRequirements() {
               borderBottom: "1px solid var(--grid-border)",
             }}
           >
-            <div className="flex items-center gap-4 flex-1 min-w-[300px]">
-              {/* Search */}
-              <div className="relative flex-1 max-w-sm">
-                <Search
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2"
-                  style={{ color: "var(--text-placeholder)" }}
-                />
-                <input
-                  type="text"
-                  placeholder="Mã yêu cầu, khách hàng..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] border focus:outline-none focus:ring-1 transition"
-                  style={{
-                    borderColor: "var(--grid-border)",
-                    backgroundColor: "#fff",
-                    color: "var(--text-main)",
-                  }}
-                />
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm("")}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full cursor-pointer"
-                  >
-                    <X size={14} style={{ color: "var(--text-placeholder)" }} />
-                  </button>
-                )}
-              </div>
+            {/* Search (Start) */}
+            <div className="relative flex-1 max-w-sm min-w-[300px]">
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2"
+                style={{ color: "var(--text-placeholder)" }}
+              />
+              <input
+                type="text"
+                placeholder="Mã yêu cầu, khách hàng..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] border focus:outline-none focus:ring-1 transition"
+                style={{
+                  borderColor: "var(--grid-border)",
+                  backgroundColor: "#fff",
+                  color: "var(--text-main)",
+                }}
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full cursor-pointer"
+                >
+                  <X size={14} style={{ color: "var(--text-placeholder)" }} />
+                </button>
+              )}
+            </div>
 
-              {/* Date Filter */}
+            {/* Date Filter + Actions (End) */}
+            <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <div className="relative">
                   <Calendar
@@ -904,9 +1160,7 @@ export default function OwnerRequirements() {
                   }}
                 />
               </div>
-            </div>
 
-            <div className="flex items-center gap-2">
               {hasActiveFilters && (
                 <button
                   onClick={clearAllFilters}
@@ -927,14 +1181,13 @@ export default function OwnerRequirements() {
                 }}
               >
                 <tr>
-                  {["STT", "Mã yêu cầu", "Khách hàng", "Ngày nhận", "Số lượng", "Trạng thái"].map((h, i) => (
+                  {["STT", "Mã yêu cầu", "Khách hàng", "Ngày nhận", "Giao dự kiến", "Số lượng", "Trạng thái"].map((h, i) => (
                     <th
                       key={i}
-                      className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${
-                        i === 0 ? "text-center w-[50px]" : 
-                        i === 4 ? "text-center" :
-                        i === 5 ? "text-right pr-4" : ""
-                      }`}
+                      className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 0 ? "text-center w-[50px]" :
+                        i === 5 ? "text-center" :
+                          i === 6 ? "text-right pr-4" : ""
+                        }`}
                       style={{ color: "var(--text-placeholder)" }}
                     >
                       {h}
@@ -978,7 +1231,10 @@ export default function OwnerRequirements() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>
-                         {r.createdDate}
+                        {r.createdDate}
+                      </td>
+                      <td className="px-4 py-3 text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>
+                        {r.estimatedDeliveryDate || "—"}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className="text-[13px] font-black py-1 px-3 bg-slate-100 rounded-lg text-slate-600">{r.items?.length || 0}</span>
@@ -1004,26 +1260,26 @@ export default function OwnerRequirements() {
                           <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 flex items-center gap-2 transition-all transform translate-x-4 group-hover:translate-x-0 z-20">
                             {/* Visual Action Button (Status-based but opens Modal) */}
                             <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedReqId(r.id);
-                                }}
-                                className={`flex items-center gap-2 ${statusConfig.actionColor} text-white px-3 py-1.5 rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all outline-none`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedReqId(r.id);
+                              }}
+                              className={`flex items-center gap-2 ${statusConfig.actionColor} text-white px-3 py-1.5 rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all outline-none`}
                             >
-                                <span className="text-[10px] font-black uppercase tracking-wider">{statusConfig.actionLabel}</span>
-                                <statusConfig.actionIcon size={14} />
+                              <span className="text-[10px] font-black uppercase tracking-wider">{statusConfig.actionLabel}</span>
+                              <statusConfig.actionIcon size={14} />
                             </button>
 
                             {/* View Detail Button */}
                             <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedReqId(r.id);
-                                }}
-                                className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-xl shadow-sm hover:bg-slate-50 active:scale-95 transition-all text-[10px] font-black uppercase tracking-wider outline-none"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedReqId(r.id);
+                              }}
+                              className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-xl shadow-sm hover:bg-slate-50 active:scale-95 transition-all text-[10px] font-black uppercase tracking-wider outline-none"
                             >
-                                Chi tiết
-                                <Eye size={14} />
+                              Chi tiết
+                              <Eye size={14} />
                             </button>
                           </div>
                         </div>
