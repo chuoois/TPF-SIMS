@@ -10,6 +10,7 @@
  */
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import {
   X,
@@ -534,6 +535,7 @@ const createEmptyTab = () => ({
   depositAmount: 0,
   deliveryMethod: "store", // "store" hoặc "delivery"
   deliveryDate: "",
+  processingFee: 0,
 });
 
 // ===================== COMPONENT =====================
@@ -585,6 +587,7 @@ export default function InStockInvoicePage() {
       depositAmount: 0,
       deliveryMethod: "store",
       deliveryDate: "",
+      processingFee: 0,
     },
   ]);
   const [activeTabId, setActiveTabId] = useState(1);
@@ -595,8 +598,6 @@ export default function InStockInvoicePage() {
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [toast, setToast] = useState(null);
-  const toastTimer = useRef(null);
   const [customerSearch, setCustomerSearch] = useState("");
   const [productSearch, setProductSearch] = useState(""); // Thêm state tìm kiếm sản phẩm
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
@@ -612,12 +613,6 @@ export default function InStockInvoicePage() {
     },
     [activeTabId],
   );
-
-  const showToast = (type, message) => {
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    setToast({ type, message });
-    toastTimer.current = setTimeout(() => setToast(null), 4000);
-  };
 
   const filteredProducts = useMemo(() => {
     return WOOD_PRODUCTS.filter((p) => {
@@ -711,7 +706,7 @@ export default function InStockInvoicePage() {
     const existing = activeTab.cartItems.find((i) => i.id === product.id);
     if (existing) {
       if (existing.quantity >= product.stock) {
-        showToast("error", `"${product.name}" đã hết hàng trong kho`);
+        toast.error(`"${product.name}" đã hết hàng trong kho`);
         return;
       }
       updateActiveTab({
@@ -721,7 +716,7 @@ export default function InStockInvoicePage() {
       });
     } else {
       if (product.stock <= 0) {
-        showToast("error", `"${product.name}" đã hết hàng`);
+        toast.error(`"${product.name}" đã hết hàng`);
         return;
       }
       updateActiveTab({
@@ -748,7 +743,7 @@ export default function InStockInvoicePage() {
           if (i.id !== id) return i;
           const newQty = i.quantity + delta;
           if (delta > 0 && newQty > i.stock) {
-            showToast("error", `Tồn kho chỉ còn ${i.stock}`);
+            toast.error(`Tồn kho chỉ còn ${i.stock}`);
             return i;
           }
           return { ...i, quantity: Math.max(0, newQty) };
@@ -768,7 +763,7 @@ export default function InStockInvoicePage() {
     if (val <= 0) return removeFromCart(id);
     const item = activeTab.cartItems.find((i) => i.id === id);
     if (item && val > item.stock) {
-      showToast("error", `Tồn kho chỉ còn ${item.stock}`);
+      toast.error(`Tồn kho chỉ còn ${item.stock}`);
       return;
     }
     updateActiveTab({
@@ -792,7 +787,10 @@ export default function InStockInvoicePage() {
   );
   const totalPayable = Math.max(
     0,
-    subtotal - activeTab.discount - activeTab.depositAmount,
+    subtotal +
+      (activeTab.processingFee || 0) -
+      activeTab.discount -
+      activeTab.depositAmount,
   );
   const itemCount = activeTab.cartItems.reduce((sum, i) => sum + i.quantity, 0);
 
@@ -800,10 +798,7 @@ export default function InStockInvoicePage() {
     if (activeTab.cartItems.length === 0) return;
 
     if (!activeTab.selectedCustomer) {
-      showToast(
-        "error",
-        "Vui lòng nhập hoặc chọn Khách hàng trước khi thanh toán!",
-      );
+      toast.error("Vui lòng nhập hoặc chọn Khách hàng trước khi thanh toán!");
       return;
     }
 
@@ -824,12 +819,16 @@ export default function InStockInvoicePage() {
         price: item.price,
         note: "",
       })),
-      total: subtotal,
+      total: totalPayable,
+      subtotal: subtotal,
+      processingFee: activeTab.processingFee || 0,
+      discount: activeTab.discount,
       deposit: activeTab.depositAmount,
+      deliveryDate: activeTab.deliveryDate,
       date: new Date().toISOString(),
     };
 
-    showToast("success", `Tạo hóa đơn ${newOrder.code} thành công!`);
+    toast.success(`Tạo yêu cầu ${newOrder.code} thành công!`);
     setPrintingOrder(newOrder);
 
     updateActiveTab({
@@ -840,6 +839,7 @@ export default function InStockInvoicePage() {
       depositAmount: 0,
       deliveryMethod: "store",
       deliveryDate: "",
+      processingFee: 0,
     });
   };
 
@@ -847,33 +847,6 @@ export default function InStockInvoicePage() {
   return (
     <>
       <PageHelmet title="Bán hàng có sẵn - TPF-SIMS" />
-
-      {/* ── Toast ── */}
-      {toast && (
-        <div
-          className="fixed top-5 right-5 z-50 flex items-center gap-3 pl-4 pr-3 py-3 rounded-xl text-sm font-medium text-white animate-in slide-in-from-top-2"
-          style={{
-            backgroundColor:
-              toast.type === "success"
-                ? "var(--status-success)"
-                : "var(--status-error)",
-            boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
-          }}
-        >
-          {toast.type === "success" ? (
-            <CheckCircle2 size={16} />
-          ) : (
-            <AlertCircle size={16} />
-          )}
-          <span className="mr-1">{toast.message}</span>
-          <button
-            onClick={() => setToast(null)}
-            className="opacity-60 hover:opacity-100 cursor-pointer p-0.5"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
 
       <div
         className="flex h-full gap-4 -m-4 p-4"
@@ -1317,7 +1290,8 @@ export default function InStockInvoicePage() {
                       style={{ color: "var(--text-placeholder)" }}
                     />
                     <input
-                      type="date"
+                      type="text"
+                      placeholder="dd/mm/yy"
                       value={activeTab.deliveryDate || ""}
                       onChange={(e) =>
                         updateActiveTab({ deliveryDate: e.target.value })
@@ -1351,6 +1325,39 @@ export default function InStockInvoicePage() {
                 >
                   {fmt(subtotal)}đ
                 </span>
+              </div>
+              <div className="flex justify-between text-[13px] items-center">
+                <span style={{ color: "var(--text-secondary)" }}>
+                  Phí gia công
+                </span>
+                <div className="flex items-center gap-1">
+                  <span
+                    className="text-[13px]"
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
+                    ₫
+                  </span>
+                  <input
+                    type="text"
+                    value={
+                      activeTab.processingFee
+                        ? fmt(activeTab.processingFee)
+                        : ""
+                    }
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\D/g, "");
+                      updateActiveTab({
+                        processingFee: parseInt(raw) || 0,
+                      });
+                    }}
+                    placeholder="0"
+                    className="w-28 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white"
+                    style={{
+                      border: "1px solid var(--grid-border)",
+                      color: "var(--text-main)",
+                    }}
+                  />
+                </div>
               </div>
               <div className="flex justify-between text-[13px] items-center">
                 <span style={{ color: "var(--text-secondary)" }}>Giảm giá</span>
@@ -1469,7 +1476,7 @@ export default function InStockInvoicePage() {
                   backgroundColor: "var(--bg-main)",
                 }}
               >
-                {["Hàng thô", "Hàng hoàn thiện"].map((tab) => (
+                {["Hàng mộc", "Hàng hoàn thiện"].map((tab) => (
                   <button
                     key={tab}
                     onClick={() => {

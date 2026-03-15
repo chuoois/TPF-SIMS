@@ -10,6 +10,7 @@
  */
 
 import { useState, useCallback, useRef, useMemo } from "react";
+import toast from "react-hot-toast";
 import {
   X,
   Plus,
@@ -149,8 +150,6 @@ export default function CustomOrderRequirementsPage() {
     images: [],
   });
   const [editingItemId, setEditingItemId] = useState(null);
-  const [toast, setToast] = useState(null);
-  const toastTimer = useRef(null);
 
   const updateActiveTab = useCallback(
     (updates) => {
@@ -161,11 +160,6 @@ export default function CustomOrderRequirementsPage() {
     [activeTabId],
   );
 
-  const showToast = (type, message) => {
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    setToast({ type, message });
-    toastTimer.current = setTimeout(() => setToast(null), 4000);
-  };
 
   const updateDelivery = (field, value) => {
     updateActiveTab({
@@ -265,15 +259,14 @@ export default function CustomOrderRequirementsPage() {
   const handleCreateOrder = () => {
     if (activeTab.cartItems.length === 0) return;
     if (!activeTab.customerName.trim()) {
-      showToast("error", "Vui lòng nhập tên khách hàng");
+      toast.error("Vui lòng nhập tên khách hàng");
       return;
     }
     if (!activeTab.customerPhone.trim()) {
-      showToast("error", "Vui lòng nhập số điện thoại");
+      toast.error("Vui lòng nhập số điện thoại");
       return;
     }
-    showToast(
-      "success",
+    toast.success(
       `Tạo yêu cầu đặt hàng ${generateOrderCode()} thành công!`,
     );
     if (tabs.length <= 1) {
@@ -288,32 +281,6 @@ export default function CustomOrderRequirementsPage() {
     <>
       <PageHelmet title="Yêu cầu đặt riêng - TPF-SIMS" />
 
-      {/* Toast */}
-      {toast && (
-        <div
-          className="fixed top-5 right-5 z-50 flex items-center gap-3 pl-4 pr-3 py-3 rounded-xl text-sm font-medium text-white animate-in slide-in-from-top-2"
-          style={{
-            backgroundColor:
-              toast.type === "success"
-                ? "var(--status-success)"
-                : "var(--status-error)",
-            boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
-          }}
-        >
-          {toast.type === "success" ? (
-            <CheckCircle2 size={16} />
-          ) : (
-            <AlertCircle size={16} />
-          )}
-          <span className="mr-1">{toast.message}</span>
-          <button
-            onClick={() => setToast(null)}
-            className="opacity-60 hover:opacity-100 cursor-pointer p-0.5"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
 
       <div
         className="flex h-full gap-4 -m-4 p-4"

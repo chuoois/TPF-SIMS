@@ -7,6 +7,7 @@
  */
 
 import { useState, useMemo, useRef, useEffect } from "react";
+import toast from "react-hot-toast";
 import { Plus,
   Pencil,
   NotebookPen,
@@ -381,14 +382,6 @@ export default function SalesCustomerManage() {
   const [noteText, setNoteText] = useState("");
   const [formErrors, setFormErrors] = useState({});
 
-  // Toast
-  const [toast, setToast] = useState(null);
-  const toastTimer = useRef(null);
-  const showToast = (type, message) => {
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    setToast({ type, message });
-    toastTimer.current = setTimeout(() => setToast(null), 4000);
-  };
 
   // Filtered customers
   const filtered = useMemo(() => {
@@ -473,7 +466,7 @@ export default function SalesCustomerManage() {
       setCustomers((prev) =>
         prev.map((c) => (c.id === currentCustomer.id ? { ...c, ...form } : c)),
       );
-      showToast("success", "Cập nhật hồ sơ thành công");
+      toast.success("Cập nhật hồ sơ thành công");
     } else {
       const newId = `KH${String(customers.length + 1).padStart(3, "0")}`;
       setCustomers((prev) => [
@@ -485,7 +478,7 @@ export default function SalesCustomerManage() {
           createdAt: new Date().toISOString().split("T")[0],
         },
       ]);
-      showToast("success", "Tạo hồ sơ khách hàng thành công");
+      toast.success("Tạo hồ sơ khách hàng thành công");
     }
     setIsFormOpen(false);
     setCurrentCustomer(null);
@@ -498,14 +491,14 @@ export default function SalesCustomerManage() {
         c.id === currentCustomer.id ? { ...c, note: noteText } : c,
       ),
     );
-    showToast("success", "Ghi chú đã được cập nhật");
+    toast.success("Ghi chú đã được cập nhật");
     setIsNoteOpen(false);
   };
 
   const handleDelete = () => {
     if (!deleteConfirm) return;
     setCustomers((prev) => prev.filter((c) => c.id !== deleteConfirm.id));
-    showToast("success", "Xóa khách hàng thành công");
+    toast.success("Xóa khách hàng thành công");
     setDeleteConfirm(null);
   };
 
@@ -519,32 +512,6 @@ export default function SalesCustomerManage() {
     <>
       <PageHelmet title="Quản lý khách hàng - TPF-SIMS" />
 
-      {/* Toast */}
-      {toast && (
-        <div
-          className="fixed top-5 right-5 z-50 flex items-center gap-3 pl-4 pr-3 py-3 rounded-xl text-sm font-medium text-white animate-in slide-in-from-top-2"
-          style={{
-            backgroundColor:
-              toast.type === "success"
-                ? "var(--status-success)"
-                : "var(--status-error)",
-            boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
-          }}
-        >
-          {toast.type === "success" ? (
-            <CheckCircle2 size={16} />
-          ) : (
-            <AlertCircle size={16} />
-          )}
-          <span className="mr-1">{toast.message}</span>
-          <button
-            onClick={() => setToast(null)}
-            className="opacity-60 hover:opacity-100 cursor-pointer p-0.5"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
 
       <div
         className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 space-y-4"
