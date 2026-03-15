@@ -458,7 +458,7 @@ export default function CustomOrderRequirementsPage() {
                   />
                   <input
                     type="text"
-                    placeholder="Loại gỗ"
+                    placeholder="Loại"
                     value={newItem.woodType}
                     onChange={(e) => {
                       updateNewItem("woodType", e.target.value);
