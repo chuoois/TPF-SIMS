@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import ViewProductModal from "./ViewProductModal";
+import EditProductModal from "./EditProductModal";
+import { toast } from "react-hot-toast";
 
 // ─────────────────────────────────────────────────────────
 // MOCK DATA
@@ -24,27 +26,27 @@ import ViewProductModal from "./ViewProductModal";
 const CATEGORIES = ["Phòng khách", "Phòng ngủ", "Phòng thờ", "Phòng ăn"];
 
 const ALL_PRODUCTS = [
-    // FINISHED – Hàng hoàn thiện
-    { id: "P001", code: "SP-PK-001", name: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món",         category: "Phòng khách", type: "FINISHED", woodType: "Gỗ Hương",   color: "Hương",      stock: 5,  importPrice: 38000000, sellingPrice: 55000000, status: "Đang kinh doanh",  img: "https://placehold.co/80x80?text=SP001", length: "180", width: "90",  height: "75",  minStock: 2,    maxStock: 10,   location: "Kho A – Tầng 1, Dãy C",         details: "Bộ 6 món gồm 1 bàn lớn, 4 ghế tựa và 1 ghế chủ. Chạm khắc hình nghê bảo đỉnh tinh xảo, sơn PU cao cấp." },
-    { id: "P003", code: "SP-PT-001", name: "Sập thờ Mai Điểu chân 20",                category: "Phòng thờ",   type: "FINISHED", woodType: "Gỗ Gụ",      color: "Chay",       stock: 2,  importPrice: 18000000, sellingPrice: 27000000, status: "Đang kinh doanh",  img: "https://placehold.co/80x80?text=SP003", length: "200", width: "100", height: "60",  minStock: 1,    maxStock: 5,    location: "Kho B – Tầng 1, Dãy A",         details: "Chạm khắc hoa văn mai điểu tứ quý, chân chạm 20 vòng. Gỗ gụ mật già, màu chay tự nhiên." },
-    { id: "P005", code: "SP-PT-002", name: "Hoành phi câu đối chạm rồng",             category: "Phòng thờ",   type: "FINISHED", woodType: "Gỗ Hương",   color: "Hương",      stock: 6,  importPrice: 9500000,  sellingPrice: 15000000, status: "Đang kinh doanh",  img: "https://placehold.co/80x80?text=SP005", length: "120", width: "40",  height: "5",   minStock: 2,    maxStock: 15,   location: "Kho A – Tầng 2, Dãy B",         details: "Bộ hoành phi 1 tấm + 2 câu đối. Chạm rồng 5 móng nổi, sơn thiếp vàng 24k." },
-    { id: "P006", code: "SP-PA-001", name: "Bộ bàn ăn 8 ghế nguyên khối",            category: "Phòng ăn",    type: "FINISHED", woodType: "Gỗ Hương",   color: "Hương",      stock: 3,  importPrice: 32000000, sellingPrice: 48000000, status: "Đang kinh doanh",  img: "https://placehold.co/80x80?text=SP006", length: "220", width: "100", height: "78",  minStock: 1,    maxStock: 6,    location: "Kho A – Tầng 1, Dãy D",         details: "Bộ gồm 1 bàn + 8 ghế. Mặt bàn nguyên khối liền, chân chạm hoa văn truyền thống. Sơn PU bóng." },
-    { id: "P007", code: "SP-PK-003", name: "Kệ tivi nguyên khối mặt liền",            category: "Phòng khách", type: "FINISHED", woodType: "Gỗ Gõ Đỏ",  color: "Trần",       stock: 0,  importPrice: 22000000, sellingPrice: 32000000, status: "Ngừng kinh doanh", img: null,                                     length: "180", width: "45",  height: "55",  minStock: 1,    maxStock: 5,    location: "Kho C – Tầng 1",                 details: "Kệ tivi 3 ngăn, mặt liền không mộng. Gỗ gõ đỏ trần tự nhiên, giữ vân gỗ." },
-    { id: "P008", code: "SP-PN-002", name: "Tủ quần áo 4 cánh chạm hoa lá tây",      category: "Phòng ngủ",   type: "FINISHED", woodType: "Gỗ Gụ",      color: "Chay",       stock: 4,  importPrice: 22000000, sellingPrice: 33000000, status: "Đang kinh doanh",  img: null,                                     length: "220", width: "60",  height: "240", minStock: 2,    maxStock: 8,    location: "Kho A – Tầng 3, Dãy A",         details: "Tủ 4 cánh, chạm hoa lá tây nổi trên toàn bộ cánh tủ. Bên trong có ngăn kéo và thanh treo." },
-    { id: "P010", code: "SP-PK-004", name: "Tủ rượu nguyên khối cánh kính",           category: "Phòng khách", type: "FINISHED", woodType: "Gỗ Sồi Nga", color: "Óc chó",     stock: 1,  importPrice: 19000000, sellingPrice: 28000000, status: "Ngừng kinh doanh", img: null,                                     length: "120", width: "40",  height: "180", minStock: 1,    maxStock: 4,    location: "Kho C – Tầng 2",                 details: "Tủ rượu cánh kính cường lực, thân gỗ sồi Nga, màu óc chó đậm. 3 tầng kệ bên trong." },
-    { id: "P011", code: "SP-PN-003", name: "Giường ngủ hoa hồng Tân cổ điển",         category: "Phòng ngủ",   type: "FINISHED", woodType: "Gỗ Sồi Nga", color: "Óc chó",     stock: 4,  importPrice: 15000000, sellingPrice: 24000000, status: "Đang kinh doanh",  img: null,                                     length: "200", width: "160", height: "50",  minStock: 2,    maxStock: 8,    location: "Kho B – Tầng 2, Dãy C",         details: "Giường đôi, đầu giường chạm hoa hồng nổi. Phù hợp trang trí phòng ngủ tân cổ điển." },
+    // FINISHED – Hàng có sẵn
+    { id: "P001", sku: "BBG-HS-180x90x75-Huong",     name: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món",         category: "Phòng khách", type: "FINISHED", materialType: "Gỗ Hương",   color: "Hương",     stock: 5,  importPrice: 38000000, sellingPrice: 55000000, img: "https://placehold.co/80x80?text=SP001", length: "180", width: "90",  height: "75",  minStock: 2,    details: "Bộ 6 món gồm 1 bàn lớn, 4 ghế tựa và 1 ghế chủ. Chạm khắc hình nghê bảo đỉnh tinh xảo, sơn PU cao cấp." },
+    { id: "P003", sku: "STM-HS-200x100x60-Chay",    name: "Sập thờ Mai Điểu chân 20",                category: "Phòng thờ",   type: "FINISHED", materialType: "Gỗ Gụ",      color: "Chay",       stock: 2,  importPrice: 18000000, sellingPrice: 27000000, img: "https://placehold.co/80x80?text=SP003", length: "200", width: "100", height: "60",  minStock: 1,    details: "Chạm khắc hoa văn mai điểu tứ quý, chân chạm 20 vòng. Gỗ gụ mật già, màu chay tự nhiên." },
+    { id: "P005", sku: "HPD-HS-120x40x5-Huong",     name: "Hoành phi câu đối chạm rồng",             category: "Phòng thờ",   type: "FINISHED", materialType: "Gỗ Hương",   color: "Hương",     stock: 6,  importPrice: 9500000,  sellingPrice: 15000000, img: "https://placehold.co/80x80?text=SP005", length: "120", width: "40",  height: "5",   minStock: 2,    details: "Bộ hoành phi 1 tấm + 2 câu đối. Chạm rồng 5 móng nổi, sơn thiếp vàng 24k." },
+    { id: "P006", sku: "BBA-HS-220x100x78-Huong",   name: "Bộ bàn ăn 8 ghế nguyên khối",            category: "Phòng ăn",    type: "FINISHED", materialType: "Gỗ Hương",   color: "Hương",     stock: 3,  importPrice: 32000000, sellingPrice: 48000000, img: "https://placehold.co/80x80?text=SP006", length: "220", width: "100", height: "78",  minStock: 1,    details: "Bộ gồm 1 bàn + 8 ghế. Mặt bàn nguyên khối liền, chân chạm hoa văn truyền thống. Sơn PU bóng." },
+    { id: "P007", sku: "KTV-HS-180x45x55-Tran",     name: "Kệ tivi nguyên khối mặt liền",            category: "Phòng khách", type: "FINISHED", materialType: "Gỗ Gõ Đỏ",  color: "Trần",       stock: 0,  importPrice: 22000000, sellingPrice: 32000000, img: null,                                     length: "180", width: "45",  height: "55",  minStock: 1,    details: "Kệ tivi 3 ngăn, mặt liền không mộng. Gỗ gõ đỏ trần tự nhiên, giữ vân gỗ." },
+    { id: "P008", sku: "TQA-HS-220x60x240-Chay",    name: "Tủ quần áo 4 cánh chạm hoa lá tây",      category: "Phòng ngủ",   type: "FINISHED", materialType: "Gỗ Gụ",      color: "Chay",       stock: 4,  importPrice: 22000000, sellingPrice: 33000000, img: null,                                     length: "220", width: "60",  height: "240", minStock: 2,    details: "Tủ 4 cánh, chạm hoa lá tây nổi trên toàn bộ cánh tủ. Bên trong có ngăn kéo và thanh treo." },
+    { id: "P010", sku: "TRU-HS-120x40x180-OcCho",   name: "Tủ rượu nguyên khối cánh kính",           category: "Phòng khách", type: "FINISHED", materialType: "Gỗ Sồi Nga", color: "Óc chó",     stock: 1,  importPrice: 19000000, sellingPrice: 28000000, img: null,                                     length: "120", width: "40",  height: "180", minStock: 1,    details: "Tủ rượu cánh kính cường lực, thân gỗ sồi Nga, màu óc chó đậm. 3 tầng kệ bên trong." },
+    { id: "P011", sku: "GNG-HS-200x160x50-OcCho",   name: "Giường ngủ hoa hồng Tân cổ điển",         category: "Phòng ngủ",   type: "FINISHED", materialType: "Gỗ Sồi Nga", color: "Óc chó",     stock: 4,  importPrice: 15000000, sellingPrice: 24000000, img: null,                                     length: "200", width: "160", height: "50",  minStock: 2,    details: "Giường đôi, đầu giường chạm hoa hồng nổi. Phù hợp trang trí phòng ngủ tân cổ điển." },
 
-    // RAW – Hàng thô
-    { id: "P002", code: "SP-PK-002", name: "Sofa nguyên khối chữ L",                   category: "Phòng khách", type: "RAW",      woodType: "Gỗ Gõ Đỏ",  color: "Nguyên mộc", stock: 12, importPrice: 25000000, sellingPrice: null,     status: "Đang kinh doanh",  img: null,                                     length: "260", width: "160", height: "85",  minStock: 3,    maxStock: 20,   location: "Kho D – Tầng 1",                 details: "Khung sofa nguyên khối gỗ gõ đỏ, chưa bọc đệm. Dùng để bán thô hoặc gia công thêm." },
-    { id: "P004", code: "SP-PN-001", name: "Giường ngủ hoa hồng Tân cổ điển (mộc)",   category: "Phòng ngủ",   type: "RAW",      woodType: "Gỗ Sồi Nga", color: "Nguyên mộc", stock: 8,  importPrice: 12000000, sellingPrice: null,     status: "Đang kinh doanh",  img: null,                                     length: "200", width: "160", height: "50",  minStock: 2,    maxStock: 12,   location: "Kho D – Tầng 2",                 details: "Phôi giường chưa sơn, chưa đánh bóng. Cần gia công sơn PU trước khi xuất." },
-    { id: "P009", code: "SP-PT-003", name: "Bàn thờ chạm rồng cuốn thủy (mộc)",       category: "Phòng thờ",   type: "RAW",      woodType: "Gỗ Hương",   color: "Nguyên mộc", stock: 7,  importPrice: 28000000, sellingPrice: null,     status: "Đang kinh doanh",  img: null,                                     length: "180", width: "60",  height: "100", minStock: 2,    maxStock: 10,   location: "Kho D – Tầng 1, Dãy B",         details: "Bàn thờ chạm rồng cuốn thủy, chưa sơn. Đang chờ lô sơn để hoàn thiện." },
-    { id: "P012", code: "SP-PA-002", name: "Ghế chạm hoa văn (mộc)",                   category: "Phòng ăn",    type: "RAW",      woodType: "Gỗ Mít",     color: "Nguyên mộc", stock: 20, importPrice: 3500000,  sellingPrice: null,     status: "Đang kinh doanh",  img: null,                                     length: "45",  width: "45",  height: "95",  minStock: 5,    maxStock: 30,   location: "Kho D – Tầng 3",                 details: "Ghế ăn phôi thô, khung chạm hoa văn dây leo. Bộ 4–8 chiếc tùy đơn." },
+    // RAW – Hàng mộc
+    { id: "P002", sku: "SFA-HM-260x160x85-raw",      name: "Sofa nguyên khối chữ L",                  category: "Phòng khách", type: "RAW",      materialType: "Gỗ Gõ Đỏ",  color: "raw",        stock: 12, importPrice: 25000000, sellingPrice: null,     img: null,                                     length: "260", width: "160", height: "85",  minStock: 3,    details: "Khung sofa nguyên khối gỗ gõ đỏ, chưa bọc đệm. Dùng để bán thô hoặc gia công thêm." },
+    { id: "P004", sku: "GNG-HM-200x160x50-raw",      name: "Giường ngủ hoa hồng Tân cổ điển (mộc)",   category: "Phòng ngủ",   type: "RAW",      materialType: "Gỗ Sồi Nga", color: "raw",        stock: 8,  importPrice: 12000000, sellingPrice: null,     img: null,                                     length: "200", width: "160", height: "50",  minStock: 2,    details: "Phôi giường chưa sơn, chưa đánh bóng. Cần gia công sơn PU trước khi xuất." },
+    { id: "P009", sku: "BTT-HM-180x60x100-raw",      name: "Bàn thờ chạm rồng cuốn thủy (mộc)",       category: "Phòng thờ",   type: "RAW",      materialType: "Gỗ Hương",   color: "raw",        stock: 7,  importPrice: 28000000, sellingPrice: null,     img: null,                                     length: "180", width: "60",  height: "100", minStock: 2,    details: "Bàn thờ chạm rồng cuốn thủy, chưa sơn. Đang chờ lô sơn để hoàn thiện." },
+    { id: "P012", sku: "GHV-HM-45x45x95-raw",        name: "Ghế chạm hoa văn (mộc)",                  category: "Phòng ăn",    type: "RAW",      materialType: "Gỗ Mít",     color: "raw",        stock: 20, importPrice: 3500000,  sellingPrice: null,     img: null,                                     length: "45",  width: "45",  height: "95",  minStock: 5,    details: "Ghế ăn phôi thô, khung chạm hoa văn dây leo. Bộ 4–8 chiếc tùy đơn." },
 
     // CUSTOM – Hàng khách đặt
-    { id: "P013", code: "KD-PK-001", name: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món – ĐĐ anh Tuấn", category: "Phòng khách", type: "CUSTOM", woodType: "Gỗ Hương",   color: "Hương",      stock: 2, importPrice: 42000000, sellingPrice: 65000000, status: "Đang sản xuất",  img: null, length: "180", width: "90",  height: "75",  minStock: null, maxStock: null, location: "Kho sản xuất – Xưởng 2",         details: "Đơn đặt của anh Tuấn – TP.HCM. Bộ 6 món, yêu cầu chạm thêm hoa văn riêng theo mẫu. Dự kiến giao 25/03/2026." },
-    { id: "P014", code: "KD-PN-001", name: "Giường hoa hồng – ĐĐ cô Lan",              category: "Phòng ngủ",   type: "CUSTOM", woodType: "Gỗ Gụ",      color: "Chay",       stock: 1, importPrice: 22000000, sellingPrice: 35000000, status: "Hoàn thành",       img: null, length: "200", width: "160", height: "50",  minStock: null, maxStock: null, location: "Kho B – Tầng 2, Dãy D",         details: "Đơn đặt của cô Lan – Hà Nội. Đã hoàn thiện, chờ khách đến nhận ngày 15/03/2026." },
-    { id: "P015", code: "KD-PT-001", name: "Sập thờ 6 chân – ĐĐ anh Minh",             category: "Phòng thờ",   type: "CUSTOM", woodType: "Gỗ Gụ",      color: "Cánh gián",  stock: 1, importPrice: 30000000, sellingPrice: 45000000, status: "Hoàn thành",       img: null, length: "200", width: "100", height: "60",  minStock: null, maxStock: null, location: "Kho B – Tầng 1, Dãy B",         details: "Đơn đặt của anh Minh – Hải Phòng. Sập 6 chân chạm hoa văn theo yêu cầu riêng. Đã giao xong." },
-    { id: "P016", code: "KD-PT-002", name: "Bàn thờ rồng lớn – ĐĐ gia đình bà Hà",     category: "Phòng thờ",   type: "CUSTOM", woodType: "Gỗ Hương",   color: "Hương",      stock: 1, importPrice: 38000000, sellingPrice: 55000000, status: "Đang sản xuất",  img: null, length: "200", width: "70",  height: "110", minStock: null, maxStock: null, location: "Kho sản xuất – Xưởng 1",         details: "Đơn của gia đình bà Hà – Nam Định. Bàn thờ rồng 5 móng kích thước lớn, yêu cầu thiếp vàng thật 24k. Dự kiến giao 01/04/2026." },
+    { id: "P013", sku: "BBG-KD-180x90x75-Huong",     name: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món – ĐĐ anh Tuấn", category: "Phòng khách", type: "CUSTOM", materialType: "Gỗ Hương",   color: "Hương",     stock: 2, importPrice: 42000000, sellingPrice: 65000000, img: null, length: "180", width: "90",  height: "75",  minStock: null, details: "Đơn đặt của anh Tuấn. Bộ 6 món, yêu cầu chạm thêm hoa văn riêng. Dự kiến giao 25/03/2026." },
+    { id: "P014", sku: "GHH-KD-200x160x50-Chay",     name: "Giường hoa hồng – ĐĐ cô Lan",              category: "Phòng ngủ",   type: "CUSTOM", materialType: "Gỗ Gụ",      color: "Chay",       stock: 1, importPrice: 22000000, sellingPrice: 35000000, img: null, length: "200", width: "160", height: "50",  minStock: null, details: "Đơn của cô Lan. Đã hoàn thiện, chờ khách nhận ngày 15/03/2026." },
+    { id: "P015", sku: "ST6-KD-200x100x60-CanhGian", name: "Sập thờ 6 chân – ĐĐ anh Minh",             category: "Phòng thờ",   type: "CUSTOM", materialType: "Gỗ Gụ",      color: "Cánh gián",  stock: 1, importPrice: 30000000, sellingPrice: 45000000, img: null, length: "200", width: "100", height: "60",  minStock: null, details: "Đơn của anh Minh. Sập 6 chân chạm hoa văn theo yêu cầu riêng. Đã giao xong." },
+    { id: "P016", sku: "BTR-KD-200x70x110-Huong",    name: "Bàn thờ rồng lớn – ĐĐ gia đình bà Hà",     category: "Phòng thờ",   type: "CUSTOM", materialType: "Gỗ Hương",   color: "Hương",     stock: 1, importPrice: 38000000, sellingPrice: 55000000, img: null, length: "200", width: "70",  height: "110", minStock: null, details: "Đơn của gia đình bà Hà. Bàn thờ rồng 5 móng, yêu cầu thiếp vàng 24k. Dự kiến giao 01/04/2026." },
 ];
 
 // ── Pill config ──────────────────────────────────────────
@@ -57,13 +59,13 @@ const TYPE_FILTERS = [
     },
     {
         value: "FINISHED",
-        label: "Hàng hoàn thiện",
+        label: "Hàng có sẵn",
         icon: CheckCircle,
         activeStyle: { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" },
     },
     {
         value: "RAW",
-        label: "Hàng thô",
+        label: "Hàng mộc",
         icon: Hammer,
         activeStyle: { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" },
     },
@@ -76,24 +78,18 @@ const TYPE_FILTERS = [
 ];
 
 const TYPE_BADGE = {
-    FINISHED: { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0", label: "Hoàn thiện" },
-    RAW:      { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA", label: "Hàng thô" },
+    FINISHED: { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0", label: "Có sẵn" },
+    RAW:      { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA", label: "Hàng mộc" },
     CUSTOM:   { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE", label: "Khách đặt" },
 };
 
 const fmtCurrency = (n) =>
     n != null ? new Intl.NumberFormat("vi-VN").format(n) + "₫" : "—";
 
-const getStatusColor = (status) => {
-    if (["Đang kinh doanh", "Đang sản xuất"].includes(status))
-        return { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" };
-    if (status === "Hoàn thành")
-        return { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" };
-    return { bg: "#F3F4F6", text: "#6B7280", border: "#D1D5DB" };
-};
-
 // ─────────────────────────────────────────────────────────
 export default function AccountantProductManage() {
+    const [products, setProducts] = useState(ALL_PRODUCTS);
+    const [editProduct, setEditProduct] = useState(null);
     const [typeFilter, setTypeFilter] = useState("ALL");
     const [categoryFilter, setCategoryFilter] = useState("Tất cả");
     const [search, setSearch] = useState("");
@@ -101,16 +97,22 @@ export default function AccountantProductManage() {
     const [itemsPerPage, setItemsPerPage] = useState(15);
     const [viewProduct, setViewProduct] = useState(null);
 
+    const handleSaveProduct = (updated) => {
+        setProducts(prev => prev.map(p => p.id === updated.id ? updated : p));
+        setEditProduct(null);
+        toast.success("Đã cập nhật thông tin sản phẩm!", { style: { fontSize: "14px" } });
+    };
+
     const filtered = useMemo(() => {
-        let r = ALL_PRODUCTS;
+        let r = products;
         if (typeFilter !== "ALL") r = r.filter(p => p.type === typeFilter);
         if (categoryFilter !== "Tất cả") r = r.filter(p => p.category === categoryFilter);
         if (search.trim()) {
             const q = search.toLowerCase();
             r = r.filter(p =>
                 p.name.toLowerCase().includes(q) ||
-                p.code.toLowerCase().includes(q) ||
-                p.woodType?.toLowerCase().includes(q)
+                p.sku.toLowerCase().includes(q) ||
+                p.materialType?.toLowerCase().includes(q)
             );
         }
         return r;
@@ -123,10 +125,10 @@ export default function AccountantProductManage() {
 
     // counts per type
     const counts = useMemo(() => {
-        const c = { ALL: ALL_PRODUCTS.length, FINISHED: 0, RAW: 0, CUSTOM: 0 };
-        ALL_PRODUCTS.forEach(p => { c[p.type] = (c[p.type] || 0) + 1; });
+        const c = { ALL: products.length, FINISHED: 0, RAW: 0, CUSTOM: 0 };
+        products.forEach(p => { c[p.type] = (c[p.type] || 0) + 1; });
         return c;
-    }, []);
+    }, [products]);
 
     const TH = ({ children, right, center }) => (
         <th className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${right ? "text-right" : center ? "text-center" : ""}`}
@@ -192,7 +194,7 @@ export default function AccountantProductManage() {
                         <div className="relative w-full max-w-sm">
                             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-placeholder)" }} />
                             <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-                                placeholder="Tìm mã, tên, loại gỗ..."
+                                placeholder="Tìm SKU, tên, loại..."
                                 className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
                                 style={{ border: "1px solid var(--grid-border)", backgroundColor: "var(--bg-main)", color: "var(--text-main)" }} />
                             {search && (
@@ -225,45 +227,44 @@ export default function AccountantProductManage() {
                             <thead className="sticky top-0 z-10" style={{ backgroundColor: "var(--grid-header-bg)", borderBottom: "1px solid var(--grid-border)" }}>
                                 <tr>
                                     <TH>Ảnh</TH>
-                                    <TH>Mã SP</TH>
+                                    <TH>Mã SKU</TH>
                                     <TH>Tên sản phẩm</TH>
                                     <TH>Danh mục</TH>
                                     <TH>Loại hàng</TH>
-                                    <TH>Loại gỗ</TH>
+                                    <TH>Loại</TH>
                                     <TH>Màu sắc</TH>
                                     <TH right>Giá bán</TH>
                                     <TH center>Tồn kho</TH>
-                                    <TH>Trạng thái</TH>
+                                    <th className="w-24 px-4 py-3"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {paginated.map(p => {
-                                    const isStopped = ["Ngừng kinh doanh"].includes(p.status);
                                     const badge = TYPE_BADGE[p.type];
                                     return (
                                         <tr key={p.id} className="group relative hover:bg-gray-50/50 transition-colors"
-                                            style={{ borderBottom: "1px solid var(--grid-border)", opacity: isStopped ? 0.55 : 1 }}>
+                                            style={{ borderBottom: "1px solid var(--grid-border)" }}>
                                             {/* Ảnh */}
                                             <td className="px-4 py-3">
                                                 {p.img
                                                     ? <img src={p.img} alt={p.name} className="w-10 h-10 rounded-lg object-cover"
-                                                        style={{ border: "1px solid var(--grid-border)", filter: isStopped ? "grayscale(100%)" : "none" }} />
+                                                            style={{ border: "1px solid var(--grid-border)" }} />
                                                     : <div className="w-10 h-10 rounded-lg flex items-center justify-center"
                                                         style={{ backgroundColor: "var(--bg-main)", border: "1px solid var(--grid-border)" }}>
                                                         <ImageIcon size={16} style={{ color: "var(--text-placeholder)" }} />
                                                     </div>}
                                             </td>
-                                            {/* Mã */}
+                                            {/* Mã SKU */}
                                             <td className="px-4 py-3">
                                                 <span className="text-[12px] font-bold font-mono px-2 py-1 rounded"
                                                     style={{ backgroundColor: "var(--bg-main)", color: "var(--text-main)", border: "1px solid var(--grid-border)" }}>
-                                                    {p.code}
+                                                    {p.sku}
                                                 </span>
                                             </td>
                                             {/* Tên */}
                                             <td className="px-4 py-3 max-w-[240px]">
                                                 <p className="text-[13px] font-semibold truncate"
-                                                    style={{ color: "var(--text-main)", textDecoration: isStopped ? "line-through" : "none" }}>
+                                                    style={{ color: "var(--text-main)" }}>
                                                     {p.name}
                                                 </p>
                                             </td>
@@ -281,9 +282,9 @@ export default function AccountantProductManage() {
                                                     {badge.label}
                                                 </span>
                                             </td>
-                                            {/* Loại gỗ */}
+                                            {/* Loại */}
                                             <td className="px-4 py-3">
-                                                <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{p.woodType || "—"}</span>
+                                                <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{p.materialType || "—"}</span>
                                             </td>
                                             {/* Màu */}
                                             <td className="px-4 py-3">
@@ -298,12 +299,14 @@ export default function AccountantProductManage() {
                                             {/* Tồn kho */}
                                             <td className="px-4 py-3 text-center">
                                                 <span className="text-[13px] font-bold"
-                                                    style={{ color: p.stock === 0 ? "#DC2626" : p.stock <= 3 ? "#D97706" : "var(--text-main)" }}>
+                                                    style={{ color: p.stock === 0 ? "#DC2626" : p.stock <= p.minStock ? "#D97706" : "var(--text-main)" }}>
                                                     {p.stock}
                                                 </span>
                                             </td>
-                                            {/* Trạng thái */}
-                                            <td className="px-4 py-3"><StatusChip status={p.status} /></td>
+                                            
+                                            {/* Spacer */}
+                                            <td className="px-4 py-3"></td>
+
                                             {/* Hover action */}
                                             <td className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                                 <div className="flex gap-1.5 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-gray-100">
@@ -312,13 +315,19 @@ export default function AccountantProductManage() {
                                                         style={{ color: "var(--text-secondary)" }}>
                                                         <Eye size={14} /> Xem
                                                     </button>
+                                                    <button onClick={() => setEditProduct(p)}
+                                                        className="h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[12px] font-bold hover:bg-blue-50 cursor-pointer transition"
+                                                        style={{ color: "var(--brand-primary)" }}>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22h6"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> 
+                                                        Sửa
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
                                     );
                                 })}
                                 {paginated.length === 0 && (
-                                    <tr><td colSpan={10} className="py-24 text-center">
+                                    <tr><td colSpan={9} className="py-24 text-center">
                                         <div className="flex flex-col items-center gap-2" style={{ color: "var(--text-placeholder)" }}>
                                             <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ backgroundColor: "var(--bg-main)" }}>
                                                 <Package size={28} strokeWidth={1.5} />
@@ -375,6 +384,13 @@ export default function AccountantProductManage() {
                 <ViewProductModal
                     product={viewProduct}
                     onClose={() => setViewProduct(null)}
+                />
+            )}
+            {editProduct && (
+                <EditProductModal
+                    product={editProduct}
+                    onClose={() => setEditProduct(null)}
+                    onSave={handleSaveProduct}
                 />
             )}
         </>
