@@ -150,7 +150,7 @@ export default function ViewImportModal({ item, onClose }) {
                             <div className="space-y-3">
                                 {lines.map((line, idx) => {
                                     const lineTotal = Number(line.qty || 0) * Number(line.importPrice || 0);
-                                    const formLabel = line.formType === "READY" ? "Hàng sẵn có" : "Hàng mới lên";
+                                    const formLabel = line.formType === "READY" ? "Hàng nhập thêm" : "Hàng mới ";
                                     const productTypeLabel = {
                                         RAW: "Hàng mộc",
                                         CUSTOM: "Hàng khách đặt",
@@ -227,11 +227,11 @@ export default function ViewImportModal({ item, onClose }) {
 
                                                 {/* SL + Giá */}
                                                 <InfoBlock label="Số lượng" value={line.qty ? `${line.qty} cái` : "—"} />
-                                                
+
                                                 {line.formType !== "READY" && line.importPrice > 0 && (
                                                     <InfoBlock label="Giá gốc" value={fmtCurrency(Number(line.importPrice))} />
                                                 )}
-                                                
+
                                                 {line.formType !== "READY" && line.sellingPrice > 0 && (
                                                     <InfoBlock label="Giá bán" value={fmtCurrency(Number(line.sellingPrice))} />
                                                 )}

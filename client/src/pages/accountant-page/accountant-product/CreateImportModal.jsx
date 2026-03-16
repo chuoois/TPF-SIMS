@@ -30,9 +30,13 @@ const COLORS = [
     "Trần", "Chay", "Hương", "Óc chó", "Gõ đỏ", "Nguyên mộc"
 ];
 
+const SUPPLIERS = [
+    "Xưởng Minh Đức", "Xưởng An Bình", "Xưởng Tiến Phát", "Xưởng Hà Linh", "Xưởng Đồng Kỵ"
+];
+
 const FORM_TYPES = [
-    { value: "NEW", label: "Hàng mới lên", code: "HM" },
-    { value: "READY", label: "Hàng sẵn có (nhập thêm)", code: "HS" },
+    { value: "NEW", label: "Hàng mới", code: "HM" },
+    { value: "READY", label: "Hàng nhập thêm", code: "HS" },
 ];
 
 const PRODUCT_TYPES = [
@@ -52,6 +56,18 @@ const MOCK_PRODUCTS = [
 // ── Helpers ────────────────────────────────────────────
 const fmtCurrency = (n) =>
     n ? new Intl.NumberFormat("vi-VN").format(n) + "₫" : "—";
+
+const formatNumber = (numStr) => {
+    if (!numStr) return "";
+    const num = String(numStr).replace(/\D/g, "");
+    if (!num) return "";
+    return new Intl.NumberFormat("vi-VN").format(num);
+};
+
+const parseNumber = (str) => {
+    if (!str) return "";
+    return str.toString().replace(/\D/g, "");
+};
 
 const emptyLine = () => ({
     _id: Math.random(),
@@ -131,12 +147,14 @@ export default function CreateImportModal({ onClose, onSaved }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        
         if (!supplier.trim()) { toast.error("Vui lòng nhập tên xưởng cung cấp"); return; }
+        if (!SUPPLIERS.includes(supplier.trim())) { toast.error("Xưởng cung cấp không hợp lệ"); return; }
         if (!importDate) { toast.error("Vui lòng chọn ngày nhập"); return; }
         for (const l of lines) {
             if (!l.productName.trim()) { toast.error("Vui lòng nhập tên sản phẩm"); return; }
             if (!l.qty || Number(l.qty) <= 0) { toast.error("Số lượng phải lớn hơn 0"); return; }
-            
+
             // Validate prices only if form requires them (NEW form type)
             if (l.formType !== "READY") {
                 if (!l.importPrice || Number(l.importPrice) <= 0) { toast.error("Giá gốc phải lớn hơn 0"); return; }
@@ -197,10 +215,29 @@ export default function CreateImportModal({ onClose, onSaved }) {
                             </p>
 
                             <div className="grid grid-cols-2 gap-3">
-                                <div>
+                                <div className="relative">
                                     <label className={lbl} style={lblS}><Building2 size={11} className="inline mr-1" />Tên xưởng *</label>
-                                    <input value={supplier} onChange={(e) => setSupplier(e.target.value)}
+                                    <input value={supplier} onChange={(e) => {
+                                        setSupplier(e.target.value);
+                                        setActiveDropdown({ id: "supplier", field: "supplier" });
+                                    }}
+                                        onFocus={() => setActiveDropdown({ id: "supplier", field: "supplier" })}
+                                        onBlur={() => setTimeout(() => setActiveDropdown({ id: null, field: null }), 200)}
                                         placeholder="VD: Xưởng Hà Linh..." className={inp} style={inpS} />
+                                    {activeDropdown.id === "supplier" && activeDropdown.field === "supplier" && (
+                                        <div className="absolute z-50 left-0 right-0 top-[100%] mt-1 max-h-40 overflow-y-auto bg-white rounded-xl shadow-lg border" style={{ borderColor: 'var(--grid-border)' }}>
+                                            {SUPPLIERS.filter(s => s.toLowerCase().includes(supplier.toLowerCase())).length > 0 ? (
+                                                SUPPLIERS.filter(s => s.toLowerCase().includes(supplier.toLowerCase())).map(s => (
+                                                    <div key={s} className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b last:border-0 text-[13px]"
+                                                        onMouseDown={(e) => { e.preventDefault(); setSupplier(s); setActiveDropdown({ id: null, field: null }); }}>
+                                                        {s}
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="p-3 text-[12px] text-gray-500 text-center">Không tìm thấy xưởng</div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                                 <div>
                                     <label className={lbl} style={lblS}><Calendar size={11} className="inline mr-1" />Ngày nhập *</label>
@@ -208,11 +245,11 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                         className={inp} style={inpS} />
                                 </div>
                             </div>
-                            
+
                             <div>
                                 <label className={lbl} style={lblS}><AlignLeft size={11} className="inline mr-1" />Ghi chú về đơn</label>
                                 <textarea value={note} onChange={(e) => setNote(e.target.value)}
-                                    placeholder="Ghi chú thêm thông tin về đơn nhập (tùy chọn)..." 
+                                    placeholder="Ghi chú thêm thông tin về đơn nhập (tùy chọn)..."
                                     className={`w-full p-2.5 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-purple-300 transition resize-none`}
                                     style={{ ...inpS, minHeight: '60px' }} />
                             </div>
@@ -297,7 +334,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                                         onFocus={() => { if (line.productName.trim()) setActiveDropdown({ id: line._id, field: "productName" }); }}
                                                         onBlur={() => setTimeout(() => setActiveDropdown({ id: null, field: null }), 200)}
                                                         placeholder="Nhập tên hoặc mã sản phẩm để tìm kiếm..." className={inp} style={inpS} />
-                                                    
+
                                                     {/* Thả xuống tìm kiếm SP */}
                                                     {activeDropdown.id === line._id && activeDropdown.field === "productName" && line.productName.trim() && (
                                                         <div className="absolute z-50 left-0 right-0 top-[100%] mt-1 max-h-56 overflow-y-auto bg-white rounded-xl shadow-lg border" style={{ borderColor: 'var(--grid-border)' }}>
@@ -480,7 +517,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                             </div>
 
                                             {/* Row 4: Số lượng, Giá, Tồn min */}
-                                            <div className="grid grid-cols-4 gap-4 mb-4">
+                                            <div className={`grid ${line.productType === "CUSTOM" ? "grid-cols-3" : "grid-cols-4"} gap-4 mb-4`}>
                                                 <div>
                                                     <label className={lbl} style={lblS}>Số lượng *</label>
                                                     <input type="number" min="1" value={line.qty}
@@ -489,62 +526,64 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                                 </div>
                                                 <div>
                                                     <label className={lbl} style={lblS}>Giá gốc (₫) *</label>
-                                                    <input type="number" min="0" value={line.importPrice}
-                                                        onChange={(e) => updateLine(line._id, "importPrice", e.target.value)}
+                                                    <input type="text" value={formatNumber(line.importPrice)}
+                                                        onChange={(e) => updateLine(line._id, "importPrice", parseNumber(e.target.value))}
                                                         placeholder="0" className={inp} style={inpS} />
                                                 </div>
                                                 <div>
                                                     <label className={lbl} style={lblS}>Giá bán (₫) *</label>
-                                                    <input type="number" min="0" value={line.sellingPrice}
-                                                        onChange={(e) => updateLine(line._id, "sellingPrice", e.target.value)}
+                                                    <input type="text" value={formatNumber(line.sellingPrice)}
+                                                        onChange={(e) => updateLine(line._id, "sellingPrice", parseNumber(e.target.value))}
                                                         placeholder="0" className={inp} style={inpS} />
                                                 </div>
-                                                <div>
-                                                    <label className={lbl} style={lblS}><div className="flex items-center gap-1"><BarChart2 size={11} />Tồn thấp nhất</div></label>
-                                                    <input type="number" min="0" value={line.minStock}
-                                                        onChange={(e) => updateLine(line._id, "minStock", e.target.value)}
-                                                        placeholder="0" className={inp} style={inpS} />
-                                                </div>
+                                                {line.productType !== "CUSTOM" && (
+                                                    <div>
+                                                        <label className={lbl} style={lblS}><div className="flex items-center gap-1"><BarChart2 size={11} />Tồn thấp nhất</div></label>
+                                                        <input type="number" min="0" value={line.minStock}
+                                                            onChange={(e) => updateLine(line._id, "minStock", e.target.value)}
+                                                            placeholder="0" className={inp} style={inpS} />
+                                                    </div>
+                                                )}
                                             </div>
 
-                                                {/* Ảnh và Chi tiết */}
-                                                <div className="grid grid-cols-12 gap-4">
-                                                    {/* Ảnh SP */}
-                                                    <div className="col-span-3 lg:col-span-2">
-                                                        <label className={lbl} style={lblS}>Ảnh sản phẩm</label>
-                                                        <div className="relative w-full aspect-square rounded-xl border-dashed border-2 flex items-center justify-center cursor-pointer transition overflow-hidden group hover:border-purple-400"
-                                                            style={{ borderColor: "var(--grid-border)", backgroundColor: "var(--bg-main)" }}>
-                                                            {line.imagePreview ? (
-                                                                <>
-                                                                    <img src={line.imagePreview} alt="SP" className="w-full h-full object-cover" />
-                                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                                        <button type="button" onClick={(e) => { e.stopPropagation(); removeLineFile(line._id); }}
-                                                                            className="p-1.5 bg-red-500 rounded-lg text-white hover:bg-red-600 transition">
-                                                                            <Trash2 size={14} />
-                                                                        </button>
-                                                                    </div>
-                                                                </>
-                                                            ) : (
-                                                                <div className="flex flex-col items-center gap-1.5" style={{ color: "var(--text-placeholder)" }}>
-                                                                    <Image size={24} strokeWidth={1.5} />
-                                                                    <span className="text-[10px] font-medium uppercase">Tải ảnh lên</span>
+                                            {/* Ảnh và Chi tiết */}
+                                            <div className="grid grid-cols-12 gap-4">
+                                                {/* Ảnh SP */}
+                                                <div className="col-span-3 lg:col-span-2">
+                                                    <label className={lbl} style={lblS}>Ảnh sản phẩm</label>
+                                                    <div className="relative w-full aspect-square rounded-xl border-dashed border-2 flex items-center justify-center cursor-pointer transition overflow-hidden group hover:border-purple-400"
+                                                        style={{ borderColor: "var(--grid-border)", backgroundColor: "var(--bg-main)" }}>
+                                                        {line.imagePreview ? (
+                                                            <>
+                                                                <img src={line.imagePreview} alt="SP" className="w-full h-full object-cover" />
+                                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                                    <button type="button" onClick={(e) => { e.stopPropagation(); removeLineFile(line._id); }}
+                                                                        className="p-1.5 bg-red-500 rounded-lg text-white hover:bg-red-600 transition">
+                                                                        <Trash2 size={14} />
+                                                                    </button>
                                                                 </div>
-                                                            )}
-                                                            <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                                                                onChange={(e) => handleLineFile(line._id, e)} title="" />
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Ghi chú */}
-                                                    <div className="col-span-9 lg:col-span-10 flex flex-col">
-                                                        <label className={lbl} style={lblS}><div className="flex items-center gap-1"><AlignLeft size={11} />Chi tiết sản phẩm</div></label>
-                                                        <textarea value={line.details}
-                                                            onChange={(e) => updateLine(line._id, "details", e.target.value)}
-                                                            placeholder="Ghi chú thêm thông tin chi tiết mặt hàng..."
-                                                            className={`w-full p-2.5 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-purple-300 transition resize-none flex-1`}
-                                                            style={{ ...inpS, lineHeight: 1.4, minHeight: '3.5rem' }} />
+                                                            </>
+                                                        ) : (
+                                                            <div className="flex flex-col items-center gap-1.5" style={{ color: "var(--text-placeholder)" }}>
+                                                                <Image size={24} strokeWidth={1.5} />
+                                                                <span className="text-[10px] font-medium uppercase">Tải ảnh lên</span>
+                                                            </div>
+                                                        )}
+                                                        <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                                            onChange={(e) => handleLineFile(line._id, e)} title="" />
                                                     </div>
                                                 </div>
+
+                                                {/* Ghi chú */}
+                                                <div className="col-span-9 lg:col-span-10 flex flex-col">
+                                                    <label className={lbl} style={lblS}><div className="flex items-center gap-1"><AlignLeft size={11} />Chi tiết sản phẩm</div></label>
+                                                    <textarea value={line.details}
+                                                        onChange={(e) => updateLine(line._id, "details", e.target.value)}
+                                                        placeholder="Ghi chú thêm thông tin chi tiết mặt hàng..."
+                                                        className={`w-full p-2.5 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-purple-300 transition resize-none flex-1`}
+                                                        style={{ ...inpS, lineHeight: 1.4, minHeight: '3.5rem' }} />
+                                                </div>
+                                            </div>
                                         </>
                                     )}
 
