@@ -282,7 +282,7 @@ const fmtCurrency = (n) =>
     : "—";
 
 const fmtDate = (s) =>
-  s ? new Date(s).toLocaleDateString("vi-VN") : "Chưa xác định";
+  s ? new Date(s).toLocaleDateString("vi-VN") : "";
 
 const fmtDateTime = (s) => {
   if (!s) return "—";

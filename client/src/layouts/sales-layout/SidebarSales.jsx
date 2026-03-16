@@ -28,7 +28,7 @@ const menuItems = [
     path: "/sales/dashboard/customers",
   },
   {
-    text: "Hàng có sẵn",
+    text: "Tạo đơn hàng",
     icon: ShoppingBag,
     path: "/sales/dashboard/invoice-instock",
   },
@@ -38,7 +38,7 @@ const menuItems = [
     path: "/sales/dashboard/requirements-custom-order",
   },
   {
-    text: "Yêu cầu từ khách hàng",
+    text: "Quản lý yêu cầu từ khách hàng",
     icon: ClipboardList,
     path: "/sales/dashboard/requirements",
   },
