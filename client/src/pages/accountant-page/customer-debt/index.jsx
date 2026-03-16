@@ -51,11 +51,21 @@ const MOCK_DEBTS = [
         deposit_amount: 1500000,
         order_date: "01/03/2026",
     },
+    {
+        id: "5",
+        order_code: "HD260305W1X2Y3",
+        customer_name: "Hoàng Văn E",
+        phone_number: "0966778899",
+        total_amount: 10000000,
+        deposit_amount: 10000000,
+        order_date: "05/03/2026",
+    },
 ];
 
 export default function AccountantCustomerDebt() {
     const [debts, setDebts] = useState(MOCK_DEBTS);
     const [searchQuery, setSearchQuery] = useState("");
+    const [statusFilter, setStatusFilter] = useState("ALL");
     const [selectedDebt, setSelectedDebt] = useState(null);
     const [isSettleModalOpen, setIsSettleModalOpen] = useState(false);
     const [viewDebtDetails, setViewDebtDetails] = useState(null);
@@ -68,6 +78,13 @@ export default function AccountantCustomerDebt() {
 
     const filteredDebts = useMemo(() => {
         let r = debts;
+
+        if (statusFilter === "DEBT") {
+            r = r.filter(d => getRemainingAmount(d.total_amount, d.deposit_amount) > 0);
+        } else if (statusFilter === "SETTLED") {
+            r = r.filter(d => getRemainingAmount(d.total_amount, d.deposit_amount) <= 0);
+        }
+
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             r = r.filter(
@@ -78,7 +95,7 @@ export default function AccountantCustomerDebt() {
             );
         }
         return r;
-    }, [debts, searchQuery]);
+    }, [debts, searchQuery, statusFilter]);
 
     const totalPages = Math.ceil(filteredDebts.length / itemsPerPage) || 1;
     const paginated = filteredDebts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -125,17 +142,37 @@ export default function AccountantCustomerDebt() {
                 <div className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
                     {/* Toolbar */}
                     <div className="px-4 py-3 border-b shrink-0 flex flex-wrap items-center gap-3" style={{ borderColor: "var(--grid-border)" }}>
-                        <div className="relative w-full max-w-sm">
-                            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-placeholder)" }} />
-                            <input type="text" value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                                placeholder="Tìm mã đơn, tên KH, SĐT..."
-                                className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
-                                style={{ border: "1px solid var(--grid-border)", backgroundColor: "var(--bg-main)", color: "var(--text-main)" }} />
-                            {searchQuery && (
-                                <button onClick={() => setSearchQuery("")}
-                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer"
-                                    style={{ color: "var(--text-placeholder)" }}><X size={14} /></button>
-                            )}
+                        <div className="flex items-center gap-3 flex-1">
+                            <div className="relative w-full max-w-sm">
+                                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-placeholder)" }} />
+                                <input type="text" value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                                    placeholder="Tìm mã đơn, tên KH, SĐT..."
+                                    className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
+                                    style={{ border: "1px solid var(--grid-border)", backgroundColor: "var(--bg-main)", color: "var(--text-main)" }} />
+                                {searchQuery && (
+                                    <button onClick={() => setSearchQuery("")}
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer"
+                                        style={{ color: "var(--text-placeholder)" }}><X size={14} /></button>
+                                )}
+                            </div>
+                            
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+                                className="h-9 px-3 pr-8 rounded-lg text-[13px] border cursor-pointer appearance-none outline-none focus:ring-2 transition flex-shrink-0"
+                                style={{
+                                    borderColor: "var(--grid-border)",
+                                    backgroundColor: "var(--bg-main)",
+                                    color: "var(--text-main)",
+                                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                                    backgroundRepeat: "no-repeat",
+                                    backgroundPosition: "right 10px center",
+                                }}
+                            >
+                                <option value="ALL">Tất cả trạng thái</option>
+                                <option value="DEBT">Còn nợ</option>
+                                <option value="SETTLED">Đã thanh toán</option>
+                            </select>
                         </div>
                     </div>
 
