@@ -61,64 +61,64 @@ export const INITIAL_ORDERS = [
     date: "2026-03-08T10:00:00", deliveryDate: "2026-03-09", fulfillmentType: "Lấy ngay",
   },
 
-  // ========== NHÓM 2: HÀNG THÔ ==========
+  // ========== NHÓM 2: Hàng mộc ==========
   {
-    id: "DH-T01", code: "DH-THO-001", type: "Hàng thô", status: "Chờ xử lý",
+    id: "DH-T01", code: "DH-THO-001", type: "Hàng mộc", status: "Chờ xử lý",
     customerName: "Hoàng Nguyệt Ánh", phone: "0978901234", total: 56000000,
     date: "2026-03-12T10:00:00", deliveryDate: "2026-03-20", fulfillmentType: "Giao nhà",
   },
   {
-    id: "DH-T02", code: "DH-THO-002", type: "Hàng thô", status: "Đang sản xuất",
+    id: "DH-T02", code: "DH-THO-002", type: "Hàng mộc", status: "Đang sản xuất",
     customerName: "Đặng Tuấn Kiệt", phone: "0931234567", total: 8200000,
     date: "2026-03-11T15:30:00", deliveryDate: "2026-03-15", fulfillmentType: "Giao nhà",
   },
   {
-    id: "DH-T03", code: "DH-THO-003", type: "Hàng thô", status: "Đang sản xuất",
+    id: "DH-T03", code: "DH-THO-003", type: "Hàng mộc", status: "Đang sản xuất",
     customerName: "Vũ Hải Đăng", phone: "0922334455", total: 12500000,
     date: "2026-03-10T08:00:00", deliveryDate: "2026-03-14", fulfillmentType: "Giao nhà",
   },
   {
-    id: "DH-T04", code: "DH-THO-004", type: "Hàng thô", status: "Chờ giao hàng",
+    id: "DH-T04", code: "DH-THO-004", type: "Hàng mộc", status: "Chờ giao hàng",
     customerName: "Bùi Tiến Dũng", phone: "0911223344", total: 28000000,
     date: "2026-03-09T11:20:00", deliveryDate: "2026-03-12", fulfillmentType: "Giao nhà",
   },
   {
-    id: "DH-T05", code: "DH-THO-005", type: "Hàng thô", status: "Đang giao hàng",
+    id: "DH-T05", code: "DH-THO-005", type: "Hàng mộc", status: "Đang giao hàng",
     customerName: "Đinh Công Thành", phone: "0988776655", total: 15400000,
     date: "2026-03-08T14:45:00", deliveryDate: "2026-03-10", fulfillmentType: "Giao nhà",
   },
   {
-    id: "DH-T06", code: "DH-THO-006", type: "Hàng thô", status: "Hoàn thành",
+    id: "DH-T06", code: "DH-THO-006", type: "Hàng mộc", status: "Hoàn thành",
     customerName: "Trần Anh Tú", phone: "0900112233", total: 32000000,
     date: "2026-03-07T09:00:00", deliveryDate: "2026-03-09", fulfillmentType: "Giao nhà",
     deliveryImage: "https://images.unsplash.com/photo-1617806118233-ef203e91122b",
   },
 
-  // ========== NHÓM 3: HÀNG ĐẶT ==========
+  // ========== NHÓM 3: Hàng khách đặt ==========
   {
-    id: "DH-D01", code: "DH-DAT-001", type: "Hàng đặt", status: "Chờ xử lý",
+    id: "DH-D01", code: "DH-DAT-001", type: "Hàng khách đặt", status: "Chờ xử lý",
     customerName: "Nguyễn Thị Hồng", phone: "0912123123", total: 75000000,
     date: "2026-03-12T11:15:00", deliveryDate: "2026-03-30", fulfillmentType: "Giao nhà",
   },
   {
-    id: "DH-D02", code: "DH-DAT-002", type: "Hàng đặt", status: "Đang sản xuất",
+    id: "DH-D02", code: "DH-DAT-002", type: "Hàng khách đặt", status: "Đang sản xuất",
     customerName: "Lê Văn Tám", phone: "0321654987", total: 120000000,
     date: "2026-03-11T09:00:00", deliveryDate: "2026-03-25", fulfillmentType: "Giao nhà",
   },
   {
-    id: "DH-D03", code: "DH-DAT-003", type: "Hàng đặt", status: "Đang sản xuất",
+    id: "DH-D03", code: "DH-DAT-003", type: "Hàng khách đặt", status: "Đang sản xuất",
     customerName: "Phan Trị", phone: "0944123789", total: 45000000,
     date: "2026-03-10T10:15:00", deliveryDate: "2026-03-28", fulfillmentType: "Giao nhà",
   },
   {
-    id: "DH-D04", code: "DH-DAT-004", type: "Hàng đặt", status: "Chờ giao hàng",
+    id: "DH-D04", code: "DH-DAT-004", type: "Hàng khách đặt", status: "Chờ giao hàng",
     customerName: "Sơn", phone: "0988", total: 95000000,
     date: "2026-03-09T14:20:00", deliveryDate: "2026-03-22", fulfillmentType: "Giao nhà",
   },
 ];
 
 
-const ORDER_TYPES = ["Hàng sẵn", "Hàng thô", "Hàng đặt"];
+const ORDER_TYPES = ["Hàng sẵn", "Hàng mộc", "Hàng khách đặt"];
 
 const HANG_SAN_STATUSES = [
   "Chờ xử lý",
@@ -126,7 +126,7 @@ const HANG_SAN_STATUSES = [
   "Đang giao hàng",
   "Hoàn thành",
   "Chờ duyệt hủy",
-  "Đã hủy",
+  "Đơn đã hủy",
 ];
 
 const HANG_THO_STATUSES = [
@@ -136,7 +136,7 @@ const HANG_THO_STATUSES = [
   "Đang giao hàng",
   "Hoàn thành",
   "Chờ duyệt hủy",
-  "Đã hủy",
+  "Đơn đã hủy",
 ];
 
 const HANG_DAT_STATUSES = [
@@ -146,7 +146,7 @@ const HANG_DAT_STATUSES = [
   "Đang giao hàng",
   "Hoàn thành",
   "Chờ duyệt hủy",
-  "Đã hủy",
+  "Đơn đã hủy",
 ];
 
 const ALL_STATUSES = [
@@ -196,7 +196,7 @@ const getStatusColor = (status) => {
       return { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" }; // Green
     case "Chờ duyệt hủy":
       return { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" }; // Amber/Yellow
-    case "Đã hủy":
+    case "Đơn đã hủy":
       return { bg: "#FEF2F2", text: "#B91C1C", border: "#FECACA" }; // Red
 
     default:
@@ -461,8 +461,8 @@ export default function SalesOrderManage() {
           {useMemo(() => {
             let statuses = [];
             if (activeTab === "Hàng sẵn") statuses = HANG_SAN_STATUSES;
-            else if (activeTab === "Hàng thô") statuses = HANG_THO_STATUSES;
-            else if (activeTab === "Hàng đặt") statuses = HANG_DAT_STATUSES;
+            else if (activeTab === "Hàng mộc") statuses = HANG_THO_STATUSES;
+            else if (activeTab === "Hàng khách đặt") statuses = HANG_DAT_STATUSES;
             else statuses = ALL_STATUSES;
             return ["Tất cả", ...statuses];
           }, [activeTab]).map((s) => {
