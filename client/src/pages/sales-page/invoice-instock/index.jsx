@@ -35,6 +35,7 @@ import {
   MapPin,
   Phone,
   Calendar,
+  Camera,
 } from "lucide-react";
 import { PrintableInvoice } from "../order-manage/detail";
 import { PageHelmet } from "@/components/seo/PageHelmet";
@@ -184,7 +185,7 @@ const WOOD_PRODUCTS = [
     category: "Phòng khách",
     productType: "Hàng sẵn",
     size: "140 x 40 x 85",
-    color: "Gỗ tự nhiên",
+    color: "Cánh gián nhạt",
   },
   {
     id: 13,
@@ -303,7 +304,7 @@ const WOOD_PRODUCTS = [
     category: "Phòng ngủ",
     productType: "Hàng sẵn",
     size: "45 x 40 x 45",
-    color: "Gỗ dẻ gai nguyên bản",
+    color: "Sơn bóng mờ",
   },
   {
     id: 23,
@@ -507,30 +508,6 @@ const WOOD_PRODUCTS = [
     productType: "Hàng mộc",
     size: "50 x 40 x 30 cm",
     color: "Gỗ thông mộc",
-  },
-  {
-    id: 38,
-    name: "Ghế xoay lưới văn phòng",
-    sku: "GXV-38",
-    price: 1850000,
-    stock: 45,
-    image: "/wood_products.png",
-    category: "Phòng làm việc",
-    productType: "Hàng sẵn",
-    size: "60 x 60 x 110 cm",
-    color: "Đen",
-  },
-  {
-    id: 39,
-    name: "Hộc tủ di động 3 ngăn kéo",
-    sku: "HT-39",
-    price: 1550000,
-    stock: 28,
-    image: "/wood_products.png",
-    category: "Phòng làm việc",
-    productType: "Hàng mộc",
-    size: "40 x 50 x 65 cm",
-    color: "Gỗ cao su mộc",
   },
   {
     id: 40,
@@ -819,6 +796,8 @@ export default function InStockInvoicePage() {
             sku: product.sku,
             quantity: 1,
             note: "",
+            productType: product.productType,
+            images: [],
           },
         ],
       });
@@ -870,6 +849,24 @@ export default function InStockInvoicePage() {
     });
   };
 
+  const updateItemImages = (id, newImages) => {
+    updateActiveTab({
+      cartItems: activeTab.cartItems.map((i) =>
+        i.id === id ? { ...i, images: [...(i.images || []), ...newImages] } : i,
+      ),
+    });
+  };
+
+  const removeItemImage = (itemId, imgIdx) => {
+    updateActiveTab({
+      cartItems: activeTab.cartItems.map((i) =>
+        i.id === itemId
+          ? { ...i, images: i.images.filter((_, idx) => idx !== imgIdx) }
+          : i,
+      ),
+    });
+  };
+
   const subtotal = activeTab.cartItems.reduce(
     (sum, i) => sum + i.price * i.quantity,
     0,
@@ -906,7 +903,8 @@ export default function InStockInvoicePage() {
         size: "",
         qty: item.quantity,
         price: item.price,
-        note: "",
+        note: item.note || "",
+        images: item.images || [],
       })),
       total: totalPayable,
       subtotal: subtotal,
@@ -1140,6 +1138,64 @@ export default function InStockInvoicePage() {
                         style={{ color: "var(--text-secondary)" }}
                       />
                     </div>
+
+                    {/* Image Upload for Raw Wood */}
+                    {item.productType === "Hàng mộc" && (
+                      <div className="mt-2 pl-11 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <label className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-dashed border-gray-300 hover:border-brand-primary hover:bg-brand-primary/5 transition-colors cursor-pointer group/upload">
+                            <Camera
+                              size={12}
+                              className="text-gray-400 group-hover/upload:text-brand-primary"
+                            />
+                            <span className="text-[11px] font-medium text-gray-500 group-hover/upload:text-brand-primary">
+                              Gửi ảnh khách
+                            </span>
+                            <input
+                              type="file"
+                              multiple
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const files = Array.from(e.target.files);
+                                if (files.length > 0) {
+                                  // Mock: create Object URLs for preview
+                                  const urls = files.map((f) =>
+                                    URL.createObjectURL(f),
+                                  );
+                                  updateItemImages(item.id, urls);
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
+
+                        {item.images && item.images.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {item.images.map((img, imgIdx) => (
+                              <div
+                                key={imgIdx}
+                                className="relative w-12 h-12 rounded-lg border overflow-hidden group/img"
+                              >
+                                <img
+                                  src={img}
+                                  alt="customer"
+                                  className="w-full h-full object-cover"
+                                />
+                                <button
+                                  onClick={() =>
+                                    removeItemImage(item.id, imgIdx)
+                                  }
+                                  className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity"
+                                >
+                                  <X size={12} className="text-white" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

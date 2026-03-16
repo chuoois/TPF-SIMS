@@ -146,7 +146,7 @@ const HANG_DAT_STATUSES = [
   "Đang giao hàng",
   "Hoàn thành",
   "Chờ duyệt hủy",
-  "Đơn đã hủy",
+  "Đã hủy",
 ];
 
 const ALL_STATUSES = [
@@ -255,7 +255,7 @@ export default function SalesOrderManage() {
 
   const prepOrderForPrint = (o) => {
     const fullOrder = MOCK_ORDERS_DETAIL[o.id] || {
-      ...MOCK_ORDERS_DETAIL["DH008"],
+      ...MOCK_ORDERS_DETAIL["DH-S01"],
       code: o.code,
       customer: {
         name: o.customerName,
@@ -263,10 +263,11 @@ export default function SalesOrderManage() {
         address: "Đang cập nhật...",
       },
       total: o.total,
-      deposit: null,
+      deposit: 0,
       status: o.status,
       type: o.type,
       date: o.date,
+      products: [],
     };
     fullOrder.displayTotal =
       fullOrder.total != null

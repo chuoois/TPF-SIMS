@@ -226,7 +226,7 @@ export const MOCK_ORDERS_DETAIL = {
   // ========== NHÓM 3: HÀNG ĐẶT ==========
   "DH-D03": {
     code: "DH-DAT-003",
-    type: "Hàng đặt",
+    type: "Hàng khách đặt",
     status: "Đang sản xuất",
     date: "2026-03-10T10:15:00",
     deliveryDate: "2026-03-28",
@@ -342,7 +342,7 @@ function readNumberVN(num) {
     }
     unitIdx++;
   }
-  result = result.replace(/\\s+/g, " ").trim();
+  result = result.replace(/\s+/g, " ").trim();
   return result.charAt(0).toUpperCase() + result.slice(1) + " đồng";
 }
 
@@ -1088,7 +1088,7 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
                     fontWeight: "bold",
                   }}
                 >
-                  {fmtCurrency(displayTotal)}
+                  {fmtCurrency(displayTotal - (o.deposit || 0))}
                 </td>
               </tr>
             </>
@@ -1147,7 +1147,7 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
             fontFamily: "'Caveat', 'Dancing Script', cursive, serif",
           }}
         >
-          {readNumberVN(displayTotal)}
+          {readNumberVN(displayTotal - (o.deposit || 0))}
         </span>
       </div>
 
