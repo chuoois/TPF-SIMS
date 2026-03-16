@@ -30,7 +30,7 @@ const menuItems = [
   { text: "Quản lý sản xuất", icon: Hammer, path: "/owner/production" },
   // { text: "Khách hàng", icon: Users, path: "/owner/customers" },
   { text: "Nhà cung cấp", icon: Building2, path: "/owner/suppliers" },
-  { text: "Nhân sự", icon: UserCog, path: "/owner/employees" },
+  { text: "Quản lý tài khoản", icon: UserCog, path: "/owner/employees" },
   { text: "Báo cáo", icon: BarChart3, path: "/owner/reports" },
   { text: "Nhật ký hệ thống", icon: History, path: "/owner/system-logs" },
 ];

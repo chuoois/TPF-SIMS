@@ -59,7 +59,8 @@ const COLORS = ["Cánh gián", "Hạt dẻ", "Mun", "Tự nhiên", "Sơn PU", "�
 
 const PRODUCT_STATUSES = [
   "Hàng sẵn",
-  "Đặt theo mẫu",
+  "Hàng thô",
+  "Hàng đặt",
   "Hết hàng",
   "Ngừng kinh doanh",
   "Quà tặng",
@@ -95,11 +96,28 @@ const INITIAL_PRODUCTS = [
     costPrice: 95000000,
     retailPrice: 120000000,
     unit: "Bộ",
-    productType: "Đặt theo mẫu",
-    status: "Đặt theo mẫu",
+    productType: "Hàng đặt",
+    status: "Hàng đặt",
     stock: 0,
     img: "https://placehold.co/100x100?text=QuocVoi",
     description: "Hàng đặt theo kích thước riêng, tay 12 vách 4 phân.",
+  },
+  {
+    id: "SP-THO-01",
+    code: "SP-THO-001",
+    name: "Tủ áo gỗ xoan đào (Hàng thô)",
+    category: "Phòng ngủ",
+    woodType: "Gỗ xoan đào",
+    color: "Để mộc",
+    dimensions: "160x200x55",
+    costPrice: 8500000,
+    retailPrice: 12500000,
+    unit: "Chiếc",
+    productType: "Hàng thô",
+    status: "Hàng thô",
+    stock: 3,
+    img: "https://placehold.co/100x100?text=TuAoTho",
+    description: "Hàng mộc sẵn tại kho, chờ sơn hoàn thiện.",
   },
   {
     id: "SP003",
@@ -180,8 +198,8 @@ const INITIAL_PRODUCTS = [
     costPrice: 40000000,
     retailPrice: 55000000,
     unit: "Bộ",
-    productType: "Đặt theo mẫu",
-    status: "Đặt theo mẫu",
+    productType: "Hàng đặt",
+    status: "Hàng đặt",
     stock: 0,
     img: "https://placehold.co/100x100?text=BanAn",
     description: "Nguyên tấm nguyên khối.",
@@ -195,7 +213,9 @@ const getStatusConfig = (status) => {
   switch (status) {
     case "Hàng sẵn":
       return { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" }; // Green
-    case "Đặt theo mẫu":
+    case "Hàng thô":
+      return { bg: "#FFFBEB", text: "#D97706", border: "#FDE68A" }; // Amber
+    case "Hàng đặt":
       return { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" }; // Blue
     case "Hết hàng":
       return { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" }; // Orange
@@ -924,7 +944,8 @@ export default function OwnerProducts() {
                         defaultValue={editItem?.productType || "Hàng sẵn"}
                       >
                         <option value="Hàng sẵn">Hàng sẵn</option>
-                        <option value="Đặt theo mẫu">Đặt theo mẫu</option>
+                        <option value="Hàng thô">Hàng thô</option>
+                        <option value="Hàng đặt">Hàng đặt</option>
                       </select>
                     </div>
                     <div>
@@ -935,8 +956,8 @@ export default function OwnerProducts() {
                         type="number"
                         className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100"
                         defaultValue={editItem ? editItem.stock : 0}
-                        disabled={editItem?.productType === "Đặt theo mẫu"}
-                        title="Chỉ áp dụng cho hàng sẵn"
+                        disabled={editItem?.productType === "Hàng đặt"}
+                        title="Hàng đặt không quản lý kho theo mẫu"
                       />
                     </div>
                   </div>
@@ -1126,9 +1147,9 @@ export default function OwnerProducts() {
                         Tồn kho hiện tại
                       </span>
                       <span className="text-lg font-bold text-gray-900">
-                        {detailItem.productType === "Hàng sẵn"
-                          ? detailItem.stock
-                          : "—"}
+                        {detailItem.productType === "Hàng đặt"
+                          ? "—"
+                          : detailItem.stock}
                       </span>
                     </div>
                   </div>

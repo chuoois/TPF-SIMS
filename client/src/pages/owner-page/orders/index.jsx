@@ -20,6 +20,7 @@ import {
   Camera,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
+import toast from "react-hot-toast";
 
 
 const INITIAL_ORDERS = [
@@ -64,7 +65,7 @@ const INITIAL_ORDERS = [
   },
   {
     id: "DH-T02", code: "DH-THO-002", customerName: "Đặng Tuấn Kiệt", phone: "0931234567",
-    type: "Hàng thô", total: 8200000, status: "Đang sản xuất",
+    type: "Hàng thô", total: 8200000, status: "Đang gia công",
     date: "2026-03-11T15:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-15"
   },
   {
@@ -99,20 +100,20 @@ const INITIAL_ORDERS = [
     date: "2026-03-05T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-08"
   },
 
-  // ========== NHÓM 3: HÀNG ĐẶT (8 trạng thái) ==========
+  // ========== NHÓM 3: HÀNG ĐẶT (12 trạng thái) ==========
   {
     id: "DH-D01", code: "DH-DAT-001", customerName: "Nguyễn Thị Hồng", phone: "0912123123",
-    type: "Hàng đặt", total: 75000000, status: "Chờ xử lý",
+    type: "Hàng đặt", total: 75000000, status: "Đang gia công",
     date: "2026-03-12T11:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-30"
   },
   {
     id: "DH-D02", code: "DH-DAT-002", customerName: "Lê Văn Tám", phone: "0321654987",
-    type: "Hàng đặt", total: 120000000, status: "Đang sản xuất",
+    type: "Hàng đặt", total: 120000000, status: "Đang gia công",
     date: "2026-03-11T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-25"
   },
   {
     id: "DH-D03", code: "DH-DAT-003", customerName: "Phan Văn Trị", phone: "0944123123",
-    type: "Hàng đặt", total: 45000000, status: "Đang sản xuất",
+    type: "Hàng đặt", total: 45000000, status: "Đang gia công",
     date: "2026-03-10T10:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-28"
   },
   {
@@ -141,6 +142,26 @@ const INITIAL_ORDERS = [
     type: "Hàng đặt", total: 42000000, status: "Đã hủy",
     date: "2026-03-01T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-10"
   },
+  {
+    id: "DH-D09", code: "DH-DAT-009", customerName: "Vũ Phương Thảo", phone: "0944000111",
+    type: "Hàng đặt", total: 15600000, status: "Chờ sản xuất",
+    date: "2026-03-12T16:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-20"
+  },
+  {
+    id: "DH-D10", code: "DH-DAT-010", customerName: "Đỗ Minh Quân", phone: "0944222333",
+    type: "Hàng đặt", total: 32000000, status: "Chờ sản xuất",
+    date: "2026-03-13T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-25"
+  },
+  {
+    id: "DH-D11", code: "DH-DAT-011", customerName: "Phạm Gia Bảo", phone: "0944444555",
+    type: "Hàng đặt", total: 8500000, status: "Chờ sản xuất",
+    date: "2026-03-14T10:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-28"
+  },
+  {
+    id: "DH-D12", code: "DH-DAT-012", customerName: "Nguyễn Anh Tuấn", phone: "0944666777",
+    type: "Hàng đặt", total: 112000000, status: "Đang gia công",
+    date: "2026-03-15T14:20:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-30"
+  },
 ];
 
 const ORDER_TYPES = ["Hàng sẵn", "Hàng thô", "Hàng đặt"];
@@ -156,7 +177,7 @@ const HANG_SAN_STATUSES = [
 
 const HANG_THO_STATUSES = [
   "Chờ xử lý",
-  "Đang sản xuất",
+  "Đang gia công",
   "Chờ giao hàng",
   "Đang giao hàng",
   "Hoàn thành",
@@ -165,8 +186,9 @@ const HANG_THO_STATUSES = [
 ];
 
 const HANG_DAT_STATUSES = [
-  "Chờ xử lý",
-  "Đang sản xuất",
+  "Chờ sản xuất",
+  "Đang gia công",
+  "Đã nhập kho",
   "Chờ giao hàng",
   "Đang giao hàng",
   "Hoàn thành",
@@ -202,7 +224,12 @@ const getStatusColor = (status) => {
       return { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" }; // Blue
     case "Đang xử lý":
       return { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" }; // Orange
+    case "Chờ sản xuất":
+      return { bg: "#FEF3C7", text: "#B45309", border: "#FDE68A" }; // Amber/Dark
+    case "Đã nhập kho":
+      return { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" }; // Green
     case "Đang sản xuất":
+    case "Đang gia công":
       return { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" }; // Amber
     case "Chờ giao hàng":
       return { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" }; // Purple
@@ -263,7 +290,7 @@ export default function OwnerOrders() {
     const updatedSaved = saved.map(o => o.id === id ? { ...o, status: newStatus } : o);
     localStorage.setItem("tpf_simulated_orders", JSON.stringify(updatedSaved));
 
-    alert(`Đã cập nhật trạng thái đơn hàng sang: ${newStatus}`);
+    toast.success(`Đã cập nhật trạng thái đơn hàng sang: ${newStatus}`);
   };
 
   const handleDeliveryUpload = (id, e) => {
@@ -277,7 +304,7 @@ export default function OwnerOrders() {
         const updatedSaved = saved.map(o => o.id === id ? { ...o, status: "Giao hàng thành công", deliveryImage: reader.result } : o);
         localStorage.setItem("tpf_simulated_orders", JSON.stringify(updatedSaved));
 
-        alert("Đã tải ảnh giao hàng và hoàn tất đơn!");
+        toast.success("Đã tải ảnh giao hàng và hoàn tất đơn!");
         setStatusFilter("Giao hàng thành công"); // Tự động chuyển tab filter
       };
       reader.readAsDataURL(file);
@@ -662,7 +689,7 @@ export default function OwnerOrders() {
                               className="w-1.5 h-1.5 rounded-full mr-1.5"
                               style={{ backgroundColor: statusConfig.text }}
                             ></span>
-                            {o.status}
+                            {o.status === "Đã nhập kho" && o.type === "Hàng đặt" ? "Đã nhập kho (Duyệt mộc)" : o.status}
                           </span>
                         </div>
                       </td>
@@ -684,7 +711,7 @@ export default function OwnerOrders() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              alert("Đang mở ảnh bàn giao cho đơn " + o.code);
+                              toast.success("Đang mở ảnh bàn giao cho đơn " + o.code);
                             }}
                             className="w-10 h-10 rounded-lg overflow-hidden border border-green-200 hover:ring-2 ring-green-400 transition cursor-pointer mx-auto block"
                           >
@@ -704,13 +731,13 @@ export default function OwnerOrders() {
                             {o.status === "Chờ duyệt hủy" && (
                               <>
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); alert("Đã duyệt hủy đơn hàng."); }}
+                                  onClick={(e) => { e.stopPropagation(); toast.success("Đã duyệt hủy đơn hàng."); }}
                                   className="h-9 px-4 rounded-xl bg-red-500 text-white text-[12px] font-black hover:bg-red-600 transition-all shadow-lg shadow-red-100 flex items-center gap-2 active:scale-95"
                                 >
                                   <XCircle size={16} /> DUYỆT HỦY
                                 </button>
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); alert("Đã từ chối yêu cầu hủy."); }}
+                                  onClick={(e) => { e.stopPropagation(); toast.error("Đã từ chối yêu cầu hủy."); }}
                                   className="h-9 px-4 rounded-xl bg-slate-100 text-slate-600 text-[12px] font-bold hover:bg-slate-200 transition-all active:scale-95"
                                 >
                                   TỪ CHỐI
@@ -721,24 +748,31 @@ export default function OwnerOrders() {
                             {/* FLOW THEO LOẠI HÀNG */}
                             {o.type === "Hàng sẵn" ? (
                               <>
-                                {/* Hàng sẵn: Chờ xử lý -> Chờ giao hàng - ĐÃ GỠ THEO YÊU CẦU (Sales làm) */}
                                 {o.status === "Chờ xử lý" && (
-                                   <div className="text-[10px] text-gray-400 italic">Sales đang xử lý...</div>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if(window.confirm("Xác nhận đơn hàng và chuẩn bị giao hàng?")) {
+                                        handleUpdateStatus(o.id, "Chờ giao hàng");
+                                      }
+                                    }}
+                                    className="h-9 px-4 rounded-xl bg-emerald-600 text-white text-[12px] font-black hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center gap-2 active:scale-95"
+                                  >
+                                    <CheckCircle size={16} /> XÁC NHẬN ĐƠN
+                                  </button>
                                 )}
                               </>
                             ) : (
                               <>
                                 {/* HÀNG THÔ VÀ ĐẶT */}
                                 
-                                {/* Nút Bàn giao sản xuất (Hàng thô, Hàng đặt nhảy thẳng từ Chờ xử lý -> Đang sản xuất) */}
-                                {o.status === "Chờ xử lý" && (o.type === "Hàng thô" || o.type === "Hàng đặt") && (
+                                {o.status === "Chờ xử lý" && o.type === "Hàng thô" && (
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       if(window.confirm("Bàn giao đơn hàng này sang Xưởng sản xuất?")) {
-                                        handleUpdateStatus(o.id, "Đang sản xuất");
-                                        // Deep link to specific production detail and auto-open assignment modal
-                                        navigate("/owner/production/LSX001", { state: { autoOpenAssign: true } });
+                                        handleUpdateStatus(o.id, "Đang gia công");
+                                        navigate("/owner/production/LSX007"); // LSX007 is a raw item
                                       }
                                     }}
                                     className="h-9 px-4 rounded-xl bg-indigo-600 text-white text-[12px] font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2 active:scale-95"
@@ -747,7 +781,52 @@ export default function OwnerOrders() {
                                   </button>
                                 )}
 
-                                {o.status === "Đang sản xuất" && (
+                                {o.status === "Chờ sản xuất" && o.type === "Hàng đặt" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if(window.confirm("Bàn giao đơn hàng này sang Xưởng sản xuất?")) {
+                                        handleUpdateStatus(o.id, "Đang gia công");
+                                        navigate("/owner/production/LSX001");
+                                      }
+                                    }}
+                                    className="h-9 px-4 rounded-xl bg-indigo-600 text-white text-[12px] font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2 active:scale-95"
+                                  >
+                                    <Hammer size={16} /> BÀN GIAO SẢN XUẤT
+                                  </button>
+                                )}
+
+                                {/* HÀNG ĐẶT: Đang gia công (Mộc) -> Đã nhập kho (Duyệt mộc) */}
+                                {o.status === "Đang gia công" && o.type === "Hàng đặt" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if(window.confirm("Xác nhận sản phẩm đã xong phần mộc và nhập kho để kiểm tra?")) {
+                                        handleUpdateStatus(o.id, "Đã nhập kho");
+                                      }
+                                    }}
+                                    className="h-9 px-4 rounded-xl bg-emerald-600 text-white text-[12px] font-black hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center gap-2 active:scale-95"
+                                  >
+                                    <CheckCircle size={16} /> NHẬP KHO (Xong Mộc)
+                                  </button>
+                                )}
+
+                                {/* HÀNG ĐẶT: Đã nhập kho (Duyệt mộc) -> Chờ giao hàng (Xong Sơn) */}
+                                {o.status === "Đã nhập kho" && o.type === "Hàng đặt" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if(window.confirm("Xác nhận sản phẩm đã hoàn thiện sơn và sẵn sàng giao hàng?")) {
+                                        handleUpdateStatus(o.id, "Chờ giao hàng");
+                                      }
+                                    }}
+                                    className="h-9 px-4 rounded-xl bg-indigo-600 text-white text-[12px] font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2 active:scale-95"
+                                  >
+                                    <CheckCircle size={16} /> HOÀN THIỆN SƠN
+                                  </button>
+                                )}
+
+                                {(o.status === "Đang sản xuất" || o.status === "Đang gia công") && (
                                    <div className="flex flex-col items-center">
                                       <div className="text-[10px] text-indigo-600 font-bold uppercase tracking-tight">Đang sản xuất...</div>
                                       <div className="text-[9px] text-gray-400 italic mt-0.5">Xử lý tại mục Sản xuất</div>

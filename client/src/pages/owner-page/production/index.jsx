@@ -29,6 +29,7 @@ import {
   Paintbrush,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
+import toast from "react-hot-toast";
 
 // ===================== STATIC DATA =====================
 const INITIAL_PRODUCTIONS = [
@@ -40,12 +41,14 @@ const INITIAL_PRODUCTIONS = [
     orderId: "DH001",
     customerName: "Nguyễn Văn A",
     productName: "Tủ bếp chữ L",
+    productImage: "https://images.unsplash.com/photo-1556912177-c54030639a03?q=80&w=300",
     variantName: "Gỗ sồi Nga — Sơn PU",
+    orderType: "Hàng đặt",
     quantityPlanned: 1,
     quantityCompleted: 0,
-    status: "Chờ giao thợ",
-    subStage: null,
-    assignedWorker: null,
+    status: "Đang làm mộc",
+    subStage: "gia_cong_moc",
+    assignedWorker: "Thợ cả",
     startDate: null,
     expectedEndDate: "2026-03-20",
     date: "2026-03-05T16:30:00",
@@ -57,15 +60,36 @@ const INITIAL_PRODUCTIONS = [
     orderId: "DH001",
     customerName: "Nguyễn Văn A",
     productName: "Đảo bếp",
+    productImage: "https://images.unsplash.com/photo-1588854337221-4cf9fa96059c?q=80&w=300",
     variantName: "Đồng bộ tủ bếp",
+    orderType: "Hàng đặt",
     quantityPlanned: 1,
     quantityCompleted: 0,
-    status: "Chờ giao thợ",
-    subStage: null,
-    assignedWorker: null,
+    status: "Đang làm mộc",
+    subStage: "gia_cong_moc",
+    assignedWorker: "Thợ cả",
     startDate: null,
     expectedEndDate: "2026-03-22",
     date: "2026-03-05T16:32:00",
+  },
+  {
+    id: "LSX022",
+    code: "LSX-2603-0022",
+    orderCode: "DH-2603-0001",
+    orderId: "DH001",
+    customerName: "Nguyễn Văn A",
+    productName: "Kệ trang trí",
+    productImage: "https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?q=80&w=300",
+    variantName: "Gỗ sồi Nga — Sơn PU",
+    orderType: "Hàng đặt",
+    quantityPlanned: 2,
+    quantityCompleted: 0,
+    status: "Đang làm mộc",
+    subStage: "gia_cong_moc",
+    assignedWorker: "Thợ cả",
+    startDate: null,
+    expectedEndDate: "2026-03-22",
+    date: "2026-03-05T16:33:00",
   },
   // Order 2: Single product (Dining room)
   {
@@ -75,12 +99,14 @@ const INITIAL_PRODUCTIONS = [
     orderId: "DH002",
     customerName: "Trần Thị B",
     productName: "Bàn ăn nguyên tấm",
+    productImage: "https://images.unsplash.com/photo-1577145745727-42b77daeb623?q=80&w=300",
     variantName: "Gỗ gõ đỏ — Live Edge",
+    orderType: "Hàng thô",
     quantityPlanned: 1,
     quantityCompleted: 0,
-    status: "Chờ giao thợ",
-    subStage: null,
-    assignedWorker: null,
+    status: "Đang làm mộc",
+    subStage: "gia_cong_moc",
+    assignedWorker: "Thợ cả",
     startDate: null,
     expectedEndDate: "2026-03-25",
     date: "2026-03-05T16:35:00",
@@ -93,34 +119,17 @@ const INITIAL_PRODUCTIONS = [
     orderId: "DH008",
     customerName: "Lê Văn C",
     productName: "Bàn trà phòng khách",
+    productImage: "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=300",
     variantName: "Gỗ hương đá — Chạm nghê",
+    orderType: "Hàng đặt",
     quantityPlanned: 1,
     quantityCompleted: 0,
-    status: "Đang sản xuất",
+    status: "Đang làm mộc",
     subStage: "gia_cong_moc",
-    needsRedo: true,
-    redoReason: "Mặt bàn bị xước nhỏ",
     assignedWorker: "Nguyễn Văn Đức",
     startDate: "2026-03-03",
     expectedEndDate: "2026-03-25",
     date: "2026-03-03T08:00:00",
-  },
-  {
-    id: "LSX004",
-    code: "LSX-2603-0004",
-    orderCode: "DH-2603-0008",
-    orderId: "DH008",
-    customerName: "Lê Văn C",
-    productName: "Kệ tivi",
-    variantName: "Gỗ hương đá — PU đồng màu",
-    quantityPlanned: 1,
-    quantityCompleted: 1,
-    status: "Hoàn thành",
-    subStage: null,
-    assignedWorker: "Trần Minh Tâm",
-    startDate: "2026-03-03",
-    expectedEndDate: "2026-03-15",
-    date: "2026-03-03T08:15:00",
   },
   // Order 4: Pending Approval (was Chờ nghiệm thu)
   {
@@ -130,10 +139,13 @@ const INITIAL_PRODUCTIONS = [
     orderId: "DH012",
     customerName: "Phạm Văn D",
     productName: "Tủ quần áo 4 cánh",
+    productImage: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=300",
     variantName: "Gỗ công nghiệp MDF — Phủ Melamine",
+    orderType: "Hàng đặt",
     quantityPlanned: 1,
     quantityCompleted: 1,
-    status: "Đang sản xuất",
+    status: "Đang sơn",
+    subStage: "son_hoan_thien",
     isPendingApproval: true,
     completionPhoto: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=3000&auto=format&fit=crop",
     assignedWorker: "Lê Văn Hùng",
@@ -149,15 +161,36 @@ const INITIAL_PRODUCTIONS = [
     orderId: "DH015",
     customerName: "Hoàng Anh Tuấn",
     productName: "Giường ngủ 1m8",
+    productImage: "https://images.unsplash.com/photo-1505693419173-42b925b406af?q=80&w=300",
     variantName: "Gỗ xoan đào — Kiểu hiện đại",
+    orderType: "Hàng đặt",
     quantityPlanned: 1,
     quantityCompleted: 0,
-    status: "Đang sản xuất",
+    status: "Đang sơn",
     subStage: "son_hoan_thien",
     assignedWorker: "Phạm Quốc Bảo",
     startDate: "2026-03-02",
     expectedEndDate: "2026-03-12",
     date: "2026-03-02T10:00:00",
+  },
+  {
+    id: "LSX023",
+    code: "LSX-2603-0023",
+    orderCode: "DH-2603-0015",
+    orderId: "DH015",
+    customerName: "Hoàng Anh Tuấn",
+    productName: "Tủ đầu giường",
+    productImage: "https://images.unsplash.com/photo-1616137509918-62f4f22c1926?q=80&w=300",
+    variantName: "Gỗ xoan đào — Đồng bộ giường",
+    orderType: "Hàng đặt",
+    quantityPlanned: 2,
+    quantityCompleted: 0,
+    status: "Đang làm mộc",
+    subStage: "gia_cong_moc",
+    assignedWorker: "Thợ cả",
+    startDate: null,
+    expectedEndDate: "2026-03-15",
+    date: "2026-03-02T09:58:00",
   },
   // Order 6: Completed
   {
@@ -167,7 +200,9 @@ const INITIAL_PRODUCTIONS = [
     orderId: "DH018",
     customerName: "Nguyễn Thu Hà",
     productName: "Bộ bàn ghế ăn 6 ghế",
+    productImage: "https://images.unsplash.com/photo-1617806118233-ef203e91122b?q=80&w=300",
     variantName: "Gỗ sồi — Màu óc chó",
+    orderType: "Hàng thô",
     quantityPlanned: 1,
     quantityCompleted: 1,
     status: "Hoàn thành",
@@ -187,8 +222,8 @@ const MOCK_WORKERS = [
 
 const STATUSES = [
   "Tất cả",
-  "Chờ giao thợ",
-  "Đang sản xuất",
+  "Đang làm mộc",
+  "Đang sơn",
   "Hoàn thành",
 ];
 
@@ -204,23 +239,35 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString("vi-VN");
 };
 
+const getDeadlineStyle = (dateString) => {
+  if (!dateString) return { color: "var(--text-main)", text: "Chưa định ngày" };
+  const d = new Date(dateString);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const deadline = new Date(d);
+  deadline.setHours(0, 0, 0, 0);
+  const diffTime = deadline.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) return { color: "#EF4444", text: formatDate(dateString), urgent: true };
+  if (diffDays <= 3) return { color: "#F59E0B", text: formatDate(dateString), urgent: true };
+  return { color: "var(--text-main)", text: formatDate(dateString), urgent: false };
+};
+
 const getStatusColor = (status, subStage = null, isPendingApproval = false, needsRedo = false) => {
   // 1. Primary Status (Matching the Tabs)
   const primaryBadge = {
-    "Chờ giao thợ": { label: "Chờ giao thợ", bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" },
-    "Đang sản xuất": { label: "Đang sản xuất", bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" },
+    "Đang làm mộc": { label: "Đang làm mộc", bg: "#FDF4FF", text: "#A21CAF", border: "#F5D0FE" },
+    "Đang sơn": { label: "Đang sơn", bg: "#FDF2F8", text: "#DB2777", border: "#FBCFE8" },
     "Hoàn thành": { label: "Hoàn thành", bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" },
   }[status] || { label: status, bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
 
   // 2. Detail Status (The Nuance)
   let detailBadge = null;
-  if (isPendingApproval && subStage === "son_hoan_thien") {
+  if (isPendingApproval && status === "Đang sơn") {
     detailBadge = { label: "Chờ duyệt", bg: "#EFF6FF", text: "#1D4ED8", border: "#DBEAFE" };
-  } else if (needsRedo) {
+  } else if (needsRedo && status === "Đang sơn") {
     detailBadge = { label: "Sửa lại", bg: "#FEF2F2", text: "#EF4444", border: "#FEE2E2" };
-  } else if (status === "Đang sản xuất") {
-    if (subStage === "gia_cong_moc") detailBadge = { label: "Gia công Mộc", bg: "#FDF4FF", text: "#A21CAF", border: "#F5D0FE" };
-    if (subStage === "son_hoan_thien") detailBadge = { label: "Sơn hoàn thiện", bg: "#FDF2F8", text: "#DB2777", border: "#FBCFE8" };
   }
 
   return { primaryBadge, detailBadge };
@@ -236,16 +283,14 @@ export default function OwnerProduction() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
   const [showRedoModal, setShowRedoModal] = useState(false);
-  const [showAssignModal, setShowAssignModal] = useState(false);
   const [showInspectModal, setShowInspectModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [selectedWorker, setSelectedWorker] = useState(null);
 
   const navigate = () => {}; // Dummy for now since we're using static data update alerts
 
   // Filter & Search
   const filtered = useMemo(() => {
-    let result = productions;
+    let result = productions.filter(p => p.orderType !== "Hàng sẵn");
 
     // Filter by status
     if (statusFilter !== "Tất cả") {
@@ -271,8 +316,7 @@ export default function OwnerProduction() {
         (p) =>
           p.code.toLowerCase().includes(q) ||
           p.orderCode?.toLowerCase().includes(q) ||
-          p.productName.toLowerCase().includes(q) ||
-          (p.assignedWorker && p.assignedWorker.toLowerCase().includes(q)),
+          p.productName.toLowerCase().includes(q)
       );
     }
 
@@ -294,14 +338,35 @@ export default function OwnerProduction() {
       setSelectedItem(item);
       setShowInspectModal(true);
     } else {
-      const confirmed = window.confirm(`Xác nhận báo xong việc cho ${item.code}? Hệ thống sẽ gửi yêu cầu nghiệm thu tới chủ xưởng.`);
-      if (confirmed) {
-        setProductions(prev => prev.map(p => 
-          p.id === item.id 
-            ? { ...p, isPendingApproval: true, quantityCompleted: p.quantityPlanned } 
-            : p
-        ));
-      }
+      toast((t) => (
+        <div className="flex flex-col gap-3">
+          <p className="text-[13px] font-medium text-gray-700">
+            Xác nhận <strong>Nhập kho & Hoàn thành</strong> cho mã lệnh <strong>{item.code}</strong>?
+          </p>
+          <div className="flex justify-end gap-2">
+            <button 
+              onClick={() => toast.dismiss(t.id)}
+              className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-gray-400 hover:bg-gray-50 transition"
+            >
+              Hủy
+            </button>
+            <button 
+              onClick={() => {
+                toast.dismiss(t.id);
+                setProductions(prev => prev.map(p => 
+                  p.id === item.id 
+                    ? { ...p, isPendingApproval: true, quantityCompleted: p.quantityPlanned } 
+                    : p
+                ));
+                toast.success(`Đã ghi nhận yêu cầu nhập kho cho ${item.code}`);
+              }}
+              className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition"
+            >
+              Xác nhận
+            </button>
+          </div>
+        </div>
+      ), { duration: 5000, position: 'top-center' });
     }
   };
 
@@ -323,24 +388,15 @@ export default function OwnerProduction() {
     setShowRedoModal(false);
   };
 
-  const handleAssignWorker = () => {
-    if (!selectedWorker || !selectedItem) return;
-    const worker = MOCK_WORKERS.find(w => w.id === selectedWorker);
-    setProductions(prev => prev.map(p => 
-      p.id === selectedItem.id 
-        ? { ...p, status: "Đang sản xuất", assignedWorker: worker.name, startDate: new Date().toISOString() } 
-        : p
-    ));
-    setShowAssignModal(false);
-    setSelectedWorker(null);
-  };
+
 
 
   const statusCounts = useMemo(() => {
-    const counts = { "Tất cả": productions.length };
+    const validProductions = productions.filter(p => p.orderType !== "Hàng sẵn");
+    const counts = { "Tất cả": validProductions.length };
     STATUSES.forEach(s => {
       if (s !== "Tất cả") {
-        counts[s] = productions.filter(p => p.status === s).length;
+        counts[s] = validProductions.filter(p => p.status === s).length;
       }
     });
     return counts;
@@ -548,15 +604,21 @@ export default function OwnerProduction() {
                     className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500"
                     style={{ color: "var(--text-placeholder)" }}
                   >
+                    Loại hàng
+                  </th>
+                  <th
+                    className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500"
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
+                    Khách hàng
+                  </th>
+                  <th
+                    className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500"
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
                     Sản phẩm
                   </th>
                   <th
-                    className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 text-center"
-                    style={{ color: "var(--text-placeholder)" }}
-                  >
-                    Tiến độ
-                  </th>
-                   <th
                     className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500"
                     style={{ color: "var(--text-placeholder)" }}
                   >
@@ -566,19 +628,14 @@ export default function OwnerProduction() {
                     className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500"
                     style={{ color: "var(--text-placeholder)" }}
                   >
-                    Thợ phụ trách
-                  </th>
-                  <th
-                    className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500"
-                    style={{ color: "var(--text-placeholder)" }}
-                  >
-                    Ngày tạo
+                    Hạn giao
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {paginatedItems.map((p, idx) => {
                   const sc = getStatusColor(p.status, p.subStage, p.isPendingApproval, p.needsRedo);
+                  const ds = getDeadlineStyle(p.expectedEndDate);
                   const progress =
                     p.quantityPlanned > 0
                       ? Math.round((p.quantityCompleted / p.quantityPlanned) * 100)
@@ -625,61 +682,56 @@ export default function OwnerProduction() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex flex-col gap-1">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[13px] font-bold text-gray-900">
+                             {p.customerName || "—"}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        {p.orderType && (
+                          <span className="text-[10px] font-black px-2 py-1 rounded-lg bg-slate-100 text-slate-500 border border-slate-200 uppercase w-fit tracking-tight">
+                            {p.orderType}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1.5">
                           <div className="flex items-center gap-2">
                             <span className="text-[13px] font-bold text-gray-900 truncate">
                               {p.productName}
                             </span>
-                            {p.status === "Chờ giao thợ" && (
-                              <span className="flex h-2 w-2 rounded-full bg-orange-500 animate-pulse" title="Cần giao việc ngay" />
-                            )}
                           </div>
-                          <div className="flex flex-col">
-                            <span className="text-[11px] font-medium text-gray-400">
+                          <div className="flex flex-wrap gap-1">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded bg-gray-50 border border-gray-100 text-[10px] font-bold text-gray-500">
                               {p.variantName}
                             </span>
-                            {p.customerName && (
-                              <span className="text-[10px] font-bold text-slate-400 uppercase mt-0.5">
-                                Khách: {p.customerName}
-                              </span>
-                            )}
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span
+                            className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold whitespace-nowrap"
+                            style={{
+                              backgroundColor: sc.primaryBadge.bg,
+                              color: sc.primaryBadge.text,
+                              border: `1px solid ${sc.primaryBadge.border}`,
+                            }}
+                          >
                             <span
-                              className="text-[12px] font-bold"
-                              style={{
-                                color: progress === 100 ? "#16a34a" : "#1f2937",
-                              }}
-                            >
-                              {p.quantityCompleted}/{p.quantityPlanned}
-                            </span>
-                            <span className="text-[10px] text-gray-400 font-medium">
-                              ({progress}%)
-                            </span>
-                          </div>
-                          {p.status !== "Chờ giao thợ" && (
-                            <div className="w-20 h-1 rounded-full bg-gray-100 overflow-hidden">
-                              <div
-                                className="h-full transition-all duration-500"
-                                style={{
-                                  width: `${progress}%`,
-                                  backgroundColor:
-                                    progress === 100 ? "#16a34a" : "var(--brand-primary)",
-                                }}
-                              />
-                            </div>
-                          )}
-                          {/* Operational Detail inside Progress Cell */}
+                               className="w-1.5 h-1.5 rounded-full mr-1.5"
+                               style={{ backgroundColor: sc.primaryBadge.text }}
+                            />
+                            {sc.primaryBadge.label}
+                          </span>
                           {sc.detailBadge && (
                             <span
-                              className="px-2 py-0.5 rounded text-[10px] font-bold"
+                              className="px-2 py-0.5 rounded-md text-[10px] font-bold"
                               style={{
                                 backgroundColor: sc.detailBadge.bg,
                                 color: sc.detailBadge.text,
+                                border: `1px solid ${sc.detailBadge.border}`
                               }}
                             >
                               {sc.detailBadge.label}
@@ -687,44 +739,9 @@ export default function OwnerProduction() {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold whitespace-nowrap"
-                          style={{
-                            backgroundColor: sc.primaryBadge.bg,
-                            color: sc.primaryBadge.text,
-                            border: `1px solid ${sc.primaryBadge.border}`,
-                          }}
-                        >
-                          <span
-                             className="w-1.5 h-1.5 rounded-full mr-1.5"
-                             style={{ backgroundColor: sc.primaryBadge.text }}
-                          />
-                          {sc.primaryBadge.label}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        {p.assignedWorker ? (
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-500 shrink-0">
-                              {p.assignedWorker.split(" ").pop()[0]}
-                            </div>
-                            <span className="font-bold text-gray-700">
-                              {p.assignedWorker}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 italic text-xs">
-                            Chưa phân công
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <div className="flex flex-col items-center">
-                          <span className="font-medium text-gray-700">
-                            {formatDate(p.date)}
-                          </span>
-                        </div>
+
+                      <td className="px-6 py-4 text-[13px] font-bold relative" style={{ color: ds.color }}>
+                        {ds.text}
 
                         {/* HOVER QUICK ACTIONS BAR */}
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 flex items-center gap-2 bg-white border border-gray-100 shadow-2xl rounded-2xl p-1.5 z-10">
@@ -736,19 +753,9 @@ export default function OwnerProduction() {
                                   Chi tiết
                                 </Link>
 
-                                {p.status === "Chờ giao thợ" && (
-                                  <button 
-                                    onClick={() => {
-                                      setSelectedItem(p);
-                                      setShowAssignModal(true);
-                                    }}
-                                    className="h-9 px-4 rounded-xl bg-emerald-600 flex items-center gap-2 text-[12px] font-bold text-white hover:bg-emerald-700 transition-all shadow-md active:scale-95"
-                                  >
-                                    <UserPlus size={16} /> Giao việc
-                                  </button>
-                                )}
 
-                                {p.status === "Đang sản xuất" && (
+
+                                {p.status === "Đang sơn" && (
                                    <>
                                       {p.isPendingApproval ? (
                                         <button 
@@ -758,7 +765,7 @@ export default function OwnerProduction() {
                                           }}
                                           className="h-9 px-5 rounded-xl bg-blue-600 flex items-center gap-2 text-[12px] font-bold text-white hover:bg-blue-700 transition-all shadow-lg active:scale-95"
                                         >
-                                          <Camera size={16} /> Xem & Duyệt
+                                          <Camera size={16} /> Nhập kho
                                         </button>
                                       ) : (
                                         <>
@@ -782,7 +789,7 @@ export default function OwnerProduction() {
                 })}
                 {paginatedItems.length === 0 && (
                   <tr>
-                    <td colSpan="8" className="py-24 text-center">
+                    <td colSpan="6" className="py-24 text-center">
                       <div
                         className="flex flex-col items-center gap-2"
                         style={{ color: "var(--text-placeholder)" }}
@@ -972,69 +979,7 @@ export default function OwnerProduction() {
           </div>
         )}
 
-        {/* Quick Assign Modal */}
-        {showAssignModal && selectedItem && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-emerald-50/30">
-                  <div className="flex items-center gap-2 text-emerald-600">
-                    <UserPlus size={18} />
-                    <h3 className="text-[15px] font-bold uppercase tracking-tight">Giao việc cho thợ</h3>
-                  </div>
-                  <button onClick={() => setShowAssignModal(false)} className="text-gray-400 hover:text-gray-600 transition p-1 hover:bg-white rounded-lg">
-                    <X size={20} />
-                  </button>
-               </div>
-               
-               <div className="p-6">
-                  <div className="space-y-4">
-                     <p className="text-[13px] text-gray-600">Chọn thợ phụ trách cho lệnh sản xuất <span className="font-bold text-emerald-600">{selectedItem.code}</span>:</p>
-                     
-                     <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-                        {MOCK_WORKERS.map(worker => (
-                           <label 
-                             key={worker.id}
-                             className={`flex items-center gap-3 p-3 rounded-xl border-2 transition cursor-pointer hover:border-emerald-200 ${selectedWorker === worker.id ? 'border-emerald-500 bg-emerald-50' : 'border-gray-50 bg-white'}`}
-                           >
-                              <input 
-                                type="radio" 
-                                name="worker" 
-                                className="hidden" 
-                                onChange={() => setSelectedWorker(worker.id)}
-                                checked={selectedWorker === worker.id}
-                              />
-                              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-[14px] transition-colors ${selectedWorker === worker.id ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
-                                 {worker.avatar}
-                              </div>
-                              <div className="flex-1">
-                                 <p className="text-[14px] font-bold text-gray-900">{worker.name}</p>
-                                 <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{worker.role}</p>
-                              </div>
-                              {selectedWorker === worker.id && <CheckCircle size={18} className="text-emerald-600" />}
-                           </label>
-                        ))}
-                     </div>
-                  </div>
 
-                  <div className="mt-6 flex gap-3">
-                     <button 
-                       onClick={() => setShowAssignModal(false)}
-                       className="flex-1 h-11 rounded-xl text-[13px] font-bold text-gray-400 hover:bg-gray-50 transition"
-                     >
-                        Hủy bỏ
-                     </button>
-                     <button 
-                       disabled={!selectedWorker}
-                       onClick={handleAssignWorker}
-                       className="flex-1 h-11 rounded-xl text-[13px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-100 active:scale-95"
-                     >
-                        Bắt đầu sản xuất
-                     </button>
-                  </div>
-               </div>
-            </div>
-          </div>
-        )}
         {/* Photo Inspection Modal */}
         {showInspectModal && selectedItem && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
