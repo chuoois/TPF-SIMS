@@ -184,7 +184,7 @@ const STATUS_CONFIG = {
     icon: "CheckCircle2",
     description: "Đã lập lệnh sản xuất & chuyển sang phân xưởng",
   },
-  "Đã hủy": {
+  "Yêu cầu đã hủy": {
     bg: "#FEF2F2",
     text: "#B91C1C",
     border: "#FECACA",
@@ -538,7 +538,7 @@ export default function SalesRequirements() {
     if (!cancelTarget) return;
     setRequirements((prev) =>
       prev.map((r) =>
-        r.id === cancelTarget.id ? { ...r, status: "Đã hủy" } : r,
+        r.id === cancelTarget.id ? { ...r, status: "Yêu cầu đã hủy" } : r,
       ),
     );
     toast.success(`Đã hủy yêu cầu ${cancelTarget.code} thành công`);
