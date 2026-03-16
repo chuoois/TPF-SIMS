@@ -50,8 +50,8 @@ const currentOwnerName = "Võ Cường";
 const STATS = {
   revenueToday: 15500000,
   revenueGrowth: 12.5,
-  newOrders: 8,
-  pendingApprovals: 5,
+  newRequirements: 4,
+  productionToApprove: 3,
   debtCustomer: 45000000,
   debtSupplier: 28500000,
   deliveriesToday: 2,
@@ -92,10 +92,7 @@ const TOP_PRODUCTS = [
   { name: "Tủ Quần Áo 4C", qty: 6, revenue: 48000000 },
 ];
 
-const OVERDUE_CUSTOMERS = [
-  { name: "Anh Hưng (Q7)", amount: 15000000, overdueDays: 5, id: "KH045" },
-  { name: "Chị Lan Anh", amount: 4500000, overdueDays: 2, id: "KH012" },
-];
+
 
 const LOW_STOCK_PRODUCTS = [
   { name: "Ghế đôn sofa L", currentStock: 2, id: "SP015", unit: "cái" },
@@ -106,51 +103,35 @@ const LOW_STOCK_PRODUCTS = [
 const RECENT_ACTIVITIES = [
   {
     id: 1,
-    user: "Nguyễn Văn A",
-    action: "Tạo mới đơn hàng",
-    target: "ĐH-20240308-01",
+    user: "Bình Nguyễn",
+    action: "Gửi yêu cầu khách hàng mới",
+    target: "Yêu cầu tủ bếp sồi Nga",
     time: "10 phút trước",
     type: "order",
   },
   {
     id: 2,
-    user: "Trần Thị B",
-    action: "Cập nhật tồn kho",
-    target: "Bàn ăn tròn xoay",
+    user: "Thợ cả",
+    action: "Hoàn thành đánh giấy ráp",
+    target: "LSX-2603-0001",
     time: "35 phút trước",
     type: "inventory",
   },
   {
     id: 3,
-    user: "Lê Hoàng C",
-    action: "Thêm thông tin khách hàng",
-    target: "Công ty Vạn Phát",
+    user: "Thợ sơn B",
+    action: "Báo cáo hoàn thành sơn",
+    target: "LSX-2603-0012",
     time: "1 giờ trước",
-    type: "customer",
+    type: "product",
   },
   {
     id: 4,
     user: "Nguyễn Văn A",
-    action: "Xác nhận báo giá",
-    target: "BG-20240307-05",
+    action: "Xác nhận duyệt lệnh",
+    target: "LSX-2603-0007",
     time: "2 giờ trước",
-    type: "quote",
-  },
-  {
-    id: 5,
-    user: "Phạm D.",
-    action: "Tạo phiếu nhập hàng",
-    target: "Gỗ An Cường",
-    time: "3 giờ trước",
-    type: "supplier",
-  },
-  {
-    id: 6,
-    user: "Trần Thị B",
-    action: "Sửa thông tin sản phẩm",
-    target: "Ghế đôn sofa L",
-    time: "Hôm qua",
-    type: "product",
+    type: "inventory",
   },
 ];
 
@@ -168,54 +149,51 @@ const MetricCard = ({
   linkTo,
 }) => {
   const CardContentBlock = (
-    <Card
-      className={cn(
-        "border-0 shadow-sm rounded-xl overflow-hidden relative bg-white group transition-shadow duration-300",
-        linkTo
-          ? "hover:shadow-md cursor-pointer hover:border-blue-200"
-          : "hover:shadow-md",
-      )}
-    >
-      <CardContent className="p-4">
-        <div className="flex justify-between items-center gap-4">
-          <div className="flex-1">
-            <p className="text-[12px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+    <Card className="border-0 shadow-sm rounded-2xl overflow-hidden bg-white h-full transition-all group">
+      <CardContent className="p-4 h-full flex flex-col justify-between">
+        <div className="flex justify-between items-start gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
               {title}
             </p>
-            <div className="flex items-end gap-2">
-              <h3 className="text-[20px] font-black text-slate-900 tracking-tight leading-none">
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <h3 className="text-[18px] font-black text-slate-900 tracking-tight leading-tight">
                 {value}
               </h3>
               {trend && (
-                <span className="text-[12px] font-semibold flex items-center gap-0.5 text-emerald-600 mb-0.5">
-                  <TrendingUp size={14} /> {trend}
+                <span className="text-[11px] font-semibold flex items-center gap-0.5 text-emerald-600">
+                  <TrendingUp size={12} /> {trend}
                 </span>
               )}
             </div>
             {subtext && (
-              <p className="text-[12px] text-slate-500 font-medium mt-1 truncate">
+              <p className="text-[11px] text-slate-400 font-medium mt-1 leading-tight">
                 {subtext}
               </p>
             )}
           </div>
           <div
             className={cn(
-              "w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-br shadow-inner",
+              "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-br shadow-inner",
               gradient,
             )}
           >
-            <Icon className="w-6 h-6 text-white" />
+            <Icon className="w-5 h-5 text-white" />
           </div>
         </div>
+
+        {linkTo && (
+          <div className="mt-3 pt-3 border-t border-slate-50 flex items-center justify-between text-[11px] font-bold text-blue-600 transition-colors group-hover:text-blue-700">
+            <span className="uppercase tracking-wider">Xem chi tiết</span>
+            <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 
   return linkTo ? (
-    <Link
-      to={linkTo}
-      className="block relative hover:-translate-y-0.5 transition-transform"
-    >
+    <Link to={linkTo} className="block h-full hover:-translate-y-1 transition-all">
       {CardContentBlock}
     </Link>
   ) : (
@@ -252,87 +230,80 @@ export default function OwnerDashboard() {
         </div>
 
         {/* 0. ATTENTION REQUIRED (To-Do List) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 shrink-0">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
           {/* Sắp hết hàng */}
           <Link
             to="/owner/products?tab=low_stock"
             className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex items-center justify-between hover:border-orange-300 hover:shadow-md transition-all group"
           >
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center shrink-0 border border-orange-100/50">
                 <Package className="text-orange-600" size={20} />
               </div>
-              <div>
-                <p className="text-[11px] font-bold text-slate-500 mb-0.5 uppercase tracking-wider">
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold text-slate-500 mb-0.5 uppercase tracking-wider">
                   Sắp hết hàng
                 </p>
-                <p className="text-[13px] font-medium text-slate-600">
-                  <span className="font-bold text-orange-600 text-[15px] mr-1">
+                <p className="text-[12px] font-medium text-slate-600 leading-tight">
+                  <span className="font-bold text-orange-600 text-[14px] mr-1">
                     {LOW_STOCK_PRODUCTS.length}
                   </span>
-                  sản phẩm
+                  mã hàng
                 </p>
               </div>
             </div>
-            <ArrowRight
-              size={16}
-              className="text-slate-300 group-hover:text-orange-500 group-hover:translate-x-0.5 transition-transform"
-            />
+            <ArrowRight size={14} className="text-slate-300 group-hover:text-orange-500 group-hover:translate-x-0.5 transition-transform" />
           </Link>
 
-          {/* Cần duyệt gấp */}
+          {/* Yêu cầu từ Sales */}
           <Link
-            to="/owner/orders?tab=pending"
+            to="/owner/requirements"
             className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex items-center justify-between hover:border-blue-300 hover:shadow-md transition-all group"
           >
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center shrink-0 border border-blue-100/50">
-                <Clock className="text-blue-600" size={20} />
+                <FileEdit className="text-blue-600" size={20} />
               </div>
-              <div>
-                <p className="text-[11px] font-bold text-slate-500 mb-0.5 uppercase tracking-wider">
-                  Cần phê duyệt
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold text-slate-500 mb-0.5 uppercase tracking-wider">
+                  Yêu cầu từ Sales
                 </p>
-                <p className="text-[13px] font-medium text-slate-600">
-                  <span className="font-bold text-blue-600 text-[15px] mr-1">
-                    {STATS.pendingApprovals}
+                <p className="text-[12px] font-medium text-slate-600 leading-tight">
+                  <span className="font-bold text-blue-600 text-[14px] mr-1">
+                    {STATS.newRequirements}
                   </span>
-                  báo giá
+                  mới
                 </p>
               </div>
             </div>
-            <ArrowRight
-              size={16}
-              className="text-slate-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-transform"
-            />
+            <ArrowRight size={14} className="text-slate-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-transform" />
           </Link>
 
-          {/* Nợ quá hạn */}
+          {/* Cần duyệt sản xuất */}
           <Link
-            to="/owner/customers?tab=debt"
-            className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex items-center justify-between hover:border-rose-300 hover:shadow-md transition-all group"
+            to="/owner/production"
+            className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex items-center justify-between hover:border-emerald-300 hover:shadow-md transition-all group"
           >
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-rose-50 flex items-center justify-center shrink-0 border border-rose-100/50">
-                <ShieldAlert className="text-rose-600" size={20} />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0 border border-emerald-100/50">
+                <CheckCircle2 className="text-emerald-600" size={20} />
               </div>
-              <div>
-                <p className="text-[11px] font-bold text-slate-500 mb-0.5 uppercase tracking-wider">
-                  Nợ quá hạn
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold text-slate-500 mb-0.5 uppercase tracking-wider">
+                  Duyệt Sản Xuất
                 </p>
-                <p className="text-[13px] font-medium text-slate-600">
-                  <span className="font-bold text-rose-600 text-[15px] mr-1">
-                    {OVERDUE_CUSTOMERS.length}
+                <p className="text-[12px] font-medium text-slate-600 leading-tight">
+                  <span className="font-bold text-emerald-600 text-[14px] mr-1">
+                    {STATS.productionToApprove}
                   </span>
-                  khách hàng
+                  đợi duyệt
                 </p>
               </div>
             </div>
-            <ArrowRight
-              size={16}
-              className="text-slate-300 group-hover:text-rose-500 group-hover:translate-x-0.5 transition-transform"
-            />
+            <ArrowRight size={14} className="text-slate-300 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-transform" />
           </Link>
+
+
         </div>
 
         {/* 1. KEY METRICS ROW */}
@@ -349,19 +320,19 @@ export default function OwnerDashboard() {
 
           <MetricCard
             title="Tổng Phải Thu (KH)"
-            value="45M"
-            subtext="Từ 12 khách hàng đang nợ"
+            value="45.000.000 ₫"
+            subtext="Xem báo cáo công nợ"
             icon={PiggyBank}
             gradient="from-amber-400 to-orange-500"
-            linkTo="/owner/customers"
+            linkTo="/owner/reports?type=debt_customer"
           />
           <MetricCard
             title="Tổng Phải Trả (NCC)"
-            value="28.5M"
-            subtext="Cho 5 nhà cung cấp"
+            value="28.500.000 ₫"
+            subtext="Xem báo cáo công nợ"
             icon={Building2}
             gradient="from-rose-400 to-red-500"
-            linkTo="/owner/suppliers"
+            linkTo="/owner/reports?type=debt_supplier"
           />
         </div>
 

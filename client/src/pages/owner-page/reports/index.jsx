@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,11 +68,22 @@ const MOCK_DEBT_SUPPLIER_DATA = [
 const formatCurrency = (val) => new Intl.NumberFormat("vi-VN").format(val);
 
 export default function OwnerReports() {
-   const [activeReport, setActiveReport] = useState("sales");
+   const [searchParams, setSearchParams] = useSearchParams();
+   const typeParam = searchParams.get("type");
+
+   const [activeReport, setActiveReport] = useState(typeParam || "sales");
    const [dateRange, setDateRange] = useState("this_month");
    const [searchTerm, setSearchTerm] = useState("");
    const [currentPage, setCurrentPage] = useState(1);
    const [itemsPerPage, setItemsPerPage] = useState(15);
+
+   // Sync state if URL param changes
+   useEffect(() => {
+      if (typeParam && typeParam !== activeReport) {
+         setActiveReport(typeParam);
+         setCurrentPage(1);
+      }
+   }, [typeParam]);
 
    // Lấy danh sách dữ liệu tương ứng với báo cáo hiện tại
    const getCurrentDataList = () => {
@@ -98,8 +110,10 @@ export default function OwnerReports() {
 
    // Handle thay đổi Tab
    const handleTabChange = (e) => {
-      setActiveReport(e.target.value);
-      setCurrentPage(1); // Reset page về 1 khi chuyển tab báo cáo
+      const newType = e.target.value;
+      setActiveReport(newType);
+      setCurrentPage(1);
+      setSearchParams({ type: newType });
    };
 
    // Tính tổng cho báo cáo bán hàng (có thể tính trên toàn bộ hoặc chỉ trang hiện tại, ở đây tính trên toàn bộ)
@@ -168,8 +182,8 @@ export default function OwnerReports() {
                         <FileSpreadsheet size={24} strokeWidth={2} />
                      </div>
                      <div>
-                        <h1 className="text-[16px] font-bold text-slate-900 leading-tight">Sổ Sách & Báo Cáo</h1>
-                        <p className="text-[13px] text-slate-500 font-medium">Bảng kê chi tiết dữ liệu (Dạng danh sách)</p>
+                        <h1 className="text-[16px] font-bold text-slate-900 leading-tight">Báo Cáo Thống Kê</h1>
+                        <p className="text-[13px] text-slate-500 font-medium">Bảng kê chi tiết dữ liệu </p>
                      </div>
                   </div>
                   <div className="flex items-center gap-2">

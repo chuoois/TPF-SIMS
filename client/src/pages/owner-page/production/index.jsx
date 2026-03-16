@@ -46,7 +46,7 @@ const INITIAL_PRODUCTIONS = [
     orderType: "Hàng đặt",
     quantityPlanned: 1,
     quantityCompleted: 0,
-    status: "Đang làm mộc",
+    status: "Đánh giấy ráp",
     subStage: "gia_cong_moc",
     assignedWorker: "Thợ cả",
     startDate: null,
@@ -65,7 +65,7 @@ const INITIAL_PRODUCTIONS = [
     orderType: "Hàng đặt",
     quantityPlanned: 1,
     quantityCompleted: 0,
-    status: "Đang làm mộc",
+    status: "Đánh giấy ráp",
     subStage: "gia_cong_moc",
     assignedWorker: "Thợ cả",
     startDate: null,
@@ -84,7 +84,7 @@ const INITIAL_PRODUCTIONS = [
     orderType: "Hàng đặt",
     quantityPlanned: 2,
     quantityCompleted: 0,
-    status: "Đang làm mộc",
+    status: "Đánh giấy ráp",
     subStage: "gia_cong_moc",
     assignedWorker: "Thợ cả",
     startDate: null,
@@ -101,10 +101,10 @@ const INITIAL_PRODUCTIONS = [
     productName: "Bàn ăn nguyên tấm",
     productImage: "https://images.unsplash.com/photo-1577145745727-42b77daeb623?q=80&w=300",
     variantName: "Gỗ gõ đỏ — Live Edge",
-    orderType: "Hàng thô",
+    orderType: "Hàng mộc",
     quantityPlanned: 1,
     quantityCompleted: 0,
-    status: "Đang làm mộc",
+    status: "Đánh giấy ráp",
     subStage: "gia_cong_moc",
     assignedWorker: "Thợ cả",
     startDate: null,
@@ -124,7 +124,7 @@ const INITIAL_PRODUCTIONS = [
     orderType: "Hàng đặt",
     quantityPlanned: 1,
     quantityCompleted: 0,
-    status: "Đang làm mộc",
+    status: "Đánh giấy ráp",
     subStage: "gia_cong_moc",
     assignedWorker: "Nguyễn Văn Đức",
     startDate: "2026-03-03",
@@ -185,7 +185,7 @@ const INITIAL_PRODUCTIONS = [
     orderType: "Hàng đặt",
     quantityPlanned: 2,
     quantityCompleted: 0,
-    status: "Đang làm mộc",
+    status: "Đánh giấy ráp",
     subStage: "gia_cong_moc",
     assignedWorker: "Thợ cả",
     startDate: null,
@@ -202,7 +202,7 @@ const INITIAL_PRODUCTIONS = [
     productName: "Bộ bàn ghế ăn 6 ghế",
     productImage: "https://images.unsplash.com/photo-1617806118233-ef203e91122b?q=80&w=300",
     variantName: "Gỗ sồi — Màu óc chó",
-    orderType: "Hàng thô",
+    orderType: "Hàng mộc",
     quantityPlanned: 1,
     quantityCompleted: 1,
     status: "Hoàn thành",
@@ -222,7 +222,7 @@ const MOCK_WORKERS = [
 
 const STATUSES = [
   "Tất cả",
-  "Đang làm mộc",
+  "Đánh giấy ráp",
   "Đang sơn",
   "Hoàn thành",
 ];
@@ -257,7 +257,7 @@ const getDeadlineStyle = (dateString) => {
 const getStatusColor = (status, subStage = null, isPendingApproval = false, needsRedo = false) => {
   // 1. Primary Status (Matching the Tabs)
   const primaryBadge = {
-    "Đang làm mộc": { label: "Đang làm mộc", bg: "#FDF4FF", text: "#A21CAF", border: "#F5D0FE" },
+    "Đánh giấy ráp": { label: "Đánh giấy ráp", bg: "#FDF4FF", text: "#A21CAF", border: "#F5D0FE" },
     "Đang sơn": { label: "Đang sơn", bg: "#FDF2F8", text: "#DB2777", border: "#FBCFE8" },
     "Hoàn thành": { label: "Hoàn thành", bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" },
   }[status] || { label: status, bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
@@ -341,7 +341,7 @@ export default function OwnerProduction() {
       toast((t) => (
         <div className="flex flex-col gap-3">
           <p className="text-[13px] font-medium text-gray-700">
-            Xác nhận <strong>Nhập kho & Hoàn thành</strong> cho mã lệnh <strong>{item.code}</strong>?
+            Xác nhận <strong>Duyệt & Hoàn thành</strong> cho mã lệnh <strong>{item.code}</strong>?
           </p>
           <div className="flex justify-end gap-2">
             <button 
@@ -358,7 +358,7 @@ export default function OwnerProduction() {
                     ? { ...p, isPendingApproval: true, quantityCompleted: p.quantityPlanned } 
                     : p
                 ));
-                toast.success(`Đã ghi nhận yêu cầu nhập kho cho ${item.code}`);
+                toast.success(`Đã ghi nhận yêu cầu duyệt cho ${item.code}`);
               }}
               className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition"
             >
@@ -765,7 +765,7 @@ export default function OwnerProduction() {
                                           }}
                                           className="h-9 px-5 rounded-xl bg-blue-600 flex items-center gap-2 text-[12px] font-bold text-white hover:bg-blue-700 transition-all shadow-lg active:scale-95"
                                         >
-                                          <Camera size={16} /> Nhập kho
+                                          <Camera size={16} /> Duyệt
                                         </button>
                                       ) : (
                                         <>

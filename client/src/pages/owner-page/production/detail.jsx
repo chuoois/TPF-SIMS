@@ -26,7 +26,7 @@ import {
 
 // ===================== CONSTANTS =====================
 const STAGES = [
-  { key: "gia_cong_moc", label: "Gia công Mộc & Ráp", icon: Hammer, color: "#7C3AED", bg: "#F5F3FF" },
+  { key: "gia_cong_moc", label: "Đánh giấy ráp", icon: Hammer, color: "#7C3AED", bg: "#F5F3FF" },
   { key: "son_hoan_thien", label: "Sơn hoàn thiện", icon: Paintbrush, color: "#0891B2", bg: "#ECFEFF" },
 ];
 
@@ -46,7 +46,7 @@ const MOCK_PRODUCTIONS = {
     specs: { hardware: "Hafele / DTC", notes: "Lắp chung cư. Yêu cầu: Soi chỉ hiện đại" },
     quantityPlanned: 1,
     quantityCompleted: 0,
-    status: "Đang làm mộc",
+    status: "Đánh giấy ráp",
     subStage: "gia_cong_moc",
     isPendingApproval: false,
     needsRedo: false,
@@ -62,7 +62,7 @@ const MOCK_PRODUCTIONS = {
       "https://images.unsplash.com/photo-1556911223-43a03b30ad51?q=80&w=800"
     ],
     timeline: [
-      { time: "05/03/2026 16:45", label: "Bắt đầu làm mộc", desc: "Tự động bàn giao Xưởng", active: true },
+      { time: "05/03/2026 16:45", label: "Bắt đầu đánh giấy ráp", desc: "Tự động bàn giao Xưởng", active: true },
     ],
     shippingNotes: "Giao trong giờ hành chính. Nhà có thang máy, báo trước 30p.",
     images: [
@@ -75,7 +75,7 @@ const MOCK_PRODUCTIONS = {
     code: "LSX-2603-0003",
     orderCode: "DH-2603-0008",
     orderId: "DH008",
-    status: "Đang làm mộc",
+    status: "Đánh giấy ráp",
     subStage: "gia_cong_moc",
     assignedWorker: "Nguyễn Văn Đức",
     startDate: "2026-03-03",
@@ -99,7 +99,7 @@ const MOCK_PRODUCTIONS = {
     ],
     progressPhotos: [],
     timeline: [
-      { time: "03/03/2026 09:00", label: "Bắt đầu làm Mộc", desc: "Thợ xác nhận nhận việc", active: true },
+      { time: "03/03/2026 09:00", label: "Bắt đầu đánh giấy ráp", desc: "Thợ xác nhận nhận việc", active: true },
     ],
     shippingNotes: "Giao nhà phố, đường rộng xe tải vào được.",
   },
@@ -231,7 +231,7 @@ const fmtDateTime = (s) => {
 const getStatusColor = (status, subStage = null, isPendingApproval = false, needsRedo = false) => {
   // 1. Primary Status
   const primaryBadge = {
-    "Đang làm mộc": { label: "Đang làm mộc", bg: "#FDF4FF", text: "#A21CAF", border: "#F5D0FE" },
+    "Đánh giấy ráp": { label: "Đánh giấy ráp", bg: "#FDF4FF", text: "#A21CAF", border: "#F5D0FE" },
     "Đang sơn": { label: "Đang sơn", bg: "#FDF2F8", text: "#DB2777", border: "#FBCFE8" },
     "Hoàn thành": { label: "Hoàn thành", bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" },
   }[status] || { label: status, bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
@@ -433,7 +433,7 @@ export default function ProductionDetail() {
     toast((t) => (
       <div className="flex flex-col gap-3">
         <p className="text-[13px] font-medium text-gray-700">
-          Xác nhận <strong>Nhập kho & Hoàn thành</strong> mã lệnh <strong>{p.code}</strong>?
+          Xác nhận <strong>Duyệt & Hoàn thành</strong> mã lệnh <strong>{p.code}</strong>?
         </p>
         <div className="flex justify-end gap-2">
           <button 
@@ -526,7 +526,7 @@ export default function ProductionDetail() {
                     style={{ backgroundColor: "#10B981", color: "#fff" }}
                   >
                     <CheckCircle size={18} />
-                    Nhập kho & Hoàn thành
+                    Duyệt & Hoàn thành
                   </button>
                 </div>
               )}
@@ -576,7 +576,7 @@ export default function ProductionDetail() {
                 </p>
                 <p className="text-[12px] mt-0.5" style={{ color: currentStageInfo.color, opacity: 0.8 }}>
                   Đơn hàng đang được triển khai thực hiện tại xưởng.
-                  {p.subStage === "gia_cong_moc" && " Đang gia công khung sườn và chi tiết mộc."}
+                  {p.subStage === "gia_cong_moc" && " Đang đánh giấy ráp và chuẩn bị hoàn thiện."}
                   {p.subStage === "son_hoan_thien" && " Đang xử lý bề mặt và phun sơn hoàn thiện."}
                 </p>
               </div>

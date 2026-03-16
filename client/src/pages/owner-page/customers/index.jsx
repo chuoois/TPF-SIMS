@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Search, Plus, Eye, Users, FileText, ChevronLeft, ChevronRight, X, Phone, MapPin, Building2, User } from "lucide-react";
 
@@ -28,7 +29,7 @@ const INITIAL_CUSTOMERS = [
 const MOCK_ORDER_HISTORY = [
   { id: "DH001", code: "DH-1025", date: "2024-03-01 09:30", total: 15000000, status: "Hoàn thành" },
   { id: "DH002", code: "DH-1028", date: "2024-03-05 14:15", total: 24500000, status: "Đang giao" },
-  { id: "DH003", code: "DH-1042", date: "2024-03-10 10:00", total: 8900000, status: "Đã hủy" },
+  { id: "DH003", code: "DH-1042", date: "2024-03-10 10:00", total: 8900000, status: "Đơn đã hủy" },
   { id: "DH004", code: "DH-1056", date: "2024-03-15 16:45", total: 42000000, status: "Hoàn thành" },
 ];
 
@@ -253,6 +254,9 @@ const DebtHistoryModal = ({ customer, onClose }) => {
 };
 
 export default function OwnerCustomers() {
+  const [searchParams] = useSearchParams();
+  const currentTab = searchParams.get("tab") || "all";
+  
   const [customers] = useState(INITIAL_CUSTOMERS);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -266,6 +270,11 @@ export default function OwnerCustomers() {
   const filtered = useMemo(() => {
     let result = customers;
 
+    // Tab filter
+    if (currentTab === "debt") {
+      result = result.filter((c) => c.debt > 0);
+    }
+
     // Search
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
@@ -278,7 +287,7 @@ export default function OwnerCustomers() {
     }
 
     return result;
-  }, [customers, searchTerm]);
+  }, [customers, searchTerm, currentTab]);
 
   const hasActiveFilters = searchTerm;
 

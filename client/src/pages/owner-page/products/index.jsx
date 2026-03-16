@@ -2,7 +2,7 @@
  * Component OwnerProducts
  * Quản lý Sản phẩm — Cửa hàng Nội thất Gỗ
  *
- * Designed following Kiotviet/MISA layout: 1 unified list, 5 statuses, category & wood filtering.
+ * Designed following Kiotviet/MISA layout: 1 unified list, 5 statuses, category & material filtering.
  */
 
 import { useState, useMemo, useEffect } from "react";
@@ -10,6 +10,7 @@ import {
   Search,
   Plus,
   Package,
+  PackageCheck,
   Pencil,
   Eye,
   X,
@@ -55,11 +56,13 @@ const WOOD_TYPES = [
   "Gỗ Óc chó",
 ];
 
+const OTHER_MATERIALS = ["Đồng vàng", "Gốm sứ"];
+
 const COLORS = ["Cánh gián", "Hạt dẻ", "Mun", "Tự nhiên", "Sơn PU", "Để mộc"];
 
 const PRODUCT_STATUSES = [
   "Hàng sẵn",
-  "Hàng thô",
+  "Hàng mộc",
   "Hàng đặt",
   "Hết hàng",
   "Ngừng kinh doanh",
@@ -72,7 +75,7 @@ const INITIAL_PRODUCTS = [
     code: "SP-PT-001",
     name: "Sập thờ Mai Điểu chân 20",
     category: "Phòng thờ",
-    woodType: "Gỗ Mít",
+    material: "Gỗ Mít",
     color: "Đục tay",
     dimensions: "197x107x108",
     costPrice: 32000000,
@@ -90,7 +93,7 @@ const INITIAL_PRODUCTS = [
     code: "SP-PK-001",
     name: "Bộ bàn ghế Quốc Voi 6 món",
     category: "Phòng khách",
-    woodType: "Gỗ Hương",
+    material: "Gỗ Hương",
     color: "Đục tay",
     dimensions: "Tay 12",
     costPrice: 95000000,
@@ -105,16 +108,16 @@ const INITIAL_PRODUCTS = [
   {
     id: "SP-THO-01",
     code: "SP-THO-001",
-    name: "Tủ áo gỗ xoan đào (Hàng thô)",
+    name: "Tủ áo gỗ xoan đào (Hàng mộc)",
     category: "Phòng ngủ",
-    woodType: "Gỗ xoan đào",
+    material: "Gỗ xoan đào",
     color: "Để mộc",
     dimensions: "160x200x55",
     costPrice: 8500000,
     retailPrice: 12500000,
     unit: "Chiếc",
-    productType: "Hàng thô",
-    status: "Hàng thô",
+    productType: "Hàng mộc",
+    status: "Hàng mộc",
     stock: 3,
     img: "https://placehold.co/100x100?text=TuAoTho",
     description: "Hàng mộc sẵn tại kho, chờ sơn hoàn thiện.",
@@ -124,7 +127,7 @@ const INITIAL_PRODUCTS = [
     code: "SP-PK-002",
     name: "Sofa nguyên khối chữ L (Mộc)",
     category: "Phòng khách",
-    woodType: "Gỗ Gõ đỏ",
+    material: "Gỗ Gõ đỏ",
     color: "Nguyên khối",
     dimensions: "260x180x85",
     costPrice: 25000000,
@@ -141,7 +144,7 @@ const INITIAL_PRODUCTS = [
     code: "SP-TT-001",
     name: "Lộc bình cao 1m8",
     category: "Trang trí",
-    woodType: "Gỗ Hương",
+    material: "Gỗ Hương",
     color: "Đục máy sửa tay",
     dimensions: "Cao 1m8, ĐK 50",
     costPrice: 18000000,
@@ -158,7 +161,7 @@ const INITIAL_PRODUCTS = [
     code: "SP-PN-001",
     name: "Giường ngủ hoa hồng Tân cổ điển",
     category: "Phòng ngủ",
-    woodType: "Gỗ Sồi",
+    material: "Gỗ Sồi",
     color: "Đục máy sửa tay",
     dimensions: "180x200",
     costPrice: 12000000,
@@ -175,7 +178,7 @@ const INITIAL_PRODUCTS = [
     code: "SP-TT-002",
     name: "Tượng Đạt Ma sư tổ",
     category: "Trang trí",
-    woodType: "Gỗ Trắc",
+    material: "Gỗ Trắc",
     color: "Đục tay",
     dimensions: "Cao 60, Rộng 30",
     costPrice: 5000000,
@@ -192,7 +195,7 @@ const INITIAL_PRODUCTS = [
     code: "SP-PA-001",
     name: "Bộ bàn ăn 8 ghế nguyên khối",
     category: "Phòng ăn",
-    woodType: "Gỗ Gõ đỏ",
+    material: "Gỗ Gõ đỏ",
     color: "Nguyên khối",
     dimensions: "240x95x10",
     costPrice: 40000000,
@@ -209,11 +212,21 @@ const INITIAL_PRODUCTS = [
 // ===================== HELPERS =====================
 const fmtCurrency = (n) => new Intl.NumberFormat("vi-VN").format(n) + "₫";
 
+const formatNumberInput = (value) => {
+  if (value === "" || value === null || value === undefined) return "";
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
+
+const parseNumberInput = (value) => {
+  if (!value) return "";
+  return value.toString().replace(/\./g, "").replace(/[^\d]/g, "");
+};
+
 const getStatusConfig = (status) => {
   switch (status) {
     case "Hàng sẵn":
       return { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" }; // Green
-    case "Hàng thô":
+    case "Hàng mộc":
       return { bg: "#FFFBEB", text: "#D97706", border: "#FDE68A" }; // Amber
     case "Hàng đặt":
       return { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" }; // Blue
@@ -354,6 +367,10 @@ const PropertiesTab = ({
   onAddWood,
   onEditWood,
   onDeleteWood,
+  otherMaterials,
+  onAddOtherMaterial,
+  onEditOtherMaterial,
+  onDeleteOtherMaterial,
   colors,
   onAddColor,
   onEditColor,
@@ -375,7 +392,7 @@ const PropertiesTab = ({
           <div>
             <h2 className="text-[15px] font-bold text-gray-900">Loại gỗ</h2>
             <p className="text-[12px] text-gray-400 mt-0.5 font-medium">
-              Danh sách các chất liệu gỗ
+              Danh mục các loại gỗ tự nhiên
             </p>
           </div>
           <button
@@ -399,9 +416,9 @@ const PropertiesTab = ({
                   STT
                 </th>
                 <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                  Tên loại gỗ
+                  Tên gỗ
                 </th>
-                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 text-right w-28">
+                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 text-right w-24">
                   Thao tác
                 </th>
               </tr>
@@ -418,8 +435,8 @@ const PropertiesTab = ({
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center border border-emerald-100/50">
-                        <TreePine size={16} className="text-emerald-600" />
+                      <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center border border-green-100/50">
+                        <TreePine size={16} className="text-green-600" />
                       </div>
                       <span className="font-bold text-gray-900">{w}</span>
                     </div>
@@ -434,6 +451,94 @@ const PropertiesTab = ({
                       </button>
                       <button
                         onClick={() => onDeleteWood(w)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Chất liệu khác */}
+      <div
+        className="flex-1 flex flex-col bg-white rounded-2xl overflow-hidden"
+        style={{
+          boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+        }}
+      >
+        <div
+          className="px-6 py-4 border-b flex items-center justify-between shrink-0"
+          style={{ borderColor: "var(--grid-border)" }}
+        >
+          <div>
+            <h2 className="text-[15px] font-bold text-gray-900">
+              Chất liệu khác
+            </h2>
+            <p className="text-[12px] text-gray-400 mt-0.5 font-medium">
+              Đồng, gốm, sứ, nhựa...
+            </p>
+          </div>
+          <button
+            onClick={onAddOtherMaterial}
+            className="h-8 px-3 rounded-lg flex items-center gap-1.5 text-[12px] font-bold transition hover:bg-gray-100 border border-gray-200 cursor-pointer"
+          >
+            <Plus size={14} /> Thêm
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          <table className="w-full text-left relative text-[13px]">
+            <thead
+              className="sticky top-0 z-10"
+              style={{
+                backgroundColor: "var(--grid-header-bg)",
+                borderBottom: "1px solid var(--grid-border)",
+              }}
+            >
+              <tr>
+                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 w-16">
+                  STT
+                </th>
+                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                  Tên
+                </th>
+                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 text-right w-24">
+                  Thao tác
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {otherMaterials.map((m, i) => (
+                <tr
+                  key={m}
+                  className="hover:bg-gray-50/50 transition-colors group"
+                  style={{ borderBottom: "1px solid var(--grid-border)" }}
+                >
+                  <td className="px-6 py-4 font-medium text-gray-400">
+                    {i + 1}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center border border-emerald-100/50">
+                        <Box size={16} className="text-emerald-600" />
+                      </div>
+                      <span className="font-bold text-gray-900">{m}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 relative">
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-end gap-1.5 translate-x-2 group-hover:translate-x-0">
+                      <button
+                        onClick={() => onEditOtherMaterial(m)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <button
+                        onClick={() => onDeleteOtherMaterial(m)}
                         className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                       >
                         <X size={14} />
@@ -544,6 +649,7 @@ export default function OwnerProducts() {
   // Mock State for Cats & Props
   const [categories, setCategories] = useState(CATEGORIES);
   const [woods, setWoods] = useState(WOOD_TYPES);
+  const [otherMaterials, setOtherMaterials] = useState(OTHER_MATERIALS);
   const [colors, setColors] = useState(COLORS);
 
   // Simple Input Modal State
@@ -581,6 +687,14 @@ export default function OwnerProducts() {
       } else {
         setWoods([...woods, value]);
       }
+    } else if (type === "material") {
+      if (originalValue) {
+        setOtherMaterials(
+          otherMaterials.map((m) => (m === originalValue ? value : m)),
+        );
+      } else {
+        setOtherMaterials([...otherMaterials, value]);
+      }
     } else if (type === "color") {
       if (originalValue) {
         setColors(colors.map((c) => (c === originalValue ? value : c)));
@@ -608,14 +722,24 @@ export default function OwnerProducts() {
   };
 
   const handleDeleteWood = (w) => {
-    if (products.some((p) => p.woodType === w)) {
-      alert(
-        `Không thể xóa loại gỗ "${w}" vì đang có sản phẩm sử dụng chất liệu này.`,
-      );
+    if (products.some((p) => p.material === w)) {
+      alert(`Không thể xóa loại gỗ "${w}" vì đang có sản phẩm thuộc loại này.`);
       return;
     }
     if (window.confirm(`Bạn có chắc chắn muốn xóa loại gỗ "${w}"?`)) {
       setWoods(woods.filter((x) => x !== w));
+    }
+  };
+
+  const handleDeleteMaterial = (m) => {
+    if (products.some((p) => p.material === m)) {
+      alert(
+        `Không thể xóa chất liệu "${m}" vì đang có sản phẩm sử dụng chất liệu này.`,
+      );
+      return;
+    }
+    if (window.confirm(`Bạn có chắc chắn muốn xóa chất liệu "${m}"?`)) {
+      setOtherMaterials(otherMaterials.filter((x) => x !== m));
     }
   };
 
@@ -635,7 +759,7 @@ export default function OwnerProducts() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("Tất cả");
   const [categoryFilter, setCategoryFilter] = useState("Tất cả");
-  const [woodFilter, setWoodFilter] = useState("Tất cả");
+  const [materialFilter, setMaterialFilter] = useState("Tất cả");
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -644,6 +768,8 @@ export default function OwnerProducts() {
   // Modal states
   const [showAddEditModal, setShowAddEditModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
+  const [costPrice, setCostPrice] = useState(0);
+  const [retailPrice, setRetailPrice] = useState(0);
 
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailItem, setDetailItem] = useState(null);
@@ -661,6 +787,8 @@ export default function OwnerProducts() {
   const handleOpenEdit = (product, e) => {
     e.stopPropagation();
     setEditItem(product);
+    setCostPrice(product.costPrice || 0);
+    setRetailPrice(product.retailPrice || 0);
     setShowAddEditModal(true);
   };
 
@@ -701,8 +829,8 @@ export default function OwnerProducts() {
     if (categoryFilter !== "Tất cả") {
       result = result.filter((p) => p.category === categoryFilter);
     }
-    if (woodFilter !== "Tất cả") {
-      result = result.filter((p) => p.woodType === woodFilter);
+    if (materialFilter !== "Tất cả") {
+      result = result.filter((p) => p.material === materialFilter);
     }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -713,20 +841,20 @@ export default function OwnerProducts() {
     }
 
     return result;
-  }, [products, statusFilter, categoryFilter, woodFilter, searchQuery]);
+  }, [products, statusFilter, categoryFilter, materialFilter, searchQuery]);
 
   const hasActiveFilters =
-    categoryFilter !== "Tất cả" || woodFilter !== "Tất cả" || searchQuery;
+    categoryFilter !== "Tất cả" || materialFilter !== "Tất cả" || searchQuery;
 
   const clearFilters = () => {
     setCategoryFilter("Tất cả");
-    setWoodFilter("Tất cả");
+    setMaterialFilter("Tất cả");
     setSearchQuery("");
   };
 
   useEffect(() => {
     setTimeout(() => setCurrentPage(1), 0);
-  }, [searchQuery, statusFilter, categoryFilter, woodFilter]);
+  }, [searchQuery, statusFilter, categoryFilter, materialFilter]);
 
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const paginatedProducts = filteredProducts.slice(
@@ -866,19 +994,32 @@ export default function OwnerProducts() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Loại gỗ
+                        Chất liệu
                       </label>
                       <select className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
-                        <option value="">Chọn loại gỗ</option>
-                        {WOOD_TYPES.map((w) => (
-                          <option
-                            key={w}
-                            value={w}
-                            selected={editItem?.woodType === w}
-                          >
-                            {w}
-                          </option>
-                        ))}
+                        <option value="">Chọn loại gỗ hoặc chất liệu</option>
+                        <optgroup label="Nhóm Gỗ">
+                          {woods.map((w) => (
+                            <option
+                              key={w}
+                              value={w}
+                              selected={editItem?.material === w}
+                            >
+                              {w}
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Chất liệu khác">
+                          {otherMaterials.map((m) => (
+                            <option
+                              key={m}
+                              value={m}
+                              selected={editItem?.material === m}
+                            >
+                              {m}
+                            </option>
+                          ))}
+                        </optgroup>
                       </select>
                     </div>
                     <div>
@@ -920,9 +1061,14 @@ export default function OwnerProducts() {
                         Giá nhập (VNĐ)
                       </label>
                       <input
-                        type="number"
+                        type="text"
                         className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                        defaultValue={editItem?.costPrice || ""}
+                        value={formatNumberInput(costPrice)}
+                        onChange={(e) => {
+                          const val = parseNumberInput(e.target.value);
+                          setCostPrice(val === "" ? 0 : Number(val));
+                        }}
+                        placeholder="0"
                       />
                     </div>
                     <div>
@@ -930,9 +1076,14 @@ export default function OwnerProducts() {
                         Giá bán (VNĐ) <span className="text-red-500">*</span>
                       </label>
                       <input
-                        type="number"
+                        type="text"
                         className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                        defaultValue={editItem?.retailPrice || ""}
+                        value={formatNumberInput(retailPrice)}
+                        onChange={(e) => {
+                          const val = parseNumberInput(e.target.value);
+                          setRetailPrice(val === "" ? 0 : Number(val));
+                        }}
+                        placeholder="0"
                       />
                     </div>
                     <div>
@@ -944,7 +1095,7 @@ export default function OwnerProducts() {
                         defaultValue={editItem?.productType || "Hàng sẵn"}
                       >
                         <option value="Hàng sẵn">Hàng sẵn</option>
-                        <option value="Hàng thô">Hàng thô</option>
+                        <option value="Hàng mộc">Hàng mộc</option>
                         <option value="Hàng đặt">Hàng đặt</option>
                       </select>
                     </div>
@@ -1101,9 +1252,9 @@ export default function OwnerProducts() {
                     </span>
                   </div>
                   <div>
-                    <span className="text-gray-500 block text-xs">Loại gỗ</span>
+                    <span className="text-gray-500 block text-xs">Chất liệu</span>
                     <span className="font-semibold text-gray-900">
-                      {detailItem.woodType}
+                      {detailItem.material}
                     </span>
                   </div>
                   <div>
@@ -1202,7 +1353,7 @@ export default function OwnerProducts() {
                 ? `${filteredProducts.length} sản phẩm`
                 : activeTab === "categories"
                   ? `${categories.length} danh mục`
-                  : `${woods.length + colors.length} thuộc tính`}
+                  : `${woods.length + otherMaterials.length + colors.length} thuộc tính`}
             </p>
           </div>
 
@@ -1374,22 +1525,22 @@ export default function OwnerProducts() {
                       ))}
                     </select>
 
-                    {/* Wood Filter */}
+                    {/* Material Filter */}
                     <select
-                      value={woodFilter}
-                      onChange={(e) => setWoodFilter(e.target.value)}
+                      value={materialFilter}
+                      onChange={(e) => setMaterialFilter(e.target.value)}
                       className="h-9 px-3 pr-8 rounded-lg text-[13px] font-medium outline-none cursor-pointer focus:ring-2 transition appearance-none"
                       style={{
                         border:
-                          woodFilter !== "Tất cả"
+                          materialFilter !== "Tất cả"
                             ? "1px solid var(--brand-primary)"
                             : "1px solid var(--grid-border)",
                         backgroundColor:
-                          woodFilter !== "Tất cả"
+                          materialFilter !== "Tất cả"
                             ? "var(--status-focus)"
                             : "var(--bg-main)",
                         color:
-                          woodFilter !== "Tất cả"
+                          materialFilter !== "Tất cả"
                             ? "var(--brand-primary)"
                             : "var(--text-main)",
                         backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
@@ -1397,12 +1548,21 @@ export default function OwnerProducts() {
                         backgroundPosition: "right 8px center",
                       }}
                     >
-                      <option value="Tất cả">Loại gỗ</option>
-                      {WOOD_TYPES.map((w) => (
-                        <option key={w} value={w}>
-                          {w}
-                        </option>
-                      ))}
+                      <option value="Tất cả">Tất cả chất liệu</option>
+                      <optgroup label="Nhóm Gỗ">
+                        {woods.map((w) => (
+                          <option key={w} value={w}>
+                            {w}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Chất liệu khác">
+                        {otherMaterials.map((m) => (
+                          <option key={m} value={m}>
+                            {m}
+                          </option>
+                        ))}
+                      </optgroup>
                     </select>
                   </div>
 
@@ -1461,7 +1621,7 @@ export default function OwnerProducts() {
                         className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider"
                         style={{ color: "var(--text-placeholder)" }}
                       >
-                        Thông tin KT
+                        Chất liệu
                       </th>
                       <th
                         className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider"
@@ -1556,7 +1716,7 @@ export default function OwnerProducts() {
                           <td className="px-4 py-4">
                             <div className="flex flex-col gap-1">
                               <div className="text-gray-700 font-medium">
-                                {p.woodType}
+                                {p.material}
                               </div>
                             </div>
                           </td>
@@ -1815,6 +1975,14 @@ export default function OwnerProducts() {
             onAddWood={() => handleOpenSimpleModal("wood", "Thêm loại gỗ")}
             onEditWood={(w) => handleOpenSimpleModal("wood", "Sửa loại gỗ", w)}
             onDeleteWood={handleDeleteWood}
+            otherMaterials={otherMaterials}
+            onAddOtherMaterial={() =>
+              handleOpenSimpleModal("material", "Thêm chất liệu khác")
+            }
+            onEditOtherMaterial={(m) =>
+              handleOpenSimpleModal("material", "Sửa chất liệu khác", m)
+            }
+            onDeleteOtherMaterial={handleDeleteMaterial}
             colors={colors}
             onAddColor={() => handleOpenSimpleModal("color", "Thêm màu sắc")}
             onEditColor={(c) =>
