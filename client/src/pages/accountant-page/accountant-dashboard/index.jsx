@@ -63,7 +63,7 @@ const StatCard = ({ icon: Icon, label, value, sub, color, to }) => {
 };
 
 // ── Mock data khớp với accountant-product ────────────────────────────────────
-// Sản phẩm sắp hết hàng (stock <= minStock), chỉ lấy FINISHED vì RAW/CUSTOM không có minStock
+// Sản phẩm dưới định mức tồn kho (stock <= minStock), chỉ lấy FINISHED vì RAW/CUSTOM không có minStock
 const LOW_STOCK_PRODUCTS = [
     {
         id: "P007", sku: "KTV-HS-180x45x55-Tran",
@@ -81,7 +81,7 @@ const LOW_STOCK_PRODUCTS = [
         id: "P003", sku: "STM-HS-200x100x60-Chay",
         name: "Sập thờ Mai Điểu chân 20",
         type: "FINISHED", category: "Phòng thờ",
-        stock: 2, minStock: 1,
+        stock: 1, minStock: 2,
     },
 ];
 
@@ -153,11 +153,11 @@ const getDaysStyleDB = (days) => {
 
 // ── Mock data: Hàng tồn lâu (importedAt > 60 ngày) ────────────────────────────
 const LONG_STAY_PRODUCTS = [
-    { id: "P010", name: "Tủ rượu nguyên khối cánh kính",                sku: "TRU-HS-120x40x180-OcCho",  category: "Phòng khách",  type: "FINISHED", stock: 1,  importedAt: "2025-11-15", importPrice: 19000000 },
-    { id: "P007", name: "Kệ tivi nguyên khối mặt liền",                  sku: "KTV-HS-180x45x55-Tran",    category: "Phòng khách",  type: "FINISHED", stock: 0,  importedAt: "2025-12-01", importPrice: 22000000 },
-    { id: "P001", name: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món",               sku: "BBG-HS-180x90x75-Huong",   category: "Phòng khách",  type: "FINISHED", stock: 5,  importedAt: "2025-12-20", importPrice: 38000000 },
-    { id: "P004", name: "Giường ngủ hoa hồng Tân cổ điển (mộc)",         sku: "GNG-HM-200x160x50-raw",    category: "Phòng ngủ",    type: "RAW",      stock: 8,  importedAt: "2025-12-10", importPrice: 12000000 },
-    { id: "P012", name: "Ghế chạm hoa văn (mộc)",                        sku: "GHV-HM-45x45x95-raw",     category: "Phòng ăn",     type: "RAW",      stock: 20, importedAt: "2025-10-01", importPrice: 3500000 },
+    { id: "P010", name: "Tủ rượu nguyên khối cánh kính", sku: "TRU-HS-120x40x180-OcCho", category: "Phòng khách", type: "FINISHED", stock: 1, importedAt: "2025-11-15", importPrice: 19000000 },
+    { id: "P007", name: "Kệ tivi nguyên khối mặt liền", sku: "KTV-HS-180x45x55-Tran", category: "Phòng khách", type: "FINISHED", stock: 0, importedAt: "2025-12-01", importPrice: 22000000 },
+    { id: "P001", name: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món", sku: "BBG-HS-180x90x75-Huong", category: "Phòng khách", type: "FINISHED", stock: 5, importedAt: "2025-12-20", importPrice: 38000000 },
+    { id: "P004", name: "Giường ngủ hoa hồng Tân cổ điển (mộc)", sku: "GNG-HM-200x160x50-raw", category: "Phòng ngủ", type: "RAW", stock: 8, importedAt: "2025-12-10", importPrice: 12000000 },
+    { id: "P012", name: "Ghế chạm hoa văn (mộc)", sku: "GHV-HM-45x45x95-raw", category: "Phòng ăn", type: "RAW", stock: 20, importedAt: "2025-10-01", importPrice: 3500000 },
 ];
 
 // ── Main Component ─────────────────────────────────────────────────────────────
@@ -180,7 +180,7 @@ export default function AccountantDashboard() {
         },
         {
             icon: TrendingDown,
-            label: "Sắp hết hàng",
+            label: "Dưới định mức tồn kho",
             value: STATS.lowStockCount.toLocaleString(),
             color: STATS.lowStockCount > 0 ? "bg-red-500" : "bg-gray-400",
             sub: "Sản phẩm có tồn kho ≤ mức tối thiểu",
@@ -230,7 +230,7 @@ export default function AccountantDashboard() {
                         <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-5">
                             <CardTitle className="text-base flex items-center gap-2 text-red-700">
                                 <AlertTriangle size={17} className="text-red-500" />
-                                Sản phẩm sắp hết hàng
+                                Sản phẩm dưới định mức tồn kho
                                 <span className="ml-1 text-[12px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-600 border border-red-200">
                                     {LOW_STOCK_PRODUCTS.length}
                                 </span>
@@ -495,7 +495,7 @@ export default function AccountantDashboard() {
                                 { to: "/accountant/imports", label: "Nhập hàng", icon: ArrowDownToLine, desc: "Quản lý phiếu nhập" },
                                 {
                                     to: "/accountant/products",
-                                    label: "Sắp hết hàng",
+                                    label: "Dưới định mức",
                                     icon: TrendingDown,
                                     desc: `${STATS.lowStockCount} sản phẩm cần chú ý`,
                                     alert: STATS.lowStockCount > 0,

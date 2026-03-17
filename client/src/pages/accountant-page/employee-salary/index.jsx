@@ -195,6 +195,10 @@ export default function AccountantEmployeeSalary() {
     const [expandedPainter, setExpandedPainter] = useState(null);
 
     const [isPeriodModalOpen, setIsPeriodModalOpen] = useState(false);
+    
+    // Payment confirmation
+    const [selectedEmpForPayment, setSelectedEmpForPayment] = useState(null);
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
 
     const handleCreatePeriod = (newPeriod) => {
@@ -258,19 +262,37 @@ export default function AccountantEmployeeSalary() {
         const emp = employees.find(e => e.id === empId);
         if (!emp) return;
 
-        const newStatus = emp.status === "Đã thanh toán" ? "Chưa thanh toán" : "Đã thanh toán";
-        const newPaymentDate = newStatus === "Đã thanh toán" ? format(new Date(), "dd/MM/yyyy", { locale: vi }) : "";
+        if (emp.status === "Đã thanh toán") {
+            // If already paid, allow direct toggle back to unpaid (with confirmation?)
+            // or just simple toggle for admin-like correction
+            setEmployees(prev => prev.map(e =>
+                e.id === empId ? { ...e, status: "Chưa thanh toán", payment_date: "" } : e
+            ));
+            toast.success(`🔄 Đã đổi trạng thái về Chưa thanh toán`, { style: { fontSize: "13px" } });
+        } else {
+            // If unpaid, trigger confirmation modal
+            setSelectedEmpForPayment(emp);
+            setIsPaymentModalOpen(true);
+        }
+    };
+
+    const handleConfirmPayment = () => {
+        if (!selectedEmpForPayment) return;
+
+        const newPaymentDate = format(new Date(), "dd/MM/yyyy", { locale: vi });
 
         setEmployees(prev => prev.map(e =>
-            e.id === empId ? { ...e, status: newStatus, payment_date: newPaymentDate } : e
+            e.id === selectedEmpForPayment.id
+                ? { ...e, status: "Đã thanh toán", payment_date: newPaymentDate }
+                : e
         ));
 
-        toast.success(
-            newStatus === "Đã thanh toán"
-                ? `✅ Đã xác nhận thanh toán cho ${emp.name}`
-                : `🔄 Đã đổi trạng thái về Chưa thanh toán`,
-            { style: { fontSize: "13px" } }
-        );
+        toast.success(`✅ Đã xác nhận thanh toán cho ${selectedEmpForPayment.name}`, {
+            style: { fontSize: "14px", fontWeight: "bold" }
+        });
+        
+        setIsPaymentModalOpen(false);
+        setSelectedEmpForPayment(null);
     };
 
     // Add product to painter
@@ -658,6 +680,87 @@ export default function AccountantEmployeeSalary() {
                             <button onClick={handleDeleteEmployee}
                                 className="h-10 px-5 rounded-xl text-[13px] font-bold bg-red-600 cursor-pointer text-white hover:bg-red-700 transition">
                                 Có, xóa nhân viên
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Confirm Payment Modal */}
+            {isPaymentModalOpen && selectedEmpForPayment && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                    onClick={() => setIsPaymentModalOpen(false)}>
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col overflow-hidden"
+                        onClick={e => e.stopPropagation()}>
+                        
+                        <div className="px-6 py-5 shrink-0 border-b relative" style={{ borderColor: "var(--grid-border)" }}>
+                            <button onClick={() => setIsPaymentModalOpen(false)}
+                                className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-black/5 cursor-pointer transition text-gray-400">
+                                <X size={18} />
+                            </button>
+                            <h2 className="text-[17px] font-black italic uppercase tracking-tight" style={{ color: "var(--brand-primary)" }}>
+                                Xác nhận chi lương
+                            </h2>
+                            <p className="text-[12px] mt-1 text-gray-500">
+                                Xác nhận đã thanh toán toàn bộ tiền lương cho nhân viên.
+                            </p>
+                        </div>
+
+                        <div className="p-6 space-y-3.5 bg-gray-50/30">
+                            <div className="p-4 rounded-xl border bg-white space-y-2.5 shadow-sm" style={{ borderColor: "var(--grid-border)" }}>
+                                <div className="flex justify-between items-center pb-2 border-b border-dashed" style={{ borderColor: "var(--grid-border)" }}>
+                                    <span className="text-[11px] font-bold text-gray-400 uppercase">Nhân viên:</span>
+                                    <span className="text-[13px] font-bold text-gray-900">{selectedEmpForPayment.name}</span>
+                                </div>
+                                <div className="flex justify-between items-center pb-2 border-b border-dashed" style={{ borderColor: "var(--grid-border)" }}>
+                                    <span className="text-[11px] font-bold text-gray-400 uppercase">Bộ phận:</span>
+                                    <span className="text-[12px] font-medium text-gray-600">{selectedEmpForPayment.role}</span>
+                                </div>
+                                <div className="flex justify-between items-center pb-2 border-b border-dashed" style={{ borderColor: "var(--grid-border)" }}>
+                                    <span className="text-[11px] font-bold text-gray-400 uppercase">Kỳ lương:</span>
+                                    <span className="text-[12px] font-bold text-gray-700">{selectedEmpForPayment.month}</span>
+                                </div>
+                            </div>
+
+                            <div className="p-4 rounded-xl border bg-white space-y-2.5 shadow-sm border-blue-100" style={{ backgroundColor: "#F8FAFF" }}>
+                                <div className="flex justify-between items-center text-[12px]">
+                                    <span className="text-gray-500">Lương cơ bản / Đơn giá:</span>
+                                    <span className="font-semibold text-gray-700">
+                                        {selectedEmpForPayment.type === "PAINTER" || selectedEmpForPayment.type === "SANDER"
+                                            ? formatCurrency(selectedEmpForPayment.base_rate)
+                                            : formatCurrency(selectedEmpForPayment.base_salary)}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center text-[12px]">
+                                    <span className="text-gray-500">Thông số công:</span>
+                                    <span className="font-semibold text-gray-700">
+                                        {selectedEmpForPayment.type === "PAINTER"
+                                            ? `${selectedEmpForPayment.products_finished} SP`
+                                            : `${selectedEmpForPayment.days_worked} ngày`}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center text-[12px]">
+                                    <span className="text-gray-500">Phụ cấp:</span>
+                                    <span className="font-semibold text-gray-700">{formatCurrency(selectedEmpForPayment.allowance)}</span>
+                                </div>
+                                <div className="pt-2 border-t border-blue-200 flex justify-between items-center">
+                                    <span className="text-[13px] font-black text-blue-700 uppercase tracking-wide">Tổng chi trả:</span>
+                                    <span className="text-[18px] font-black text-blue-800">
+                                        {formatCurrency(calculateTotalSalary(selectedEmpForPayment))}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="px-6 py-4 border-t flex items-center justify-end gap-3 bg-white" style={{ borderColor: "var(--grid-border)" }}>
+                            <button onClick={() => setIsPaymentModalOpen(false)}
+                                className="h-10 px-6 rounded-xl text-[13px] font-bold border cursor-pointer hover:bg-gray-50 transition text-gray-500"
+                                style={{ borderColor: "var(--grid-border)" }}>
+                                Hủy
+                            </button>
+                            <button onClick={handleConfirmPayment}
+                                className="h-10 px-8 rounded-xl text-[13px] font-bold text-white shadow-lg shadow-blue-200 hover:opacity-90 transition cursor-pointer"
+                                style={{ backgroundColor: "var(--brand-primary)" }}>
+                                Xác nhận thanh toán
                             </button>
                         </div>
                     </div>
