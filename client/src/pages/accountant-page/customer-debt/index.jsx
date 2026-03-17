@@ -100,6 +100,8 @@ export default function AccountantCustomerDebt() {
     const totalPages = Math.ceil(filteredDebts.length / itemsPerPage) || 1;
     const paginated = filteredDebts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+    const totalDebt = debts.reduce((acc, d) => acc + getRemainingAmount(d.total_amount, d.deposit_amount), 0);
+
     const handleOpenSettleModal = (debt) => {
         setSelectedDebt(debt);
         setIsSettleModalOpen(true);
@@ -126,15 +128,25 @@ export default function AccountantCustomerDebt() {
             <PageHelmet title="Công nợ khách hàng | Kế toán" />
             <div className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 space-y-4" style={{ backgroundColor: "var(--bg-main)" }}>
                 {/* ── Header ── */}
-                <div className="flex items-center justify-between shrink-0">
+                <div className="flex items-center justify-between shrink-0 px-1">
                     <div>
-                        <h1 className="text-xl font-bold flex items-center gap-2" style={{ color: "var(--text-main)" }}>
-                            <Users size={22} style={{ color: "var(--brand-primary)" }} />
+                        <h1 className="text-[22px] font-bold flex items-center gap-2.5" style={{ color: "var(--text-main)", letterSpacing: "-0.01em" }}>
+                            <Users size={24} style={{ color: "var(--brand-primary)" }} />
                             Công nợ khách hàng
                         </h1>
-                        <p className="text-[13px] mt-0.5" style={{ color: "var(--text-placeholder)" }}>
-                            {filteredDebts.length} khoản công nợ
+                        <p className="text-[13px] mt-1 font-medium italic" style={{ color: "var(--text-placeholder)" }}>
+                            {filteredDebts.length} khoản công nợ · {debts.filter(d => getRemainingAmount(d.total_amount, d.deposit_amount) > 0).length} đơn đang nợ
                         </p>
+                    </div>
+
+                    {/* Summary chips */}
+                    <div className="flex items-center gap-3">
+                        <div className="px-4 py-2 rounded-xl bg-red-50 border border-red-100 text-center">
+                            <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest">Tổng dư nợ</p>
+                            <p className="text-[15px] font-black text-red-600">
+                                {formatCurrency(totalDebt)}
+                            </p>
+                        </div>
                     </div>
                 </div>
 

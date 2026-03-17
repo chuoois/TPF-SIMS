@@ -232,9 +232,8 @@ const SupplierDashboardModal = ({ supplier, onClose, onPayment }) => {
                 <button
                   key={t.id}
                   onClick={() => setActiveTab(t.id)}
-                  className={`flex items-center gap-2 px-6 py-3.5 text-[13px] font-bold transition-all relative cursor-pointer ${
-                    activeTab === t.id ? "text-green-600 bg-green-50/30" : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
-                  }`}
+                  className={`flex items-center gap-2 px-6 py-3.5 text-[13px] font-bold transition-all relative cursor-pointer ${activeTab === t.id ? "text-green-600 bg-green-50/30" : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                    }`}
                 >
                   <t.icon size={16} />
                   {t.label}
@@ -366,7 +365,6 @@ const SupplierDashboardModal = ({ supplier, onClose, onPayment }) => {
                           <th className="px-6 py-4 font-bold text-gray-500 uppercase text-[11px] tracking-wider">Mã lô nhập</th>
                           <th className="px-6 py-4 font-bold text-gray-500 uppercase text-[11px] tracking-wider">Ngày nhập</th>
                           <th className="px-6 py-4 font-bold text-gray-500 text-right uppercase text-[11px] tracking-wider">Tổng tiền</th>
-                          <th className="px-6 py-4 font-bold text-gray-500 text-center uppercase text-[11px] tracking-wider">Trạng thái</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
@@ -384,11 +382,7 @@ const SupplierDashboardModal = ({ supplier, onClose, onPayment }) => {
                             </td>
                             <td className="px-6 py-4 text-gray-500 font-medium">{h.date}</td>
                             <td className="px-6 py-4 text-right font-black text-gray-900">{formatCurrency(h.total)}</td>
-                            <td className="px-6 py-4 text-center">
-                              <span className={`px-3 py-1 rounded-full text-[11px] font-black ${h.status === "Đã nhập kho" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
-                                {h.status}
-                              </span>
-                            </td>
+
                           </tr>
                         ))}
                       </tbody>

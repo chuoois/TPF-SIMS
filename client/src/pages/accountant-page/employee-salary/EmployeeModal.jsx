@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
+const getCurrentMonth = () => {
+  const now = new Date();
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const yyyy = now.getFullYear();
+  return `${mm}/${yyyy}`;
+};
+
 export default function EmployeeModal({ 
   isOpen, 
   onClose, 
@@ -9,7 +16,7 @@ export default function EmployeeModal({
 }) {
   const [formData, setFormData] = useState({
     name: "",
-    type: "SALES", // "SALES", "SANDER", "PAINTER"
+    type: "SALES", // "SALES", "SANDER", "PAINTER", "ACCOUNTANT"
     baseSalary: "",
     baseRate: "",
     daysWorked: "",
@@ -53,35 +60,50 @@ export default function EmployeeModal({
     if (formData.type === "SALES") empRole = "Nhân viên bán hàng";
     else if (formData.type === "SANDER") empRole = "Nhân viên giấy ráp";
     else if (formData.type === "PAINTER") empRole = "Thợ sơn";
+    else if (formData.type === "ACCOUNTANT") empRole = "Kế toán";
 
     // Build the employee object
     const employeeData = {
-      // Auto-generate ID if it's new
       id: employeeToEdit ? employeeToEdit.id : `NV${Math.floor(100 + Math.random() * 900)}`,
       name: formData.name,
       role: empRole,
       type: formData.type,
       allowance: Number(formData.allowance) || 0,
       status: employeeToEdit ? employeeToEdit.status : "Chưa thanh toán",
-      month: employeeToEdit ? employeeToEdit.month : "03/2026", // Mocking current month
+      month: employeeToEdit ? employeeToEdit.month : getCurrentMonth(),
+      payment_date: formData.paymentDate,
     };
 
     if (formData.type === "SALES") {
       employeeData.base_salary = Number(formData.baseSalary) || 0;
       employeeData.days_worked = Number(formData.daysWorked) || 0; 
       employeeData.products_finished = 0;
+      employeeData.products_log = [];
+    } else if (formData.type === "ACCOUNTANT") {
+      employeeData.base_salary = Number(formData.baseSalary) || 0;
+      employeeData.days_worked = Number(formData.daysWorked) || 0;
+      employeeData.products_finished = 0;
+      employeeData.products_log = [];
     } else if (formData.type === "SANDER") {
       employeeData.base_rate = Number(formData.baseRate) || 0;
       employeeData.days_worked = Number(formData.daysWorked) || 0;
       employeeData.products_finished = 0;
+      employeeData.products_log = [];
     } else if (formData.type === "PAINTER") {
       employeeData.base_rate = Number(formData.baseRate) || 0;
-      employeeData.products_finished = Number(formData.productsFinished) || 0;
+      // Keep existing products log if editing
+      employeeData.products_log = employeeToEdit?.products_log || [];
+      // Recalculate products_finished from log
+      const logTotal = employeeData.products_log.reduce((s, p) => s + (p.qty || 1), 0);
+      employeeData.products_finished = logTotal || Number(formData.productsFinished) || 0;
       employeeData.days_worked = Number(formData.daysWorked) || 0; 
     }
 
     onSave(employeeData);
   };
+
+  const inputClass = "w-full h-9 px-3 rounded-lg border text-[13px] bg-white outline-none focus:ring-2 focus:ring-blue-100 transition";
+  const inputStyle = { borderColor: "var(--grid-border)", color: "var(--text-main)" };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
@@ -121,6 +143,7 @@ export default function EmployeeModal({
                     className="w-full h-10 px-3 rounded-xl border text-[13px] focus:outline-none focus:ring-2 transition bg-gray-50/50 outline-none"
                     style={{ borderColor: "var(--grid-border)", color: "var(--text-main)" }}>
                     <option value="SALES">Nhân viên bán hàng</option>
+                    <option value="ACCOUNTANT">Kế toán</option>
                     <option value="SANDER">Nhân viên giấy ráp</option>
                     <option value="PAINTER">Thợ sơn</option>
                 </select>
@@ -132,72 +155,51 @@ export default function EmployeeModal({
                  <h4 className="text-[12px] font-bold uppercase tracking-wider text-gray-500">Thông số tính lương</h4>
               </div>
 
-              {formData.type === "SALES" && (
+              {/* SALES & ACCOUNTANT – Same monthly salary structure */}
+              {(formData.type === "SALES" || formData.type === "ACCOUNTANT") && (
                 <>
                   <div className="space-y-1.5">
-                      <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Lương tháng cố định (VNĐ)</label>
+                      <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Lương tháng cố định (VNĐ) <span className="text-red-500">*</span></label>
                       <input type="number" min="0" value={formData.baseSalary} onChange={e => setFormData({...formData, baseSalary: e.target.value})} required
-                          className="w-full h-9 px-3 rounded-lg border text-[13px] bg-white outline-none"
-                          placeholder="Ví dụ: 10000000"
-                          style={{ borderColor: "var(--grid-border)", color: "var(--text-main)" }} />
+                          className={inputClass} placeholder="Ví dụ: 10000000" style={inputStyle} />
                   </div>
                   <div className="space-y-1.5">
                       <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Số ngày công (chấm công)</label>
                       <input type="number" min="0" value={formData.daysWorked} onChange={e => setFormData({...formData, daysWorked: e.target.value})}
-                          className="w-full h-9 px-3 rounded-lg border text-[13px] bg-white outline-none"
-                          placeholder="26"
-                          style={{ borderColor: "var(--grid-border)", color: "var(--text-main)" }} />
+                          className={inputClass} placeholder="26" style={inputStyle} />
                   </div>
                 </>
               )}
 
+              {/* SANDER */}
               {formData.type === "SANDER" && (
                 <>
                   <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                           <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Đơn giá / Ngày (VNĐ)</label>
                           <input type="number" min="0" value={formData.baseRate} onChange={e => setFormData({...formData, baseRate: e.target.value})} required
-                              className="w-full h-9 px-3 rounded-lg border text-[13px] bg-white outline-none"
-                              placeholder="Ví dụ: 400000"
-                              style={{ borderColor: "var(--grid-border)", color: "var(--text-main)" }} />
+                              className={inputClass} placeholder="Ví dụ: 400000" style={inputStyle} />
                       </div>
                       <div className="space-y-1.5">
                           <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Số ngày công</label>
                           <input type="number" min="0" value={formData.daysWorked} onChange={e => setFormData({...formData, daysWorked: e.target.value})} required
-                              className="w-full h-9 px-3 rounded-lg border text-[13px] bg-white outline-none"
-                              placeholder="26"
-                              style={{ borderColor: "var(--grid-border)", color: "var(--text-main)" }} />
+                              className={inputClass} placeholder="26" style={inputStyle} />
                       </div>
                   </div>
                 </>
               )}
 
+              {/* PAINTER – Salary calculated per product from log */}
               {formData.type === "PAINTER" && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                          <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Đơn giá / Sản phẩm (VNĐ)</label>
-                          <input type="number" min="0" value={formData.baseRate} onChange={e => setFormData({...formData, baseRate: e.target.value})} required
-                              className="w-full h-9 px-3 rounded-lg border text-[13px] bg-white outline-none"
-                              placeholder="Ví dụ: 150000"
-                              style={{ borderColor: "var(--grid-border)", color: "var(--text-main)" }} />
-                      </div>
-                      <div className="space-y-1.5">
-                          <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Sản phẩm hoàn thành</label>
-                          <input type="number" min="0" value={formData.productsFinished} onChange={e => setFormData({...formData, productsFinished: e.target.value})} required
-                              className="w-full h-9 px-3 rounded-lg border text-[13px] bg-white outline-none"
-                              placeholder="120"
-                              style={{ borderColor: "var(--grid-border)", color: "var(--text-main)" }} />
-                      </div>
-                  </div>
-                  <div className="space-y-1.5">
-                      <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Số ngày đi làm (để tham khảo)</label>
-                      <input type="number" min="0" value={formData.daysWorked} onChange={e => setFormData({...formData, daysWorked: e.target.value})}
-                          className="w-full h-9 px-3 rounded-lg border text-[13px] bg-white outline-none"
-                          placeholder="26"
-                          style={{ borderColor: "var(--grid-border)", color: "var(--text-main)" }} />
-                  </div>
-                </>
+                <div className="p-4 rounded-xl bg-green-50 border border-green-200">
+                  <p className="text-[13px] text-green-800 font-semibold mb-1 flex items-center gap-1.5">
+                    🎨 Thợ sơn tính lương theo sản phẩm
+                  </p>
+                  <p className="text-[12px] text-green-700 leading-relaxed">
+                    Thông số tính lương cố định đã bị ẩn. Vui lòng sử dụng tính năng 
+                    <strong> "+ Cộng SP"</strong> trực tiếp trên bảng lương để ghi nhận sản phẩm và đơn giá cho thợ sơn.
+                  </p>
+                </div>
               )}
             </div>
 
