@@ -18,8 +18,12 @@ import {
   CheckCircle,
   RefreshCw,
   Camera,
+  DollarSign,
+  CreditCard,
+  Wallet,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
+import toast from "react-hot-toast";
 
 
 const INITIAL_ORDERS = [
@@ -27,123 +31,166 @@ const INITIAL_ORDERS = [
   {
     id: "DH-S01", code: "DH-SAN-001", customerName: "Nguyễn Văn Hùng", phone: "0912345678",
     type: "Hàng sẵn", total: 12500000, status: "Chờ xử lý",
-    date: "2026-03-12T08:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-14"
+    date: "2026-03-12T08:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-14",
+    deposit: 2000000
   },
   {
     id: "DH-S02", code: "DH-SAN-002", customerName: "Lê Thị Lan", phone: "0345678901",
     type: "Hàng sẵn", total: 3500000, status: "Chờ giao hàng",
-    date: "2026-03-11T14:20:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-12"
+    date: "2026-03-11T14:20:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-12",
+    deposit: 3500000
   },
   {
     id: "DH-S03", code: "DH-SAN-003", customerName: "Trần Minh Quang", phone: "0909123456",
     type: "Hàng sẵn", total: 45000000, status: "Đang giao hàng",
-    date: "2026-03-10T09:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-11"
+    date: "2026-03-10T09:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-11",
+    deposit: 15000000
   },
   {
     id: "DH-S04", code: "DH-SAN-004", customerName: "Phạm Thành Nam", phone: "0987654321",
     type: "Hàng sẵn", total: 8900000, status: "Hoàn thành",
-    date: "2026-03-09T16:45:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-10"
+    date: "2026-03-09T16:45:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-10",
+    deposit: 8900000
   },
   {
     id: "DH-S05", code: "DH-SAN-005", customerName: "Đinh Công Vinh", phone: "0944556677",
     type: "Hàng sẵn", total: 2100000, status: "Chờ duyệt hủy",
     date: "2026-03-11T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-13",
-    cancelReason: "Khách đổi ý"
+    deposit: 0, cancelReason: "Khách đổi ý"
   },
   {
     id: "DH-S06", code: "DH-SAN-006", customerName: "Võ Thị Bảy", phone: "0966778899",
-    type: "Hàng sẵn", total: 1500000, status: "Đã hủy",
+    type: "Hàng sẵn", total: 1500000, status: "Đơn đã hủy",
     date: "2026-03-08T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-09",
+    deposit: 0
   },
 
-  // ========== NHÓM 2: HÀNG THÔ (8 trạng thái) ==========
+  // ========== NHÓM 2: Hàng mộc (8 trạng thái) ==========
   {
     id: "DH-T01", code: "DH-THO-001", customerName: "Hoàng Nguyệt Ánh", phone: "0978901234",
-    type: "Hàng thô", total: 56000000, status: "Chờ xử lý",
-    date: "2026-03-12T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-20"
+    type: "Hàng mộc", total: 56000000, status: "Chờ xử lý",
+    date: "2026-03-12T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-20",
+    deposit: 10000000
   },
   {
     id: "DH-T02", code: "DH-THO-002", customerName: "Đặng Tuấn Kiệt", phone: "0931234567",
-    type: "Hàng thô", total: 8200000, status: "Đang sản xuất",
-    date: "2026-03-11T15:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-15"
+    type: "Hàng mộc", total: 8200000, status: "Đang gia công",
+    date: "2026-03-11T15:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-15",
+    deposit: 2000000
   },
   {
     id: "DH-T03", code: "DH-THO-003", customerName: "Vũ Hải Đăng", phone: "0922334455",
-    type: "Hàng thô", total: 12500000, status: "Đang sản xuất",
-    date: "2026-03-10T08:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-14"
+    type: "Hàng mộc", total: 12500000, status: "Đang sản xuất",
+    date: "2026-03-10T08:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-14",
+    deposit: 5000000
   },
   {
     id: "DH-T04", code: "DH-THO-004", customerName: "Bùi Tiến Dũng", phone: "0911223344",
-    type: "Hàng thô", total: 28000000, status: "Chờ giao hàng",
-    date: "2026-03-09T11:20:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-12"
+    type: "Hàng mộc", total: 28000000, status: "Chờ giao hàng",
+    date: "2026-03-09T11:20:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-12",
+    deposit: 10000000
   },
   {
     id: "DH-T05", code: "DH-THO-005", customerName: "Đinh Công Thành", phone: "0988776655",
-    type: "Hàng thô", total: 15400000, status: "Đang giao hàng",
-    date: "2026-03-08T14:45:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-10"
+    type: "Hàng mộc", total: 15400000, status: "Đang giao hàng",
+    date: "2026-03-08T14:45:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-10",
+    deposit: 5000000
   },
   {
     id: "DH-T06", code: "DH-THO-006", customerName: "Trần Anh Tú", phone: "0900112233",
-    type: "Hàng thô", total: 32000000, status: "Hoàn thành",
-    date: "2026-03-07T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-09"
+    type: "Hàng mộc", total: 32000000, status: "Hoàn thành",
+    date: "2026-03-07T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-09",
+    deposit: 32000000
   },
   {
     id: "DH-T07", code: "DH-THO-007", customerName: "Lý Quí Chung", phone: "0933445566",
-    type: "Hàng thô", total: 18000000, status: "Chờ duyệt hủy",
+    type: "Hàng mộc", total: 18000000, status: "Chờ duyệt hủy",
     date: "2026-03-11T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-15",
-    cancelReason: "Mua nhầm hàng"
+    deposit: 2000000, cancelReason: "Mua nhầm hàng"
   },
   {
     id: "DH-T08", code: "DH-THO-008", customerName: "Nguyễn Kim Ngân", phone: "0977889900",
-    type: "Hàng thô", total: 9000000, status: "Đã hủy",
-    date: "2026-03-05T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-08"
+    type: "Hàng mộc", total: 9000000, status: "Đơn đã hủy",
+    date: "2026-03-05T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-08",
+    deposit: 0
   },
 
-  // ========== NHÓM 3: HÀNG ĐẶT (8 trạng thái) ==========
+  // ========== NHÓM 3: HÀNG ĐẶT (12 trạng thái) ==========
   {
     id: "DH-D01", code: "DH-DAT-001", customerName: "Nguyễn Thị Hồng", phone: "0912123123",
-    type: "Hàng đặt", total: 75000000, status: "Chờ xử lý",
-    date: "2026-03-12T11:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-30"
+    type: "Hàng đặt", total: 75000000, status: "Đang gia công",
+    date: "2026-03-12T11:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-30",
+    deposit: 25000000
   },
   {
     id: "DH-D02", code: "DH-DAT-002", customerName: "Lê Văn Tám", phone: "0321654987",
-    type: "Hàng đặt", total: 120000000, status: "Đang sản xuất",
-    date: "2026-03-11T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-25"
+    type: "Hàng đặt", total: 120000000, status: "Đang gia công",
+    date: "2026-03-11T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-25",
+    deposit: 40000000
   },
   {
     id: "DH-D03", code: "DH-DAT-003", customerName: "Phan Văn Trị", phone: "0944123123",
-    type: "Hàng đặt", total: 45000000, status: "Đang sản xuất",
-    date: "2026-03-10T10:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-28"
+    type: "Hàng đặt", total: 45000000, status: "Đang gia công",
+    date: "2026-03-10T10:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-28",
+    deposit: 15000000
   },
   {
     id: "DH-D04", code: "DH-DAT-004", customerName: "Hoàng Thanh Sơn", phone: "0988123123",
     type: "Hàng đặt", total: 95000000, status: "Chờ giao hàng",
-    date: "2026-03-09T14:20:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-22"
+    date: "2026-03-09T14:20:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-22",
+    deposit: 30000000
   },
   {
     id: "DH-D05", code: "DH-DAT-005", customerName: "Lưu Bích Thủy", phone: "0909123123",
     type: "Hàng đặt", total: 34000000, status: "Đang giao hàng",
-    date: "2026-03-08T11:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-20"
+    date: "2026-03-08T11:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-20",
+    deposit: 10000000
   },
   {
     id: "DH-D06", code: "DH-DAT-006", customerName: "Trương Vô Kỵ", phone: "0977123123",
     type: "Hàng đặt", total: 210000000, status: "Hoàn thành",
-    date: "2026-03-05T08:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-15"
+    date: "2026-03-05T08:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-15",
+    deposit: 100000000
   },
   {
     id: "DH-D07", code: "DH-DAT-007", customerName: "Triệu Mẫn", phone: "0911123123",
     type: "Hàng đặt", total: 85000000, status: "Chờ duyệt hủy",
     date: "2026-03-11T13:45:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-26",
-    cancelReason: "Khách đổi kích thước nhà"
+    deposit: 20000000, cancelReason: "Khách đổi kích thước nhà"
   },
   {
     id: "DH-D08", code: "DH-DAT-008", customerName: "Chu Chỉ Nhược", phone: "0933123123",
-    type: "Hàng đặt", total: 42000000, status: "Đã hủy",
-    date: "2026-03-01T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-10"
+    type: "Hàng đặt", total: 42000000, status: "Đơn đã hủy",
+    date: "2026-03-01T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-10",
+    deposit: 0
+  },
+  {
+    id: "DH-D09", code: "DH-DAT-009", customerName: "Vũ Phương Thảo", phone: "0944000111",
+    type: "Hàng đặt", total: 15600000, status: "Chờ sản xuất",
+    date: "2026-03-12T16:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-20",
+    deposit: 5000000
+  },
+  {
+    id: "DH-D10", code: "DH-DAT-010", customerName: "Đỗ Minh Quân", phone: "0944222333",
+    type: "Hàng đặt", total: 32000000, status: "Chờ sản xuất",
+    date: "2026-03-13T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-25",
+    deposit: 10000000
+  },
+  {
+    id: "DH-D11", code: "DH-DAT-011", customerName: "Phạm Gia Bảo", phone: "0944444555",
+    type: "Hàng đặt", total: 8500000, status: "Chờ sản xuất",
+    date: "2026-03-14T10:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-28",
+    deposit: 3000000
+  },
+  {
+    id: "DH-D12", code: "DH-DAT-012", customerName: "Nguyễn Anh Tuấn", phone: "0944666777",
+    type: "Hàng đặt", total: 112000000, status: "Đang gia công",
+    date: "2026-03-15T14:20:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-30",
+    deposit: 50000000
   },
 ];
 
-const ORDER_TYPES = ["Hàng sẵn", "Hàng thô", "Hàng đặt"];
+const ORDER_TYPES = ["Hàng sẵn", "Hàng mộc", "Hàng đặt"];
 
 const HANG_SAN_STATUSES = [
   "Chờ xử lý",
@@ -151,27 +198,28 @@ const HANG_SAN_STATUSES = [
   "Đang giao hàng",
   "Hoàn thành",
   "Chờ duyệt hủy",
-  "Đã hủy",
+  "Đơn đã hủy",
 ];
 
 const HANG_THO_STATUSES = [
   "Chờ xử lý",
-  "Đang sản xuất",
+  "Đang gia công",
   "Chờ giao hàng",
   "Đang giao hàng",
   "Hoàn thành",
   "Chờ duyệt hủy",
-  "Đã hủy",
+  "Đơn đã hủy",
 ];
 
 const HANG_DAT_STATUSES = [
-  "Chờ xử lý",
-  "Đang sản xuất",
+  "Chờ sản xuất",
+  "Đã nhập kho",
+  "Đang gia công",
   "Chờ giao hàng",
   "Đang giao hàng",
   "Hoàn thành",
   "Chờ duyệt hủy",
-  "Đã hủy",
+  "Đơn đã hủy",
 ];
 
 const ALL_STATUSES = [
@@ -191,6 +239,15 @@ const formatCurrency = (amount) => {
   }).format(amount);
 };
 
+const formatNumberInput = (value) => {
+  if (value === "" || value === null || value === undefined) return "";
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
+
+const parseNumberInput = (value) => {
+  return value.replace(/\./g, "").replace(/[^\d]/g, "");
+};
+
 const formatDateTime = (dateString) => {
   const d = new Date(dateString);
   return `${d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })} - ${d.toLocaleDateString("vi-VN")}`;
@@ -202,7 +259,12 @@ const getStatusColor = (status) => {
       return { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" }; // Blue
     case "Đang xử lý":
       return { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" }; // Orange
+    case "Chờ sản xuất":
+      return { bg: "#FEF3C7", text: "#B45309", border: "#FDE68A" }; // Amber/Dark
+    case "Đã nhập kho":
+      return { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" }; // Green
     case "Đang sản xuất":
+    case "Đang gia công":
       return { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" }; // Amber
     case "Chờ giao hàng":
       return { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" }; // Purple
@@ -212,7 +274,7 @@ const getStatusColor = (status) => {
       return { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" }; // Green
     case "Chờ duyệt hủy":
       return { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" }; // Amber/Yellow
-    case "Đã hủy":
+    case "Đơn đã hủy":
       return { bg: "#FEF2F2", text: "#B91C1C", border: "#FECACA" }; // Red
 
     default:
@@ -240,6 +302,12 @@ export default function OwnerOrders() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
 
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [finalPayment, setFinalPayment] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState("Chuyển khoản");
+  const [deliveryImage, setDeliveryImage] = useState(null);
+
   // Helper để cập nhật Search Params mượt mà
   const updateParams = (newParams) => {
     const current = Object.fromEntries(searchParams.entries());
@@ -263,7 +331,45 @@ export default function OwnerOrders() {
     const updatedSaved = saved.map(o => o.id === id ? { ...o, status: newStatus } : o);
     localStorage.setItem("tpf_simulated_orders", JSON.stringify(updatedSaved));
 
-    alert(`Đã cập nhật trạng thái đơn hàng sang: ${newStatus}`);
+    toast.success(`Đã cập nhật trạng thái đơn hàng sang: ${newStatus}`);
+  };
+
+  const openCompleteModal = (order) => {
+    setSelectedOrder(order);
+    const balance = (order.total || 0) - (order.deposit || 0);
+    setFinalPayment(balance > 0 ? balance : 0);
+    setDeliveryImage(null);
+    setShowCompleteModal(true);
+  };
+
+  const handleFinishOrder = () => {
+    if (!deliveryImage) {
+      toast.error("Vui lòng tải ảnh giao hàng!");
+      return;
+    }
+
+    const { id } = selectedOrder;
+    setOrders(prev => prev.map(o => o.id === id ? { 
+      ...o, 
+      status: "Hoàn thành", 
+      deliveryImage, 
+      finalPayment, 
+      paymentMethod 
+    } : o));
+
+    const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
+    const updatedSaved = saved.map(o => o.id === id ? { 
+      ...o, 
+      status: "Hoàn thành", 
+      deliveryImage, 
+      finalPayment, 
+      paymentMethod 
+    } : o);
+    localStorage.setItem("tpf_simulated_orders", JSON.stringify(updatedSaved));
+
+    toast.success("Đã hoàn tất đơn hàng và ghi nhận thanh toán!");
+    setShowCompleteModal(false);
+    setSelectedOrder(null);
   };
 
   const handleDeliveryUpload = (id, e) => {
@@ -277,7 +383,7 @@ export default function OwnerOrders() {
         const updatedSaved = saved.map(o => o.id === id ? { ...o, status: "Giao hàng thành công", deliveryImage: reader.result } : o);
         localStorage.setItem("tpf_simulated_orders", JSON.stringify(updatedSaved));
 
-        alert("Đã tải ảnh giao hàng và hoàn tất đơn!");
+        toast.success("Đã tải ảnh giao hàng và hoàn tất đơn!");
         setStatusFilter("Giao hàng thành công"); // Tự động chuyển tab filter
       };
       reader.readAsDataURL(file);
@@ -333,7 +439,7 @@ export default function OwnerOrders() {
     
     let statuses = [];
     if (activeTab === "Hàng sẵn") statuses = HANG_SAN_STATUSES;
-    else if (activeTab === "Hàng thô") statuses = HANG_THO_STATUSES;
+    else if (activeTab === "Hàng mộc") statuses = HANG_THO_STATUSES;
     else if (activeTab === "Hàng đặt") statuses = HANG_DAT_STATUSES;
     else statuses = ALL_STATUSES;
 
@@ -580,13 +686,13 @@ export default function OwnerOrders() {
                     "Loại đơn",
                     "Tổng tiền",
                     "Trạng thái",
-                    "Hình thức giao",
+                    ...(activeTab !== "Hàng đặt" ? ["Hình thức giao"] : []),
                     "Ngày giao dự kiến",
                     "Ảnh giao hàng"
                   ].map((h, i) => (
                     <th
                       key={i}
-                      className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 4 ? "text-right pr-6" : ""} ${i === 0 ? "text-center w-[50px]" : ""} ${i >= 7 && i < 9 ? "text-center whitespace-nowrap" : ""}`}
+                      className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 4 ? "text-right pr-6" : ""} ${i === 0 ? "text-center w-[50px]" : ""} ${ (activeTab !== "Hàng đặt" ? (i >= 7 && i < 9) : (i >= 6 && i < 8)) ? "text-center whitespace-nowrap" : ""}`}
                       style={{ color: "var(--text-placeholder)" }}
                     >
                       {h}
@@ -662,15 +768,17 @@ export default function OwnerOrders() {
                               className="w-1.5 h-1.5 rounded-full mr-1.5"
                               style={{ backgroundColor: statusConfig.text }}
                             ></span>
-                            {o.status}
+                            {o.status === "Đã nhập kho" && o.type === "Hàng đặt" ? "Đã nhập kho (Duyệt mộc)" : o.status}
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="text-[12px] font-medium text-gray-500">
-                          {o.fulfillmentType || "Chưa xác định"}
-                        </span>
-                      </td>
+                      {activeTab !== "Hàng đặt" && (
+                        <td className="px-4 py-3">
+                          <span className="text-[12px] font-medium text-gray-500">
+                            {o.fulfillmentType || "Chưa xác định"}
+                          </span>
+                        </td>
+                      )}
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1.5 text-gray-600">
                           <Clock size={12} className="text-gray-400" />
@@ -684,7 +792,7 @@ export default function OwnerOrders() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              alert("Đang mở ảnh bàn giao cho đơn " + o.code);
+                              toast.success("Đang mở ảnh bàn giao cho đơn " + o.code);
                             }}
                             className="w-10 h-10 rounded-lg overflow-hidden border border-green-200 hover:ring-2 ring-green-400 transition cursor-pointer mx-auto block"
                           >
@@ -704,14 +812,14 @@ export default function OwnerOrders() {
                             {o.status === "Chờ duyệt hủy" && (
                               <>
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); alert("Đã duyệt hủy đơn hàng."); }}
-                                  className="h-9 px-4 rounded-xl bg-red-500 text-white text-[12px] font-black hover:bg-red-600 transition-all shadow-lg shadow-red-100 flex items-center gap-2 active:scale-95"
+                                  onClick={(e) => { e.stopPropagation(); toast.success("Đã duyệt hủy đơn hàng."); }}
+                                  className="h-8 px-3 rounded-xl bg-red-500 text-white text-[10px] font-black uppercase tracking-wider hover:bg-red-600 transition-all shadow-lg shadow-red-100 flex items-center gap-2 active:scale-95"
                                 >
-                                  <XCircle size={16} /> DUYỆT HỦY
+                                  <XCircle size={14} /> DUYỆT HỦY
                                 </button>
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); alert("Đã từ chối yêu cầu hủy."); }}
-                                  className="h-9 px-4 rounded-xl bg-slate-100 text-slate-600 text-[12px] font-bold hover:bg-slate-200 transition-all active:scale-95"
+                                  onClick={(e) => { e.stopPropagation(); toast.error("Đã từ chối yêu cầu hủy."); }}
+                                  className="h-8 px-3 rounded-xl bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-wider hover:bg-slate-200 transition-all active:scale-95"
                                 >
                                   TỪ CHỐI
                                 </button>
@@ -721,38 +829,73 @@ export default function OwnerOrders() {
                             {/* FLOW THEO LOẠI HÀNG */}
                             {o.type === "Hàng sẵn" ? (
                               <>
-                                {/* Hàng sẵn: Chờ xử lý -> Chờ giao hàng - ĐÃ GỠ THEO YÊU CẦU (Sales làm) */}
                                 {o.status === "Chờ xử lý" && (
-                                   <div className="text-[10px] text-gray-400 italic">Sales đang xử lý...</div>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if(window.confirm("Xác nhận đơn hàng và Chờ giao hàng?")) {
+                                        handleUpdateStatus(o.id, "Chờ giao hàng");
+                                      }
+                                    }}
+                                    className="h-8 px-3 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center gap-2 active:scale-95"
+                                  >
+                                    <CheckCircle size={14} /> XÁC NHẬN ĐƠN
+                                  </button>
                                 )}
                               </>
                             ) : (
                               <>
-                                {/* HÀNG THÔ VÀ ĐẶT */}
+                                {/* Hàng mộc VÀ ĐẶT */}
                                 
-                                {/* Nút Bàn giao sản xuất (Hàng thô, Hàng đặt nhảy thẳng từ Chờ xử lý -> Đang sản xuất) */}
-                                {o.status === "Chờ xử lý" && (o.type === "Hàng thô" || o.type === "Hàng đặt") && (
+                                {o.status === "Chờ xử lý" && o.type === "Hàng mộc" && (
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      if(window.confirm("Bàn giao đơn hàng này sang Xưởng sản xuất?")) {
-                                        handleUpdateStatus(o.id, "Đang sản xuất");
-                                        // Deep link to specific production detail and auto-open assignment modal
-                                        navigate("/owner/production/LSX001", { state: { autoOpenAssign: true } });
+                                      if(window.confirm("Xác nhận bàn giao gia công?")) {
+                                        handleUpdateStatus(o.id, "Đang gia công");
                                       }
                                     }}
-                                    className="h-9 px-4 rounded-xl bg-indigo-600 text-white text-[12px] font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2 active:scale-95"
+                                    className="h-8 px-3 rounded-xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-wider hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2 active:scale-95"
                                   >
-                                    <Hammer size={16} /> BÀN GIAO SẢN XUẤT
+                                    <Hammer size={14} /> BÀN GIAO GIA CÔNG
                                   </button>
                                 )}
 
-                                {o.status === "Đang sản xuất" && (
-                                   <div className="flex flex-col items-center">
-                                      <div className="text-[10px] text-indigo-600 font-bold uppercase tracking-tight">Đang sản xuất...</div>
-                                      <div className="text-[9px] text-gray-400 italic mt-0.5">Xử lý tại mục Sản xuất</div>
-                                   </div>
+
+
+                                {/* HÀNG ĐẶT: Đã nhập kho -> Đang gia công */}
+                                {o.status === "Đã nhập kho" && o.type === "Hàng đặt" && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if(window.confirm("Bắt đầu quá trình gia công và hoàn thiện sản phẩm?")) {
+                                        handleUpdateStatus(o.id, "Đang gia công");
+                                      }
+                                    }}
+                                    className="h-8 px-3 rounded-xl bg-amber-600 text-white text-[10px] font-black uppercase tracking-wider hover:bg-amber-700 transition-all shadow-lg shadow-amber-200 flex items-center gap-2 active:scale-95"
+                                  >
+                                    <Hammer size={14} /> BẮT ĐẦU GIA CÔNG
+                                  </button>
                                 )}
+
+                                {/* Hàng mộc VÀ ĐẶT: Đang gia công -> Chờ giao hàng */}
+                                {o.status === "Đang gia công" && (o.type === "Hàng mộc" || o.type === "Hàng đặt") && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if(window.confirm("Xác nhận sản phẩm đã hoàn thiện và sẵn sàng để giao?")) {
+                                        handleUpdateStatus(o.id, "Chờ giao hàng");
+                                      }
+                                    }}
+                                    className="h-8 px-3 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center gap-2 active:scale-95"
+                                  >
+                                    <CheckCircle size={14} /> HOÀN TẤT GIA CÔNG
+                                  </button>
+                                )}
+
+                              
+                                   
+                              
                               </>
                             )}
 
@@ -763,33 +906,30 @@ export default function OwnerOrders() {
                                   e.stopPropagation(); 
                                   handleUpdateStatus(o.id, "Đang giao hàng");
                                 }}
-                                className="h-9 px-4 rounded-xl bg-blue-600 text-white text-[12px] font-black hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 flex items-center gap-2 active:scale-95"
+                                className="h-8 px-3 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-wider hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 flex items-center gap-2 active:scale-95"
                               >
-                                <RefreshCw size={16} /> BẮT ĐẦU GIAO
+                                <RefreshCw size={14} /> BẮT ĐẦU GIAO
                               </button>
                             )}
 
                             {o.status === "Đang giao hàng" && (
-                              <label
-                                className="h-9 px-4 rounded-xl bg-emerald-600 text-white text-[12px] font-black hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center gap-2 cursor-pointer active:scale-95"
+                              <button
+                                onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  openCompleteModal(o);
+                                }}
+                                className="h-8 px-3 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center gap-2 active:scale-95"
                               >
-                                <Camera size={16} /> TẢI ẢNH & HOÀN TẤT
-                                <input 
-                                  type="file" 
-                                  accept="image/*" 
-                                  className="hidden" 
-                                  onChange={(e) => handleDeliveryUpload(o.id, e)} 
-                                  onClick={(e) => e.stopPropagation()}
-                                />
-                              </label>
+                                <CheckCircle size={14} /> HOÀN TẤT ĐƠN
+                              </button>
                             )}
 
                             <Link
                               to={`/owner/orders/${o.id}`}
                               onClick={(e) => e.stopPropagation()}
-                              className="h-9 px-4 rounded-xl bg-white border border-slate-200 text-slate-600 text-[12px] font-black hover:bg-slate-50 transition-all flex items-center gap-2 active:scale-95"
+                              className="h-8 px-3 rounded-xl bg-white border border-slate-200 text-slate-600 text-[10px] font-black uppercase tracking-wider hover:bg-slate-50 transition-all flex items-center gap-2 active:scale-95 whitespace-nowrap"
                             >
-                              <Eye size={16} /> XEM CHI TIẾT
+                              <Eye size={14} /> CHI TIẾT
                             </Link>
                           </div>
                         </div>
@@ -929,6 +1069,140 @@ export default function OwnerOrders() {
         </div>
       </div>
       {/* Modal Selection đã được gỡ bỏ để tránh chồng chéo logic với màn hình Sản xuất */}
+
+      {/* MODAL HOÀN TẤT ĐƠN & THANH TOÁN */}
+      {showCompleteModal && selectedOrder && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                <CheckCircle className="text-emerald-500" size={24} /> HOÀN TẤT ĐƠN HÀNG
+              </h3>
+              <button onClick={() => setShowCompleteModal(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-400">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Summary Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                   <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tổng đơn hàng</p>
+                   <p className="text-lg font-black text-slate-800">{formatCurrency(selectedOrder.total)}</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
+                   <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Đã đặt cọc</p>
+                   <p className="text-lg font-black text-emerald-700">{formatCurrency(selectedOrder.deposit || 0)}</p>
+                </div>
+              </div>
+
+              {/* Balance Due */}
+              <div className="p-5 rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200">
+                 <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[11px] font-bold text-indigo-100 uppercase tracking-wider">Số tiền còn lại cần thu</p>
+                      <p className="text-2xl font-black">{formatCurrency(selectedOrder.total - (selectedOrder.deposit || 0))}</p>
+                    </div>
+                    <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center">
+                      <DollarSign size={24} />
+                    </div>
+                 </div>
+              </div>
+
+              {/* Form Inputs */}
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[12px] font-bold text-slate-600 ml-1 mb-1.5 block">Số tiền thực tế thu tại chỗ</label>
+                  <div className="relative">
+                    <input 
+                      type="text"
+                      value={formatNumberInput(finalPayment)}
+                      onChange={(e) => {
+                        const val = parseNumberInput(e.target.value);
+                        setFinalPayment(val === "" ? 0 : Number(val));
+                      }}
+                      className="w-full h-12 pl-10 pr-4 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-800 shadow-sm"
+                      placeholder="0"
+                    />
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₫</div>
+                  </div>
+                </div>
+
+                <div>
+                   <label className="text-[12px] font-bold text-slate-600 ml-1 mb-1.5 block">Hình thức thanh toán cuối</label>
+                   <div className="grid grid-cols-2 gap-3">
+                      {["Chuyển khoản", "Tiền mặt"].map(m => (
+                        <button
+                          key={m}
+                          onClick={() => setPaymentMethod(m)}
+                          className={`h-12 rounded-2xl border font-bold text-[13px] flex items-center justify-center gap-2 transition-all ${
+                            paymentMethod === m ? 'bg-indigo-50 border-indigo-600 text-indigo-700' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                          }`}
+                        >
+                          {m === "Chuyển khoản" ? <CreditCard size={16} /> : <Wallet size={16} />}
+                          {m}
+                        </button>
+                      ))}
+                   </div>
+                </div>
+
+                <div>
+                   <label className="text-[12px] font-bold text-slate-600 ml-1 mb-1.5 block">Ảnh giao hàng (Thực tế tại nhà khách)</label>
+                   <div className="relative group">
+                     <label className={`w-full h-28 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${
+                        deliveryImage ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
+                     }`}>
+                        {deliveryImage ? (
+                          <div className="flex items-center gap-4 px-4">
+                            <img src={deliveryImage} className="w-20 h-20 rounded-xl object-cover border border-emerald-200 shadow-md" alt="Delivery" />
+                            <div className="flex flex-col">
+                              <span className="text-emerald-700 font-bold text-[13px]">Ảnh đã tải lên</span>
+                              <button 
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeliveryImage(null); }} 
+                                className="text-[11px] text-slate-400 font-bold hover:text-red-500 transition-colors uppercase tracking-wider text-left mt-1"
+                              >
+                                Thay đổi ảnh
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm mb-2 group-hover:scale-110 transition-transform">
+                              <Camera size={20} className="text-slate-400" />
+                            </div>
+                            <span className="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Nhấp để chụp hoặc tải ảnh</span>
+                          </>
+                        )}
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if(file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => setDeliveryImage(reader.result);
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                     </label>
+                   </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-slate-50 border-t border-slate-100">
+              <button 
+                onClick={handleFinishOrder}
+                className="w-full h-12 rounded-2xl bg-indigo-600 text-white font-black text-[14px] hover:bg-slate-900 transition-all shadow-lg shadow-indigo-100 active:scale-95"
+              >
+                XÁC NHẬN HOÀN TẤT & LƯU LẠI
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

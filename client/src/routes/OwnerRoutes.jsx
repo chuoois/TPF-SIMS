@@ -9,7 +9,7 @@ import Production from "../pages/owner-page/production";
 import ProductionDetail from "../pages/owner-page/production/detail";
 import Products from "../pages/owner-page/products";
 import OwnerRequirements from "../pages/owner-page/customer-requirements";
-// import Customers from "../pages/owner-page/customers";
+import OwnerCustomers from "../pages/owner-page/customers";
 import Suppliers from "../pages/owner-page/suppliers";
 import Employees from "../pages/owner-page/employees";
 import Reports from "../pages/owner-page/reports";
@@ -48,10 +48,10 @@ export const ownerRoutes = {
       path: "products",
       element: <Products />,
     },
-    // {
-    //   path: "customers",
-    //   element: <Customers />,
-    // },
+    {
+      path: "customers",
+      element: <OwnerCustomers />,
+    },
 
     {
       path: "suppliers",

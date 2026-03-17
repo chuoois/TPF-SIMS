@@ -1,5 +1,6 @@
 
 import { useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Users,
   Search,
@@ -700,6 +701,9 @@ const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
 
 // ===================== MAIN COMPONENT =====================
 export default function OwnerSuppliers() {
+  const [searchParams] = useSearchParams();
+  const currentTab = searchParams.get("tab") || "all";
+
   const [suppliers, setSuppliers] = useState(INITIAL_SUPPLIERS);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -714,6 +718,11 @@ export default function OwnerSuppliers() {
   // Filter & Search
   const filtered = useMemo(() => {
     let result = suppliers;
+
+    // Tab filter
+    if (currentTab === "debt") {
+      result = result.filter((s) => s.debt > 0);
+    }
 
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
@@ -738,7 +747,7 @@ export default function OwnerSuppliers() {
     }
 
     return result;
-  }, [suppliers, searchTerm, dateFrom, dateTo]);
+  }, [suppliers, searchTerm, dateFrom, dateTo, currentTab]);
 
   const hasActiveFilters = !!(searchTerm || dateFrom || dateTo);
 

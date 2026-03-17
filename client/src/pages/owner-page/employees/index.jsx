@@ -214,14 +214,14 @@ export default function OwnerEmployees() {
 
   return (
     <>
-      <PageHelmet title="Quản lý nhân sự | TPF-SIMS" />
+      <PageHelmet title="Quản lý tài khoản | TPF-SIMS" />
 
       <div className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 space-y-4" style={{ backgroundColor: "var(--bg-main)" }}>
         <div className="flex items-center justify-between shrink-0 mb-1">
           <div>
             <h1 className="text-[22px] font-bold flex items-center gap-2.5" style={{ color: "var(--text-main)", letterSpacing: "-0.01em" }}>
               <Users size={24} style={{ color: "var(--brand-primary)" }} />
-              Quản lý tài khoản & Nhân sự
+              Quản lý tài khoản
             </h1>
             <p className="text-[13px] mt-1 font-medium italic" style={{ color: "var(--text-placeholder)" }}>
               {processedAccounts.length} nhân viên ({activeTab === "Tất cả" ? "tất cả vai trò" : ROLES.find(r => r.value === activeTab)?.label.toLowerCase()})

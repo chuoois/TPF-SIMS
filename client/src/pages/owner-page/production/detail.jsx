@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { PageHelmet } from "@/components/seo/PageHelmet";
+import toast from "react-hot-toast";
 import {
   ArrowLeft,
   Package,
@@ -18,11 +19,14 @@ import {
   Camera,
   AlertTriangle,
   RotateCcw,
+  Star,
+  FileText,
+  Eye,
 } from "lucide-react";
 
 // ===================== CONSTANTS =====================
 const STAGES = [
-  { key: "gia_cong_moc", label: "Gia công Mộc", icon: Hammer, color: "#7C3AED", bg: "#F5F3FF" },
+  { key: "gia_cong_moc", label: "Đánh giấy ráp", icon: Hammer, color: "#7C3AED", bg: "#F5F3FF" },
   { key: "son_hoan_thien", label: "Sơn hoàn thiện", icon: Paintbrush, color: "#0891B2", bg: "#ECFEFF" },
 ];
 
@@ -34,53 +38,121 @@ const MOCK_PRODUCTIONS = {
     orderCode: "DH-2603-0001",
     orderId: "DH001",
     productName: "Tủ bếp chữ L",
-    status: "Chờ giao thợ",
-    subStage: null,
+    productImage: "https://images.unsplash.com/photo-1556912177-c54030639a03?q=80&w=300",
+    variantName: "Gỗ sồi Nga — Sơn PU",
+    material: "Gỗ sồi Nga",
+    size: "3.2m + 2.8m",
+    finish: "Sơn PU cánh gián",
+    specs: { hardware: "Hafele / DTC", notes: "Lắp chung cư. Yêu cầu: Soi chỉ hiện đại" },
+    quantityPlanned: 1,
+    quantityCompleted: 0,
+    status: "Đánh giấy ráp",
+    subStage: "gia_cong_moc",
     isPendingApproval: false,
     needsRedo: false,
-    assignedWorker: null,
-    startDate: null,
+    assignedWorker: "Thợ cả",
+    startDate: "2026-03-05",
     expectedEndDate: "2026-03-20",
     date: "2026-03-05T16:30:00",
     customerName: "Vũ Phương Thảo",
     notes: "Khách tự trang bị phụ kiện bếp",
+    customerNotes: "Yêu cầu tủ bếp hiện đại, mặt đá trắng sứ vân mây. Các ô ngăn kéo làm ray giảm chấn xịn.",
+    customerSampleImages: [
+      "https://images.unsplash.com/photo-1556912177-c54030639a03?q=80&w=800",
+      "https://images.unsplash.com/photo-1556911223-43a03b30ad51?q=80&w=800"
+    ],
     timeline: [
-      { time: "05/03/2026 16:30", label: "Tạo lệnh sản xuất", desc: "Hệ thống tự tạo từ đơn DH-2603-0001", active: false },
-      { time: "05/03/2026 16:30", label: "Chờ giao thợ", desc: "Chờ chủ xưởng giao việc cho thợ", active: true },
+      { time: "05/03/2026 16:45", label: "Bắt đầu đánh giấy ráp", desc: "Tự động bàn giao Xưởng", active: true },
+    ],
+    shippingNotes: "Giao trong giờ hành chính. Nhà có thang máy, báo trước 30p.",
+    images: [
+      "https://images.unsplash.com/photo-1541888946425-d81bb193005f?q=80&w=800",
+      "https://images.unsplash.com/photo-1503387762-592dea58ef4e?q=80&w=800"
     ],
   },
-  // ĐANG SẢN XUẤT
+  // ĐANG LÀM MỘC (MOCK_PRODUCTIONS.LSX003)
   LSX003: {
     code: "LSX-2603-0003",
     orderCode: "DH-2603-0008",
     orderId: "DH008",
-    productName: "Bộ bàn ghế phòng khách",
-    status: "Đang sản xuất",
+    status: "Đánh giấy ráp",
     subStage: "gia_cong_moc",
-    isPendingApproval: false,
-    needsRedo: true,
-    redoReason: "Mặt bàn bị xước nhỏ ở góc trái. Bác chủ yêu cầu sơn lại và xử lý kỹ khâu Mộc.",
     assignedWorker: "Nguyễn Văn Đức",
     startDate: "2026-03-03",
     expectedEndDate: "2026-03-25",
     date: "2026-03-03T08:00:00",
     customerName: "Hoàng Nguyệt Ánh",
+    productName: "Bàn trà phòng khách",
+    productImage: "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=300",
+    variantName: "Gỗ hương đá — Chạm nghê",
+    customerNotes: "Mẫu đục chạm nghê cổ điển, đục tay kỹ. Màu vecni sáng vân gỗ.",
+    customerSampleImages: ["https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=800"],
+    material: "Gỗ hương đá",
+    size: "6 món (1 đoản, 2 đơn)",
+    finish: "Vecni truyền thống",
+    specs: { hardware: "Không", notes: "Gỗ lõi 100%. Yêu cầu: Chạm Nghê đỉnh" },
+    quantityPlanned: 1,
+    quantityCompleted: 0,
     notes: "Mặt bàn đục nguyên khối không ghép",
-    images: ["https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=800"],
+    images: [
+      "https://images.unsplash.com/photo-1541888946425-d81bb193005f?q=80&w=800"
+    ],
     progressPhotos: [],
     timeline: [
-      { time: "03/03/2026 08:00", label: "Tạo lệnh sản xuất", desc: "Hệ thống tự tạo từ đơn DH-2603-0008", active: false },
-      { time: "03/03/2026 08:15", label: "Giao việc", desc: "Giao cho thợ Nguyễn Văn Đức", active: false },
-      { time: "03/03/2026 09:00", label: "Bắt đầu làm Mộc", desc: "Thợ xác nhận nhận việc", active: true },
+      { time: "03/03/2026 09:00", label: "Bắt đầu đánh giấy ráp", desc: "Thợ xác nhận nhận việc", active: true },
     ],
+    shippingNotes: "Giao nhà phố, đường rộng xe tải vào được.",
   },
-  // CHỜ DUYỆT (Merged into Đang sản xuất)
+  // HÀNG THÔ (MOCK_PRODUCTIONS.LSX007)
+  LSX007: {
+    code: "LSX-2603-0007",
+    orderCode: "DH-THO-001",
+    orderId: "DH017",
+    isRaw: true,
+    status: "Đang sơn",
+    subStage: "son_hoan_thien",
+    assignedWorker: "Thợ sơn B",
+    startDate: "2026-03-12",
+    expectedEndDate: "2026-03-20",
+    date: "2026-03-12T10:00:00",
+    customerName: "Hoàng Nguyệt Ánh",
+    productName: "Sập thờ gỗ mít",
+    productImage: "https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=300",
+    variantName: "Gỗ mít — Mộc sẵn",
+    customerNotes: "Hàng mộc có sẵn tại xưởng. Chỉ cần đánh giấy giáp và lên màu vecni cánh gián.",
+    customerSampleImages: [
+      "https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=800"
+    ],
+    material: "Gỗ mít",
+    size: "220cm",
+    finish: "Mộc / Vecni",
+    specs: { hardware: "Không", notes: "Hoa văn: Tứ linh. Làm kỹ phần chân." },
+    quantityPlanned: 1,
+    quantityCompleted: 0,
+    notes: "Mộc có sẵn, kiểm tra kỹ các mối ghép trước khi sơn",
+    images: [],
+    progressPhotos: [],
+    timeline: [
+      { time: "12/03/2026 10:15", label: "Bắt đầu sơn", desc: "Chuyển từ kho mộc sang tổ sơn", active: true },
+    ],
+    shippingNotes: "Giao lắp tầng 1, đường rộng xe tải vào được.",
+  },
+  // ĐANG SƠN (MOCK_PRODUCTIONS.LSX005)
   LSX005: {
     code: "LSX-2603-0012",
     orderCode: "DH-2603-0012",
     orderId: "DH012",
+    customerName: "Nguyễn Công Vinh",
     productName: "Bàn thờ chạm rồng",
-    status: "Đang sản xuất",
+    productImage: "https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=300",
+    variantName: "Gỗ gụ mật — Vecni",
+    material: "Gỗ gụ mật",
+    size: "197x107x127cm",
+    finish: "Vecni cánh gián",
+    specs: { hardware: "Không", notes: "Làm mộc kỹ. Yêu cầu: Chạm Tùng Hạc" },
+    quantityPlanned: 1,
+    quantityCompleted: 0,
+    status: "Đang sơn",
     subStage: "son_hoan_thien",
     isPendingApproval: true,
     needsRedo: false,
@@ -90,29 +162,53 @@ const MOCK_PRODUCTIONS = {
     date: "2026-03-04T09:00:00",
     customerName: "Nguyễn Công Vinh",
     notes: "Hàng tâm linh, làm kỹ khâu hoàn thiện",
-    images: ["https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=800"],
+    customerNotes: "Làm đúng theo mẫu ảnh cũ, màu vecni cánh gián đậm. Lưu ý các góc đục rồng phải bén.",
+    customerSampleImages: [
+      "https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=800"
+    ],
+    images: [
+      "https://images.unsplash.com/photo-1541888946425-d81bb193005f?q=80&w=800"
+    ],
     progressPhotos: [
       { url: "https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=800", time: "12/03/2026 15:30", stage: "Sơn" }
     ],
     timeline: [
-      { time: "04/03/2026 09:00", label: "Tạo lệnh sản xuất", active: false },
       { time: "12/03/2026 15:30", label: "Báo cáo hoàn thành", desc: "Thợ báo xong, chờ chủ xưởng nghiệm thu", active: true },
     ],
+    shippingNotes: "Lắp đặt phòng thờ tầng 5, có thang máy nhưng cần bê bộ phận rời.",
   },
   // HOÀN THÀNH
   LSX004: {
     code: "LSX-2603-0004",
+    orderCode: "DH-2603-0008",
+    orderId: "DH008",
+    productName: "Kệ tivi nguyên khối",
+    productImage: "https://images.unsplash.com/photo-1577145745727-42b77daeb623?q=80&w=300",
+    variantName: "Gỗ gụ — Sơn PU",
+    material: "Gỗ gụ",
+    size: "240x40x50cm",
+    finish: "Sơn PU bóng mờ",
+    specs: { hardware: "Ray nhấn mở Hafele", notes: "Gỗ vỉ nguyên miếng. Yêu cầu: Trơn hiện đại" },
+    quantityPlanned: 1,
+    quantityCompleted: 1,
     status: "Hoàn thành",
     subStage: null,
     isPendingApproval: false,
     needsRedo: false,
     assignedWorker: "Trần Minh Tâm",
-    productName: "Kệ tivi nguyên khối",
-    orderCode: "DH-2603-0008",
+    startDate: "2026-03-01",
+    expectedEndDate: "2026-03-12",
+    date: "2026-03-01T10:00:00",
     customerName: "Hoàng Nguyệt Ánh",
+    customerNotes: "Mẫu hiện đại, không đục chạm. Mặt kệ làm nhẵn mịn.",
+    customerSampleImages: [
+      "https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=800"
+    ],
+    images: ["https://images.unsplash.com/photo-1541888946425-d81bb193005f?q=80&w=800"],
     timeline: [
       { time: "12/03/2026 16:00", label: "Đã nghiệm thu", desc: "Chủ xưởng đã duyệt sản phẩm", active: true },
     ],
+    shippingNotes: "Sập nặng, cần ít nhất 4 người khiêng. Tầng 1.",
   },
 };
 
@@ -135,20 +231,17 @@ const fmtDateTime = (s) => {
 const getStatusColor = (status, subStage = null, isPendingApproval = false, needsRedo = false) => {
   // 1. Primary Status
   const primaryBadge = {
-    "Chờ giao thợ": { label: "Chờ giao thợ", bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" },
-    "Đang sản xuất": { label: "Đang sản xuất", bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" },
+    "Đánh giấy ráp": { label: "Đánh giấy ráp", bg: "#FDF4FF", text: "#A21CAF", border: "#F5D0FE" },
+    "Đang sơn": { label: "Đang sơn", bg: "#FDF2F8", text: "#DB2777", border: "#FBCFE8" },
     "Hoàn thành": { label: "Hoàn thành", bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" },
   }[status] || { label: status, bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
 
   // 2. Detail Status
   let detailBadge = null;
-  if (isPendingApproval && subStage === "son_hoan_thien") {
+  if (isPendingApproval && status === "Đang sơn") {
     detailBadge = { label: "Chờ duyệt", bg: "#EFF6FF", text: "#1D4ED8", border: "#DBEAFE" };
-  } else if (needsRedo) {
+  } else if (needsRedo && status === "Đang sơn") {
     detailBadge = { label: "Sửa lại", bg: "#FEF2F2", text: "#EF4444", border: "#FEE2E2" };
-  } else if (status === "Đang sản xuất") {
-    if (subStage === "gia_cong_moc") detailBadge = { label: "Gia công Mộc", bg: "#FDF4FF", text: "#A21CAF", border: "#F5D0FE" };
-    if (subStage === "son_hoan_thien") detailBadge = { label: "Sơn hoàn thiện", bg: "#FDF2F8", text: "#DB2777", border: "#FBCFE8" };
   }
 
   return { primaryBadge, detailBadge };
@@ -168,6 +261,17 @@ const SpecItem = ({ label, value }) => (
   <div>
     <p className="text-[10px] uppercase font-bold text-gray-400 tracking-tight">{label}</p>
     <p className="text-[12px] font-bold text-gray-800 break-words line-clamp-2" title={value}>{value || "—"}</p>
+  </div>
+);
+
+const PhotoCardSmall = ({ url }) => (
+  <div className="group relative aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-100 transition hover:shadow-md cursor-pointer">
+    <img src={url} alt="Sample" className="w-full h-full object-cover transition duration-300 group-hover:scale-110" />
+    <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+      <div className="w-6 h-6 rounded-full bg-white/90 text-gray-900 flex items-center justify-center shadow-sm">
+        <Eye size={12} />
+      </div>
+    </div>
   </div>
 );
 
@@ -194,7 +298,7 @@ const PhotoCard = ({ url, time, stage, isDesign = false }) => (
 );
 
 // ── STEP PROGRESS COMPONENT ──
-const StageProgress = ({ currentStage, status }) => {
+const StageProgress = ({ currentStage, status, isRaw }) => {
   const currentIdx = STAGES.findIndex((s) => s.key === currentStage);
   const isDone = status === "Hoàn thành";
 
@@ -261,7 +365,7 @@ const StageProgress = ({ currentStage, status }) => {
                         {step.label}
                       </p>
                       <p className="text-[10px] mt-0.5" style={{ color: "var(--text-placeholder)" }}>
-                        {(isCompleted || isFinalDone) ? "✓ Đã xong" : isCurrent ? "● Đang làm" : "○ Chờ"}
+                        {(isCompleted || isFinalDone) ? "✓ Đã xong" : isCurrent ? "● Đang làm" : (isRaw && step.key === "gia_cong_moc") ? "✓ Mộc có sẵn" : "○ Chờ"}
                       </p>
                     </div>
 
@@ -297,7 +401,6 @@ export default function ProductionDetail() {
   const location = useLocation();
 
   // States
-  const [showAssignModal, setShowAssignModal] = useState(location.state?.autoOpenAssign || false);
   const [showRedoModal, setShowRedoModal] = useState(false);
   const [selectedWorker, setSelectedWorker] = useState(null);
 
@@ -315,7 +418,6 @@ export default function ProductionDetail() {
   };
   const sc = getStatusColor(p.status, p.subStage, p.isPendingApproval, p.needsRedo);
   const progress = p.quantityPlanned > 0 ? Math.round((p.quantityCompleted / p.quantityPlanned) * 100) : 0;
-  const isWaiting = p.status === "Chờ giao thợ";
   const isProducing = p.status === "Đang sản xuất";
   const isDone = p.status === "Hoàn thành";
   const isHold = false;
@@ -325,28 +427,43 @@ export default function ProductionDetail() {
   const isLastStage = currentStageIdx === STAGES.length - 1;
 
   // Handlers
-  const handleNextStage = () => {
-    alert("Xong phần Mộc! Lệnh này sẽ chuyển sang khâu Sơn hoàn thiện.");
-    navigate(0);
-  };
+
 
   const handleOwnerApprove = () => {
-    const confirm = window.confirm(`Phê duyệt & Chốt hoàn thành mã lệnh ${p.code}?`);
-    if (confirm) {
-      alert(`Lệnh sản xuất ${p.code} đã hoàn thành xuất sắc!`);
-      navigate("/owner/production");
-    }
+    toast((t) => (
+      <div className="flex flex-col gap-3">
+        <p className="text-[13px] font-medium text-gray-700">
+          Xác nhận <strong>Duyệt & Hoàn thành</strong> mã lệnh <strong>{p.code}</strong>?
+        </p>
+        <div className="flex justify-end gap-2">
+          <button 
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-gray-400 hover:bg-gray-50 transition"
+          >
+            Hủy
+          </button>
+          <button 
+            onClick={() => {
+              toast.dismiss(t.id);
+              toast.success(`Lệnh sản xuất ${p.code} đã hoàn thành xuất sắc!`);
+              setTimeout(() => navigate("/owner/production"), 1000);
+            }}
+            className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition"
+          >
+            Xác nhận
+          </button>
+        </div>
+      </div>
+    ), { duration: 5000 });
   };
 
   const handleRedo = (reason, backToStage) => {
-    alert(`Đã yêu cầu sửa lại: ${reason}. Quay lại khâu: ${backToStage === "gia_cong_moc" ? "Mộc" : "Sơn"}`);
+    toast.error(`Đã yêu cầu sửa lại: ${reason}. Quay lại khâu: ${backToStage === "gia_cong_moc" ? "Mộc" : "Sơn"}`);
     setShowRedoModal(false);
-    navigate(0);
   };
 
   const handleClearRedo = () => {
-    alert(`Đã xác nhận bác thợ sửa xong lệnh ${p.code}. Trạng thái trở lại bình thường.`);
-    navigate(0);
+    toast.success(`Đã xác nhận bác thợ sửa xong lệnh ${p.code}. Trạng thái trở lại bình thường.`);
   };
 
   return (
@@ -393,7 +510,7 @@ export default function ProductionDetail() {
 
             {/* Action buttons */}
             <div className="flex items-center gap-2">
-              {p.isPendingApproval && p.subStage === "son_hoan_thien" && (
+              {p.isPendingApproval && p.status === "Đang sơn" && (
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setShowRedoModal(true)}
@@ -409,7 +526,7 @@ export default function ProductionDetail() {
                     style={{ backgroundColor: "#10B981", color: "#fff" }}
                   >
                     <CheckCircle size={18} />
-                    Phê duyệt & Hoàn thiện
+                    Duyệt & Hoàn thành
                   </button>
                 </div>
               )}
@@ -419,16 +536,7 @@ export default function ProductionDetail() {
 
 
 
-              {isWaiting && (
-                <button
-                  onClick={() => setShowAssignModal(true)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-[12px] font-bold transition hover:bg-emerald-700 cursor-pointer shadow-md active:scale-95"
-                  style={{ backgroundColor: "#10B981", color: "#fff" }}
-                >
-                  <UserPlus size={14} />
-                  Giao việc ngay
-                </button>
-              )}
+
 
 
 
@@ -454,20 +562,7 @@ export default function ProductionDetail() {
               </div>
             </div>
           )}
-          {isWaiting && (
-            <div
-              className="flex items-start gap-3 p-4 rounded-2xl"
-              style={{ backgroundColor: "#FFF7ED", border: "1px solid #FED7AA" }}
-            >
-              <ClipboardList size={18} className="shrink-0 mt-0.5" style={{ color: "#C2410C" }} />
-              <div>
-                <p className="text-[13px] font-bold text-orange-900">Chờ giao thợ</p>
-                <p className="text-[12px] mt-0.5 text-orange-700">
-                  Sản phẩm chưa được phân công cho thợ. Vui lòng chọn thợ phụ trách để bắt đầu sản xuất.
-                </p>
-              </div>
-            </div>
-          )}
+
 
           {isProducing && currentStageInfo && (
             <div
@@ -480,8 +575,8 @@ export default function ProductionDetail() {
                   Đang thực hiện: {currentStageInfo.label}
                 </p>
                 <p className="text-[12px] mt-0.5" style={{ color: currentStageInfo.color, opacity: 0.8 }}>
-                  Thợ {p.assignedWorker} đang đảm nhiệm công việc.
-                  {p.subStage === "gia_cong_moc" && " Đang gia công khung sườn và chi tiết mộc."}
+                  Đơn hàng đang được triển khai thực hiện tại xưởng.
+                  {p.subStage === "gia_cong_moc" && " Đang đánh giấy ráp và chuẩn bị hoàn thiện."}
                   {p.subStage === "son_hoan_thien" && " Đang xử lý bề mặt và phun sơn hoàn thiện."}
                 </p>
               </div>
@@ -497,7 +592,7 @@ export default function ProductionDetail() {
               <div>
                 <p className="text-[13px] font-bold" style={{ color: "#14532D" }}>Sản xuất hoàn tất</p>
                 <p className="text-[12px] mt-0.5" style={{ color: "#166534" }}>
-                  Sản phẩm đã hoàn thành tất cả các công đoạn bởi thợ {p.assignedWorker}. Sẵn sàng giao cho khách hàng.
+                  Sản phẩm đã hoàn thành tất cả các công đoạn. Sẵn sàng giao cho khách hàng.
                 </p>
               </div>
             </div>
@@ -507,7 +602,7 @@ export default function ProductionDetail() {
 
           {/* ── STEP PROGRESS — hiện khi đã bắt đầu SX ── */}
           {(isProducing || isDone || isHold) && (
-            <StageProgress currentStage={p.subStage} status={p.status} />
+            <StageProgress currentStage={p.subStage} status={p.status} isRaw={p.isRaw} />
           )}
 
           {/* ═══════ MAIN 2-COLUMN GRID ═══════ */}
@@ -534,10 +629,14 @@ export default function ProductionDetail() {
                 <div className="px-5 py-4 space-y-4">
                   <div className="flex items-start gap-3">
                     <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 overflow-hidden"
                       style={{ backgroundColor: "var(--bg-main)", border: "1px solid var(--grid-border)" }}
                     >
-                      <Package size={16} style={{ color: "var(--text-secondary)" }} />
+                      {p.productImage ? (
+                        <img src={p.productImage} alt={p.productName} className="w-full h-full object-cover" />
+                      ) : (
+                        <Package size={16} style={{ color: "var(--text-secondary)" }} />
+                      )}
                     </div>
                     <div>
                       <p className="text-[15px] font-bold" style={{ color: "var(--text-main)" }}>{p.productName}</p>
@@ -546,106 +645,72 @@ export default function ProductionDetail() {
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-4 bg-gray-50/50 p-4 rounded-2xl border border-dashed border-gray-200">
+                    <SpecItem label="Loại hàng" value={p.isRaw ? "HÀNG THÔ (Sẵn)" : "HÀNG ĐẶT (Mới)"} />
                     <SpecItem label="Chất liệu gỗ" value={p.material} />
                     <SpecItem label="Kích thước" value={p.size} />
-                    <SpecItem label="Hoàn thiện" value={p.finish} />
-                    <SpecItem label="Mẫu/Hoa văn" value={p.pattern} />
-                    <SpecItem label="Phụ kiện" value={p.specs?.hardware} />
-                    <SpecItem label="Yêu cầu riêng" value={p.specs?.notes} />
-                    <SpecItem label="Kế hoạch" value={`${p.quantityPlanned} bộ`} />
-                    <SpecItem label="Thực tế" value={`${p.quantityCompleted}/${p.quantityPlanned}`} />
+                    <SpecItem label="Màu sắc" value={p.finish} />
+                    <SpecItem 
+                      label="Ghi chú" 
+                      value={[p.specs?.notes, p.notes, p.customerNotes, p.shippingNotes].filter(Boolean).join(" | ")} 
+                      className="md:col-span-2 text-blue-700"
+                    />
                   </div>
-
-                  {p.notes && (
-                    <div className="pt-3 px-1" style={{ borderTop: "1px solid var(--grid-border)" }}>
-                      <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "var(--text-placeholder)" }}>Ghi chú sản xuất</p>
-                      <p className="text-[13px] mt-1 text-gray-600 italic leading-relaxed">“{p.notes}”</p>
-                    </div>
-                  )}
                 </div>
               </div>
 
-              {/* ── CARD: Hình ảnh & Bản vẽ — Luôn hiển thị ── */}
-              <div
-                className="rounded-2xl overflow-hidden"
-                style={{ backgroundColor: "var(--background)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
-              >
-                <div
-                  className="px-5 py-3 flex items-center justify-between"
-                  style={{ borderBottom: "1px solid var(--grid-border)", backgroundColor: "var(--grid-header-bg)" }}
-                >
-                  <div className="flex items-center gap-2">
-                    <Camera size={14} className="text-emerald-600" />
-                    <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-main)" }}>
-                      Hình ảnh & Bản vẽ thiết kế
-                    </span>
-                  </div>
-                  <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
-                    {p.images?.length || 0} File
-                  </span>
-                </div>
-                <div className="p-5">
-                  {p.images && p.images.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                      {p.images.map((img, idx) => (
-                        <PhotoCard key={idx} url={img} isDesign={true} />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-8 text-gray-400 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
-                      <Camera size={24} className="mb-2 opacity-20" />
-                      <p className="text-[13px] font-medium">Chưa có ảnh bản vẽ thiết kế</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* ── CARD: Ảnh tiến độ sản xuất — Hiện khi đang làm ── */}
-              {isProducing && (
-                <div
-                  className="rounded-2xl overflow-hidden"
-                  style={{ backgroundColor: "var(--background)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
-                >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* ── CARD: Ảnh mẫu khách gửi (Chỉ hiện khi có ảnh) ── */}
+                {p.customerSampleImages && p.customerSampleImages.length > 0 && (
                   <div
-                    className="px-5 py-3 flex items-center justify-between"
-                    style={{ borderBottom: "1px solid var(--grid-border)", backgroundColor: "var(--grid-header-bg)" }}
+                    className="rounded-2xl overflow-hidden"
+                    style={{ backgroundColor: "var(--background)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
                   >
-                    <div className="flex items-center gap-2">
-                      <Clock size={14} className="text-blue-600" />
-                      <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-main)" }}>
-                        Ảnh tiến độ thực tế (Xưởng)
-                      </span>
+                    <div
+                      className="px-5 py-3 flex items-center justify-between"
+                      style={{ borderBottom: "1px solid var(--grid-border)", backgroundColor: "#FFFBEB" }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Star size={14} className="text-amber-600 fill-amber-600" />
+                        <span className="text-[12px] font-bold uppercase tracking-wider text-amber-900">Ảnh mẫu từ khách</span>
+                      </div>
                     </div>
-                    <button className="text-[11px] font-bold text-blue-600 hover:underline">
-                      Xem tất cả
-                    </button>
-                  </div>
-                  <div className="p-5">
-                    {p.progressPhotos && p.progressPhotos.length > 0 ? (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                        {p.progressPhotos.map((photo, idx) => (
-                          <PhotoCard
-                            key={idx}
-                            url={photo.url}
-                            time={photo.time}
-                            stage={photo.stage}
-                          />
+                    <div className="p-4">
+                      <div className="grid grid-cols-3 gap-2">
+                        {p.customerSampleImages.map((img, idx) => (
+                          <PhotoCardSmall key={idx} url={img} />
                         ))}
-                        {/* Upload placeholder */}
-                        <div className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1.5 hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer group">
-                          <Camera size={20} className="text-gray-300 group-hover:text-blue-500" />
-                          <span className="text-[10px] font-bold text-gray-400 group-hover:text-blue-600 uppercase">Thêm ảnh</span>
-                        </div>
                       </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-8 text-gray-400 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100">
-                        <Camera size={24} className="mb-2 opacity-20" />
-                        <p className="text-[13px] font-medium">Thợ chưa cập nhật ảnh tiến độ</p>
-                      </div>
-                    )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+
+                {/* ── CARD: Hình ảnh & Bản vẽ ── */}
+                {p.images && p.images.length > 0 && (
+                  <div
+                    className="rounded-2xl overflow-hidden"
+                    style={{ backgroundColor: "var(--background)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
+                  >
+                    <div
+                      className="px-5 py-3 flex items-center justify-between"
+                      style={{ borderBottom: "1px solid var(--grid-border)", backgroundColor: "#ECFDF5" }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Camera size={14} className="text-emerald-600" />
+                        <span className="text-[12px] font-bold uppercase tracking-wider text-emerald-900">Bản vẽ thiết kế</span>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <div className="grid grid-cols-3 gap-2">
+                        {p.images.slice(0, 3).map((img, idx) => (
+                          <PhotoCardSmall key={idx} url={img} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+
 
               {/* ── CARD: Thông tin lệnh SX ── */}
               <div
@@ -702,45 +767,7 @@ export default function ProductionDetail() {
             {/* ═══ RIGHT COL (1/3) ═══ */}
             <div className="space-y-4">
 
-              {/* ── CARD: Thợ phụ trách ── */}
-              <div
-                className="rounded-2xl overflow-hidden"
-                style={{ backgroundColor: "var(--background)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
-              >
-                <div
-                  className="px-5 py-3 flex items-center gap-2"
-                  style={{ borderBottom: "1px solid var(--grid-border)", backgroundColor: "var(--grid-header-bg)" }}
-                >
-                  <User size={14} style={{ color: "var(--brand-primary)" }} />
-                  <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-main)" }}>Thợ phụ trách</span>
-                </div>
-                <div className="px-5 py-4">
-                  {p.assignedWorker ? (
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-[14px] font-bold shrink-0"
-                        style={{ backgroundColor: "var(--bg-main)", color: "var(--brand-primary)", border: "1px solid var(--grid-border)" }}
-                      >
-                        {p.assignedWorker.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="text-[14px] font-bold" style={{ color: "var(--text-main)" }}>{p.assignedWorker}</p>
-                        <p className="text-[11px]" style={{ color: "var(--text-placeholder)" }}>Thợ sản xuất</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center text-center py-3">
-                      <div
-                        className="w-12 h-12 rounded-xl flex items-center justify-center mb-2"
-                        style={{ backgroundColor: "var(--bg-main)", border: "1px solid var(--grid-border)" }}
-                      >
-                        <UserPlus size={20} style={{ color: "var(--text-placeholder)" }} />
-                      </div>
-                      <p className="text-[13px] font-bold" style={{ color: "var(--text-secondary)" }}>Chưa phân công</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+
 
               {/* ── CARD: Lịch trình ── */}
               <div
@@ -811,73 +838,7 @@ export default function ProductionDetail() {
           </div>
         </div>
 
-        {/* ── MODAL: GIAO VIỆC ── */}
-        {showAssignModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-              <div className="px-6 py-4 border-b flex items-center justify-between bg-emerald-50/30">
-                <div className="flex items-center gap-2 text-emerald-600">
-                  <UserPlus size={18} />
-                  <h3 className="text-[15px] font-bold uppercase tracking-tight">Giao việc cho thợ</h3>
-                </div>
-                <button onClick={() => setShowAssignModal(false)} className="p-2 hover:bg-white rounded-lg transition text-gray-400 hover:text-gray-600">
-                  <X size={20} />
-                </button>
-              </div>
 
-              <div className="p-6">
-                <div className="space-y-4">
-                  <p className="text-[13px] text-gray-600">Chọn thợ phụ trách cho lệnh sản xuất <span className="font-bold text-emerald-600">{p.code}</span>:</p>
-
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-                    {MOCK_WORKERS.map(worker => (
-                      <label
-                        key={worker.id}
-                        className={`flex items-center gap-3 p-3 rounded-xl border-2 transition cursor-pointer hover:border-emerald-200 ${selectedWorker === worker.id ? 'border-emerald-500 bg-emerald-50' : 'border-gray-50 bg-white'}`}
-                      >
-                        <input
-                          type="radio"
-                          name="worker"
-                          className="hidden"
-                          onChange={() => setSelectedWorker(worker.id)}
-                          checked={selectedWorker === worker.id}
-                        />
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-[14px] transition-colors ${selectedWorker === worker.id ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-500'}`}>
-                          {worker.avatar}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-[14px] font-bold text-gray-900">{worker.name}</p>
-                          <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{worker.role}</p>
-                        </div>
-                        {selectedWorker === worker.id && <CheckCircle size={18} className="text-emerald-600" />}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-6 flex gap-3">
-                  <button
-                    onClick={() => setShowAssignModal(false)}
-                    className="flex-1 h-11 rounded-xl text-[13px] font-bold text-gray-400 hover:bg-gray-50 transition"
-                  >
-                    Hủy bỏ
-                  </button>
-                  <button
-                    disabled={!selectedWorker}
-                    onClick={() => {
-                      alert(`Đã giao việc cho thợ ${MOCK_WORKERS.find(w => w.id === selectedWorker).name}. Trạng thái lệnh chuyển sang Đang sản xuất.`);
-                      setShowAssignModal(false);
-                      navigate("/owner/production");
-                    }}
-                    className="flex-1 h-11 rounded-xl text-[13px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-100 active:scale-95"
-                  >
-                    Xác nhận giao việc
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* ── MODAL: YÊU CẦU SỬA LẠI ── */}
         {showRedoModal && (
@@ -900,7 +861,7 @@ export default function ProductionDetail() {
                 </div>
 
                 <div>
-                  <label className="block text-[12px] font-bold text-gray-400 uppercase mb-2 ml-1">Nguyên nhân lỗi / Dặn dò thợ</label>
+                  <label className="block text-[12px] font-bold text-gray-400 uppercase mb-2 ml-1">Chi tiết lỗi / Yêu cầu sửa</label>
                   <textarea
                     id="redoReason"
                     className="w-full h-24 p-4 rounded-2xl border border-gray-200 text-[13px] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300 transition resize-none"

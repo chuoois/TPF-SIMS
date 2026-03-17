@@ -30,7 +30,8 @@ import {
   Activity,
   RefreshCw,
   MapPin,
-  ChevronDown, // Added ChevronDown for dropdown
+  ChevronDown,
+  Truck,
 } from "lucide-react";
 
 // ===================== MOCK DATA =====================
@@ -44,10 +45,12 @@ const MOCK_REQUIREMENTS = [
     salesPerson: "Bình Nguyễn",
     createdDate: "2026-03-12",
     status: "Đang xử lý",
-    notes: "Khách nâng cấp căn hộ, cần giường Master và kệ Tivi phòng khách đồng bộ gỗ Sồi.",
+    notes:
+      "Khách nâng cấp căn hộ, cần giường Master và kệ Tivi phòng khách đồng bộ gỗ Sồi.",
     surveyNotes: "",
     proposedSolution: "",
     estimatedPrice: 0,
+    deposit: 0,
     estimatedDeliveryDate: "2026-04-10",
     items: [
       {
@@ -75,7 +78,7 @@ const MOCK_REQUIREMENTS = [
           "https://images.unsplash.com/photo-1594913785162-e6785b42defa?auto=format&fit=crop&q=80&w=600",
         ],
         quotedPrice: 0,
-      }
+      },
     ],
   },
   {
@@ -91,6 +94,7 @@ const MOCK_REQUIREMENTS = [
     surveyNotes: "",
     proposedSolution: "",
     estimatedPrice: 0,
+    deposit: 0,
     estimatedDeliveryDate: "2026-04-15",
     items: [
       {
@@ -103,7 +107,7 @@ const MOCK_REQUIREMENTS = [
         },
         customerImages: [
           "https://images.unsplash.com/photo-1617806118233-ef203e91122b?auto=format&fit=crop&q=80&w=600",
-          "https://images.unsplash.com/photo-1565538810844-16ad7395015c?auto=format&fit=crop&q=80&w=600"
+          "https://images.unsplash.com/photo-1565538810844-16ad7395015c?auto=format&fit=crop&q=80&w=600",
         ],
         quotedPrice: 0,
         isApproved: false,
@@ -123,6 +127,7 @@ const MOCK_REQUIREMENTS = [
     surveyNotes: "Khách yêu cầu độ hoàn thiện bóng kính.",
     proposedSolution: "Tủ rượu âm tường gỗ Hương, LED cảm ứng.",
     estimatedPrice: 45000000,
+    deposit: 0,
     estimatedDeliveryDate: "2026-04-05",
     items: [
       {
@@ -154,6 +159,8 @@ const MOCK_REQUIREMENTS = [
     surveyNotes: "Căn hộ tầng 25, diện tích nhỏ.",
     proposedSolution: "Thiết kế tối giản, tích hợp ngăn chứa đồ thông minh.",
     estimatedPrice: 12000000,
+    deposit: 0,
+    hasImportedGoods: true,
     items: [
       {
         id: "ITM-004",
@@ -227,13 +234,13 @@ const STATUS_CONFIG = {
     actionType: "view_production",
     actionColor: "bg-indigo-600",
   },
-  "Đã hủy": {
+  "Đơn đã hủy": {
     bg: "#F3F4F6",
     text: "#6B7280",
     border: "#E5E7EB",
     icon: "X",
     description: "Yêu cầu đã bị hủy hoặc khách dừng tư vấn",
-    actionLabel: "Khôi phục",
+    actionLabel: null,
     actionIcon: RefreshCw,
     actionType: "restore",
     actionColor: "bg-slate-600",
@@ -267,7 +274,7 @@ const AutocompleteSelector = ({
   disabled,
   options = [],
   placeholder = "Chọn...",
-  className = ""
+  className = "",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -275,7 +282,7 @@ const AutocompleteSelector = ({
 
   const filteredOptions = useMemo(() => {
     const q = searchTerm.toLowerCase();
-    return options.filter(o => o.toLowerCase().includes(q));
+    return options.filter((o) => o.toLowerCase().includes(q));
   }, [searchTerm, options]);
 
   // Handle outside click to close dropdown
@@ -328,12 +335,16 @@ const AutocompleteSelector = ({
                   }}
                 >
                   {o}
-                  {value === o && <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />}
+                  {value === o && (
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                  )}
                 </button>
               ))
             ) : (
               <div className="px-3 py-4 text-center">
-                <p className="text-[12px] text-gray-400 italic">Nhấn để dùng giá trị mới:</p>
+                <p className="text-[12px] text-gray-400 italic">
+                  Nhấn để dùng giá trị mới:
+                </p>
                 <button
                   className="mt-1 text-[13px] font-bold text-indigo-600 hover:underline"
                   onClick={() => setIsOpen(false)}
@@ -355,7 +366,13 @@ const formatVND = (val) => {
   return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 };
 
-const PriceInput = ({ value, onChange, disabled, placeholder = "0", className = "" }) => {
+const PriceInput = ({
+  value,
+  onChange,
+  disabled,
+  placeholder = "0",
+  className = "",
+}) => {
   const [displayValue, setDisplayValue] = useState(formatVND(value));
 
   useEffect(() => {
@@ -435,6 +452,7 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
   const [estimatedPrice, setEstimatedPrice] = useState("");
   const [estimatedDeliveryDate, setEstimatedDeliveryDate] = useState("");
   const [ownerNotes, setOwnerNotes] = useState("");
+  const [deposit, setDeposit] = useState("");
   // Local state for technical specs (mocking per item for simplicity)
   const [itemSpecs, setItemSpecs] = useState([]);
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
@@ -448,14 +466,18 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
     input.onchange = (e) => {
       const files = Array.from(e.target.files);
       if (files.length > 0) {
+        const newUrls = files.map((file) => URL.createObjectURL(file));
 
-        const newUrls = files.map(file => URL.createObjectURL(file));
-
-        setItemSpecs(prev => prev.map(item =>
-          item.id === itemId
-            ? { ...item, designImages: [...(item.designImages || []), ...newUrls] }
-            : item
-        ));
+        setItemSpecs((prev) =>
+          prev.map((item) =>
+            item.id === itemId
+              ? {
+                  ...item,
+                  designImages: [...(item.designImages || []), ...newUrls],
+                }
+              : item,
+          ),
+        );
       }
     };
 
@@ -463,11 +485,16 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
   };
 
   const handleRemoveDesignImage = (itemId, index) => {
-    setItemSpecs(prev => prev.map(item =>
-      item.id === itemId
-        ? { ...item, designImages: item.designImages.filter((_, i) => i !== index) }
-        : item
-    ));
+    setItemSpecs((prev) =>
+      prev.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              designImages: item.designImages.filter((_, i) => i !== index),
+            }
+          : item,
+      ),
+    );
   };
 
   useEffect(() => {
@@ -476,26 +503,32 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
 
       setSurveyNotes(req.surveyNotes || "");
       setProposedSolution(req.proposedSolution || "");
-      setEstimatedPrice(isNewProcessing ? 0 : (req.estimatedPrice || 0));
+      setEstimatedPrice(isNewProcessing ? 0 : req.estimatedPrice || 0);
       setEstimatedDeliveryDate(req.estimatedDeliveryDate || "");
       setOwnerNotes(req.ownerNotes || "");
+      setDeposit(req.deposit || 0);
 
-      setItemSpecs(req.items.map(item => ({
-        id: item.id,
-        material: item.material || "",
-        color: item.specs?.color || item.color || "", // Added color
-        dimensions: item.specs?.dimensions || "",
-        hardware: item.specs?.hardware || "",
-        note: item.specs?.note || "",
-        price: isNewProcessing ? 0 : (item.quotedPrice || 0),
-        designImages: item.designImages || []
-      })));
+      setItemSpecs(
+        req.items.map((item) => ({
+          id: item.id,
+          material: item.material || "",
+          color: item.specs?.color || item.color || "", // Added color
+          dimensions: item.specs?.dimensions || "",
+          hardware: item.specs?.hardware || "",
+          note: item.specs?.note || "",
+          price: isNewProcessing ? 0 : item.quotedPrice || 0,
+          designImages: item.designImages || [],
+        })),
+      );
     }
   }, [req]);
 
   // Auto-calculate total when item prices change
   useEffect(() => {
-    const total = itemSpecs.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
+    const total = itemSpecs.reduce(
+      (sum, item) => sum + (Number(item.price) || 0),
+      0,
+    );
     setEstimatedPrice(total);
   }, [itemSpecs]);
 
@@ -509,7 +542,9 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
   const allImages = req.items.flatMap((item) => item.customerImages || []);
 
   const handleUpdateItemSpec = (id, field, value) => {
-    setItemSpecs(prev => prev.map(s => s.id === id ? { ...s, [field]: value } : s));
+    setItemSpecs((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)),
+    );
   };
 
   const handleSave = () => {
@@ -519,19 +554,22 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
       estimatedPrice: Number(estimatedPrice),
       estimatedDeliveryDate,
       ownerNotes,
-      itemSpecs // Passing these back for persistence
+      deposit: Number(deposit),
+      itemSpecs, // Passing these back for persistence
     });
   };
 
   const handleFixPrice = () => {
-    if (!estimatedPrice) return toast.error("Vui lòng nhập giá dự kiến trước khi chốt.");
+    if (!estimatedPrice)
+      return toast.error("Vui lòng nhập giá dự kiến trước khi chốt.");
     onAction("fix_price", req.id, {
       surveyNotes,
       proposedSolution,
       estimatedPrice: Number(estimatedPrice),
       estimatedDeliveryDate,
       ownerNotes,
-      itemSpecs
+      deposit: Number(deposit),
+      itemSpecs,
     });
   };
 
@@ -545,7 +583,6 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
         className="relative bg-white w-full max-w-5xl h-full max-h-[90vh] rounded-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
         style={{ boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
       >
-
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0 bg-gray-50">
           <div className="flex items-center gap-4">
@@ -559,7 +596,11 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                 </span>
                 <span
                   className="px-2.5 py-1 rounded-md text-[12px] font-medium border"
-                  style={{ backgroundColor: statusConfig.bg, color: statusConfig.text, borderColor: statusConfig.border }}
+                  style={{
+                    backgroundColor: statusConfig.bg,
+                    color: statusConfig.text,
+                    borderColor: statusConfig.border,
+                  }}
                 >
                   {req.status}
                 </span>
@@ -574,9 +615,7 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
           </button>
         </div>
 
-
         <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-white">
-
           {/* Section 1: Thông tin chung */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
@@ -585,22 +624,35 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                   <User size={16} className="text-gray-400" /> Khách hàng
                 </h3>
                 <div className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 space-y-2">
-                  <p className="text-[14px] font-bold text-gray-900">{req.customer}</p>
+                  <p className="text-[14px] font-bold text-gray-900">
+                    {req.customer}
+                  </p>
                   <p className="text-[13px] text-gray-600 flex items-center gap-2">
-                    <Phone size={13} className="text-gray-400 shrink-0" /> {req.phone}
+                    <Phone size={13} className="text-gray-400 shrink-0" />{" "}
+                    {req.phone}
                   </p>
                   <p className="text-[13px] text-gray-600 flex items-start gap-2">
-                    <MapPin size={13} className="text-gray-400 mt-0.5 shrink-0" /> <span className="flex-1 leading-snug">{req.address || "Chưa cung cấp địa chỉ"}</span>
+                    <MapPin
+                      size={13}
+                      className="text-gray-400 mt-0.5 shrink-0"
+                    />{" "}
+                    <span className="flex-1 leading-snug">
+                      {req.address || "Chưa cung cấp địa chỉ"}
+                    </span>
                   </p>
                 </div>
               </div>
 
               <div>
                 <h3 className="text-[13px] font-bold text-gray-800 uppercase tracking-wider mb-2 flex items-center gap-2">
-                  <Calendar size={16} className="text-gray-400" /> Ngày giao dự kiến
+                  <Calendar size={16} className="text-gray-400" /> Ngày giao dự
+                  kiến
                 </h3>
                 <div className="relative">
-                  <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  <Calendar
+                    size={14}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                  />
                   <input
                     type="date"
                     value={estimatedDeliveryDate}
@@ -630,38 +682,49 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
             )}
           </div>
 
-
           {/* Section 3: Chi tiết Sản phẩm & Thông số kỹ thuật */}
           <div className="border-t border-gray-100 pt-6">
             <h3 className="text-[14px] font-bold text-gray-900 flex items-center gap-2 mb-4">
-              <Package size={18} className="text-indigo-600" /> Danh sách Sản phẩm Yêu cầu
+              <Package size={18} className="text-indigo-600" /> Danh sách Sản
+              phẩm Yêu cầu
             </h3>
 
             <div className="space-y-6">
               {itemSpecs.map((spec, index) => {
                 const originalItem = req.items[index] || {};
                 return (
-                  <div key={spec.id} className="p-5 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                  <div
+                    key={spec.id}
+                    className="p-5 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden"
+                  >
                     {/* Item Header */}
                     <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
                       <div className="flex items-center gap-3">
                         <span className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-[12px] font-bold">
                           {index + 1}
                         </span>
-                        <h4 className="text-[15px] font-bold text-gray-900">{originalItem.name || "Sản phẩm"}</h4>
+                        <h4 className="text-[15px] font-bold text-gray-900">
+                          {originalItem.name || "Sản phẩm"}
+                        </h4>
                       </div>
                       {/* Price Input (Inline for cleaner look) */}
                       <div className="flex items-center gap-2">
-                        <label className="text-[12px] font-medium text-gray-500">Giá:</label>
+                        <label className="text-[12px] font-medium text-gray-500">
+                          Giá:
+                        </label>
                         <div className="relative w-40">
                           <PriceInput
                             value={spec.price || ""}
-                            onChange={(val) => handleUpdateItemSpec(spec.id, "price", val)}
+                            onChange={(val) =>
+                              handleUpdateItemSpec(spec.id, "price", val)
+                            }
                             disabled={!isProcessing}
                             placeholder="0"
                             className="w-full h-9 pl-3 pr-10 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[14px] font-medium disabled:bg-gray-50 text-right"
                           />
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-gray-400">đ</span>
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-gray-400">
+                            đ
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -669,31 +732,47 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                     {/* Item Specs Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                       <div>
-                        <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">Chất liệu</label>
+                        <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">
+                          Chất liệu
+                        </label>
                         <AutocompleteSelector
                           value={spec.material}
-                          onChange={(val) => handleUpdateItemSpec(spec.id, "material", val)}
+                          onChange={(val) =>
+                            handleUpdateItemSpec(spec.id, "material", val)
+                          }
                           disabled={!isProcessing}
                           options={MATERIAL_SAMPLES}
                           placeholder="VD: Gỗ Sồi"
                         />
                       </div>
                       <div>
-                        <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">Màu sắc</label>
+                        <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">
+                          Màu sắc
+                        </label>
                         <AutocompleteSelector
                           value={spec.color}
-                          onChange={(val) => handleUpdateItemSpec(spec.id, "color", val)}
+                          onChange={(val) =>
+                            handleUpdateItemSpec(spec.id, "color", val)
+                          }
                           disabled={!isProcessing}
                           options={COLOR_SAMPLES}
                           placeholder="VD: Sơn trắng"
                         />
                       </div>
                       <div>
-                        <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">Kích thước</label>
+                        <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">
+                          Kích thước
+                        </label>
                         <input
                           type="text"
                           value={spec.dimensions}
-                          onChange={(e) => handleUpdateItemSpec(spec.id, "dimensions", e.target.value)}
+                          onChange={(e) =>
+                            handleUpdateItemSpec(
+                              spec.id,
+                              "dimensions",
+                              e.target.value,
+                            )
+                          }
                           disabled={!isProcessing}
                           placeholder="D x R x C"
                           className="w-full h-9 px-3 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-700 font-medium"
@@ -703,11 +782,19 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
 
                     <div className="grid grid-cols-1 gap-4 mb-4">
                       <div>
-                        <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">Yêu cầu sản xuất (Note)</label>
+                        <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">
+                          Yêu cầu sản xuất (Note)
+                        </label>
                         <input
                           type="text"
                           value={spec.note}
-                          onChange={(e) => handleUpdateItemSpec(spec.id, "note", e.target.value)}
+                          onChange={(e) =>
+                            handleUpdateItemSpec(
+                              spec.id,
+                              "note",
+                              e.target.value,
+                            )
+                          }
                           disabled={!isProcessing}
                           placeholder="Ghi chú kỹ thuật cho xưởng..."
                           className="w-full h-9 px-3 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-700 font-medium"
@@ -720,7 +807,8 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                       {/* Customer Images */}
                       <div>
                         <p className="text-[12px] font-bold text-gray-700 mb-2 flex items-center gap-1.5">
-                          <Camera size={14} className="text-gray-500" /> Ảnh mẫu khách gửi
+                          <Camera size={14} className="text-gray-500" /> Ảnh mẫu
+                          khách gửi
                         </p>
                         <div className="flex gap-2 overflow-x-auto pb-1">
                           {originalItem.customerImages?.length > 0 ? (
@@ -730,11 +818,17 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                                 onClick={() => onEnlarge(img)}
                                 className="w-16 h-16 shrink-0 rounded-lg overflow-hidden border border-gray-200 cursor-pointer hover:border-gray-400 transition-colors"
                               >
-                                <img src={img} alt="Mẫu" className="w-full h-full object-cover" />
+                                <img
+                                  src={img}
+                                  alt="Mẫu"
+                                  className="w-full h-full object-cover"
+                                />
                               </div>
                             ))
                           ) : (
-                            <span className="text-[12px] text-gray-400 italic">Không có ảnh</span>
+                            <span className="text-[12px] text-gray-400 italic">
+                              Không có ảnh
+                            </span>
                           )}
                         </div>
                       </div>
@@ -743,7 +837,8 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <p className="text-[12px] font-bold text-indigo-700 flex items-center gap-1.5">
-                            <Layers size={14} className="text-indigo-500" /> Bản vẽ kỹ thuật / 3D
+                            <Layers size={14} className="text-indigo-500" /> Bản
+                            vẽ kỹ thuật / 3D
                           </p>
                           {isProcessing && (
                             <button
@@ -761,10 +856,18 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                                 key={i}
                                 className="w-16 h-16 shrink-0 rounded-lg overflow-hidden border border-indigo-200 relative group"
                               >
-                                <img src={img} onClick={() => onEnlarge(img)} alt="Bản vẽ" className="w-full h-full object-cover cursor-pointer" />
+                                <img
+                                  src={img}
+                                  onClick={() => onEnlarge(img)}
+                                  alt="Bản vẽ"
+                                  className="w-full h-full object-cover cursor-pointer"
+                                />
                                 {isProcessing && (
                                   <button
-                                    onClick={(e) => { e.stopPropagation(); handleRemoveDesignImage(spec.id, i); }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleRemoveDesignImage(spec.id, i);
+                                    }}
                                     className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 shadow-sm"
                                   >
                                     <X size={10} />
@@ -773,7 +876,9 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                               </div>
                             ))
                           ) : (
-                            <span className="text-[12px] text-gray-400 italic self-center">Chưa có bản vẽ</span>
+                            <span className="text-[12px] text-gray-400 italic self-center">
+                              Chưa có bản vẽ
+                            </span>
                           )}
                         </div>
                       </div>
@@ -783,20 +888,44 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
               })}
             </div>
           </div>
-
-
-
         </div>
 
         {/* Footer Actions */}
         <div className="p-4 border-t border-gray-100 bg-gray-50 shrink-0">
           <div className="flex items-center justify-between">
-            {/* Total Price Display */}
-            <div className="flex flex-col">
-              <span className="text-[11px] font-medium text-gray-500 uppercase">Tổng giá trị đơn hàng</span>
-              <span className="text-[18px] font-bold text-indigo-700">
-                {Number(estimatedPrice || 0).toLocaleString('vi-VN')} <span className="text-[14px]">đ</span>
-              </span>
+            {/* Financial Summary Breakdown - ERP Style Vertical Box */}
+            <div className="bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm min-w-[320px]">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[12px] font-bold text-gray-400 uppercase tracking-wider">Tổng tiền hàng</span>
+                  <span className="text-[16px] font-black text-gray-900">
+                    {formatVND(estimatedPrice)} <span className="text-[12px] font-bold text-gray-400">₫</span>
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-[12px] font-bold text-orange-500 uppercase tracking-wider">Tiền khách cọc</span>
+                  <div className="relative w-40">
+                    <PriceInput
+                      value={deposit}
+                      onChange={(val) => setDeposit(val)}
+                      disabled={!isProcessing}
+                      placeholder="0"
+                      className="w-full h-9 pl-3 pr-10 rounded-lg border border-orange-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none text-[14px] font-black text-orange-600 disabled:bg-orange-50 text-right"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-orange-400 font-bold">
+                      ₫
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-2 mt-2 border-t border-dashed border-gray-200 flex items-center justify-between">
+                  <span className="text-[13px] font-bold text-emerald-600 uppercase tracking-wider">Còn lại phải thu</span>
+                  <span className="text-[20px] font-black text-emerald-600">
+                    {formatVND(Math.max(0, estimatedPrice - deposit))} <span className="text-[14px] font-bold text-emerald-400">₫</span>
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* Action Buttons */}
@@ -825,13 +954,25 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
               )}
 
               {/* Cancel Button */}
-              {(isProcessing || isPriceFixed) && (
-                <button
-                  onClick={() => setShowConfirmCancel(true)}
-                  className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg text-[13px] font-medium transition-colors"
-                >
-                  Hủy bỏ
-                </button>
+              {(isProcessing || isPriceFixed || isOrderCreated) && (
+                <div className="relative group/cancel">
+                  <button
+                    disabled={req.hasImportedGoods}
+                    onClick={() => setShowConfirmCancel(true)}
+                    className={`px-4 py-2 rounded-lg text-[13px] font-medium transition-colors ${
+                      req.hasImportedGoods
+                        ? "text-gray-400 bg-gray-100 cursor-not-allowed"
+                        : "text-red-600 hover:bg-red-50"
+                    }`}
+                  >
+                    Hủy bỏ
+                  </button>
+                  {req.hasImportedGoods && (
+                    <div className="absolute bottom-full mb-2 right-0 w-48 p-2 bg-gray-800 text-white text-[10px] rounded shadow-lg opacity-0 group-hover/cancel:opacity-100 transition-opacity pointer-events-none z-50">
+                      Không thể hủy yêu cầu này vì hàng đã được nhập về xưởng.
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -851,7 +992,6 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
     </div>
   );
 };
-
 
 // ===================== MAIN COMPONENT =====================
 export default function OwnerRequirements() {
@@ -886,7 +1026,7 @@ export default function OwnerRequirements() {
         (r) =>
           r.customer.toLowerCase().includes(q) ||
           r.phone.includes(q) ||
-          r.code.toLowerCase().includes(q)
+          r.code.toLowerCase().includes(q),
       );
     }
 
@@ -902,13 +1042,15 @@ export default function OwnerRequirements() {
       result = result.filter((r) => new Date(r.createdDate) <= to);
     }
 
-    return result.sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate));
+    return result.sort(
+      (a, b) => new Date(b.createdDate) - new Date(a.createdDate),
+    );
   }, [requirements, statusFilter, searchTerm, dateFrom, dateTo]);
 
   const statusCounts = useMemo(() => {
     const counts = { "Tất cả": requirements.length };
-    Object.keys(STATUS_CONFIG).forEach(s => {
-      counts[s] = requirements.filter(r => r.status === s).length;
+    Object.keys(STATUS_CONFIG).forEach((s) => {
+      counts[s] = requirements.filter((r) => r.status === s).length;
     });
     return counts;
   }, [requirements]);
@@ -916,7 +1058,7 @@ export default function OwnerRequirements() {
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginatedRequirements = filtered.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
   const selectedReq = requirements.find((r) => r.id === selectedReqId);
@@ -926,27 +1068,35 @@ export default function OwnerRequirements() {
       prev.map((r) => {
         if (r.id !== reqId) return r;
         if (type === "save_progress") return { ...r, ...data };
-        if (type === "fix_price") return { ...r, status: "Đã chốt giá", ...data };
+        if (type === "fix_price")
+          return { ...r, status: "Đã chốt giá", ...data };
         if (type === "create_order") return { ...r, status: "Đã tạo đơn" };
-        if (type === "cancel_req") return { ...r, status: "Đã hủy" };
+        if (type === "cancel_req") return { ...r, status: "Đơn đã hủy" };
         if (type === "restore") return { ...r, status: "Đang xử lý" };
         if (type === "view_production") {
           toast.success("Chuyển hướng tới chi tiết sản xuất...");
           return r;
         }
         return r;
-      })
+      }),
     );
-    if (type === "save_progress") toast.success("Đã lưu tiến độ & thông số kỹ thuật!");
+    if (type === "save_progress")
+      toast.success("Đã lưu tiến độ & thông số kỹ thuật!");
     if (type === "create_order") {
       // Find the finalized requirement data
-      const finalizingReq = requirements.find(r => r.id === reqId);
+      const finalizingReq = requirements.find((r) => r.id === reqId);
 
       // Simulate pushing to the Orders "database"
       const tenDaysFromNow = new Date();
       tenDaysFromNow.setDate(tenDaysFromNow.getDate() + 15);
 
-      const now = new Date().toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" });
+      const now = new Date().toLocaleString("vi-VN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
 
       const newOrder = {
         id: `DH-NEW-${Date.now()}`,
@@ -970,7 +1120,7 @@ export default function OwnerRequirements() {
         deliveryDate: tenDaysFromNow.toISOString().split("T")[0],
         notes: finalizingReq.notes || "",
         // Map requirement items → products structure expected by detail.jsx
-        products: (finalizingReq.items || []).map(item => ({
+        products: (finalizingReq.items || []).map((item) => ({
           name: item.name,
           material: item.material || "Chưa rõ",
           size: item.specs?.dimensions || "",
@@ -981,16 +1131,26 @@ export default function OwnerRequirements() {
         })),
         // Initial timeline
         timeline: [
-          { time: now, label: "Tạo đơn hàng", desc: `Tạo từ yêu cầu ${finalizingReq.code}. Đang chờ phân công thợ.`, active: true },
+          {
+            time: now,
+            label: "Tạo đơn hàng",
+            desc: `Tạo từ yêu cầu ${finalizingReq.code}. Đang chờ phân công thợ.`,
+            active: true,
+          },
         ],
       };
 
-      const existingSimulated = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
+      const existingSimulated = JSON.parse(
+        localStorage.getItem("tpf_simulated_orders") || "[]",
+      );
       // Remove old stale orders for the same requirement (prevent duplicates with missing data)
       const filteredExisting = existingSimulated.filter(
-        ord => ord.requirementId !== finalizingReq.id
+        (ord) => ord.requirementId !== finalizingReq.id,
       );
-      localStorage.setItem("tpf_simulated_orders", JSON.stringify([newOrder, ...filteredExisting]));
+      localStorage.setItem(
+        "tpf_simulated_orders",
+        JSON.stringify([newOrder, ...filteredExisting]),
+      );
 
       toast.success(`Đã tạo đơn hàng thành công`);
       setSelectedReqId(null);
@@ -998,7 +1158,8 @@ export default function OwnerRequirements() {
     }
   };
 
-  const hasActiveFilters = statusFilter !== "Tất cả" || searchTerm || dateFrom || dateTo;
+  const hasActiveFilters =
+    statusFilter !== "Tất cả" || searchTerm || dateFrom || dateTo;
   const clearAllFilters = () => {
     updateParams({ status: "Tất cả" });
     setSearchTerm("");
@@ -1027,7 +1188,7 @@ export default function OwnerRequirements() {
               style={{ color: "var(--text-main)" }}
             >
               <Package size={22} style={{ color: "var(--brand-primary)" }} />
-              Danh sách yêu cầu khách hàng
+              Danh sách các yêu cầu khách hàng
             </h1>
             <p
               className="text-[13px] mt-0.5"
@@ -1050,13 +1211,19 @@ export default function OwnerRequirements() {
                 className="px-4 py-1.5 rounded-xl text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border"
                 style={{
                   backgroundColor: isActive
-                    ? (sc ? sc.bg : "#fff")
+                    ? sc
+                      ? sc.bg
+                      : "#fff"
                     : "transparent",
                   color: isActive
-                    ? (sc ? sc.text : "var(--brand-primary)")
+                    ? sc
+                      ? sc.text
+                      : "var(--brand-primary)"
                     : "var(--text-secondary)",
                   borderColor: isActive
-                    ? (sc ? sc.border : "var(--grid-border)")
+                    ? sc
+                      ? sc.border
+                      : "var(--grid-border)"
                     : "transparent",
                   boxShadow: isActive ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
                 }}
@@ -1181,13 +1348,24 @@ export default function OwnerRequirements() {
                 }}
               >
                 <tr>
-                  {["STT", "Mã yêu cầu", "Khách hàng", "Ngày nhận", "Giao dự kiến", "Số lượng", "Trạng thái"].map((h, i) => (
+                  {[
+                    "STT",
+                    "Mã yêu cầu",
+                    "Khách hàng",
+                    "Ngày tạo yêu cầu",
+                    "Trạng thái",
+                  ].map((h, i) => (
                     <th
                       key={i}
-                      className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 0 ? "text-center w-[50px]" :
-                        i === 5 ? "text-center" :
-                          i === 6 ? "text-right pr-4" : ""
-                        }`}
+                      className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${
+                        i === 0
+                          ? "text-center w-[60px]"
+                          : i === 3
+                            ? "text-center"
+                            : i === 4
+                              ? "text-right pr-6"
+                              : "text-left"
+                      }`}
                       style={{ color: "var(--text-placeholder)" }}
                     >
                       {h}
@@ -1197,7 +1375,8 @@ export default function OwnerRequirements() {
               </thead>
               <tbody>
                 {paginatedRequirements.map((r, idx) => {
-                  const statusConfig = STATUS_CONFIG[r.status] || STATUS_CONFIG["Đang xử lý"];
+                  const statusConfig =
+                    STATUS_CONFIG[r.status] || STATUS_CONFIG["Đang xử lý"];
                   return (
                     <tr
                       key={r.id}
@@ -1205,7 +1384,10 @@ export default function OwnerRequirements() {
                       className="group relative hover:bg-gray-50/50 transition-colors cursor-pointer"
                       style={{ borderBottom: "1px solid var(--grid-border)" }}
                     >
-                      <td className="px-4 py-3 text-center text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>
+                      <td
+                        className="px-4 py-3 text-center text-[13px] font-medium"
+                        style={{ color: "var(--text-secondary)" }}
+                      >
                         {(currentPage - 1) * itemsPerPage + idx + 1}
                       </td>
                       <td className="px-4 py-3">
@@ -1220,26 +1402,38 @@ export default function OwnerRequirements() {
                         <div className="flex items-center gap-3">
                           <div
                             className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[12px] transition group-hover:bg-white border"
-                            style={{ backgroundColor: "var(--bg-main)", color: "var(--text-placeholder)", borderColor: "var(--grid-border)" }}
+                            style={{
+                              backgroundColor: "var(--bg-main)",
+                              color: "var(--text-placeholder)",
+                              borderColor: "var(--grid-border)",
+                            }}
                           >
                             {r.customer.charAt(0)}
                           </div>
                           <div>
-                            <p className="text-[13px] font-semibold" style={{ color: "var(--text-main)" }}>{r.customer}</p>
-                            <p className="text-[11px]" style={{ color: "var(--text-placeholder)" }}>{r.phone}</p>
+                            <p
+                              className="text-[13px] font-semibold"
+                              style={{ color: "var(--text-main)" }}
+                            >
+                              {r.customer}
+                            </p>
+                            <p
+                              className="text-[11px]"
+                              style={{ color: "var(--text-placeholder)" }}
+                            >
+                              {r.phone}
+                            </p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>
+
+                      <td
+                        className="px-4 py-3 text-[13px] font-medium text-center"
+                        style={{ color: "var(--text-secondary)" }}
+                      >
                         {r.createdDate}
                       </td>
-                      <td className="px-4 py-3 text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>
-                        {r.estimatedDeliveryDate || "—"}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className="text-[13px] font-black py-1 px-3 bg-slate-100 rounded-lg text-slate-600">{r.items?.length || 0}</span>
-                      </td>
-                      <td className="px-4 py-3 text-right pr-4 relative">
+                      <td className="px-4 py-3 text-right pr-6 relative">
                         <div className="flex items-center justify-end gap-3">
                           <span
                             className="inline-flex items-center px-2.5 py-1 text-[11px] font-bold rounded-md"
@@ -1258,17 +1452,20 @@ export default function OwnerRequirements() {
 
                           {/* Guided Review Actions */}
                           <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 flex items-center gap-2 transition-all transform translate-x-4 group-hover:translate-x-0 z-20">
-                            {/* Visual Action Button (Status-based but opens Modal) */}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedReqId(r.id);
-                              }}
-                              className={`flex items-center gap-2 ${statusConfig.actionColor} text-white px-3 py-1.5 rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all outline-none`}
-                            >
-                              <span className="text-[10px] font-black uppercase tracking-wider">{statusConfig.actionLabel}</span>
-                              <statusConfig.actionIcon size={14} />
-                            </button>
+                            {statusConfig.actionLabel && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedReqId(r.id);
+                                }}
+                                className={`flex items-center gap-2 ${statusConfig.actionColor} text-white px-3 py-1.5 rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all outline-none`}
+                              >
+                                <span className="text-[10px] font-black uppercase tracking-wider">
+                                  {statusConfig.actionLabel}
+                                </span>
+                                <statusConfig.actionIcon size={14} />
+                              </button>
+                            )}
 
                             {/* View Detail Button */}
                             <button
