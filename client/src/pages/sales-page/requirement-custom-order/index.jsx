@@ -38,8 +38,11 @@ import {
   ImagePlus,
   Lightbulb,
   Clock,
-  Type,
   ClipboardEdit,
+  ShieldCheck,
+  Eye,
+  Info,
+  Type,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
@@ -154,6 +157,7 @@ export default function CustomOrderRequirementsPage() {
     images: [],
   });
   const [editingItemId, setEditingItemId] = useState(null);
+  const [viewingItem, setViewingItem] = useState(null);
 
   const updateActiveTab = useCallback(
     (updates) => {
@@ -272,6 +276,7 @@ export default function CustomOrderRequirementsPage() {
       ),
     });
   };
+
 
   // Checkout
   const itemCount = activeTab.cartItems.reduce((sum, i) => sum + i.quantity, 0);
@@ -629,7 +634,6 @@ export default function CustomOrderRequirementsPage() {
                     />
                   </div>
                 </div>
-
                 <div className="space-y-1.5">
                   <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
                     Ghi chú
@@ -813,12 +817,21 @@ export default function CustomOrderRequirementsPage() {
                       </span>
 
                       <div className="flex-1 min-w-0">
-                        <p
-                          className="text-[14px] font-bold"
-                          style={{ color: "var(--text-main)" }}
-                        >
-                          {item.productName}
-                        </p>
+                        <div className="flex items-center justify-between gap-2">
+                          <p
+                            className="text-[14px] font-bold truncate"
+                            style={{ color: "var(--text-main)" }}
+                          >
+                            {item.productName}
+                          </p>
+                          <button
+                            onClick={() => setViewingItem(item)}
+                            className="p-1 rounded-md hover:bg-gray-100 text-gray-400 hover:text-brand-primary transition cursor-pointer shrink-0"
+                            title="Xem chi tiết"
+                          >
+                            <Eye size={14} />
+                          </button>
+                        </div>
                         
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
                           {item.woodType && (
@@ -839,7 +852,8 @@ export default function CustomOrderRequirementsPage() {
                               <span className="text-[11px] font-medium text-gray-700">{item.size}</span>
                             </div>
                           )}
-                        </div>
+                          </div>
+                        
 
                         {item.note && (
                           <div
@@ -1305,6 +1319,7 @@ export default function CustomOrderRequirementsPage() {
             </div>
           </div>
         </div>
+
       </div>
 
       <AddCustomerModal
@@ -1321,6 +1336,115 @@ export default function CustomOrderRequirementsPage() {
           });
         }}
       />
+
+      {/* ── Custom Item Quick View Modal ── */}
+      {viewingItem && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div
+            className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300"
+            style={{ border: "1px solid var(--grid-border)" }}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <Hammer size={18} className="text-brand-primary" />
+                <h3 className="text-[16px] font-bold text-gray-900">Chi tiết yêu cầu đặt riêng</h3>
+              </div>
+              <button
+                onClick={() => setViewingItem(null)}
+                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 text-gray-400 hover:text-gray-900 transition cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 max-h-[80vh] overflow-y-auto space-y-6 font-sans">
+              <div className="flex flex-col md:flex-row gap-6">
+                {/* Image Section */}
+                <div className="w-full md:w-1/2 space-y-3">
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Ảnh mẫu yêu cầu</p>
+                  {viewingItem.images && viewingItem.images.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      {viewingItem.images.map((img, i) => (
+                        <div key={i} className="aspect-square rounded-xl overflow-hidden border border-gray-100">
+                          <img src={img} alt="" className="w-full h-full object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="aspect-square rounded-2xl bg-gray-50 border border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 text-gray-300">
+                      <Camera size={24} />
+                      <span className="text-[11px]">Không có ảnh mẫu</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Specs Section */}
+                <div className="w-full md:w-1/2 space-y-4 text-left">
+                  <div>
+                    <h2 className="text-[20px] font-bold text-gray-900">{viewingItem.productName}</h2>
+                    <div className="flex items-center gap-2 mt-1">
+                       <span className="px-2 py-0.5 rounded-md bg-orange-50 text-orange-600 text-[10px] font-bold uppercase tracking-tight border border-orange-100">
+                         Hàng đặt riêng
+                       </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3">
+                    <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <TreePine size={14} className="text-amber-700" />
+                        <span className="text-[12px] font-medium text-gray-500">Loại gỗ</span>
+                      </div>
+                      <span className="text-[13px] font-bold text-gray-800">{viewingItem.woodType || "—"}</span>
+                    </div>
+                    
+                    <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Palette size={14} className="text-purple-600" />
+                        <span className="text-[12px] font-medium text-gray-500">Màu sắc</span>
+                      </div>
+                      <span className="text-[13px] font-bold text-gray-800">{viewingItem.color || "—"}</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Ruler size={14} className="text-blue-600" />
+                        <span className="text-[12px] font-medium text-gray-500">Kích thước</span>
+                      </div>
+                      <span className="text-[13px] font-bold text-gray-800">{viewingItem.size || "—"}</span>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
+              {/* Note Section */}
+              {viewingItem.note && (
+                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100 text-left">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ClipboardEdit size={14} className="text-amber-600" />
+                    <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider">Yêu cầu bổ sung (Ghi chú)</span>
+                  </div>
+                  <p className="text-[13px] text-amber-800 leading-relaxed italic">
+                    "{viewingItem.note}"
+                  </p>
+                </div>
+              )}
+            </div>
+            
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-end">
+              <Button
+                onClick={() => setViewingItem(null)}
+                className="rounded-xl px-8 font-bold"
+              >
+                Đã hiểu
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

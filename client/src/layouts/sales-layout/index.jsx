@@ -1,4 +1,3 @@
-import { Toaster } from "react-hot-toast";
 import { Outlet } from "react-router-dom";
 import { NavbarSale } from "./NavbarSale";
 import { SidebarSales } from "./SidebarSales";
@@ -12,7 +11,6 @@ import { SidebarSales } from "./SidebarSales";
 export const SalesLayout = () => {
   return (
     <div className="flex flex-col h-screen">
-      <Toaster position="top-right" reverseOrder={false} />
       {/* Header */}
       <NavbarSale />
 
