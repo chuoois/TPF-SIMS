@@ -32,65 +32,65 @@ export const INITIAL_ORDERS = [
   {
     id: "DH-S01", code: "DH-SAN-001", type: "Hàng sẵn", status: "Chờ xử lý",
     customerName: "Nguyễn Văn Hùng", phone: "0912345678", total: 12500000,
-    date: "2026-03-12T08:30:00", deliveryDate: "2026-03-14", fulfillmentType: "Giao tận nhà",
+    date: "2026-03-12T08:30:00", deliveryDate: "2026-03-14", fulfillmentType: "Giao tận nơi",
   },
   {
     id: "DH-S02", code: "DH-SAN-002", type: "Hàng sẵn", status: "Chờ giao hàng",
     customerName: "Lê Thị Lan", phone: "0345678901", total: 3500000,
-    date: "2026-03-11T14:20:00", deliveryDate: "2026-03-12", fulfillmentType: "Lấy ngay",
+    date: "2026-03-11T14:20:00", deliveryDate: "2026-03-12", fulfillmentType: "Lấy tại cửa hàng",
   },
   {
     id: "DH-S03", code: "DH-SAN-003", type: "Hàng sẵn", status: "Đang giao hàng",
     customerName: "Trần Minh Quang", phone: "0909123456", total: 45000000,
-    date: "2026-03-10T09:15:00", deliveryDate: "2026-03-11", fulfillmentType: "Giao nhà",
+    date: "2026-03-10T09:15:00", deliveryDate: "2026-03-11", fulfillmentType: "Giao tận nơi",
   },
   {
     id: "DH-S04", code: "DH-SAN-004", type: "Hàng sẵn", status: "Hoàn thành",
     customerName: "Phạm Thành Nam", phone: "0987654321", total: 8900000,
-    date: "2026-03-09T16:45:00", deliveryDate: "2026-03-10", fulfillmentType: "Giao nhà",
+    date: "2026-03-09T16:45:00", deliveryDate: "2026-03-10", fulfillmentType: "Lấy tại cửa hàng",
     deliveryImage: "https://images.unsplash.com/photo-1595246140625-573b715d11dc?auto=format&fit=crop&q=80&w=400",
   },
   {
     id: "DH-S05", code: "DH-SAN-005", type: "Hàng sẵn", status: "Chờ duyệt hủy",
     customerName: "Đinh Công Vinh", phone: "0944556677", total: 2100000,
-    date: "2026-03-11T10:00:00", deliveryDate: "2026-03-13", fulfillmentType: "Giao nhà",
+    date: "2026-03-11T10:00:00", deliveryDate: "2026-03-13", fulfillmentType: "Giao tận nơi",
   },
   {
     id: "DH-S06", code: "DH-SAN-006", type: "Hàng sẵn", status: "Đã hủy",
     customerName: "Võ Thị Bảy", phone: "0966778899", total: 1500000,
-    date: "2026-03-08T10:00:00", deliveryDate: "2026-03-09", fulfillmentType: "Lấy ngay",
+    date: "2026-03-08T10:00:00", deliveryDate: "2026-03-09", fulfillmentType: "Lấy tại cửa hàng",
   },
 
   // ========== NHÓM 2: Hàng mộc ==========
   {
     id: "DH-T01", code: "DH-THO-001", type: "Hàng mộc", status: "Chờ xử lý",
     customerName: "Hoàng Nguyệt Ánh", phone: "0978901234", total: 56000000,
-    date: "2026-03-12T10:00:00", deliveryDate: "2026-03-20", fulfillmentType: "Giao nhà",
+    date: "2026-03-12T10:00:00", deliveryDate: "2026-03-20", fulfillmentType: "Giao tận nơi",
   },
   {
     id: "DH-T02", code: "DH-THO-002", type: "Hàng mộc", status: "Đang sản xuất",
     customerName: "Đặng Tuấn Kiệt", phone: "0931234567", total: 8200000,
-    date: "2026-03-11T15:30:00", deliveryDate: "2026-03-15", fulfillmentType: "Giao nhà",
+    date: "2026-03-11T15:30:00", deliveryDate: "2026-03-15", fulfillmentType: "Giao tận nơi",
   },
   {
     id: "DH-T03", code: "DH-THO-003", type: "Hàng mộc", status: "Đang sản xuất",
     customerName: "Vũ Hải Đăng", phone: "0922334455", total: 12500000,
-    date: "2026-03-10T08:00:00", deliveryDate: "2026-03-14", fulfillmentType: "Giao nhà",
+    date: "2026-03-10T08:00:00", deliveryDate: "2026-03-14", fulfillmentType: "Giao tận nơi",
   },
   {
     id: "DH-T04", code: "DH-THO-004", type: "Hàng mộc", status: "Chờ giao hàng",
     customerName: "Bùi Tiến Dũng", phone: "0911223344", total: 28000000,
-    date: "2026-03-09T11:20:00", deliveryDate: "2026-03-12", fulfillmentType: "Giao nhà",
+    date: "2026-03-09T11:20:00", deliveryDate: "2026-03-12", fulfillmentType: "Giao tận nơi",
   },
   {
     id: "DH-T05", code: "DH-THO-005", type: "Hàng mộc", status: "Đang giao hàng",
     customerName: "Đinh Công Thành", phone: "0988776655", total: 15400000,
-    date: "2026-03-08T14:45:00", deliveryDate: "2026-03-10", fulfillmentType: "Giao nhà",
+    date: "2026-03-08T14:45:00", deliveryDate: "2026-03-10", fulfillmentType: "Giao tận nơi",
   },
   {
     id: "DH-T06", code: "DH-THO-006", type: "Hàng mộc", status: "Hoàn thành",
     customerName: "Trần Anh Tú", phone: "0900112233", total: 32000000,
-    date: "2026-03-07T09:00:00", deliveryDate: "2026-03-09", fulfillmentType: "Giao nhà",
+    date: "2026-03-07T09:00:00", deliveryDate: "2026-03-09", fulfillmentType: "Giao tận nơi",
     deliveryImage: "https://images.unsplash.com/photo-1617806118233-ef203e91122b",
   },
 
@@ -98,22 +98,22 @@ export const INITIAL_ORDERS = [
   {
     id: "DH-D01", code: "DH-DAT-001", type: "Hàng khách đặt", status: "Chờ xử lý",
     customerName: "Nguyễn Thị Hồng", phone: "0912123123", total: 75000000,
-    date: "2026-03-12T11:15:00", deliveryDate: "2026-03-30", fulfillmentType: "Giao nhà",
+    date: "2026-03-12T11:15:00", deliveryDate: "2026-03-30", fulfillmentType: "Giao tận nơi",
   },
   {
     id: "DH-D02", code: "DH-DAT-002", type: "Hàng khách đặt", status: "Đang sản xuất",
     customerName: "Lê Văn Tám", phone: "0321654987", total: 120000000,
-    date: "2026-03-11T09:00:00", deliveryDate: "2026-03-25", fulfillmentType: "Giao nhà",
+    date: "2026-03-11T09:00:00", deliveryDate: "2026-03-25", fulfillmentType: "Giao tận nơi",
   },
   {
     id: "DH-D03", code: "DH-DAT-003", type: "Hàng khách đặt", status: "Đang sản xuất",
     customerName: "Phan Trị", phone: "0944123789", total: 45000000,
-    date: "2026-03-10T10:15:00", deliveryDate: "2026-03-28", fulfillmentType: "Giao nhà",
+    date: "2026-03-10T10:15:00", deliveryDate: "2026-03-28", fulfillmentType: "Giao tận nơi",
   },
   {
     id: "DH-D04", code: "DH-DAT-004", type: "Hàng khách đặt", status: "Chờ giao hàng",
     customerName: "Sơn", phone: "0988", total: 95000000,
-    date: "2026-03-09T14:20:00", deliveryDate: "2026-03-22", fulfillmentType: "Giao nhà",
+    date: "2026-03-09T14:20:00", deliveryDate: "2026-03-22", fulfillmentType: "Giao tận nơi",
   },
 ];
 
@@ -705,7 +705,11 @@ export default function SalesOrderManage() {
               <tbody>
                 {paginatedOrders.map((o) => {
                   const statusConfig = getStatusColor(o.status);
-                  const canCancel = CANCELLABLE_STATUSES.includes(o.status);
+                  const canCancel =
+                    CANCELLABLE_STATUSES.includes(o.status) ||
+                    (o.status === "Hoàn thành" &&
+                      (o.type === "Hàng sẵn" || o.type === "Hàng mộc") &&
+                      o.fulfillmentType === "Lấy tại cửa hàng");
                   return (
                     <tr
                       key={o.id}

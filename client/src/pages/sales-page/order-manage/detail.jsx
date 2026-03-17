@@ -22,6 +22,9 @@ import {
   Camera,
   Eye,
   Printer,
+  ShieldCheck,
+  XCircle,
+  X,
 } from "lucide-react";
 
 // ===================== MOCK DATA =====================
@@ -34,7 +37,7 @@ export const MOCK_ORDERS_DETAIL = {
     status: "Chờ xử lý",
     date: "2026-03-12T08:30:00",
     deliveryDate: "2026-03-14",
-    fulfillmentType: "Giao tận nhà",
+    fulfillmentType: "Giao tận nơi",
     customer: {
       name: "Nguyễn Văn Hùng",
       phone: "0912345678",
@@ -53,6 +56,7 @@ export const MOCK_ORDERS_DETAIL = {
         pattern: "Trơn",
         qty: 2,
         price: 6250000,
+        warranty: "12 tháng",
       },
     ],
     timeline: [
@@ -70,7 +74,7 @@ export const MOCK_ORDERS_DETAIL = {
     status: "Chờ giao hàng",
     date: "2026-03-11T14:20:00",
     deliveryDate: "2026-03-12",
-    fulfillmentType: "Lấy ngay",
+    fulfillmentType: "Lấy tại cửa hàng",
     customer: {
       name: "Lê Thị Lan",
       phone: "0345678901",
@@ -112,7 +116,7 @@ export const MOCK_ORDERS_DETAIL = {
     status: "Đang giao hàng",
     date: "2026-03-10T09:15:00",
     deliveryDate: "2026-03-11",
-    fulfillmentType: "Giao nhà",
+    fulfillmentType: "Giao tận nơi",
     customer: {
       name: "Trần Minh Quang",
       phone: "0909123456",
@@ -829,7 +833,19 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
                 border: "1px solid #d32f2f",
                 padding: "8px 6px",
                 textAlign: "center",
-                width: 120,
+                width: 70,
+                color: "#d32f2f",
+                fontWeight: "normal",
+              }}
+            >
+              BẢO HÀNH
+            </th>
+            <th
+              style={{
+                border: "1px solid #d32f2f",
+                padding: "8px 6px",
+                textAlign: "center",
+                width: 110,
                 color: "#d32f2f",
                 fontWeight: "normal",
               }}
@@ -899,6 +915,18 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
                 style={{
                   border: "1px solid #d32f2f",
                   padding: "6px",
+                  textAlign: "center",
+                  color: "blue",
+                  fontFamily: "'Caveat', 'Dancing Script', cursive, serif",
+                  fontSize: 16,
+                }}
+              >
+                {p.warranty || "—"}
+              </td>
+              <td
+                style={{
+                  border: "1px solid #d32f2f",
+                  padding: "6px",
                   textAlign: "right",
                   color: "blue",
                   fontFamily: "'Caveat', 'Dancing Script', cursive, serif",
@@ -940,6 +968,9 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
                 <td
                   style={{ border: "1px solid #d32f2f", padding: "14px 6px" }}
                 ></td>
+                <td
+                  style={{ border: "1px solid #d32f2f", padding: "14px 6px" }}
+                ></td>
               </tr>
             ),
           )}
@@ -952,7 +983,7 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
               {o.subtotal !== undefined && (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={5}
                     style={{
                       border: "1px solid #d32f2f",
                       padding: "6px 8px",
@@ -980,7 +1011,7 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
               {o.processingFee !== undefined && (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={5}
                     style={{
                       border: "1px solid #d32f2f",
                       padding: "6px 8px",
@@ -1008,7 +1039,7 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
               {o.discount !== undefined && (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={5}
                     style={{
                       border: "1px solid #d32f2f",
                       padding: "6px 8px",
@@ -1036,7 +1067,7 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
               {o.deposit !== undefined && (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={5}
                     style={{
                       border: "1px solid #d32f2f",
                       padding: "6px 8px",
@@ -1358,10 +1389,11 @@ const StandardOrderView = ({ o, displayTotal, hasPricing, remaining }) => {
                       </div>
                       <div>
                         <p className="text-[10px] uppercase font-bold text-gray-400">
-                          Hoàn thiện
+                          Bảo hành
                         </p>
-                        <p className="text-[12px] font-semibold text-gray-700">
-                          {p.finish}
+                        <p className="text-[12px] font-bold text-emerald-600 flex items-center gap-1">
+                          <ShieldCheck size={12} />
+                          {p.warranty || "—"}
                         </p>
                       </div>
                     </div>
@@ -1655,6 +1687,22 @@ export default function SalesOrderDetail() {
   const { id } = useParams();
   const printRef = useRef(null);
 
+  // Cancel request modal
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelSuccess, setCancelSuccess] = useState(false);
+
+  const handleCancelSubmit = () => {
+    if (!cancelTarget || !cancelReason.trim()) return;
+    // In a real app, you would update the order status via API
+    setCancelSuccess(true);
+    setTimeout(() => {
+      setCancelTarget(null);
+      setCancelReason("");
+      setCancelSuccess(false);
+    }, 1500);
+  };
+
   // Fake data fallback logic based on ID
   const o = MOCK_ORDERS_DETAIL[id] || {
     ...MOCK_ORDERS_DETAIL["DH-S01"],
@@ -1760,10 +1808,20 @@ export default function SalesOrderDetail() {
               </button>
 
               {/* Request Cancel Button - Conditional */}
-              {["Chờ xử lý", "Đang sản xuất", "Chờ giao hàng"].includes(
+              {(["Chờ xử lý", "Đang sản xuất", "Chờ giao hàng"].includes(
                 o.status,
-              ) && (
-                <button className="flex items-center gap-2 h-9 px-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-[12px] font-black hover:bg-red-100 transition-all">
+              ) ||
+                (o.status === "Hoàn thành" &&
+                  (o.type === "Hàng sẵn" || o.type === "Hàng thô" || o.type === "Hàng mộc") &&
+                  o.fulfillmentType === "Lấy tại cửa hàng")) && (
+                <button
+                  onClick={() => {
+                    setCancelTarget(o);
+                    setCancelReason("");
+                    setCancelSuccess(false);
+                  }}
+                  className="flex items-center gap-2 h-9 px-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-[12px] font-black hover:bg-red-100 transition-all"
+                >
                   <AlertTriangle size={15} /> GỬI YÊU CẦU HỦY
                 </button>
               )}
@@ -1779,6 +1837,119 @@ export default function SalesOrderDetail() {
           remaining={remaining}
         />
       </div>
+
+      {/* ════════════ MODAL: GỬI YÊU CẦU HỦY ════════════ */}
+      {cancelTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col"
+            style={{ border: "1px solid var(--grid-border)" }}
+          >
+            {cancelSuccess ? (
+              <div className="p-8 flex flex-col items-center text-center gap-3">
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                  style={{ background: "var(--status-focus)" }}
+                >
+                  <CheckCircle
+                    size={28}
+                    style={{ color: "var(--status-success)" }}
+                  />
+                </div>
+                <h3
+                  className="text-[16px] font-bold"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  Đã gửi yêu cầu hủy
+                </h3>
+                <p
+                  className="text-[13px]"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  Đơn hàng <strong>{cancelTarget.code}</strong> đã chuyển sang
+                  trạng thái "Chờ duyệt hủy".
+                </p>
+              </div>
+            ) : (
+              <>
+                <div
+                  className="px-6 py-4 flex items-center justify-between"
+                  style={{ borderBottom: "1px solid var(--grid-border)" }}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className="w-9 h-9 rounded-xl flex items-center justify-center"
+                      style={{ background: "#FEF2F2" }}
+                    >
+                      <XCircle size={18} style={{ color: "#DC2626" }} />
+                    </div>
+                    <div>
+                      <h3
+                        className="text-[15px] font-bold"
+                        style={{ color: "var(--text-main)" }}
+                      >
+                        Gửi yêu cầu hủy đơn
+                      </h3>
+                      <p
+                        className="text-[12px] font-medium"
+                        style={{ color: "var(--text-placeholder)" }}
+                      >
+                        {cancelTarget.code}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 flex flex-col gap-4">
+                  <div>
+                    <label
+                      className="block text-[13px] font-semibold mb-1.5"
+                      style={{ color: "var(--text-main)" }}
+                    >
+                      Lý do hủy đơn{" "}
+                      <span style={{ color: "var(--status-error)" }}>*</span>
+                    </label>
+                    <textarea
+                      value={cancelReason}
+                      onChange={(e) => setCancelReason(e.target.value)}
+                      placeholder="Nhập lý do hủy đơn hàng..."
+                      rows={3}
+                      className="w-full rounded-xl px-4 py-3 text-[13px] focus:outline-none focus:ring-2 transition resize-none"
+                      style={{
+                        border: "1px solid var(--grid-border)",
+                        backgroundColor: "var(--bg-main)",
+                        color: "var(--text-main)",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div
+                  className="px-6 py-4 flex justify-end gap-3"
+                  style={{
+                    borderTop: "1px solid var(--grid-border)",
+                    background: "var(--grid-header-bg)",
+                  }}
+                >
+                  <button
+                    onClick={() => setCancelTarget(null)}
+                    className="px-4 py-2 rounded-lg text-[13px] font-semibold transition hover:bg-gray-100 cursor-pointer border"
+                  >
+                    Hủy bỏ
+                  </button>
+                  <button
+                    onClick={handleCancelSubmit}
+                    disabled={!cancelReason.trim()}
+                    className="px-4 py-2 rounded-lg text-[13px] font-semibold text-white bg-red-600 disabled:opacity-40"
+                  >
+                    Gửi yêu cầu hủy
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Hidden container for printing */}
       <div style={{ display: "none" }}>

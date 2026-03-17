@@ -36,6 +36,9 @@ import {
   Phone,
   Calendar,
   Camera,
+  ShieldCheck,
+  Eye,
+  Info,
 } from "lucide-react";
 import { PrintableInvoice } from "../order-manage/detail";
 import { PageHelmet } from "@/components/seo/PageHelmet";
@@ -523,8 +526,59 @@ const WOOD_PRODUCTS = [
   },
 ];
 
+const GIFT_PRODUCTS = [
+  {
+    id: 1001,
+    name: "Gối tựa lưng Sofa họa tiết",
+    sku: "QT-GOI-01",
+    price: 0,
+    stock: 50,
+    image: "/wood_products.png",
+    category: "Quà tặng",
+    productType: "Quà tặng",
+    size: "45x45 cm",
+    color: "Họa tiết Vintage",
+  },
+  {
+    id: 1002,
+    name: "Khăn trải bàn ren cao cấp",
+    sku: "QT-KHAN-02",
+    price: 0,
+    stock: 30,
+    image: "/wood_products.png",
+    category: "Quà tặng",
+    productType: "Quà tặng",
+    size: "140x180 cm",
+    color: "Trắng kem",
+  },
+  {
+    id: 1003,
+    name: "Bộ vệ sinh gỗ chuyên dụng",
+    sku: "QT-VS-03",
+    price: 0,
+    stock: 100,
+    image: "/wood_products.png",
+    category: "Quà tặng",
+    productType: "Quà tặng",
+    size: "Chai 500ml",
+    color: "Trong suốt",
+  },
+  {
+    id: 1004,
+    name: "Lót ly gỗ bần (Bộ 6 cái)",
+    sku: "QT-LOT-04",
+    price: 0,
+    stock: 40,
+    image: "/wood_products.png",
+    category: "Quà tặng",
+    productType: "Quà tặng",
+    size: "D10 cm",
+    color: "Nâu bần",
+  },
+];
+
 const ITEMS_PER_PAGE = 15;
-const CATEGORIES = ["Phòng khách", "Phòng ngủ", "Phòng ăn", "Phòng làm việc"];
+const CATEGORIES = ["Phòng khách", "Phòng ngủ", "Phòng ăn", "Phòng làm việc", "Quà tặng"];
 
 const MOCK_CUSTOMERS = [
   {
@@ -589,6 +643,8 @@ const MOCK_CUSTOMERS = [
   },
 ];
 
+
+
 const fmt = (v) => new Intl.NumberFormat("vi-VN").format(v);
 
 let tabIdCounter = 1;
@@ -608,6 +664,13 @@ const createEmptyTab = () => ({
 export default function InStockInvoicePage() {
   const printRef = useRef(null);
   const [printingOrder, setPrintingOrder] = useState(null);
+  const [selectedProductForView, setSelectedProductForView] = useState(null);
+
+  const formatCurrency = (n) =>
+    new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(n);
 
   useEffect(() => {
     if (printingOrder && printRef.current) {
@@ -681,8 +744,9 @@ export default function InStockInvoicePage() {
   );
 
   const filteredProducts = useMemo(() => {
-    return WOOD_PRODUCTS.filter((p) => {
-      const matchType = p.productType === productTypeTab;
+    const source = productTypeTab === "Quà tặng" ? GIFT_PRODUCTS : WOOD_PRODUCTS;
+    return source.filter((p) => {
+      const matchType = productTypeTab === "Quà tặng" ? true : p.productType === productTypeTab;
       const matchCategory =
         selectedCategories.length === 0 ||
         selectedCategories.includes(p.category);
@@ -769,7 +833,7 @@ export default function InStockInvoicePage() {
   };
 
   const addToCart = (product) => {
-    const existing = activeTab.cartItems.find((i) => i.id === product.id);
+    const existing = activeTab.cartItems.find((i) => i.id === (product.id + (productTypeTab === "Quà tặng" ? 10000 : 0)));
     if (existing) {
       if (existing.quantity >= product.stock) {
         toast.error(`"${product.name}" đã hết hàng trong kho`);
@@ -777,7 +841,7 @@ export default function InStockInvoicePage() {
       }
       updateActiveTab({
         cartItems: activeTab.cartItems.map((i) =>
-          i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i,
+          i.id === (product.id + (productTypeTab === "Quà tặng" ? 10000 : 0)) ? { ...i, quantity: i.quantity + 1 } : i,
         ),
       });
     } else {
@@ -789,15 +853,17 @@ export default function InStockInvoicePage() {
         cartItems: [
           ...activeTab.cartItems,
           {
-            id: product.id,
+            id: product.id + (productTypeTab === "Quà tặng" ? 10000 : 0),
             name: product.name,
-            price: product.price,
+            price: productTypeTab === "Quà tặng" ? 0 : product.price,
             stock: product.stock,
             sku: product.sku,
             quantity: 1,
             note: "",
+            warranty: "",
             productType: product.productType,
             images: [],
+            isGift: productTypeTab === "Quà tặng",
           },
         ],
       });
@@ -849,6 +915,14 @@ export default function InStockInvoicePage() {
     });
   };
 
+  const updateItemWarranty = (id, warranty) => {
+    updateActiveTab({
+      cartItems: activeTab.cartItems.map((i) =>
+        i.id === id ? { ...i, warranty } : i,
+      ),
+    });
+  };
+
   const updateItemImages = (id, newImages) => {
     updateActiveTab({
       cartItems: activeTab.cartItems.map((i) =>
@@ -891,7 +965,7 @@ export default function InStockInvoicePage() {
     const newOrder = {
       code: "HD-" + Math.floor(Math.random() * 1000000),
       customer: {
-        name: activeTab.selectedCustomer?.name || "Khách lẻ",
+        name: activeTab.selectedCustomer?.name ,
         phone: activeTab.selectedCustomer?.phone || "",
         address: activeTab.selectedCustomer?.address || "",
       },
@@ -903,6 +977,7 @@ export default function InStockInvoicePage() {
         size: "",
         qty: item.quantity,
         price: item.price,
+        warranty: item.warranty || "12 tháng",
         note: item.note || "",
         images: item.images || [],
       })),
@@ -1046,12 +1121,19 @@ export default function InStockInvoicePage() {
 
                       {/* Product info */}
                       <div className="flex-1 min-w-0">
-                        <p
-                          className="text-[13px] font-semibold truncate"
-                          style={{ color: "var(--text-main)" }}
-                        >
-                          {item.name}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p
+                            className="text-[13px] font-semibold truncate"
+                            style={{ color: "var(--text-main)" }}
+                          >
+                            {item.name}
+                          </p>
+                          {item.isGift && (
+                            <span className="px-1.5 py-0.5 rounded bg-orange-100 text-orange-600 text-[10px] font-bold uppercase tracking-tight">
+                              Quà tặng
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span
                             className="text-[11px] font-mono"
@@ -1063,7 +1145,7 @@ export default function InStockInvoicePage() {
                             className="text-[11px]"
                             style={{ color: "var(--text-secondary)" }}
                           >
-                            × {fmt(item.price)}đ
+                            × {item.isGift ? "0đ" : fmt(item.price) + "đ"}
                           </span>
                         </div>
                       </div>
@@ -1120,23 +1202,46 @@ export default function InStockInvoicePage() {
                       </button>
                     </div>
 
-                    {/* Item Note */}
-                    <div className="mt-2 pl-11 flex items-center gap-2">
-                      <Pencil
-                        size={11}
-                        style={{ color: "var(--text-placeholder)" }}
-                        className="shrink-0"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Ghi chú cho sản phẩm này..."
-                        value={item.note || ""}
-                        onChange={(e) =>
-                          updateItemNote(item.id, e.target.value)
-                        }
-                        className="text-[12px] italic focus:outline-none bg-transparent w-full"
-                        style={{ color: "var(--text-secondary)" }}
-                      />
+                    <div className="mt-2 pl-11 flex items-center gap-4">
+                      {/* Note */}
+                      <div className="flex-1 flex items-center gap-2">
+                        <Pencil
+                          size={11}
+                          style={{ color: "var(--text-placeholder)" }}
+                          className="shrink-0"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Ghi chú..."
+                          value={item.note || ""}
+                          onChange={(e) =>
+                            updateItemNote(item.id, e.target.value)
+                          }
+                          className="text-[12px] italic focus:outline-none bg-transparent w-full"
+                          style={{ color: "var(--text-secondary)" }}
+                        />
+                      </div>
+
+                      {/* Warranty */}
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-100 bg-white shadow-sm ring-1 ring-black/5 hover:ring-brand-primary/30 transition-shadow">
+                        <ShieldCheck
+                          size={13}
+                          className="text-emerald-500 shrink-0"
+                        />
+                        <div className="flex flex-col">
+                          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter leading-none mb-0.5">Bảo hành</span>
+                          <input
+                            type="text"
+                            placeholder="Nhập bảo hành..."
+                            value={item.warranty || ""}
+                            onChange={(e) =>
+                              updateItemWarranty(item.id, e.target.value)
+                            }
+                            className="text-[11px] font-bold focus:outline-none bg-transparent w-20 placeholder:font-normal placeholder:text-gray-300"
+                            style={{ color: "var(--text-main)" }}
+                          />
+                        </div>
+                      </div>
                     </div>
 
                     {/* Image Upload for Raw Wood */}
@@ -1397,7 +1502,7 @@ export default function InStockInvoicePage() {
                     className="text-[13px]"
                     style={{ color: "var(--text-main)" }}
                   >
-                    Lấy ngay tại cửa hàng
+                    Lấy tại cửa hàng
                   </span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -1415,7 +1520,7 @@ export default function InStockInvoicePage() {
                     className="text-[13px]"
                     style={{ color: "var(--text-main)" }}
                   >
-                    Giao hàng
+                    Giao tận nơi
                   </span>
                 </label>
               </div>
@@ -1620,7 +1725,7 @@ export default function InStockInvoicePage() {
                   backgroundColor: "var(--bg-main)",
                 }}
               >
-                {["Hàng mộc", "Hàng sẵn"].map((tab) => (
+                {["Hàng mộc", "Hàng sẵn", "Quà tặng"].map((tab) => (
                   <button
                     key={tab}
                     onClick={() => {
@@ -1870,6 +1975,19 @@ export default function InStockInvoicePage() {
                         >
                           {fmt(product.price)}đ
                         </p>
+
+                        {/* Quick View Button */}
+                        <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedProductForView(product);
+                            }}
+                            className="p-1.5 rounded-lg bg-white/90 shadow-sm border border-gray-100 text-gray-500 hover:text-brand-primary hover:scale-110 transition cursor-pointer"
+                          >
+                            <Eye size={15} />
+                          </button>
+                        </div>
                       </div>
                     </button>
                   );
@@ -1932,7 +2050,6 @@ export default function InStockInvoicePage() {
         </div>
       </div>
 
-      {/* ── Add Customer Modal ── */}
       <AddCustomerModal
         isOpen={showAddCustomer}
         onClose={() => setShowAddCustomer(false)}
@@ -1947,6 +2064,94 @@ export default function InStockInvoicePage() {
           });
         }}
       />
+
+      {/* ── Product Quick View Modal ── */}
+      {selectedProductForView && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div
+            className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300"
+            style={{ border: "1px solid var(--grid-border)" }}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h3 className="text-[16px] font-bold text-gray-900">Chi tiết sản phẩm</h3>
+              <button
+                onClick={() => setSelectedProductForView(null)}
+                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 text-gray-400 hover:text-gray-900 transition cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex flex-col md:flex-row p-6 gap-6 max-h-[80vh] overflow-y-auto font-sans text-left">
+              {/* Product Image */}
+              <div className="w-full md:w-1/2 aspect-square rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shadow-inner">
+                <img
+                  src={selectedProductForView.image}
+                  alt={selectedProductForView.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              {/* Product Specs */}
+              <div className="w-full md:w-1/2 space-y-5">
+                <div className="text-left">
+                  <h2 className="text-[20px] font-bold text-gray-900 leading-tight">
+                    {selectedProductForView.name}
+                  </h2>
+                  <p className="text-[13px] text-gray-400 font-medium mt-1 uppercase tracking-wider">
+                    SKU: {selectedProductForView.sku}
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Kích thước</p>
+                      <p className="text-[13px] font-semibold text-gray-700 mt-0.5">{selectedProductForView.size || "—"}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Màu sắc</p>
+                      <p className="text-[13px] font-semibold text-gray-700 mt-0.5">
+                        {selectedProductForView.productType === "Hàng mộc" ? "Nguyên mộc" : selectedProductForView.color || "—"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Danh mục</p>
+                    <p className="text-[13px] font-semibold text-gray-700 mt-0.5">{selectedProductForView.category || "—"}</p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-left">
+                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Giá niêm yết</p>
+                    <p className="text-[20px] font-black text-emerald-700 mt-0.5">{fmt(selectedProductForView.price)}đ</p>
+                  </div>
+
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-100">
+                    <Package size={14} className="text-amber-600" />
+                    <span className="text-[13px] font-bold text-amber-700">
+                      Tồn kho: {selectedProductForView.stock} sản phẩm
+                    </span>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => {
+                    addToCart(selectedProductForView);
+                    setSelectedProductForView(null);
+                  }}
+                  className="w-full h-12 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-brand-primary/20"
+                >
+                  <Plus size={18} />
+                  Thêm vào giỏ hàng
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hidden Print Area */}
       <div style={{ display: "none" }}>

@@ -6,7 +6,7 @@ import { AuthProvider } from "@/context/AuthContext";
 export const App = () => {
   return (
     <AuthProvider>
-      <Toaster />
+      <Toaster position="top-right" reverseOrder={false} />
       <RouterProvider router={router} />
     </AuthProvider>
   );
