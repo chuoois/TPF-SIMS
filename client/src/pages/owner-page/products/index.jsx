@@ -36,6 +36,7 @@ import {
   Clock,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
+import toast from "react-hot-toast";
 
 // ===================== STATIC DATA =====================
 const CATEGORIES = [
@@ -85,9 +86,8 @@ const INITIAL_PRODUCTS = [
     productType: "Hàng sẵn",
     status: "Hàng sẵn",
     stock: 2,
-    img: "https://placehold.co/100x100?text=SapTho",
-    description:
-      "Sập thờ trạm khắc tỉ mỉ tinh xảo, chất liệu gỗ mít lõi liền khối.",
+    img: "https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=300",
+    description: "Sập thờ trạm khắc tỉ mỉ tinh xảo, chất liệu gỗ mít lõi liền khối.",
   },
   {
     id: "SP002",
@@ -103,7 +103,7 @@ const INITIAL_PRODUCTS = [
     productType: "Hàng khách đặt",
     status: "Hàng khách đặt",
     stock: 0,
-    img: "https://placehold.co/100x100?text=QuocVoi",
+    img: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=300",
     description: "Hàng khách đặt theo kích thước riêng, tay 12 vách 4 phân.",
   },
   {
@@ -118,15 +118,101 @@ const INITIAL_PRODUCTS = [
     retailPrice: 12500000,
     unit: "Chiếc",
     productType: "Hàng mộc",
-    status: "Hàng một",
+    status: "Hàng mộc",
     stock: 3,
-    img: "https://placehold.co/100x100?text=TuAoTho",
+    img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=300",
     description: "Hàng mộc sẵn tại kho, chờ sơn hoàn thiện.",
+  },
+  // --- BỔ SUNG HÀNG MỘC ---
+  {
+    id: "SP-HM-01",
+    code: "ST-HM-197x107-GoGu",
+    name: "Sập thờ Mai Điểu (Hàng mộc)",
+    category: "Phòng thờ",
+    material: "Gỗ Gụ",
+    color: "Để mộc",
+    dimensions: "197x107x117",
+    costPrice: 28000000,
+    retailPrice: 38000000,
+    unit: "Chiếc",
+    productType: "Hàng mộc",
+    status: "Hàng mộc",
+    stock: 2,
+    img: "https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=300",
+    description: "Hàng mộc đục tay kỹ, gỗ gụ chọn lọc không rác.",
+  },
+  {
+    id: "SP-HM-02",
+    code: "BG-HM-TanThuyHoang-Huong",
+    name: "Bộ Tần Thủy Hoàng 6 món (Hàng mộc)",
+    category: "Phòng khách",
+    material: "Gỗ Hương Đá",
+    color: "Để mộc",
+    dimensions: "Cột 12",
+    costPrice: 45000000,
+    retailPrice: 62000000,
+    unit: "Bộ",
+    productType: "Hàng mộc",
+    status: "Hàng mộc",
+    stock: 1,
+    img: "https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=300",
+    description: "Hàng mộc vân đẹp, đục tay chi tiết.",
+  },
+  {
+    id: "SP-HM-03",
+    code: "GN-HM-180x200-GoGo",
+    name: "Giường ngủ chữ X (Hàng mộc)",
+    category: "Phòng ngủ",
+    material: "Gỗ Gõ đỏ",
+    color: "Để mộc",
+    dimensions: "180x200",
+    costPrice: 10000000,
+    retailPrice: 15500000,
+    unit: "Chiếc",
+    productType: "Hàng mộc",
+    status: "Hàng mộc",
+    stock: 5,
+    img: "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=300",
+    description: "Hàng mộc sẵn kho, dát phản dầy.",
+  },
+  {
+    id: "SP-HM-04",
+    code: "BA-HM-6Ghe-Soi",
+    name: "Bộ bàn ăn 6 ghế chữ Thọ (Hàng mộc)",
+    category: "Phòng ăn",
+    material: "Gỗ Sồi Nga",
+    color: "Để mộc",
+    dimensions: "160x80",
+    costPrice: 6000000,
+    retailPrice: 9500000,
+    unit: "Bộ",
+    productType: "Hàng mộc",
+    status: "Hàng mộc",
+    stock: 3,
+    img: "https://images.unsplash.com/photo-1617806118233-ef203e91122b?q=80&w=300",
+    description: "Hàng mộc chắc chắn, kiểu dáng hiện đại.",
+  },
+  {
+    id: "SP-HM-05",
+    code: "KTV-HM-CotNho-Huong",
+    name: "Kệ tivi cột nho 2m4 (Hàng mộc)",
+    category: "Phòng khách",
+    material: "Gỗ Hương Đá",
+    color: "Để mộc",
+    dimensions: "240x50x80",
+    costPrice: 12000000,
+    retailPrice: 17000000,
+    unit: "Chiếc",
+    productType: "Hàng mộc",
+    status: "Hàng mộc",
+    stock: 2,
+    img: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=300",
+    description: "Hàng mộc đục cảnh tứ quý, gỗ đều màu.",
   },
   {
     id: "SP003",
     code: "SF-HS-260x180x85-GoDo",
-    name: "Sofa nguyên khối chữ L (Mộc)",
+    name: "Sofa nguyên khối chữ L",
     category: "Phòng khách",
     material: "Gỗ Gõ đỏ",
     color: "Nguyên khối",
@@ -137,7 +223,7 @@ const INITIAL_PRODUCTS = [
     productType: "Hàng sẵn",
     status: "Hàng sẵn",
     stock: 5,
-    img: "https://placehold.co/100x100?text=Sofa",
+    img: "https://images.unsplash.com/photo-1616486341351-70252447aece?q=80&w=300",
     description: "Bộ L mặt nguyên tấm dày 10cm.",
   },
   {
@@ -154,7 +240,7 @@ const INITIAL_PRODUCTS = [
     productType: "Hàng sẵn",
     status: "Hết hàng",
     stock: 0,
-    img: null,
+    img: "https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=300",
     description: "Tiện liền khối.",
   },
   {
@@ -171,7 +257,7 @@ const INITIAL_PRODUCTS = [
     productType: "Hàng sẵn",
     status: "Ngừng kinh doanh",
     stock: 0,
-    img: "https://placehold.co/100x100?text=GiuongNgu",
+    img: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=300",
     description: "Mẫu cũ năm ngoái.",
   },
   {
@@ -188,7 +274,7 @@ const INITIAL_PRODUCTS = [
     productType: "Hàng sẵn",
     status: "Quà tặng",
     stock: 1,
-    img: "https://placehold.co/100x100?text=DatMa",
+    img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=300",
     description: "Hàng đục kỹ.",
   },
   {
@@ -205,7 +291,7 @@ const INITIAL_PRODUCTS = [
     productType: "Hàng khách đặt",
     status: "Hàng khách đặt",
     stock: 0,
-    img: "https://placehold.co/100x100?text=BanAn",
+    img: "https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=300",
     description: "Nguyên tấm nguyên khối.",
   },
 ];
@@ -687,9 +773,20 @@ export default function OwnerProducts() {
 
   // Actions
   const toggleStatus = (id, newStatus) => {
+    const product = products.find((p) => p.id === id);
+    if (!product) return;
+
+    if (newStatus === "Ngừng kinh doanh") {
+      if (product.productType === "Hàng mộc" || product.productType === "Hàng khách đặt") {
+        toast.error(`Không thể ngừng kinh doanh sản phẩm loại "${product.productType}" khi đang trong quá trình sản xuất/hoàn thiện.`);
+        return;
+      }
+    }
+
     setProducts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, status: newStatus } : p)),
     );
+    toast.success(`Đã cập nhật trạng thái: ${newStatus}`);
   };
 
   const handleOpenEdit = (product, e) => {

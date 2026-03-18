@@ -178,6 +178,37 @@ const MOCK_REQUIREMENTS = [
       },
     ],
   },
+  {
+    id: "REQ-005",
+    code: "REQ-2603-0005",
+    customer: "Chu Văn An",
+    phone: "0933441122",
+    address: "123 Đường 3/2, Ninh Kiều, Cần Thơ",
+    salesPerson: "Bình Nguyễn",
+    createdDate: "2026-03-01",
+    status: "Đơn đã hủy",
+    notes: "Khách hủy do thay đổi thiết kế nội thất toàn diện.",
+    surveyNotes: "Đã khảo sát hiện trạng tại Cần Thơ.",
+    proposedSolution: "Thiết kế full nội thất gỗ MDF.",
+    estimatedPrice: 42000000,
+    deposit: 0,
+    items: [
+      {
+        id: "ITM-008",
+        name: "Bàn phấn trang điểm",
+        material: "Gỗ MDF chống ẩm",
+        specs: {
+          dimensions: "100x45x75cm",
+          note: "Tân cổ điển, sơn trắng 2K",
+        },
+        customerImages: [
+          "https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=300",
+        ],
+        quotedPrice: 42000000,
+        isApproved: false,
+      },
+    ],
+  },
 ];
 
 const MATERIAL_SAMPLES = [
