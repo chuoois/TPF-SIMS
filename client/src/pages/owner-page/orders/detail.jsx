@@ -35,7 +35,7 @@ const MOCK_ORDERS = {
     customer: { name: "Nguyễn Văn Hùng", phone: "0912345678", address: "45 Đường Giải Phóng, Hà Đông, Hà Nội" },
     salesPerson: "Bình Nguyễn", total: null, deposit: 12500000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
     processingFee: 200000, discount: 100000,
-    shippingNotes: "Giao trong giờ hành chính. Nhà có thang máy, báo trước 30p.",
+    notes: "Khách hàng thân thiết, cần bọc lót kỹ.",
     products: [{ 
       name: "Ghế sofa đơn nỉ", 
       image: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=300",
@@ -50,7 +50,7 @@ const MOCK_ORDERS = {
     date: "2026-03-11T14:20:00", deliveryDate: "2026-03-12", fulfillmentType: "Lấy ngay",
     customer: { name: "Lê Thị Lan", phone: "0345678901", address: "Vinhomes Ocean Park, Hà Nội" },
     salesPerson: "Bình Nguyễn", total: 3500000, deposit: 3500000, depositMethod: "Tiền mặt", paymentStatus: "full",
-    shippingNotes: "Khách lấy ngay tại cửa hàng.",
+    notes: "Khách lấy ngay tại cửa hàng.",
     products: [{ 
       name: "Bàn trà kim loại", 
       image: "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=300",
@@ -66,7 +66,7 @@ const MOCK_ORDERS = {
     date: "2026-03-10T09:15:00", deliveryDate: "2026-03-11", fulfillmentType: "Lấy luôn",
     customer: { name: "Trần Minh Quang", phone: "0909123456", address: "12 Lý Thường Kiệt, Hà Nội" },
     salesPerson: "Bình Nguyễn", total: 45000000, deposit: 45000000, depositMethod: "Chuyển khoản", paymentStatus: "full",
-    shippingNotes: "Sập nặng, cần ít nhất 4 người khiêng. Tầng 1.",
+    notes: "Sập nặng, cần ít nhất 4 người khiêng. Tầng 1.",
     products: [{ 
       name: "Sập thờ gỗ", 
       image: "https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=300",
@@ -83,22 +83,12 @@ const MOCK_ORDERS = {
     products: [{ name: "Kệ tivi", material: "Gỗ MDF", size: "180x40", finish: "Melamine", qty: 1, price: 8900000, note: "Trơn" }],
     timeline: [{ time: "10/03/2026 14:00", label: "Hoàn thành", desc: "Giao xong", active: true }],
   },
-  "DH-S05": {
-    code: "DH-SAN-005", type: "Hàng sẵn", status: "Chờ duyệt hủy",
-    cancelReason: "Khách đổi ý",
-    date: "2026-03-11T10:00:00", deliveryDate: "2026-03-13",
-    customer: { name: "Đinh Công Vinh", phone: "0944556677", address: "Khu đô thị Celadon, Tân Phú, TP.HCM" },
-    salesPerson: "Bình Nguyễn", total: 2100000, deposit: 0, depositMethod: "Tiền mặt", paymentStatus: "none",
-    shippingNotes: "Khách hủy hàng thô chưa sản xuất.",
-    products: [{ name: "Ghế", material: "Gỗ tần bì", size: "45x50", finish: "Sơn", qty: 2, price: 1050000, note: "Trơn" }],
-    timeline: [{ time: "11/03/2026 11:00", label: "Chờ duyệt hủy", desc: "Sale gửi yc hủy", active: true }],
-  },
   "DH-S06": {
     code: "DH-SAN-006", type: "Hàng sẵn", status: "Đơn đã hủy",
     date: "2026-03-08T10:00:00", deliveryDate: "2026-03-09",
     customer: { name: "Võ Thị Bảy", phone: "0966778899", address: "123 Cách Mạng Tháng 8, Quận 3, TP.HCM" },
     salesPerson: "Bình Nguyễn", total: 1500000, deposit: 0, depositMethod: "Chuyển khoản", paymentStatus: "none",
-    shippingNotes: "Hủy do sai thông tin.",
+    notes: "Hủy do sai thông tin.",
     products: [{ name: "Đôn", material: "Lim", size: "30x30", finish: "PU", qty: 1, price: 1500000, note: "Trơn" }],
     timeline: [{ time: "08/03/2026 10:30", label: "Đơn đã hủy", desc: "Hủy do khách báo sai đỏ", active: true }],
   },
@@ -110,7 +100,7 @@ const MOCK_ORDERS = {
     customer: { name: "Hoàng Nguyệt Ánh", phone: "0978901234", address: "TP.HCM" },
     salesPerson: "Bình Nguyễn", total: 56000000, deposit: 15000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
     processingFee: 1500000, discount: 500000,
-    shippingNotes: "Giao nhà phố, đường rộng xe tải vào được.",
+    notes: "Giao nhà phố, đường rộng xe tải vào được.",
     products: [
       { 
         name: "Sập thờ", 
@@ -129,8 +119,8 @@ const MOCK_ORDERS = {
     date: "2026-03-11T15:30:00", deliveryDate: "2026-03-15",
     customer: { name: "Đặng Tuấn Kiệt", phone: "0931234567", address: "Căn hộ Vinhomes Central Park, Bình Thạnh, TP.HCM" },
     salesPerson: "Bình Nguyễn", total: 8200000, deposit: 2000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
-    shippingNotes: "Giao sau 17h, liên hệ quản lý tòa nhà để lên thang máy chuyên dụng.",
-    products: [{ name: "Trường kỷ", material: "Gỗ lim", size: "2m", finish: "Mộc", qty: 1, price: 8200000, note: "Trơn" }],
+    notes: "Giao sau 17h, liên hệ quản lý tòa nhà để lên thang máy chuyên dụng.",
+    products: [{ name: "Trường kỷ", material: "Gỗ lim", size: "200cm", finish: "Mộc", qty: 1, price: 8200000, note: "Trơn" }],
     timeline: [{ time: "11/03/2026 16:00", label: "Đang sản xuất", desc: "Chờ chia việc", active: true }],
   },
   "DH-T03": {
@@ -138,7 +128,7 @@ const MOCK_ORDERS = {
     date: "2026-03-10T08:00:00", deliveryDate: "2026-03-14",
     customer: { name: "Vũ Hải Đăng", phone: "0922334455", address: "99 Xuân Thủy, Cầu Giấy, Hà Nội" },
     salesPerson: "Bình Nguyễn", total: 12500000, deposit: 4000000, depositMethod: "Tiền mặt", paymentStatus: "partial",
-    shippingNotes: "Nhà trong ngõ nhỏ, xe tải không vào được, cần thợ chở xe máy từ đầu ngõ.",
+    notes: "Nhà trong ngõ nhỏ, xe tải không vào được, cần thợ chở xe máy từ đầu ngõ.",
     products: [{ name: "Bàn ghế", material: "Gụ", size: "Chuẩn", finish: "Mộc", qty: 1, price: 12500000, note: "Chạm" }],
     sampleImages: ["https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=800"],
     timeline: [{ time: "10/03/2026 09:00", label: "Đang sản xuất", desc: "Đang sơn", active: true }],
@@ -148,7 +138,7 @@ const MOCK_ORDERS = {
     date: "2026-03-09T11:20:00", deliveryDate: "2026-03-12",
     customer: { name: "Bùi Tiến Dũng", phone: "0911223344", address: "Khu đô thị Ciputra, Tây Hồ, Hà Nội" },
     salesPerson: "Bình Nguyễn", total: 28000000, deposit: 10000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
-    shippingNotes: "Khi giao nhớ mang theo phiếu bảo hành đóng dấu đỏ.",
+    notes: "Khi giao nhớ mang theo phiếu bảo hành đóng dấu đỏ.",
     products: [{ name: "Tủ", material: "Hương", size: "120", finish: "PU", qty: 1, price: 28000000, note: "Trơn" }],
     sampleImages: ["https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=800"],
     timeline: [{ time: "11/03/2026 09:00", label: "Chuẩn bị giao hàng", desc: "Xong mộc", active: true }],
@@ -158,7 +148,7 @@ const MOCK_ORDERS = {
     date: "2026-03-08T14:45:00", deliveryDate: "2026-03-10",
     customer: { name: "Đinh Công Thành", phone: "0988776655", address: "Số 88 Duy Tân, Cầu Giấy, Hà Nội" },
     salesPerson: "Bình Nguyễn", total: 15400000, deposit: 5000000, depositMethod: "Tiền mặt", paymentStatus: "partial",
-    shippingNotes: "Giao lắp tầng 3, cầu thang hơi hẹp, cần thợ tay nghề cao để khiêng đồ.",
+    notes: "Giao lắp tầng 3, cầu thang hơi hẹp, cần thợ tay nghề cao để khiêng đồ.",
     products: [{ name: "Salon gỗ xà cừ", material: "Gỗ xà cừ đỏ", size: "Chuẩn 6 món", finish: "Sơn PU bóng", qty: 1, price: 15400000, warranty: "12 tháng", note: "Mẫu trơn hiện đại" }],
     timeline: [
       { time: "08/03/2026 14:45", label: "Tạo đơn", desc: "Hàng mộc nhập từ kho", active: false },
@@ -171,7 +161,7 @@ const MOCK_ORDERS = {
     deliveryImage: "https://images.unsplash.com/photo-1617806118233-ef203e91122b",
     customer: { name: "Trần Anh Tú", phone: "0900112233", address: "15 Lê Duẩn, Ba Đình, Hà Nội" },
     salesPerson: "Bình Nguyễn", total: 32000000, deposit: 32000000, depositMethod: "Chuyển khoản", paymentStatus: "full",
-    shippingNotes: "Giao lắp xong xuôi, khách đã ký biên bản bàn giao.",
+    notes: "Giao lắp xong xuôi, khách đã ký biên bản bàn giao.",
     products: [{ name: "Kệ TV", material: "Sồi", size: "Chuẩn", finish: "PU", qty: 1, price: 32000000, note: "Trơn" }],
     sampleImages: [
       "https://images.unsplash.com/photo-1577145745727-42b77daeb623?q=80&w=800"
@@ -195,7 +185,7 @@ const MOCK_ORDERS = {
     date: "2026-03-05T09:00:00", deliveryDate: "2026-03-08",
     customer: { name: "Nguyễn Kim Ngân", phone: "0977889900", address: "Chung cư Seasons Avenue, Mỗ Lao, Hà Đông, Hà Nội" },
     salesPerson: "Bình Nguyễn", total: 9000000, deposit: 0, depositMethod: "Tiền mặt", paymentStatus: "none",
-    shippingNotes: "Khách báo hủy đơn do không tìm được shipper vận chuyển.",
+    notes: "Khách báo hủy đơn do không tìm được shipper vận chuyển.",
     products: [{ name: "Đôn gỗ trang trí", material: "Gỗ gõ đỏ", size: "35x35x45cm", finish: "Để mộc", qty: 1, price: 9000000, warranty: "12 tháng", note: "Chân vuông" }],
     timeline: [
       { time: "05/03/2026 09:00", label: "Tạo đơn", active: false },
@@ -210,7 +200,7 @@ const MOCK_ORDERS = {
     customer: { name: "Nguyễn Thị Hồng", phone: "0912123123", address: "Hà Nội" },
     salesPerson: "Bình Nguyễn", total: 75000000, deposit: 25000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
     processingFee: 0, discount: 1000000,
-    shippingNotes: "Lắp đặt phòng thờ tầng 5, có thang máy nhưng cần bê bộ phận rời.",
+    notes: "Lắp đặt phòng thờ tầng 5, có thang máy nhưng cần bê bộ phận rời.",
     products: [{ 
       name: "Tủ thờ", 
       image: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=300",
@@ -227,7 +217,7 @@ const MOCK_ORDERS = {
     date: "2026-03-11T09:00:00", deliveryDate: "2026-03-25",
     customer: { name: "Lê Văn Tám", phone: "0321654987", address: "688 Lê Trọng Tấn, Bình Tân, TP.HCM" },
     salesPerson: "Bình Nguyễn", total: 120000000, deposit: 40000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
-    shippingNotes: "Bộ Salon rất nặng, cần đi xe cẩu và ít nhất 6 người hỗ trợ lắp đặt.",
+    notes: "Bộ Salon rất nặng, cần đi xe cẩu và ít nhất 6 người hỗ trợ lắp đặt.",
     products: [{ name: "Bộ Salon", material: "Hương", size: "To", finish: "PU", qty: 1, price: 120000000, note: "Trơn" }],
     timeline: [
       { time: "11/03/2026 09:30", label: "Đã nhập kho", desc: "Chuẩn bị", active: false },
@@ -239,7 +229,7 @@ const MOCK_ORDERS = {
     date: "2026-03-10T10:15:00", deliveryDate: "2026-03-28",
     customer: { name: "Phan Trị", phone: "0944123789", address: "158 Nguyễn Văn Cừ, Long Biên, Hà Nội" },
     salesPerson: "Bình Nguyễn", total: 45000000, deposit: 10000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
-    shippingNotes: "Giao lắp tầng 2 phòng khách, cầu thang rộng dễ vận chuyển.",
+    notes: "Giao lắp tầng 2 phòng khách, cầu thang rộng dễ vận chuyển.",
     products: [{ 
       name: "Tủ rượu gỗ sồi", material: "Sồi Nga", size: "120x200x40cm", finish: "Sơn màu óc chó", qty: 1, price: 45000000,
       note: "Yêu cầu sơn màu óc chó đậm giống ảnh mẫu khách gửi. Mẫu trơn hiện đại."
@@ -281,7 +271,7 @@ const MOCK_ORDERS = {
     deliveryImage: "https://images.unsplash.com/photo-1599690924032-4e55e5108bb6",
     customer: { name: "Thân Văn Kỵ", phone: "0977123987", address: "Khu biệt thự Chateau, Phú Mỹ Hưng, Quận 7, TP.HCM" },
     salesPerson: "Bình Nguyễn", total: 210000000, deposit: 210000000, depositMethod: "Chuyển khoản", paymentStatus: "full",
-    shippingNotes: "Hàng cao cấp, bọc lót kỹ. Giao sân vườn tầng trệt.",
+    notes: "Hàng cao cấp, bọc lót kỹ. Giao sân vườn tầng trệt.",
     products: [{ name: "Sofa", material: "Đỏ", size: "To", finish: "PU", qty: 1, price: 210000000, note: "Chạm" }],
     sampleImages: [
       "https://images.unsplash.com/photo-1599690924032-4e55e5108bb6?q=80&w=800"
@@ -294,7 +284,7 @@ const MOCK_ORDERS = {
     date: "2026-03-11T13:45:00", deliveryDate: "2026-03-26",
     customer: { name: "Nguyễn Văn Triệu", phone: "0911223344", address: "15 Nguyễn Trãi, Phường 2, Quận 5, TP.HCM" },
     salesPerson: "Bình Nguyễn", total: 85000000, deposit: 0, depositMethod: "Chuyển khoản", paymentStatus: "none",
-    shippingNotes: "Đơn bị hủy do khách muốn đổi mẫu tại cửa hàng.",
+    notes: "Đơn bị hủy do khách muốn đổi mẫu tại cửa hàng.",
     products: [{ name: "Hệ tủ bếp gỗ công nghiệp", material: "Gỗ MDF phủ Melamine", size: "Dài 3.2m", finish: "Phủ Melamine mờ", qty: 1, price: 85000000, warranty: "12 tháng", note: "Trơn một màu" }],
     timeline: [
       { time: "11/03/2026 13:45", label: "Tiếp nhận tư vấn", active: false },
@@ -306,7 +296,7 @@ const MOCK_ORDERS = {
     date: "2026-03-01T10:00:00", deliveryDate: "2026-03-10",
     customer: { name: "Chu Văn An", phone: "0933441122", address: "123 Đường 3/2, Ninh Kiều, Cần Thơ" },
     salesPerson: "Bình Nguyễn", total: 42000000, deposit: 0, depositMethod: "Chuyển khoản", paymentStatus: "none",
-    shippingNotes: "Khách hủy do thay đổi thiết kế nội thất toàn diện.",
+    notes: "Khách hủy do thay đổi thiết kế nội thất toàn diện.",
     products: [{ name: "Bàn phấn trang điểm", material: "Gỗ MDF chống ẩm", size: "100x45x75cm", finish: "Sơn trắng 2K", qty: 1, price: 42000000, warranty: "12 tháng", note: "Tân cổ điển" }],
     timeline: [
       { time: "01/03/2026 10:00", label: "Tạo đơn", active: false },
@@ -418,14 +408,12 @@ const CustomerInfoCard = ({ o }) => (
           <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "var(--text-placeholder)" }}>Ngày giao</p>
           <p className="text-[13px] font-semibold mt-0.5" style={{ color: "var(--text-main)" }}>{fmtDate(o.deliveryDate)}</p>
         </div>
+        <div className="md:col-span-1">
+          <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "var(--text-placeholder)" }}>Ghi chú</p>
+          <p className="text-[13px] font-semibold mt-0.5" style={{ color: "var(--text-main)" }}>{o.notes || "—"}</p>
+        </div>
       </div>
 
-      {o.notes && (
-        <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--grid-border)" }}>
-          <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "var(--text-placeholder)" }}>Ghi chú</p>
-          <p className="text-[12px] mt-0.5" style={{ color: "var(--text-secondary)" }}>{o.notes}</p>
-        </div>
-      )}
     </div>
   </div>
 );
@@ -473,7 +461,7 @@ const HistoryCard = ({ o }) => (
   </div>
 );
 
-const MediaGallery = ({ images }) => (
+const MediaGallery = ({ images, onPreview }) => (
   <div
     className="rounded-2xl overflow-hidden mt-4"
     style={{ backgroundColor: "var(--background)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
@@ -495,7 +483,11 @@ const MediaGallery = ({ images }) => (
     <div className="p-5">
        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
           {images.map((img, idx) => (
-             <div key={idx} className="group relative aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-100 hover:shadow-lg transition cursor-pointer">
+             <div 
+               key={idx} 
+               className="group relative aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-100 hover:shadow-lg transition cursor-pointer"
+               onClick={() => onPreview(img)}
+             >
                 <img src={img} alt="Sample" className="w-full h-full object-cover transition duration-300 group-hover:scale-110" />
                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                    <div className="w-8 h-8 rounded-full bg-white/90 text-gray-900 flex items-center justify-center shadow-md">
@@ -512,7 +504,7 @@ const MediaGallery = ({ images }) => (
 
 // --- KIỂU HIỂN THỊ ĐƠN HÀNG THÔNG THƯỜNG ---
 // Chuyên dụng để theo dõi đơn (Đã chốt giá, Đang sản xuất, Giao hàng...)
-const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remaining, deliveryImage, onDeliveryImageChange }) => {
+const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remaining, deliveryImage, onDeliveryImageChange, onPreview }) => {
   return (
     <div className="flex-1 overflow-y-auto p-6 space-y-4">
       {/* ── BANNER ── */}
@@ -521,7 +513,10 @@ const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remainin
           className="flex flex-col md:flex-row items-stretch md:items-start gap-4 p-5 rounded-2xl"
           style={{ backgroundColor: "#F0FDF4", border: "1px solid #BBF7D0" }}
         >
-          <div className="shrink-0 relative group cursor-pointer w-full md:w-40 h-32 md:h-auto object-cover rounded-xl overflow-hidden border-2 border-green-200">
+      <div 
+        className="shrink-0 relative group cursor-pointer w-full md:w-40 h-32 md:h-auto object-cover rounded-xl overflow-hidden border-2 border-green-200"
+        onClick={() => o.finishedImage && onPreview(o.finishedImage)}
+      >
             {o.finishedImage ? (
               <img src={o.finishedImage} alt="Sản phẩm hoàn thiện" className="w-full h-full object-cover" />
             ) : (
@@ -569,7 +564,7 @@ const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remainin
                 </label>
               ) : (
                 <div className="flex items-center gap-3">
-                  <div className="relative">
+                  <div className="relative cursor-pointer" onClick={() => onPreview(deliveryImage)}>
                     <img src={deliveryImage} alt="Ảnh giao hàng" className="w-20 h-20 rounded-xl object-cover border-2 border-blue-300 shadow-sm" />
                     <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
                       <CheckCircle size={12} className="text-white" />
@@ -644,8 +639,9 @@ const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remainin
                   <div className="flex-1 min-w-0 w-full space-y-3">
                     <div className="flex items-start gap-3">
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 overflow-hidden"
+                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 overflow-hidden cursor-pointer hover:ring-2 ring-indigo-400 transition"
                         style={{ backgroundColor: "var(--bg-main)", border: "1px solid var(--grid-border)" }}
+                        onClick={() => p.image && onPreview(p.image)}
                       >
                         {p.image ? (
                           <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
@@ -779,7 +775,7 @@ const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remainin
 
           {/* ── CARD: Ảnh mẫu khách gửi — Không hiện với Hàng Sẵn ── */}
           {o.type !== "Hàng sẵn" && o.sampleImages && o.sampleImages.length > 0 && (
-            <MediaGallery images={o.sampleImages} />
+            <MediaGallery images={o.sampleImages} onPreview={onPreview} />
           )}
         </div>
 
@@ -836,9 +832,6 @@ const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remainin
                       <p className="text-[16px] font-black" style={{ color: remaining > 0 ? "#DC2626" : "#15803D" }}>
                         {fmtCurrency(remaining)}
                       </p>
-                      {o.paymentStatus === "partial" && (
-                        <p className="text-[10px] font-bold text-amber-600 uppercase mt-0.5">Đặt cọc một phần</p>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -890,17 +883,6 @@ const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remainin
                   <p className="text-[12px] font-semibold mt-0.5" style={{ color: "var(--text-main)" }}>{fmtDate(o.deliveryDate)}</p>
                 </div>
               </div>
-              {o.shippingNotes && (
-                <div className="flex items-start gap-2.5 pt-2" style={{ borderTop: "1px solid var(--grid-border)" }}>
-                  <Truck size={13} className="mt-0.5 shrink-0" style={{ color: "var(--brand-primary)" }} />
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "var(--brand-primary)" }}>Ghi chú giao hàng & lắp đặt</p>
-                    <p className="text-[12px] font-medium mt-0.5 text-gray-700 leading-relaxed italic">
-                      "{o.shippingNotes}"
-                    </p>
-                  </div>
-                </div>
-              )}
               {o.deliveryImage && (
                 <div className="flex items-start gap-2.5 pt-2" style={{ borderTop: "1px solid var(--grid-border)" }}>
                   <Camera size={13} className="mt-0.5 shrink-0" style={{ color: "var(--text-placeholder)" }} />
@@ -958,6 +940,7 @@ export default function OwnerOrderDetail() {
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [finalPayment, setFinalPayment] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("Chuyển khoản");
+  const [previewImage, setPreviewImage] = useState(null);
 
   // Effect to sync state when modal opens
   useEffect(() => {
@@ -1205,6 +1188,7 @@ export default function OwnerOrderDetail() {
           remaining={remaining}
           deliveryImage={deliveryImage}
           onDeliveryImageChange={handleDeliveryImageChange}
+          onPreview={setPreviewImage}
         />
       </div>
 
@@ -1348,6 +1332,29 @@ export default function OwnerOrderDetail() {
       )}
 
       {/* AssignWorkerModal đã được gỡ bỏ khỏi đây để tránh chồng chéo logic với Quản lý Sản xuất */}
+
+      {/* MODAL XEM ẢNH PHÓNG TO */}
+      {previewImage && (
+        <div 
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div className="relative max-w-5xl w-full h-full flex items-center justify-center">
+            <button 
+              onClick={() => setPreviewImage(null)}
+              className="absolute top-0 right-0 m-4 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-[210]"
+            >
+              <XCircle size={24} />
+            </button>
+            <img 
+              src={previewImage} 
+              alt="Preview" 
+              className="max-w-full max-h-full object-contain rounded-xl shadow-2xl animate-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -41,7 +41,7 @@ const MOCK_PRODUCTIONS = {
     productImage: "https://images.unsplash.com/photo-1556912177-c54030639a03?q=80&w=300",
     variantName: "Gỗ sồi Nga — Sơn PU",
     material: "Gỗ sồi Nga",
-    size: "3.2m + 2.8m",
+    size: "320cm + 280cm",
     finish: "Sơn PU cánh gián",
     specs: { hardware: "Hafele / DTC", notes: "Lắp chung cư. Yêu cầu: Soi chỉ hiện đại" },
     quantityPlanned: 1,
@@ -646,7 +646,7 @@ export default function ProductionDetail() {
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-4 bg-gray-50/50 p-4 rounded-2xl border border-dashed border-gray-200">
                     <SpecItem label="Loại hàng" value={p.isRaw ? "HÀNG THÔ (Sẵn)" : "HÀNG ĐẶT (Mới)"} />
-                    <SpecItem label="Chất liệu gỗ" value={p.material} />
+                    <SpecItem label="Loại gỗ" value={p.material} />
                     <SpecItem label="Kích thước" value={p.size} />
                     <SpecItem label="Màu sắc" value={p.finish} />
                     <SpecItem 

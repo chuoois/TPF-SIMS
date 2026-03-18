@@ -33,6 +33,7 @@ import {
   Palette,
   Flower2,
   Briefcase,
+  Clock,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 
@@ -63,7 +64,7 @@ const COLORS = ["Cánh gián", "Hạt dẻ", "Mun", "Tự nhiên", "Sơn PU", "�
 const PRODUCT_STATUSES = [
   "Hàng sẵn",
   "Hàng mộc",
-  "Hàng đặt",
+  "Hàng khách đặt",
   "Hết hàng",
   "Ngừng kinh doanh",
   "Quà tặng",
@@ -72,7 +73,7 @@ const PRODUCT_STATUSES = [
 const INITIAL_PRODUCTS = [
   {
     id: "SP001",
-    code: "SP-PT-001",
+    code: "ST-HS-197x107x108-Mit",
     name: "Sập thờ Mai Điểu chân 20",
     category: "Phòng thờ",
     material: "Gỗ Mít",
@@ -90,7 +91,7 @@ const INITIAL_PRODUCTS = [
   },
   {
     id: "SP002",
-    code: "SP-PK-001",
+    code: "BBG-HKD-Tay12-Huong",
     name: "Bộ bàn ghế Quốc Voi 6 món",
     category: "Phòng khách",
     material: "Gỗ Hương",
@@ -99,15 +100,15 @@ const INITIAL_PRODUCTS = [
     costPrice: 95000000,
     retailPrice: 120000000,
     unit: "Bộ",
-    productType: "Hàng đặt",
-    status: "Hàng đặt",
+    productType: "Hàng khách đặt",
+    status: "Hàng khách đặt",
     stock: 0,
     img: "https://placehold.co/100x100?text=QuocVoi",
-    description: "Hàng đặt theo kích thước riêng, tay 12 vách 4 phân.",
+    description: "Hàng khách đặt theo kích thước riêng, tay 12 vách 4 phân.",
   },
   {
     id: "SP-THO-01",
-    code: "SP-THO-001",
+    code: "TA-HM-160x200x55-XoanDao",
     name: "Tủ áo gỗ xoan đào (Hàng mộc)",
     category: "Phòng ngủ",
     material: "Gỗ xoan đào",
@@ -117,14 +118,14 @@ const INITIAL_PRODUCTS = [
     retailPrice: 12500000,
     unit: "Chiếc",
     productType: "Hàng mộc",
-    status: "Hàng mộc",
+    status: "Hàng một",
     stock: 3,
     img: "https://placehold.co/100x100?text=TuAoTho",
     description: "Hàng mộc sẵn tại kho, chờ sơn hoàn thiện.",
   },
   {
     id: "SP003",
-    code: "SP-PK-002",
+    code: "SF-HS-260x180x85-GoDo",
     name: "Sofa nguyên khối chữ L (Mộc)",
     category: "Phòng khách",
     material: "Gỗ Gõ đỏ",
@@ -141,12 +142,12 @@ const INITIAL_PRODUCTS = [
   },
   {
     id: "SP004",
-    code: "SP-TT-001",
+    code: "LB-HS-180m-Huong",
     name: "Lộc bình cao 1m8",
     category: "Trang trí",
     material: "Gỗ Hương",
     color: "Đục máy sửa tay",
-    dimensions: "Cao 1m8, ĐK 50",
+    dimensions: "Cao 180cm, ĐK 50",
     costPrice: 18000000,
     retailPrice: 25000000,
     unit: "Cặp",
@@ -158,7 +159,7 @@ const INITIAL_PRODUCTS = [
   },
   {
     id: "SP005",
-    code: "SP-PN-001",
+    code: "GN-HS-180x200-Soi",
     name: "Giường ngủ hoa hồng Tân cổ điển",
     category: "Phòng ngủ",
     material: "Gỗ Sồi",
@@ -175,7 +176,7 @@ const INITIAL_PRODUCTS = [
   },
   {
     id: "SP006",
-    code: "SP-TT-002",
+    code: "TDM-HS-60x30-Trac",
     name: "Tượng Đạt Ma sư tổ",
     category: "Trang trí",
     material: "Gỗ Trắc",
@@ -192,7 +193,7 @@ const INITIAL_PRODUCTS = [
   },
   {
     id: "SP007",
-    code: "SP-PA-001",
+    code: "BA-HKD-240x95x10-GoDo",
     name: "Bộ bàn ăn 8 ghế nguyên khối",
     category: "Phòng ăn",
     material: "Gỗ Gõ đỏ",
@@ -201,11 +202,63 @@ const INITIAL_PRODUCTS = [
     costPrice: 40000000,
     retailPrice: 55000000,
     unit: "Bộ",
-    productType: "Hàng đặt",
-    status: "Hàng đặt",
+    productType: "Hàng khách đặt",
+    status: "Hàng khách đặt",
     stock: 0,
     img: "https://placehold.co/100x100?text=BanAn",
     description: "Nguyên tấm nguyên khối.",
+  },
+];
+
+const INITIAL_INVENTORY_LOGS = [
+  {
+    id: "LOG001",
+    timestamp: "2026-03-17T14:30:00",
+    type: "Nhập kho",
+    productName: "Sập thờ Mai Điểu chân 20",
+    productCode: "ST-HS-197x107x108-Mit",
+    productImg: "https://placehold.co/100x100?text=SapTho",
+    change: +2,
+    balance: 2,
+    reference: "PN-2603-001",
+    authorizedBy: "Kế toán (Linh)",
+  },
+  {
+    id: "LOG002",
+    timestamp: "2026-03-17T15:45:00",
+    type: "Xuất bán",
+    productName: "Tủ áo gỗ xoan đào (Hàng mộc)",
+    productCode: "TA-HM-160x200x55-XoanDao",
+    productImg: "https://placehold.co/100x100?text=TuAoTho",
+    change: -1,
+    balance: 3,
+    reference: "DH-2603-0012",
+    authorizedBy: "NV. Bán hàng",
+  },
+  {
+    id: "LOG003",
+    timestamp: "2026-03-17T16:20:00",
+    type: "Kiểm kho",
+    productName: "Sofa nguyên khối chữ L (Mộc)",
+    productCode: "SF-HS-260x180x85-GoDo",
+    productImg: "https://placehold.co/100x100?text=Sofa",
+    change: -1,
+    balance: 5,
+    reference: "Kiểm kho định kỳ",
+    authorizedBy: "Bác chủ (Admin)",
+    note: "Hàng bị xước sơn, chuyển kho bảo hành",
+  },
+  {
+    id: "LOG004",
+    timestamp: "2026-03-16T09:00:00",
+    type: "Nhập kho",
+    productName: "Lộc bình cao 1m8",
+    productCode: "LB-HS-180m-Huong",
+    productImg: null,
+    change: +1,
+    balance: 1,
+    reference: "PN-2603-002",
+    authorizedBy: "Kế toán (Linh)",
   },
 ];
 
@@ -228,7 +281,7 @@ const getStatusConfig = (status) => {
       return { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" }; // Green
     case "Hàng mộc":
       return { bg: "#FFFBEB", text: "#D97706", border: "#FDE68A" }; // Amber
-    case "Hàng đặt":
+    case "Hàng khách đặt":
       return { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" }; // Blue
     case "Hết hàng":
       return { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" }; // Orange
@@ -378,263 +431,117 @@ const PropertiesTab = ({
 }) => {
   return (
     <div className="flex gap-6 h-full overflow-hidden">
-      {/* Loại gỗ */}
-      <div
-        className="flex-1 flex flex-col bg-white rounded-2xl overflow-hidden"
-        style={{
-          boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
-        }}
-      >
-        <div
-          className="px-6 py-4 border-b flex items-center justify-between shrink-0"
-          style={{ borderColor: "var(--grid-border)" }}
-        >
-          <div>
-            <h2 className="text-[15px] font-bold text-gray-900">Loại gỗ</h2>
-            <p className="text-[12px] text-gray-400 mt-0.5 font-medium">
-              Danh mục các loại gỗ tự nhiên
-            </p>
+      {/* 1. CHẤT LIỆU (Gỗ & Khác) */}
+      <div className="flex-1 flex flex-col gap-6">
+        {/* Nhóm Gỗ */}
+        <div className="flex-1 flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+          <div className="px-5 py-3 border-b flex items-center justify-between shrink-0 bg-gray-50/50">
+            <div>
+              <h2 className="text-[14px] font-bold text-gray-900">Chất liệu Gỗ</h2>
+              <p className="text-[11px] text-gray-400 mt-0.5">Các loại gỗ tự nhiên</p>
+            </div>
+            <button onClick={onAddWood} className="h-8 px-3 rounded-lg flex items-center gap-1.5 text-[11px] font-bold bg-white border border-gray-200 hover:bg-gray-50 transition shadow-sm">
+              <Plus size={14} /> Thêm loại gỗ
+            </button>
           </div>
-          <button
-            onClick={onAddWood}
-            className="h-8 px-3 rounded-lg flex items-center gap-1.5 text-[12px] font-bold transition hover:bg-gray-100 border border-gray-200 cursor-pointer"
-          >
-            <Plus size={14} /> Thêm gỗ
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto">
-          <table className="w-full text-left relative text-[13px]">
-            <thead
-              className="sticky top-0 z-10"
-              style={{
-                backgroundColor: "var(--grid-header-bg)",
-                borderBottom: "1px solid var(--grid-border)",
-              }}
-            >
-              <tr>
-                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 w-16">
-                  STT
-                </th>
-                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                  Tên gỗ
-                </th>
-                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 text-right w-24">
-                  Thao tác
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {woods.map((w, i) => (
-                <tr
-                  key={w}
-                  className="hover:bg-gray-50/50 transition-colors group"
-                  style={{ borderBottom: "1px solid var(--grid-border)" }}
-                >
-                  <td className="px-6 py-4 font-medium text-gray-400">
-                    {i + 1}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center border border-green-100/50">
-                        <TreePine size={16} className="text-green-600" />
+          <div className="flex-1 overflow-y-auto max-h-[250px]">
+            <table className="w-full text-left text-[13px]">
+              <tbody className="divide-y divide-gray-50">
+                {woods.map((w, i) => (
+                  <tr key={w} className="hover:bg-gray-50/30 group transition-colors">
+                    <td className="px-5 py-2.5 font-medium text-gray-400 w-10">{i + 1}</td>
+                    <td className="px-5 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <TreePine size={14} className="text-emerald-600" />
+                        <span className="font-bold text-gray-700">{w}</span>
                       </div>
-                      <span className="font-bold text-gray-900">{w}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 relative">
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-end gap-1.5 translate-x-2 group-hover:translate-x-0">
-                      <button
-                        onClick={() => onEditWood(w)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
-                      >
-                        <Pencil size={14} />
-                      </button>
-                      <button
-                        onClick={() => onDeleteWood(w)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    </td>
+                    <td className="px-5 py-2.5 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => onEditWood(w)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition"><Pencil size={13} /></button>
+                        <button onClick={() => onDeleteWood(w)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition"><X size={13} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Chất liệu khác */}
+        <div className="flex-1 flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+          <div className="px-5 py-3 border-b flex items-center justify-between shrink-0 bg-gray-50/50">
+            <div>
+              <h2 className="text-[14px] font-bold text-gray-900">Chất liệu khác</h2>
+              <p className="text-[11px] text-gray-400 mt-0.5">Da, đá, kính, đồng...</p>
+            </div>
+            <button onClick={onAddOtherMaterial} className="h-8 px-3 rounded-lg flex items-center gap-1.5 text-[11px] font-bold bg-white border border-gray-200 hover:bg-gray-50 transition shadow-sm">
+              <Plus size={14} /> Thêm
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto max-h-[250px]">
+            <table className="w-full text-left text-[13px]">
+              <tbody className="divide-y divide-gray-50">
+                {otherMaterials.map((m, i) => (
+                  <tr key={m} className="hover:bg-gray-50/30 group transition-colors">
+                    <td className="px-5 py-2.5 font-medium text-gray-400 w-10">{i + 1}</td>
+                    <td className="px-5 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <Box size={14} className="text-blue-500" />
+                        <span className="font-bold text-gray-700">{m}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-2.5 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => onEditOtherMaterial(m)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition"><Pencil size={13} /></button>
+                        <button onClick={() => onDeleteOtherMaterial(m)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition"><X size={13} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      {/* Chất liệu khác */}
-      <div
-        className="flex-1 flex flex-col bg-white rounded-2xl overflow-hidden"
-        style={{
-          boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
-        }}
-      >
-        <div
-          className="px-6 py-4 border-b flex items-center justify-between shrink-0"
-          style={{ borderColor: "var(--grid-border)" }}
-        >
-          <div>
-            <h2 className="text-[15px] font-bold text-gray-900">
-              Chất liệu khác
-            </h2>
-            <p className="text-[12px] text-gray-400 mt-0.5 font-medium">
-              Đồng, gốm, sứ, nhựa...
-            </p>
+      {/* 2. NGOẠI QUAN (Màu sắc) */}
+      <div className="flex-1 flex flex-col gap-6">
+        {/* Màu sắc */}
+        <div className="flex-1 flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+          <div className="px-5 py-3 border-b flex items-center justify-between shrink-0 bg-gray-50/50">
+            <div>
+              <h2 className="text-[14px] font-bold text-gray-900">Màu sắc</h2>
+              <p className="text-[11px] text-gray-400 mt-0.5">Màu sơn hoàn thiện</p>
+            </div>
+            <button onClick={onAddColor} className="h-8 px-3 rounded-lg flex items-center gap-1.5 text-[11px] font-bold bg-white border border-gray-200 hover:bg-gray-50 transition shadow-sm">
+              <Plus size={14} /> Thêm màu
+            </button>
           </div>
-          <button
-            onClick={onAddOtherMaterial}
-            className="h-8 px-3 rounded-lg flex items-center gap-1.5 text-[12px] font-bold transition hover:bg-gray-100 border border-gray-200 cursor-pointer"
-          >
-            <Plus size={14} /> Thêm
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto">
-          <table className="w-full text-left relative text-[13px]">
-            <thead
-              className="sticky top-0 z-10"
-              style={{
-                backgroundColor: "var(--grid-header-bg)",
-                borderBottom: "1px solid var(--grid-border)",
-              }}
-            >
-              <tr>
-                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 w-16">
-                  STT
-                </th>
-                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                  Tên
-                </th>
-                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 text-right w-24">
-                  Thao tác
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {otherMaterials.map((m, i) => (
-                <tr
-                  key={m}
-                  className="hover:bg-gray-50/50 transition-colors group"
-                  style={{ borderBottom: "1px solid var(--grid-border)" }}
-                >
-                  <td className="px-6 py-4 font-medium text-gray-400">
-                    {i + 1}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center border border-emerald-100/50">
-                        <Box size={16} className="text-emerald-600" />
+          <div className="flex-1 overflow-y-auto">
+            <table className="w-full text-left text-[13px]">
+              <tbody className="divide-y divide-gray-50">
+                {colors.map((c, i) => (
+                  <tr key={c} className="hover:bg-gray-50/30 group transition-colors">
+                    <td className="px-5 py-2.5 font-medium text-gray-400 w-10">{i + 1}</td>
+                    <td className="px-5 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3.5 h-3.5 rounded-full border border-gray-100 shadow-sm" style={{ backgroundColor: c.toLowerCase().includes("gián") ? "#8B4513" : c.toLowerCase().includes("mun") ? "#1a1a1a" : "#DEB887" }} />
+                        <span className="font-bold text-gray-700">{c}</span>
                       </div>
-                      <span className="font-bold text-gray-900">{m}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 relative">
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-end gap-1.5 translate-x-2 group-hover:translate-x-0">
-                      <button
-                        onClick={() => onEditOtherMaterial(m)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
-                      >
-                        <Pencil size={14} />
-                      </button>
-                      <button
-                        onClick={() => onDeleteOtherMaterial(m)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Màu sắc */}
-      <div
-        className="flex-1 flex flex-col bg-white rounded-2xl overflow-hidden"
-        style={{
-          boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
-        }}
-      >
-        <div
-          className="px-6 py-4 border-b flex items-center justify-between shrink-0"
-          style={{ borderColor: "var(--grid-border)" }}
-        >
-          <div>
-            <h2 className="text-[15px] font-bold text-gray-900">Màu sắc</h2>
-            <p className="text-[12px] text-gray-400 mt-0.5 font-medium">
-              Bảng màu hoàn thiện sản phẩm
-            </p>
+                    </td>
+                    <td className="px-5 py-2.5 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => onEditColor(c)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition"><Pencil size={13} /></button>
+                        <button onClick={() => onDeleteColor(c)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition"><X size={13} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <button
-            onClick={onAddColor}
-            className="h-8 px-3 rounded-lg flex items-center gap-1.5 text-[12px] font-bold transition hover:bg-gray-100 border border-gray-200 cursor-pointer"
-          >
-            <Plus size={14} /> Thêm màu
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto">
-          <table className="w-full text-left relative text-[13px]">
-            <thead
-              className="sticky top-0 z-10"
-              style={{
-                backgroundColor: "var(--grid-header-bg)",
-                borderBottom: "1px solid var(--grid-border)",
-              }}
-            >
-              <tr>
-                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 w-16">
-                  STT
-                </th>
-                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                  Tên màu
-                </th>
-                <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 text-right w-28">
-                  Thao tác
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {colors.map((c, i) => (
-                <tr
-                  key={c}
-                  className="hover:bg-gray-50/50 transition-colors group"
-                  style={{ borderBottom: "1px solid var(--grid-border)" }}
-                >
-                  <td className="px-6 py-4 font-medium text-gray-400">
-                    {i + 1}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center border border-orange-100/50">
-                        <Palette size={16} className="text-orange-600" />
-                      </div>
-                      <span className="font-bold text-gray-900">{c}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 relative">
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-end gap-1.5 translate-x-2 group-hover:translate-x-0">
-                      <button
-                        onClick={() => onEditColor(c)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
-                      >
-                        <Pencil size={14} />
-                      </button>
-                      <button
-                        onClick={() => onDeleteColor(c)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       </div>
     </div>
@@ -643,8 +550,16 @@ const PropertiesTab = ({
 
 // ===================== COMPONENT =====================
 export default function OwnerProducts() {
-  const [activeTab, setActiveTab] = useState("products"); // products | categories | properties
   const [products, setProducts] = useState(INITIAL_PRODUCTS);
+  const [inventoryLogs, setInventoryLogs] = useState(INITIAL_INVENTORY_LOGS);
+
+  // Filter States
+  const [activeTab, setActiveTab] = useState("products"); // products | categories | properties | inventory_log
+  const [searchQuery, setSearchQuery] = useState("");
+  const [logSearchQuery, setLogSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Tất cả");
+  const [categoryFilter, setCategoryFilter] = useState("Tất cả");
+  const [materialFilter, setMaterialFilter] = useState("Tất cả");
 
   // Mock State for Cats & Props
   const [categories, setCategories] = useState(CATEGORIES);
@@ -689,9 +604,7 @@ export default function OwnerProducts() {
       }
     } else if (type === "material") {
       if (originalValue) {
-        setOtherMaterials(
-          otherMaterials.map((m) => (m === originalValue ? value : m)),
-        );
+        setOtherMaterials(otherMaterials.map((m) => (m === originalValue ? value : m)));
       } else {
         setOtherMaterials([...otherMaterials, value]);
       }
@@ -755,11 +668,6 @@ export default function OwnerProducts() {
     }
   };
 
-  // Filters state
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("Tất cả");
-  const [categoryFilter, setCategoryFilter] = useState("Tất cả");
-  const [materialFilter, setMaterialFilter] = useState("Tất cả");
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -843,8 +751,27 @@ export default function OwnerProducts() {
     return result;
   }, [products, statusFilter, categoryFilter, materialFilter, searchQuery]);
 
+  const filteredLogs = useMemo(() => {
+    let result = inventoryLogs;
+
+    if (logSearchQuery.trim()) {
+      const q = logSearchQuery.toLowerCase();
+      result = result.filter(
+        (l) =>
+          l.productName.toLowerCase().includes(q) ||
+          l.productCode.toLowerCase().includes(q) ||
+          l.reference.toLowerCase().includes(q) ||
+          l.authorizedBy.toLowerCase().includes(q),
+      );
+    }
+
+    return result.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  }, [inventoryLogs, logSearchQuery]);
+
   const hasActiveFilters =
-    categoryFilter !== "Tất cả" || materialFilter !== "Tất cả" || searchQuery;
+    categoryFilter !== "Tất cả" ||
+    materialFilter !== "Tất cả" ||
+    searchQuery;
 
   const clearFilters = () => {
     setCategoryFilter("Tất cả");
@@ -927,12 +854,12 @@ export default function OwnerProducts() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Mã SP (SKU) <span className="text-red-500">*</span>
+                        Mã SKU <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                        placeholder="VD: SP001"
+                        placeholder="VD: BBG-HS-1.8x0.9x0.75-Huong"
                         defaultValue={editItem?.code || ""}
                       />
                     </div>
@@ -998,7 +925,7 @@ export default function OwnerProducts() {
                       </label>
                       <select className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
                         <option value="">Chọn loại gỗ hoặc chất liệu</option>
-                        <optgroup label="Nhóm Gỗ">
+                        <optgroup label="Chất liệu Gỗ">
                           {woods.map((w) => (
                             <option
                               key={w}
@@ -1009,7 +936,7 @@ export default function OwnerProducts() {
                             </option>
                           ))}
                         </optgroup>
-                        <optgroup label="Chất liệu khác">
+                        <optgroup label="Vật liệu phối hợp">
                           {otherMaterials.map((m) => (
                             <option
                               key={m}
@@ -1041,7 +968,7 @@ export default function OwnerProducts() {
                     </div>
                     <div className="col-span-2">
                       <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Kích thước (D×R×C)
+                        Kích thước (D×R×C) (cm)
                       </label>
                       <input
                         type="text"
@@ -1096,7 +1023,7 @@ export default function OwnerProducts() {
                       >
                         <option value="Hàng sẵn">Hàng sẵn</option>
                         <option value="Hàng mộc">Hàng mộc</option>
-                        <option value="Hàng đặt">Hàng đặt</option>
+                        <option value="Hàng khách đặt">Hàng khách đặt</option>
                       </select>
                     </div>
                     <div>
@@ -1107,8 +1034,8 @@ export default function OwnerProducts() {
                         type="number"
                         className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100"
                         defaultValue={editItem ? editItem.stock : 0}
-                        disabled={editItem?.productType === "Hàng đặt"}
-                        title="Hàng đặt không quản lý kho theo mẫu"
+                        disabled={editItem?.productType === "Hàng khách đặt"}
+                        title="Hàng khách đặt không quản lý kho theo mẫu"
                       />
                     </div>
                   </div>
@@ -1235,11 +1162,19 @@ export default function OwnerProducts() {
                 </div>
               </div>
               <div className="flex-1 space-y-5">
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900 mb-1">
-                    {detailItem.name}
-                  </h1>
-                  <p className="text-sm text-gray-500">{detailItem.category}</p>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h1 className="text-xl font-bold text-gray-900 mb-1">
+                      {detailItem.name}
+                    </h1>
+                    <p className="text-sm text-gray-500">{detailItem.category}</p>
+                  </div>
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 flex flex-col items-end">
+                    <span className="text-[10px] uppercase font-bold text-gray-400 mb-0.5 tracking-wider">Mã SKU</span>
+                    <span className="text-[13px] font-bold font-mono text-blue-600">
+                      {detailItem.code}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
@@ -1298,7 +1233,7 @@ export default function OwnerProducts() {
                         Tồn kho hiện tại
                       </span>
                       <span className="text-lg font-bold text-gray-900">
-                        {detailItem.productType === "Hàng đặt"
+                        {detailItem.productType === "Hàng khách đặt"
                           ? "—"
                           : detailItem.stock}
                       </span>
@@ -1370,6 +1305,7 @@ export default function OwnerProducts() {
                 { id: "products", label: "Danh sách sản phẩm" },
                 { id: "categories", label: "Danh mục" },
                 { id: "properties", label: "Thuộc tính" },
+                { id: "inventory_log", label: "Nhật ký kho" },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -1466,7 +1402,7 @@ export default function OwnerProducts() {
                   />
                   <input
                     type="text"
-                    placeholder="Theo mã số, tên sản phẩm..."
+                    placeholder="Theo mã SKU, tên sản phẩm..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
@@ -1549,14 +1485,14 @@ export default function OwnerProducts() {
                       }}
                     >
                       <option value="Tất cả">Tất cả chất liệu</option>
-                      <optgroup label="Nhóm Gỗ">
+                      <optgroup label="Chất liệu Gỗ">
                         {woods.map((w) => (
                           <option key={w} value={w}>
                             {w}
                           </option>
                         ))}
                       </optgroup>
-                      <optgroup label="Chất liệu khác">
+                      <optgroup label="Vật liệu phối hợp">
                         {otherMaterials.map((m) => (
                           <option key={m} value={m}>
                             {m}
@@ -1609,7 +1545,7 @@ export default function OwnerProducts() {
                         className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider"
                         style={{ color: "var(--text-placeholder)" }}
                       >
-                        Mã SP
+                        Mã SKU
                       </th>
                       <th
                         className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider"
@@ -1688,12 +1624,14 @@ export default function OwnerProducts() {
                             )}
                           </td>
                           <td className="px-4 py-4">
-                            <p
-                              className="text-[13px] font-bold font-mono"
-                              style={{ color: "var(--text-main)" }}
-                            >
-                              {p.code}
-                            </p>
+                            <div className="inline-block bg-gray-100 border border-gray-200 rounded-lg px-2 py-1 leading-none shadow-sm">
+                              <p
+                                className="text-[12px] font-bold font-mono"
+                                style={{ color: "var(--text-main)" }}
+                              >
+                                {p.code}
+                              </p>
+                            </div>
                           </td>
                           <td className="px-4 py-4">
                             <p
@@ -1990,6 +1928,199 @@ export default function OwnerProducts() {
             }
             onDeleteColor={handleDeleteColor}
           />
+        )}
+        {activeTab === "inventory_log" && (
+          <div
+            className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden"
+            style={{
+              boxShadow:
+                "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+            }}
+          >
+            {/* Log Search Header */}
+            <div
+              className="px-5 py-4 border-b flex items-center justify-between gap-4"
+              style={{ borderColor: "var(--grid-border)" }}
+            >
+              <div className="relative w-full max-w-sm">
+                <Search
+                  size={15}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                />
+                <input
+                  type="text"
+                  placeholder="Tìm theo mã SKU, tên SP, mã đơn..."
+                  value={logSearchQuery}
+                  onChange={(e) => setLogSearchQuery(e.target.value)}
+                  className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500/10 transition"
+                />
+                {logSearchQuery && (
+                  <button
+                    onClick={() => setLogSearchQuery("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 p-1 hover:text-gray-600"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+              <div className="text-[12px] text-gray-400 font-medium italic">
+                Hiển thị {filteredLogs.length} biến động gần nhất
+              </div>
+            </div>
+
+            {/* Log Table */}
+            <div className="flex-1 overflow-y-auto">
+              <table className="w-full text-left text-[13px]">
+                <thead
+                  className="sticky top-0 z-10 bg-white border-b"
+                  style={{ borderColor: "var(--grid-border)" }}
+                >
+                  <tr>
+                    <th className="px-5 py-3 font-bold text-gray-500 uppercase text-[10px] tracking-wider">
+                      Thời gian
+                    </th>
+                    <th className="px-5 py-3 font-bold text-gray-500 uppercase text-[10px] tracking-wider">
+                      Hoạt động
+                    </th>
+                    <th className="px-5 py-3 font-bold text-gray-500 uppercase text-[10px] tracking-wider">
+                      Sản phẩm
+                    </th>
+                    <th className="px-5 py-3 font-bold text-gray-500 uppercase text-[10px] tracking-wider text-center">
+                      Biến động
+                    </th>
+                    <th className="px-5 py-3 font-bold text-gray-500 uppercase text-[10px] tracking-wider text-center">
+                      Số dư cuối
+                    </th>
+                    <th className="px-5 py-3 font-bold text-gray-500 uppercase text-[10px] tracking-wider">
+                      Tham chiếu
+                    </th>
+                    <th className="px-5 py-3 font-bold text-gray-500 uppercase text-[10px] tracking-wider">
+                      Người thực hiện
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredLogs.map((log) => {
+                    const isPlus = log.change > 0;
+                    return (
+                      <tr
+                        key={log.id}
+                        className="hover:bg-gray-50/50 transition-colors"
+                      >
+                        <td className="px-5 py-4">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-gray-900">
+                              {new Date(log.timestamp).toLocaleTimeString(
+                                "vi-VN",
+                                { hour: "2-digit", minute: "2-digit" },
+                              )}
+                            </span>
+                            <span className="text-[11px] text-gray-400">
+                              {new Date(log.timestamp).toLocaleDateString(
+                                "vi-VN",
+                              )}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 text-center">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-bold inline-flex items-center gap-1`}
+                            style={{
+                              backgroundColor:
+                                log.type === "Nhập kho"
+                                  ? "#F0FDF4"
+                                  : log.type === "Xuất bán"
+                                    ? "#EFF6FF"
+                                    : "#F3F4F6",
+                              color:
+                                log.type === "Nhập kho"
+                                  ? "#15803D"
+                                  : log.type === "Xuất bán"
+                                    ? "#1D4ED8"
+                                    : "#6B7280",
+                            }}
+                          >
+                            {log.type === "Nhập kho" ? (
+                              <PackageCheck size={12} />
+                            ) : (
+                              <Package size={12} />
+                            )}
+                            {log.type}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center border overflow-hidden shrink-0">
+                              {log.productImg ? (
+                                <img
+                                  src={log.productImg}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <ImageIcon size={20} className="text-gray-300" />
+                              )}
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-bold text-gray-900 truncate">
+                                {log.productName}
+                              </span>
+                              <span className="text-[11px] font-mono text-gray-400">
+                                {log.productCode}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 text-center">
+                          <span
+                            className={`text-[14px] font-bold ${isPlus ? "text-emerald-600" : "text-red-500"}`}
+                          >
+                            {isPlus ? "+" : ""}
+                            {log.change}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-center">
+                          <span className="font-bold text-gray-700 bg-gray-100 px-2.5 py-1 rounded-lg">
+                            {log.balance}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-2 text-blue-600 font-bold hover:underline cursor-pointer">
+                            {log.reference}
+                          </div>
+                          {log.note && (
+                            <p className="text-[11px] text-gray-400 italic mt-0.5">
+                              {log.note}
+                            </p>
+                          )}
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center text-[10px] font-bold text-blue-600 border border-blue-100">
+                              {log.authorizedBy.charAt(0)}
+                            </div>
+                            <span className="font-medium text-gray-600">
+                              {log.authorizedBy}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                  {filteredLogs.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan="7"
+                        className="py-20 text-center text-gray-400 italic"
+                      >
+                        Không tìm thấy lịch sử biến động nào...
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
       </div>
 

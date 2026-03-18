@@ -33,9 +33,9 @@ const INITIAL_SUPPLIERS = [
 ];
 
 const MOCK_IMPORT_HISTORY = [
-  { id: "PN001", code: "PN-2601", date: "2024-03-01 10:00", total: 150000000, status: "Đã nhập kho" },
-  { id: "PN002", code: "PN-2605", date: "2024-03-05 14:30", total: 245000000, status: "Đang về" },
-  { id: "PN003", code: "PN-2612", date: "2024-03-12 09:15", total: 89000000, status: "Đã nhập kho" },
+  { id: "PN001", code: "PN-2601", date: "2024-03-01 10:00", total: 150000000 },
+  { id: "PN002", code: "PN-2605", date: "2024-03-05 14:30", total: 245000000 },
+  { id: "PN003", code: "PN-2612", date: "2024-03-12 09:15", total: 89000000 },
 ];
 
 const MOCK_SHIPMENT_ITEMS = {
@@ -265,7 +265,6 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
                         <th className="px-6 py-4 font-bold text-gray-500 uppercase text-[11px] tracking-wider">Mã lô nhập</th>
                         <th className="px-6 py-4 font-bold text-gray-500 uppercase text-[11px] tracking-wider">Ngày nhập</th>
                         <th className="px-6 py-4 font-bold text-gray-500 text-right uppercase text-[11px] tracking-wider">Tổng tiền</th>
-                        <th className="px-6 py-4 font-bold text-gray-500 text-center uppercase text-[11px] tracking-wider">Trạng thái</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -283,14 +282,6 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
                           </td>
                           <td className="px-6 py-4 text-gray-500 font-medium">{h.date}</td>
                           <td className="px-6 py-4 text-right font-black text-gray-900">{formatCurrency(h.total)}</td>
-                          <td className="px-6 py-4 text-center">
-                            <span
-                              className={`px-3 py-1 rounded-full text-[11px] font-black ${h.status === "Đã nhập kho" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
-                                }`}
-                            >
-                              {h.status}
-                            </span>
-                          </td>
                         </tr>
                       ))}
                     </tbody>

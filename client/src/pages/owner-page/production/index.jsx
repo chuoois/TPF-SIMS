@@ -46,7 +46,7 @@ const INITIAL_PRODUCTIONS = [
     orderType: "Hàng đặt",
     quantityPlanned: 1,
     quantityCompleted: 0,
-    status: "Đánh giấy ráp",
+    status: "Đang đánh giấy ráp",
     subStage: "gia_cong_moc",
     assignedWorker: "Thợ cả",
     startDate: null,
@@ -65,7 +65,7 @@ const INITIAL_PRODUCTIONS = [
     orderType: "Hàng đặt",
     quantityPlanned: 1,
     quantityCompleted: 0,
-    status: "Đánh giấy ráp",
+    status: "Đang đánh giấy ráp",
     subStage: "gia_cong_moc",
     assignedWorker: "Thợ cả",
     startDate: null,
@@ -84,7 +84,7 @@ const INITIAL_PRODUCTIONS = [
     orderType: "Hàng đặt",
     quantityPlanned: 2,
     quantityCompleted: 0,
-    status: "Đánh giấy ráp",
+    status: "Đang đánh giấy ráp",
     subStage: "gia_cong_moc",
     assignedWorker: "Thợ cả",
     startDate: null,
@@ -104,7 +104,7 @@ const INITIAL_PRODUCTIONS = [
     orderType: "Hàng mộc",
     quantityPlanned: 1,
     quantityCompleted: 0,
-    status: "Đánh giấy ráp",
+    status: "Đang đánh giấy ráp",
     subStage: "gia_cong_moc",
     assignedWorker: "Thợ cả",
     startDate: null,
@@ -124,7 +124,7 @@ const INITIAL_PRODUCTIONS = [
     orderType: "Hàng đặt",
     quantityPlanned: 1,
     quantityCompleted: 0,
-    status: "Đánh giấy ráp",
+    status: "Đang đánh giấy ráp",
     subStage: "gia_cong_moc",
     assignedWorker: "Nguyễn Văn Đức",
     startDate: "2026-03-03",
@@ -185,7 +185,7 @@ const INITIAL_PRODUCTIONS = [
     orderType: "Hàng đặt",
     quantityPlanned: 2,
     quantityCompleted: 0,
-    status: "Đánh giấy ráp",
+    status: "Đang đánh giấy ráp",
     subStage: "gia_cong_moc",
     assignedWorker: "Thợ cả",
     startDate: null,
@@ -222,7 +222,7 @@ const MOCK_WORKERS = [
 
 const STATUSES = [
   "Tất cả",
-  "Đánh giấy ráp",
+  "Đang đánh giấy ráp",
   "Đang sơn",
   "Hoàn thành",
 ];
@@ -257,7 +257,7 @@ const getDeadlineStyle = (dateString) => {
 const getStatusColor = (status, subStage = null, isPendingApproval = false, needsRedo = false) => {
   // 1. Primary Status (Matching the Tabs)
   const primaryBadge = {
-    "Đánh giấy ráp": { label: "Đánh giấy ráp", bg: "#FDF4FF", text: "#A21CAF", border: "#F5D0FE" },
+    "Đang đánh giấy ráp": { label: "Đang đánh giấy ráp", bg: "#FDF4FF", text: "#A21CAF", border: "#F5D0FE" },
     "Đang sơn": { label: "Đang sơn", bg: "#FDF2F8", text: "#DB2777", border: "#FBCFE8" },
     "Hoàn thành": { label: "Hoàn thành", bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" },
   }[status] || { label: status, bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
@@ -286,7 +286,7 @@ export default function OwnerProduction() {
   const [showInspectModal, setShowInspectModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  const navigate = () => {}; // Dummy for now since we're using static data update alerts
+  const navigate = () => { }; // Dummy for now since we're using static data update alerts
 
   // Filter & Search
   const filtered = useMemo(() => {
@@ -344,18 +344,18 @@ export default function OwnerProduction() {
             Xác nhận <strong>Duyệt & Hoàn thành</strong> cho mã lệnh <strong>{item.code}</strong>?
           </p>
           <div className="flex justify-end gap-2">
-            <button 
+            <button
               onClick={() => toast.dismiss(t.id)}
               className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-gray-400 hover:bg-gray-50 transition"
             >
               Hủy
             </button>
-            <button 
+            <button
               onClick={() => {
                 toast.dismiss(t.id);
-                setProductions(prev => prev.map(p => 
-                  p.id === item.id 
-                    ? { ...p, isPendingApproval: true, quantityCompleted: p.quantityPlanned } 
+                setProductions(prev => prev.map(p =>
+                  p.id === item.id
+                    ? { ...p, isPendingApproval: true, quantityCompleted: p.quantityPlanned }
                     : p
                 ));
                 toast.success(`Đã ghi nhận yêu cầu duyệt cho ${item.code}`);
@@ -371,18 +371,18 @@ export default function OwnerProduction() {
   };
 
   const handleApprove = (item) => {
-    setProductions(prev => prev.map(p => 
-      p.id === item.id 
-        ? { ...p, status: "Hoàn thành", isPendingApproval: false } 
+    setProductions(prev => prev.map(p =>
+      p.id === item.id
+        ? { ...p, status: "Hoàn thành", isPendingApproval: false }
         : p
     ));
     setShowInspectModal(false);
   };
 
   const handleQuickRedo = (reason, backToStage) => {
-    setProductions(prev => prev.map(p => 
-      p.id === selectedItem.id 
-        ? { ...p, status: "Đang sản xuất", isPendingApproval: false, needsRedo: true, redoReason: reason, subStage: backToStage } 
+    setProductions(prev => prev.map(p =>
+      p.id === selectedItem.id
+        ? { ...p, status: "Đang sản xuất", isPendingApproval: false, needsRedo: true, redoReason: reason, subStage: backToStage }
         : p
     ));
     setShowRedoModal(false);
@@ -640,7 +640,7 @@ export default function OwnerProduction() {
                     p.quantityPlanned > 0
                       ? Math.round((p.quantityCompleted / p.quantityPlanned) * 100)
                       : 0;
-                  
+
                   // Check if this item belongs to a group (same order) on this page
                   const sameOrderItems = paginatedItems.filter(item => item.orderId === p.orderId && p.orderId !== null);
                   const isFirstInGroup = sameOrderItems.length > 1 && sameOrderItems[0].id === p.id;
@@ -651,7 +651,7 @@ export default function OwnerProduction() {
                     <tr
                       key={p.id}
                       className="group relative border-b hover:bg-emerald-50/10 transition-colors"
-                      style={{ 
+                      style={{
                         borderBottom: "1px solid var(--grid-border)",
                       }}
                     >
@@ -661,11 +661,11 @@ export default function OwnerProduction() {
                       <td className="px-6 py-4 relative">
                         {/* Group Indicator Line */}
                         {isInGroup && (
-                          <div 
+                          <div
                             className={`absolute left-0 w-1 bg-blue-400/30 ${isFirstInGroup ? 'top-4 rounded-t-full' : 'top-0'} ${isLastInGroup ? 'bottom-4 rounded-b-full' : 'bottom-0'}`}
                           />
                         )}
-                        
+
                         <div className="flex flex-col gap-1.5">
                           <p className="text-[13px] font-bold font-mono text-gray-900 tracking-tight">
                             {p.code}
@@ -675,17 +675,10 @@ export default function OwnerProduction() {
                               to={`/owner/orders/${p.orderId}`}
                               className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-blue-50 border border-blue-100 text-[10px] font-bold text-blue-600 hover:bg-blue-600 hover:text-white transition-all w-fit group/order"
                             >
-                              <FileText size={10} className="text-blue-400 group-hover/order:text-white" /> 
+                              <FileText size={10} className="text-blue-400 group-hover/order:text-white" />
                               {p.orderCode}
                             </Link>
                           )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-[13px] font-bold text-gray-900">
-                             {p.customerName || "—"}
-                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -694,6 +687,13 @@ export default function OwnerProduction() {
                             {p.orderType}
                           </span>
                         )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[13px] font-bold text-gray-900">
+                            {p.customerName || "—"}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col gap-1.5">
@@ -720,8 +720,8 @@ export default function OwnerProduction() {
                             }}
                           >
                             <span
-                               className="w-1.5 h-1.5 rounded-full mr-1.5"
-                               style={{ backgroundColor: sc.primaryBadge.text }}
+                              className="w-1.5 h-1.5 rounded-full mr-1.5"
+                              style={{ backgroundColor: sc.primaryBadge.text }}
                             />
                             {sc.primaryBadge.label}
                           </span>
@@ -745,44 +745,44 @@ export default function OwnerProduction() {
 
                         {/* HOVER QUICK ACTIONS BAR */}
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 flex items-center gap-2 bg-white border border-gray-100 shadow-2xl rounded-2xl p-1.5 z-10">
-                               <Link
-                                  to={`/owner/production/${p.id}`}
-                                  className="inline-flex items-center gap-1.5 px-4 h-9 rounded-xl bg-emerald-50 text-emerald-700 text-[12px] font-bold hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                          <Link
+                            to={`/owner/production/${p.id}`}
+                            className="inline-flex items-center gap-1.5 px-4 h-9 rounded-xl bg-emerald-50 text-emerald-700 text-[12px] font-bold hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                          >
+                            <Eye size={14} />
+                            Chi tiết
+                          </Link>
+
+
+
+                          {p.status === "Đang sơn" && (
+                            <>
+                              {p.isPendingApproval ? (
+                                <button
+                                  onClick={() => {
+                                    setSelectedItem(p);
+                                    setShowInspectModal(true);
+                                  }}
+                                  className="h-9 px-5 rounded-xl bg-blue-600 flex items-center gap-2 text-[12px] font-bold text-white hover:bg-blue-700 transition-all shadow-lg active:scale-95"
                                 >
-                                  <Eye size={14} />
-                                  Chi tiết
-                                </Link>
-
-
-
-                                {p.status === "Đang sơn" && (
-                                   <>
-                                      {p.isPendingApproval ? (
-                                        <button 
-                                          onClick={() => {
-                                            setSelectedItem(p);
-                                            setShowInspectModal(true);
-                                          }}
-                                          className="h-9 px-5 rounded-xl bg-blue-600 flex items-center gap-2 text-[12px] font-bold text-white hover:bg-blue-700 transition-all shadow-lg active:scale-95"
-                                        >
-                                          <Camera size={16} /> Duyệt
-                                        </button>
-                                      ) : (
-                                        <>
-                                          <button 
-                                            onClick={() => {
-                                              setSelectedItem(p);
-                                              setShowRedoModal(true);
-                                            }}
-                                            className="h-9 px-3 rounded-xl bg-white border border-red-200 flex items-center gap-1.5 text-[12px] font-bold text-red-500 hover:bg-red-50 transition-all shadow-sm"
-                                          >
-                                            <RotateCcw size={16} /> Sửa lại
-                                          </button>
-                                        </>
-                                      )}
-                                   </>
-                                )}
-                            </div>
+                                  <Camera size={16} /> Duyệt
+                                </button>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => {
+                                      setSelectedItem(p);
+                                      setShowRedoModal(true);
+                                    }}
+                                    className="h-9 px-3 rounded-xl bg-white border border-red-200 flex items-center gap-1.5 text-[12px] font-bold text-red-500 hover:bg-red-50 transition-all shadow-sm"
+                                  >
+                                    <RotateCcw size={16} /> Sửa lại
+                                  </button>
+                                </>
+                              )}
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -921,60 +921,60 @@ export default function OwnerProduction() {
         {showRedoModal && selectedItem && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-emerald-50/30">
-                  <div className="flex items-center gap-2 text-emerald-600">
-                    <AlertTriangle size={18} />
-                    <h3 className="text-[15px] font-bold uppercase tracking-tight">Yêu cầu sửa lại sản phẩm</h3>
-                  </div>
-                  <button onClick={() => setShowRedoModal(false)} className="text-gray-400 hover:text-gray-600 transition p-1 hover:bg-white rounded-lg">
-                    <X size={20} />
-                  </button>
-               </div>
-               
-               <div className="p-6 space-y-5">
-                  <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200">
-                    <p className="text-[11px] text-gray-400 font-bold uppercase mb-1">Đang xử lý lệnh</p>
-                    <p className="text-[13px] font-bold text-gray-900">{selectedItem.code} - {selectedItem.productName}</p>
-                  </div>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-emerald-50/30">
+                <div className="flex items-center gap-2 text-emerald-600">
+                  <AlertTriangle size={18} />
+                  <h3 className="text-[15px] font-bold uppercase tracking-tight">Yêu cầu sửa lại sản phẩm</h3>
+                </div>
+                <button onClick={() => setShowRedoModal(false)} className="text-gray-400 hover:text-gray-600 transition p-1 hover:bg-white rounded-lg">
+                  <X size={20} />
+                </button>
+              </div>
 
-                  <div>
-                    <label className="block text-[12px] font-bold text-gray-400 uppercase mb-2 ml-1">Nguyên nhân lỗi / Dặn dò thợ</label>
-                    <textarea 
-                      id="redoReasonQuick"
-                      className="w-full h-24 p-4 rounded-2xl border border-gray-200 text-[13px] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300 transition resize-none"
-                      placeholder="Ví dụ: Màu sơn chưa đều, còn xước ở cạnh bàn..."
-                    />
-                  </div>
+              <div className="p-6 space-y-5">
+                <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200">
+                  <p className="text-[11px] text-gray-400 font-bold uppercase mb-1">Đang xử lý lệnh</p>
+                  <p className="text-[13px] font-bold text-gray-900">{selectedItem.code} - {selectedItem.productName}</p>
+                </div>
 
-                  <div>
-                    <label className="block text-[12px] font-bold text-gray-400 uppercase mb-2 ml-1">Quay lại công đoạn</label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button 
-                        onClick={() => handleQuickRedo(document.getElementById('redoReasonQuick').value, 'gia_cong_moc')}
-                        className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50 transition group"
-                      >
-                        <Hammer size={20} className="text-gray-400 group-hover:text-emerald-600" />
-                        <span className="text-[12px] font-bold text-gray-600 group-hover:text-emerald-700">Gia công Mộc</span>
-                      </button>
-                      <button 
-                        onClick={() => handleQuickRedo(document.getElementById('redoReasonQuick').value, 'son_hoan_thien')}
-                        className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50 transition group"
-                      >
-                        <Paintbrush size={20} className="text-gray-400 group-hover:text-emerald-600" />
-                        <span className="text-[12px] font-bold text-gray-600 group-hover:text-emerald-700">Sơn hoàn thiện</span>
-                      </button>
-                    </div>
-                  </div>
-               </div>
+                <div>
+                  <label className="block text-[12px] font-bold text-gray-400 uppercase mb-2 ml-1">Nguyên nhân lỗi / Dặn dò thợ</label>
+                  <textarea
+                    id="redoReasonQuick"
+                    className="w-full h-24 p-4 rounded-2xl border border-gray-200 text-[13px] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-300 transition resize-none"
+                    placeholder="Ví dụ: Màu sơn chưa đều, còn xước ở cạnh bàn..."
+                  />
+                </div>
 
-               <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
-                  <button 
-                    onClick={() => setShowRedoModal(false)}
-                    className="px-5 py-2 rounded-xl text-[13px] font-bold text-gray-400 hover:text-gray-600 transition"
-                  >
-                    Hủy bỏ
-                  </button>
-               </div>
+                <div>
+                  <label className="block text-[12px] font-bold text-gray-400 uppercase mb-2 ml-1">Quay lại công đoạn</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => handleQuickRedo(document.getElementById('redoReasonQuick').value, 'gia_cong_moc')}
+                      className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50 transition group"
+                    >
+                      <Hammer size={20} className="text-gray-400 group-hover:text-emerald-600" />
+                      <span className="text-[12px] font-bold text-gray-600 group-hover:text-emerald-700">Gia công Mộc</span>
+                    </button>
+                    <button
+                      onClick={() => handleQuickRedo(document.getElementById('redoReasonQuick').value, 'son_hoan_thien')}
+                      className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50 transition group"
+                    >
+                      <Paintbrush size={20} className="text-gray-400 group-hover:text-emerald-600" />
+                      <span className="text-[12px] font-bold text-gray-600 group-hover:text-emerald-700">Sơn hoàn thiện</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+                <button
+                  onClick={() => setShowRedoModal(false)}
+                  className="px-5 py-2 rounded-xl text-[13px] font-bold text-gray-400 hover:text-gray-600 transition"
+                >
+                  Hủy bỏ
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -989,25 +989,25 @@ export default function OwnerProduction() {
                   <Camera size={22} />
                   <h3 className="text-[17px] font-bold uppercase tracking-tight">Nghiệm thu sản phẩm qua ảnh</h3>
                 </div>
-                <button 
-                  onClick={() => setShowInspectModal(false)} 
+                <button
+                  onClick={() => setShowInspectModal(false)}
                   className="text-gray-400 hover:text-gray-600 transition p-2 hover:bg-white rounded-xl"
                 >
                   <X size={24} />
                 </button>
               </div>
-              
+
               <div className="p-8 space-y-6">
                 <div className="flex flex-col md:flex-row gap-6">
                   {/* Photo Preview */}
                   <div className="flex-1 aspect-square rounded-3xl overflow-hidden border border-gray-100 shadow-inner bg-gray-50">
-                    <img 
-                      src={selectedItem.completionPhoto} 
-                      alt="Ảnh hoàn thiện" 
+                    <img
+                      src={selectedItem.completionPhoto}
+                      alt="Ảnh hoàn thiện"
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                     />
                   </div>
-                  
+
                   {/* Details & Decision */}
                   <div className="flex-1 flex flex-col justify-between py-2">
                     <div className="space-y-4">
@@ -1016,7 +1016,7 @@ export default function OwnerProduction() {
                         <p className="text-[15px] font-bold text-gray-900">{selectedItem.code}</p>
                         <p className="text-[13px] text-gray-600 mt-1">{selectedItem.productName}</p>
                       </div>
-                      
+
                       <div className="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100">
                         <p className="text-[11px] text-emerald-600/60 font-bold uppercase mb-1">Người báo xong</p>
                         <p className="text-[14px] font-bold text-emerald-900">{selectedItem.assignedWorker}</p>
@@ -1024,29 +1024,29 @@ export default function OwnerProduction() {
                       </div>
 
                       <div className="flex items-start gap-2 text-amber-600 bg-amber-50 p-4 rounded-2xl border border-amber-100">
-                         <AlertTriangle size={18} className="shrink-0 mt-0.5" />
-                         <p className="text-[12px] leading-relaxed">
-                            Hãy kiểm tra kỹ các góc cạnh, màu sơn và quy cách so với yêu cầu khách hàng trước khi phê duyệt.
-                         </p>
+                        <AlertTriangle size={18} className="shrink-0 mt-0.5" />
+                        <p className="text-[12px] leading-relaxed">
+                          Hãy kiểm tra kỹ các góc cạnh, màu sơn và quy cách so với yêu cầu khách hàng trước khi phê duyệt.
+                        </p>
                       </div>
                     </div>
-                    
+
                     <div className="space-y-3 mt-6">
-                       <button 
+                      <button
                         onClick={() => handleApprove(selectedItem)}
                         className="w-full h-14 rounded-2xl bg-emerald-600 text-white font-bold flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-lg active:scale-95"
                       >
-                         <CheckCircle size={20} /> Duyệt & Hoàn thành
-                       </button>
-                       <button 
+                        <CheckCircle size={20} /> Duyệt & Hoàn thành
+                      </button>
+                      <button
                         onClick={() => {
                           setShowInspectModal(false);
                           setShowRedoModal(true);
                         }}
                         className="w-full h-14 rounded-2xl bg-white border-2 border-red-200 text-red-600 font-bold flex items-center justify-center gap-2 hover:bg-red-50 transition-all active:scale-95"
                       >
-                         <RotateCcw size={20} /> Sai mẫu - Yêu cầu sửa lại
-                       </button>
+                        <RotateCcw size={20} /> Sai mẫu - Yêu cầu sửa lại
+                      </button>
                     </div>
                   </div>
                 </div>

@@ -53,12 +53,6 @@ const INITIAL_ORDERS = [
     deposit: 8900000, fulfillmentType: "Giao hàng"
   },
   {
-    id: "DH-S05", code: "DH-SAN-005", customerName: "Đinh Công Vinh", phone: "0944556677",
-    type: "Hàng sẵn", total: 2100000, status: "Chờ duyệt hủy",
-    date: "2026-03-11T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-13",
-    deposit: 0, cancelReason: "Khách đổi ý", fulfillmentType: "Giao hàng"
-  },
-  {
     id: "DH-S06", code: "DH-SAN-006", customerName: "Võ Thị Bảy", phone: "0966778899",
     type: "Hàng sẵn", total: 1500000, status: "Đơn đã hủy",
     date: "2026-03-08T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-09",
@@ -127,83 +121,83 @@ const INITIAL_ORDERS = [
     deposit: 0, fulfillmentType: "Giao hàng"
   },
 
-  // ========== NHÓM 3: HÀNG ĐẶT (12 trạng thái) ==========
+  // ========== NHÓM 3: Hàng khách đặt (12 trạng thái) ==========
   {
     id: "DH-D01", code: "DH-DAT-001", customerName: "Nguyễn Thị Hồng", phone: "0912123123",
-    type: "Hàng đặt", total: 75000000, status: "Đang gia công",
+    type: "Hàng khách đặt", total: 75000000, status: "Đang gia công",
     date: "2026-03-12T11:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-30",
     deposit: 25000000, fulfillmentType: "Giao hàng"
   },
   {
     id: "DH-D02", code: "DH-DAT-002", customerName: "Lê Văn Tám", phone: "0321654987",
-    type: "Hàng đặt", total: 120000000, status: "Đang gia công",
+    type: "Hàng khách đặt", total: 120000000, status: "Đang gia công",
     date: "2026-03-11T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-25",
     deposit: 40000000, fulfillmentType: "Giao hàng"
   },
   {
     id: "DH-D03", code: "DH-DAT-003", customerName: "Phan Văn Trị", phone: "0944123123",
-    type: "Hàng đặt", total: 45000000, status: "Đang gia công",
+    type: "Hàng khách đặt", total: 45000000, status: "Đang gia công",
     date: "2026-03-10T10:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-28",
     deposit: 15000000, fulfillmentType: "Giao hàng"
   },
   {
     id: "DH-D04", code: "DH-DAT-004", customerName: "Hoàng Thanh Sơn", phone: "0988123123",
-    type: "Hàng đặt", total: 95000000, status: "Chờ giao hàng",
+    type: "Hàng khách đặt", total: 95000000, status: "Chờ giao hàng",
     date: "2026-03-09T14:20:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-22",
     deposit: 30000000, fulfillmentType: "Giao hàng"
   },
   {
     id: "DH-D05", code: "DH-DAT-005", customerName: "Lưu Bích Thủy", phone: "0909123123",
-    type: "Hàng đặt", total: 34000000, status: "Đang giao hàng",
+    type: "Hàng khách đặt", total: 34000000, status: "Đang giao hàng",
     date: "2026-03-08T11:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-20",
     deposit: 10000000, fulfillmentType: "Giao hàng"
   },
   {
     id: "DH-D06", code: "DH-DAT-006", customerName: "Trương Vô Kỵ", phone: "0977123123",
-    type: "Hàng đặt", total: 210000000, status: "Hoàn thành",
+    type: "Hàng khách đặt", total: 210000000, status: "Hoàn thành",
     date: "2026-03-05T08:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-15",
     deposit: 100000000, fulfillmentType: "Giao hàng",
     deliveryImage: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=400"
   },
   {
     id: "DH-D07", code: "DH-DAT-007", customerName: "Triệu Mẫn", phone: "0911123123",
-    type: "Hàng đặt", total: 85000000, status: "Chờ duyệt hủy",
+    type: "Hàng khách đặt", total: 85000000, status: "Chờ duyệt hủy",
     date: "2026-03-11T13:45:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-26",
     deposit: 20000000, cancelReason: "Khách đổi kích thước nhà", fulfillmentType: "Giao hàng"
   },
   {
     id: "DH-D08", code: "DH-DAT-008", customerName: "Chu Chỉ Nhược", phone: "0933123123",
-    type: "Hàng đặt", total: 42000000, status: "Đơn đã hủy",
+    type: "Hàng khách đặt", total: 42000000, status: "Đơn đã hủy",
     date: "2026-03-01T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-10",
     deposit: 0, fulfillmentType: "Giao hàng"
   },
   {
     id: "DH-D09", code: "DH-DAT-009", customerName: "Vũ Phương Thảo", phone: "0944000111",
-    type: "Hàng đặt", total: 15600000, status: "Đã nhập kho",
+    type: "Hàng khách đặt", total: 15600000, status: "Đã nhập kho",
     date: "2026-03-12T16:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-20",
     deposit: 5000000, fulfillmentType: "Giao hàng"
   },
   {
     id: "DH-D10", code: "DH-DAT-010", customerName: "Đỗ Minh Quân", phone: "0944222333",
-    type: "Hàng đặt", total: 32000000, status: "Chờ sản xuất",
+    type: "Hàng khách đặt", total: 32000000, status: "Chờ sản xuất",
     date: "2026-03-13T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-25",
     deposit: 10000000, fulfillmentType: "Giao hàng"
   },
   {
     id: "DH-D11", code: "DH-DAT-011", customerName: "Phạm Gia Bảo", phone: "0944444555",
-    type: "Hàng đặt", total: 8500000, status: "Chờ sản xuất",
+    type: "Hàng khách đặt", total: 8500000, status: "Chờ sản xuất",
     date: "2026-03-14T10:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-28",
     deposit: 3000000, fulfillmentType: "Giao hàng"
   },
   {
     id: "DH-D12", code: "DH-DAT-012", customerName: "Nguyễn Anh Tuấn", phone: "0944666777",
-    type: "Hàng đặt", total: 112000000, status: "Đang gia công",
+    type: "Hàng khách đặt", total: 112000000, status: "Đang gia công",
     date: "2026-03-15T14:20:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-30",
     deposit: 50000000, fulfillmentType: "Giao hàng"
   },
 ];
 
-const ORDER_TYPES = ["Hàng sẵn", "Hàng mộc", "Hàng đặt"];
+const ORDER_TYPES = ["Hàng sẵn", "Hàng mộc", "Hàng khách đặt"];
 
 const HANG_SAN_STATUSES = [
   "Chờ xử lý",
@@ -320,6 +314,7 @@ export default function OwnerOrders() {
   const [finalPayment, setFinalPayment] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("Chuyển khoản");
   const [deliveryImage, setDeliveryImage] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
 
   // Helper để cập nhật Search Params mượt mà
   const updateParams = (newParams) => {
@@ -434,8 +429,8 @@ export default function OwnerOrders() {
       const q = searchTerm.toLowerCase();
       result = result.filter(
         (o) =>
-          o.customerName.toLowerCase().includes(q) ||
-          o.phone.includes(q) ||
+          (o.customerName || o.customer?.name || "").toLowerCase().includes(q) ||
+          (o.phone || o.customer?.phone || "").includes(q) ||
           o.code.toLowerCase().includes(q) ||
           o.salesPerson?.toLowerCase().includes(q)
       );
@@ -453,7 +448,7 @@ export default function OwnerOrders() {
     let statuses = [];
     if (activeTab === "Hàng sẵn") statuses = HANG_SAN_STATUSES;
     else if (activeTab === "Hàng mộc") statuses = HANG_THO_STATUSES;
-    else if (activeTab === "Hàng đặt") statuses = HANG_DAT_STATUSES;
+    else if (activeTab === "Hàng khách đặt") statuses = HANG_DAT_STATUSES;
     else statuses = ALL_STATUSES;
 
     const counts = { "Tất cả": baseOrders.length };
@@ -699,13 +694,13 @@ export default function OwnerOrders() {
                     "Loại đơn",
                     "Tổng tiền",
                     "Trạng thái",
-                    ...(activeTab !== "Hàng đặt" ? ["Hình thức giao"] : []),
+                    ...(activeTab !== "Hàng khách đặt" ? ["Hình thức giao"] : []),
                     "Ngày giao dự kiến",
                     "Ảnh giao hàng"
                   ].map((h, i) => (
                     <th
                       key={i}
-                      className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 4 ? "text-right pr-8" : ""} ${i === 0 ? "text-center w-[50px]" : ""} ${ (activeTab !== "Hàng đặt" ? (i >= 7 && i < 9) : (i >= 6 && i < 8)) ? "text-center whitespace-nowrap" : ""}`}
+                      className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 4 ? "text-right pr-8" : ""} ${i === 0 ? "text-center w-[50px]" : ""} ${ (activeTab !== "Hàng khách đặt" ? (i >= 7 && i < 9) : (i >= 6 && i < 8)) ? "text-center whitespace-nowrap" : ""}`}
                       style={{ color: "var(--text-placeholder)" }}
                     >
                       {h}
@@ -738,13 +733,13 @@ export default function OwnerOrders() {
                           className="text-[13px] font-semibold"
                           style={{ color: "var(--text-main)" }}
                         >
-                          {o.customerName}
+                          {o.customerName || o.customer?.name || "—"}
                         </p>
                         <p
                           className="text-[11px]"
                           style={{ color: "var(--text-placeholder)" }}
                         >
-                          {o.phone}
+                          {o.phone || o.customer?.phone || "—"}
                         </p>
                       </td>
                       <td className="px-4 py-3">
@@ -781,11 +776,11 @@ export default function OwnerOrders() {
                               className="w-1.5 h-1.5 rounded-full mr-1.5"
                               style={{ backgroundColor: statusConfig.text }}
                             ></span>
-                            {o.status === "Đã nhập kho" && o.type === "Hàng đặt" ? "Đã nhập kho (Duyệt mộc)" : o.status}
+                            {o.status === "Đã nhập kho" && o.type === "Hàng khách đặt" ? "Đã nhập kho (Duyệt mộc)" : o.status}
                           </span>
                         </div>
                       </td>
-                      {activeTab !== "Hàng đặt" && (
+                      {activeTab !== "Hàng khách đặt" && (
                         <td className="px-4 py-3">
                           <span className="text-[12px] font-medium text-gray-500">
                             {o.fulfillmentType || "Chưa xác định"}
@@ -805,9 +800,9 @@ export default function OwnerOrders() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              toast.success("Đang mở ảnh bàn giao cho đơn " + o.code);
+                              setPreviewImage(o.deliveryImage);
                             }}
-                            className="w-10 h-10 rounded-lg overflow-hidden border border-green-200 hover:ring-2 ring-green-400 transition cursor-pointer mx-auto block"
+                            className="relative z-30 w-10 h-10 rounded-lg overflow-hidden border border-green-200 hover:ring-2 ring-green-400 transition cursor-pointer ml-auto mr-4 block"
                           >
                             <img src={o.deliveryImage} alt="delivery" className="w-full h-full object-cover" />
                           </button>
@@ -816,7 +811,7 @@ export default function OwnerOrders() {
                         )}
 
                         {/* ===================== HOVER ACTIONS AREA ===================== */}
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-300 translate-x-4 group-hover:translate-x-0 z-20">
+                        <div className="absolute inset-y-0 right-36 flex items-center pr-4 pointer-events-none opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-300 translate-x-4 group-hover:translate-x-0 z-20">
                           <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200 shadow-2xl shadow-indigo-200/50">
                             
                             {/* OWNER ACTIONS - CONTEXTUAL BY TYPE & STATUS */}
@@ -876,8 +871,8 @@ export default function OwnerOrders() {
 
 
 
-                                {/* HÀNG ĐẶT: Đã nhập kho -> Đang gia công */}
-                                {o.status === "Đã nhập kho" && o.type === "Hàng đặt" && (
+                                {/* Hàng khách đặt: Đã nhập kho -> Đang gia công */}
+                                {o.status === "Đã nhập kho" && o.type === "Hàng khách đặt" && (
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -892,7 +887,7 @@ export default function OwnerOrders() {
                                 )}
 
                                 {/* Hàng mộc VÀ ĐẶT: Đang gia công -> Chờ giao hàng */}
-                                {o.status === "Đang gia công" && (o.type === "Hàng mộc" || o.type === "Hàng đặt") && (
+                                {o.status === "Đang gia công" && (o.type === "Hàng mộc" || o.type === "Hàng khách đặt") && (
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -952,7 +947,7 @@ export default function OwnerOrders() {
                 })}
                 {paginatedOrders.length === 0 && (
                   <tr>
-                    <td colSpan={activeTab === "Hàng đặt" ? 8 : 9} className="py-24 text-center">
+                    <td colSpan={activeTab === "Hàng khách đặt" ? 8 : 9} className="py-24 text-center">
                       <div
                         className="flex flex-col items-center gap-2"
                         style={{ color: "var(--text-placeholder)" }}
@@ -1213,6 +1208,52 @@ export default function OwnerOrders() {
                 XÁC NHẬN HOÀN TẤT & LƯU LẠI
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL XEM ẢNH PHÓNG TO */}
+      {previewImage && (
+        <div 
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div className="relative max-w-5xl w-full h-full flex items-center justify-center">
+            <button 
+              onClick={() => setPreviewImage(null)}
+              className="absolute top-0 right-0 m-4 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-[210]"
+            >
+              <X size={24} />
+            </button>
+            <img 
+              src={previewImage} 
+              alt="Preview" 
+              className="max-w-full max-h-full object-contain rounded-xl shadow-2xl animate-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* MODAL XEM ẢNH PHÓNG TO */}
+      {previewImage && (
+        <div 
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div className="relative max-w-5xl w-full h-full flex items-center justify-center">
+            <button 
+              onClick={() => setPreviewImage(null)}
+              className="absolute top-0 right-0 m-4 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-[210]"
+            >
+              <X size={24} />
+            </button>
+            <img 
+              src={previewImage} 
+              alt="Preview" 
+              className="max-w-full max-h-full object-contain rounded-xl shadow-2xl animate-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            />
           </div>
         </div>
       )}
