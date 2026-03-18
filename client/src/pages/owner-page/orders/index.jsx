@@ -21,6 +21,7 @@ import {
   DollarSign,
   CreditCard,
   Wallet,
+  Ban,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import toast from "react-hot-toast";
@@ -30,40 +31,52 @@ const INITIAL_ORDERS = [
   // ========== NHÓM 1: HÀNG SẴN (6 trạng thái) ==========
   {
     id: "DH-S01", code: "DH-SAN-001", customerName: "Nguyễn Văn Hùng", phone: "0912345678",
-    type: "Hàng sẵn", total: 12500000, status: "Chờ xử lý",
+    type: "Hàng sẵn", total: 18500000, status: "Chờ xử lý",
     date: "2026-03-12T08:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-14",
     deposit: 2000000, fulfillmentType: "Giao hàng"
   },
   {
     id: "DH-S02", code: "DH-SAN-002", customerName: "Lê Thị Lan", phone: "0345678901",
-    type: "Hàng sẵn", total: 3500000, status: "Chờ giao hàng",
+    type: "Hàng sẵn", total: 5200000, status: "Chờ giao hàng",
     date: "2026-03-11T14:20:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-12",
-    deposit: 3500000, fulfillmentType: "Giao hàng"
+    deposit: 5200000, fulfillmentType: "Lấy ngay"
   },
   {
     id: "DH-S03", code: "DH-SAN-003", customerName: "Trần Minh Quang", phone: "0909123456",
-    type: "Hàng sẵn", total: 45000000, status: "Đang giao hàng",
+    type: "Hàng sẵn", total: 12800000, status: "Đang giao hàng",
     date: "2026-03-10T09:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-11",
-    deposit: 15000000, fulfillmentType: "Giao hàng"
+    deposit: 5000000, fulfillmentType: "Giao hàng"
   },
   {
     id: "DH-S04", code: "DH-SAN-004", customerName: "Phạm Thành Nam", phone: "0987654321",
-    type: "Hàng sẵn", total: 8900000, status: "Hoàn thành",
+    type: "Hàng sẵn", total: 45000000, status: "Hoàn thành",
     date: "2026-03-09T16:45:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-10",
-    deposit: 8900000, fulfillmentType: "Giao hàng",
+    deposit: 45000000, fulfillmentType: "Giao hàng",
     deliveryImage: "https://images.unsplash.com/photo-1595246140625-573b715d11dc?auto=format&fit=crop&q=80&w=400"
   },
   {
     id: "DH-S05", code: "DH-SAN-005", customerName: "Hoàng Văn Thái", phone: "0912000111",
     type: "Hàng sẵn", total: 4200000, status: "Chờ duyệt hủy",
     date: "2026-03-13T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-15",
-    deposit: 1000000, cancelReason: "Khách đổi ý không muốn mua nữa", fulfillmentType: "Giao hàng"
+    deposit: 1000000, cancelReason: "Khách đổi ý muốn chuyển sang mẫu khác lớn hơn", fulfillmentType: "Giao hàng"
   },
   {
     id: "DH-S06", code: "DH-SAN-006", customerName: "Võ Thị Bảy", phone: "0966778899",
     type: "Hàng sẵn", total: 1500000, status: "Đơn đã hủy",
     date: "2026-03-08T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-09",
-    deposit: 0, fulfillmentType: "Lấy ngay tại cửa hàng"
+    deposit: 1500000, fulfillmentType: "Lấy ngay tại cửa hàng", depositResolution: "refunded"
+  },
+  {
+    id: "DH-S07", code: "DH-SAN-007", customerName: "Trịnh Thăng Bình", phone: "0945123789",
+    type: "Hàng sẵn", total: 15200000, status: "Chờ giao hàng",
+    date: "2026-03-14T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-16",
+    deposit: 5000000, fulfillmentType: "Giao hàng"
+  },
+  {
+    id: "DH-S08", code: "DH-SAN-008", customerName: "Nguyễn Cao Kỳ Duyên", phone: "0933998877",
+    type: "Hàng sẵn", total: 6800000, status: "Chờ duyệt hủy",
+    date: "2026-03-15T08:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-17",
+    deposit: 2000000, cancelReason: "Khách tìm được mẫu khác phù hợp hơn với không gian", fulfillmentType: "Giao hàng"
   },
 
   // ========== NHÓM 2: HÀNG MỘC (7 trạng thái) ==========
@@ -75,7 +88,7 @@ const INITIAL_ORDERS = [
   },
   {
     id: "DH-T02", code: "DH-THO-002", customerName: "Đặng Tuấn Kiệt", phone: "0931234567",
-    type: "Hàng mộc", total: 8200000, status: "Đang sản xuất",
+    type: "Hàng mộc", total: 8200000, status: "Đang gia công",
     date: "2026-03-11T15:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-15",
     deposit: 2000000, fulfillmentType: "Giao hàng"
   },
@@ -176,7 +189,7 @@ const HANG_SAN_STATUSES = [
 
 const HANG_THO_STATUSES = [
   "Chờ xử lý",
-  "Đang sản xuất",
+  "Đang gia công",
   "Chờ giao hàng",
   "Đang giao hàng",
   "Hoàn thành",
@@ -261,7 +274,9 @@ export default function OwnerOrders() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState(() => {
     const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
-    return [...saved, ...INITIAL_ORDERS];
+    // Lọc bỏ những đơn trong INITIAL_ORDERS đã có trong saved để tránh trùng lặp
+    const uniqueInitial = INITIAL_ORDERS.filter(io => !saved.find(so => so.id === io.id || so.code === io.code));
+    return [...saved, ...uniqueInitial];
   });
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -722,8 +737,8 @@ export default function OwnerOrders() {
                       </td>
                       <td className="px-4 py-3 text-right pr-8">
                         <p
-                          className="text-[13px] font-bold"
-                          style={{ color: "var(--text-main)" }}
+                          className={`text-[13px] font-bold ${o.status === "Đơn đã hủy" ? "text-gray-400 line-through" : ""}`}
+                          style={{ color: o.status === "Đơn đã hủy" ? undefined : "var(--text-main)" }}
                         >
                           {formatCurrency(o.total)}
                         </p>
@@ -744,6 +759,11 @@ export default function OwnerOrders() {
                             ></span>
                             {o.status === "Đã nhập kho" && o.type === "Hàng khách đặt" ? "Đã nhập kho (Duyệt mộc)" : o.status}
                           </span>
+                          {o.status === "Đơn đã hủy" && o.depositResolution && (
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border self-start ${o.depositResolution === 'refunded' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                              {o.depositResolution === 'refunded' ? "ĐÃ HOÀN CỌC" : "THU CỌC (BỒI THƯỜNG)"}
+                            </span>
+                          )}
                         </div>
                       </td>
                       {activeTab !== "Hàng khách đặt" && (
@@ -784,24 +804,75 @@ export default function OwnerOrders() {
                             
                             {/* HOÀN TOÀN CHUNG */}
                             {o.status === "Chờ duyệt hủy" && (
-                              <>
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); toast.success("Đã duyệt hủy đơn hàng."); }}
-                                  className="h-8 px-3 rounded-xl bg-red-500 text-white text-[10px] font-black uppercase tracking-wider hover:bg-red-600 transition-all shadow-lg shadow-red-100 flex items-center gap-2 active:scale-95"
-                                >
-                                  <XCircle size={14} /> DUYỆT HỦY
-                                </button>
+                              <div className="flex items-center gap-2">
+                                {o.type === "Hàng sẵn" ? (
+                                  <>
+                                    <button
+                                      onClick={(e) => { 
+                                        e.stopPropagation(); 
+                                        if(window.confirm("Duyệt hủy đơn và HOÀN TRẢ TIỀN CỌC?")) {
+                                          handleUpdateStatus(o.id, "Đơn đã hủy");
+                                          // Cập nhật resolution vào localStorage
+                                          const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
+                                          const updated = saved.map(order => 
+                                            (order.id === o.id) ? { ...order, status: "Đơn đã hủy", depositResolution: "refunded" } : order
+                                          );
+                                          localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
+                                          setOrders(updated);
+                                        }
+                                      }}
+                                      className="h-8 px-3 rounded-xl bg-red-500 text-white text-[10px] font-black uppercase tracking-wider hover:bg-red-600 transition-all shadow-lg shadow-red-100 flex items-center gap-2 active:scale-95"
+                                    >
+                                      <XCircle size={14} /> HOÀN CỌC
+                                    </button>
+                                    <button
+                                      onClick={(e) => { 
+                                        e.stopPropagation(); 
+                                        if(window.confirm("Duyệt hủy đơn và THU HỒI TIỀN CỌC?")) {
+                                          handleUpdateStatus(o.id, "Đơn đã hủy");
+                                          const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
+                                          const updated = saved.map(order => 
+                                            (order.id === o.id) ? { ...order, status: "Đơn đã hủy", depositResolution: "forfeited" } : order
+                                          );
+                                          localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
+                                          setOrders(updated);
+                                        }
+                                      }}
+                                      className="h-8 px-3 rounded-xl bg-amber-700 text-white text-[10px] font-black uppercase tracking-wider hover:bg-amber-800 transition-all shadow-lg shadow-amber-100 flex items-center gap-2 active:scale-95"
+                                    >
+                                      <Ban size={14} /> THU CỌC
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button
+                                    onClick={(e) => { 
+                                      e.stopPropagation(); 
+                                      if(window.confirm("Xác nhận hủy đơn: Khách MẤT CỌC do đã triển khai sản xuất?")) {
+                                        handleUpdateStatus(o.id, "Đơn đã hủy");
+                                        const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
+                                        const updated = saved.map(order => 
+                                          (order.id === o.id) ? { ...order, status: "Đơn đã hủy", depositResolution: "forfeited" } : order
+                                        );
+                                        localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
+                                        setOrders(updated);
+                                      }
+                                    }}
+                                    className="h-8 px-3 rounded-xl bg-red-600 text-white text-[10px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-red-100 flex items-center gap-2 active:scale-95"
+                                  >
+                                    <XCircle size={14} /> DUYỆT HỦY (THU CỌC)
+                                  </button>
+                                )}
                                 <button
                                   onClick={(e) => { 
                                     e.stopPropagation(); 
-                                    const restoreStatus = o.type === "Hàng sẵn" ? "Chờ giao hàng" : (o.type === "Hàng mộc" ? "Đang sản xuất" : "Đang gia công");
+                                    const restoreStatus = o.type === "Hàng sẵn" ? "Chờ giao hàng" : "Đang gia công";
                                     handleUpdateStatus(o.id, restoreStatus);
                                   }}
                                   className="h-8 px-3 rounded-xl bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-wider hover:bg-slate-200 transition-all active:scale-95"
                                 >
                                   TỪ CHỐI
                                 </button>
-                              </>
+                              </div>
                             )}
 
                             {/* FLOW THEO LOẠI HÀNG */}
@@ -1205,28 +1276,6 @@ export default function OwnerOrders() {
         </div>
       )}
 
-      {/* MODAL XEM ẢNH PHÓNG TO */}
-      {previewImage && (
-        <div 
-          className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md animate-in fade-in duration-200"
-          onClick={() => setPreviewImage(null)}
-        >
-          <div className="relative max-w-5xl w-full h-full flex items-center justify-center">
-            <button 
-              onClick={() => setPreviewImage(null)}
-              className="absolute top-0 right-0 m-4 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-[210]"
-            >
-              <X size={24} />
-            </button>
-            <img 
-              src={previewImage} 
-              alt="Preview" 
-              className="max-w-full max-h-full object-contain rounded-xl shadow-2xl animate-in zoom-in-95 duration-200"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
-        </div>
-      )}
     </>
   );
 }
