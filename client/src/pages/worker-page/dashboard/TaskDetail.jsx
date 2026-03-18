@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -23,15 +24,19 @@ import {
   ChevronLeft,
   ZoomIn,
   Palette,
+  Calendar,
+  Settings,
+  X,
 } from "lucide-react";
-import { updateMockTaskStatus, getTaskById } from "../mock";
+import { updateMockTaskStatus, getTaskById, updateTaskFinishedImage, updateTaskDeadline } from "../mock";
 
 /* ─── Production Steps ─── */
 const STEPS = [
   { id: 1, key: "WAITING", label: "Tiếp nhận", icon: PackageCheck },
-  { id: 2, key: "SANDING", label: "Đánh giấy ráp", icon: Play },
+  { id: 2, key: "SANDING", label: "Đánh giấy giáp", icon: Play },
   { id: 3, key: "PAINTING", label: "Phun sơn", icon: Play },
-  { id: 4, key: "QC_PENDING", label: "Hoàn thiện", icon: CheckCircle2 },
+  { id: 4, key: "OWNER_PENDING", label: "Chờ chủ duyệt", icon: AlertCircle },
+  { id: 5, key: "QC_PENDING", label: "Hoàn thiện", icon: CheckCircle2 },
 ];
 
 const getStepIndex = (status) => {
@@ -42,12 +47,14 @@ const getStepIndex = (status) => {
       return 1;
     case "PAINTING":
       return 2;
-    case "QC_PENDING":
+    case "OWNER_PENDING":
       return 3;
+    case "QC_PENDING":
+      return 4;
     case "REWORK":
       return 1;
     case "COMPLETED":
-      return 4;
+      return 5;
     default:
       return 0;
   }
@@ -63,16 +70,22 @@ const getStatusBadge = (status) => {
       border: "var(--grid-border)",
     },
     SANDING: {
-      label: "Đang chà nhám",
+      label: "Đang đánh giấy giáp",
       bg: "rgba(33,164,244,0.08)",
       color: "#1a8fd4",
       border: "rgba(33,164,244,0.2)",
     },
     PAINTING: {
-      label: "Đang sơn/phủ",
+      label: "Đang phun sơn",
       bg: "rgba(67,104,224,0.08)",
       color: "#4368E0",
       border: "rgba(67,104,224,0.2)",
+    },
+    OWNER_PENDING: {
+      label: "Chờ chủ duyệt",
+      bg: "rgba(245,158,11,0.08)",
+      color: "#d97706",
+      border: "rgba(245,158,11,0.2)",
     },
     QC_PENDING: {
       label: "Chờ QC duyệt",
@@ -96,13 +109,51 @@ const getStatusBadge = (status) => {
   return map[status] || map.WAITING;
 };
 
+const getDeadlineStyle = (urgency) => {
+  switch (urgency) {
+    case "DANGER":
+      return {
+        bg: "rgba(229,72,77,0.08)",
+        color: "#e5484d",
+        border: "rgba(229,72,77,0.2)",
+        label: "Quá hạn",
+      };
+    case "URGENT":
+      return {
+        bg: "rgba(245,158,11,0.08)",
+        color: "#d97706",
+        border: "rgba(245,158,11,0.2)",
+        label: "Gấp",
+      };
+    case "WARNING":
+      return {
+        bg: "rgba(67,104,224,0.08)",
+        color: "#4368E0",
+        border: "rgba(67,104,224,0.2)",
+        label: "Sắp tới hạn",
+      };
+    default:
+      return {
+        bg: "rgba(158,158,158,0.1)",
+        color: "var(--text-secondary)",
+        border: "var(--grid-border)",
+        label: "Bình thường",
+      };
+  }
+};
+
 export default function TaskDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [selectedTask, setSelectedTask] = useState(null);
-
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [finishedImage, setFinishedImage] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [showDeadlineModal, setShowDeadlineModal] = useState(false);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [isStartingProduction, setIsStartingProduction] = useState(false);
+  const [zoomImage, setZoomImage] = useState(null);
 
   useEffect(() => {
     const task = getTaskById(id);
@@ -114,12 +165,76 @@ export default function TaskDetail() {
   }, [id, navigate]);
 
   const updateTaskStatus = (taskId, newStatus) => {
-    updateMockTaskStatus(taskId, newStatus);
+    updateMockTaskStatus(taskId, newStatus, finishedImage);
     // Re-read the task from mock to pick up any changes (e.g. startedAt)
     const updated = getTaskById(taskId);
     setSelectedTask(updated);
+    setFinishedImage(null);
+  };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setIsUploading(true);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFinishedImage(reader.result);
+        setIsUploading(false);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUpdateImage = () => {
+    if (!finishedImage) return;
+    setIsUploading(true);
+    setTimeout(() => {
+      updateTaskFinishedImage(selectedTask.id, finishedImage);
+      const updated = getTaskById(selectedTask.id);
+      setSelectedTask(updated);
+      setFinishedImage(null);
+      setIsUploading(false);
+      toast.success("Đã cập nhật ảnh sản phẩm!");
+    }, 1000);
+  };
+
+  const handleSetDeadline = () => {
+    if (!selectedDate) {
+      toast.error("Vui lòng chọn ngày kết thúc");
+      return;
+    }
+
+    const targetDate = new Date(selectedDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Difference in days
+    const diffTime = targetDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      toast.error("Vui lòng chọn ngày trong tương lai");
+      return;
+    }
+
+    const dateStr = `${targetDate.getDate().toString().padStart(2, "0")}/${(targetDate.getMonth() + 1).toString().padStart(2, "0")}/${targetDate.getFullYear()}`;
+    
+    let urgency = "NORMAL";
+    if (diffDays <= 1) urgency = "URGENT";
+    else if (diffDays <= 3) urgency = "WARNING";
+
+    updateTaskDeadline(selectedTask.id, dateStr, urgency);
+
+    if (isStartingProduction) {
+      updateMockTaskStatus(selectedTask.id, "SANDING");
+      setIsStartingProduction(false);
+    }
+
+    const updated = getTaskById(selectedTask.id);
     setSelectedTask(updated);
+    setShowDeadlineModal(false);
+    setSelectedDate("");
+    toast.success(isStartingProduction ? `Đã bắt đầu & thiết lập hạn chót: ${dateStr}` : `Đã cập nhật hạn chót: ${dateStr}`);
   };
 
   if (!selectedTask) return null;
@@ -133,7 +248,10 @@ export default function TaskDetail() {
     if (selectedTask.status === "WAITING" || selectedTask.status === "REWORK") {
       return (
         <button
-          onClick={() => updateTaskStatus(selectedTask.id, "SANDING")}
+          onClick={() => {
+            setIsStartingProduction(true);
+            setShowDeadlineModal(true);
+          }}
           className="h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
           style={{
             background: "var(--brand-primary)",
@@ -153,26 +271,83 @@ export default function TaskDetail() {
       selectedTask.status === "SANDING" ||
       selectedTask.status === "PAINTING"
     ) {
+      const isPainting = selectedTask.status === "PAINTING";
+      const canFinish = !isPainting || finishedImage;
+
       return (
-        <button
-          onClick={() =>
-            updateTaskStatus(
-              selectedTask.id,
-              selectedTask.status === "SANDING" ? "PAINTING" : "COMPLETED",
-            )
-          }
-          className="h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
-          style={{
-            background: "var(--status-success)",
-            color: "#fff",
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.filter = "brightness(1.1)")
-          }
-          onMouseLeave={(e) => (e.currentTarget.style.filter = "none")}
-        >
-          <CheckCircle2 size={15} /> Xác nhận hoàn thành công đoạn
-        </button>
+        <div className="flex flex-col gap-4 items-end">
+          {isPainting && (
+            <div className="w-full max-w-sm">
+              <label className="block text-[12px] font-bold text-gray-500 mb-2 uppercase tracking-wider">
+                Ảnh sản phẩm hoàn thiện <span className="text-red-500">*</span>
+              </label>
+              <div className="relative group">
+                <label
+                  className={`w-full h-32 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${
+                    finishedImage
+                      ? "border-emerald-500 bg-emerald-50"
+                      : "border-gray-200 bg-gray-50 hover:bg-gray-100"
+                  }`}
+                >
+                  {finishedImage ? (
+                    <div className="flex items-center gap-4 px-4 w-full">
+                      <img
+                        src={finishedImage}
+                        className="w-24 h-24 rounded-xl object-cover border border-emerald-200 shadow-md"
+                        alt="Preview"
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-emerald-700 font-bold text-[13px]">
+                          Ảnh đã chọn
+                        </span>
+                        <span className="text-[11px] text-gray-400 font-medium">
+                          Nhấp để thay đổi
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm mb-2 group-hover:scale-110 transition-transform">
+                        <Camera size={20} className="text-gray-400" />
+                      </div>
+                      <span className="text-gray-400 text-[11px] font-bold uppercase tracking-wider">
+                        Chụp hoặc tải ảnh lên
+                      </span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+                </label>
+              </div>
+            </div>
+          )}
+          <button
+            onClick={() => {
+              if (isPainting && !finishedImage) {
+                toast.error("Vui lòng tải ảnh sản phẩm hoàn thiện!");
+                return;
+              }
+              updateTaskStatus(
+                selectedTask.id,
+                selectedTask.status === "SANDING" ? "PAINTING" : "OWNER_PENDING",
+              );
+            }}
+            disabled={isUploading || (isPainting && !finishedImage)}
+            className={`h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 ${
+              isUploading || (isPainting && !finishedImage)
+                ? "opacity-50 cursor-not-allowed bg-gray-400"
+                : "cursor-pointer bg-emerald-600 hover:bg-emerald-700"
+            }`}
+            style={{ color: "#fff" }}
+          >
+            <CheckCircle2 size={15} /> 
+            {isPainting ? "Xác nhận gửi chủ duyệt" : "Hoàn thành đánh giấy ráp"}
+          </button>
+        </div>
       );
     }
 
@@ -187,8 +362,80 @@ export default function TaskDetail() {
             border: "1px solid rgba(255,153,0,0.2)",
           }}
         >
-          <Clock size={15} /> Đang chờ QC duyệt
+          <Clock size={15} />
+          Đang chờ QC duyệt
         </button>
+      );
+    }
+
+    if (selectedTask.status === "OWNER_PENDING") {
+      const currentDisplayImage = finishedImage || selectedTask.finishedImage;
+
+      return (
+        <div className="flex flex-col gap-4 items-end">
+          <div className="w-full max-w-sm">
+            <label className="block text-[12px] font-bold text-gray-500 mb-2 uppercase tracking-wider">
+              {finishedImage ? "Ảnh mới chọn" : "Ảnh đã gửi cho chủ duyệt"}
+            </label>
+            <div className="relative group">
+              <label className="w-full h-32 rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/30 flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-amber-50">
+                <div className="flex items-center gap-4 px-4 w-full">
+                  <img
+                    src={currentDisplayImage}
+                    className="w-24 h-24 rounded-xl object-cover border border-amber-200 shadow-md"
+                    alt="Preview"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-amber-700 font-bold text-[13px]">
+                      {finishedImage ? "Ảnh mới (Chưa lưu)" : "Ảnh đã gửi"}
+                    </span>
+                    <span className="text-[11px] text-gray-400 font-medium">
+                      Nhấp để thay đổi ảnh khác
+                    </span>
+                  </div>
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+              </label>
+            </div>
+          </div>
+          
+          <div className="flex gap-3">
+            {finishedImage && (
+              <button
+                onClick={() => setFinishedImage(null)}
+                className="h-11 px-6 rounded-xl font-semibold text-[14px] border border-gray-200 text-gray-500 hover:bg-gray-50 transition-all cursor-pointer"
+              >
+                Hủy thay đổi
+              </button>
+            )}
+            <button
+              onClick={finishedImage ? handleUpdateImage : null}
+              disabled={isUploading || !finishedImage}
+              className={`h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 ${
+                !finishedImage
+                  ? "opacity-50 cursor-not-allowed bg-amber-100/50 text-amber-600 border border-amber-200"
+                  : "cursor-pointer bg-amber-600 hover:bg-amber-700 text-white shadow-amber-200"
+              }`}
+            >
+              {finishedImage ? (
+                <>
+                  <CheckCircle2 size={15} /> 
+                  Cập nhật ảnh đã gửi
+                </>
+              ) : (
+                <>
+                  <AlertCircle size={15} /> 
+                  Đang chờ chủ duyệt
+                </>
+              )}
+            </button>
+          </div>
+        </div>
       );
     }
 
@@ -240,10 +487,8 @@ export default function TaskDetail() {
   /* ─── Mock images array ─── */
   const productImages = [
     selectedTask.image,
-    selectedTask.image,
-    selectedTask.image,
-    selectedTask.image,
-  ];
+    selectedTask.finishedImage,
+  ].filter(Boolean);
 
   return (
     <div
@@ -254,7 +499,7 @@ export default function TaskDetail() {
         {/* ═══════════ BREADCRUMB ═══════════ */}
         <div className="flex items-center gap-2 text-[13px]">
           <button
-            onClick={() => navigate("/worker/dashboard")}
+            onClick={() => navigate(-1)}
             className="flex items-center gap-1.5 font-medium transition-colors cursor-pointer"
             style={{ color: "var(--text-secondary)" }}
             onMouseEnter={(e) =>
@@ -288,24 +533,23 @@ export default function TaskDetail() {
             {/* Left: Product title & badges */}
             <div className="flex flex-col gap-3">
               <div className="flex flex-wrap items-center gap-2.5">
-                <span
-                  className="px-2.5 py-1 rounded-lg text-[11px] font-bold"
-                  style={{
-                    background: selectedTask.isCustomOrder
-                      ? "rgba(67,104,224,0.08)"
-                      : "var(--bg-main)",
-                    color: selectedTask.isCustomOrder
-                      ? "#4368E0"
-                      : "var(--text-secondary)",
-                    border: `1px solid ${
-                      selectedTask.isCustomOrder
-                        ? "rgba(67,104,224,0.15)"
-                        : "var(--grid-border)"
-                    }`,
-                  }}
-                >
-                  {selectedTask.isCustomOrder ? "🎯 Đặt riêng" : "📦 Hàng kho"}
-                </span>
+                {selectedTask.status !== "WAITING" && selectedTask.status !== "REWORK" && (
+                  <button
+                    onClick={() => {
+                      setIsStartingProduction(false);
+                      setShowDeadlineModal(true);
+                    }}
+                    className="px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                    style={{
+                      background: "rgba(16,185,129,0.08)",
+                      color: "#10b981",
+                      border: "1px solid rgba(16,185,129,0.2)",
+                    }}
+                  >
+                    <Calendar size={12} />
+                    {selectedTask.deadline ? "Đổi hạn chót" : "Đặt hạn chót"}
+                  </button>
+                )}
                 <span
                   className="px-2.5 py-1 rounded-lg text-[11px] font-bold"
                   style={{
@@ -381,13 +625,15 @@ export default function TaskDetail() {
                   {currentStepIndex}/{STEPS.length} bước
                 </span>
                 {selectedTask.deadline && (
-                  <span
-                    className="text-[11px] font-semibold mt-0.5 flex items-center gap-1"
-                    style={{ color: "var(--status-error)" }}
-                  >
-                    <Clock size={11} />
-                    {selectedTask.deadline}
-                  </span>
+                  <div className="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-gray-100">
+                    <Clock size={12} className="text-gray-400" />
+                    <span 
+                      className="text-[14px] font-bold"
+                      style={{ color: "var(--text-main)" }}
+                    >
+                      Hạn chót: {selectedTask.deadline}
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
@@ -446,48 +692,51 @@ export default function TaskDetail() {
                     </h3>
                   </div>
                   {/* Main Image */}
-                  <div
-                    className="aspect-[4/3] rounded-xl overflow-hidden relative group cursor-zoom-in"
-                    style={{
-                      background: "var(--bg-main)",
-                      border: "1px solid var(--grid-border)",
-                    }}
-                  >
-                    <img
-                      src={productImages[activeImageIndex]}
-                      alt="Main preview"
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center">
-                      <ZoomIn
-                        size={28}
-                        className="text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow-lg"
+                    <div
+                      className="aspect-[4/3] rounded-xl overflow-hidden relative group cursor-zoom-in"
+                      style={{
+                        background: "var(--bg-main)",
+                        border: "1px solid var(--grid-border)",
+                      }}
+                      onClick={() => setZoomImage(productImages[activeImageIndex])}
+                    >
+                      <img
+                        src={productImages[activeImageIndex]}
+                        alt="Main preview"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                       />
-                    </div>
-                  </div>
-                  {/* Thumbnail strip */}
-                  <div className="flex gap-2">
-                    {productImages.map((img, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setActiveImageIndex(i)}
-                        className="w-16 h-12 rounded-lg overflow-hidden cursor-pointer transition-all"
-                        style={{
-                          border:
-                            activeImageIndex === i
-                              ? "2px solid var(--brand-primary)"
-                              : "2px solid var(--grid-border)",
-                          opacity: activeImageIndex === i ? 1 : 0.6,
-                        }}
-                      >
-                        <img
-                          src={img}
-                          alt={`Thumb ${i + 1}`}
-                          className="w-full h-full object-cover"
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center">
+                        <ZoomIn
+                          size={28}
+                          className="text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow-lg"
                         />
-                      </button>
-                    ))}
-                  </div>
+                      </div>
+                    </div>
+                  {/* Thumbnail strip */}
+                  {productImages.length > 1 && (
+                    <div className="flex gap-2">
+                      {productImages.map((img, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setActiveImageIndex(i)}
+                          className="w-16 h-12 rounded-lg overflow-hidden cursor-pointer transition-all"
+                          style={{
+                            border:
+                              activeImageIndex === i
+                                ? "2px solid var(--brand-primary)"
+                                : "2px solid var(--grid-border)",
+                            opacity: activeImageIndex === i ? 1 : 0.6,
+                          }}
+                        >
+                          <img
+                            src={img}
+                            alt={`Thumb ${i + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : (
                 /* ── Custom Order Blueprint ── */
@@ -574,6 +823,51 @@ export default function TaskDetail() {
                   </div>
                 </div>
               )}
+
+              {/* Customer Provided Images */}
+              {selectedTask.customerImages && selectedTask.customerImages.length > 0 && (
+                <div
+                  className="p-5 flex flex-col gap-4"
+                  style={{ borderTop: "1px solid var(--grid-border)" }}
+                >
+                  <div className="flex items-center justify-between pb-1">
+                    <div className="flex items-center gap-2">
+                      <Camera size={15} className="text-blue-500" />
+                      <h3
+                        className="text-[13px] font-bold"
+                        style={{ color: "var(--text-main)" }}
+                      >
+                        Hình ảnh từ khách hàng
+                      </h3>
+                    </div>
+                    <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
+                      {selectedTask.customerImages.length} Ảnh
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedTask.customerImages.map((img, i) => (
+                      <div
+                        key={i}
+                        className="w-24 h-20 rounded-lg overflow-hidden border border-gray-100 cursor-zoom-in hover:shadow-md transition-shadow group relative shrink-0"
+                        style={{ background: "var(--bg-main)" }}
+                        onClick={() => setZoomImage(img)}
+                      >
+                        <img
+                          src={img}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          alt={`Customer ${i + 1}`}
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center">
+                          <ZoomIn
+                            size={16}
+                            className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Specs Card */}
@@ -618,7 +912,7 @@ export default function TaskDetail() {
                       className="text-[11px] font-semibold mb-0.5"
                       style={{ color: "var(--text-placeholder)" }}
                     >
-                      Vật liệu
+                      Loại
                     </p>
                     <p
                       className="text-[14px] font-bold"
@@ -653,7 +947,7 @@ export default function TaskDetail() {
                       Kích thước
                     </p>
                     <p
-                      className="text-[14px] font-bold"
+                      className="text-[14px] font-bold whitespace-nowrap"
                       style={{ color: "var(--text-main)" }}
                     >
                       {selectedTask.dimensions}
@@ -848,33 +1142,7 @@ export default function TaskDetail() {
                             </span>
                           </div>
 
-                          {/* QC Rework feedback */}
-                          {isCurrent &&
-                            selectedTask.status === "REWORK" &&
-                            step.key === "SANDING" &&
-                            selectedTask.qcFeedback && (
-                              <div
-                                className="mt-3 p-3.5 rounded-xl text-[13px] flex gap-2.5"
-                                style={{
-                                  background: "rgba(229,72,77,0.04)",
-                                  border: "1px solid rgba(229,72,77,0.12)",
-                                  color: "var(--status-error)",
-                                }}
-                              >
-                                <AlertCircle
-                                  className="shrink-0 mt-0.5"
-                                  size={14}
-                                />
-                                <div>
-                                  <span className="font-bold block mb-0.5">
-                                    Lỗi kiểm định QC:
-                                  </span>
-                                  <span style={{ color: "var(--text-main)" }}>
-                                    {selectedTask.qcFeedback}
-                                  </span>
-                                </div>
-                              </div>
-                            )}
+                     
                         </div>
                       </div>
                     );
@@ -895,6 +1163,96 @@ export default function TaskDetail() {
           </div>
         </div>
       </div>
+
+      {/* ═══════════ DEADLINE MODAL ═══════════ */}
+      {showDeadlineModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowDeadlineModal(false)}
+          />
+          <div className="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                  <Calendar size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900">Thiết lập hạn chót</h3>
+                  <p className="text-[12px] text-gray-500">Dành cho thợ cả / Quản lý</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[12px] font-bold text-gray-500 mb-2 uppercase tracking-wider">
+                    Chọn ngày kết thúc dự kiến
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      min={new Date().toLocaleDateString('en-CA')} // YYYY-MM-DD format
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="w-full h-12 px-4 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-semibold appearance-none"
+                    />
+                  </div>
+                </div>
+
+                {selectedDate && (
+                  <div className="p-3 rounded-xl bg-blue-50/50 border border-blue-100">
+                    <p className="text-[12px] text-blue-700 leading-relaxed font-medium">
+                      Hệ thống sẽ ghi nhận hạn chót là ngày <strong>{new Date(selectedDate).toLocaleDateString('vi-VN')}</strong>.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-4 bg-gray-50 border-t border-gray-100 flex gap-3">
+              <button
+                onClick={() => setShowDeadlineModal(false)}
+                className="flex-1 h-11 rounded-xl font-bold text-gray-500 hover:bg-gray-100 transition-all text-[14px]"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={handleSetDeadline}
+                className="flex-1 h-11 rounded-xl font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-sm shadow-emerald-200 text-[14px]"
+              >
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ═══════════ IMAGE ZOOM MODAL ═══════════ */}
+      {zoomImage && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 transition-all animate-in fade-in duration-200"
+          onClick={() => setZoomImage(null)}
+        >
+          <button 
+            className="absolute top-6 right-6 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              setZoomImage(null);
+            }}
+          >
+            <X size={24} />
+          </button>
+          <div 
+            className="relative max-w-5xl w-full h-full flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img 
+              src={zoomImage} 
+              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-300"
+              alt="Zoomed preview"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

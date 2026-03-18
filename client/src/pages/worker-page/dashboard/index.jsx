@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Search,
   Filter,
@@ -13,12 +13,34 @@ import { MOCK_TASKS, STATUS_CONFIG } from "../mock";
 
 export default function WorkerDashboard() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tasks, setTasks] = useState([]);
-  const [activeFilter, setActiveFilter] = useState("Tất cả");
-  const [searchTerm, setSearchTerm] = useState("");
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(15);
+  const activeFilter = searchParams.get("filter") || "Tất cả";
+  const searchTerm = searchParams.get("search") || "";
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
+  const itemsPerPage = parseInt(searchParams.get("perPage") || "15", 10);
+
+  const updateParams = (updates) => {
+    const newParams = new URLSearchParams(searchParams);
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value) {
+        newParams.set(key, value);
+      } else {
+        newParams.delete(key);
+      }
+    });
+    // Reset page to 1 if filters change
+    if (!updates.page && (updates.filter || updates.search)) {
+      newParams.set("page", "1");
+    }
+    setSearchParams(newParams);
+  };
+
+  const setActiveFilter = (f) => updateParams({ filter: f });
+  const setSearchTerm = (s) => updateParams({ search: s });
+  const setCurrentPage = (p) => updateParams({ page: p.toString() });
+  const setItemsPerPage = (sp) => updateParams({ perPage: sp.toString() });
 
   useEffect(() => {
     setTasks(MOCK_TASKS);
@@ -48,6 +70,12 @@ export default function WorkerDashboard() {
           color: "bg-orange-50 text-orange-600 cursor-default",
           disabled: true,
         };
+      case "OWNER_PENDING":
+        return {
+          label: "Chờ chủ duyệt",
+          color: "bg-amber-50 text-amber-600 cursor-default",
+          disabled: true,
+        };
       case "COMPLETED":
         return {
           label: "Đã hoàn thành",
@@ -62,13 +90,13 @@ export default function WorkerDashboard() {
     }
   };
 
-  const filters = ["Tất cả", "Đặt theo mẫu", "Hàng sẵn"];
+  const filters = ["Tất cả", "Hàng khách đặt", "Hàng mộc"];
 
   // Filter tasks
   const filteredTasks = tasks.filter((t) => {
     // Filter by order type
-    if (activeFilter === "Đặt theo mẫu" && !t.isCustomOrder) return false;
-    if (activeFilter === "Hàng sẵn" && t.isCustomOrder) return false;
+    if (activeFilter === "Hàng khách đặt" && !t.isCustomOrder) return false;
+    if (activeFilter === "Hàng mộc" && t.isCustomOrder) return false;
 
     // Filter by search term
     if (!searchTerm.trim()) return true;
@@ -80,10 +108,38 @@ export default function WorkerDashboard() {
     );
   });
 
-  // Reset page on search or filter change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, activeFilter]);
+  const getDeadlineStyle = (urgency) => {
+    switch (urgency) {
+      case "DANGER":
+        return {
+          bg: "rgba(229,72,77,0.08)",
+          color: "#e5484d",
+          border: "rgba(229,72,77,0.2)",
+          label: "Quá hạn",
+        };
+      case "URGENT":
+        return {
+          bg: "rgba(245,158,11,0.08)",
+          color: "#d97706",
+          border: "rgba(245,158,11,0.2)",
+          label: "Gấp",
+        };
+      case "WARNING":
+        return {
+          bg: "rgba(67,104,224,0.08)",
+          color: "#4368E0",
+          border: "rgba(67,104,224,0.2)",
+          label: "Sắp tới hạn",
+        };
+      default:
+        return {
+          bg: "rgba(158,158,158,0.1)",
+          color: "var(--text-secondary)",
+          border: "var(--grid-border)",
+          label: "Bình thường",
+        };
+    }
+  };
 
   const totalPages = Math.ceil(filteredTasks.length / itemsPerPage);
   const paginatedTasks = filteredTasks.slice(
@@ -193,7 +249,6 @@ export default function WorkerDashboard() {
                   "#",
                   "Sản phẩm",
                   "Mã ĐH",
-                  "Thông số",
                   "Trạng thái",
                   "Ngày bắt đầu",
                   "Hạn chót",
@@ -261,40 +316,15 @@ export default function WorkerDashboard() {
                       </div>
                     </td>
 
-                    {/* Origin / Order Code */}
                     <td className="px-4 py-3">
                       <p
-                        className="text-[12px] font-mono tracking-wide mb-0.5"
+                        className="text-[14px] font-bold font-mono tracking-wide"
                         style={{ color: "var(--text-main)" }}
                       >
                         {task.orderCode}
                       </p>
-                      <span
-                        className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold border ${
-                          task.isCustomOrder
-                            ? "bg-[var(--status-focus)] text-[var(--brand-primary)] border-[var(--status-focus)]"
-                            : "bg-gray-100 text-gray-500 border-gray-100"
-                        }`}
-                      >
-                        {task.isCustomOrder ? "Đặt riêng" : "Kho"}
-                      </span>
                     </td>
 
-                    {/* Specs */}
-                    <td className="px-4 py-3">
-                      <p
-                        className="text-[12px] font-medium"
-                        style={{ color: "var(--text-main)" }}
-                      >
-                        {task.woodType}
-                      </p>
-                      <p
-                        className="text-[11px]"
-                        style={{ color: "var(--text-secondary)" }}
-                      >
-                        {task.dimensions}
-                      </p>
-                    </td>
 
                     {/* Status */}
                     <td className="px-4 py-3">
@@ -302,7 +332,9 @@ export default function WorkerDashboard() {
                         className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-bold border ${
                           task.status === "QC_PENDING"
                             ? "bg-orange-50 text-orange-600 border-orange-100"
-                            : task.status === "REWORK"
+                            : task.status === "OWNER_PENDING"
+                              ? "bg-amber-50 text-amber-700 border-amber-100"
+                              : task.status === "REWORK"
                               ? "bg-red-50 text-red-600 border-red-100"
                               : task.status === "WAITING"
                                 ? "bg-gray-50 text-gray-600 border-gray-200"
@@ -335,10 +367,12 @@ export default function WorkerDashboard() {
                       )}
                     </td>
 
-                    {/* Deadline */}
                     <td className="px-4 py-3">
                       {task.deadline ? (
-                        <span className="text-[12px] font-bold text-red-600">
+                        <span
+                          className="text-[12px] font-semibold"
+                          style={{ color: "var(--text-main)" }}
+                        >
                           {task.deadline}
                         </span>
                       ) : (

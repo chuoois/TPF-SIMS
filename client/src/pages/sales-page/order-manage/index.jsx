@@ -386,6 +386,22 @@ export default function SalesOrderManage() {
     currentPage * itemsPerPage,
   );
 
+  const statusCounts = useMemo(() => {
+    const tabOrders = orders.filter((o) => o.type === activeTab);
+    const counts = { "Tất cả": tabOrders.length };
+
+    let tabStatuses = [];
+    if (activeTab === "Hàng sẵn") tabStatuses = HANG_SAN_STATUSES;
+    else if (activeTab === "Hàng mộc") tabStatuses = HANG_THO_STATUSES;
+    else if (activeTab === "Hàng khách đặt") tabStatuses = HANG_DAT_STATUSES;
+
+    tabStatuses.forEach((s) => {
+      counts[s] = tabOrders.filter((o) => o.status === s).length;
+    });
+
+    return counts;
+  }, [orders, activeTab]);
+
   // Handle cancel request submit
   const handleCancelSubmit = () => {
     if (!cancelTarget || !cancelReason.trim()) return;
@@ -496,6 +512,9 @@ export default function SalesOrderManage() {
                   />
                 )}
                 {s}
+                <span className="text-[10px] opacity-60 bg-black/5 px-1.5 rounded-md ml-0.5 font-black">
+                  {statusCounts[s] || 0}
+                </span>
               </button>
             );
           })}
