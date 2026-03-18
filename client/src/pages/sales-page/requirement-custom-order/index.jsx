@@ -569,7 +569,7 @@ export default function CustomOrderRequirementsPage() {
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1.5">
                   <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
-                    Dài (m)
+                    Dài (cm)
                   </label>
                   <input
                     type="number"
@@ -582,7 +582,7 @@ export default function CustomOrderRequirementsPage() {
                 </div>
                 <div className="space-y-1.5">
                   <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
-                    Rộng (m)
+                    Rộng (cm)
                   </label>
                   <input
                     type="number"
@@ -595,7 +595,7 @@ export default function CustomOrderRequirementsPage() {
                 </div>
                 <div className="space-y-1.5">
                   <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
-                    Cao (m)
+                    Cao (cm)
                   </label>
                   <input
                     type="number"

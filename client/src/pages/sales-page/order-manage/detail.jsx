@@ -25,7 +25,16 @@ import {
   ShieldCheck,
   XCircle,
   X,
+  User,
+  Info,
+  DollarSign,
+  Wallet,
+  FileText,
+  Calculator,
+  History,
+  Check,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 // ===================== MOCK DATA =====================
 // Đồng bộ keys với INITIAL_ORDERS bên index.jsx
@@ -506,78 +515,70 @@ const CustomerInfoCard = ({ o }) => (
   </div>
 );
 
-const HistoryCard = ({ o }) => (
-  <div
-    className="rounded-2xl overflow-hidden mt-4"
-    style={{
-      backgroundColor: "var(--background)",
-      boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-    }}
-  >
+const HistoryCard = ({ o }) => {
+  const historyData = o.history || o.timeline || [];
+
+  return (
     <div
-      className="px-5 py-3 flex items-center gap-2"
+      className="rounded-2xl overflow-hidden mt-4"
       style={{
-        borderBottom: "1px solid var(--grid-border)",
-        backgroundColor: "var(--grid-header-bg)",
+        backgroundColor: "var(--background)",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
       }}
     >
-      <Clock size={14} style={{ color: "var(--brand-primary)" }} />
-      <span
-        className="text-[12px] font-bold uppercase tracking-wider"
-        style={{ color: "var(--text-main)" }}
+      <div
+        className="px-5 py-3 flex items-center gap-2"
+        style={{
+          borderBottom: "1px solid var(--grid-border)",
+          backgroundColor: "var(--grid-header-bg)",
+        }}
       >
-        Lịch sử giao dịch
-      </span>
-    </div>
-    <div className="px-5 py-4">
-      {o.timeline.map((t, i) => {
-        const isLast = i === o.timeline.length - 1;
-        return (
-          <div key={i} className="flex gap-3">
-            <div className="flex flex-col items-center">
-              <div
-                className="w-2 h-2 rounded-full mt-1.5 shrink-0"
-                style={{
-                  backgroundColor: t.active
-                    ? "var(--brand-primary)"
-                    : "var(--grid-border)",
-                }}
-              />
-              {!isLast && (
+        <History size={14} style={{ color: "var(--brand-primary)" }} />
+        <span
+          className="text-[12px] font-bold uppercase tracking-wider"
+          style={{ color: "var(--text-main)" }}
+        >
+          Lịch sử đơn hàng
+        </span>
+      </div>
+      <div className="px-5 py-5">
+        <div className="relative space-y-6 before:absolute before:inset-0 before:ml-2.5 before:w-0.5 before:-translate-x-px before:bg-gradient-to-b before:from-gray-100 before:via-gray-100 before:to-transparent">
+          {historyData.length > 0 ? (
+            historyData.map((h, i) => (
+              <div key={i} className="relative flex items-start gap-4 group">
                 <div
-                  className="w-px flex-1 my-1"
-                  style={{ backgroundColor: "var(--grid-border)" }}
-                />
-              )}
+                  className="mt-1.5 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center shrink-0 shadow-sm z-10 transition-transform group-hover:scale-110"
+                  style={{ backgroundColor: h.active ? "var(--brand-primary)" : "#E2E8F0" }}
+                >
+                  <Check size={10} className="text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[13px] font-bold text-gray-800">
+                      {h.status || h.label}
+                    </p>
+                    <span className="text-[10px] font-medium text-gray-400 whitespace-nowrap">
+                      {h.time}
+                    </span>
+                  </div>
+                  <p className="text-[12px] text-gray-500 mt-0.5 leading-relaxed">
+                    {h.note || h.desc}
+                  </p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-[12px] text-gray-400 italic">
+                Chưa có lịch sử cập nhật
+              </p>
             </div>
-            <div className="pb-3.5 min-w-0">
-              <p
-                className="text-[12px] font-bold"
-                style={{
-                  color: t.active ? "var(--brand-primary)" : "var(--text-main)",
-                }}
-              >
-                {t.label}
-              </p>
-              <p
-                className="text-[10px]"
-                style={{ color: "var(--text-placeholder)" }}
-              >
-                {t.time}
-              </p>
-              <p
-                className="text-[11px] mt-0.5"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                {t.desc}
-              </p>
-            </div>
-          </div>
-        );
-      })}
+          )}
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const MediaGallery = ({ images }) => (
   <div
@@ -1232,28 +1233,37 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
 };
 
 // --- KIỂU HIỂN THỊ ĐƠN HÀNG THÔNG THƯỜNG ---
-const StandardOrderView = ({ o, displayTotal, hasPricing, remaining }) => {
+const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remaining }) => {
   return (
     <div className="flex-1 overflow-y-auto p-6 space-y-4">
       {/* ── BANNER ── */}
-      {o.status === "Chờ giao hàng" && (
+      {(o.status === "Chờ giao hàng" || o.status === "Chuẩn bị giao hàng") && (
         <div
-          className="flex items-start gap-3 p-4 rounded-2xl"
+          className="flex flex-col md:flex-row items-stretch md:items-start gap-4 p-5 rounded-2xl"
           style={{ backgroundColor: "#F0FDF4", border: "1px solid #BBF7D0" }}
         >
-          <CheckCircle
-            size={18}
-            className="shrink-0 mt-0.5"
-            style={{ color: "#166534" }}
-          />
-          <div>
-            <p className="text-[14px] font-bold" style={{ color: "#14532D" }}>
-              Sản phẩm đã sẵn sàng giao!
-            </p>
-            <p className="text-[13px] mt-0.5" style={{ color: "#15803D" }}>
-              Hàng hóa đã được hoàn thiện và đóng gói. Vui lòng sắp xếp lịch
-              trình để giao cho khách.
-            </p>
+          <div className="shrink-0 relative group cursor-pointer w-full md:w-40 h-32 md:h-auto object-cover rounded-xl overflow-hidden border-2 border-green-200 shadow-sm bg-white">
+            {o.finishedImage ? (
+              <img src={o.finishedImage} alt="Sản phẩm hoàn thiện" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-green-300">
+                <Camera size={24} />
+              </div>
+            )}
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+              <Eye size={20} className="text-white" />
+            </div>
+          </div>
+          <div className="flex-1 space-y-2">
+            <div className="flex items-start gap-2">
+              <CheckCircle size={18} className="shrink-0 mt-0.5" style={{ color: "#166534" }} />
+              <div>
+                <p className="text-[14px] font-bold" style={{ color: "#14532D" }}>Sản phẩm đã sẵn sàng giao!</p>
+                <p className="text-[13px] mt-0.5" style={{ color: "#15803D" }}>
+                  Hàng hóa đã được hoàn thiện và đóng gói. Vui lòng sắp xếp lịch trình và phương tiện để giao hàng cho khách.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -1263,18 +1273,11 @@ const StandardOrderView = ({ o, displayTotal, hasPricing, remaining }) => {
           className="flex items-start gap-3 p-4 rounded-2xl"
           style={{ backgroundColor: "#EFF6FF", border: "1px solid #BFDBFE" }}
         >
-          <Truck
-            size={18}
-            className="shrink-0 mt-0.5"
-            style={{ color: "#1D4ED8" }}
-          />
-          <div>
-            <p className="text-[13px] font-bold" style={{ color: "#1E40AF" }}>
-              Đơn hàng đang được giao
-            </p>
+          <Truck size={18} className="shrink-0 mt-0.5" style={{ color: "#1D4ED8" }} />
+          <div className="flex-1">
+            <p className="text-[13px] font-bold" style={{ color: "#1E40AF" }}>Đơn hàng đang được giao</p>
             <p className="text-[12px] mt-0.5" style={{ color: "#1D4ED8" }}>
-              Khách hàng đang nhận sản phẩm. Vui lòng theo dõi để cập nhật trạng
-              thái hoàn tất.
+              Khách hàng đang nhận sản phẩm. Nhân viên bán hàng vui lòng theo dõi tiến độ để cập nhật trạng thái hoàn tất sau khi nhận ảnh bàn giao.
             </p>
           </div>
         </div>
@@ -1285,17 +1288,24 @@ const StandardOrderView = ({ o, displayTotal, hasPricing, remaining }) => {
           className="flex items-start gap-3 p-4 rounded-2xl"
           style={{ backgroundColor: "#FEF3C7", border: "1px solid #FDE68A" }}
         >
-          <AlertTriangle
-            size={18}
-            className="shrink-0 mt-0.5"
-            style={{ color: "#D97706" }}
-          />
+          <AlertTriangle size={18} className="shrink-0 mt-0.5" style={{ color: "#D97706" }} />
           <div>
-            <p className="text-[13px] font-bold" style={{ color: "#92400E" }}>
-              Yêu cầu hủy đơn hàng
-            </p>
-            <p className="text-[12px] mt-0.5" style={{ color: "#A16207" }}>
-              Lý do: {o.cancelReason}
+            <p className="text-[13px] font-bold" style={{ color: "#92400E" }}>Yêu cầu hủy đơn hàng</p>
+            <p className="text-[12px] mt-0.5" style={{ color: "#A16207" }}>Lý do: {o.cancelReason}</p>
+          </div>
+        </div>
+      )}
+
+      {o.status === "Hoàn thành" && (
+        <div
+          className="flex items-start gap-3 p-4 rounded-2xl"
+          style={{ backgroundColor: "#F0FDF4", border: "1px solid #BBF7D0" }}
+        >
+          <CheckCircle size={18} className="shrink-0 mt-0.5" style={{ color: "#166534" }} />
+          <div>
+            <p className="text-[13px] font-bold" style={{ color: "#14532D" }}>Đơn hàng đã hoàn tất</p>
+            <p className="text-[12px] mt-0.5" style={{ color: "#166534" }}>
+              Khách hàng đã nhận đủ sản phẩm và thanh toán hoàn tất.
             </p>
           </div>
         </div>
@@ -1306,64 +1316,41 @@ const StandardOrderView = ({ o, displayTotal, hasPricing, remaining }) => {
         <div className="lg:col-span-2 space-y-4">
           <CustomerInfoCard o={o} />
 
+          {/* ── CARD: Sản phẩm chi tiết ── */}
           <div
             className="rounded-2xl overflow-hidden"
-            style={{
-              backgroundColor: "var(--background)",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-            }}
+            style={{ backgroundColor: "var(--background)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
           >
             <div
               className="px-5 py-3 flex items-center gap-2"
-              style={{
-                borderBottom: "1px solid var(--grid-border)",
-                backgroundColor: "var(--grid-header-bg)",
-              }}
+              style={{ borderBottom: "1px solid var(--grid-border)", backgroundColor: "var(--grid-header-bg)" }}
             >
               <Package size={14} style={{ color: "var(--brand-primary)" }} />
-              <span
-                className="text-[12px] font-bold uppercase tracking-wider"
-                style={{ color: "var(--text-main)" }}
-              >
+              <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-main)" }}>
                 Sản phẩm đặt mua ({o.products.length})
               </span>
             </div>
 
-            <div
-              className="divide-y"
-              style={{ borderColor: "var(--grid-border)" }}
-            >
+            <div className="divide-y" style={{ borderColor: "var(--grid-border)" }}>
               {o.products.map((p, i) => (
-                <div
-                  key={i}
-                  className="px-5 py-4 flex flex-col md:flex-row items-start gap-4"
-                >
+                <div key={i} className="px-5 py-4 flex flex-col md:flex-row items-start gap-4">
+                  {/* Tên SP + Chi tiết Kỹ thuật */}
                   <div className="flex-1 min-w-0 w-full space-y-3">
                     <div className="flex items-start gap-3">
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
-                        style={{
-                          backgroundColor: "var(--bg-main)",
-                          border: "1px solid var(--grid-border)",
-                        }}
+                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 overflow-hidden shadow-sm"
+                        style={{ backgroundColor: "var(--bg-main)", border: "1px solid var(--grid-border)" }}
                       >
-                        <Package
-                          size={16}
-                          style={{ color: "var(--text-secondary)" }}
-                        />
+                        {p.image ? (
+                          <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <Package size={16} style={{ color: "var(--text-secondary)" }} />
+                        )}
                       </div>
                       <div>
-                        <p
-                          className="text-[14px] font-bold"
-                          style={{ color: "var(--text-main)" }}
-                        >
-                          {p.name}
-                        </p>
+                        <p className="text-[14px] font-bold" style={{ color: "var(--text-main)" }}>{p.name}</p>
                         {p.note && (
-                          <p
-                            className="text-[12px] italic mt-0.5"
-                            style={{ color: "var(--status-error)" }}
-                          >
+                          <p className="text-[12px] italic mt-0.5" style={{ color: "var(--status-error)" }}>
                             * {p.note}
                           </p>
                         )}
@@ -1372,49 +1359,33 @@ const StandardOrderView = ({ o, displayTotal, hasPricing, remaining }) => {
 
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2.5 bg-[#F9F9F9] p-3 rounded-xl border border-dashed border-gray-200">
                       <div>
-                        <p className="text-[10px] uppercase font-bold text-gray-400">
-                          Chất liệu
-                        </p>
-                        <p className="text-[12px] font-semibold text-gray-700">
-                          {p.material}
-                        </p>
+                        <p className="text-[10px] uppercase font-bold text-gray-400">Chất liệu</p>
+                        <p className="text-[12px] font-semibold text-gray-700">{p.material}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] uppercase font-bold text-gray-400">
-                          Kích thước
-                        </p>
-                        <p className="text-[12px] font-semibold text-gray-700">
-                          {p.size}
-                        </p>
+                        <p className="text-[10px] uppercase font-bold text-gray-400">Kích thước</p>
+                        <p className="text-[12px] font-semibold text-gray-700">{p.size}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] uppercase font-bold text-gray-400">
-                          Bảo hành
-                        </p>
-                        <p className="text-[12px] font-bold text-emerald-600 flex items-center gap-1">
+                        <p className="text-[10px] uppercase font-bold text-gray-400">Bảo hành</p>
+                        <p className="text-[12px] font-bold text-emerald-600 flex items-center gap-0.5">
                           <ShieldCheck size={12} />
-                          {p.warranty || "—"}
+                          {p.warranty || "12 tháng"}
                         </p>
                       </div>
                     </div>
                   </div>
-
+                  
+                  {/* Số lượng & Giá */}
                   <div className="text-right shrink-0 w-full md:w-auto flex md:flex-col justify-between items-center md:items-end">
-                    <div className="bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200">
-                      <span className="text-[11px] font-bold text-gray-500 uppercase">
-                        SL:
-                      </span>{" "}
-                      <span className="text-[14px] font-bold text-gray-800">
-                        {p.qty}
-                      </span>
+                    <div className="bg-gray-100/80 px-3 py-1.5 rounded-lg border border-gray-200">
+                      <span className="text-[11px] font-bold text-gray-500 uppercase leading-none">SL:</span>{" "}
+                      <span className="text-[14px] font-black text-gray-800 leading-none">{p.qty}</span>
                     </div>
                     <div className="mt-2 text-right">
-                      <p
-                        className="text-[16px] font-bold"
-                        style={{ color: "var(--text-main)" }}
-                      >
-                        {p.price ? fmtCurrency(p.price * p.qty) : "—"}
-                      </p>
+                       <p className="text-[16px] font-black" style={{ color: "var(--text-main)" }}>
+                         {p.price ? fmtCurrency(p.price * p.qty) : "—"}
+                       </p>
                     </div>
                   </div>
                 </div>
@@ -1424,87 +1395,58 @@ const StandardOrderView = ({ o, displayTotal, hasPricing, remaining }) => {
             {hasPricing && (
               <div
                 className="px-5 py-3 flex items-center justify-between"
-                style={{
-                  borderTop: "1px solid var(--grid-border)",
-                  backgroundColor: "var(--grid-header-bg)",
-                }}
+                style={{ borderTop: "1px solid var(--grid-border)", backgroundColor: "var(--grid-header-bg)" }}
               >
-                <span
-                  className="text-[12px] font-bold uppercase"
-                  style={{ color: "var(--text-placeholder)" }}
-                >
-                  Tổng đơn hàng
-                </span>
-                <span
-                  className="text-[16px] font-bold"
-                  style={{ color: "var(--brand-primary)" }}
-                >
-                  {fmtCurrency(displayTotal)}
-                </span>
+                <span className="text-[12px] font-bold uppercase" style={{ color: "var(--text-placeholder)" }}>Tổng đơn hàng</span>
+                <div className="text-right">
+                  <span className="text-[16px] font-black" style={{ color: "var(--brand-primary)" }}>{fmtCurrency(displayTotal)}</span>
+                  <div className="flex items-center gap-2 justify-end mt-1">
+                    <span className="text-[11px] text-gray-400 font-medium">Đã cọc:</span>
+                    <span className="text-[11px] font-bold text-gray-700">{fmtCurrency(o.deposit || 0)}</span>
+                  </div>
+                  {remaining > 0 && (
+                    <div className="flex items-center gap-2 justify-end mt-0.5">
+                      <span className="text-[11px] text-red-500 font-bold uppercase tracking-tighter">Còn lại:</span>
+                      <span className="text-[13px] font-black text-red-600">{fmtCurrency(remaining)}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
 
           {/* LSX liên kết - READ ONLY */}
-          {(o.type === "Hàng thô" || o.type === "Hàng đặt") &&
-            o.status === "Đang sản xuất" && (
+          {(o.type === "Hàng mộc" || o.type === "Hàng khách đặt") && (o.status === "Đang sản xuất" || o.status === "Đang gia công") && (
+            <div
+              className="rounded-2xl overflow-hidden mt-4"
+              style={{ backgroundColor: "var(--background)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
+            >
               <div
-                className="rounded-2xl overflow-hidden mt-4"
-                style={{
-                  backgroundColor: "var(--background)",
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-                }}
+                className="px-5 py-3 flex items-center justify-between"
+                style={{ borderBottom: "1px solid var(--grid-border)", backgroundColor: "var(--grid-header-bg)" }}
               >
-                <div
-                  className="px-5 py-3 flex items-center justify-between"
-                  style={{
-                    borderBottom: "1px solid var(--grid-border)",
-                    backgroundColor: "var(--grid-header-bg)",
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <Hammer
-                      size={14}
-                      style={{ color: "var(--brand-primary)" }}
-                    />
-                    <span
-                      className="text-[12px] font-bold uppercase tracking-wider"
-                      style={{ color: "var(--text-main)" }}
-                    >
-                      Tiến độ sản xuất
-                    </span>
-                  </div>
-                </div>
-
-                <div
-                  className="divide-y"
-                  style={{ borderColor: "var(--grid-border)" }}
-                >
-                  <div className="px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <span className="w-2 h-2 rounded-full bg-purple-600 shadow-[0_0_0_4px_#F5F3FF]" />
-                      <div>
-                        <p className="text-[13px] font-bold text-gray-800">
-                          Lệnh sản xuất liên kết
-                        </p>
-                        <p className="text-[12px] text-gray-500 mt-0.5">
-                          Sản phẩm đang được gia công tại xưởng...
-                        </p>
-                      </div>
-                    </div>
-                    <Badge
-                      style={{
-                        backgroundColor: "#F5F3FF",
-                        color: "#7C3AED",
-                        border: "1px solid #DDD6FE",
-                      }}
-                    >
-                      ĐANG XỬ LÝ
-                    </Badge>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <Hammer size={14} style={{ color: "var(--brand-primary)" }} />
+                  <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-main)" }}>Tiến độ sản xuất</span>
                 </div>
               </div>
-            )}
+              <div className="divide-y" style={{ borderColor: "var(--grid-border)" }}>
+                <div className="px-5 py-4 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <span className="w-2 h-2 rounded-full bg-purple-600 shadow-[0_0_0_4px_#F5F3FF]" />
+                    <div>
+                      <p className="text-[13px] font-bold text-gray-800">Lệnh sản xuất liên kết</p>
+                      <p className="text-[12px] text-gray-500 mt-0.5">Sản phẩm đang được gia công tại xưởng...</p>
+                    </div>
+                  </div>
+                  <Badge style={{ backgroundColor: "#F5F3FF", color: "#7C3AED", border: "1px solid #DDD6FE" }}>
+                    <Clock size={10} className="mr-1" />
+                    ĐANG XỬ LÝ
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          )}
 
           {o.sampleImages && o.sampleImages.length > 0 && (
             <MediaGallery images={o.sampleImages} />
@@ -1513,162 +1455,40 @@ const StandardOrderView = ({ o, displayTotal, hasPricing, remaining }) => {
 
         {/* RIGHT COL */}
         <div className="space-y-4">
-          {hasPricing && (
-            <div
-              className="rounded-2xl overflow-hidden"
-              style={{
-                backgroundColor: "var(--background)",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-              }}
-            >
-              <div
-                className="px-5 py-3 flex items-center gap-2"
-                style={{
-                  borderBottom: "1px solid var(--grid-border)",
-                  backgroundColor: "var(--grid-header-bg)",
-                }}
-              >
-                <CreditCard
-                  size={14}
-                  style={{ color: "var(--brand-primary)" }}
-                />
-                <span
-                  className="text-[12px] font-bold uppercase tracking-wider"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  Thanh toán
-                </span>
-              </div>
-              <div className="px-5 py-4 space-y-2.5">
-                <div className="flex justify-between text-[13px]">
-                  <span style={{ color: "var(--text-secondary)" }}>
-                    Tổng tiền
-                  </span>
-                  <span
-                    className="font-bold"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    {fmtCurrency(displayTotal)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-[13px]">
-                  <span style={{ color: "var(--text-secondary)" }}>
-                    Đặt cọc
-                  </span>
-                  <span className="font-bold" style={{ color: "#15803D" }}>
-                    {fmtCurrency(o.deposit || 0)}
-                  </span>
-                </div>
-                <div
-                  className="pt-2.5"
-                  style={{ borderTop: "1px solid var(--grid-border)" }}
-                >
-                  <div className="flex justify-between text-[13px]">
-                    <span
-                      className="font-bold"
-                      style={{ color: "var(--text-main)" }}
-                    >
-                      Còn lại
-                    </span>
-                    <span
-                      className="font-bold"
-                      style={{ color: remaining > 0 ? "#DC2626" : "#15803D" }}
-                    >
-                      {fmtCurrency(remaining)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
           <div
             className="rounded-2xl overflow-hidden"
-            style={{
-              backgroundColor: "var(--background)",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-            }}
+            style={{ backgroundColor: "var(--background)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
           >
             <div
               className="px-5 py-3 flex items-center gap-2"
-              style={{
-                borderBottom: "1px solid var(--grid-border)",
-                backgroundColor: "var(--grid-header-bg)",
-              }}
+              style={{ borderBottom: "1px solid var(--grid-border)", backgroundColor: "var(--grid-header-bg)" }}
             >
               <Truck size={14} style={{ color: "var(--brand-primary)" }} />
-              <span
-                className="text-[12px] font-bold uppercase tracking-wider"
-                style={{ color: "var(--text-main)" }}
-              >
-                Giao hàng
-              </span>
+              <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-main)" }}>Vận chuyển</span>
             </div>
-            <div className="px-5 py-4 space-y-3">
-              <div className="flex items-start gap-2.5">
-                <MapPin
-                  size={13}
-                  className="mt-0.5 shrink-0"
-                  style={{ color: "var(--text-placeholder)" }}
-                />
+            <div className="px-5 py-4 space-y-3.5">
+              <div className="flex items-start gap-3">
+                <MapPin size={13} className="mt-0.5 shrink-0 text-gray-400" />
                 <div>
-                  <p
-                    className="text-[10px] uppercase tracking-wider font-bold"
-                    style={{ color: "var(--text-placeholder)" }}
-                  >
-                    Địa chỉ giao
-                  </p>
-                  <p
-                    className="text-[12px] font-semibold mt-0.5"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    {o.customer.address}
-                  </p>
+                  <p className="text-[10px] uppercase font-black text-gray-400 tracking-wider">Địa chỉ giao</p>
+                  <p className="text-[12.5px] font-bold mt-0.5 text-gray-800 leading-snug">{o.customer.address}</p>
                 </div>
               </div>
-              <div className="flex items-start gap-2.5">
-                <Calendar
-                  size={13}
-                  className="mt-0.5 shrink-0"
-                  style={{ color: "var(--text-placeholder)" }}
-                />
+              <div className="flex items-start gap-3">
+                <Calendar size={13} className="mt-0.5 shrink-0 text-gray-400" />
                 <div>
-                  <p
-                    className="text-[10px] uppercase tracking-wider font-bold"
-                    style={{ color: "var(--text-placeholder)" }}
-                  >
-                    Ngày giao dự kiến
-                  </p>
-                  <p
-                    className="text-[12px] font-semibold mt-0.5"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    {fmtDate(o.deliveryDate)}
-                  </p>
+                  <p className="text-[10px] uppercase font-black text-gray-400 tracking-wider">Ngày giao dự kiến</p>
+                  <p className="text-[12.5px] font-bold mt-0.5 text-gray-800">{fmtDate(o.deliveryDate)}</p>
                 </div>
               </div>
               {o.deliveryImage && (
-                <div
-                  className="flex items-start gap-2.5 pt-2"
-                  style={{ borderTop: "1px solid var(--grid-border)" }}
-                >
-                  <Camera
-                    size={13}
-                    className="mt-0.5 shrink-0"
-                    style={{ color: "var(--text-placeholder)" }}
-                  />
-                  <div>
-                    <p
-                      className="text-[10px] uppercase tracking-wider font-bold"
-                      style={{ color: "var(--text-placeholder)" }}
-                    >
-                      Ảnh giao hàng
-                    </p>
-                    <img
-                      src={o.deliveryImage}
-                      alt="Ảnh giao hàng"
-                      className="w-28 h-28 rounded-xl object-cover mt-1 border border-gray-200 shadow-sm"
-                    />
+                <div className="pt-2 border-t border-dashed border-gray-100">
+                  <p className="text-[10px] uppercase font-black text-gray-400 tracking-wider mb-2">Ảnh giao hàng thực tế</p>
+                  <div className="group relative w-32 h-32 rounded-xl overflow-hidden border border-gray-200">
+                    <img src={o.deliveryImage} alt="Giao hàng" className="w-full h-full object-cover transition duration-300 group-hover:scale-110" />
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Eye size={16} className="text-white" />
+                    </div>
                   </div>
                 </div>
               )}
@@ -1711,11 +1531,12 @@ export default function SalesOrderDetail() {
 
   const ss = statusStyle(o.status);
 
+  const productTotal = o.products.reduce((acc, p) => acc + (p.price || 0) * p.qty, 0);
   const displayTotal =
     o.total != null
       ? o.total
-      : o.products.reduce((acc, p) => acc + (p.price || 0) * p.qty, 0);
-  const hasPricing = o.total != null || o.products.some((p) => p.price != null);
+      : productTotal;
+  const hasPricing = displayTotal > 0 || o.total != null;
   const remaining = hasPricing ? displayTotal - (o.deposit || 0) : null;
 
   const handlePrint = () => {
@@ -1832,6 +1653,7 @@ export default function SalesOrderDetail() {
         {/* ╔══════════ MAIN CONTENT ══════════╗ */}
         <StandardOrderView
           o={o}
+          productTotal={productTotal}
           displayTotal={displayTotal}
           hasPricing={hasPricing}
           remaining={remaining}

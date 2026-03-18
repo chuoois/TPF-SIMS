@@ -46,11 +46,11 @@ const PRODUCT_TYPES = [
 ];
 
 const MOCK_PRODUCTS = [
-    { code: "SP-PK-001", name: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món", category: "Phòng Khách", woodType: "Gỗ Hương" },
-    { code: "HS-PK-001", name: "Sofa nguyên khối chữ L", category: "Phòng Khách", woodType: "Gỗ Gõ Đỏ" },
-    { code: "SP-PT-001", name: "Sập thờ Mai Điểu chân 20", category: "Phòng Thờ", woodType: "Gỗ Gụ" },
-    { code: "HS-PA-001", name: "Bộ bàn ăn 8 ghế nguyên khối", category: "Phòng Ăn", woodType: "Gỗ Hương" },
-    { code: "HS-PN-001", name: "Giường ngủ hoa hồng Tân cổ điển", category: "Phòng Ngủ", woodType: "Gỗ Sồi Nga" },
+    { code: "SP-PK-001", name: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món", category: "Phòng Khách", woodType: "Gỗ Hương", importPrice: 25000000 },
+    { code: "HS-PK-001", name: "Sofa nguyên khối chữ L", category: "Phòng Khách", woodType: "Gỗ Gõ Đỏ", importPrice: 45000000 },
+    { code: "SP-PT-001", name: "Sập thờ Mai Điểu chân 20", category: "Phòng Thờ", woodType: "Gỗ Gụ", importPrice: 18000000 },
+    { code: "HS-PA-001", name: "Bộ bàn ăn 8 ghế nguyên khối", category: "Phòng Ăn", woodType: "Gỗ Hương", importPrice: 32000000 },
+    { code: "HS-PN-001", name: "Giường ngủ hoa hồng Tân cổ điển", category: "Phòng Ngủ", woodType: "Gỗ Sồi Nga", importPrice: 12000000 },
 ];
 
 // ── Helpers ────────────────────────────────────────────
@@ -147,7 +147,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        
+
         if (!supplier.trim()) { toast.error("Vui lòng nhập tên xưởng cung cấp"); return; }
         if (!SUPPLIERS.includes(supplier.trim())) { toast.error("Xưởng cung cấp không hợp lệ"); return; }
         if (!importDate) { toast.error("Vui lòng chọn ngày nhập"); return; }
@@ -369,18 +369,24 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                                 </div>
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-4 border-t pt-4" style={{ borderColor: "var(--grid-border)" }}>
+                                            <div className="grid grid-cols-3 gap-4 border-t pt-4" style={{ borderColor: "var(--grid-border)" }}>
                                                 <div>
                                                     <label className={lbl} style={lblS}>Số lượng nhập *</label>
                                                     <input type="number" min="1" value={line.qty}
                                                         onChange={(e) => updateLine(line._id, "qty", e.target.value)}
                                                         placeholder="0" className={inp} style={inpS} />
                                                 </div>
+                                                <div>
+                                                    <label className={lbl} style={lblS}>Giá nhập (₫) *</label>
+                                                    <input type="text" value={formatNumber(line.importPrice)}
+                                                        onChange={(e) => updateLine(line._id, "importPrice", parseNumber(e.target.value))}
+                                                        placeholder="0" className={inp} style={inpS} />
+                                                </div>
                                                 <div className="flex flex-col">
-                                                    <label className={lbl} style={lblS}><div className="flex items-center gap-1"><AlignLeft size={11} />Chi tiết sản phẩm</div></label>
+                                                    <label className={lbl} style={lblS}><div className="flex items-center gap-1"><AlignLeft size={11} />Chi tiết</div></label>
                                                     <input type="text" value={line.details}
                                                         onChange={(e) => updateLine(line._id, "details", e.target.value)}
-                                                        placeholder="Ghi chú thêm thông tin chi tiết mặt hàng..."
+                                                        placeholder="Ghi chú thêm..."
                                                         className={inp} style={inpS} />
                                                 </div>
                                             </div>

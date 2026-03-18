@@ -1,6 +1,16 @@
 import { useState, useEffect } from "react";
 import { X, Paintbrush, Plus } from "lucide-react";
 
+const formatNumber = (num) => {
+  if (!num) return "";
+  return new Intl.NumberFormat("vi-VN").format(num);
+};
+
+const parseNumber = (str) => {
+  if (!str) return "";
+  return str.toString().replace(/\D/g, "");
+};
+
 export default function AddProductModal({ isOpen, onClose, employee, onAdd }) {
   const [productName, setProductName] = useState("");
   const [price, setPrice] = useState("");
@@ -83,13 +93,12 @@ export default function AddProductModal({ isOpen, onClose, employee, onAdd }) {
                 Đơn giá / sản phẩm (VNĐ) <span className="text-red-500">*</span>
               </label>
               <input
-                type="number"
-                min="0"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                type="text"
+                value={formatNumber(price)}
+                onChange={(e) => setPrice(parseNumber(e.target.value))}
                 required
                 className="w-full h-10 px-3 rounded-xl border text-[13px] focus:outline-none focus:ring-2 transition bg-gray-50/50 outline-none"
-                placeholder="150000"
+                placeholder="Ví dụ: 150.000"
                 style={{ borderColor: "var(--grid-border)", color: "var(--text-main)" }}
               />
             </div>

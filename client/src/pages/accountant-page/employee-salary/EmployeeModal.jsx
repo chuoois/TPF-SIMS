@@ -8,6 +8,16 @@ const getCurrentMonth = () => {
   return `${mm}/${yyyy}`;
 };
 
+const formatNumber = (num) => {
+  if (!num) return "";
+  return new Intl.NumberFormat("vi-VN").format(num);
+};
+
+const parseNumber = (str) => {
+  if (!str) return "";
+  return str.toString().replace(/\D/g, "");
+};
+
 export default function EmployeeModal({ 
   isOpen, 
   onClose, 
@@ -158,10 +168,10 @@ export default function EmployeeModal({
               {/* SALES & ACCOUNTANT – Same monthly salary structure */}
               {(formData.type === "SALES" || formData.type === "ACCOUNTANT") && (
                 <>
-                  <div className="space-y-1.5">
+<div className="space-y-1.5">
                       <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Lương tháng cố định (VNĐ) <span className="text-red-500">*</span></label>
-                      <input type="number" min="0" value={formData.baseSalary} onChange={e => setFormData({...formData, baseSalary: e.target.value})} required
-                          className={inputClass} placeholder="Ví dụ: 10000000" style={inputStyle} />
+                      <input type="text" value={formatNumber(formData.baseSalary)} onChange={e => setFormData({...formData, baseSalary: parseNumber(e.target.value)})} required
+                          className={inputClass} placeholder="Ví dụ: 10.000.000" style={inputStyle} />
                   </div>
                   <div className="space-y-1.5">
                       <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Số ngày công (chấm công)</label>
@@ -177,8 +187,8 @@ export default function EmployeeModal({
                   <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                           <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Đơn giá / Ngày (VNĐ)</label>
-                          <input type="number" min="0" value={formData.baseRate} onChange={e => setFormData({...formData, baseRate: e.target.value})} required
-                              className={inputClass} placeholder="Ví dụ: 400000" style={inputStyle} />
+                          <input type="text" value={formatNumber(formData.baseRate)} onChange={e => setFormData({...formData, baseRate: parseNumber(e.target.value)})} required
+                              className={inputClass} placeholder="Ví dụ: 400.000" style={inputStyle} />
                       </div>
                       <div className="space-y-1.5">
                           <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Số ngày công</label>
@@ -205,7 +215,7 @@ export default function EmployeeModal({
 
             <div className="space-y-1.5">
                 <label className="text-[13px] font-bold text-amber-600">Phụ cấp / Thưởng / Hỗ trợ thêm (VNĐ)</label>
-                <input type="number" min="0" value={formData.allowance} onChange={e => setFormData({...formData, allowance: e.target.value})}
+                <input type="text" value={formatNumber(formData.allowance)} onChange={e => setFormData({...formData, allowance: parseNumber(e.target.value)})}
                     className="w-full h-10 px-3 rounded-xl border text-[13px] focus:outline-none focus:ring-2 transition bg-amber-50/30"
                     placeholder="Tiền thưởng thêm, phụ cấp điện thoại, xăng xe..."
                     style={{ borderColor: "var(--grid-border)", color: "var(--text-main)" }} />
