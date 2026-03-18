@@ -981,7 +981,7 @@ export default function InStockInvoicePage() {
         size: "",
         qty: item.quantity,
         price: item.price,
-        warranty: item.isGift ? "Không bảo hành" : (item.warranty || "12 tháng"),
+        warranty: item.isGift ? "Không bảo hành" : (item.warranty ? new Date(item.warranty).toLocaleDateString("vi-VN") : "12 tháng"),
         note: item.note || "",
         images: item.images || [],
       })),
@@ -1236,13 +1236,13 @@ export default function InStockInvoicePage() {
                           <div className="flex flex-col">
                             <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter leading-none mb-0.5">Bảo hành</span>
                             <input
-                              type="text"
-                              placeholder="Nhập bảo hành..."
+                              type="date"
+                              min={new Date().toISOString().split("T")[0]}
                               value={item.warranty || ""}
                               onChange={(e) =>
                                 updateItemWarranty(item.id, e.target.value)
                               }
-                              className="text-[11px] font-bold focus:outline-none bg-transparent w-20 placeholder:font-normal placeholder:text-gray-300"
+                              className="text-[11px] font-bold focus:outline-none bg-transparent w-[100px] cursor-pointer"
                               style={{ color: "var(--text-main)" }}
                             />
                           </div>
