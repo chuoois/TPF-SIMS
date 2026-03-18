@@ -48,7 +48,7 @@ import { cn } from "@/lib/utils";
 const currentOwnerName = "Võ Cường";
 
 const STATS = {
-  revenueToday: 15500000,
+  revenueToday: 16500000, // Includes 1M from forfeited deposit
   revenueGrowth: 12.5,
   newRequirements: 4,
   productionToApprove: 3,
@@ -310,9 +310,9 @@ export default function OwnerDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 shrink-0">
           <MetricCard
             title="Doanh Thu Hôm Nay"
-            value="15.5M"
+            value="16.5M"
             trend="+12.5%"
-            subtext="so với hôm qua"
+            subtext="Bao gồm 1M bồi thường thu cọc"
             icon={Wallet}
             gradient="from-blue-500 to-indigo-600"
             linkTo="/owner/reports"

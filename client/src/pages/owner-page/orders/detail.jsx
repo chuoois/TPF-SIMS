@@ -23,6 +23,8 @@ import {
   Info,
   DollarSign,
   Wallet,
+  Image,
+  Ban,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -33,275 +35,246 @@ const MOCK_ORDERS = {
     code: "DH-SAN-001", type: "Hàng sẵn", status: "Chờ xử lý",
     date: "2026-03-12T08:30:00", deliveryDate: "2026-03-14", fulfillmentType: "Giao tận nhà",
     customer: { name: "Nguyễn Văn Hùng", phone: "0912345678", address: "45 Đường Giải Phóng, Hà Đông, Hà Nội" },
-    salesPerson: "Bình Nguyễn", total: null, deposit: 12500000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
-    processingFee: 200000, discount: 100000,
-    notes: "Khách hàng thân thiết, cần bọc lót kỹ.",
-    products: [{ 
-      name: "Ghế sofa đơn nỉ", 
-      image: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=300",
-      material: "Gỗ sồi", size: "80×85 cm", finish: "Chân gỗ tự nhiên", qty: 2, price: 6250000, warranty: "12 tháng", note: "Mẫu trơn hiện đại" 
-    }],
+    salesPerson: "Bình Nguyễn", total: 18500000, deposit: 2000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
+    notes: "Khách hàng thân thiết, cần bọc lót kỹ phần chân gỗ.",
+    products: [{ name: "Bàn ăn gỗ Sồi Nga 6 ghế", image: "https://images.unsplash.com/photo-1577145745727-427773530be9?q=80&w=800", material: "Gỗ sồi tự nhiên", size: "160x80 cm", finish: "Sơn Lau", qty: 1, price: 18500000, note: "Màu tự nhiên" }],
     timeline: [
-      { time: "12/03/2026 08:30", label: "Tiếp nhận đơn", desc: "Đơn hàng mới từ Showroom", active: true }
+      { time: "12/03/2026 08:30", label: "Tiếp nhận đơn", desc: "Đơn hàng mới từ Showroom Giải Phóng", active: true },
+      { time: "12/03/2026 09:15", label: "Đang kiểm kho", desc: "Kho xác nhận còn hàng sẵn sàng bàn giao", active: false }
     ],
   },
   "DH-S02": {
-    code: "DH-SAN-002", type: "Hàng sẵn", status: "Chuẩn bị giao hàng",
+    code: "DH-SAN-002", type: "Hàng sẵn", status: "Chờ giao hàng",
     date: "2026-03-11T14:20:00", deliveryDate: "2026-03-12", fulfillmentType: "Lấy ngay",
-    customer: { name: "Lê Thị Lan", phone: "0345678901", address: "Vinhomes Ocean Park, Hà Nội" },
-    salesPerson: "Bình Nguyễn", total: 3500000, deposit: 3500000, depositMethod: "Tiền mặt", paymentStatus: "full",
-    notes: "Khách lấy ngay tại cửa hàng.",
-    products: [{ 
-      name: "Bàn trà kim loại", 
-      image: "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=300",
-      material: "Sắt nghệ thuật", size: "70×70 cm", finish: "Sơn tĩnh điện", qty: 1, price: 3500000, note: "Chân X" 
-    }],
+    customer: { name: "Lê Thị Lan", phone: "0345678901", address: "Vinhomes Ocean Park, Gia Lâm, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 5200000, deposit: 5200000, depositMethod: "Tiền mặt", paymentStatus: "full",
+    notes: "Khách tự vận chuyển bằng xe cá nhân.",
+    products: [{ name: "Kệ giày thông minh 3 tầng", image: "https://images.unsplash.com/photo-1595113316349-9fa4ee24f884?q=80&w=800", material: "Gỗ MDF lõi xanh", size: "80×110 cm", finish: "Phủ Melamine", qty: 1, price: 5200000, note: "Màu trắng hiện đại" }],
     timeline: [
-      { time: "11/03/2026 14:20", label: "Tạo đơn", desc: "Thanh toán đủ", active: false },
-      { time: "11/03/2026 15:00", label: "Chuẩn bị giao hàng", desc: "Đã sẵn sàng", active: true }
+      { time: "11/03/2026 14:20", label: "Tiếp nhận đơn", desc: "Khách thanh toán 100% tại quầy", active: true },
+      { time: "11/03/2026 15:30", label: "Xác nhận kho", desc: "Đã xuất kho chuẩn bị bàn giao", active: true },
+      { time: "11/03/2026 16:00", label: "Chờ giao hàng", desc: "Chờ khách mang xe tới nhận", active: true }
     ],
   },
   "DH-S03": {
     code: "DH-SAN-003", type: "Hàng sẵn", status: "Đang giao hàng",
-    date: "2026-03-10T09:15:00", deliveryDate: "2026-03-11", fulfillmentType: "Lấy luôn",
-    customer: { name: "Trần Minh Quang", phone: "0909123456", address: "12 Lý Thường Kiệt, Hà Nội" },
-    salesPerson: "Bình Nguyễn", total: 45000000, deposit: 45000000, depositMethod: "Chuyển khoản", paymentStatus: "full",
-    notes: "Sập nặng, cần ít nhất 4 người khiêng. Tầng 1.",
-    products: [{ 
-      name: "Sập thờ gỗ", 
-      image: "https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=300",
-      material: "Gỗ gụ mật", size: "197×107 cm", finish: "Vecni", qty: 1, price: 45000000, note: "Mai điểu" 
-    }],
-    timeline: [{ time: "11/03/2026 08:00", label: "Đang giao hàng", desc: "Shipper đi giao", active: true }],
+    date: "2026-03-10T09:15:00", deliveryDate: "2026-03-11", fulfillmentType: "Giao hàng",
+    customer: { name: "Trần Minh Quang", phone: "0909123456", address: "Chung cư Goldmark City, 136 Hồ Tùng Mậu, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 12800000, deposit: 5000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
+    notes: "Giao vào giờ hành chính, gọi trước 30p.",
+    products: [{ name: "Kệ Tivi gỗ Xoan Đào", image: "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?q=80&w=800", material: "Gỗ Xoan Đào", size: "220 cm", finish: "Sơn PU bóng", qty: 1, price: 12800000, note: "Hoa văn chạm nhẹ" }],
+    timeline: [
+      { time: "10/03/2026 10:00", label: "Tiếp nhận đơn", active: true },
+      { time: "11/03/2026 08:00", label: "Đang giao hàng", desc: "Tài xế: Nguyễn Văn Nam (0988.xxx.123) đang vận chuyển", active: true }
+    ],
   },
   "DH-S04": {
     code: "DH-SAN-004", type: "Hàng sẵn", status: "Hoàn thành",
     date: "2026-03-09T16:45:00", deliveryDate: "2026-03-10", fulfillmentType: "Giao nhà",
-    deliveryImage: "https://images.unsplash.com/photo-1595246140625-573b715d11dc?auto=format&fit=crop&q=80&w=400",
-    customer: { name: "Phạm Thành Nam", phone: "0987654321", address: "TP.HCM" },
-    salesPerson: "Bình Nguyễn", total: 8900000, deposit: 8900000, paymentStatus: "full",
-    products: [{ name: "Kệ tivi", material: "Gỗ MDF", size: "180x40", finish: "Melamine", qty: 1, price: 8900000, note: "Trơn" }],
-    timeline: [{ time: "10/03/2026 14:00", label: "Hoàn thành", desc: "Giao xong", active: true }],
+    deliveryImage: "https://images.unsplash.com/photo-1595246140625-573b715d11dc?auto=format&fit=crop&q=80&w=800",
+    customer: { name: "Phạm Thành Nam", phone: "0987654321", address: "Biệt thự BT2, Linh Đàm, Hoàng Mai, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 45000000, deposit: 45000000, paymentStatus: "full",
+    products: [{ name: "Bộ Sofa da bò Ý cao cấp", image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=800", material: "Da thật / Khung gỗ sồi", size: "Góc L 3m2", finish: "Da bò Mill", qty: 1, price: 45000000, note: "Màu nâu cafe" }],
+    timeline: [
+      { time: "09/03/2026 17:00", label: "Tiếp nhận đơn", active: true },
+      { time: "10/03/2026 14:00", label: "Hoàn thành", desc: "Khách đã nhận hàng và ký biên bản bàn giao", active: true }
+    ],
+  },
+  "DH-S05": {
+    code: "DH-SAN-005", type: "Hàng sẵn", status: "Chờ duyệt hủy",
+    date: "2026-03-13T10:00:00", deliveryDate: "2026-03-15",
+    cancelReason: "Khách đổi ý muốn chuyển sang mẫu khác lớn hơn",
+    customer: { name: "Hoàng Văn Thái", phone: "0912000111", address: "Số 2 Lê Lợi, Hải Phòng" },
+    deposit: 1000000, paymentStatus: "partial", depositResolution: "pending",
+    products: [{ name: "Tab đầu giường Gỗ Sồi", image: "https://images.unsplash.com/photo-1505693314120-0d4438678010?q=80&w=800", material: "Gỗ Sồi", size: "45x45 cm", finish: "Sơn PU", qty: 2, price: 2100000, note: "Combo 2 cái" }],
+    timeline: [
+      { time: "13/03/2026 10:00", label: "Tiếp nhận đơn", active: true },
+      { time: "13/03/2026 11:00", label: "Yêu cầu hủy đơn", desc: "Sales gửi yêu cầu hủy chờ Owner duyệt", active: true }
+    ],
   },
   "DH-S06": {
     code: "DH-SAN-006", type: "Hàng sẵn", status: "Đơn đã hủy",
     date: "2026-03-08T10:00:00", deliveryDate: "2026-03-09",
-    customer: { name: "Võ Thị Bảy", phone: "0966778899", address: "123 Cách Mạng Tháng 8, Quận 3, TP.HCM" },
-    salesPerson: "Bình Nguyễn", total: 1500000, deposit: 0, depositMethod: "Chuyển khoản", paymentStatus: "none",
-    notes: "Hủy do sai thông tin.",
-    products: [{ name: "Đôn", material: "Lim", size: "30x30", finish: "PU", qty: 1, price: 1500000, note: "Trơn" }],
-    timeline: [{ time: "08/03/2026 10:30", label: "Đơn đã hủy", desc: "Hủy do khách báo sai đỏ", active: true }],
+    customer: { name: "Võ Thị Bảy", phone: "0966778899", address: "Thảo Điền, Quận 2, TP.HCM" },
+    salesPerson: "Bình Nguyễn", total: 1500000, deposit: 1500000, paymentStatus: "full", depositResolution: "refunded",
+    products: [{ name: "Đôn gỗ trang trí", image: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=800", material: "Gỗ Lim", size: "30x30", finish: "PU", qty: 1, price: 1500000, note: "Mẫu trơn" }],
+    timeline: [
+      { time: "08/03/2026 10:00", label: "Tiếp nhận đơn", active: true },
+      { time: "08/03/2026 10:30", label: "Đơn đã hủy", desc: "Khách báo sai địa chỉ. Đã hoàn cọc 100%.", active: true }
+    ],
+  },
+  "DH-S07": {
+    code: "DH-SAN-007", type: "Hàng sẵn", status: "Chờ giao hàng",
+    date: "2026-03-14T09:00:00", deliveryDate: "2026-03-16", fulfillmentType: "Giao hàng",
+    customer: { name: "Trịnh Thăng Bình", phone: "0945123789", address: "Vinhomes Riverside, Long Biên, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 15200000, deposit: 5000000, paymentStatus: "partial",
+    products: [{ name: "Tủ đầu giường gỗ Gõ Đỏ", image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?q=80&w=800", material: "Gỗ Gõ Đỏ", size: "50x45x60 cm", finish: "Sơn bóng cao cấp", qty: 2, price: 7600000, note: "Mẫu cổ điển" }],
+    timeline: [
+      { time: "14/03/2026 09:00", label: "Tiếp nhận đơn", active: true },
+      { time: "14/03/2026 14:00", label: "Chờ giao hàng", desc: "Đã đóng gói, chờ xe tải điều phối", active: true }
+    ],
+  },
+  "DH-S08": {
+    code: "DH-SAN-008", type: "Hàng sẵn", status: "Chờ duyệt hủy",
+    date: "2026-03-15T08:30:00", deliveryDate: "2026-03-17", cancelReason: "Khách tìm được mẫu khác phù hợp hơn với không gian",
+    customer: { name: "Nguyễn Cao Kỳ Duyên", phone: "0933998877", address: "Quận 1, TP.HCM" },
+    salesPerson: "Bình Nguyễn", total: 6800000, deposit: 2000000, paymentStatus: "partial",
+    products: [{ name: "Kệ trang trí khung sắt mạ vàng", image: "https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?q=80&w=800", material: "Sắt mạ / Kính cường lực", size: "120x35x180 cm", finish: "Mạ PVD", qty: 1, price: 6800000, note: "Dáng thanh lịch" }],
+    timeline: [
+      { time: "15/03/2026 08:30", label: "Tiếp nhận đơn", active: true },
+      { time: "15/03/2026 10:00", label: "Yêu cầu hủy đơn", desc: "Yêu cầu từ khách hàng qua điện thoại", active: true }
+    ],
   },
 
-  // ========== NHÓM 2: HÀNG THÔ (8 trạng thái) ==========
+  // ========== NHÓM 2: HÀNG MỘC (7 trạng thái) ==========
   "DH-T01": {
     code: "DH-THO-001", type: "Hàng mộc", status: "Chờ xử lý",
     date: "2026-03-12T10:00:00", deliveryDate: "2026-03-20",
-    customer: { name: "Hoàng Nguyệt Ánh", phone: "0978901234", address: "TP.HCM" },
-    salesPerson: "Bình Nguyễn", total: 56000000, deposit: 15000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
-    processingFee: 1500000, discount: 500000,
-    notes: "Giao nhà phố, đường rộng xe tải vào được.",
-    products: [
-      { 
-        name: "Sập thờ", 
-        image: "https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=300",
-        material: "Gỗ mít", size: "220", finish: "Mộc", qty: 1, price: 56000000, note: "Khách yêu cầu làm mộc kỹ như ảnh mẫu. Hoa văn: Tứ linh" 
-      }
-    ],
-    sampleImages: [
-      "https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=800",
-      "https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=800"
-    ],
+    customer: { name: "Hoàng Nguyệt Ánh", phone: "0978901234", address: "Đà Nẵng" },
+    salesPerson: "Bình Nguyễn", total: 56000000, deposit: 10000000, paymentStatus: "partial",
+    products: [{ name: "Sập thờ Tứ Linh", material: "Gỗ mít", size: "220", finish: "Mộc", qty: 1, price: 56000000, note: "Khách yêu cầu làm mộc kỹ" }],
+    sampleImages: ["https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=800"],
     timeline: [{ time: "12/03/2026 10:00", label: "Tạo đơn", desc: "Nhận mộc", active: true }],
   },
   "DH-T02": {
     code: "DH-THO-002", type: "Hàng mộc", status: "Đang gia công",
     date: "2026-03-11T15:30:00", deliveryDate: "2026-03-15",
-    customer: { name: "Đặng Tuấn Kiệt", phone: "0931234567", address: "Căn hộ Vinhomes Central Park, Bình Thạnh, TP.HCM" },
-    salesPerson: "Bình Nguyễn", total: 8200000, deposit: 2000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
-    notes: "Giao sau 17h, liên hệ quản lý tòa nhà để lên thang máy chuyên dụng.",
-    products: [{ name: "Trường kỷ", material: "Gỗ lim", size: "200cm", finish: "Mộc", qty: 1, price: 8200000, note: "Trơn" }],
-    timeline: [{ time: "11/03/2026 16:00", label: "Đang sản xuất", desc: "Chờ chia việc", active: true }],
+    customer: { name: "Đặng Tuấn Kiệt", phone: "0931234567", address: "TP.HCM" },
+    salesPerson: "Bình Nguyễn", total: 8200000, deposit: 2000000, paymentStatus: "partial",
+    products: [{ name: "Trường kỷ gỗ lim", material: "Gỗ lim", size: "200cm", finish: "Mộc", qty: 1, price: 8200000, note: "Trơn" }],
+    sampleImages: ["https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=800"],
+    timeline: [{ time: "11/03/2026 16:00", label: "Đang gia công", desc: "Đang đóng mộng", active: true }],
   },
   "DH-T03": {
-    code: "DH-THO-003", type: "Hàng mộc", status: "Đang sản xuất",
+    code: "DH-THO-003", type: "Hàng mộc", status: "Chờ giao hàng",
     date: "2026-03-10T08:00:00", deliveryDate: "2026-03-14",
-    customer: { name: "Vũ Hải Đăng", phone: "0922334455", address: "99 Xuân Thủy, Cầu Giấy, Hà Nội" },
-    salesPerson: "Bình Nguyễn", total: 12500000, deposit: 4000000, depositMethod: "Tiền mặt", paymentStatus: "partial",
-    notes: "Nhà trong ngõ nhỏ, xe tải không vào được, cần thợ chở xe máy từ đầu ngõ.",
-    products: [{ name: "Bàn ghế", material: "Gụ", size: "Chuẩn", finish: "Mộc", qty: 1, price: 12500000, note: "Chạm" }],
-    sampleImages: ["https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=800"],
-    timeline: [{ time: "10/03/2026 09:00", label: "Đang sản xuất", desc: "Đang sơn", active: true }],
+    customer: { name: "Vũ Hải Đăng", phone: "0922334455", address: "Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 12500000, deposit: 5000000, paymentStatus: "partial",
+    products: [{ name: "Bàn ghế ăn", material: "Gụ", size: "Chuẩn", finish: "Mộc", qty: 1, price: 12500000, note: "Chạm" }],
+    sampleImages: ["https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=800"],
+    timeline: [{ time: "13/03/2026 09:00", label: "Chờ giao hàng", desc: "Xong mộc", active: true }],
   },
   "DH-T04": {
-    code: "DH-THO-004", type: "Hàng mộc", status: "Chuẩn bị giao hàng",
+    code: "DH-THO-004", type: "Hàng mộc", status: "Đang giao hàng",
     date: "2026-03-09T11:20:00", deliveryDate: "2026-03-12",
-    customer: { name: "Bùi Tiến Dũng", phone: "0911223344", address: "Khu đô thị Ciputra, Tây Hồ, Hà Nội" },
-    salesPerson: "Bình Nguyễn", total: 28000000, deposit: 10000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
-    notes: "Khi giao nhớ mang theo phiếu bảo hành đóng dấu đỏ.",
-    products: [{ name: "Tủ", material: "Hương", size: "120", finish: "PU", qty: 1, price: 28000000, note: "Trơn" }],
-    sampleImages: ["https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=800"],
-    timeline: [{ time: "11/03/2026 09:00", label: "Chuẩn bị giao hàng", desc: "Xong mộc", active: true }],
+    customer: { name: "Bùi Tiến Dũng", phone: "0911223344", address: "Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 28000000, deposit: 10000000, paymentStatus: "partial",
+    products: [{ name: "Tủ quần áo", material: "Hương", size: "120", finish: "PU", qty: 1, price: 28000000, note: "Trơn" }],
+    sampleImages: ["https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=800"],
+    timeline: [{ time: "11/03/2026 09:00", label: "Đang giao hàng", active: true }],
   },
   "DH-T05": {
-    code: "DH-THO-005", type: "Hàng mộc", status: "Đang giao hàng",
+    code: "DH-THO-005", type: "Hàng mộc", status: "Hoàn thành",
     date: "2026-03-08T14:45:00", deliveryDate: "2026-03-10",
-    customer: { name: "Đinh Công Thành", phone: "0988776655", address: "Số 88 Duy Tân, Cầu Giấy, Hà Nội" },
-    salesPerson: "Bình Nguyễn", total: 15400000, deposit: 5000000, depositMethod: "Tiền mặt", paymentStatus: "partial",
-    notes: "Giao lắp tầng 3, cầu thang hơi hẹp, cần thợ tay nghề cao để khiêng đồ.",
-    products: [{ name: "Salon gỗ xà cừ", material: "Gỗ xà cừ đỏ", size: "Chuẩn 6 món", finish: "Sơn PU bóng", qty: 1, price: 15400000, warranty: "12 tháng", note: "Mẫu trơn hiện đại" }],
-    timeline: [
-      { time: "08/03/2026 14:45", label: "Tạo đơn", desc: "Hàng mộc nhập từ kho", active: false },
-      { time: "09/03/2026 10:00", label: "Đang giao hàng", desc: "Đã bốc xếp lên xe tải số 29C-12345", active: true }
-    ],
+    deliveryImage: "https://images.unsplash.com/photo-1617806118233-ef203e91122b",
+    customer: { name: "Đinh Công Thành", phone: "0988776655", address: "Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 15400000, deposit: 15400000, paymentStatus: "full",
+    products: [{ name: "Salon gỗ xà cừ", material: "Gỗ xà cừ đỏ", size: "Chuẩn 6 món", finish: "Sơn PU bóng", qty: 1, price: 15400000, note: "Mẫu trơn" }],
+    sampleImages: ["https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=800"],
+    timeline: [{ time: "10/03/2026 14:00", label: "Hoàn thành", active: true }],
   },
   "DH-T06": {
-    code: "DH-THO-006", type: "Hàng mộc", status: "Hoàn thành",
-    date: "2026-03-07T09:00:00", deliveryDate: "2026-03-09",
-    deliveryImage: "https://images.unsplash.com/photo-1617806118233-ef203e91122b",
-    customer: { name: "Trần Anh Tú", phone: "0900112233", address: "15 Lê Duẩn, Ba Đình, Hà Nội" },
-    salesPerson: "Bình Nguyễn", total: 32000000, deposit: 32000000, depositMethod: "Chuyển khoản", paymentStatus: "full",
-    notes: "Giao lắp xong xuôi, khách đã ký biên bản bàn giao.",
-    products: [{ name: "Kệ TV", material: "Sồi", size: "Chuẩn", finish: "PU", qty: 1, price: 32000000, note: "Trơn" }],
-    sampleImages: [
-      "https://images.unsplash.com/photo-1577145745727-42b77daeb623?q=80&w=800"
-    ],
-    timeline: [{ time: "07/03/2026 09:00", label: "Hoàn thành", desc: "Đã giao", active: true }],
+    code: "DH-THO-006", type: "Hàng mộc", status: "Chờ duyệt hủy",
+    date: "2026-03-11T09:00:00", deliveryDate: "2026-03-15",
+    cancelReason: "Mua nhầm hàng",
+    customer: { name: "Lý Quí Chung", phone: "0933445566", address: "TP.HCM" },
+    salesPerson: "Bình Nguyễn", total: 18000000, deposit: 2000000, paymentStatus: "partial",
+    products: [{ name: "Kệ sách gỗ hương", material: "Gỗ hương", size: "200x35", finish: "Để mộc", qty: 1, price: 18000000, note: "Mẫu trơn" }],
+    sampleImages: ["https://images.unsplash.com/photo-1616486341351-70252447aece?q=80&w=800"],
+    timeline: [{ time: "11/03/2026 10:00", label: "Chờ duyệt hủy", active: true }],
   },
   "DH-T07": {
-    code: "DH-THO-007", type: "Hàng mộc", status: "Chờ duyệt hủy",
-    cancelReason: "Khách báo mua nhầm loại gỗ, muốn đổi sang gỗ gõ đỏ",
-    date: "2026-03-11T09:00:00", deliveryDate: "2026-03-15",
-    customer: { name: "Lý Quí Chung", phone: "0933445566", address: "Căn hộ Landmark 81, Bình Thạnh, TP.HCM" },
-    salesPerson: "Bình Nguyễn", total: 18000000, deposit: 0, paymentStatus: "none",
-    products: [{ name: "Kệ sách gỗ hương", material: "Gỗ hương", size: "200x35x180cm", finish: "Để mộc", qty: 1, price: 18000000, warranty: "12 tháng", note: "Mẫu trơn hiện đại" }],
-    timeline: [
-      { time: "11/03/2026 09:00", label: "Kiểm tra mộc", active: false },
-      { time: "11/03/2026 10:00", label: "Chờ duyệt hủy", desc: "Chủ cửa hàng xem xét yêu cầu hoàn cọc", active: true }
-    ],
-  },
-  "DH-T08": {
-    code: "DH-THO-008", type: "Hàng mộc", status: "Đơn đã hủy",
+    code: "DH-THO-007", type: "Hàng mộc", status: "Đơn đã hủy",
     date: "2026-03-05T09:00:00", deliveryDate: "2026-03-08",
-    customer: { name: "Nguyễn Kim Ngân", phone: "0977889900", address: "Chung cư Seasons Avenue, Mỗ Lao, Hà Đông, Hà Nội" },
-    salesPerson: "Bình Nguyễn", total: 9000000, deposit: 0, depositMethod: "Tiền mặt", paymentStatus: "none",
-    notes: "Khách báo hủy đơn do không tìm được shipper vận chuyển.",
-    products: [{ name: "Đôn gỗ trang trí", material: "Gỗ gõ đỏ", size: "35x35x45cm", finish: "Để mộc", qty: 1, price: 9000000, warranty: "12 tháng", note: "Chân vuông" }],
-    timeline: [
-      { time: "05/03/2026 09:00", label: "Tạo đơn", active: false },
-      { time: "05/03/2026 10:00", label: "Đơn đã hủy", desc: "Khách hủy do không tìm được shipper", active: true }
-    ],
+    customer: { name: "Nguyễn Kim Ngân", phone: "0977889900", address: "Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 9000000, deposit: 0, paymentStatus: "none",
+    products: [{ name: "Đôn gỗ trang trí", material: "Gỗ gõ đỏ", size: "35x35", finish: "Để mộc", qty: 1, price: 9000000, note: "Chân vuông" }],
+    sampleImages: ["https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=800"],
+    timeline: [{ time: "05/03/2026 10:00", label: "Đơn đã hủy", active: true }],
   },
 
-  // ========== NHÓM 3: HÀNG ĐẶT ==========
+  // ========== NHÓM 3: HÀNG KHÁCH ĐẶT (8 trạng thái) ==========
   "DH-D01": {
-    code: "DH-DAT-001", type: "Hàng đặt", status: "Đang gia công",
+    code: "DH-DAT-001", type: "Hàng khách đặt", status: "Chờ sản xuất",
     date: "2026-03-12T11:15:00", deliveryDate: "2026-03-30",
     customer: { name: "Nguyễn Thị Hồng", phone: "0912123123", address: "Hà Nội" },
-    salesPerson: "Bình Nguyễn", total: 75000000, deposit: 25000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
-    processingFee: 0, discount: 1000000,
-    notes: "Lắp đặt phòng thờ tầng 5, có thang máy nhưng cần bê bộ phận rời.",
-    products: [{ 
-      name: "Tủ thờ", 
-      image: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=300",
-      material: "Hương đá", size: "160", finish: "PU", qty: 1, price: 75000000, note: "Hoa văn: Chạm" 
-    }],
+    salesPerson: "Bình Nguyễn", total: 75000000, deposit: 25000000, paymentStatus: "partial",
+    products: [{ name: "Tủ thờ Hương Đá", material: "Hương đá", size: "160", finish: "PU", qty: 1, price: 75000000, note: "Hoa văn: Chạm" }],
     sampleImages: ["https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=800"],
-    timeline: [
-      { time: "12/03/2026 11:15", label: "Tạo đơn", desc: "Cọc 25tr", active: false },
-      { time: "12/03/2026 16:30", label: "Đang gia công", desc: "Đã bàn giao gia công", active: true }
-    ],
+    designSketches: ["https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=800"],
+    timeline: [{ time: "12/03/2026 11:15", label: "Tạo đơn", desc: "Đang lên thiết kế", active: true }],
   },
   "DH-D02": {
-    code: "DH-DAT-002", type: "Hàng đặt", status: "Đang gia công",
+    code: "DH-DAT-002", type: "Hàng khách đặt", status: "Đã nhập kho",
     date: "2026-03-11T09:00:00", deliveryDate: "2026-03-25",
-    customer: { name: "Lê Văn Tám", phone: "0321654987", address: "688 Lê Trọng Tấn, Bình Tân, TP.HCM" },
-    salesPerson: "Bình Nguyễn", total: 120000000, deposit: 40000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
-    notes: "Bộ Salon rất nặng, cần đi xe cẩu và ít nhất 6 người hỗ trợ lắp đặt.",
-    products: [{ name: "Bộ Salon", material: "Hương", size: "To", finish: "PU", qty: 1, price: 120000000, note: "Trơn" }],
-    timeline: [
-      { time: "11/03/2026 09:30", label: "Đã nhập kho", desc: "Chuẩn bị", active: false },
-      { time: "11/03/2026 14:00", label: "Đang gia công", desc: "Đã bàn giao gia công", active: true }
-    ],
+    customer: { name: "Lê Văn Tám", phone: "0321654987", address: "TP.HCM" },
+    salesPerson: "Bình Nguyễn", total: 120000000, deposit: 40000000, paymentStatus: "partial",
+    products: [{ name: "Bộ Salon Hương", material: "Hương", size: "To", finish: "PU", qty: 1, price: 120000000, note: "Trơn" }],
+    sampleImages: ["https://images.unsplash.com/photo-1616486341351-70252447aece?q=80&w=800"],
+    designSketches: ["https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=800"],
+    timeline: [{ time: "14/03/2026 09:30", label: "Đã nhập kho", desc: "Mộc đã về kho", active: true }],
   },
   "DH-D03": {
-    code: "DH-DAT-003", type: "Hàng đặt", status: "Đang gia công",
+    code: "DH-DAT-003", type: "Hàng khách đặt", status: "Đang gia công",
     date: "2026-03-10T10:15:00", deliveryDate: "2026-03-28",
-    customer: { name: "Phan Trị", phone: "0944123789", address: "158 Nguyễn Văn Cừ, Long Biên, Hà Nội" },
-    salesPerson: "Bình Nguyễn", total: 45000000, deposit: 10000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
-    notes: "Giao lắp tầng 2 phòng khách, cầu thang rộng dễ vận chuyển.",
-    products: [{ 
-      name: "Tủ rượu gỗ sồi", material: "Sồi Nga", size: "120x200x40cm", finish: "Sơn màu óc chó", qty: 1, price: 45000000,
-      note: "Yêu cầu sơn màu óc chó đậm giống ảnh mẫu khách gửi. Mẫu trơn hiện đại."
-    }],
-    sampleImages: [
-      "https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=800",
-      "https://images.unsplash.com/photo-1616486341351-70252447aece?q=80&w=800"
-    ],
-    timeline: [
-      { time: "10/03/2026 10:15", label: "Tạo đơn", desc: "Khách đặt màu óc chó", active: false },
-      { time: "11/03/2026 09:00", label: "Đang gia công", desc: "Đã bàn giao xưởng", active: true }
-    ],
+    customer: { name: "Phan Văn Trị", phone: "0944123123", address: "Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 45000000, deposit: 15000000, paymentStatus: "partial",
+    products: [{ name: "Tủ rượu gỗ sồi", material: "Sồi Nga", size: "12x200", finish: "Sơn óc chó", qty: 1, price: 45000000, note: "Mẫu hiện đại" }],
+    sampleImages: ["https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=800"],
+    designSketches: ["https://images.unsplash.com/photo-1617806118233-ef203e91122b?q=80&w=800"],
+    timeline: [{ time: "12/03/2026 14:00", label: "Đang gia công", desc: "Đang sơn hoàn thiện", active: true }],
   },
   "DH-D04": {
-    code: "DH-DAT-004", type: "Hàng đặt", status: "Chuẩn bị giao hàng",
+    code: "DH-DAT-004", type: "Hàng khách đặt", status: "Chờ giao hàng",
     date: "2026-03-09T14:20:00", deliveryDate: "2026-03-22",
-    customer: { name: "Hoàng Minh Sơn", phone: "0988776655", address: "Diamond Island, Quận 2, TP.HCM" },
+    customer: { name: "Hoàng Thanh Sơn", phone: "0988123123", address: "TP.HCM" },
     salesPerson: "Bình Nguyễn", total: 95000000, deposit: 30000000, paymentStatus: "partial",
-    products: [{ name: "Bàn ăn gỗ nguyên chấn", material: "Gỗ Me tây", size: "220x90x10cm", finish: "Sơn PU mờ 50", qty: 1, price: 95000000, warranty: "24 tháng", note: "Cạnh tự nhiên (Live Edge), Trơn" }],
-    timeline: [
-      { time: "09/03/2026 14:20", label: "Tạo đơn", desc: "Khách chọn tấm gỗ mã MT-09", active: false },
-      { time: "14/03/2026 16:00", label: "Xong sản xuất", desc: "Đã nhập kho chờ xe giao", active: true }
-    ],
+    products: [{ name: "Kệ TV gỗ sồi", material: "Sồi", size: "240cm", finish: "Tự nhiên", qty: 1, price: 95000000, note: "Mẫu trơn" }],
+    sampleImages: ["https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=800"],
+    designSketches: ["https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=800"],
+    timeline: [{ time: "14/03/2026 10:00", label: "Chờ giao hàng", active: true }],
   },
   "DH-D05": {
-    code: "DH-DAT-005", type: "Hàng đặt", status: "Đang giao hàng",
+    code: "DH-DAT-005", type: "Hàng khách đặt", status: "Đang giao hàng",
     date: "2026-03-08T11:00:00", deliveryDate: "2026-03-20",
-    customer: { name: "Phạm Thu Thủy", phone: "0909112233", address: "Khu đô thị Sala, Quận 2, TP.HCM" },
+    customer: { name: "Lưu Bích Thuỷ", phone: "0909123123", address: "Hải Phòng" },
     salesPerson: "Bình Nguyễn", total: 34000000, deposit: 10000000, paymentStatus: "partial",
-    products: [{ name: "Giường ngủ 1.8m", material: "Gỗ xoan đào", size: "180x200cm", finish: "Sơn bóng 100", qty: 1, price: 34000000, warranty: "12 tháng", note: "Trơn phối màu" }],
-    timeline: [
-      { time: "08/03/2026 11:00", label: "Tạo đơn", desc: "Đã nhập kho mộc", active: false },
-      { time: "18/03/2026 14:00", label: "Đang giao hàng", desc: "Shipper đang trên đường tới địa chỉ khách", active: true }
-    ],
+    products: [{ name: "Bàn phấn tân cổ điển", material: "Gỗ MDF", size: "100x45", finish: "Sơn trắng", qty: 1, price: 34000000, note: "Pha lê" }],
+    sampleImages: ["https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=800"],
+    designSketches: ["https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=800"],
+    timeline: [{ time: "14/03/2026 11:00", label: "Đang giao hàng", active: true }],
   },
   "DH-D06": {
-    code: "DH-DAT-006", type: "Hàng đặt", status: "Hoàn thành",
+    code: "DH-DAT-006", type: "Hàng khách đặt", status: "Hoàn thành",
     date: "2026-03-05T08:30:00", deliveryDate: "2026-03-15",
-    deliveryImage: "https://images.unsplash.com/photo-1599690924032-4e55e5108bb6",
-    customer: { name: "Thân Văn Kỵ", phone: "0977123987", address: "Khu biệt thự Chateau, Phú Mỹ Hưng, Quận 7, TP.HCM" },
-    salesPerson: "Bình Nguyễn", total: 210000000, deposit: 210000000, depositMethod: "Chuyển khoản", paymentStatus: "full",
-    notes: "Hàng cao cấp, bọc lót kỹ. Giao sân vườn tầng trệt.",
-    products: [{ name: "Sofa", material: "Đỏ", size: "To", finish: "PU", qty: 1, price: 210000000, note: "Chạm" }],
-    sampleImages: [
-      "https://images.unsplash.com/photo-1599690924032-4e55e5108bb6?q=80&w=800"
-    ],
-    timeline: [{ time: "15/03", label: "Hoàn thành", desc: "Đã giao", active: true }],
+    deliveryImage: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=400",
+    customer: { name: "Trương Vô Kỵ", phone: "0977123123", address: "TP.HCM" },
+    salesPerson: "Bình Nguyễn", total: 210000000, deposit: 210000000, paymentStatus: "full",
+    products: [{ name: "Bộ bàn ghế rồng", material: "Hương Lào", size: "Đặc biệt", finish: "PU", qty: 1, price: 210000000, note: "Khảm trai" }],
+    sampleImages: ["https://images.unsplash.com/photo-1616486341351-70252447aece?q=80&w=800"],
+    designSketches: ["https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=800"],
+    timeline: [{ time: "15/03/2026 14:00", label: "Hoàn thành", active: true }],
   },
   "DH-D07": {
-    code: "DH-DAT-007", type: "Hàng đặt", status: "Chờ duyệt hủy",
-    cancelReason: "Khách đổi ý sang mua tại cửa hàng gần nhà hơn",
+    code: "DH-DAT-007", type: "Hàng khách đặt", status: "Chờ duyệt hủy",
     date: "2026-03-11T13:45:00", deliveryDate: "2026-03-26",
-    customer: { name: "Nguyễn Văn Triệu", phone: "0911223344", address: "15 Nguyễn Trãi, Phường 2, Quận 5, TP.HCM" },
-    salesPerson: "Bình Nguyễn", total: 85000000, deposit: 0, depositMethod: "Chuyển khoản", paymentStatus: "none",
-    notes: "Đơn bị hủy do khách muốn đổi mẫu tại cửa hàng.",
-    products: [{ name: "Hệ tủ bếp gỗ công nghiệp", material: "Gỗ MDF phủ Melamine", size: "Dài 3.2m", finish: "Phủ Melamine mờ", qty: 1, price: 85000000, warranty: "12 tháng", note: "Trơn một màu" }],
-    timeline: [
-      { time: "11/03/2026 13:45", label: "Tiếp nhận tư vấn", active: false },
-      { time: "11/03/2026 15:00", label: "Chờ duyệt hủy", desc: "Yêu cầu hủy do chưa vào cọc", active: true }
-    ],
+    cancelReason: "Khách đổi kích thước nhà",
+    customer: { name: "Triệu Mẫn", phone: "0911123123", address: "Hàn Nội" },
+    salesPerson: "Bình Nguyễn", total: 85000000, deposit: 20000000, paymentStatus: "partial",
+    products: [{ name: "Giường ngủ Indochine", material: "Sồi", size: "180x200", finish: "Đen", qty: 1, price: 85000000, note: "Nệm da" }],
+    sampleImages: ["https://images.unsplash.com/photo-1617806118233-ef203e91122b?q=80&w=800"],
+    designSketches: ["https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=800"],
+    timeline: [{ time: "14/03/2026 14:00", label: "Chờ duyệt hủy", active: true }],
   },
   "DH-D08": {
-    code: "DH-DAT-008", type: "Hàng đặt", status: "Đơn đã hủy",
+    code: "DH-DAT-008", type: "Hàng khách đặt", status: "Đơn đã hủy",
     date: "2026-03-01T10:00:00", deliveryDate: "2026-03-10",
-    customer: { name: "Chu Văn An", phone: "0933441122", address: "123 Đường 3/2, Ninh Kiều, Cần Thơ" },
-    salesPerson: "Bình Nguyễn", total: 42000000, deposit: 0, depositMethod: "Chuyển khoản", paymentStatus: "none",
-    notes: "Khách hủy do thay đổi thiết kế nội thất toàn diện.",
-    products: [{ name: "Bàn phấn trang điểm", material: "Gỗ MDF chống ẩm", size: "100x45x75cm", finish: "Sơn trắng 2K", qty: 1, price: 42000000, warranty: "12 tháng", note: "Tân cổ điển" }],
-    timeline: [
-      { time: "01/03/2026 10:00", label: "Tạo đơn", active: false },
-      { time: "01/03/2026 15:30", label: "Đơn đã hủy", desc: "Hủy sớm do khách thay đổi thiết kế nội thất", active: true }
-    ],
+    customer: { name: "Chu Chỉ Nhược", phone: "0933123123", address: "Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 42000000, deposit: 0, paymentStatus: "none",
+    products: [{ name: "Bàn trà đôi", material: "Cẩm lai", size: "70-50", finish: "Mộc", qty: 1, price: 42000000, note: "Tân cổ điển" }],
+    sampleImages: ["https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=800"],
+    designSketches: ["https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=800"],
+    timeline: [{ time: "05/03/2026 10:00", label: "Đơn đã hủy", active: true }],
   },
 };
 
@@ -333,9 +306,8 @@ const statusStyle = (status) => {
     "Đang xử lý":      { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" }, // Orange
     "Chờ sản xuất":    { bg: "#FEF3C7", text: "#B45309", border: "#FDE68A" }, // Amber/Dark
     "Đã nhập kho":     { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" }, // Green
-    "Đang sản xuất":   { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" }, // Amber
     "Đang gia công":   { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" }, // Amber
-    "Chuẩn bị giao hàng":   { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" }, // Purple
+    "Chờ giao hàng":   { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" }, // Purple
     "Đang giao hàng":  { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" }, // Deep Blue
     "Hoàn thành":      { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" }, // Green
     "Chờ duyệt hủy":   { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" }, // Amber/Yellow
@@ -461,54 +433,65 @@ const HistoryCard = ({ o }) => (
   </div>
 );
 
-const MediaGallery = ({ images, onPreview }) => (
-  <div
-    className="rounded-2xl overflow-hidden mt-4"
-    style={{ backgroundColor: "var(--background)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
-  >
+const MediaGallery = ({ title, icon: Icon, images, onPreview, colorClass = "emerald" }) => {
+  if (!images || images.length === 0) return null;
+  
+  const colors = {
+    emerald: { text: "text-emerald-600", bg: "bg-emerald-50", icon: "text-emerald-600" },
+    indigo: { text: "text-indigo-600", bg: "bg-indigo-50", icon: "text-indigo-600" },
+  };
+  const c = colors[colorClass] || colors.emerald;
+
+  return (
     <div
-      className="px-5 py-3 flex items-center justify-between"
-      style={{ borderBottom: "1px solid var(--grid-border)", backgroundColor: "var(--grid-header-bg)" }}
+      className="rounded-2xl overflow-hidden mt-4"
+      style={{ backgroundColor: "var(--background)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
     >
-      <div className="flex items-center gap-2">
-        <Camera size={14} className="text-emerald-600" />
-        <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-main)" }}>
-          Ảnh mẫu / Yêu cầu từ khách
+      <div
+        className="px-5 py-3 flex items-center justify-between"
+        style={{ borderBottom: "1px solid var(--grid-border)", backgroundColor: "var(--grid-header-bg)" }}
+      >
+        <div className="flex items-center gap-2">
+          {Icon && <Icon size={14} className={c.icon} />}
+          <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-main)" }}>
+            {title}
+          </span>
+        </div>
+        <span className={`text-[11px] font-bold ${c.text} ${c.bg} px-2.5 py-1 rounded-lg`}>
+          {images.length} Ảnh
         </span>
       </div>
-      <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg">
-        {images?.length || 0} Ảnh
-      </span>
+      <div className="p-5">
+         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {images.map((img, idx) => (
+               <div 
+                 key={idx} 
+                 className="group relative aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-100 hover:shadow-lg transition cursor-pointer"
+                 onClick={() => onPreview(img)}
+               >
+                  <img src={img} alt="Gallery" className="w-full h-full object-cover transition duration-300 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                     <div className="w-8 h-8 rounded-full bg-white/90 text-gray-900 flex items-center justify-center shadow-md">
+                        <Eye size={16} />
+                     </div>
+                  </div>
+               </div>
+            ))}
+         </div>
+      </div>
     </div>
-    <div className="p-5">
-       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {images.map((img, idx) => (
-             <div 
-               key={idx} 
-               className="group relative aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-100 hover:shadow-lg transition cursor-pointer"
-               onClick={() => onPreview(img)}
-             >
-                <img src={img} alt="Sample" className="w-full h-full object-cover transition duration-300 group-hover:scale-110" />
-                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                   <div className="w-8 h-8 rounded-full bg-white/90 text-gray-900 flex items-center justify-center shadow-md">
-                      <Eye size={16} />
-                   </div>
-                </div>
-             </div>
-          ))}
-       </div>
-    </div>
-  </div>
-);
+  );
+};
+
 
 
 // --- KIỂU HIỂN THỊ ĐƠN HÀNG THÔNG THƯỜNG ---
-// Chuyên dụng để theo dõi đơn (Đã chốt giá, Đang sản xuất, Giao hàng...)
+// Chuyên dụng để theo dõi đơn (Đã chốt giá, Đang gia công, Giao hàng...)
 const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remaining, deliveryImage, onDeliveryImageChange, onPreview }) => {
   return (
     <div className="flex-1 overflow-y-auto p-6 space-y-4">
       {/* ── BANNER ── */}
-      {o.status === "Chuẩn bị giao hàng" && (
+      {o.status === "Chờ giao hàng" && (
         <div
           className="flex flex-col md:flex-row items-stretch md:items-start gap-4 p-5 rounded-2xl"
           style={{ backgroundColor: "#F0FDF4", border: "1px solid #BBF7D0" }}
@@ -719,7 +702,7 @@ const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remainin
           </div>
 
           {/* ── CARD: Danh sách Lệnh Sản Xuất Liên Kết ── */}
-          {o.type === "Đặt theo mẫu" && (o.status === "Đang sản xuất" || o.status === "Đang gia công") && (
+          {o.type === "Đặt theo mẫu" && (o.status === "Đang gia công" || o.status === "Đang gia công") && (
             <div
               className="rounded-2xl overflow-hidden mt-4"
               style={{ backgroundColor: "var(--background)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
@@ -748,7 +731,7 @@ const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remainin
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-purple-100 text-purple-700">
-                      Đang sản xuất (Đánh ráp)
+                      Đang gia công (Đánh ráp)
                     </span>
                     <Link to="/owner/production/LSX003" className="text-[12px] font-bold text-blue-600 hover:underline">Xem chi tiết</Link>
                   </div>
@@ -773,9 +756,34 @@ const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remainin
             </div>
           )}
 
-          {/* ── CARD: Ảnh mẫu khách gửi — Không hiện với Hàng Sẵn ── */}
-          {o.type !== "Hàng sẵn" && o.sampleImages && o.sampleImages.length > 0 && (
-            <MediaGallery images={o.sampleImages} onPreview={onPreview} />
+          {/* ── CARD: Ảnh mẫu / Ảnh sản phẩm ── */}
+          {o.type === "Hàng sẵn" ? (
+            <MediaGallery 
+              title="Ảnh sản phẩm" 
+              icon={Image} 
+              images={o.products.map(p => p.image).filter(Boolean)} 
+              onPreview={onPreview} 
+              colorClass="emerald"
+            />
+          ) : (
+            <MediaGallery 
+              title="Ảnh mẫu / Yêu cầu từ khách" 
+              icon={Camera} 
+              images={o.sampleImages} 
+              onPreview={onPreview} 
+              colorClass="emerald"
+            />
+          )}
+
+          {/* ── CARD: Bản thiết kế từ Chủ cửa hàng (Chỉ Hàng khách đặt) ── */}
+          {o.type === "Hàng khách đặt" && (
+            <MediaGallery 
+              title="Bản thiết kế từ Chủ" 
+              icon={FileText} 
+              images={o.designSketches} 
+              onPreview={onPreview} 
+              colorClass="indigo"
+            />
           )}
         </div>
 
@@ -815,22 +823,42 @@ const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remainin
 
                 <div className="pt-2 border-t border-dashed" style={{ borderColor: "var(--grid-border)" }}>
                   <div className="flex justify-between text-[13px]">
-                    <span className="font-bold" style={{ color: "var(--text-main)" }}>Tổng thanh toán</span>
-                    <span className="font-bold text-[15px]" style={{ color: "var(--brand-primary)" }}>{fmtCurrency(displayTotal)}</span>
+                    <span className="font-bold" style={{ color: "var(--text-main)" }}>
+                      {o.status === "Đơn đã hủy" ? "Tổng tiền gốc" : "Tổng thanh toán"}
+                    </span>
+                    <span className={`font-bold text-[15px] ${o.status === "Đơn đã hủy" ? 'text-slate-400 line-through' : 'text-[var(--brand-primary)]'}`}>
+                      {fmtCurrency(displayTotal)}
+                    </span>
                   </div>
                 </div>
 
                 <div className="flex justify-between text-[13px]">
                   <span style={{ color: "var(--text-secondary)" }}>Đặt cọc</span>
-                  <span className="font-bold" style={{ color: "#15803D" }}>{fmtCurrency(o.deposit || 0)}</span>
+                  <div className="text-right">
+                    <span className="font-bold" style={{ color: "#15803D" }}>{fmtCurrency(o.deposit || 0)}</span>
+                    {o.status === "Đơn đã hủy" && o.depositResolution && (
+                      <p className={`text-[10px] font-bold mt-0.5 ${o.depositResolution === 'refunded' ? 'text-blue-600' : 'text-amber-600'}`}>
+                        {o.depositResolution === 'refunded' ? "(Đã hoàn cọc)" : "(Khách mất cọc)"}
+                      </p>
+                    )}
+                  </div>
                 </div>
+
+                {o.status === "Đơn đã hủy" && o.depositResolution === 'forfeited' && (
+                  <div className="flex justify-between items-center py-2 mt-2 border-t border-dashed border-amber-200 bg-amber-50/20 px-2 rounded-lg">
+                    <span className="text-amber-800 font-bold text-[12px]">Doanh thu bồi thường</span>
+                    <span className="text-amber-800 font-black text-[14px]">{fmtCurrency(o.deposit)}</span>
+                  </div>
+                )}
 
                 <div className="pt-2 border-t" style={{ borderColor: "var(--grid-border)" }}>
                   <div className="flex justify-between items-center">
-                    <span className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Còn lại</span>
+                    <span className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>
+                      {o.status === "Đơn đã hủy" ? "Phải thu còn lại" : "Còn lại"}
+                    </span>
                     <div className="text-right">
-                      <p className="text-[16px] font-black" style={{ color: remaining > 0 ? "#DC2626" : "#15803D" }}>
-                        {fmtCurrency(remaining)}
+                      <p className={`text-[16px] font-black ${o.status === "Đơn đã hủy" ? 'text-slate-400' : (remaining > 0 ? "#DC2626" : "#15803D")}`}>
+                        {fmtCurrency(o.status === "Đơn đã hủy" ? 0 : remaining)}
                       </p>
                     </div>
                   </div>
@@ -1038,7 +1066,7 @@ export default function OwnerOrderDetail() {
                   <h1 className="text-[16px] font-bold" style={{ color: "var(--text-main)" }}>{o.code}</h1>
                   <Badge style={{ backgroundColor: ss.bg, color: ss.text, border: `1px solid ${ss.border}` }}>
                     <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: ss.text }} />
-                    {o.status === "Đã nhập kho" && o.type === "Hàng đặt" ? "Đã duyệt mộc" : o.status}
+                    {o.status === "Đã nhập kho" && o.type === "Hàng khách đặt" ? "Đã duyệt mộc" : o.status}
                   </Badge>
                   <span
                     className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
@@ -1065,7 +1093,19 @@ export default function OwnerOrderDetail() {
                    onClick={() => {
                       if(window.confirm("Bàn giao đơn hàng này sang Xưởng sản xuất?")) {
                         const updated = savedOrders.map(order => 
-                          (order.code === o.code || order.id === id) ? { ...order, status: "Đang sản xuất" } : order
+                          (order.code === o.code || order.id === id) ? { 
+                            ...order, 
+                            status: "Đang sản xuất",
+                            timeline: [
+                              ...(order.timeline || []),
+                              { 
+                                time: new Date().toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }).replace(',', ' —'), 
+                                label: "Bàn giao gia công", 
+                                desc: "Owner đã duyệt và bàn giao xưởng sản xuất mộc.",
+                                active: true 
+                              }
+                            ]
+                          } : order
                         );
                         localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
                         toast.success("Đã bàn giao Xưởng thành công!");
@@ -1080,14 +1120,26 @@ export default function OwnerOrderDetail() {
 
               {/* Hàng đặt workflow - Tới bước Đã nhập kho thì Owner mới bắt đầu thao tác */}
               
-              {o.status === "Đã nhập kho" && o.type === "Hàng đặt" && (
+              {o.status === "Đã nhập kho" && o.type === "Hàng khách đặt" && (
                  <button
                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer shadow-sm"
                    style={{ backgroundColor: "#4F46E5", color: "#fff" }}
                    onClick={() => {
                       if(window.confirm("Xác nhận bàn giao gia công?")) {
                         const updated = savedOrders.map(order => 
-                          (order.code === o.code || order.id === id) ? { ...order, status: "Đang gia công" } : order
+                          (order.code === o.code || order.id === id) ? { 
+                            ...order, 
+                            status: "Đang gia công",
+                            timeline: [
+                              ...(order.timeline || []),
+                              { 
+                                time: new Date().toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }).replace(',', ' —'), 
+                                label: "Bàn giao gia công", 
+                                desc: "Đã duyệt mộc và chuyển sang bộ phận sơn hoàn thiện.",
+                                active: true 
+                              }
+                            ]
+                          } : order
                         );
                         localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
                         toast.success("Đã bàn giao gia công thành công!");
@@ -1107,23 +1159,104 @@ export default function OwnerOrderDetail() {
 
               {/* Chủ duyệt hủy đơn mà Sales yêu cầu */}
               {o.status === "Chờ duyệt hủy" && (
-                <button
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer"
-                  style={{ backgroundColor: "#DC2626", color: "#fff" }}
-                  onClick={() => {
-                    if(window.confirm("Bạn xác nhận duyệt phê chuẩn hủy đơn hàng này?")) {
-                      const updated = savedOrders.map(order => 
-                        (order.code === o.code || order.id === id) ? { ...order, status: "Đơn đã hủy" } : order
-                      );
-                      localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
-                      toast.success("Đã duyệt hủy đơn hàng thành công!");
-                      navigate("/owner/orders");
-                    }
-                  }}
-                >
-                  <XCircle size={14} />
-                  Duyệt hủy đơn
-                </button>
+                <div className="flex items-center gap-2">
+                  {/* Option Hoàn cọc chỉ dành cho Hàng sẵn */}
+                  {o.type === "Hàng sẵn" && (
+                    <button
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer"
+                      style={{ backgroundColor: "#DC2626", color: "#fff" }}
+                      onClick={() => {
+                        if(window.confirm("Duyệt hủy đơn và HOÀN TRẢ TIỀN CỌC cho khách hàng?")) {
+                          const updated = savedOrders.map(order => 
+                            (order.code === o.code || order.id === id) ? { 
+                              ...order, 
+                              status: "Đơn đã hủy", 
+                              depositResolution: "refunded",
+                              timeline: [
+                                ...(order.timeline || []),
+                                { 
+                                  time: new Date().toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }).replace(',', ' —'), 
+                                  label: "Duyệt hủy đơn", 
+                                  desc: "Chủ cửa hàng đã duyệt. Đã hoàn trả tiền cọc.",
+                                  active: true 
+                                }
+                              ]
+                            } : order
+                          );
+                          localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
+                          toast.success("Đã duyệt hủy và đánh dấu Hoàn cọc!");
+                          navigate("/owner/orders");
+                        }
+                      }}
+                    >
+                      <XCircle size={14} />
+                      Duyệt hủy & Hoàn cọc
+                    </button>
+                  )}
+
+                  {/* Option Thu cọc dành cho tất cả nhưng là duy nhất cho Hàng mộc/đặt */}
+                  <button
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer"
+                    style={{ backgroundColor: "#92400E", color: "#fff" }}
+                    onClick={() => {
+                      const msg = o.type === "Hàng sẵn" 
+                        ? "Duyệt hủy đơn và THU HỒI TIỀN CỌC (Bồi thường)?" 
+                        : "Xác nhận hủy đơn: Khách MẤT CỌC do xưởng đã triển khai sản xuất?";
+                      if(window.confirm(msg)) {
+                        const updated = savedOrders.map(order => 
+                          (order.code === o.code || order.id === id) ? { 
+                            ...order, 
+                            status: "Đơn đã hủy", 
+                            depositResolution: "forfeited",
+                            timeline: [
+                              ...(order.timeline || []),
+                              { 
+                                time: new Date().toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }).replace(',', ' —'), 
+                                label: "Duyệt hủy đơn", 
+                                desc: "Chủ cửa hàng đã duyệt. Thu hồi tiền cọc bồi thường.",
+                                active: true 
+                              }
+                            ]
+                          } : order
+                        );
+                        localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
+                        toast.success("Đã duyệt hủy và đánh dấu Thu cọc!");
+                        navigate("/owner/orders");
+                      }
+                    }}
+                  >
+                    <Ban size={14} />
+                    {o.type === "Hàng sẵn" ? "Duyệt hủy & Thu cọc" : "Duyệt hủy (Thu cọc bồi thường)"}
+                  </button>
+                  <button
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-70 cursor-pointer border border-slate-200 bg-white text-slate-600"
+                    onClick={() => {
+                      if(window.confirm("Từ chối yêu cầu hủy và khôi phục trạng thái đơn hàng?")) {
+                        const restoreStatus = o.type === "Hàng khách đặt" ? "Đang gia công" : (o.type === "Hàng mộc" ? "Đang sản xuất" : "Chuẩn bị giao hàng");
+                        const updated = savedOrders.map(order => 
+                          (order.code === o.code || order.id === id) ? { 
+                            ...order, 
+                            status: restoreStatus,
+                            timeline: [
+                              ...(order.timeline || []),
+                              { 
+                                time: new Date().toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }).replace(',', ' —'), 
+                                label: "Từ chối hủy đơn", 
+                                desc: `Chủ cửa hàng từ chối yêu cầu hủy. Khôi phục trạng thái: ${restoreStatus}`,
+                                active: true 
+                              }
+                            ]
+                          } : order
+                        );
+                        localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
+                        toast.success(`Đã từ chối yêu cầu hủy. Đơn hàng quay lại trạng thái: ${restoreStatus}`);
+                        navigate(0);
+                      }
+                    }}
+                  >
+                    Từ chối
+                  </button>
+                </div>
               )}
 
               {/* Chỉ cho phép Hủy trực tiếp ở trạng thái đầu */}
@@ -1147,7 +1280,7 @@ export default function OwnerOrderDetail() {
                 </button>
               )}
 
-              {o.status === "Chuẩn bị giao hàng" && (
+              {o.status === "Chờ giao hàng" && (
                 <button
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer shadow-sm"
                   style={{ backgroundColor: "#7C3AED", color: "#fff" }}

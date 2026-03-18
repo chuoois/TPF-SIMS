@@ -28,12 +28,13 @@ const REPORT_CATEGORIES = [
 
 // Mock Data for Sales Report
 const MOCK_SALES_DATA = [
-   { id: "HD00102", date: "08/03/2026", customer: "Nguyễn Văn A", grossSales: 25000000, discount: 500000, netSales: 24500000, cogs: 18000000, grossProfit: 6500000 },
-   { id: "HD00103", date: "08/03/2026", customer: "Chị Ngọc - Q7", grossSales: 15000000, discount: 0, netSales: 15000000, cogs: 9500000, grossProfit: 5500000 },
-   { id: "HD00104", date: "07/03/2026", customer: "Công ty Nội Thất An Trần", grossSales: 120000000, discount: 5000000, netSales: 115000000, cogs: 82000000, grossProfit: 33000000 },
-   { id: "HD00105", date: "06/03/2026", customer: "Anh Bình Phát", grossSales: 8500000, discount: 0, netSales: 8500000, cogs: 5500000, grossProfit: 3000000 },
-   { id: "HD00106", date: "06/03/2026", customer: "Khách lẻ tại shop", grossSales: 4200000, discount: 200000, netSales: 4000000, cogs: 2800000, grossProfit: 1200000 },
-   { id: "HD00107", date: "05/03/2026", customer: "Dự án Biệt thự Vinhome", grossSales: 350000000, discount: 15000000, netSales: 335000000, cogs: 240000000, grossProfit: 95000000 },
+   { id: "HD00102", date: "08/03/2026", customer: "Nguyễn Văn A", grossSales: 25000000, discount: 500000, netSales: 24500000, cogs: 18000000, grossProfit: 6500000, compensation: 0 },
+   { id: "DH-SAN-005", date: "13/03/2026", customer: "Hoàng Văn Thái (Hủy đơn/Thu cọc)", grossSales: 4200000, discount: 0, netSales: 0, cogs: 0, grossProfit: 1000000, compensation: 1000000 },
+   { id: "DH-SAN-004", date: "09/03/2026", customer: "Phạm Thành Nam", grossSales: 45000000, discount: 0, netSales: 45000000, cogs: 32000000, grossProfit: 13000000, compensation: 0 },
+   { id: "DH-SAN-002", date: "11/03/2026", customer: "Lê Thị Lan (Lấy ngay)", grossSales: 5200000, discount: 0, netSales: 5200000, cogs: 3500000, grossProfit: 1700000, compensation: 0 },
+   { id: "HD00104", date: "07/03/2026", customer: "Công ty Nội Thất An Trần", grossSales: 120000000, discount: 5000000, netSales: 115000000, cogs: 82000000, grossProfit: 33000000, compensation: 0 },
+   { id: "HD00106", date: "06/03/2026", customer: "Khách lẻ tại shop", grossSales: 4200000, discount: 200000, netSales: 4000000, cogs: 2800000, grossProfit: 1200000, compensation: 0 },
+   { id: "HD00107", date: "05/03/2026", customer: "Dự án Biệt thự Vinhome", grossSales: 350000000, discount: 15000000, netSales: 335000000, cogs: 240000000, grossProfit: 95000000, compensation: 0 },
 ];
 
 const MOCK_INVENTORY_DATA = [
@@ -53,6 +54,8 @@ const MOCK_DEBT_CUSTOMER_DATA = [
 
 const MOCK_CASHFLOW_DATA = [
    { id: "PT00101", date: "08/03/2026", type: "Thu", category: "Khách trả nợ", ref: "KH088", description: "Công ty Nội Thất An Trần trả đợt 1", inAmount: 50000000, outAmount: 0, method: "Chuyển khoản" },
+   { id: "PT00104", date: "13/03/2026", type: "Thu", category: "Thu nhập khác", ref: "DH-SAN-005", description: "Thu hồi tiền cọc đơn DH-SAN-005 (Bồi thường)", inAmount: 1000000, outAmount: 0, method: "Chuyển khoản" },
+   { id: "PT00105", date: "11/03/2026", type: "Thu", category: "Bán hàng", ref: "DH-SAN-002", description: "Bán hàng thu đủ đơn DH-SAN-002", inAmount: 5200000, outAmount: 0, method: "Tiền mặt" },
    { id: "PC00201", date: "08/03/2026", type: "Chi", category: "Thanh toán NCC", ref: "NCC005", description: "Trả tiền Gỗ An Cường", inAmount: 0, outAmount: 120000000, method: "Chuyển khoản" },
    { id: "PT00102", date: "07/03/2026", type: "Thu", category: "Khách trả nợ", ref: "KH012", description: "Chị Lan Anh đặt cọc", inAmount: 2000000, outAmount: 0, method: "Tiền mặt" },
    { id: "PC00202", date: "07/03/2026", type: "Chi", category: "Chi phí vận hành", ref: "-", description: "Tiền điện nước tháng 2", inAmount: 0, outAmount: 2500000, method: "Ủy nhiệm chi" },
@@ -123,9 +126,10 @@ export default function OwnerReports() {
          acc.discount += curr.discount;
          acc.netSales += curr.netSales;
          acc.cogs += curr.cogs;
+         acc.compensation += (curr.compensation || 0);
          acc.grossProfit += curr.grossProfit;
          return acc;
-      }, { grossSales: 0, discount: 0, netSales: 0, cogs: 0, grossProfit: 0 });
+      }, { grossSales: 0, discount: 0, netSales: 0, cogs: 0, grossProfit: 0, compensation: 0 });
    }, []);
 
    const inventoryTotals = useMemo(() => {
@@ -258,8 +262,9 @@ export default function OwnerReports() {
                                  <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 w-[120px]">Chứng từ</th>
                                  <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 w-[100px] text-center">Ngày ghi</th>
                                  <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200">Khách Hàng</th>
-                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-right w-[140px]">Tổng tiền bán hàng</th>
+                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 w-[140px]">Tổng tiền bán hàng</th>
                                  <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-right w-[120px]">CK / Giảm giá</th>
+                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-right w-[140px] bg-amber-50/50">Doanh thu bồi thường (Cọc)</th>
                                  <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-right w-[140px]">Doanh thu sau giảm giá</th>
                                  <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-right w-[140px]">Giá Vốn (COGS)</th>
                                  <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-right w-[140px] bg-slate-200/50">Lợi Nhuận Gộp</th>
@@ -274,6 +279,7 @@ export default function OwnerReports() {
                                     <td className="py-3 px-4 text-[13px] text-slate-800 font-semibold border-r border-slate-100">{row.customer}</td>
                                     <td className="py-3 px-4 text-[13px] text-slate-900 font-bold text-right border-r border-slate-100">{formatCurrency(row.grossSales)}</td>
                                     <td className="py-3 px-4 text-[13px] text-rose-600 font-semibold text-right border-r border-slate-100">{row.discount > 0 ? `-${formatCurrency(row.discount)}` : 0}</td>
+                                    <td className="py-3 px-4 text-[13px] text-amber-600 font-bold text-right border-r border-slate-100 bg-amber-50/30">{row.compensation > 0 ? formatCurrency(row.compensation) : "-"}</td>
                                     <td className="py-3 px-4 text-[13px] text-slate-900 font-black text-right border-r border-slate-100">{formatCurrency(row.netSales)}</td>
                                     <td className="py-3 px-4 text-[13px] text-slate-600 font-semibold text-right border-r border-slate-100">{formatCurrency(row.cogs)}</td>
                                     <td className="py-3 px-4 text-[13px] text-emerald-600 font-black text-right border-r border-slate-100 bg-slate-50/50">{formatCurrency(row.grossProfit)}</td>
@@ -282,9 +288,10 @@ export default function OwnerReports() {
                            </tbody>
                            <tfoot className="sticky bottom-0 z-10 bg-emerald-50 shadow-[0_-1px_0_0_#cbd5e1]">
                               <tr>
-                                 <td colSpan={4} className="py-3 px-4 text-[13px] font-black text-slate-800 border-r border-slate-300/30 text-right uppercase">Tổng Cộng:</td>
+                                 <td colSpan={5} className="py-3 px-4 text-[13px] font-black text-slate-800 border-r border-slate-300/30 text-right uppercase">Tổng Cộng:</td>
                                  <td className="py-3 px-4 text-[14px] font-black text-slate-900 text-right border-r border-slate-300/30">{formatCurrency(salesTotals.grossSales)}</td>
                                  <td className="py-3 px-4 text-[13px] font-bold text-rose-600 text-right border-r border-slate-300/30">-{formatCurrency(salesTotals.discount)}</td>
+                                 <td className="py-3 px-4 text-[14px] font-black text-amber-700 text-right border-r border-slate-300/30 bg-amber-100/30">{formatCurrency(salesTotals.compensation)}</td>
                                  <td className="py-3 px-4 text-[14px] font-black text-slate-900 text-right border-r border-slate-300/30">{formatCurrency(salesTotals.netSales)}</td>
                                  <td className="py-3 px-4 text-[13px] font-bold text-slate-700 text-right border-r border-slate-300/30">{formatCurrency(salesTotals.cogs)}</td>
                                  <td className="py-3 px-4 text-[14px] font-black text-emerald-700 text-right border-r border-slate-300/30 bg-emerald-100/50">{formatCurrency(salesTotals.grossProfit)}</td>
