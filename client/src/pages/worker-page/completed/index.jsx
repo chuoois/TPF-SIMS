@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Clock,
   Play,
@@ -28,7 +28,7 @@ const MOCK_TASKS = [
     id: "T-0985",
     productName: "Bàn ăn gỗ sồi 6 ghế",
     woodType: "Gỗ Sồi",
-    dimensions: "160 x 80 x 75 cm",
+    dimensions: "160 x 80 x 75 ",
     colorType: "Nâu tự nhiên",
     status: "COMPLETED",
     isCustomOrder: true,
@@ -36,14 +36,18 @@ const MOCK_TASKS = [
     notes: "Khách khen làm đúng yêu cầu bo tròn viền.",
     startedAt: "05/03/2026 08:30",
     completedAt: "14:30 Hôm nay",
+    deadline: "05/03/2026",
     rating: 5,
     image: "/wood_products.png",
+    customerImages: [
+      "https://images.unsplash.com/photo-1581428982868-e410dd047a90?auto=format&fit=crop&q=80&w=400",
+    ],
   },
   {
     id: "T-0982",
     productName: "Kệ sách treo tường thông minh",
     woodType: "Gỗ Công Nghiệp MDF",
-    dimensions: "120 x 20 x 30 cm",
+    dimensions: "120 x 20 x 30 ",
     colorType: "Trắng bóng mờ",
     status: "COMPLETED",
     isCustomOrder: false,
@@ -51,23 +55,66 @@ const MOCK_TASKS = [
     notes: "Xử lý bề mặt rất mịn, đạt chuẩn xuất xưởng.",
     startedAt: "04/03/2026 09:00",
     completedAt: "09:15 Hôm qua",
+    deadline: "04/03/2026",
     rating: 4,
     image: "/wood_products.png",
+    customerImages: [
+      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&q=80&w=400",
+    ],
+  },
+  {
+    id: "T-0987",
+    productName: "Tủ giày 3 cánh tối giản",
+    woodType: "Gỗ Công Nghiệp MDF",
+    dimensions: "100 x 35 x 110 ",
+    colorType: "Màu kem",
+    status: "COMPLETED",
+    isCustomOrder: false,
+    orderCode: "K-15",
+    notes: "Đã kiểm tra ngăn kéo mượt mà.",
+    startedAt: "03/03/2026 13:00",
+    completedAt: "16:45 Hôm qua",
+    deadline: "03/03/2026",
+    rating: 5,
+    image: "/wood_products.png",
+    customerImages: [
+      "https://images.unsplash.com/photo-1595428774223-ef52624120ec?auto=format&fit=crop&q=80&w=400",
+    ],
   },
   {
     id: "T-0975",
     productName: "Giường ngủ tân cổ điển",
     woodType: "Gỗ Gõ Đỏ",
-    dimensions: "180 x 200 x 45 cm",
+    dimensions: "180 x 200 x 45 ",
     colorType: "Nâu đỏ đậm",
     status: "COMPLETED",
     isCustomOrder: true,
     orderCode: "DH-099",
-    notes: "",
+    notes: "Chạm trổ đầu giường rất tinh xảo.",
     startedAt: "15/02/2026 14:00",
     completedAt: "Thứ 4, 18/02",
+    deadline: "18/02/2026",
     rating: 5,
     image: "/wood_products.png",
+    customerImages: [
+      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&q=80&w=400",
+    ],
+  },
+  {
+    id: "T-0970",
+    productName: "Bàn làm việc Giám đốc",
+    woodType: "Gỗ Hương",
+    dimensions: "180 x 90 x 76 ",
+    colorType: "Nâu trầm",
+    status: "COMPLETED",
+    isCustomOrder: true,
+    orderCode: "DH-095",
+    notes: "Hàng cao cấp, yêu cầu độ bóng 50%.",
+    startedAt: "10/02/2026 08:00",
+    completedAt: "Thứ 2, 12/02",
+    rating: 5,
+    image: "/wood_products.png",
+    customerImages: [],
   },
 ];
 
@@ -81,23 +128,46 @@ const STATUS_CONFIG = {
 
 export default function WorkerCompleted() {
   const navigate = useNavigate();
-  const [tasks] = useState(MOCK_TASKS);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tasks = MOCK_TASKS;
 
-  const [activeFilter, setActiveFilter] = useState("Tất cả");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  const activeFilter = searchParams.get("filter") || "Tất cả";
+  const searchTerm = searchParams.get("search") || "";
+  const fromDate = searchParams.get("from") || "";
+  const toDate = searchParams.get("to") || "";
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
+  const itemsPerPage = parseInt(searchParams.get("perPage") || "15", 10);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(15);
+  const updateParams = (updates) => {
+    const newParams = new URLSearchParams(searchParams);
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value) {
+        newParams.set(key, value);
+      } else {
+        newParams.delete(key);
+      }
+    });
+    // Reset page to 1 if filters change, unless page is explicitly provided
+    if (!updates.page && (updates.filter || updates.search || updates.from || updates.to)) {
+      newParams.set("page", "1");
+    }
+    setSearchParams(newParams);
+  };
 
-  const filters = ["Tất cả", "Đặt theo mẫu", "Hàng sẵn"];
+  const setActiveFilter = (f) => updateParams({ filter: f });
+  const setSearchTerm = (s) => updateParams({ search: s });
+  const setFromDate = (d) => updateParams({ from: d });
+  const setToDate = (d) => updateParams({ to: d });
+  const setCurrentPage = (p) => updateParams({ page: p.toString() });
+  const setItemsPerPage = (sp) => updateParams({ perPage: sp.toString() });
+
+  const filters = ["Tất cả", "Hàng khách đặt", "Hàng mộc"];
 
   // Filter tasks
   const filteredTasks = tasks.filter((t) => {
     // Filter by order type
-    if (activeFilter === "Đặt theo mẫu" && !t.isCustomOrder) return false;
-    if (activeFilter === "Hàng sẵn" && t.isCustomOrder) return false;
+    if (activeFilter === "Hàng khách đặt" && !t.isCustomOrder) return false;
+    if (activeFilter === "Hàng mộc" && t.isCustomOrder) return false;
 
     // Filter by date range (mock logic, should use proper timestamps in prod)
     if (fromDate || toDate) {
@@ -146,10 +216,6 @@ export default function WorkerCompleted() {
     );
   });
 
-  // Reset page on search or filter change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, activeFilter, fromDate, toDate]);
 
   const totalPages = Math.ceil(filteredTasks.length / itemsPerPage);
   const paginatedTasks = filteredTasks.slice(
@@ -308,14 +374,14 @@ export default function WorkerCompleted() {
                   "#",
                   "Sản phẩm",
                   "Mã ĐH",
-                  "Thông số",
                   "Ngày bắt đầu",
+                  "Hạn chót",
                   "Thời gian hoàn thành",
                   "",
                 ].map((h, i) => (
                   <th
                     key={i}
-                    className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 6 ? "text-right" : ""}`}
+                    className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 7 ? "text-right" : ""}`}
                     style={{ color: "var(--text-placeholder)" }}
                   >
                     {h}
@@ -377,37 +443,13 @@ export default function WorkerCompleted() {
                     {/* Origin / Order Code */}
                     <td className="px-4 py-3">
                       <p
-                        className="text-[12px] font-mono tracking-wide mb-0.5"
+                        className="text-[14px] font-bold font-mono tracking-wide"
                         style={{ color: "var(--text-main)" }}
                       >
                         {task.orderCode}
                       </p>
-                      <span
-                        className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold border ${
-                          task.isCustomOrder
-                            ? "bg-[var(--status-focus)] text-[var(--brand-primary)] border-[var(--status-focus)]"
-                            : "bg-gray-100 text-gray-500 border-gray-100"
-                        }`}
-                      >
-                        {task.isCustomOrder ? "Đặt riêng" : "Kho"}
-                      </span>
                     </td>
 
-                    {/* Specs */}
-                    <td className="px-4 py-3">
-                      <p
-                        className="text-[12px] font-medium"
-                        style={{ color: "var(--text-main)" }}
-                      >
-                        {task.woodType}
-                      </p>
-                      <p
-                        className="text-[11px]"
-                        style={{ color: "var(--text-secondary)" }}
-                      >
-                        {task.dimensions}
-                      </p>
-                    </td>
 
                     {/* Start Date */}
                     <td className="px-4 py-3">
@@ -426,6 +468,16 @@ export default function WorkerCompleted() {
                           —
                         </span>
                       )}
+                    </td>
+
+                    {/* Deadline */}
+                    <td className="px-4 py-3">
+                      <span
+                        className="text-[12px] font-semibold"
+                        style={{ color: "var(--text-main)" }}
+                      >
+                        {task.deadline || "—"}
+                      </span>
                     </td>
 
                     {/* Time */}

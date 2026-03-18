@@ -58,6 +58,7 @@ const WOOD_PRODUCTS = [
     productType: "Hàng sẵn",
     size: "180 x 90 x 75 cm",
     color: "Sồi tự nhiên",
+    description: "Bộ bàn ăn 6 ghế chất liệu gỗ sồi Nga tự nhiên, xử lý chống mối mọt, thiết kế hiện đại phù hợp cho phòng ăn gia đình.",
   },
   {
     id: 2,
@@ -70,6 +71,7 @@ const WOOD_PRODUCTS = [
     productType: "Hàng sẵn",
     size: "120 x 35 x 180 cm",
     color: "Óc chó đậm",
+    description: "Kệ sách 5 tầng bền bỉ, vân gỗ óc chó sang trọng, tạo điểm nhấn cho không gian làm việc hoặc phòng khách.",
   },
   {
     id: 3,
@@ -82,6 +84,7 @@ const WOOD_PRODUCTS = [
     productType: "Hàng mộc",
     size: "140 x 70 x 75 cm",
     color: "Trắng sồi",
+    description: "Bàn làm việc sơn trắng sồi thanh lịch, tích hợp 3 ngăn kéo tiện lợi cho việc lưu trữ hồ sơ, văn phòng phẩm.",
   },
   {
     id: 4,
@@ -538,6 +541,7 @@ const GIFT_PRODUCTS = [
     productType: "Quà tặng",
     size: "45x45 cm",
     color: "Họa tiết Vintage",
+    description: "Gối tựa lưng êm ái với họa tiết Vintage độc đáo, mang lại sự thoải mái và vẻ đẹp cổ điển cho bộ sofa nhà bạn.",
   },
   {
     id: 1002,
@@ -977,7 +981,7 @@ export default function InStockInvoicePage() {
         size: "",
         qty: item.quantity,
         price: item.price,
-        warranty: item.warranty || "12 tháng",
+        warranty: item.isGift ? "Không bảo hành" : (item.warranty || "12 tháng"),
         note: item.note || "",
         images: item.images || [],
       })),
@@ -1223,25 +1227,27 @@ export default function InStockInvoicePage() {
                       </div>
 
                       {/* Warranty */}
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-100 bg-white shadow-sm ring-1 ring-black/5 hover:ring-brand-primary/30 transition-shadow">
-                        <ShieldCheck
-                          size={13}
-                          className="text-emerald-500 shrink-0"
-                        />
-                        <div className="flex flex-col">
-                          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter leading-none mb-0.5">Bảo hành</span>
-                          <input
-                            type="text"
-                            placeholder="Nhập bảo hành..."
-                            value={item.warranty || ""}
-                            onChange={(e) =>
-                              updateItemWarranty(item.id, e.target.value)
-                            }
-                            className="text-[11px] font-bold focus:outline-none bg-transparent w-20 placeholder:font-normal placeholder:text-gray-300"
-                            style={{ color: "var(--text-main)" }}
+                      {!item.isGift && (
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-100 bg-white shadow-sm ring-1 ring-black/5 hover:ring-brand-primary/30 transition-shadow">
+                          <ShieldCheck
+                            size={13}
+                            className="text-emerald-500 shrink-0"
                           />
+                          <div className="flex flex-col">
+                            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter leading-none mb-0.5">Bảo hành</span>
+                            <input
+                              type="text"
+                              placeholder="Nhập bảo hành..."
+                              value={item.warranty || ""}
+                              onChange={(e) =>
+                                updateItemWarranty(item.id, e.target.value)
+                              }
+                              className="text-[11px] font-bold focus:outline-none bg-transparent w-20 placeholder:font-normal placeholder:text-gray-300"
+                              style={{ color: "var(--text-main)" }}
+                            />
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
 
                     {/* Image Upload for Raw Wood */}
@@ -2135,6 +2141,15 @@ export default function InStockInvoicePage() {
                       Tồn kho: {selectedProductForView.stock} sản phẩm
                     </span>
                   </div>
+
+                  {selectedProductForView.description && (
+                    <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Mô tả sản phẩm</p>
+                      <p className="text-[13px] text-gray-600 leading-relaxed italic">
+                        "{selectedProductForView.description}"
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <Button

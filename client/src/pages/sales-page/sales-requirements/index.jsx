@@ -799,7 +799,6 @@ export default function SalesRequirements() {
                     "Mã yêu cầu",
                     "Khách hàng",
                     "Ngày nhận",
-                    "Số lượng",
                     "Trạng thái",
                   ].map((h, i) => (
                     <th
@@ -808,10 +807,8 @@ export default function SalesRequirements() {
                         i === 0
                           ? "text-center w-[50px]"
                           : i === 4
-                            ? "text-center"
-                            : i === 5
-                              ? "text-right pr-4"
-                              : ""
+                            ? "text-right pr-4"
+                            : ""
                       }`}
                       style={{ color: "var(--text-placeholder)" }}
                     >
@@ -878,11 +875,6 @@ export default function SalesRequirements() {
                         style={{ color: "var(--text-secondary)" }}
                       >
                         {r.createdDate?.split("-").reverse().join("/")}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className="text-[13px] font-black py-1 px-3 bg-slate-100 rounded-lg text-slate-600">
-                          {r.items?.length || 0}
-                        </span>
                       </td>
                       <td className="px-4 py-3 text-right pr-6">
                         <div className="inline-flex items-center relative">
