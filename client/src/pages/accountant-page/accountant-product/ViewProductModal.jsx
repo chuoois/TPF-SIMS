@@ -103,7 +103,7 @@ export default function ViewProductModal({ product, onClose }) {
                         {product.name}
                     </h2>
 
-                    </div>
+                </div>
 
                 {/* ── Scrollable Body ── */}
                 <div className="flex-1 overflow-y-auto">
