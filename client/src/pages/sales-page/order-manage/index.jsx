@@ -68,12 +68,12 @@ export const INITIAL_ORDERS = [
     date: "2026-03-12T10:00:00", deliveryDate: "2026-03-20", fulfillmentType: "Giao tận nơi",
   },
   {
-    id: "DH-T02", code: "DH-THO-002", type: "Hàng mộc", status: "Đang sản xuất",
+    id: "DH-T02", code: "DH-THO-002", type: "Hàng mộc", status: "Đang gia công",
     customerName: "Đặng Tuấn Kiệt", phone: "0931234567", total: 8200000,
     date: "2026-03-11T15:30:00", deliveryDate: "2026-03-15", fulfillmentType: "Giao tận nơi",
   },
   {
-    id: "DH-T03", code: "DH-THO-003", type: "Hàng mộc", status: "Đang sản xuất",
+    id: "DH-T03", code: "DH-THO-003", type: "Hàng mộc", status: "Đang gia công",
     customerName: "Vũ Hải Đăng", phone: "0922334455", total: 12500000,
     date: "2026-03-10T08:00:00", deliveryDate: "2026-03-14", fulfillmentType: "Giao tận nơi",
   },
@@ -101,12 +101,12 @@ export const INITIAL_ORDERS = [
     date: "2026-03-12T11:15:00", deliveryDate: "2026-03-30", fulfillmentType: "Giao tận nơi",
   },
   {
-    id: "DH-D02", code: "DH-DAT-002", type: "Hàng khách đặt", status: "Đang sản xuất",
+    id: "DH-D02", code: "DH-DAT-002", type: "Hàng khách đặt", status: "Đang gia công",
     customerName: "Lê Văn Tám", phone: "0321654987", total: 120000000,
     date: "2026-03-11T09:00:00", deliveryDate: "2026-03-25", fulfillmentType: "Giao tận nơi",
   },
   {
-    id: "DH-D03", code: "DH-DAT-003", type: "Hàng khách đặt", status: "Đang sản xuất",
+    id: "DH-D03", code: "DH-DAT-003", type: "Hàng khách đặt", status: "Đang gia công",
     customerName: "Phan Trị", phone: "0944123789", total: 45000000,
     date: "2026-03-10T10:15:00", deliveryDate: "2026-03-28", fulfillmentType: "Giao tận nơi",
   },
@@ -131,7 +131,7 @@ const HANG_SAN_STATUSES = [
 
 const HANG_THO_STATUSES = [
   "Chờ xử lý",
-  "Đang sản xuất",
+  "Đang gia công",
   "Chờ giao hàng",
   "Đang giao hàng",
   "Hoàn thành",
@@ -140,13 +140,14 @@ const HANG_THO_STATUSES = [
 ];
 
 const HANG_DAT_STATUSES = [
-  "Chờ xử lý",
-  "Đang sản xuất",
+  "Chờ sản xuất",
+  "Đã nhập kho",
+  "Đang gia công",
   "Chờ giao hàng",
   "Đang giao hàng",
   "Hoàn thành",
   "Chờ duyệt hủy",
-  "Đã hủy",
+  "Đơn đã hủy",
 ];
 
 const ALL_STATUSES = [
@@ -164,7 +165,8 @@ const CANCELLABLE_STATUSES = [
   "Chờ báo giá",
   "Đã báo giá",
   "Chờ xác nhận",
-  "Đang sản xuất", // Có thể cho phép gửi YC hủy khi đang sx nếu chính sách cho phép
+  "Đang gia công",
+  "Chờ sản xuất",
 ];
 
 // ===================== HELPERS =====================
@@ -187,6 +189,12 @@ const getStatusColor = (status) => {
     case "Đang xử lý":
       return { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" }; // Orange
     case "Đang sản xuất":
+      return { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" }; // Amber
+    case "Chờ sản xuất":
+      return { bg: "#FEF3C7", text: "#B45309", border: "#FDE68A" }; // Amber/Dark
+    case "Đã nhập kho":
+      return { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" }; // Green
+    case "Đang gia công":
       return { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" }; // Amber
     case "Chờ giao hàng":
       return { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" }; // Purple
