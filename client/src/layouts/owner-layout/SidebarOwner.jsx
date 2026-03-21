@@ -19,13 +19,14 @@ import {
   ChevronRight,
   PanelLeftClose,
   History,
+  Tag,
 } from "lucide-react";
 
 const menuItems = [
   { text: "Tổng quan", icon: Home, path: "/owner/dashboard" },
   { text: "Yêu cầu khách hàng", icon: ClipboardList, path: "/owner/requirements" },
   { text: "Đơn hàng", icon: ClipboardList, path: "/owner/orders" },
-
+  { text: "Mã giảm giá", icon: Tag, path: "/owner/coupons" },
   { text: "Sản phẩm", icon: Package, path: "/owner/products" },
   { text: "Quản lý sản xuất", icon: Hammer, path: "/owner/production" },
   // { text: "Khách hàng", icon: Users, path: "/owner/customers" },

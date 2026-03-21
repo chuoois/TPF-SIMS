@@ -14,6 +14,8 @@ import Suppliers from "../pages/owner-page/suppliers";
 import Employees from "../pages/owner-page/employees";
 import Reports from "../pages/owner-page/reports";
 import SystemLogs from "../pages/owner-page/system-logs";
+import Coupons from "../pages/owner-page/coupon/index";
+import CouponCreate from "../pages/owner-page/coupon/create";
 
 export const ownerRoutes = {
   path: "/owner",
@@ -31,6 +33,18 @@ export const ownerRoutes = {
     {
       path: "orders/:id",
       element: <OrderDetail />,
+    },
+    {
+      path: "coupons",
+      element: <Coupons />,
+    },
+    {
+      path: "coupons/create",
+      element: <CouponCreate />,
+    },
+    {
+      path: "coupons/:id/edit",
+      element: <CouponCreate />,
     },
     {
       path: "requirements",
