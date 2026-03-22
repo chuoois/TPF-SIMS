@@ -1,13 +1,12 @@
 /**
  * ViewProductModal – Xem Chi Tiết Sản Phẩm trong Kho (Read-Only)
- *
- * Created By: HieuNM – 12/03/2026
+ * Hỗ trợ hiển thị sản phẩm bình thường VÀ bộ sản phẩm (isBundle=true)
  */
 
 import {
     X, Package, Tag, Layers, Palette, Ruler, MapPin,
     BarChart2, DollarSign, CheckCircle, Hammer, Users,
-    Image as ImageIcon, TrendingDown, TrendingUp, ArrowDownToLine,
+    Image as ImageIcon, TrendingDown, TrendingUp, ArrowDownToLine, AlertTriangle,
 } from "lucide-react";
 
 // ── Helpers ──────────────────────────────────────────────
@@ -35,12 +34,6 @@ const TYPE_CONFIG = {
     },
 };
 
-const STATUS_COLOR = {
-    "Đang kinh doanh": { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" },
-    "Đang sản xuất": { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" },
-    "Hoàn thành": { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" },
-};
-
 const InfoRow = ({ icon: Icon, label, value, valueStyle }) => (
     <div className="flex items-start gap-3 py-2.5 border-b last:border-0" style={{ borderColor: "var(--grid-border)" }}>
         <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
@@ -57,15 +50,93 @@ const InfoRow = ({ icon: Icon, label, value, valueStyle }) => (
     </div>
 );
 
+// ── Bundle Items Table ───────────────────────────────────
+function BundleItemsTable({ items, bundlePrice }) {
+    const estimatedTotal = items.reduce((s, it) => s + (Number(it.qty) || 0) * (Number(it.unitPrice) || 0), 0);
+    const diff = estimatedTotal - (Number(bundlePrice) || 0);
+    const isMatch = estimatedTotal > 0 && Math.abs(diff) === 0;
+
+    return (
+        <div className="rounded-xl overflow-hidden" style={{ border: "2px solid #7C3AED", margin: "0 24px" }}>
+            {/* Header */}
+            <div className="px-4 py-2.5 flex items-center justify-between" style={{ backgroundColor: "#F5F3FF" }}>
+                <p className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "#7C3AED" }}>
+                    <Layers size={12} /> Các món lẻ trong bộ
+                </p>
+                {estimatedTotal > 0 && bundlePrice && (
+                    isMatch ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                            style={{ backgroundColor: "#F0FDF4", color: "#15803D", border: "1px solid #BBF7D0" }}>
+                            <CheckCircle size={10} /> Khớp HĐ
+                        </span>
+                    ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                            style={{ backgroundColor: "#FFFBEB", color: "#D97706", border: "1px solid #FDE68A" }}>
+                            <AlertTriangle size={10} />
+                            {diff > 0 ? "+" : ""}{fmtCurrency(Math.abs(diff))} chênh lệch
+                        </span>
+                    )
+                )}
+            </div>
+
+            {/* Table */}
+            <table className="w-full" style={{ backgroundColor: "#FAFAFE" }}>
+                <thead>
+                    <tr style={{ borderBottom: "1px solid #EDE9FE" }}>
+                        <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-wider w-8" style={{ color: "#7C3AED" }}>#</th>
+                        <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-wider" style={{ color: "#7C3AED" }}>Tên món</th>
+                        <th className="px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider w-20" style={{ color: "#7C3AED" }}>SL</th>
+                        <th className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider w-40" style={{ color: "#7C3AED" }}>Giá ước tính/đv</th>
+                        <th className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider w-36" style={{ color: "#7C3AED" }}>Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {items.map((item, idx) => {
+                        const sub = (Number(item.qty) || 0) * (Number(item.unitPrice) || 0);
+                        return (
+                            <tr key={item._id || idx} style={{ borderBottom: "1px solid #F3F0FF" }}>
+                                <td className="px-4 py-2.5 text-[12px] font-semibold" style={{ color: "#7C3AED" }}>{idx + 1}</td>
+                                <td className="px-4 py-2.5 text-[13px] font-semibold" style={{ color: "var(--text-main)" }}>{item.name}</td>
+                                <td className="px-3 py-2.5 text-center">
+                                    <span className="text-[12px] font-bold px-2 py-0.5 rounded-lg" style={{ backgroundColor: "#EDE9FE", color: "#7C3AED" }}>
+                                        x{item.qty}
+                                    </span>
+                                </td>
+                                <td className="px-3 py-2.5 text-right text-[12px]" style={{ color: "var(--text-secondary)" }}>
+                                    {item.unitPrice ? fmtCurrency(item.unitPrice) : <span style={{ color: "var(--text-placeholder)" }}>Chưa có</span>}
+                                </td>
+                                <td className="px-3 py-2.5 text-right text-[12px] font-bold" style={{ color: sub > 0 ? "#5B21B6" : "var(--text-placeholder)" }}>
+                                    {sub > 0 ? fmtCurrency(sub) : "—"}
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+                {/* Footer tổng */}
+                <tfoot>
+                    <tr style={{ borderTop: "1px solid #DDD6FE" }}>
+                        <td colSpan={4} className="px-4 py-2.5 text-right text-[11px] font-bold" style={{ color: "#7C3AED" }}>
+                            Tổng ước tính
+                        </td>
+                        <td className="px-3 py-2.5 text-right text-[13px] font-black" style={{ color: "#7C3AED" }}>
+                            {fmtCurrency(estimatedTotal)}
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    );
+}
+
 // ─────────────────────────────────────────────────────────
 export default function ViewProductModal({ product, onClose }) {
     if (!product) return null;
 
     const cfg = TYPE_CONFIG[product.type] || TYPE_CONFIG.FINISHED;
     const TypeIcon = cfg.icon;
+    const isBundle = product.isBundle && Array.isArray(product.items) && product.items.length > 0;
 
     const dims = [product.length, product.width, product.height].filter(Boolean);
-    const hasPrice = product.sellingPrice != null;
 
     return (
         <div
@@ -73,27 +144,32 @@ export default function ViewProductModal({ product, onClose }) {
             onClick={e => { if (e.target === e.currentTarget) onClose(); }}
         >
             <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden"
-                style={{ maxHeight: "88vh" }}>
+                style={{ maxHeight: "90vh" }}>
 
                 {/* ── Gradient Header by Type ── */}
                 <div className="px-6 py-5 shrink-0 relative" style={{ background: cfg.headerBg }}>
-                    {/* Close */}
                     <button onClick={onClose}
                         className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-black/5 cursor-pointer transition"
                         style={{ color: cfg.text }}>
                         <X size={18} />
                     </button>
 
-                    {/* Type badge + code */}
-                    <div className="flex items-center gap-2 mb-3">
+                    {/* Badges: Type + Bundle + Code */}
+                    <div className="flex items-center gap-2 mb-3 flex-wrap">
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold"
                             style={{ backgroundColor: cfg.bg, color: cfg.text, border: `1px solid ${cfg.border}` }}>
                             <TypeIcon size={12} />
                             {cfg.label}
                         </span>
+                        {isBundle && (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold"
+                                style={{ backgroundColor: "#F5F3FF", color: "#7C3AED", border: "1px solid #DDD6FE" }}>
+                                <Layers size={12} /> Bộ sản phẩm · {product.items.length} món
+                            </span>
+                        )}
                         <span className="text-[11px] font-mono font-bold px-2 py-1 rounded-lg bg-white/70"
                             style={{ color: cfg.text }}>
-                            {product.code}
+                            {product.sku || product.code}
                         </span>
                     </div>
 
@@ -102,12 +178,11 @@ export default function ViewProductModal({ product, onClose }) {
                         style={{ color: cfg.text }}>
                         {product.name}
                     </h2>
-
                 </div>
 
                 {/* ── Scrollable Body ── */}
                 <div className="flex-1 overflow-y-auto">
-                    {/* Ảnh + Tồn kho nổi bật */}
+                    {/* Ảnh + Stats */}
                     <div className="flex gap-0 border-b" style={{ borderColor: "var(--grid-border)" }}>
                         {/* Ảnh */}
                         <div className="w-40 shrink-0 flex items-center justify-center border-r p-4"
@@ -124,8 +199,8 @@ export default function ViewProductModal({ product, onClose }) {
                             }
                         </div>
 
-                        {/* Stats nhanh – hàng trên: Tồn / Giá nhập / Giá bán */}
-                        <div className="flex-1 flex flex-col divide-y" style={{ borderColor: "var(--grid-border)" }}>
+                        {/* Stats */}
+                        <div className="flex-1 flex flex-col divide-y" style={{ divideColor: "var(--grid-border)" }}>
                             <div className="grid grid-cols-3 divide-x" style={{ borderColor: "var(--grid-border)" }}>
                                 {/* Tồn kho */}
                                 <div className="p-4 flex flex-col gap-1">
@@ -139,14 +214,15 @@ export default function ViewProductModal({ product, onClose }) {
                                     </span>
                                     <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
                                         {product.stock === 0 ? "Hết hàng" : product.stock <= 3 ? "Sắp hết" : "Còn hàng"}
+                                        {isBundle ? " bộ" : ""}
                                     </span>
                                 </div>
 
-                                {/* Giá nhập */}
+                                {/* Giá nhập / Giá bộ */}
                                 <div className="p-4 flex flex-col gap-1">
                                     <span className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1"
                                         style={{ color: "var(--text-placeholder)" }}>
-                                        <ArrowDownToLine size={10} /> Giá nhập
+                                        <ArrowDownToLine size={10} /> {isBundle ? "Giá bộ (HĐ)" : "Giá nhập"}
                                     </span>
                                     {product.importPrice != null
                                         ? <>
@@ -158,26 +234,9 @@ export default function ViewProductModal({ product, onClose }) {
                                         : <span className="text-[13px] italic" style={{ color: "var(--text-placeholder)" }}>—</span>
                                     }
                                 </div>
-
-                                {/* Giá bán */}
-                                <div className="p-4 flex flex-col gap-1">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1"
-                                        style={{ color: "var(--text-placeholder)" }}>
-                                        <DollarSign size={10} /> Giá bán
-                                    </span>
-                                    {hasPrice
-                                        ? <>
-                                            <span className="text-[16px] font-black leading-none" style={{ color: "var(--brand-primary)" }}>
-                                                {new Intl.NumberFormat("vi-VN").format(product.sellingPrice)}
-                                            </span>
-                                            <span className="text-[11px] font-bold" style={{ color: "var(--brand-primary)" }}>₫</span>
-                                        </>
-                                        : <span className="text-[13px] italic" style={{ color: "var(--text-placeholder)" }}>Chưa định giá</span>
-                                    }
-                                </div>
                             </div>
 
-                            {/* Hàng dưới: Tồn min */}
+                            {/* Tồn min */}
                             <div className="p-3 flex items-center gap-3">
                                 <TrendingDown size={14} style={{ color: "var(--text-placeholder)" }} />
                                 <div>
@@ -188,10 +247,17 @@ export default function ViewProductModal({ product, onClose }) {
                         </div>
                     </div>
 
+                    {/* ── Bundle Items Table ── */}
+                    {isBundle && (
+                        <div className="py-4">
+                            <BundleItemsTable items={product.items} bundlePrice={product.bundlePrice || product.importPrice} />
+                        </div>
+                    )}
+
                     {/* ── Chi tiết ── */}
                     <div className="px-6 py-2">
                         <InfoRow icon={Layers} label="Danh mục" value={product.category} />
-                        <InfoRow icon={Tag} label="Loại" value={product.materialType} />
+                        <InfoRow icon={Tag} label="Loại gỗ" value={product.materialType} />
                         <InfoRow icon={Palette} label="Màu sắc" value={product.color} />
                         {dims.length > 0 && (
                             <InfoRow icon={Ruler} label="Kích thước (Dài × Rộng × Cao)"

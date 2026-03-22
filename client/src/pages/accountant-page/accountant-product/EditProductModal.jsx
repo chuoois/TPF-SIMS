@@ -1,5 +1,5 @@
 /**
- * EditProductModal – Chỉnh Sửa Sản Phẩm (Giá nhập, Giá bán, Tồn tối thiểu)
+ * EditProductModal – Chỉnh Sửa Sản Phẩm (Giá nhập,  Tồn tối thiểu)
  *
  * Created By: AI
  */
@@ -55,7 +55,6 @@ export default function EditProductModal({ product, onClose, onSave }) {
     if (!product) return null;
 
     const [importPrice, setImportPrice] = useState(product.importPrice || "");
-    const [sellingPrice, setSellingPrice] = useState(product.sellingPrice || "");
     const [minStock, setMinStock] = useState(product.minStock || "");
 
     const cfg = TYPE_CONFIG[product.type] || TYPE_CONFIG.FINISHED;
@@ -68,7 +67,6 @@ export default function EditProductModal({ product, onClose, onSave }) {
         onSave({
             ...product, // giữ nguyên các field khác
             importPrice: importPrice === "" ? null : Number(importPrice),
-            sellingPrice: sellingPrice === "" ? null : Number(sellingPrice),
             minStock: minStock === "" ? null : Number(minStock),
         });
     };
@@ -146,16 +144,7 @@ export default function EditProductModal({ product, onClose, onSave }) {
                                         className={inpStr} style={inpS} placeholder="0" />
                                 </div>
 
-                                {/* Giá bán */}
-                                <div className="p-4 flex flex-col gap-1">
-                                    <label className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1"
-                                        style={{ color: "var(--text-placeholder)" }}>
-                                        <DollarSign size={10} /> Giá bán (₫)
-                                    </label>
-                                    <input type="number" min="0" step="1000"
-                                        value={sellingPrice} onChange={e => setSellingPrice(e.target.value)}
-                                        className={inpStr} style={inpS} placeholder="0" />
-                                </div>
+
                             </div>
 
                             {/* Tồn min */}
