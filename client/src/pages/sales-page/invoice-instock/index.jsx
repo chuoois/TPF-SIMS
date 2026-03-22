@@ -39,6 +39,8 @@ import {
   ShieldCheck,
   Eye,
   Info,
+  ToggleLeft,
+  ToggleRight,
 } from "lucide-react";
 import { PrintableInvoice } from "../order-manage/detail";
 import { PageHelmet } from "@/components/seo/PageHelmet";
@@ -46,12 +48,16 @@ import { Button } from "@/components/ui/button";
 import AddCustomerModal from "@/pages/sales-page/components/AddCustomerModal";
 
 // ===================== STATIC DATA =====================
+const SYSTEM_WARRANTY = "12 tháng"; // Cấu hình bảo hành từ hệ thống
+const WOOD_FINISHING_RATE = 1.35; // Giá hoàn thiện = giá thô × 1.35 (bao gồm dịch vụ sơn, xử lý, hoàn thiện)
+
 const WOOD_PRODUCTS = [
   {
     id: 1,
     name: "Bộ bàn ăn gỗ sồi 4 ghế",
     sku: "BA-SOI-4G",
     price: 12500000,
+    discount: 10,
     stock: 8,
     image: "/wood_products.png",
     category: "Phòng ăn",
@@ -78,6 +84,7 @@ const WOOD_PRODUCTS = [
     name: "Bàn làm việc gỗ sồi 3 ngăn",
     sku: "BLV-SOI-3N",
     price: 7200000,
+    discount: 12,
     stock: 12,
     image: "/wood_products.png",
     category: "Phòng làm việc",
@@ -115,6 +122,7 @@ const WOOD_PRODUCTS = [
     name: "Bàn trà đôi mặt đá Marble",
     sku: "BT-MD-06",
     price: 4200000,
+    discount: 15,
     stock: 8,
     image: "/wood_products.png",
     category: "Phòng khách",
@@ -150,6 +158,7 @@ const WOOD_PRODUCTS = [
     name: "Sofa nỉ chữ L cỡ lớn",
     sku: "SF-NL-09",
     price: 15800000,
+    discount: 5,
     stock: 4,
     image: "/wood_products.png",
     category: "Phòng khách",
@@ -162,6 +171,7 @@ const WOOD_PRODUCTS = [
     name: "Tủ giày gỗ thông ghép",
     sku: "TG-GT-10",
     price: 1200000,
+    discount: 10,
     stock: 30,
     image: "/wood_products.png",
     category: "Phòng khách",
@@ -270,6 +280,7 @@ const WOOD_PRODUCTS = [
     name: "Giường bọc da đầu giường cao",
     sku: "GBD-19",
     price: 18500000,
+    discount: 7,
     stock: 4,
     image: "/wood_products.png",
     category: "Phòng ngủ",
@@ -281,6 +292,7 @@ const WOOD_PRODUCTS = [
     name: "Tủ quần áo cánh lùa kính đen",
     sku: "TQA-L-20",
     price: 21000000,
+    discount: 8,
     stock: 2,
     image: "/wood_products.png",
     category: "Phòng ngủ",
@@ -412,6 +424,7 @@ const WOOD_PRODUCTS = [
     name: "Đảo bếp di động mặt gỗ",
     sku: "DB-31",
     price: 8900000,
+    discount: 15,
     stock: 7,
     image: "/wood_products.png",
     category: "Phòng ăn",
@@ -449,6 +462,7 @@ const WOOD_PRODUCTS = [
     name: "Ghế công thái học Ergonomic",
     sku: "GCTH-34",
     price: 4500000,
+    discount: 20,
     stock: 22,
     image: "/wood_products.png",
     category: "Phòng làm việc",
@@ -661,7 +675,7 @@ const createEmptyTab = () => ({
   depositAmount: 0,
   deliveryMethod: "store", // "store" hoặc "delivery"
   deliveryDate: "",
-  processingFee: 0,
+  storePickupDate: "", // yyyy-mm-dd — để trống = lấy ngay, có ngày = hẹn lấy
 });
 
 // ===================== COMPONENT =====================
@@ -720,11 +734,12 @@ export default function InStockInvoicePage() {
       depositAmount: 0,
       deliveryMethod: "store",
       deliveryDate: "",
-      processingFee: 0,
+      storePickupDate: "",
     },
   ]);
   const [activeTabId, setActiveTabId] = useState(1);
   const [productTypeTab, setProductTypeTab] = useState("Hàng mộc");
+  const [woodPriceMode, setWoodPriceMode] = useState("finished"); // "finished" | "raw"
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedProductTypes, setSelectedProductTypes] = useState([]);
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
@@ -853,21 +868,26 @@ export default function InStockInvoicePage() {
         toast.error(`"${product.name}" đã hết hàng`);
         return;
       }
+      const isWood = product.productType === "Hàng mộc";
+      const isGift = productTypeTab === "Quà tặng";
+      let itemPrice = product.price;
+      if (isGift) itemPrice = 0;
+      else if (isWood && woodPriceMode === "finished") itemPrice = Math.round(product.price * WOOD_FINISHING_RATE);
       updateActiveTab({
         cartItems: [
           ...activeTab.cartItems,
           {
-            id: product.id + (productTypeTab === "Quà tặng" ? 10000 : 0),
+            id: product.id + (isGift ? 10000 : 0),
             name: product.name,
-            price: productTypeTab === "Quà tặng" ? 0 : product.price,
+            price: itemPrice,
             stock: product.stock,
             sku: product.sku,
             quantity: 1,
             note: "",
-            warranty: "",
             productType: product.productType,
             images: [],
-            isGift: productTypeTab === "Quà tặng",
+            isGift,
+            priceMode: isWood ? woodPriceMode : null,
           },
         ],
       });
@@ -919,13 +939,7 @@ export default function InStockInvoicePage() {
     });
   };
 
-  const updateItemWarranty = (id, warranty) => {
-    updateActiveTab({
-      cartItems: activeTab.cartItems.map((i) =>
-        i.id === id ? { ...i, warranty } : i,
-      ),
-    });
-  };
+  // Bảo hành do hệ thống cấu hình, không cho sales chỉnh
 
   const updateItemImages = (id, newImages) => {
     updateActiveTab({
@@ -951,8 +965,7 @@ export default function InStockInvoicePage() {
   );
   const totalPayable = Math.max(
     0,
-    subtotal +
-      (activeTab.processingFee || 0) -
+    subtotal -
       activeTab.discount -
       activeTab.depositAmount,
   );
@@ -966,10 +979,16 @@ export default function InStockInvoicePage() {
       return;
     }
 
+    // Validate: giao tận nơi nhưng chưa chọn ngày giao
+    if (activeTab.deliveryMethod === "delivery" && !activeTab.deliveryDate) {
+      toast.error("Vui lòng chọn ngày giao hàng!");
+      return;
+    }
+
     const newOrder = {
       code: "HD-" + Math.floor(Math.random() * 1000000),
       customer: {
-        name: activeTab.selectedCustomer?.name ,
+        name: activeTab.selectedCustomer?.name,
         phone: activeTab.selectedCustomer?.phone || "",
         address: activeTab.selectedCustomer?.address || "",
       },
@@ -981,16 +1000,20 @@ export default function InStockInvoicePage() {
         size: "",
         qty: item.quantity,
         price: item.price,
-        warranty: item.isGift ? "Không bảo hành" : (item.warranty ? new Date(item.warranty).toLocaleDateString("vi-VN") : "12 tháng"),
+        warranty: item.isGift ? "Không bảo hành" : SYSTEM_WARRANTY,
         note: item.note || "",
         images: item.images || [],
       })),
       total: totalPayable,
       subtotal: subtotal,
-      processingFee: activeTab.processingFee || 0,
       discount: activeTab.discount,
       deposit: activeTab.depositAmount,
+      deliveryMethod: activeTab.deliveryMethod,
       deliveryDate: activeTab.deliveryDate,
+      // Lấy tại cửa hàng: trống = lấy ngay, có ngày = hẹn lấy
+      storePickupDate: activeTab.deliveryMethod === "store"
+        ? (activeTab.storePickupDate || null)
+        : null,
       date: new Date().toISOString(),
     };
 
@@ -1005,7 +1028,7 @@ export default function InStockInvoicePage() {
       depositAmount: 0,
       deliveryMethod: "store",
       deliveryDate: "",
-      processingFee: 0,
+      storePickupDate: "",
     });
   };
 
@@ -1226,87 +1249,19 @@ export default function InStockInvoicePage() {
                         />
                       </div>
 
-                      {/* Warranty */}
+                      {/* Warranty – Read-only system config */}
                       {!item.isGift && (
-                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-100 bg-white shadow-sm ring-1 ring-black/5 hover:ring-brand-primary/30 transition-shadow">
+                        <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200">
                           <ShieldCheck
-                            size={13}
+                            size={12}
                             className="text-emerald-500 shrink-0"
                           />
-                          <div className="flex flex-col">
-                            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter leading-none mb-0.5">Bảo hành</span>
-                            <input
-                              type="date"
-                              min={new Date().toISOString().split("T")[0]}
-                              value={item.warranty || ""}
-                              onChange={(e) =>
-                                updateItemWarranty(item.id, e.target.value)
-                              }
-                              className="text-[11px] font-bold focus:outline-none bg-transparent w-[100px] cursor-pointer"
-                              style={{ color: "var(--text-main)" }}
-                            />
-                          </div>
+                          <span className="text-[11px] font-semibold text-emerald-700">
+                            Bảo hành: {SYSTEM_WARRANTY}
+                          </span>
                         </div>
                       )}
                     </div>
-
-                    {/* Image Upload for Raw Wood */}
-                    {item.productType === "Hàng mộc" && (
-                      <div className="mt-2 pl-11 space-y-2">
-                        <div className="flex items-center gap-2">
-                          <label className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-dashed border-gray-300 hover:border-brand-primary hover:bg-brand-primary/5 transition-colors cursor-pointer group/upload">
-                            <Camera
-                              size={12}
-                              className="text-gray-400 group-hover/upload:text-brand-primary"
-                            />
-                            <span className="text-[11px] font-medium text-gray-500 group-hover/upload:text-brand-primary">
-                              Gửi ảnh khách
-                            </span>
-                            <input
-                              type="file"
-                              multiple
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(e) => {
-                                const files = Array.from(e.target.files);
-                                if (files.length > 0) {
-                                  // Mock: create Object URLs for preview
-                                  const urls = files.map((f) =>
-                                    URL.createObjectURL(f),
-                                  );
-                                  updateItemImages(item.id, urls);
-                                }
-                              }}
-                            />
-                          </label>
-                        </div>
-
-                        {item.images && item.images.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {item.images.map((img, imgIdx) => (
-                              <div
-                                key={imgIdx}
-                                className="relative w-12 h-12 rounded-lg border overflow-hidden group/img"
-                              >
-                                <img
-                                  src={img}
-                                  alt="customer"
-                                  className="w-full h-full object-cover"
-                                />
-                                <button
-                                  onClick={() =>
-                                    removeItemImage(item.id, imgIdx)
-                                  }
-                                  className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity"
-                                >
-                                  <X size={12} className="text-white" />
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
@@ -1481,7 +1436,7 @@ export default function InStockInvoicePage() {
 
             {/* Delivery Method */}
             <div
-              className="px-4 py-3 space-y-2 border-t"
+              className="px-4 py-3 space-y-3 border-t"
               style={{
                 borderColor: "var(--grid-border)",
               }}
@@ -1500,7 +1455,10 @@ export default function InStockInvoicePage() {
                     value="store"
                     checked={activeTab.deliveryMethod === "store"}
                     onChange={() =>
-                      updateActiveTab({ deliveryMethod: "store" })
+                      updateActiveTab({
+                        deliveryMethod: "store",
+                        deliveryDate: "",
+                      })
                     }
                     className="w-3.5 h-3.5 text-green-600 focus:ring-green-500"
                   />
@@ -1518,7 +1476,10 @@ export default function InStockInvoicePage() {
                     value="delivery"
                     checked={activeTab.deliveryMethod === "delivery"}
                     onChange={() =>
-                      updateActiveTab({ deliveryMethod: "delivery" })
+                      updateActiveTab({
+                        deliveryMethod: "delivery",
+                        storePickupDate: "",
+                      })
                     }
                     className="w-3.5 h-3.5 text-green-600 focus:ring-green-500"
                   />
@@ -1531,8 +1492,56 @@ export default function InStockInvoicePage() {
                 </label>
               </div>
 
+              {/* ── Lấy tại cửa hàng: date picker tùy chọn ── */}
+              {activeTab.deliveryMethod === "store" && (
+                <div
+                  className="ml-1 pl-4 space-y-2"
+                  style={{ borderLeft: "2px solid var(--grid-border)" }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="text-[12.5px] shrink-0"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
+                      Ngày hẹn lấy:
+                    </span>
+                    <div className="relative flex-1">
+                      <Calendar
+                        size={14}
+                        className="absolute left-2.5 top-1/2 -translate-y-1/2"
+                        style={{ color: "var(--text-placeholder)" }}
+                      />
+                      <input
+                        type="date"
+                        value={activeTab.storePickupDate || ""}
+                        min={new Date().toISOString().split("T")[0]}
+                        onChange={(e) =>
+                          updateActiveTab({
+                            storePickupDate: e.target.value,
+                          })
+                        }
+                        className="w-full text-[12.5px] pl-8 pr-2 py-1.5 focus:outline-none focus:ring-1 rounded-lg bg-white"
+                        style={{
+                          border: "1px solid var(--grid-border)",
+                          color: "var(--text-main)",
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <p
+                    className="text-[11px] italic"
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
+                    {activeTab.storePickupDate
+                      ? `Khách hẹn lấy tại cửa hàng ngày ${activeTab.storePickupDate.split("-").reverse().join("/")}`
+                      : "Để trống nếu khách lấy ngay tại cửa hàng"}
+                  </p>
+                </div>
+              )}
+
+              {/* ── Giao tận nơi — date picker ── */}
               {activeTab.deliveryMethod === "delivery" && (
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-2 mt-1">
                   <span
                     className="text-[13px] shrink-0"
                     style={{ color: "var(--text-secondary)" }}
@@ -1548,6 +1557,7 @@ export default function InStockInvoicePage() {
                     <input
                       type="date"
                       value={activeTab.deliveryDate || ""}
+                      min={new Date().toISOString().split("T")[0]}
                       onChange={(e) =>
                         updateActiveTab({ deliveryDate: e.target.value })
                       }
@@ -1580,66 +1590,6 @@ export default function InStockInvoicePage() {
                 >
                   {fmt(subtotal)}đ
                 </span>
-              </div>
-              <div className="flex justify-between text-[13px] items-center">
-                <span style={{ color: "var(--text-secondary)" }}>
-                  Phí gia công
-                </span>
-                <div className="flex items-center gap-1">
-                  <span
-                    className="text-[13px]"
-                    style={{ color: "var(--text-placeholder)" }}
-                  >
-                    ₫
-                  </span>
-                  <input
-                    type="text"
-                    value={
-                      activeTab.processingFee
-                        ? fmt(activeTab.processingFee)
-                        : ""
-                    }
-                    onChange={(e) => {
-                      const raw = e.target.value.replace(/\D/g, "");
-                      updateActiveTab({
-                        processingFee: parseInt(raw) || 0,
-                      });
-                    }}
-                    placeholder="0"
-                    className="w-28 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white"
-                    style={{
-                      border: "1px solid var(--grid-border)",
-                      color: "var(--text-main)",
-                    }}
-                  />
-                </div>
-              </div>
-              <div className="flex justify-between text-[13px] items-center">
-                <span style={{ color: "var(--text-secondary)" }}>Giảm giá</span>
-                <div className="flex items-center gap-1">
-                  <span
-                    className="text-[13px]"
-                    style={{ color: "var(--text-placeholder)" }}
-                  >
-                    ₫
-                  </span>
-                  <input
-                    type="text"
-                    value={activeTab.discount ? fmt(activeTab.discount) : ""}
-                    onChange={(e) => {
-                      const raw = e.target.value.replace(/\D/g, "");
-                      updateActiveTab({
-                        discount: parseInt(raw) || 0,
-                      });
-                    }}
-                    placeholder="0"
-                    className="w-28 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white"
-                    style={{
-                      border: "1px solid var(--grid-border)",
-                      color: "var(--text-main)",
-                    }}
-                  />
-                </div>
               </div>
               <div className="flex justify-between text-[13px] items-center">
                 <span
@@ -1778,6 +1728,52 @@ export default function InStockInvoicePage() {
                 )}
               </button>
             </div>
+
+            {/* Toggle chọn loại giá cho Hàng mộc */}
+            {productTypeTab === "Hàng mộc" && (
+              <div
+                className="flex items-center rounded-xl overflow-hidden"
+                style={{
+                  border: "1px solid var(--grid-border)",
+                  backgroundColor: "var(--bg-main)",
+                }}
+              >
+                <button
+                  onClick={() => setWoodPriceMode("finished")}
+                  className="flex-1 flex items-center justify-center gap-2 py-2 text-[12px] font-semibold transition-all cursor-pointer"
+                  style={{
+                    backgroundColor:
+                      woodPriceMode === "finished"
+                        ? "var(--brand-primary)"
+                        : "transparent",
+                    color:
+                      woodPriceMode === "finished"
+                        ? "#fff"
+                        : "var(--text-secondary)",
+                  }}
+                >
+                  <PackageCheck size={14} />
+                  Giá hoàn thiện
+                </button>
+                <button
+                  onClick={() => setWoodPriceMode("raw")}
+                  className="flex-1 flex items-center justify-center gap-2 py-2 text-[12px] font-semibold transition-all cursor-pointer"
+                  style={{
+                    backgroundColor:
+                      woodPriceMode === "raw"
+                        ? "var(--brand-primary)"
+                        : "transparent",
+                    color:
+                      woodPriceMode === "raw"
+                        ? "#fff"
+                        : "var(--text-secondary)",
+                  }}
+                >
+                  <Hammer size={14} />
+                  Giá thô
+                </button>
+              </div>
+            )}
 
             {/* Thanh tìm kiếm */}
             <div className="relative w-full">
@@ -1940,6 +1936,19 @@ export default function InStockInvoicePage() {
                         {outOfStock ? "Hết hàng" : `Kho: ${product.stock}`}
                       </div>
 
+                      {/* Discount badge */}
+                      {product.discount > 0 && (
+                        <div
+                          className="absolute top-2 left-2 z-10 text-[10px] font-bold px-2 py-0.5 rounded-md"
+                          style={{
+                            backgroundColor: "#EF4444",
+                            color: "#fff",
+                          }}
+                        >
+                          -{product.discount}%
+                        </div>
+                      )}
+
                       {/* Image */}
                       <div className="aspect-square overflow-hidden bg-gray-50">
                         <img
@@ -1979,7 +1988,9 @@ export default function InStockInvoicePage() {
                           className="text-[13px] font-bold"
                           style={{ color: "var(--brand-primary)" }}
                         >
-                          {fmt(product.price)}đ
+                          {product.productType === "Hàng mộc"
+                            ? fmt(woodPriceMode === "finished" ? Math.round(product.price * WOOD_FINISHING_RATE) : product.price)
+                            : fmt(product.price)}đ
                         </p>
 
                         {/* Quick View Button */}
@@ -2130,10 +2141,23 @@ export default function InStockInvoicePage() {
                     <p className="text-[13px] font-semibold text-gray-700 mt-0.5">{selectedProductForView.category || "—"}</p>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-left">
-                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Giá niêm yết</p>
-                    <p className="text-[20px] font-black text-emerald-700 mt-0.5">{fmt(selectedProductForView.price)}đ</p>
-                  </div>
+                  {selectedProductForView.productType === "Hàng mộc" ? (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className={`p-3 rounded-xl border text-left ${woodPriceMode === "finished" ? "bg-emerald-50 border-emerald-200 ring-2 ring-emerald-300" : "bg-gray-50 border-gray-100"}`}>
+                        <p className={`text-[10px] font-bold uppercase tracking-wider ${woodPriceMode === "finished" ? "text-emerald-600" : "text-gray-400"}`}>Giá hoàn thiện</p>
+                        <p className={`text-[17px] font-black mt-0.5 ${woodPriceMode === "finished" ? "text-emerald-700" : "text-gray-500"}`}>{fmt(Math.round(selectedProductForView.price * WOOD_FINISHING_RATE))}đ</p>
+                      </div>
+                      <div className={`p-3 rounded-xl border text-left ${woodPriceMode === "raw" ? "bg-emerald-50 border-emerald-200 ring-2 ring-emerald-300" : "bg-gray-50 border-gray-100"}`}>
+                        <p className={`text-[10px] font-bold uppercase tracking-wider ${woodPriceMode === "raw" ? "text-emerald-600" : "text-gray-400"}`}>Giá thô</p>
+                        <p className={`text-[17px] font-black mt-0.5 ${woodPriceMode === "raw" ? "text-emerald-700" : "text-gray-500"}`}>{fmt(selectedProductForView.price)}đ</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-left">
+                      <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Giá niêm yết</p>
+                      <p className="text-[20px] font-black text-emerald-700 mt-0.5">{fmt(selectedProductForView.price)}đ</p>
+                    </div>
+                  )}
 
                   <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-100">
                     <Package size={14} className="text-amber-600" />

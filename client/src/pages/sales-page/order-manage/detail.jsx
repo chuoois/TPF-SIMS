@@ -976,126 +976,37 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
             ),
           )}
           {/* Breakdown Rows */}
-          {o.subtotal !== undefined ||
-          o.processingFee !== undefined ||
-          o.discount > 0 ||
-          o.deposit > 0 ? (
+          {o.processingFee !== undefined ? (
             <>
-              {o.subtotal !== undefined && (
-                <tr>
-                  <td
-                    colSpan={5}
-                    style={{
-                      border: "1px solid #d32f2f",
-                      padding: "6px 8px",
-                      textAlign: "right",
-                      color: "#d32f2f",
-                      fontSize: 13,
-                    }}
-                  >
-                    TỔNG TIỀN HÀNG:
-                  </td>
-                  <td
-                    style={{
-                      border: "1px solid #d32f2f",
-                      padding: "6px 8px",
-                      textAlign: "right",
-                      color: "blue",
-                      fontFamily: "'Caveat', 'Dancing Script', cursive, serif",
-                      fontSize: 16,
-                    }}
-                  >
-                    {fmtCurrency(o.subtotal)}
-                  </td>
-                </tr>
-              )}
-              {o.processingFee !== undefined && (
-                <tr>
-                  <td
-                    colSpan={5}
-                    style={{
-                      border: "1px solid #d32f2f",
-                      padding: "6px 8px",
-                      textAlign: "right",
-                      color: "#d32f2f",
-                      fontSize: 13,
-                    }}
-                  >
-                    PHÍ GIA CÔNG:
-                  </td>
-                  <td
-                    style={{
-                      border: "1px solid #d32f2f",
-                      padding: "6px 8px",
-                      textAlign: "right",
-                      color: "blue",
-                      fontFamily: "'Caveat', 'Dancing Script', cursive, serif",
-                      fontSize: 16,
-                    }}
-                  >
-                    {fmtCurrency(o.processingFee)}
-                  </td>
-                </tr>
-              )}
-              {o.discount !== undefined && (
-                <tr>
-                  <td
-                    colSpan={5}
-                    style={{
-                      border: "1px solid #d32f2f",
-                      padding: "6px 8px",
-                      textAlign: "right",
-                      color: "#d32f2f",
-                      fontSize: 13,
-                    }}
-                  >
-                    GIẢM GIÁ:
-                  </td>
-                  <td
-                    style={{
-                      border: "1px solid #d32f2f",
-                      padding: "6px 8px",
-                      textAlign: "right",
-                      color: "blue",
-                      fontFamily: "'Caveat', 'Dancing Script', cursive, serif",
-                      fontSize: 16,
-                    }}
-                  >
-                    {fmtCurrency(o.discount)}
-                  </td>
-                </tr>
-              )}
-              {o.deposit !== undefined && (
-                <tr>
-                  <td
-                    colSpan={5}
-                    style={{
-                      border: "1px solid #d32f2f",
-                      padding: "6px 8px",
-                      textAlign: "right",
-                      color: "#d32f2f",
-                      fontSize: 13,
-                    }}
-                  >
-                    {o.type === "Hàng sẵn" ? "TIỀN ĐÃ TRẢ:" : "TIỀN ĐẶT CỌC:"}
-                  </td>
-                  <td
-                    style={{
-                      border: "1px solid #d32f2f",
-                      padding: "6px 8px",
-                      textAlign: "right",
-                      color: "blue",
-                      fontFamily: "'Caveat', 'Dancing Script', cursive, serif",
-                      fontSize: 16,
-                    }}
-                  >
-                    {fmtCurrency(o.deposit)}
-                  </td>
-                </tr>
-              )}
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={5}
+                  style={{
+                    border: "1px solid #d32f2f",
+                    padding: "6px 8px",
+                    textAlign: "right",
+                    color: "#d32f2f",
+                    fontSize: 13,
+                  }}
+                >
+                  PHÍ GIA CÔNG:
+                </td>
+                <td
+                  style={{
+                    border: "1px solid #d32f2f",
+                    padding: "6px 8px",
+                    textAlign: "right",
+                    color: "blue",
+                    fontFamily: "'Caveat', 'Dancing Script', cursive, serif",
+                    fontSize: 16,
+                  }}
+                >
+                  {fmtCurrency(o.processingFee)}
+                </td>
+              </tr>
+              <tr>
+                <td
+                  colSpan={5}
                   style={{
                     border: "1px solid #d32f2f",
                     padding: "6px 8px",
@@ -1105,9 +1016,7 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
                     fontSize: 14,
                   }}
                 >
-                  {o.type === "Hàng sẵn"
-                    ? "TỔNG CÒN LẠI:"
-                    : "CÒN LẠI PHẢI THU:"}
+                  CỘNG
                 </td>
                 <td
                   style={{
@@ -1120,14 +1029,14 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
                     fontWeight: "bold",
                   }}
                 >
-                  {fmtCurrency(displayTotal - (o.deposit || 0))}
+                  {fmtCurrency(displayTotal)}
                 </td>
               </tr>
             </>
           ) : (
             <tr>
               <td
-                colSpan={4}
+                colSpan={5}
                 style={{
                   border: "1px solid #d32f2f",
                   padding: "6px 8px",
@@ -1233,7 +1142,7 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
 };
 
 // --- KIỂU HIỂN THỊ ĐƠN HÀNG THÔNG THƯỜNG ---
-const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remaining }) => {
+const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remaining, onPreview }) => {
   return (
     <div className="flex-1 overflow-y-auto p-6 space-y-4">
       {/* ── BANNER ── */}
@@ -1242,7 +1151,10 @@ const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remainin
           className="flex flex-col md:flex-row items-stretch md:items-start gap-4 p-5 rounded-2xl"
           style={{ backgroundColor: "#F0FDF4", border: "1px solid #BBF7D0" }}
         >
-          <div className="shrink-0 relative group cursor-pointer w-full md:w-40 h-32 md:h-auto object-cover rounded-xl overflow-hidden border-2 border-green-200 shadow-sm bg-white">
+          <div
+            className="shrink-0 relative group cursor-pointer w-full md:w-40 h-32 md:h-auto object-cover rounded-xl overflow-hidden border-2 border-green-200 shadow-sm bg-white"
+            onClick={() => o.finishedImage && onPreview(o.finishedImage)}
+          >
             {o.finishedImage ? (
               <img src={o.finishedImage} alt="Sản phẩm hoàn thiện" className="w-full h-full object-cover" />
             ) : (
@@ -1338,13 +1250,19 @@ const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remainin
                   <div className="flex-1 min-w-0 w-full space-y-3">
                     <div className="flex items-start gap-3">
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 overflow-hidden shadow-sm"
+                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 overflow-hidden shadow-sm cursor-pointer group"
                         style={{ backgroundColor: "var(--bg-main)", border: "1px solid var(--grid-border)" }}
+                        onClick={() => p.image && onPreview(p.image)}
                       >
                         {p.image ? (
-                          <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                          <img src={p.image} alt={p.name} className="w-full h-full object-cover transition duration-300 group-hover:scale-110" />
                         ) : (
                           <Package size={16} style={{ color: "var(--text-secondary)" }} />
+                        )}
+                        {p.image && (
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                            <Eye size={16} className="text-white" />
+                          </div>
                         )}
                       </div>
                       <div>
@@ -1359,12 +1277,16 @@ const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remainin
 
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2.5 bg-[#F9F9F9] p-3 rounded-xl border border-dashed border-gray-200">
                       <div>
-                        <p className="text-[10px] uppercase font-bold text-gray-400">Chất liệu</p>
+                        <p className="text-[10px] uppercase font-bold text-gray-400">Loại gỗ</p>
                         <p className="text-[12px] font-semibold text-gray-700">{p.material}</p>
                       </div>
                       <div>
                         <p className="text-[10px] uppercase font-bold text-gray-400">Kích thước</p>
                         <p className="text-[12px] font-semibold text-gray-700">{p.size}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-gray-400">Màu sắc</p>
+                        <p className="text-[12px] font-semibold text-gray-700">{p.finish}</p>
                       </div>
                       <div>
                         <p className="text-[10px] uppercase font-bold text-gray-400">Bảo hành</p>
@@ -1449,12 +1371,69 @@ const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remainin
           )}
 
           {o.sampleImages && o.sampleImages.length > 0 && (
-            <MediaGallery images={o.sampleImages} />
+            <MediaGallery images={o.sampleImages} onPreview={onPreview} />
           )}
         </div>
 
         {/* RIGHT COL */}
         <div className="space-y-4">
+          {hasPricing && (
+            <div
+              className="rounded-2xl overflow-hidden"
+              style={{ backgroundColor: "var(--background)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
+            >
+              <div
+                className="px-5 py-3 flex items-center gap-2"
+                style={{ borderBottom: "1px solid var(--grid-border)", backgroundColor: "var(--grid-header-bg)" }}
+              >
+                <CreditCard size={14} style={{ color: "var(--brand-primary)" }} />
+                <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-main)" }}>Thanh toán</span>
+              </div>
+              <div className="px-5 py-4 space-y-3">
+                <div className="flex justify-between text-[13px]">
+                  <span style={{ color: "var(--text-secondary)" }}>Tiền hàng</span>
+                  <span className="font-bold" style={{ color: "var(--text-main)" }}>{fmtCurrency(productTotal)}</span>
+                </div>
+
+                <div className="pt-2 border-t border-dashed" style={{ borderColor: "var(--grid-border)" }}>
+                  <div className="flex justify-between text-[13px]">
+                    <span className="font-bold" style={{ color: "var(--text-main)" }}>Tổng thanh toán</span>
+                    <span className="font-bold text-[15px]" style={{ color: "var(--brand-primary)" }}>
+                      {fmtCurrency(displayTotal)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between text-[13px]">
+                  <span style={{ color: "var(--text-secondary)" }}>Đặt cọc</span>
+                  <span className="font-bold" style={{ color: "#15803D" }}>{fmtCurrency(o.deposit || 0)}</span>
+                </div>
+
+                <div className="pt-2 border-t" style={{ borderColor: "var(--grid-border)" }}>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Còn lại</span>
+                    <p className="text-[16px] font-black" style={{ color: remaining > 0 ? "#DC2626" : "#15803D" }}>
+                      {fmtCurrency(remaining > 0 ? remaining : 0)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex flex-wrap gap-2">
+                  {o.paymentStatus === "full" && (
+                    <Badge style={{ backgroundColor: "#F0FDF4", color: "#15803D", border: "1px solid #BBF7D0" }}>
+                      <CreditCard size={11} /> Đã thanh toán đủ
+                    </Badge>
+                  )}
+                  {o.paymentStatus === "partial" && (
+                    <Badge style={{ backgroundColor: "#FFF7ED", color: "#C2410C", border: "1px solid #FED7AA" }}>
+                      <CreditCard size={11} /> Đã cọc một phần
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div
             className="rounded-2xl overflow-hidden"
             style={{ backgroundColor: "var(--background)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
@@ -1464,31 +1443,29 @@ const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remainin
               style={{ borderBottom: "1px solid var(--grid-border)", backgroundColor: "var(--grid-header-bg)" }}
             >
               <Truck size={14} style={{ color: "var(--brand-primary)" }} />
-              <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-main)" }}>Vận chuyển</span>
+              <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-main)" }}>Giao hàng</span>
             </div>
-            <div className="px-5 py-4 space-y-3.5">
-              <div className="flex items-start gap-3">
-                <MapPin size={13} className="mt-0.5 shrink-0 text-gray-400" />
+            <div className="px-5 py-4 space-y-3">
+              <div className="flex items-start gap-2.5">
+                <MapPin size={13} className="mt-0.5 shrink-0" style={{ color: "var(--text-placeholder)" }} />
                 <div>
-                  <p className="text-[10px] uppercase font-black text-gray-400 tracking-wider">Địa chỉ giao</p>
-                  <p className="text-[12.5px] font-bold mt-0.5 text-gray-800 leading-snug">{o.customer.address}</p>
+                  <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "var(--text-placeholder)" }}>Địa chỉ giao</p>
+                  <p className="text-[12px] font-semibold mt-0.5" style={{ color: "var(--text-main)" }}>{o.customer.address}</p>
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <Calendar size={13} className="mt-0.5 shrink-0 text-gray-400" />
+              <div className="flex items-start gap-2.5">
+                <Calendar size={13} className="mt-0.5 shrink-0" style={{ color: "var(--text-placeholder)" }} />
                 <div>
-                  <p className="text-[10px] uppercase font-black text-gray-400 tracking-wider">Ngày giao dự kiến</p>
-                  <p className="text-[12.5px] font-bold mt-0.5 text-gray-800">{fmtDate(o.deliveryDate)}</p>
+                  <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "var(--text-placeholder)" }}>Ngày giao dự kiến</p>
+                  <p className="text-[12px] font-semibold mt-0.5" style={{ color: "var(--text-main)" }}>{fmtDate(o.deliveryDate)}</p>
                 </div>
               </div>
               {o.deliveryImage && (
-                <div className="pt-2 border-t border-dashed border-gray-100">
-                  <p className="text-[10px] uppercase font-black text-gray-400 tracking-wider mb-2">Ảnh giao hàng thực tế</p>
-                  <div className="group relative w-32 h-32 rounded-xl overflow-hidden border border-gray-200">
-                    <img src={o.deliveryImage} alt="Giao hàng" className="w-full h-full object-cover transition duration-300 group-hover:scale-110" />
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Eye size={16} className="text-white" />
-                    </div>
+                <div className="flex items-start gap-2.5 pt-2" style={{ borderTop: "1px solid var(--grid-border)" }}>
+                  <Camera size={13} className="mt-0.5 shrink-0" style={{ color: "var(--text-placeholder)" }} />
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "var(--text-placeholder)" }}>Ảnh giao hàng</p>
+                    <img src={o.deliveryImage} alt="Ảnh giao hàng" className="w-28 h-28 rounded-xl object-cover mt-1 border border-gray-200 shadow-sm" />
                   </div>
                 </div>
               )}
