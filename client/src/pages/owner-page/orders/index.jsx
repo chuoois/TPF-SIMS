@@ -18,7 +18,7 @@ import {
   CheckCircle,
   RefreshCw,
   Camera,
-  DollarSign,
+  Banknote,
   CreditCard,
   Wallet,
   Ban,
@@ -311,6 +311,69 @@ export default function OwnerOrders() {
     updateParams({ status });
   };
 
+  // Logic kích hoạt bảo hành tự động (Software Standard Design)
+  const activateWarrantyForOrder = (order) => {
+    const savedWarranties = JSON.parse(localStorage.getItem("tpf_simulated_warranties") || "[]");
+    
+    // Phân loại chính sách dựa trên SKU/Tên sản phẩm
+    const isNaturalWood = order.items?.some(item => 
+      item.productName.toLowerCase().includes("gụ") || 
+      item.productName.toLowerCase().includes("hương") || 
+      item.productName.toLowerCase().includes("mít")
+    ) || order.code.includes("-Mit") || order.code.includes("-Huong") || order.code.includes("-Gu");
+
+    const policy = isNaturalWood ? {
+      label: "Gỗ tự nhiên (Gụ, Hương, Mít)", 
+      duration: 36, 
+      coverage: [
+        "Bảo hành nứt nẻ, cong vênh do lỗi xử lý gỗ.",
+        "Xử lý gỗ bị co ngót, hở mộng do thời tiết.",
+        "Cam kết đúng chủng loại gỗ 100%."
+      ],
+      conditions: "Không để sản phẩm dưới ánh nắng trực tiếp hoặc nơi quá ẩm ướt."
+    } : {
+      label: "Gỗ công nghiệp (MDF, HDF)", 
+      duration: 12, 
+      coverage: [
+        "Bảo hành bong tróc cạnh, bề mặt gỗ.",
+        "Lỗi phụ kiện (bản lề, tay nắm) trong 12 tháng."
+      ],
+      conditions: "Tránh tiếp xúc trực tiếp với nước hoặc độ ẩm cao kéo dài."
+    };
+
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setMonth(endDate.getMonth() + policy.duration);
+
+    const newWarranty = {
+      id: `BH-${order.code}`,
+      customerName: order.customerName,
+      customerPhone: order.phone,
+      productName: order.items?.[0]?.productName || "Sản phẩm đồ gỗ",
+      productCode: order.items?.[0]?.sku || order.code.replace("DH", "SKU"),
+      productImg: order.items?.[0]?.image || "https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=300",
+      warrantyMonths: policy.duration,
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+      status: "Active",
+      policy,
+      history: [
+        { date: startDate.toISOString(), action: "Kích hoạt Tự động", note: `Đã giao hàng thành công. Hệ thống tự động kích hoạt bảo hành ${policy.label}.` }
+      ],
+      maintenanceLogs: []
+    };
+
+    // Kiểm tra xem đã có chưa, nếu chưa thì push, nếu có rồi thì update (tránh trùng lặp)
+    const existingIndex = savedWarranties.findIndex(w => w.id === newWarranty.id);
+    if (existingIndex > -1) {
+      savedWarranties[existingIndex] = newWarranty;
+    } else {
+      savedWarranties.push(newWarranty);
+    }
+
+    localStorage.setItem("tpf_simulated_warranties", JSON.stringify(savedWarranties));
+  };
+
   // Logic cập nhật trạng thái đơn hàng (Simulated)
   const handleUpdateStatus = (id, newStatus) => {
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
@@ -357,6 +420,8 @@ export default function OwnerOrders() {
     localStorage.setItem("tpf_simulated_orders", JSON.stringify(updatedSaved));
 
     toast.success("Đã hoàn tất đơn hàng và ghi nhận thanh toán!");
+    activateWarrantyForOrder(selectedOrder);
+    toast.success("Hệ thống đã tự động kích hoạt bảo hành cho khách hàng!");
     setShowCompleteModal(false);
     setSelectedOrder(null);
   };
@@ -373,6 +438,9 @@ export default function OwnerOrders() {
         localStorage.setItem("tpf_simulated_orders", JSON.stringify(updatedSaved));
 
         toast.success("Đã tải ảnh giao hàng và hoàn tất đơn!");
+        const currentOrder = orders.find(o => o.id === id);
+        if (currentOrder) activateWarrantyForOrder(currentOrder);
+        toast.success("Hệ thống đã tự động kích hoạt bảo hành cho khách hàng!");
         setStatusFilter("Hoàn thành"); // Tự động chuyển tab filter
       };
       reader.readAsDataURL(file);
@@ -1153,7 +1221,7 @@ export default function OwnerOrders() {
                       <p className="text-2xl font-black">{formatCurrency(selectedOrder.total - (selectedOrder.deposit || 0))}</p>
                     </div>
                     <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center">
-                      <DollarSign size={24} />
+                      <Banknote size={24} />
                     </div>
                  </div>
               </div>

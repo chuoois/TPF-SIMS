@@ -21,7 +21,6 @@ import {
   Eye,
   UserPlus,
   Info,
-  DollarSign,
   Wallet,
   Image,
   Ban,

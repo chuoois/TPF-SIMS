@@ -19,6 +19,7 @@ import {
   ChevronRight,
   PanelLeftClose,
   History,
+  ShieldCheck,
 } from "lucide-react";
 
 const menuItems = [
@@ -31,6 +32,7 @@ const menuItems = [
   // { text: "Khách hàng", icon: Users, path: "/owner/customers" },
   { text: "Nhà cung cấp", icon: Building2, path: "/owner/suppliers" },
   { text: "Quản lý tài khoản", icon: UserCog, path: "/owner/employees" },
+  { text: "Bảo hành", icon: ShieldCheck, path: "/owner/warranty" },
   { text: "Báo cáo", icon: BarChart3, path: "/owner/reports" },
   { text: "Nhật ký hệ thống", icon: History, path: "/owner/system-logs" },
 ];
