@@ -184,10 +184,10 @@ const STATUS_CONFIG = {
     icon: "CheckCircle2",
     description: "Đã lập lệnh sản xuất & chuyển sang phân xưởng",
   },
-  "Yêu cầu đã hủy": {
-    bg: "#FEF2F2",
-    text: "#B91C1C",
-    border: "#FECACA",
+  "Đơn đã hủy": {
+    bg: "#F3F4F6",
+    text: "#6B7280",
+    border: "#E5E7EB",
     icon: "X",
     description: "Yêu cầu đã bị hủy hoặc khách dừng tư vấn",
   },
@@ -210,7 +210,7 @@ const CancelRequestModal = ({ target, onSuccess, onCancel }) => {
             Bạn có chắc chắn muốn hủy yêu cầu mã{" "}
             <strong className="text-gray-900">{target.code}</strong> không?{" "}
             <br />
-            Hành động này sẽ chuyển trạng thái sang "Hủy" ngay lập tức.
+            Hành động này sẽ chuyển trạng thái sang "Đơn đã hủy" ngay lập tức.
           </p>
 
           <div className="flex flex-col w-full gap-2">
@@ -538,7 +538,7 @@ export default function SalesRequirements() {
     if (!cancelTarget) return;
     setRequirements((prev) =>
       prev.map((r) =>
-        r.id === cancelTarget.id ? { ...r, status: "Yêu cầu đã hủy" } : r,
+        r.id === cancelTarget.id ? { ...r, status: "Đơn đã hủy" } : r,
       ),
     );
     toast.success(`Đã hủy yêu cầu ${cancelTarget.code} thành công`);
