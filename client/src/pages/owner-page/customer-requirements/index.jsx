@@ -9,7 +9,6 @@ import {
   Clock,
   ChevronRight,
   User,
-  DollarSign,
   Camera,
   Layers,
   CheckCircle2,

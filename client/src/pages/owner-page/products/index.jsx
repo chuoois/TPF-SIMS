@@ -24,7 +24,7 @@ import {
   TreePine,
   Box,
   Ruler,
-  DollarSign,
+  Banknote,
   Info,
   Armchair,
   Bed,
@@ -34,6 +34,7 @@ import {
   Flower2,
   Briefcase,
   Clock,
+  ShieldCheck,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import toast from "react-hot-toast";
@@ -63,6 +64,7 @@ const OTHER_MATERIALS = ["Đồng vàng", "Gốm sứ"];
 const COLORS = ["Cánh gián", "Hạt dẻ", "Mun", "Tự nhiên", "Sơn PU", "Để mộc"];
 
 const PRODUCT_STATUSES = [
+  "Chưa định giá",
   "Hàng sẵn",
   "Hàng mộc",
   "Hàng khách đặt",
@@ -86,6 +88,8 @@ const INITIAL_PRODUCTS = [
     productType: "Hàng sẵn",
     status: "Hàng sẵn",
     stock: 2,
+    isPriced: true,
+    warrantyMonths: 12,
     img: "https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=300",
     description: "Sập thờ trạm khắc tỉ mỉ tinh xảo, chất liệu gỗ mít lõi liền khối.",
   },
@@ -103,6 +107,7 @@ const INITIAL_PRODUCTS = [
     productType: "Hàng khách đặt",
     status: "Hàng khách đặt",
     stock: 0,
+    isPriced: true,
     img: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=300",
     description: "Hàng khách đặt theo kích thước riêng, tay 12 vách 4 phân.",
   },
@@ -115,13 +120,51 @@ const INITIAL_PRODUCTS = [
     color: "Để mộc",
     dimensions: "160x200x55",
     costPrice: 8500000,
-    retailPrice: 12500000,
+    rawRetailPrice: 10500000,
+    finishedRetailPrice: 13500000,
     unit: "Chiếc",
     productType: "Hàng mộc",
     status: "Hàng mộc",
     stock: 3,
+    isPriced: true,
     img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=300",
     description: "Hàng mộc sẵn tại kho, chờ sơn hoàn thiện.",
+  },
+  {
+    id: "SP-NEW-01",
+    code: "BG-NEW-Huong-01",
+    name: "Bộ Ghế Tần Thủy Hoàng (Mới nhập)",
+    category: "Phòng khách",
+    material: "Gỗ Hương",
+    color: "Để mộc",
+    dimensions: "Tay 12",
+    costPrice: 42000000,
+    retailPrice: 0,
+    unit: "Bộ",
+    productType: "Hàng mộc",
+    status: "Chưa định giá",
+    stock: 1,
+    isPriced: false,
+    img: null,
+    description: "Hàng mới nhập kho bởi kế toán, chờ chủ cửa hàng định giá.",
+  },
+  {
+    id: "SP-NEW-02",
+    code: "ST-NEW-Mit-02",
+    name: "Sập thờ Nhị Cấp (Mới nhập)",
+    category: "Phòng thờ",
+    material: "Gỗ Mít",
+    color: "Để mộc",
+    dimensions: "197x127x117",
+    costPrice: 24000000,
+    retailPrice: 0,
+    unit: "Chiếc",
+    productType: "Hàng sẵn",
+    status: "Chưa định giá",
+    stock: 2,
+    isPriced: false,
+    img: null,
+    description: "Hàng mới nhập kho, chưa định giá bán lẻ.",
   },
   // --- BỔ SUNG HÀNG MỘC ---
   {
@@ -133,11 +176,13 @@ const INITIAL_PRODUCTS = [
     color: "Để mộc",
     dimensions: "197x107x117",
     costPrice: 28000000,
-    retailPrice: 38000000,
+    rawRetailPrice: 35000000,
+    finishedRetailPrice: 42000000,
     unit: "Chiếc",
     productType: "Hàng mộc",
     status: "Hàng mộc",
     stock: 2,
+    isPriced: true,
     img: "https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=300",
     description: "Hàng mộc đục tay kỹ, gỗ gụ chọn lọc không rác.",
   },
@@ -150,11 +195,13 @@ const INITIAL_PRODUCTS = [
     color: "Để mộc",
     dimensions: "Cột 12",
     costPrice: 45000000,
-    retailPrice: 62000000,
+    rawRetailPrice: 58000000,
+    finishedRetailPrice: 68000000,
     unit: "Bộ",
     productType: "Hàng mộc",
     status: "Hàng mộc",
     stock: 1,
+    isPriced: true,
     img: "https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=300",
     description: "Hàng mộc vân đẹp, đục tay chi tiết.",
   },
@@ -167,11 +214,13 @@ const INITIAL_PRODUCTS = [
     color: "Để mộc",
     dimensions: "180x200",
     costPrice: 10000000,
-    retailPrice: 15500000,
+    rawRetailPrice: 13000000,
+    finishedRetailPrice: 16500000,
     unit: "Chiếc",
     productType: "Hàng mộc",
     status: "Hàng mộc",
     stock: 5,
+    isPriced: true,
     img: "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=300",
     description: "Hàng mộc sẵn kho, dát phản dầy.",
   },
@@ -184,11 +233,13 @@ const INITIAL_PRODUCTS = [
     color: "Để mộc",
     dimensions: "160x80",
     costPrice: 6000000,
-    retailPrice: 9500000,
+    rawRetailPrice: 8000000,
+    finishedRetailPrice: 10500000,
     unit: "Bộ",
     productType: "Hàng mộc",
     status: "Hàng mộc",
     stock: 3,
+    isPriced: true,
     img: "https://images.unsplash.com/photo-1617806118233-ef203e91122b?q=80&w=300",
     description: "Hàng mộc chắc chắn, kiểu dáng hiện đại.",
   },
@@ -201,11 +252,13 @@ const INITIAL_PRODUCTS = [
     color: "Để mộc",
     dimensions: "240x50x80",
     costPrice: 12000000,
-    retailPrice: 17000000,
+    rawRetailPrice: 15500000,
+    finishedRetailPrice: 19000000,
     unit: "Chiếc",
     productType: "Hàng mộc",
     status: "Hàng mộc",
     stock: 2,
+    isPriced: true,
     img: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=300",
     description: "Hàng mộc đục cảnh tứ quý, gỗ đều màu.",
   },
@@ -223,6 +276,7 @@ const INITIAL_PRODUCTS = [
     productType: "Hàng sẵn",
     status: "Hàng sẵn",
     stock: 5,
+    isPriced: true,
     img: "https://images.unsplash.com/photo-1616486341351-70252447aece?q=80&w=300",
     description: "Bộ L mặt nguyên tấm dày 10cm.",
   },
@@ -240,6 +294,7 @@ const INITIAL_PRODUCTS = [
     productType: "Hàng sẵn",
     status: "Hết hàng",
     stock: 0,
+    isPriced: true,
     img: "https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=300",
     description: "Tiện liền khối.",
   },
@@ -257,6 +312,7 @@ const INITIAL_PRODUCTS = [
     productType: "Hàng sẵn",
     status: "Ngừng kinh doanh",
     stock: 0,
+    isPriced: true,
     img: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=300",
     description: "Mẫu cũ năm ngoái.",
   },
@@ -274,6 +330,7 @@ const INITIAL_PRODUCTS = [
     productType: "Hàng sẵn",
     status: "Quà tặng",
     stock: 1,
+    isPriced: true,
     img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=300",
     description: "Hàng đục kỹ.",
   },
@@ -291,6 +348,7 @@ const INITIAL_PRODUCTS = [
     productType: "Hàng khách đặt",
     status: "Hàng khách đặt",
     stock: 0,
+    isPriced: true,
     img: "https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=300",
     description: "Nguyên tấm nguyên khối.",
   },
@@ -349,7 +407,10 @@ const INITIAL_INVENTORY_LOGS = [
 ];
 
 // ===================== HELPERS =====================
-const fmtCurrency = (n) => new Intl.NumberFormat("vi-VN").format(n) + "₫";
+const fmtCurrency = (n) => {
+  if (n === undefined || n === null || isNaN(n) || n === 0) return "—";
+  return new Intl.NumberFormat("vi-VN").format(n) + "₫";
+};
 
 const formatNumberInput = (value) => {
   if (value === "" || value === null || value === undefined) return "";
@@ -361,8 +422,36 @@ const parseNumberInput = (value) => {
   return value.toString().replace(/\./g, "").replace(/[^\d]/g, "");
 };
 
+const MarginDisplay = ({ cost, price, label = "Lợi nhuận" }) => {
+  if (!price || price <= 0) return null;
+  const profit = price - cost;
+  const margin = (profit / price) * 100;
+  
+  let colorClass = "text-red-500";
+  if (margin >= 30) colorClass = "text-emerald-600";
+  else if (margin >= 15) colorClass = "text-amber-600";
+  
+  return (
+    <div className="mt-1.5 flex items-center justify-between px-1">
+      <div className="flex items-center gap-1.5">
+        <span className={`text-[11px] font-bold ${colorClass}`}>
+          {label}: {fmtCurrency(profit)}
+        </span>
+        <span className="text-gray-300">|</span>
+        <span className={`text-[11px] font-black ${colorClass}`}>
+          {margin.toFixed(1)}%
+        </span>
+      </div>
+      {margin < 15 && (
+        <span className="text-[10px] font-bold text-red-400 italic">Biên thấp!</span>
+      )}
+    </div>
+  );
+};
 const getStatusConfig = (status) => {
   switch (status) {
+    case "Chưa định giá":
+      return { bg: "#FEF2F2", text: "#DC2626", border: "#FECACA" }; // Red (warning)
     case "Hàng sẵn":
       return { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" }; // Green
     case "Hàng mộc":
@@ -764,6 +853,10 @@ export default function OwnerProducts() {
   const [editItem, setEditItem] = useState(null);
   const [costPrice, setCostPrice] = useState(0);
   const [retailPrice, setRetailPrice] = useState(0);
+  const [rawRetailPrice, setRawRetailPrice] = useState(0);
+  const [finishedRetailPrice, setFinishedRetailPrice] = useState(0);
+  const [productType, setProductType] = useState("Hàng sẵn");
+  const [warrantyMonths, setWarrantyMonths] = useState(12);
 
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailItem, setDetailItem] = useState(null);
@@ -794,6 +887,10 @@ export default function OwnerProducts() {
     setEditItem(product);
     setCostPrice(product.costPrice || 0);
     setRetailPrice(product.retailPrice || 0);
+    setRawRetailPrice(product.rawRetailPrice || 0);
+    setFinishedRetailPrice(product.finishedRetailPrice || 0);
+    setProductType(product.productType || "Hàng sẵn");
+    setWarrantyMonths(product.warrantyMonths || 12);
     setShowAddEditModal(true);
   };
 
@@ -886,7 +983,46 @@ export default function OwnerProducts() {
     currentPage * itemsPerPage,
   );
 
-  // ===================== RENDER MODALS =====================
+  const handleSaveAddEdit = () => {
+    if (editItem) {
+      // Logic for editing existing product
+      let newStatus = editItem.status;
+      let isPriced = editItem.isPriced;
+
+      if (editItem.status === "Chưa định giá") {
+        isPriced = true;
+        // Logic for transitioning status
+        if (productType === "Hàng sẵn") {
+          newStatus = editItem.stock > 0 ? "Hàng sẵn" : "Hết hàng";
+        } else {
+          newStatus = "Đặt theo mẫu";
+        }
+      }
+
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === editItem.id
+            ? {
+                ...p,
+                costPrice,
+                retailPrice,
+                rawRetailPrice,
+                finishedRetailPrice,
+                productType,
+                warrantyMonths: Number(warrantyMonths),
+                isPriced,
+                status: newStatus,
+              }
+            : p,
+        ),
+      );
+      toast.success("Đã cập nhật thông tin sản phẩm và định giá thành công!");
+    } else {
+      // Simple mock for adding new product
+      toast.success("Đã thêm sản phẩm mới thành công!");
+    }
+    setShowAddEditModal(false);
+  };
 
   // 1. ADD / EDIT MODAL (Simplified mock form)
   const renderAddEditModal = () => {
@@ -896,10 +1032,18 @@ export default function OwnerProducts() {
         <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
           <div className="px-6 py-4 border-b flex items-center justify-between bg-gray-50/80">
             <h2
-              className="text-lg font-bold"
+              className="text-lg font-bold flex items-center gap-2"
               style={{ color: "var(--text-main)" }}
             >
-              {editItem ? "Sửa sản phẩm" : "Thêm mới sản phẩm"}
+              {editItem?.status === "Chưa định giá" ? (
+                <span className="flex items-center gap-2 text-red-600">
+                  <Banknote size={20} /> Định giá sản phẩm mới
+                </span>
+              ) : editItem ? (
+                "Sửa sản phẩm"
+              ) : (
+                "Thêm mới sản phẩm"
+              )}
             </h2>
             <button
               onClick={() => setShowAddEditModal(false)}
@@ -1080,48 +1224,115 @@ export default function OwnerProducts() {
                 {/* Section 3: Thương mại */}
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Giá nhập (VNĐ)
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                        value={formatNumberInput(costPrice)}
-                        onChange={(e) => {
-                          const val = parseNumberInput(e.target.value);
-                          setCostPrice(val === "" ? 0 : Number(val));
-                        }}
-                        placeholder="0"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Giá bán (VNĐ) <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                        value={formatNumberInput(retailPrice)}
-                        onChange={(e) => {
-                          const val = parseNumberInput(e.target.value);
-                          setRetailPrice(val === "" ? 0 : Number(val));
-                        }}
-                        placeholder="0"
-                      />
-                    </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-600 mb-1">
+                            Giá nhập (vốn)
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              className="w-full border rounded-lg px-3 py-2 text-sm bg-gray-50 font-bold text-gray-700 outline-none"
+                              value={formatNumberInput(costPrice)}
+                              readOnly
+                            />
+                            <Info size={14} className="text-gray-400" title="Giá vốn do kế toán nhập, không thể thay đổi tại đây" />
+                          </div>
+                        </div>
+                        <div className="col-span-1 hidden md:block"></div>
+                        
+                        {productType === "Hàng mộc" ? (
+                          <>
+                            <div className="col-span-3 pb-2 border-b border-dashed border-gray-200 mt-2">
+                              <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-tighter">Quyết định giá bán</h4>
+                            </div>
+                            <div className="space-y-4">
+                              <div className="space-y-2">
+                                <label className="block text-xs font-semibold text-orange-700">
+                                  Giá bán mộc (đ) <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  className="w-full border-2 border-orange-100 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none font-bold text-orange-600 shadow-sm transition-all focus:border-orange-200"
+                                  value={formatNumberInput(rawRetailPrice)}
+                                  onChange={(e) => {
+                                    const val = parseNumberInput(e.target.value);
+                                    setRawRetailPrice(val === "" ? 0 : Number(val));
+                                  }}
+                                  placeholder="0"
+                                />
+                                <MarginDisplay cost={costPrice} price={rawRetailPrice} label="Lãi mộc" />
+                              </div>
+                            </div>
+                            <div className="space-y-4">
+                              <div className="space-y-2">
+                                <label className="block text-xs font-semibold text-green-700">
+                                  Giá bán hoàn thiện (đ) <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  className="w-full border-2 border-green-100 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none font-bold text-green-600 shadow-sm transition-all focus:border-green-200"
+                                  value={formatNumberInput(finishedRetailPrice)}
+                                  onChange={(e) => {
+                                    const val = parseNumberInput(e.target.value);
+                                    setFinishedRetailPrice(val === "" ? 0 : Number(val));
+                                  }}
+                                  placeholder="0"
+                                />
+                                <MarginDisplay cost={costPrice} price={finishedRetailPrice} label="Lãi hoàn thiện" />
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="col-span-3 pb-2 border-b border-dashed border-gray-200 mt-2">
+                              <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-tighter">Quyết định giá bán</h4>
+                            </div>
+                            <div className={productType !== "Hàng mộc" ? "col-span-2" : ""}>
+                              <div className="space-y-2">
+                                <label className="block text-xs font-semibold text-blue-700">
+                                  Giá bán (đ) <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  className="w-full border-2 border-blue-100 rounded-lg px-3 py-2 text-[15px] focus:ring-2 focus:ring-blue-500 outline-none font-bold text-blue-600 shadow-sm transition-all focus:border-blue-200"
+                                  value={formatNumberInput(retailPrice)}
+                                  onChange={(e) => {
+                                    const val = parseNumberInput(e.target.value);
+                                    setRetailPrice(val === "" ? 0 : Number(val));
+                                  }}
+                                  placeholder="0"
+                                />
+                                <MarginDisplay cost={costPrice} price={retailPrice} />
+                              </div>
+                            </div>
+                          </>
+                        )}
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 mb-1">
                         Loại sản phẩm
                       </label>
                       <select
                         className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                        defaultValue={editItem?.productType || "Hàng sẵn"}
+                        value={productType}
+                        onChange={(e) => setProductType(e.target.value)}
                       >
                         <option value="Hàng sẵn">Hàng sẵn</option>
                         <option value="Hàng mộc">Hàng mộc</option>
                         <option value="Hàng khách đặt">Hàng khách đặt</option>
                       </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1 flex items-center gap-1">
+                        <ShieldCheck size={14} className="text-blue-500" />
+                        Bảo hành (tháng)
+                      </label>
+                      <input
+                        type="number"
+                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        value={warrantyMonths}
+                        onChange={(e) => setWarrantyMonths(e.target.value)}
+                        placeholder="12"
+                      />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 mb-1">
@@ -1149,12 +1360,11 @@ export default function OwnerProducts() {
               Hủy bỏ
             </button>
             <button
-              onClick={() => {
-                setShowAddEditModal(false); /* mock submit */
-              }}
-              className="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition cursor-pointer flex items-center gap-2"
+              onClick={handleSaveAddEdit}
+              className={`px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all shadow-lg hover:shadow-xl flex items-center gap-2 transform active:scale-95 ${editItem?.status === "Chưa định giá" ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}`}
             >
-              Lưu
+              <Banknote size={16} />
+              {editItem?.status === "Chưa định giá" ? "Xác nhận định giá & Mở bán" : "Lưu thay đổi"}
             </button>
           </div>
         </div>
@@ -1218,12 +1428,48 @@ export default function OwnerProducts() {
                 {detailItem.code}
               </span>
             </h2>
-            <button
-              onClick={() => setShowDetailModal(false)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition cursor-pointer"
-            >
-              <X size={18} />
-            </button>
+            <div className="flex items-center gap-2">
+              {detailItem?.status === "Chưa định giá" ? (
+                <>
+                  <button
+                    onClick={(e) => {
+                      setShowDetailModal(false);
+                      handleOpenEdit(detailItem, e);
+                    }}
+                    className="h-8 px-3 rounded-lg text-[12px] font-bold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 transition-all shadow-sm flex items-center gap-1.5"
+                  >
+                    Sửa
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      setShowDetailModal(false);
+                      handleOpenEdit(detailItem, e);
+                    }}
+                    className="h-8 px-3 rounded-lg text-[12px] font-bold text-white bg-red-600 hover:bg-red-700 transition-all shadow-sm flex items-center gap-1.5"
+                  >
+                    <Banknote size={14} />
+                    Định giá ngay
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={(e) => {
+                    setShowDetailModal(false);
+                    handleOpenEdit(detailItem, e);
+                  }}
+                  className="h-8 px-3 rounded-lg text-[12px] font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-sm flex items-center gap-1.5"
+                >
+                  <Pencil size={14} />
+                  Sửa
+                </button>
+              )}
+              <button
+                onClick={() => setShowDetailModal(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition cursor-pointer text-gray-400"
+              >
+                <X size={18} />
+              </button>
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto p-6">
             <div className="flex gap-6">
@@ -1296,6 +1542,12 @@ export default function OwnerProducts() {
                     </span>
                   </div>
                   <div>
+                    <span className="text-gray-500 block text-xs italic">Bảo hành</span>
+                    <span className="font-bold text-blue-700 flex items-center gap-1">
+                      <ShieldCheck size={14} /> {detailItem.warrantyMonths || 12} tháng
+                    </span>
+                  </div>
+                  <div>
                     <span className="text-gray-500 block text-xs">
                       Kích thước
                     </span>
@@ -1306,20 +1558,41 @@ export default function OwnerProducts() {
                 </div>
 
                 <div className="p-4 bg-gray-50 rounded-xl grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-gray-500 block text-xs mb-1">
-                      Giá bán
-                    </span>
-                    <span className="text-lg font-bold text-blue-600">
-                      {fmtCurrency(detailItem.retailPrice)}
-                    </span>
-                  </div>
-                  {detailItem.costPrice && (
+                  {detailItem.productType === "Hàng mộc" ? (
+                    <>
+                      <div>
+                        <span className="text-gray-500 block text-xs mb-1">
+                          Giá bán mộc
+                        </span>
+                        <span className="text-lg font-bold text-orange-600">
+                          {fmtCurrency(detailItem.rawRetailPrice)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 block text-xs mb-1">
+                          Giá bán hoàn thiện
+                        </span>
+                        <span className="text-lg font-bold text-green-600">
+                          {fmtCurrency(detailItem.finishedRetailPrice)}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
                     <div>
                       <span className="text-gray-500 block text-xs mb-1">
-                        Giá nhập
+                        Giá bán lẻ
                       </span>
-                      <span className="text-lg font-bold text-gray-700">
+                      <span className={`text-lg font-bold ${detailItem.status === "Chưa định giá" ? "text-red-500" : "text-blue-600"}`}>
+                        {detailItem.status === "Chưa định giá" ? "Chờ định giá" : fmtCurrency(detailItem.retailPrice)}
+                      </span>
+                    </div>
+                  )}
+                  {detailItem.costPrice && (
+                    <div className={detailItem.productType === "Hàng mộc" ? "col-span-2 border-t pt-2" : ""}>
+                      <span className="text-gray-500 block text-xs mb-1">
+                        Giá nhập (vốn)
+                      </span>
+                      <span className="text-[15px] font-bold text-gray-700">
                         {fmtCurrency(detailItem.costPrice)}
                       </span>
                     </div>
@@ -1756,17 +2029,37 @@ export default function OwnerProducts() {
                             </div>
                           </td>
                           <td className="px-4 py-4">
-                            <span className="font-medium text-gray-700">
-                              {p.productType}
-                            </span>
+                            <div className="flex flex-col">
+                              <span className="font-medium text-gray-900 text-[13px]">
+                                {p.productType}
+                              </span>
+                              <span className="text-[10px] text-blue-600 font-bold flex items-center gap-0.5 mt-1 bg-blue-50 px-1.5 py-0.5 rounded-sm border border-blue-100 self-start">
+                                <ShieldCheck size={10} /> BH: {p.warrantyMonths || 12}T
+                              </span>
+                            </div>
                           </td>
                           <td className="px-4 py-4 text-right">
-                            <p
-                              className="text-[13px] font-bold"
-                              style={{ color: "var(--text-main)" }}
-                            >
-                              {fmtCurrency(p.retailPrice)}
-                            </p>
+                            {p.status === "Chưa định giá" ? (
+                              <span className="text-[12px] font-bold text-red-500 italic">
+                                Chờ định giá
+                              </span>
+                            ) : p.productType === "Hàng mộc" ? (
+                              <div className="flex flex-col items-end">
+                                <span className="text-[12px] font-bold text-orange-600">
+                                  {fmtCurrency(p.rawRetailPrice)} (Mộc)
+                                </span>
+                                <span className="text-[12px] font-bold text-green-600">
+                                  {fmtCurrency(p.finishedRetailPrice)} (HT)
+                                </span>
+                              </div>
+                            ) : (
+                              <p
+                                className="text-[13px] font-bold"
+                                style={{ color: "var(--text-main)" }}
+                              >
+                                {fmtCurrency(p.retailPrice)}
+                              </p>
+                            )}
                           </td>
                           <td className="px-4 py-4 text-right">
                             {p.productType === "Hàng sẵn" ? (
@@ -1798,16 +2091,35 @@ export default function OwnerProducts() {
                             {/* Hover Actions */}
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 pointer-events-none group-hover:pointer-events-auto">
                               <div className="flex justify-end gap-1.5 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-gray-100 pointer-events-auto">
-                                <button
-                                  onClick={(e) => handleOpenEdit(p, e)}
-                                  className="h-8 px-2.5 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100 gap-1.5 text-[12px] font-bold text-gray-700"
-                                >
-                                  Sửa
-                                </button>
+                                {p.status === "Chưa định giá" ? (
+                                  <>
+                                    <button
+                                      onClick={(e) => handleOpenEdit(p, e)}
+                                      className="h-8 px-3 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100 gap-1.5 text-[12px] font-bold text-gray-700 border border-gray-200"
+                                    >
+                                      Sửa
+                                    </button>
+                                    <button
+                                      onClick={(e) => handleOpenEdit(p, e)}
+                                      className="h-8 px-3 rounded-lg flex items-center justify-center transition cursor-pointer bg-red-600 hover:bg-red-700 gap-1.5 text-[12px] font-bold text-white shadow-sm"
+                                    >
+                                      <Banknote size={14} />
+                                      Định giá
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button
+                                    onClick={(e) => handleOpenEdit(p, e)}
+                                    className="h-8 px-3 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100 gap-1.5 text-[12px] font-bold text-gray-700"
+                                  >
+                                    Sửa
+                                  </button>
+                                )}
 
                                 {p.status !== "Quà tặng" &&
                                   p.status !== "Ngừng kinh doanh" &&
-                                  p.productType === "Hàng sẵn" && (
+                                  p.productType === "Hàng sẵn" &&
+                                  p.status !== "Chưa định giá" && (
                                     <button
                                       onClick={(e) => handleOpenGift(p, e)}
                                       className="h-8 px-2.5 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-purple-50 gap-1.5 text-[12px] font-bold text-purple-600"
@@ -1816,33 +2128,35 @@ export default function OwnerProducts() {
                                     </button>
                                   )}
 
-                                {p.status !== "Ngừng kinh doanh" ? (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      toggleStatus(p.id, "Ngừng kinh doanh");
-                                    }}
-                                    className="h-8 px-2.5 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-red-50 text-[12px] font-bold text-red-600"
-                                  >
-                                    Dừng
-                                  </button>
-                                ) : (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      toggleStatus(
-                                        p.id,
-                                        p.productType === "Hàng sẵn"
-                                          ? p.stock > 0
-                                            ? "Hàng sẵn"
-                                            : "Hết hàng"
-                                          : "Đặt theo mẫu",
-                                      );
-                                    }}
-                                    className="h-8 px-2.5 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-green-50 text-[12px] font-bold text-green-700"
-                                  >
-                                    Mở
-                                  </button>
+                                {p.status !== "Chưa định giá" && (
+                                  p.status !== "Ngừng kinh doanh" ? (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleStatus(p.id, "Ngừng kinh doanh");
+                                      }}
+                                      className="h-8 px-2.5 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-red-50 text-[12px] font-bold text-red-600"
+                                    >
+                                      Dừng
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleStatus(
+                                          p.id,
+                                          p.productType === "Hàng sẵn"
+                                            ? p.stock > 0
+                                              ? "Hàng sẵn"
+                                              : "Hết hàng"
+                                            : "Đặt theo mẫu",
+                                        );
+                                      }}
+                                      className="h-8 px-2.5 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-green-50 text-[12px] font-bold text-green-700"
+                                    >
+                                      Mở
+                                    </button>
+                                  )
                                 )}
                               </div>
                             </div>
