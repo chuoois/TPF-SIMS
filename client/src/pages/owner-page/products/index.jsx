@@ -28,12 +28,14 @@ import {
   Info,
   Armchair,
   Bed,
+  Lock,
   Monitor,
   Utensils,
   Palette,
   Flower2,
   Briefcase,
   Clock,
+  Settings,
   ShieldCheck,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
@@ -120,6 +122,8 @@ const INITIAL_PRODUCTS = [
     color: "Để mộc",
     dimensions: "160x200x55",
     costPrice: 8500000,
+    laborCost: 1500000,
+    materialCost: 500000,
     rawRetailPrice: 10500000,
     finishedRetailPrice: 13500000,
     unit: "Chiếc",
@@ -176,6 +180,8 @@ const INITIAL_PRODUCTS = [
     color: "Để mộc",
     dimensions: "197x107x117",
     costPrice: 28000000,
+    laborCost: 6000000,
+    materialCost: 2000000,
     rawRetailPrice: 35000000,
     finishedRetailPrice: 42000000,
     unit: "Chiếc",
@@ -448,6 +454,38 @@ const MarginDisplay = ({ cost, price, label = "Lợi nhuận" }) => {
     </div>
   );
 };
+
+const ProfitabilityIndicator = ({ cost, profit }) => {
+  if (!cost || cost <= 0) return null;
+  
+  // If price is 0, profit will be exactly -cost. Show "Chờ định giá" instead of -100%
+  if (Math.abs(profit + cost) < 1) {
+    return (
+      <div className="flex flex-col items-end opacity-30">
+        <div className="text-[10px] font-bold uppercase text-gray-400">Chờ định giá</div>
+        <div className="text-[14px] font-black text-gray-300">--%</div>
+      </div>
+    );
+  }
+
+  const roi = (profit / cost) * 100;
+  
+  // Only show if it's "Good" (>= 50%)
+  if (roi < 50) return null;
+
+  return (
+    <div className="flex flex-col items-end">
+      <div className="text-[10px] font-bold uppercase text-emerald-600 flex items-center gap-1">
+        <div className="w-1.5 h-1.5 rounded-full bg-current" />
+        Tỷ suất Tốt
+      </div>
+      <div className="text-[14px] font-black text-emerald-600">
+        {roi.toFixed(1)}%
+      </div>
+    </div>
+  );
+};
+
 const getStatusConfig = (status) => {
   switch (status) {
     case "Chưa định giá":
@@ -856,6 +894,7 @@ export default function OwnerProducts() {
   const [rawRetailPrice, setRawRetailPrice] = useState(0);
   const [finishedRetailPrice, setFinishedRetailPrice] = useState(0);
   const [productType, setProductType] = useState("Hàng sẵn");
+  const [productCategory, setProductCategory] = useState("");
   const [warrantyMonths, setWarrantyMonths] = useState(12);
 
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -890,6 +929,7 @@ export default function OwnerProducts() {
     setRawRetailPrice(product.rawRetailPrice || 0);
     setFinishedRetailPrice(product.finishedRetailPrice || 0);
     setProductType(product.productType || "Hàng sẵn");
+    setProductCategory(product.category || "");
     setWarrantyMonths(product.warrantyMonths || 12);
     setShowAddEditModal(true);
   };
@@ -1004,13 +1044,14 @@ export default function OwnerProducts() {
           p.id === editItem.id
             ? {
                 ...p,
-                costPrice,
-                retailPrice,
-                rawRetailPrice,
-                finishedRetailPrice,
+                costPrice: Number(costPrice),
+                retailPrice: Number(retailPrice),
+                rawRetailPrice: Number(rawRetailPrice),
+                finishedRetailPrice: Number(finishedRetailPrice),
                 productType,
+                category: productCategory,
                 warrantyMonths: Number(warrantyMonths),
-                isPriced,
+                isPriced: true,
                 status: newStatus,
               }
             : p,
@@ -1120,14 +1161,14 @@ export default function OwnerProducts() {
                         Danh mục sản phẩm{" "}
                         <span className="text-red-500">*</span>
                       </label>
-                      <select className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                      <select 
+                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                        value={productCategory}
+                        onChange={(e) => setProductCategory(e.target.value)}
+                      >
                         <option value="">Chọn danh mục SP</option>
                         {CATEGORIES.map((c) => (
-                          <option
-                            key={c}
-                            value={c}
-                            selected={editItem?.category === c}
-                          >
+                          <option key={c} value={c}>
                             {c}
                           </option>
                         ))}
@@ -1224,89 +1265,76 @@ export default function OwnerProducts() {
                 {/* Section 3: Thương mại */}
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-600 mb-1">
-                            Giá nhập (vốn)
-                          </label>
-                          <div className="flex items-center gap-2">
+                    <div className="col-span-2">
+                        <label className="text-xs font-semibold text-gray-400 mb-1 block">
+                          Giá nhập (đ)
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            className="w-full border rounded-lg px-3 py-2 text-[15px] font-black outline-none bg-white text-gray-700 focus:ring-2 focus:ring-blue-500"
+                            value={formatNumberInput(costPrice)}
+                            onChange={(e) => {
+                              const val = parseNumberInput(e.target.value);
+                              setCostPrice(val === "" ? 0 : Number(val));
+                            }}
+                            placeholder="0"
+                          />
+                        </div>
+                    </div>
+
+                    {productType === "Hàng mộc" ? (
+                      <div className="col-span-2 grid grid-cols-2 gap-4 pt-2">
+                          <div className="p-3 rounded-xl border-2 border-orange-100 space-y-2 bg-orange-50/20">
+                            <label className="block text-xs font-bold text-orange-700">Giá bán MỘC (đ)</label>
                             <input
                               type="text"
-                              className="w-full border rounded-lg px-3 py-2 text-sm bg-gray-50 font-bold text-gray-700 outline-none"
-                              value={formatNumberInput(costPrice)}
-                              readOnly
+                              className="w-full border-none p-0 text-lg font-black text-orange-600 bg-transparent outline-none"
+                              value={formatNumberInput(rawRetailPrice)}
+                              onChange={(e) => {
+                                const val = parseNumberInput(e.target.value);
+                                setRawRetailPrice(val === "" ? 0 : Number(val));
+                              }}
                             />
-                            <Info size={14} className="text-gray-400" title="Giá vốn do kế toán nhập, không thể thay đổi tại đây" />
+                            <div className="flex items-center justify-between border-t border-orange-100 pt-2">
+                              <MarginDisplay cost={costPrice} price={rawRetailPrice} label="Lợi nhuận gộp" />
+                            </div>
                           </div>
+
+                          <div className="p-3 rounded-xl border-2 border-emerald-100 space-y-2 bg-emerald-50/20">
+                            <label className="block text-xs font-bold text-emerald-700">Giá bán HOÀN THIỆN (đ)</label>
+                            <input
+                              type="text"
+                              className="w-full border-none p-0 text-lg font-black text-emerald-600 bg-transparent outline-none"
+                              value={formatNumberInput(finishedRetailPrice)}
+                              onChange={(e) => {
+                                const val = parseNumberInput(e.target.value);
+                                setFinishedRetailPrice(val === "" ? 0 : Number(val));
+                              }}
+                            />
+                            <div className="flex items-center justify-between border-t border-emerald-100 pt-2">
+                              <MarginDisplay cost={costPrice} price={finishedRetailPrice} label="Lợi nhuận gộp" />
+                            </div>
+                          </div>
+                      </div>
+                    ) : (
+                      <div className="col-span-2 p-4 border-2 border-blue-100 rounded-2xl bg-blue-50/30 space-y-3">
+                        <label className="block text-xs font-bold text-blue-700 uppercase tracking-wider">Giá bán lẻ (đ)</label>
+                        <input
+                          type="text"
+                          className="w-full border-none p-0 text-3xl font-black text-blue-600 bg-transparent outline-none"
+                          value={formatNumberInput(retailPrice)}
+                          onChange={(e) => {
+                            const val = parseNumberInput(e.target.value);
+                            setRetailPrice(val === "" ? 0 : Number(val));
+                          }}
+                          placeholder="0"
+                        />
+                        <div className="flex items-center justify-between border-t border-blue-100 pt-3">
+                          <MarginDisplay cost={costPrice} price={retailPrice} label="Lãi dự kiến" />
                         </div>
-                        <div className="col-span-1 hidden md:block"></div>
-                        
-                        {productType === "Hàng mộc" ? (
-                          <>
-                            <div className="col-span-3 pb-2 border-b border-dashed border-gray-200 mt-2">
-                              <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-tighter">Quyết định giá bán</h4>
-                            </div>
-                            <div className="space-y-4">
-                              <div className="space-y-2">
-                                <label className="block text-xs font-semibold text-orange-700">
-                                  Giá bán mộc (đ) <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                  type="text"
-                                  className="w-full border-2 border-orange-100 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none font-bold text-orange-600 shadow-sm transition-all focus:border-orange-200"
-                                  value={formatNumberInput(rawRetailPrice)}
-                                  onChange={(e) => {
-                                    const val = parseNumberInput(e.target.value);
-                                    setRawRetailPrice(val === "" ? 0 : Number(val));
-                                  }}
-                                  placeholder="0"
-                                />
-                                <MarginDisplay cost={costPrice} price={rawRetailPrice} label="Lãi mộc" />
-                              </div>
-                            </div>
-                            <div className="space-y-4">
-                              <div className="space-y-2">
-                                <label className="block text-xs font-semibold text-green-700">
-                                  Giá bán hoàn thiện (đ) <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                  type="text"
-                                  className="w-full border-2 border-green-100 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none font-bold text-green-600 shadow-sm transition-all focus:border-green-200"
-                                  value={formatNumberInput(finishedRetailPrice)}
-                                  onChange={(e) => {
-                                    const val = parseNumberInput(e.target.value);
-                                    setFinishedRetailPrice(val === "" ? 0 : Number(val));
-                                  }}
-                                  placeholder="0"
-                                />
-                                <MarginDisplay cost={costPrice} price={finishedRetailPrice} label="Lãi hoàn thiện" />
-                              </div>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="col-span-3 pb-2 border-b border-dashed border-gray-200 mt-2">
-                              <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-tighter">Quyết định giá bán</h4>
-                            </div>
-                            <div className={productType !== "Hàng mộc" ? "col-span-2" : ""}>
-                              <div className="space-y-2">
-                                <label className="block text-xs font-semibold text-blue-700">
-                                  Giá bán (đ) <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                  type="text"
-                                  className="w-full border-2 border-blue-100 rounded-lg px-3 py-2 text-[15px] focus:ring-2 focus:ring-blue-500 outline-none font-bold text-blue-600 shadow-sm transition-all focus:border-blue-200"
-                                  value={formatNumberInput(retailPrice)}
-                                  onChange={(e) => {
-                                    const val = parseNumberInput(e.target.value);
-                                    setRetailPrice(val === "" ? 0 : Number(val));
-                                  }}
-                                  placeholder="0"
-                                />
-                                <MarginDisplay cost={costPrice} price={retailPrice} />
-                              </div>
-                            </div>
-                          </>
-                        )}
+                      </div>
+                    )}
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 mb-1">
                         Loại sản phẩm
@@ -1541,12 +1569,14 @@ export default function OwnerProducts() {
                       {detailItem.color}
                     </span>
                   </div>
-                  <div>
-                    <span className="text-gray-500 block text-xs italic">Bảo hành</span>
-                    <span className="font-bold text-blue-700 flex items-center gap-1">
-                      <ShieldCheck size={14} /> {detailItem.warrantyMonths || 12} tháng
-                    </span>
-                  </div>
+                  {detailItem.status !== "Chưa định giá" && (
+                    <div>
+                      <span className="text-gray-500 block text-xs italic">Bảo hành</span>
+                      <span className="font-bold text-blue-700 flex items-center gap-1">
+                        <ShieldCheck size={14} /> {detailItem.warrantyMonths || 12} tháng
+                      </span>
+                    </div>
+                  )}
                   <div>
                     <span className="text-gray-500 block text-xs">
                       Kích thước
@@ -2033,9 +2063,11 @@ export default function OwnerProducts() {
                               <span className="font-medium text-gray-900 text-[13px]">
                                 {p.productType}
                               </span>
-                              <span className="text-[10px] text-blue-600 font-bold flex items-center gap-0.5 mt-1 bg-blue-50 px-1.5 py-0.5 rounded-sm border border-blue-100 self-start">
-                                <ShieldCheck size={10} /> BH: {p.warrantyMonths || 12}T
-                              </span>
+                              {p.status !== "Chưa định giá" && (
+                                <span className="text-[10px] text-blue-600 font-bold flex items-center gap-0.5 mt-1 bg-blue-50 px-1.5 py-0.5 rounded-sm border border-blue-100 self-start">
+                                  <ShieldCheck size={10} /> BH: {p.warrantyMonths || 12}T
+                                </span>
+                              )}
                             </div>
                           </td>
                           <td className="px-4 py-4 text-right">

@@ -361,10 +361,8 @@ const INIT = {
   description: "",
   discountType: "percent",   // "percent" | "amount"
   discountValue: "",
-  maxDiscount: "",           // cap in VND when type=percent
   minOrderValue: "",
-  totalLimit: "",
-  perUserLimit: "",
+  usageLimit: "",
   startDate: "",
   endDate: "",
   allProducts: true,
@@ -435,12 +433,10 @@ export default function CouponCreatePage() {
     const val = form.discountType === "percent"
       ? `${form.discountValue}%`
       : `${fmtVND(form.discountValue)}₫`;
-    const cap = form.discountType === "percent" && form.maxDiscount
-      ? `, tối đa ${fmtVND(form.maxDiscount)}₫`
-      : "";
-    const minOrder = form.minOrderValue ? ` cho đơn hàng từ ${fmtVND(form.minOrderValue)}₫` : "";
     const products = form.allProducts ? "tất cả sản phẩm" : `${form.selectedProducts.length} sản phẩm đã chọn`;
-    return `Khách được giảm ${val}${cap}${minOrder} — áp dụng cho ${products}`;
+    const minOrder = form.minOrderValue ? ` cho đơn hàng từ ${fmtVND(form.minOrderValue)}₫` : "";
+    const limit = form.usageLimit ? ` (tối đa ${form.usageLimit} lượt)` : "";
+    return `Khách được giảm ${val}${minOrder}${limit} — áp dụng cho ${products}`;
   }, [form]);
 
   // ── Submit ───────────────────────────────────────────────────────────────
@@ -459,10 +455,8 @@ export default function CouponCreatePage() {
         description: form.description.trim() || null,
         discountType: form.discountType === "percent" ? "PERCENT" : "AMOUNT",
         discountValue: form.discountType === "percent" ? parseFloat(form.discountValue) : parseRaw(form.discountValue),
-        maxDiscountAmount: form.discountType === "percent" && form.maxDiscount ? parseRaw(form.maxDiscount) : null,
         minOrderValue: form.minOrderValue ? parseRaw(form.minOrderValue) : null,
-        totalUsageLimit: form.totalLimit ? parseInt(form.totalLimit) : null,
-        perUserLimit: form.perUserLimit ? parseInt(form.perUserLimit) : null,
+        usageLimit: form.usageLimit ? parseInt(form.usageLimit) : null,
         startDate: form.startDate || null,
         endDate: form.endDate || null,
         applyAllProducts: form.allProducts,
@@ -652,7 +646,7 @@ export default function CouponCreatePage() {
                 {/* Discount value */}
                 <FieldRow label={form.discountType === "percent" ? "Mức giảm (%)" : "Số tiền giảm (₫)"}
                   required error={touched.discountValue && errors.discountValue}
-                  hint={form.discountType === "percent" ? "Từ 1 đến 100" : "Định dạng VNĐ"} half>
+                  hint={form.discountType === "percent" ? "Từ 1 đến 100" : "Định dạng VNĐ"}>
                   <div className="relative">
                     <Input
                       type={form.discountType === "percent" ? "number" : "text"} inputMode="numeric"
@@ -673,31 +667,16 @@ export default function CouponCreatePage() {
                   </div>
                 </FieldRow>
 
-                {/* Max discount cap (only for percent) */}
-                {form.discountType === "percent" && (
-                  <FieldRow label="Giảm tối đa (₫)" hint="Để trống = không giới hạn"
-                    tooltip="Dù phần trăm tính ra lớn hơn, khách chỉ được giảm tối đa mức này" half>
-                    <div className="relative">
-                      <Input
-                        type="text" inputMode="numeric"
-                        value={fmtVND(form.maxDiscount)}
-                        onChange={e => set("maxDiscount", e.target.value.replace(/\D/g, ""))}
-                        placeholder="500.000"
-                        className="h-11 rounded-xl pr-8"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[14px] font-black text-gray-300">₫</span>
-                    </div>
-                  </FieldRow>
-                )}
+
               </div>
             </SectionCard>
 
-            {/* ── Section 3: Conditions ─────────────────────────── */}
-            <SectionCard step="3" title="Điều kiện áp dụng" subtitle="Giá trị đơn hàng tối thiểu, giới hạn lượt">
-              <div className="flex gap-4">
+            {/* ── Section 3: Risk Control ─────────────────────────── */}
+            <SectionCard step="3" title="Kiểm soát rủi ro" subtitle="Giới hạn ngân sách và điều kiện đơn hàng">
+              <div className="grid grid-cols-2 gap-4">
                 {/* Min order */}
-                <FieldRow label="Đơn hàng tối thiểu (₫)" hint="Để trống = áp dụng mọi đơn" half
-                  tooltip="Coupon chỉ áp dụng khi giá trị đơn hàng đạt mức tối thiểu này">
+                <FieldRow label="Đơn hàng tối thiểu (₫)" hint="Để trống = không giới hạn"
+                  tooltip="Coupon chỉ áp dụng khi giá trị đơn hàng đạt mức tối thiểu này. Quan trọng khi dùng mã giảm số tiền cố định.">
                   <div className="relative">
                     <Input type="text" inputMode="numeric"
                       value={fmtVND(form.minOrderValue)}
@@ -707,32 +686,18 @@ export default function CouponCreatePage() {
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[14px] font-black text-gray-300">₫</span>
                   </div>
                 </FieldRow>
-                {/* Empty spacer when not percent */}
-                {form.discountType !== "percent" && <div className="flex-1 min-w-0" />}
-              </div>
-
-              <div className="flex gap-4">
-                {/* Total limit */}
-                <FieldRow label="Tổng lượt dùng" hint="Để trống = không giới hạn" half
-                  tooltip="Số lần tối đa coupon này được dùng bởi tất cả khách">
+                {/* Usage limit */}
+                <FieldRow label="Tổng số lượt sử dụng" hint="Để trống = vô hạn"
+                  tooltip="Tổng số lần mã này có thể được sử dụng trên toàn hệ thống.">
                   <div className="relative">
-                    <Input type="number" min={1}
-                      value={form.totalLimit}
-                      onChange={e => set("totalLimit", e.target.value)}
+                    <Input type="text" inputMode="numeric"
+                      value={form.usageLimit}
+                      onChange={e => set("usageLimit", e.target.value.replace(/\D/g, ""))}
                       placeholder="100"
-                      className="h-11 rounded-xl" />
-                  </div>
-                </FieldRow>
-                {/* Per user limit */}
-                <FieldRow label="Mỗi khách hàng" hint="Để trống = không giới hạn" half
-                  tooltip="Mỗi tài khoản chỉ dùng được tối đa số lần này">
-                  <div className="relative">
-                    <Users size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
-                    <Input type="number" min={1}
-                      value={form.perUserLimit}
-                      onChange={e => set("perUserLimit", e.target.value)}
-                      placeholder="1"
-                      className="h-11 rounded-xl pl-9" />
+                      className="h-11 rounded-xl pr-8" />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[14px] font-black text-gray-300">
+                      <Tag size={13} />
+                    </span>
                   </div>
                 </FieldRow>
               </div>

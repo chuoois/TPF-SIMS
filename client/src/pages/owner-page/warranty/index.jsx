@@ -89,7 +89,7 @@ const INITIAL_WARRANTIES = [
       { date: "2025-04-01", action: "Kích hoạt", note: "Khách mua tại showroom" },
     ],
     maintenanceLogs: [
-      { date: "2025-10-15", type: "Xử lý co ngót", technician: "Trần Văn A", detail: "Chỉnh lại mộng bàn bị hở do gỗ co lại trong mùa hanh khô.", cost: 0, status: "Done" }
+      { date: "2025-10-15", type: "Xử lý co ngót", detail: "Chỉnh lại mộng bàn bị hở do gỗ co lại trong mùa hanh khô.", status: "Done" }
     ],
   },
   {
@@ -307,14 +307,7 @@ const WarrantyDetailsModal = ({ isOpen, onClose, warranty, onCreateRepair }) => 
                           {log.isMaintenance ? log.detail : log.action}
                         </p>
                         {log.note && <p className="text-[11px] text-gray-500 font-medium italic">{log.note}</p>}
-                        {log.technician && (
-                          <div className="flex items-center gap-2 mt-1">
-                             <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-black text-gray-600 border border-gray-200 uppercase">
-                               {log.technician.charAt(0)}
-                             </div>
-                             <span className="text-[11px] text-gray-400 font-bold">KT: {log.technician}</span>
-                          </div>
-                        )}
+                        
                       </div>
                     </div>
                   ))}
@@ -361,9 +354,7 @@ const WarrantyDetailsModal = ({ isOpen, onClose, warranty, onCreateRepair }) => 
 const CreateRepairModal = ({ isOpen, onClose, warranty, onSubmit }) => {
   const [formData, setFormData] = useState({
     type: "Bảo hành Co ngót",
-    technician: "",
     detail: "",
-    cost: 0,
     status: "Done"
   });
 
@@ -410,34 +401,6 @@ const CreateRepairModal = ({ isOpen, onClose, warranty, onSubmit }) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Nhân viên thực hiện</label>
-                <input 
-                  type="text"
-                  placeholder="Họ tên nhân viên..."
-                  value={formData.technician}
-                  onChange={(e) => setFormData({...formData, technician: e.target.value})}
-                  className="w-full h-12 px-5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Chi phí sửa chữa</label>
-                <div className="relative">
-                   <input 
-                    type="text"
-                    placeholder="0"
-                    value={formData.cost?.toLocaleString('vi-VN')}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '');
-                      setFormData({...formData, cost: parseInt(val) || 0});
-                    }}
-                    className="w-full h-12 px-5 pr-12 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all text-blue-700"
-                  />
-                  <span className="absolute right-5 top-1/2 -translate-y-1/2 text-sm font-black text-gray-400">đ</span>
-                </div>
-              </div>
-            </div>
 
             <div>
               <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Nội dung chi tiết & Ghi chú</label>
@@ -462,7 +425,6 @@ const CreateRepairModal = ({ isOpen, onClose, warranty, onSubmit }) => {
               // Ensure we have at least a basic detail
               const finalData = {
                 ...formData,
-                technician: formData.technician.trim() || "Chủ cửa hàng",
                 detail: formData.detail.trim() || formData.type,
                 date: new Date().toISOString()
               };

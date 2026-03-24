@@ -288,20 +288,18 @@ export default function CouponListPage() {
                                     <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400 w-[72px] text-center">Trạng thái</th>
                                     <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">Tên coupon</th>
                                     <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">Mã coupon</th>
-                                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400 text-center w-24">Tối đa</th>
-                                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400 text-center w-24">Đã dùng</th>
                                     <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400 w-28">Giảm giá</th>
+                                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400 w-28">Lượt dùng</th>
                                     <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400 w-32">Sản phẩm</th>
                                     <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400 w-28">Từ ngày</th>
                                     <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400 w-28">Đến ngày</th>
-                                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">Cấp cho</th>
                                     <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400 text-right w-28">Hành động</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {paged.length === 0 ? (
                                     <tr>
-                                        <td colSpan={11} className="py-20 text-center">
+                                        <td colSpan={8} className="py-20 text-center">
                                             <Tag size={32} className="mx-auto mb-3 opacity-20 text-gray-400" />
                                             <p className="text-gray-400 font-medium text-[14px]">
                                                 {search ? "Không tìm thấy mã nào phù hợp" : "Chưa có mã giảm giá nào"}
@@ -317,7 +315,6 @@ export default function CouponListPage() {
                                     </tr>
                                 ) : paged.map((c) => {
                                     const isToggleLoading = toggleLoadingId === c.id;
-                                    const usedPercent = c.usageLimit ? Math.min(100, (c.usedCount / c.usageLimit) * 100) : null;
                                     const isExpired = c.toDate && new Date(c.toDate) < new Date();
 
                                     return (
@@ -343,9 +340,6 @@ export default function CouponListPage() {
                                             {/* Tên */}
                                             <td className="px-4 py-3">
                                                 <p className="font-bold text-gray-800">{c.name}</p>
-                                                <p className="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1">
-                                                    <Users size={10} /> {c.grantedTo}
-                                                </p>
                                             </td>
 
                                             {/* Mã */}
@@ -356,27 +350,9 @@ export default function CouponListPage() {
                                                 </span>
                                             </td>
 
-                                            {/* Tối đa */}
-                                            <td className="px-4 py-3 text-center">
-                                                <span className="font-semibold text-gray-700">{c.usageLimit ?? <span className="text-gray-400 text-[12px]">∞</span>}</span>
-                                            </td>
 
-                                            {/* Đã dùng */}
-                                            <td className="px-4 py-3 text-center">
-                                                <div className="flex flex-col items-center gap-1">
-                                                    <span className={cn("font-bold text-[13px]",
-                                                        usedPercent === 100 ? "text-red-500" : usedPercent > 70 ? "text-amber-500" : "text-gray-700")}>
-                                                        {c.usedCount}
-                                                    </span>
-                                                    {usedPercent !== null && (
-                                                        <div className="w-12 h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                                                            <div className={cn("h-full rounded-full transition-all",
-                                                                usedPercent >= 100 ? "bg-red-400" : usedPercent > 70 ? "bg-amber-400" : "bg-emerald-400")}
-                                                                style={{ width: `${usedPercent}%` }} />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </td>
+
+
 
                                             {/* Giảm giá */}
                                             <td className="px-4 py-3">
@@ -386,6 +362,20 @@ export default function CouponListPage() {
                                                         : "bg-blue-50 text-blue-700 border-blue-100")}>
                                                     {fmtDiscount(c.discountType, c.discountValue)}
                                                 </span>
+                                            </td>
+
+                                            {/* Lượt dùng */}
+                                            <td className="px-4 py-3">
+                                                <div className="flex flex-col gap-1 w-24">
+                                                    <div className="flex justify-between items-end">
+                                                        <span className="text-[12px] font-bold text-gray-700">{c.usedCount || 0}</span>
+                                                        <span className="text-[10px] text-gray-400">/ {c.usageLimit || "∞"}</span>
+                                                    </div>
+                                                    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                        <div className="h-full bg-emerald-500 transition-all duration-500"
+                                                            style={{ width: c.usageLimit ? `${Math.min(100, (c.usedCount / c.usageLimit) * 100)}%` : "0%" }} />
+                                                    </div>
+                                                </div>
                                             </td>
 
                                             {/* Sản phẩm */}
@@ -407,12 +397,7 @@ export default function CouponListPage() {
                                                 <ExpiryBadge toDate={c.toDate} isActive={c.isActive} />
                                             </td>
 
-                                            {/* Cấp cho */}
-                                            <td className="px-4 py-3 text-[12px] text-gray-500">
-                                                <div className="flex items-center gap-1">
-                                                    <Users size={12} className="text-gray-300" />{c.grantedTo}
-                                                </div>
-                                            </td>
+
 
                                             {/* Hành động */}
                                             <td className="px-4 py-3">
