@@ -11,6 +11,7 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
+import { ImagePlus, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   X,
@@ -62,9 +63,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng ăn",
     productType: "Hàng sẵn",
-    size: "180 x 90 x 75 cm",
     color: "Sồi tự nhiên",
-    description: "Bộ bàn ăn 6 ghế chất liệu gỗ sồi Nga tự nhiên, xử lý chống mối mọt, thiết kế hiện đại phù hợp cho phòng ăn gia đình.",
+    description: "Bộ bàn ăn 6 ghế chất liệu gỗ sồi Nga tự nhiên, xử lý chống mối mọt, thiết kế hiện đại phù hợp cho phòng ăn gia đình. Kích thước (Bàn): 180 x 90 x 75 cm.",
   },
   {
     id: 2,
@@ -75,9 +75,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng làm việc",
     productType: "Hàng sẵn",
-    size: "120 x 35 x 180 cm",
     color: "Óc chó đậm",
-    description: "Kệ sách 5 tầng bền bỉ, vân gỗ óc chó sang trọng, tạo điểm nhấn cho không gian làm việc hoặc phòng khách.",
+    description: "Kệ sách 5 tầng bền bỉ, vân gỗ óc chó sang trọng, tạo điểm nhấn cho không gian làm việc hoặc phòng khách. Kích thước: 120 x 35 x 180 cm.",
   },
   {
     id: 3,
@@ -89,9 +88,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng làm việc",
     productType: "Hàng mộc",
-    size: "140 x 70 x 75 cm",
     color: "Trắng sồi",
-    description: "Bàn làm việc sơn trắng sồi thanh lịch, tích hợp 3 ngăn kéo tiện lợi cho việc lưu trữ hồ sơ, văn phòng phẩm.",
+    description: "Bàn làm việc sơn trắng sồi thanh lịch, tích hợp 3 ngăn kéo tiện lợi cho việc lưu trữ hồ sơ, văn phòng phẩm. Kích thước: 140 x 70 x 75 cm.",
   },
   {
     id: 4,
@@ -102,8 +100,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng ngủ",
     productType: "Hàng mộc",
-    size: "100 x 45 x 120 cm",
     color: "Nguyên mộc",
+    description: "Kích thước: 100 x 45 x 120 cm.",
   },
   {
     id: 5,
@@ -114,8 +112,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng ăn",
     productType: "Hàng sẵn",
-    size: "45 x 48 x 90 cm",
     color: "Sồi sáng",
+    description: "Kích thước: 45 x 48 x 90 cm.",
   },
   {
     id: 6,
@@ -127,8 +125,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng khách",
     productType: "Hàng sẵn",
-    size: "D80 & D60 cm",
     color: "Trắng vân mây",
+    description: "Kích thước mặt bàn: D80 & D60 cm.",
   },
   {
     id: 7,
@@ -139,7 +137,7 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng khách",
     productType: "Hàng mộc",
-    size: "Cao 220",
+    description: "Kích thước: Cao 220 cm.",
   },
   {
     id: 8,
@@ -150,8 +148,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng khách",
     productType: "Hàng sẵn",
-    size: "Module 100 x 240",
     color: "Nâu cà phê",
+    description: "Kích thước: Module 100 x 240 cm.",
   },
   {
     id: 9,
@@ -163,8 +161,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng khách",
     productType: "Hàng sẵn",
-    size: "280 x 160",
     color: "Xanh Navy",
+    description: "Kích thước: 280 x 160 cm.",
   },
   {
     id: 10,
@@ -176,8 +174,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng khách",
     productType: "Hàng mộc",
-    size: "80 x 120 x 30 cm",
     color: "Nguyên mộc",
+    description: "Kích thước: 80 x 120 x 30 cm.",
   },
   {
     id: 11,
@@ -188,8 +186,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng khách",
     productType: "Hàng sẵn",
-    size: "100 x 110 x 35",
     color: "Trắng + Vân gỗ",
+    description: "Kích thước: 100 x 110 x 35 cm.",
   },
   {
     id: 12,
@@ -200,8 +198,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng khách",
     productType: "Hàng sẵn",
-    size: "140 x 40 x 85",
     color: "Cánh gián nhạt",
+    description: "Kích thước: 140 x 40 x 85 cm.",
   },
   {
     id: 13,
@@ -212,8 +210,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng khách",
     productType: "Hàng sẵn",
-    size: "320 x 200",
     color: "Đen tuyền",
+    description: "Kích thước: 320 x 200 cm.",
   },
   {
     id: 14,
@@ -224,8 +222,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng khách",
     productType: "Hàng sẵn",
-    size: "Tròn 70",
     color: "Đen mờ",
+    description: "Kích thước: Tròn 70 cm.",
   },
   {
     id: 15,
@@ -236,8 +234,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng khách",
     productType: "Hàng sẵn",
-    size: "180 x 35",
     color: "Xám chì",
+    description: "Kích thước: 180 x 35 cm.",
   },
   {
     id: 16,
@@ -248,8 +246,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng khách",
     productType: "Hàng sẵn",
-    size: "90 x 120 x 24",
     color: "Vân sồi",
+    description: "Kích thước: 90 x 120 x 24 cm.",
   },
   {
     id: 17,
@@ -260,7 +258,7 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng khách",
     productType: "Hàng mộc",
-    size: "Tròn 40",
+    description: "Kích thước: Tròn 40 cm.",
   },
   {
     id: 18,
@@ -271,7 +269,7 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng khách",
     productType: "Hàng mộc",
-    size: "Module 120x260",
+    description: "Kích thước: Module 120x260 cm.",
   },
 
   // Phòng ngủ
@@ -285,7 +283,7 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng ngủ",
     productType: "Hàng mộc",
-    size: "180 x 200",
+    description: "Kích thước lọt lòng: 180 x 200 cm.",
   },
   {
     id: 20,
@@ -297,8 +295,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng ngủ",
     productType: "Hàng sẵn",
-    size: "240 x 220 x 60",
     color: "Khung đen",
+    description: "Kích thước: 240 x 220 x 60 cm.",
   },
   {
     id: 21,
@@ -309,8 +307,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng ngủ",
     productType: "Hàng sẵn",
-    size: "100 x 40 x 75",
     color: "Trắng sứ",
+    description: "Kích thước: 100 x 40 x 75 cm.",
   },
   {
     id: 22,
@@ -321,8 +319,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng ngủ",
     productType: "Hàng sẵn",
-    size: "45 x 40 x 45",
     color: "Sơn bóng mờ",
+    description: "Kích thước: 45 x 40 x 45 cm.",
   },
   {
     id: 23,
@@ -333,7 +331,7 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng ngủ",
     productType: "Hàng mộc",
-    size: "120 x 200",
+    description: "Kích thước tầng: 120 x 200 cm.",
   },
   {
     id: 24,
@@ -344,8 +342,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng ngủ",
     productType: "Hàng sẵn",
-    size: "Ghế: 85x85, Đôn: 50x40",
     color: "Ghi sáng",
+    description: "Kích thước Ghế: 85x85 cm. Kích thước Đôn: 50x40 cm.",
   },
   {
     id: 25,
@@ -356,7 +354,7 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng ngủ",
     productType: "Hàng mộc",
-    size: "60 x 80 x 40",
+    description: "Kích thước: 60 x 80 x 40 cm.",
   },
   {
     id: 26,
@@ -367,7 +365,7 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng ngủ",
     productType: "Hàng mộc",
-    size: "150 x 40",
+    description: "Kích thước: 150 x 40 cm.",
   },
 
   // Phòng ăn
@@ -380,8 +378,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng ăn",
     productType: "Hàng sẵn",
-    size: "160 x 80",
     color: "Mặt đá xám vân xoáy",
+    description: "Kích thước bàn: 160 x 80 cm.",
   },
   {
     id: 28,
@@ -392,8 +390,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng ăn",
     productType: "Hàng sẵn",
-    size: "Module 60x60x220",
     color: "Đen nhám",
+    description: "Kích thước: Module 60x60x220 cm.",
   },
   {
     id: 29,
@@ -404,8 +402,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng ăn",
     productType: "Hàng sẵn",
-    size: "Theo mặt bằng thực tế",
     color: "Xanh ngọc / Trắng",
+    description: "Kích thước tủ bếp: Theo mặt bằng thực tế.",
   },
   {
     id: 30,
@@ -416,8 +414,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng ăn",
     productType: "Hàng sẵn",
-    size: "Chân 45cm",
     color: "Da bò",
+    description: "Sản phẩm ghế chân cao 45cm.",
   },
   {
     id: 31,
@@ -429,7 +427,7 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng ăn",
     productType: "Hàng mộc",
-    size: "120 x 80",
+    description: "Kích thước mặt đảo: 120 x 80 cm.",
   },
   {
     id: 32,
@@ -440,8 +438,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng ăn",
     productType: "Hàng sẵn",
-    size: "80 x 110 x 20",
     color: "Nâu cánh gián",
+    description: "Kích thước: 80 x 110 x 20 cm.",
   },
   {
     id: 33,
@@ -452,8 +450,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng ăn",
     productType: "Hàng sẵn",
-    size: "Đường kính 1.4m",
     color: "Mặt đá vân mây trắng",
+    description: "Kích thước bàn xoay: Đường kính 1.4m.",
   },
 
   // Phòng làm việc
@@ -467,8 +465,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng làm việc",
     productType: "Hàng sẵn",
-    size: "Tiêu chuẩn Adult",
     color: "Đen / Trắng xám",
+    description: "Kích thước: Tiêu chuẩn Adult.",
   },
   {
     id: 35,
@@ -479,8 +477,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng làm việc",
     productType: "Hàng sẵn",
-    size: "160 x 75",
     color: "Mặt óc chó / Chân đen",
+    description: "Kích thước mặt bàn: 160 x 75 cm.",
   },
   {
     id: 36,
@@ -491,8 +489,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng làm việc",
     productType: "Hàng sẵn",
-    size: "120 x 200 x 40",
     color: "Ghi chì",
+    description: "Kích thước: 120 x 200 x 40 cm.",
   },
   {
     id: 37,
@@ -503,7 +501,7 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng làm việc",
     productType: "Hàng mộc",
-    size: "50 x 40 x 30",
+    description: "Kích thước: 50 x 40 x 30 cm.",
   },
   {
     id: 38,
@@ -514,8 +512,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng làm việc",
     productType: "Hàng sẵn",
-    size: "Size L",
     color: "Đen",
+    description: "Tải trọng cao. Kích thước: Size L.",
   },
   {
     id: 39,
@@ -526,8 +524,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng làm việc",
     productType: "Hàng mộc",
-    size: "50 x 40 x 30 cm",
     color: "Gỗ thông mộc",
+    description: "Kích thước: 50 x 40 x 30 cm.",
   },
   {
     id: 40,
@@ -538,8 +536,8 @@ const WOOD_PRODUCTS = [
     image: "/wood_products.png",
     category: "Phòng làm việc",
     productType: "Hàng sẵn",
-    size: "240 x 120 x 75 cm",
     color: "Vàng vân gỗ / Chân ghi",
+    description: "Kích thước bàn họp lớn: 240 x 120 x 75 cm.",
   },
 ];
 
@@ -553,9 +551,8 @@ const GIFT_PRODUCTS = [
     image: "/wood_products.png",
     category: "Quà tặng",
     productType: "Quà tặng",
-    size: "45x45 cm",
     color: "Họa tiết Vintage",
-    description: "Gối tựa lưng êm ái với họa tiết Vintage độc đáo, mang lại sự thoải mái và vẻ đẹp cổ điển cho bộ sofa nhà bạn.",
+    description: "Gối tựa lưng êm ái với họa tiết Vintage độc đáo, mang lại sự thoải mái và vẻ đẹp cổ điển cho bộ sofa nhà bạn. Kích thước: 45x45 cm.",
   },
   {
     id: 1002,
@@ -566,8 +563,8 @@ const GIFT_PRODUCTS = [
     image: "/wood_products.png",
     category: "Quà tặng",
     productType: "Quà tặng",
-    size: "140x180 cm",
     color: "Trắng kem",
+    description: "Kích thước khăn: 140x180 cm.",
   },
   {
     id: 1003,
@@ -578,8 +575,8 @@ const GIFT_PRODUCTS = [
     image: "/wood_products.png",
     category: "Quà tặng",
     productType: "Quà tặng",
-    size: "Chai 500ml",
     color: "Trong suốt",
+    description: "Chai dung tích 500ml.",
   },
   {
     id: 1004,
@@ -590,8 +587,8 @@ const GIFT_PRODUCTS = [
     image: "/wood_products.png",
     category: "Quà tặng",
     productType: "Quà tặng",
-    size: "D10 cm",
     color: "Nâu bần",
+    description: "Kích thước lót ly: D10 cm.",
   },
 ];
 
@@ -852,7 +849,11 @@ export default function InStockInvoicePage() {
   };
 
   const addToCart = (product) => {
-    const existing = activeTab.cartItems.find((i) => i.id === (product.id + (productTypeTab === "Quà tặng" ? 10000 : 0)));
+    const isWood = product.productType === "Hàng mộc";
+    const isGift = productTypeTab === "Quà tặng";
+    const cartItemId = `${product.id + (isGift ? 10000 : 0)}${isWood ? `-${woodPriceMode}` : ""}`;
+
+    const existing = activeTab.cartItems.find((i) => i.id === cartItemId);
     if (existing) {
       if (existing.quantity >= product.stock) {
         toast.error(`"${product.name}" đã hết hàng trong kho`);
@@ -860,7 +861,7 @@ export default function InStockInvoicePage() {
       }
       updateActiveTab({
         cartItems: activeTab.cartItems.map((i) =>
-          i.id === (product.id + (productTypeTab === "Quà tặng" ? 10000 : 0)) ? { ...i, quantity: i.quantity + 1 } : i,
+          i.id === cartItemId ? { ...i, quantity: i.quantity + 1 } : i,
         ),
       });
     } else {
@@ -873,13 +874,16 @@ export default function InStockInvoicePage() {
       let itemPrice = product.price;
       if (isGift) itemPrice = 0;
       else if (isWood && woodPriceMode === "finished") itemPrice = Math.round(product.price * WOOD_FINISHING_RATE);
+
+      // Hàng mộc giá hoàn thiện: hỗ trợ giá cũ + giá đã giảm
+      const isWoodFinished = isWood && woodPriceMode === "finished";
       updateActiveTab({
         cartItems: [
           ...activeTab.cartItems,
           {
-            id: product.id + (isGift ? 10000 : 0),
+            id: cartItemId,
             name: product.name,
-            price: itemPrice,
+            price: isWood && woodPriceMode === "finished" && product.discount ? Math.round(itemPrice * (1 - product.discount / 100)) : itemPrice,
             stock: product.stock,
             sku: product.sku,
             quantity: 1,
@@ -888,6 +892,9 @@ export default function InStockInvoicePage() {
             images: [],
             isGift,
             priceMode: isWood ? woodPriceMode : null,
+            // Dual pricing cho Hàng mộc hoàn thiện
+            oldPrice: isWoodFinished ? itemPrice : null,
+            discountPrice: isWoodFinished ? (product.discount ? Math.round(itemPrice * (1 - product.discount / 100)) : itemPrice) : null,
           },
         ],
       });
@@ -935,6 +942,23 @@ export default function InStockInvoicePage() {
     updateActiveTab({
       cartItems: activeTab.cartItems.map((i) =>
         i.id === id ? { ...i, note } : i,
+      ),
+    });
+  };
+
+  const updateItemPrices = (id, field, value) => {
+    const raw = value.replace(/\D/g, "");
+    const numVal = parseInt(raw) || 0;
+    updateActiveTab({
+      cartItems: activeTab.cartItems.map((i) =>
+        i.id === id
+          ? {
+              ...i,
+              [field]: numVal,
+              // Cập nhật price = discountPrice để tính tổng đúng
+              ...(field === "discountPrice" ? { price: numVal } : {}),
+            }
+          : i,
       ),
     });
   };
@@ -1262,6 +1286,44 @@ export default function InStockInvoicePage() {
                         </div>
                       )}
                     </div>
+
+                    {/* === Hàng mộc hoàn thiện: Giá cũ / Giá đã giảm + Upload ảnh === */}
+                    {item.productType === "Hàng mộc" && item.priceMode === "finished" && (
+                      <div className="mt-2 pl-11 space-y-2">
+                        {/* Dual pricing */}
+                       
+
+                        {/* Image upload */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {(item.images || []).map((img, imgIdx) => (
+                            <div key={imgIdx} className="relative w-14 h-14 rounded-lg overflow-hidden border border-gray-200 group/img">
+                              <img src={typeof img === "string" ? img : URL.createObjectURL(img)} alt="" className="w-full h-full object-cover" />
+                              <button
+                                onClick={() => removeItemImage(item.id, imgIdx)}
+                                className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition cursor-pointer shadow"
+                              >
+                                <X size={10} />
+                              </button>
+                            </div>
+                          ))}
+                          <label className="w-14 h-14 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-green-400 hover:bg-green-50/50 transition">
+                            <ImagePlus size={18} className="text-gray-400" />
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              className="hidden"
+                              onChange={(e) => {
+                                if (e.target.files?.length) {
+                                  updateItemImages(item.id, Array.from(e.target.files));
+                                }
+                                e.target.value = "";
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1966,14 +2028,8 @@ export default function InStockInvoicePage() {
                         >
                           {product.name}
                         </p>
-                        {/* Hiển thị Kích thước và Màu sắc */}
+                        {/* Hiển thị Màu sắc */}
                         <div className="flex flex-col gap-0.5 mt-1">
-                          <span
-                            className="text-[10px] font-medium truncate"
-                            style={{ color: "var(--text-placeholder)" }}
-                          >
-                            Kích thước: {product.size}
-                          </span>
                           <span
                             className="text-[10px] font-medium truncate"
                             style={{ color: "var(--text-placeholder)" }}
@@ -1984,14 +2040,25 @@ export default function InStockInvoicePage() {
                               : product.color}
                           </span>
                         </div>
-                        <p
-                          className="text-[13px] font-bold"
-                          style={{ color: "var(--brand-primary)" }}
-                        >
-                          {product.productType === "Hàng mộc"
-                            ? fmt(woodPriceMode === "finished" ? Math.round(product.price * WOOD_FINISHING_RATE) : product.price)
-                            : fmt(product.price)}đ
-                        </p>
+                        {product.productType === "Hàng mộc" && woodPriceMode === "finished" && product.discount > 0 ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] line-through text-gray-400">
+                              {fmt(Math.round(product.price * WOOD_FINISHING_RATE))}đ
+                            </span>
+                            <span className="text-[13px] font-bold" style={{ color: "#EF4444" }}>
+                              {fmt(Math.round(product.price * WOOD_FINISHING_RATE * (1 - product.discount / 100)))}đ
+                            </span>
+                          </div>
+                        ) : (
+                          <p
+                            className="text-[13px] font-bold"
+                            style={{ color: "var(--brand-primary)" }}
+                          >
+                            {product.productType === "Hàng mộc"
+                              ? fmt(woodPriceMode === "finished" ? Math.round(product.price * WOOD_FINISHING_RATE) : product.price)
+                              : fmt(product.price)}đ
+                          </p>
+                        )}
 
                         {/* Quick View Button */}
                         <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -2123,11 +2190,7 @@ export default function InStockInvoicePage() {
                 </div>
 
                 <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Kích thước</p>
-                      <p className="text-[13px] font-semibold text-gray-700 mt-0.5">{selectedProductForView.size || "—"}</p>
-                    </div>
+                  <div className="grid grid-cols-1 gap-4">
                     <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Màu sắc</p>
                       <p className="text-[13px] font-semibold text-gray-700 mt-0.5">
@@ -2142,15 +2205,24 @@ export default function InStockInvoicePage() {
                   </div>
 
                   {selectedProductForView.productType === "Hàng mộc" ? (
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className={`p-3 rounded-xl border text-left ${woodPriceMode === "finished" ? "bg-emerald-50 border-emerald-200 ring-2 ring-emerald-300" : "bg-gray-50 border-gray-100"}`}>
-                        <p className={`text-[10px] font-bold uppercase tracking-wider ${woodPriceMode === "finished" ? "text-emerald-600" : "text-gray-400"}`}>Giá hoàn thiện</p>
-                        <p className={`text-[17px] font-black mt-0.5 ${woodPriceMode === "finished" ? "text-emerald-700" : "text-gray-500"}`}>{fmt(Math.round(selectedProductForView.price * WOOD_FINISHING_RATE))}đ</p>
-                      </div>
-                      <div className={`p-3 rounded-xl border text-left ${woodPriceMode === "raw" ? "bg-emerald-50 border-emerald-200 ring-2 ring-emerald-300" : "bg-gray-50 border-gray-100"}`}>
-                        <p className={`text-[10px] font-bold uppercase tracking-wider ${woodPriceMode === "raw" ? "text-emerald-600" : "text-gray-400"}`}>Giá thô</p>
-                        <p className={`text-[17px] font-black mt-0.5 ${woodPriceMode === "raw" ? "text-emerald-700" : "text-gray-500"}`}>{fmt(selectedProductForView.price)}đ</p>
-                      </div>
+                    <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-left">
+                      <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
+                        {woodPriceMode === "finished" ? "Giá hoàn thiện" : "Giá thô"}
+                      </p>
+                      {woodPriceMode === "finished" && selectedProductForView.discount > 0 ? (
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[14px] line-through text-emerald-600/60 font-medium">
+                            {fmt(Math.round(selectedProductForView.price * WOOD_FINISHING_RATE))}đ
+                          </span>
+                          <span className="text-[20px] font-black text-red-600">
+                            {fmt(Math.round(selectedProductForView.price * WOOD_FINISHING_RATE * (1 - selectedProductForView.discount / 100)))}đ
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="text-[20px] font-black text-emerald-700 mt-0.5">
+                          {fmt(woodPriceMode === "finished" ? Math.round(selectedProductForView.price * WOOD_FINISHING_RATE) : selectedProductForView.price)}đ
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-left">
