@@ -289,7 +289,6 @@ export default function CouponListPage() {
                                     <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">Tên coupon</th>
                                     <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">Mã coupon</th>
                                     <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400 w-28">Giảm giá</th>
-                                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400 w-28">Lượt dùng</th>
                                     <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400 w-32">Sản phẩm</th>
                                     <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400 w-28">Từ ngày</th>
                                     <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400 w-28">Đến ngày</th>
@@ -362,20 +361,6 @@ export default function CouponListPage() {
                                                         : "bg-blue-50 text-blue-700 border-blue-100")}>
                                                     {fmtDiscount(c.discountType, c.discountValue)}
                                                 </span>
-                                            </td>
-
-                                            {/* Lượt dùng */}
-                                            <td className="px-4 py-3">
-                                                <div className="flex flex-col gap-1 w-24">
-                                                    <div className="flex justify-between items-end">
-                                                        <span className="text-[12px] font-bold text-gray-700">{c.usedCount || 0}</span>
-                                                        <span className="text-[10px] text-gray-400">/ {c.usageLimit || "∞"}</span>
-                                                    </div>
-                                                    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                                        <div className="h-full bg-emerald-500 transition-all duration-500"
-                                                            style={{ width: c.usageLimit ? `${Math.min(100, (c.usedCount / c.usageLimit) * 100)}%` : "0%" }} />
-                                                    </div>
-                                                </div>
                                             </td>
 
                                             {/* Sản phẩm */}

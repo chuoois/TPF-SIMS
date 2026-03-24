@@ -394,12 +394,9 @@ export default function CouponCreatePage() {
     if (!f.name.trim()) e.name = "Vui lòng nhập tên chương trình";
     if (!f.discountValue) {
       e.discountValue = "Bắt buộc nhập giá trị giảm";
-    } else if (f.discountType === "percent") {
+    } else {
       const v = parseFloat(f.discountValue);
       if (isNaN(v) || v <= 0 || v > 100) e.discountValue = "Phần trăm: 1 – 100";
-    } else {
-      const v = parseRaw(f.discountValue);
-      if (!v || v <= 0) e.discountValue = "Số tiền phải lớn hơn 0";
     }
     if (f.startDate && f.endDate && f.endDate < f.startDate) e.endDate = "Ngày kết thúc phải sau ngày bắt đầu";
     if (!f.allProducts && f.selectedProducts.length === 0) e.selectedProducts = "Chọn ít nhất 1 sản phẩm";
@@ -412,8 +409,8 @@ export default function CouponCreatePage() {
     if (!form.code.trim() || form.code.length > 20) return false;
     if (!form.name.trim()) return false;
     if (!form.discountValue) return false;
-    if (form.discountType === "percent") { const v = parseFloat(form.discountValue); if (isNaN(v) || v <= 0 || v > 100) return false; }
-    else { if (!parseRaw(form.discountValue)) return false; }
+    const v = parseFloat(form.discountValue);
+    if (isNaN(v) || v <= 0 || v > 100) return false;
     if (form.startDate && form.endDate && form.endDate < form.startDate) return false;
     if (!form.allProducts && form.selectedProducts.length === 0) return false;
     return true;
@@ -430,9 +427,7 @@ export default function CouponCreatePage() {
   // ── Preview sentence ─────────────────────────────────────────────────────
   const preview = useMemo(() => {
     if (!form.discountValue) return null;
-    const val = form.discountType === "percent"
-      ? `${form.discountValue}%`
-      : `${fmtVND(form.discountValue)}₫`;
+    const val = `${form.discountValue}%`;
     const products = form.allProducts ? "tất cả sản phẩm" : `${form.selectedProducts.length} sản phẩm đã chọn`;
     const minOrder = form.minOrderValue ? ` cho đơn hàng từ ${fmtVND(form.minOrderValue)}₫` : "";
     const limit = form.usageLimit ? ` (tối đa ${form.usageLimit} lượt)` : "";
@@ -453,8 +448,8 @@ export default function CouponCreatePage() {
         couponCode: form.code.toUpperCase(),
         couponName: form.name.trim(),
         description: form.description.trim() || null,
-        discountType: form.discountType === "percent" ? "PERCENT" : "AMOUNT",
-        discountValue: form.discountType === "percent" ? parseFloat(form.discountValue) : parseRaw(form.discountValue),
+        discountType: "PERCENT",
+        discountValue: parseFloat(form.discountValue),
         minOrderValue: form.minOrderValue ? parseRaw(form.minOrderValue) : null,
         usageLimit: form.usageLimit ? parseInt(form.usageLimit) : null,
         startDate: form.startDate || null,
@@ -616,135 +611,81 @@ export default function CouponCreatePage() {
               </div>
             </SectionCard>
 
-            {/* ── Section 2: Discount ──────────────────────────── */}
-            <SectionCard step="2" title="Loại & giá trị giảm giá" subtitle="Chọn hình thức và mức giảm">
-              {/* Type selector */}
-              <FieldRow label="Hình thức giảm giá" required>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { v: "percent", label: "Phần trăm (%)", icon: Percent, desc: "VD: Giảm 20%" },
-                    { v: "amount", label: "Số tiền cố định", icon: Banknote, desc: "VD: Giảm 100.000₫" },
-                  ].map(({ v, label, icon: Icon, desc }) => (
-                    <button key={v} type="button"
-                      onClick={() => { set("discountType", v); set("discountValue", ""); set("maxDiscount", ""); }}
-                      className={cn("p-4 rounded-xl border-2 text-left transition-all cursor-pointer",
-                        form.discountType === v
-                          ? "border-emerald-500 bg-emerald-50"
-                          : "border-gray-200 hover:border-gray-300 bg-white")}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <Icon size={16} className={form.discountType === v ? "text-emerald-600" : "text-gray-400"} />
-                        <span className={cn("text-[13px] font-bold", form.discountType === v ? "text-emerald-700" : "text-gray-700")}>{label}</span>
-                        {form.discountType === v && <Check size={13} className="ml-auto text-emerald-500" />}
-                      </div>
-                      <p className="text-[11px] text-gray-400">{desc}</p>
-                    </button>
-                  ))}
-                </div>
-              </FieldRow>
-
-              <div className="flex gap-4">
+            {/* ── Section 2: Discount & Date range ──────────────── */}
+            <SectionCard step="2" title="Cài đặt giảm giá & Thời gian" subtitle="Mức giảm phần trăm và thời hạn áp dụng của chương trình">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
                 {/* Discount value */}
-                <FieldRow label={form.discountType === "percent" ? "Mức giảm (%)" : "Số tiền giảm (₫)"}
-                  required error={touched.discountValue && errors.discountValue}
-                  hint={form.discountType === "percent" ? "Từ 1 đến 100" : "Định dạng VNĐ"}>
-                  <div className="relative">
-                    <Input
-                      type={form.discountType === "percent" ? "number" : "text"} inputMode="numeric"
-                      value={form.discountType === "amount" ? fmtVND(form.discountValue) : form.discountValue}
-                      onChange={e => {
-                        const raw = e.target.value.replace(/\D/g, "");
-                        set("discountValue", form.discountType === "percent" ? e.target.value : raw);
-                      }}
-                      onBlur={() => touch("discountValue")}
-                      min={1} max={form.discountType === "percent" ? 100 : undefined}
-                      placeholder={form.discountType === "percent" ? "20" : "100.000"}
-                      className={cn("h-11 rounded-xl pr-10",
-                        touched.discountValue && errors.discountValue && "border-red-400 focus-visible:border-red-400 focus-visible:ring-red-200")}
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[14px] font-black" style={{ color: "var(--brand-primary)" }}>
-                      {form.discountType === "percent" ? "%" : "₫"}
-                    </span>
-                  </div>
-                </FieldRow>
-
-
-              </div>
-            </SectionCard>
-
-            {/* ── Section 3: Risk Control ─────────────────────────── */}
-            <SectionCard step="3" title="Kiểm soát rủi ro" subtitle="Giới hạn ngân sách và điều kiện đơn hàng">
-              <div className="grid grid-cols-2 gap-4">
-                {/* Min order */}
-                <FieldRow label="Đơn hàng tối thiểu (₫)" hint="Để trống = không giới hạn"
-                  tooltip="Coupon chỉ áp dụng khi giá trị đơn hàng đạt mức tối thiểu này. Quan trọng khi dùng mã giảm số tiền cố định.">
-                  <div className="relative">
-                    <Input type="text" inputMode="numeric"
-                      value={fmtVND(form.minOrderValue)}
-                      onChange={e => set("minOrderValue", e.target.value.replace(/\D/g, ""))}
-                      placeholder="500.000"
-                      className="h-11 rounded-xl pr-8" />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[14px] font-black text-gray-300">₫</span>
-                  </div>
-                </FieldRow>
-                {/* Usage limit */}
-                <FieldRow label="Tổng số lượt sử dụng" hint="Để trống = vô hạn"
-                  tooltip="Tổng số lần mã này có thể được sử dụng trên toàn hệ thống.">
-                  <div className="relative">
-                    <Input type="text" inputMode="numeric"
-                      value={form.usageLimit}
-                      onChange={e => set("usageLimit", e.target.value.replace(/\D/g, ""))}
-                      placeholder="100"
-                      className="h-11 rounded-xl pr-8" />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[14px] font-black text-gray-300">
-                      <Tag size={13} />
-                    </span>
-                  </div>
-                </FieldRow>
-              </div>
-            </SectionCard>
-
-            {/* ── Section 4: Date range ─────────────────────────── */}
-            <SectionCard step="4" title="Thời gian hiệu lực" subtitle="Ngày bắt đầu và kết thúc của chương trình">
-              <div className="flex gap-4">
-                <FieldRow label="Ngày bắt đầu" hint="Để trống = hiệu lực ngay" half>
-                  <div className="relative">
-                    <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
-                    <Input type="date"
-                      value={form.startDate}
-                      onChange={e => { set("startDate", e.target.value); touch("startDate"); }}
-                      className="h-11 rounded-xl pl-9"
-                      min={new Date().toISOString().slice(0, 10)} />
-                  </div>
-                </FieldRow>
-                <FieldRow label="Ngày kết thúc" hint="Để trống = không giới hạn" half error={touched.endDate && errors.endDate}>
-                  <div className="relative">
-                    <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
-                    <Input type="date"
-                      value={form.endDate}
-                      onChange={e => { set("endDate", e.target.value); touch("endDate"); }}
-                      onBlur={() => touch("endDate")}
-                      className={cn("h-11 rounded-xl pl-9",
-                        touched.endDate && errors.endDate && "border-red-400 focus-visible:border-red-400 focus-visible:ring-red-200")}
-                      min={form.startDate || new Date().toISOString().slice(0, 10)} />
-                  </div>
-                </FieldRow>
-              </div>
-
-              {/* Duration chip */}
-              {form.startDate && form.endDate && !errors.endDate && (
-                <div className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-medium animate-in fade-in duration-200"
-                  style={{ backgroundColor: "var(--status-focus)", color: "var(--brand-primary)" }}>
-                  <Calendar size={13} />
-                  {(() => {
-                    const days = Math.ceil((new Date(form.endDate) - new Date(form.startDate)) / 86400000);
-                    return `Thời hạn: ${days} ngày`;
-                  })()}
+                <div className="col-span-1 md:border-r border-gray-100 md:pr-6">
+                  <FieldRow label="Mức giảm (%)"
+                    required error={touched.discountValue && errors.discountValue}
+                    hint="Từ 1 đến 100">
+                    <div className="relative group">
+                      <div className="absolute left-0 inset-y-0 w-11 flex items-center justify-center bg-gray-50 rounded-l-xl border-r group-hover:bg-emerald-50 transition-colors" style={{ borderColor: touched.discountValue && errors.discountValue ? "#F87171" : "var(--grid-border)" }}>
+                        <Percent size={14} className="text-gray-400 group-hover:text-emerald-500 transition-colors" />
+                      </div>
+                      <Input
+                        type="number" inputMode="numeric"
+                        value={form.discountValue}
+                        onChange={e => set("discountValue", e.target.value)}
+                        onBlur={() => touch("discountValue")}
+                        min={1} max={100}
+                        placeholder="20"
+                        className={cn("h-11 rounded-xl pl-14 pr-10 font-bold text-[15px] border-gray-200 focus-visible:border-emerald-500 focus-visible:ring-emerald-200 transition-all",
+                          touched.discountValue && errors.discountValue && "border-red-400 focus-visible:border-red-400 focus-visible:ring-red-200",
+                          !errors.discountValue && form.discountValue && "bg-emerald-50/20 text-emerald-700")}
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[15px] font-black text-gray-300 group-hover:text-emerald-500 transition-colors">
+                        %
+                      </span>
+                    </div>
+                  </FieldRow>
                 </div>
-              )}
+
+                {/* Dates */}
+                <div className="col-span-1 md:col-span-2">
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <FieldRow label="Ngày bắt đầu" hint="Để trống = hiệu lực ngay" half>
+                      <div className="relative group">
+                        <Calendar size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-emerald-500 transition-colors" />
+                        <Input type="date"
+                          value={form.startDate}
+                          onChange={e => { set("startDate", e.target.value); touch("startDate"); }}
+                          className="h-11 rounded-xl pl-10 text-[13px] border-gray-200 hover:border-emerald-300 focus-visible:border-emerald-500 transition-colors"
+                          min={new Date().toISOString().slice(0, 10)} />
+                      </div>
+                    </FieldRow>
+                    <FieldRow label="Ngày kết thúc" hint="Để trống = không giới hạn" half error={touched.endDate && errors.endDate}>
+                      <div className="relative group">
+                        <Calendar size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-emerald-500 transition-colors" />
+                        <Input type="date"
+                          value={form.endDate}
+                          onChange={e => { set("endDate", e.target.value); touch("endDate"); }}
+                          onBlur={() => touch("endDate")}
+                          className={cn("h-11 rounded-xl pl-10 text-[13px] border-gray-200 hover:border-emerald-300 focus-visible:border-emerald-500 transition-colors",
+                            touched.endDate && errors.endDate && "border-red-400 focus-visible:border-red-400 focus-visible:ring-red-200")}
+                          min={form.startDate || new Date().toISOString().slice(0, 10)} />
+                      </div>
+                    </FieldRow>
+                  </div>
+
+                  {/* Duration chip */}
+                  {form.startDate && form.endDate && !errors.endDate && (
+                    <div className="mt-3 flex items-center gap-2 px-4 py-2.5 rounded-xl text-[12px] font-medium animate-in fade-in duration-200 bg-emerald-50 text-emerald-700 border border-emerald-100 w-fit">
+                      <Calendar size={14} />
+                      {(() => {
+                        const days = Math.ceil((new Date(form.endDate) - new Date(form.startDate)) / 86400000);
+                        return `Thời hạn chương trình: ${days} ngày`;
+                      })()}
+                    </div>
+                  )}
+                </div>
+
+              </div>
             </SectionCard>
 
-            {/* ── Section 5: Products ───────────────────────────── */}
-            <SectionCard step="5" title="Sản phẩm áp dụng" subtitle="Chọn sản phẩm hoặc áp dụng toàn bộ">
+            {/* ── Section 3: Products ───────────────────────────── */}
+            <SectionCard step="3" title="Sản phẩm áp dụng" subtitle="Chọn sản phẩm hoặc áp dụng toàn bộ">
               {/* All-products toggle */}
               <button type="button" onClick={() => { set("allProducts", !form.allProducts); if (!form.allProducts) set("selectedProducts", []); }}
                 className={cn("w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all cursor-pointer",
