@@ -130,7 +130,7 @@ const MOCK_ORDERS = {
     code: "DH-THO-001", type: "Hàng mộc", status: "Chờ xử lý",
     date: "2026-03-12T10:00:00", deliveryDate: "2026-03-20",
     customer: { name: "Hoàng Nguyệt Ánh", phone: "0978901234", address: "Đà Nẵng" },
-    products: [{ name: "Sập thờ Tứ Linh", material: "Gỗ mít", size: "197×107×108 (Lỗ Ban)", finish: "Mộc", qty: 1, price: 56000000, note: "Chân 18 phân, Dạ 5 phân,\nĐục Tứ Linh chạm tay kỹ" }],
+    products: [{ name: "Sập thờ Tứ Linh", material: "Gỗ mít", size: "197×107×108", finish: "Mộc", qty: 1, price: 56000000, note: "Chân 18 phân, Dạ 5 phân,\nĐục Tứ Linh chạm tay kỹ" }],
     sampleImages: ["https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=800"],
     timeline: [{ time: "12/03/2026 10:00", label: "Tạo đơn", desc: "Nhận mộc", active: true }],
   },
@@ -197,7 +197,7 @@ const MOCK_ORDERS = {
     date: "2026-03-12T11:15:00", deliveryDate: "2026-03-30",
     customer: { name: "Nguyễn Thị Hồng", phone: "0912123123", address: "Hà Nội" },
     salesPerson: "Bình Nguyễn", total: 75000000, deposit: 25000000, paymentStatus: "partial",
-    products: [{ name: "Tủ thờ Hương Đá", material: "Hương đá", size: "197×107×108 (Lỗ Ban)", finish: "PU", qty: 1, price: 75000000, note: "Chân 18 phân, Dạ 5 phân,\nHoa văn đục ngũ phúc" }],
+    products: [{ name: "Tủ thờ Hương Đá", material: "Hương đá", size: "197×107×108", finish: "PU", qty: 1, price: 75000000, note: "Chân 18 phân, Dạ 5 phân,\nHoa văn đục ngũ phúc" }],
     sampleImages: ["https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=800"],
     designSketches: ["https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=800"],
     timeline: [{ time: "12/03/2026 11:15", label: "Tạo đơn", desc: "Đang lên thiết kế", active: true }],
@@ -363,7 +363,7 @@ const CustomerInfoCard = ({ o }) => (
           <p className="text-[13px] font-semibold mt-0.5" style={{ color: "var(--text-main)" }}>{o.code}</p>
         </div>
         <div>
-          <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "var(--text-placeholder)" }}>Loại đơn</p>
+          <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "var(--text-placeholder)" }}>Loại hàng</p>
           <p className="text-[13px] font-semibold mt-0.5" style={{ color: "var(--text-main)" }}>{o.type}</p>
         </div>
         <div>
@@ -637,7 +637,7 @@ const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remainin
 
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2.5 bg-[#F9F9F9] p-3 rounded-xl border border-dashed border-gray-200">
                       <div>
-                        <p className="text-[10px] uppercase font-bold text-gray-400">Loại gỗ</p>
+                        <p className="text-[10px] uppercase font-bold text-gray-400">Chất liệu</p>
                         <p className="text-[12px] font-semibold text-gray-700">{p.material}</p>
                       </div>
                       <div>
@@ -1263,25 +1263,77 @@ export default function OwnerOrderDetail() {
                 </div>
               )}
 
-              {/* Chỉ cho phép Hủy trực tiếp ở trạng thái đầu */}
-              {(o.status === "Chờ xử lý" || o.status === "Chờ sản xuất") && (
-                <button
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer"
-                  style={{ backgroundColor: "#DC2626", color: "#fff" }}
-                  onClick={() => {
-                    if(window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) {
-                      const updated = savedOrders.map(order => 
-                        (order.code === o.code || order.id === id) ? { ...order, status: "Đơn đã hủy" } : order
-                      );
-                      localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
-                      toast.success("Đơn đã hủy đơn hàng!");
-                      navigate("/owner/orders");
-                    }
-                  }}
-                >
-                  <XCircle size={14} />
-                  Hủy đơn hàng
-                </button>
+              {/* PROFESSIONAL CANCELLATION WORKFLOW (MỚI) */}
+              {["Chờ xử lý", "Chờ sản xuất", "Đang sản xuất", "Đang gia công", "Đã nhập kho", "Chờ giao hàng"].includes(o.status) && (
+                <div className="flex items-center gap-2">
+                  {/* Trường hợp 1: Mới tạo - Cho phép chọn Hoàn hoặc Thu */}
+                  {(o.status === "Chờ xử lý" || o.status === "Chờ sản xuất") && (
+                    <button
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer bg-emerald-600 text-white"
+                      onClick={() => {
+                        if(window.confirm("Huỷ đơn hàng và HOÀN TRẢ TIỀN CỌC cho khách?")) {
+                          const updated = savedOrders.map(order => 
+                            (order.code === o.code || order.id === id) ? { 
+                              ...order, 
+                              status: "Đơn đã hủy", 
+                              depositResolution: "refunded",
+                              timeline: [
+                                ...(order.timeline || []),
+                                { 
+                                  time: new Date().toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }).replace(',', ' —'), 
+                                  label: "Huỷ đơn & Hoàn cọc", 
+                                  desc: "Chủ cửa hàng chủ động huỷ. Đã hoàn cọc 100%.",
+                                  active: true 
+                                }
+                              ]
+                            } : order
+                          );
+                          localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
+                          toast.success("Đã huỷ đơn và Hoàn cọc!");
+                          navigate("/owner/orders");
+                        }
+                      }}
+                    >
+                      <RefreshCw size={14} />
+                      Huỷ & Hoàn cọc
+                    </button>
+                  )}
+
+                  {/* Trường hợp 2: Mọi giai đoạn ban đầu/đang làm đều có thể Thu cọc bồi thường */}
+                  <button
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer bg-red-600 text-white"
+                    onClick={() => {
+                      const msg = (o.status === "Chờ xử lý" || o.status === "Chờ sản xuất")
+                        ? "Huỷ đơn hàng và THU HỒI TIỀN CỌC (Bồi thường chi phí chuẩn bị)?"
+                        : "Xác nhận Huỷ đơn và THU CỌC bồi thường (Phôi gỗ đã xong/đang triển khai, thiệt hại lớn)?";
+                      
+                      if(window.confirm(msg)) {
+                        const updated = savedOrders.map(order => 
+                          (order.code === o.code || order.id === id) ? { 
+                            ...order, 
+                            status: "Đơn đã hủy", 
+                            depositResolution: "forfeited",
+                            timeline: [
+                              ...(order.timeline || []),
+                              { 
+                                time: new Date().toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }).replace(',', ' —'), 
+                                label: "Huỷ đơn & Thu cọc", 
+                                desc: `Chủ cửa hàng chủ động huỷ. Thu cọc bồi thường. Lý do: ${["Đang gia công", "Đang sản xuất", "Đã nhập kho", "Chờ giao hàng"].includes(o.status) ? "Hàng đã làm xong/đang chuẩn bị giao" : "Chi phí chuẩn bị"}`,
+                                active: true 
+                              }
+                            ]
+                          } : order
+                        );
+                        localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
+                        toast.success("Đã huỷ đơn và Thu cọc bồi thường!");
+                        navigate("/owner/orders");
+                      }
+                    }}
+                  >
+                    <Ban size={14} />
+                    Huỷ & Thu cọc
+                  </button>
+                </div>
               )}
 
               {o.status === "Chờ giao hàng" && (

@@ -57,7 +57,7 @@ const MOCK_REQUIREMENTS = [
         name: "Giường ngủ Master",
         material: "Gỗ Sồi Mỹ",
         specs: {
-          dimensions: "1.8m x 2m x 0.4m",
+          dimensions: "180 x 200 x 40 cm",
           note: "Hộc kéo 2 bên hông giường",
         },
         customerImages: [
@@ -70,7 +70,7 @@ const MOCK_REQUIREMENTS = [
         name: "Kệ Tivi phòng khách",
         material: "Gỗ Sồi Mỹ",
         specs: {
-          dimensions: "2.2m x 0.45m x 0.5m",
+          dimensions: "220 x 45 x 50 cm",
           note: "Cánh mây mắt cáo tự nhiên",
         },
         customerImages: [
@@ -101,7 +101,7 @@ const MOCK_REQUIREMENTS = [
         name: "Bàn ăn Hoàng Gia",
         material: "Gỗ Gõ Đỏ Pachy",
         specs: {
-          dimensions: "2.4m x 1.1m x 0.75m",
+          dimensions: "240 x 110 x 75 cm",
           note: "Đục chạm mẫu Louis XVI",
         },
         customerImages: [
@@ -134,7 +134,7 @@ const MOCK_REQUIREMENTS = [
         name: "Tủ rượu sang trọng",
         material: "Gỗ Hương",
         specs: {
-          dimensions: "1.2m x 0.5m x 2m",
+          dimensions: "120 x 50 x 200 cm",
           note: "3 ngăn kéo, khóa an toàn",
         },
         customerImages: [
@@ -166,7 +166,7 @@ const MOCK_REQUIREMENTS = [
         name: "Kệ Tivi Slim",
         material: "Gỗ Công nghiệp An Cường",
         specs: {
-          dimensions: "2m x 0.4m x 0.45m",
+          dimensions: "200 x 40 x 45 cm",
           note: "Hàng đặt theo kích thước lẻ",
         },
         customerImages: [
@@ -197,7 +197,7 @@ const MOCK_REQUIREMENTS = [
         name: "Bàn phấn trang điểm",
         material: "Gỗ MDF chống ẩm",
         specs: {
-          dimensions: "100x45x75cm",
+          dimensions: "100 x 45 x 75 cm",
           note: "Tân cổ điển, sơn trắng 2K",
         },
         customerImages: [
@@ -543,6 +543,7 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
           id: item.id,
           material: item.material || "",
           color: item.specs?.color || item.color || "", // Added color
+          quantity: item.qty || item.quantity || 1,
           dimensions: item.specs?.dimensions || "",
           hardware: item.specs?.hardware || "",
           note: item.specs?.note || "",
@@ -760,8 +761,8 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                     </div>
 
                     {/* Item Specs Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                      <div>
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4">
+                      <div className="md:col-span-3">
                         <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">
                           Chất liệu
                         </label>
@@ -775,7 +776,7 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                           placeholder="VD: Gỗ Sồi"
                         />
                       </div>
-                      <div>
+                      <div className="md:col-span-3">
                         <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">
                           Màu sắc
                         </label>
@@ -789,24 +790,62 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                           placeholder="VD: Sơn trắng"
                         />
                       </div>
-                      <div>
+                      <div className="md:col-span-2">
                         <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">
-                          Kích thước
+                          Số lượng
                         </label>
                         <input
-                          type="text"
-                          value={spec.dimensions}
-                          onChange={(e) =>
-                            handleUpdateItemSpec(
-                              spec.id,
-                              "dimensions",
-                              e.target.value,
-                            )
-                          }
+                          type="number"
+                          value={spec.quantity}
+                          onChange={(e) => handleUpdateItemSpec(spec.id, "quantity", e.target.value ? Number(e.target.value) : "")}
                           disabled={!isProcessing}
-                          placeholder="D x R x C"
                           className="w-full h-9 px-3 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-700 font-medium"
                         />
+                      </div>
+                      <div className="md:col-span-4">
+                        <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">
+                          Kích thước (D×R×C)
+                        </label>
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="text"
+                            placeholder="Dài"
+                            value={spec.dimensions?.split(/[xX×*]/)[0]?.trim() || ""}
+                            onChange={(e) => {
+                              const parts = (spec.dimensions || "").split(/[xX×*]/).map(d => d.trim());
+                              parts[0] = e.target.value;
+                              handleUpdateItemSpec(spec.id, "dimensions", [parts[0]||"", parts[1]||"", parts[2]||""].filter(Boolean).join(" x "));
+                            }}
+                            disabled={!isProcessing}
+                            className="w-full h-9 px-2 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-700 font-medium text-center"
+                          />
+                          <span className="text-gray-400 text-[10px] font-bold">×</span>
+                          <input
+                            type="text"
+                            placeholder="Rộng"
+                            value={spec.dimensions?.split(/[xX×*]/)[1]?.trim() || ""}
+                            onChange={(e) => {
+                              const parts = (spec.dimensions || "").split(/[xX×*]/).map(d => d.trim());
+                              parts[1] = e.target.value;
+                              handleUpdateItemSpec(spec.id, "dimensions", [parts[0]||"", parts[1]||"", parts[2]||""].filter(Boolean).join(" x "));
+                            }}
+                            disabled={!isProcessing}
+                            className="w-full h-9 px-2 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-700 font-medium text-center"
+                          />
+                          <span className="text-gray-400 text-[10px] font-bold">×</span>
+                          <input
+                            type="text"
+                            placeholder="Cao"
+                            value={spec.dimensions?.split(/[xX×*]/)[2]?.trim() || ""}
+                            onChange={(e) => {
+                              const parts = (spec.dimensions || "").split(/[xX×*]/).map(d => d.trim());
+                              parts[2] = e.target.value;
+                              handleUpdateItemSpec(spec.id, "dimensions", [parts[0]||"", parts[1]||"", parts[2]||""].filter(Boolean).join(" x "));
+                            }}
+                            disabled={!isProcessing}
+                            className="w-full h-9 px-2 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-700 font-medium text-center"
+                          />
+                        </div>
                       </div>
                     </div>
 

@@ -694,8 +694,8 @@ export default function ProductionDetail() {
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-4 bg-gray-50/50 p-4 rounded-2xl border border-dashed border-gray-200">
-                    <SpecItem label="Loại hàng" value={p.isRaw ? "HÀNG THÔ (Sẵn)" : "HÀNG ĐẶT (Mới)"} />
-                    <SpecItem label="Loại gỗ" value={p.material} />
+                    <SpecItem label="Loại hàng" value={p.isRaw ? "HÀNG MỘC" : "HÀNG KHÁCH ĐẶT"} />
+                    <SpecItem label="Chất liệu" value={p.material} />
                     <SpecItem label="Kích thước" value={p.size} />
                     <SpecItem label="Màu sắc" value={p.finish} />
                     <SpecItem 

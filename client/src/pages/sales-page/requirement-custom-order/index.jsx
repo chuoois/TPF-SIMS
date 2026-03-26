@@ -828,7 +828,7 @@ export default function CustomOrderRequirementsPage() {
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
                           {item.woodType && (
                             <div className="flex items-center gap-2">
-                              <span className="text-[11px] text-gray-400 w-14">Loại gỗ:</span>
+                              <span className="text-[11px] text-gray-400 w-14">Chất liệu:</span>
                               <span className="text-[11px] font-medium text-gray-700">{item.woodType}</span>
                             </div>
                           )}
@@ -1387,7 +1387,7 @@ export default function CustomOrderRequirementsPage() {
                     <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <TreePine size={14} className="text-amber-700" />
-                        <span className="text-[12px] font-medium text-gray-500">Loại gỗ</span>
+                        <span className="text-[12px] font-medium text-gray-500">Chất liệu</span>
                       </div>
                       <span className="text-[13px] font-bold text-gray-800">{viewingItem.woodType || "—"}</span>
                     </div>

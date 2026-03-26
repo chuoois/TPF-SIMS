@@ -43,7 +43,7 @@ const INITIAL_PRODUCTIONS = [
     productName: "Tủ bếp chữ L",
     productImage: "https://images.unsplash.com/photo-1556912177-c54030639a03?q=80&w=300",
     variantName: "Gỗ sồi Nga — Sơn PU",
-    orderType: "Hàng đặt",
+    orderType: "Hàng khách đặt",
     quantityPlanned: 1,
     quantityCompleted: 0,
     status: "Đang đánh giấy ráp",
@@ -62,7 +62,7 @@ const INITIAL_PRODUCTIONS = [
     productName: "Đảo bếp",
     productImage: "https://images.unsplash.com/photo-1588854337221-4cf9fa96059c?q=80&w=300",
     variantName: "Đồng bộ tủ bếp",
-    orderType: "Hàng đặt",
+    orderType: "Hàng khách đặt",
     quantityPlanned: 1,
     quantityCompleted: 0,
     status: "Đang đánh giấy ráp",
@@ -81,7 +81,7 @@ const INITIAL_PRODUCTIONS = [
     productName: "Kệ trang trí",
     productImage: "https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?q=80&w=300",
     variantName: "Gỗ sồi Nga — Sơn PU",
-    orderType: "Hàng đặt",
+    orderType: "Hàng khách đặt",
     quantityPlanned: 2,
     quantityCompleted: 0,
     status: "Đang đánh giấy ráp",
@@ -121,7 +121,7 @@ const INITIAL_PRODUCTIONS = [
     productName: "Bàn trà phòng khách",
     productImage: "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=300",
     variantName: "Gỗ hương đá — Chạm nghê",
-    orderType: "Hàng đặt",
+    orderType: "Hàng khách đặt",
     quantityPlanned: 1,
     quantityCompleted: 0,
     status: "Đang đánh giấy ráp",
@@ -143,7 +143,7 @@ const INITIAL_PRODUCTIONS = [
     productName: "Tủ quần áo 4 cánh",
     productImage: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=300",
     variantName: "Gỗ công nghiệp MDF — Phủ Melamine",
-    orderType: "Hàng đặt",
+    orderType: "Hàng khách đặt",
     quantityPlanned: 1,
     quantityCompleted: 1,
     status: "Đang sơn",
@@ -165,7 +165,7 @@ const INITIAL_PRODUCTIONS = [
     productName: "Giường ngủ 1m8",
     productImage: "https://images.unsplash.com/photo-1505693419173-42b925b406af?q=80&w=300",
     variantName: "Gỗ xoan đào — Kiểu hiện đại",
-    orderType: "Hàng đặt",
+    orderType: "Hàng khách đặt",
     quantityPlanned: 1,
     quantityCompleted: 0,
     status: "Đang sơn",
@@ -184,7 +184,7 @@ const INITIAL_PRODUCTIONS = [
     productName: "Tủ đầu giường",
     productImage: "https://images.unsplash.com/photo-1616137509918-62f4f22c1926?q=80&w=300",
     variantName: "Gỗ xoan đào — Đồng bộ giường",
-    orderType: "Hàng đặt",
+    orderType: "Hàng khách đặt",
     quantityPlanned: 2,
     quantityCompleted: 0,
     status: "Đang đánh giấy ráp",
@@ -621,7 +621,7 @@ export default function OwnerProduction() {
                     className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500"
                     style={{ color: "var(--text-placeholder)" }}
                   >
-                    Loại hàng
+                    Loại sản phẩm
                   </th>
                   <th
                     className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500"

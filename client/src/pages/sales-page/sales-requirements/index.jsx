@@ -54,7 +54,7 @@ const MOCK_REQUIREMENTS = [
         name: "Giường ngủ Master",
         material: "Gỗ Sồi Mỹ",
         specs: {
-          dimensions: "1.8m x 2m x 0.4m",
+          dimensions: "180 x 200 x 40 cm",
           note: "Hộc kéo 2 bên hông giường",
         },
         customerImages: [
@@ -67,7 +67,7 @@ const MOCK_REQUIREMENTS = [
         name: "Kệ Tivi phòng khách",
         material: "Gỗ Sồi Mỹ",
         specs: {
-          dimensions: "2.2m x 0.45m x 0.5m",
+          dimensions: "220 x 45 x 50 cm",
           note: "Cánh mây mắt cáo tự nhiên",
         },
         customerImages: [
@@ -97,7 +97,7 @@ const MOCK_REQUIREMENTS = [
         name: "Bàn ăn Hoàng Gia",
         material: "Gỗ Gõ Đỏ Pachy",
         specs: {
-          dimensions: "2.4m x 1.1m x 0.75m",
+          dimensions: "240 x 110 x 75 cm",
           note: "Đục chạm mẫu Louis XVI",
         },
         customerImages: [
@@ -128,7 +128,7 @@ const MOCK_REQUIREMENTS = [
         name: "Tủ rượu sang trọng",
         material: "Gỗ Hương",
         specs: {
-          dimensions: "1.2m x 0.5m x 2m",
+          dimensions: "120 x 50 x 200 cm",
           note: "3 ngăn kéo, khóa an toàn",
         },
         customerImages: [
@@ -158,7 +158,7 @@ const MOCK_REQUIREMENTS = [
         name: "Kệ Tivi Slim",
         material: "Gỗ Công nghiệp An Cường",
         specs: {
-          dimensions: "2m x 0.4m x 0.45m",
+          dimensions: "200 x 40 x 45 cm",
           note: "Hàng đặt theo kích thước lẻ",
         },
         customerImages: [
@@ -270,6 +270,7 @@ const RequirementDetailModal = ({ req, onClose, onEnlarge, onOpenCancel }) => {
         req.items.map((item) => ({
           id: item.id,
           material: item.material || "",
+          quantity: item.qty || item.quantity || 1,
           dimensions: item.specs?.dimensions || "",
           hardware: item.specs?.hardware || "",
           note: item.specs?.note || "",
@@ -407,7 +408,7 @@ const RequirementDetailModal = ({ req, onClose, onEnlarge, onOpenCancel }) => {
                     </div>
 
                     {/* Item Specs Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                       <div>
                         <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">
                           Chất liệu
@@ -418,13 +419,21 @@ const RequirementDetailModal = ({ req, onClose, onEnlarge, onOpenCancel }) => {
                       </div>
                       <div>
                         <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">
+                          Số lượng
+                        </label>
+                        <div className="text-[13px] text-gray-700">
+                          {spec.quantity || "1"}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">
                           Kích thước
                         </label>
                         <div className="text-[13px] text-gray-700">
                           {spec.dimensions || "---"}
                         </div>
                       </div>
-                      <div className="md:col-span-2">
+                      <div className="md:col-span-3">
                         <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">
                           Yêu cầu sản xuất (Note)
                         </label>
