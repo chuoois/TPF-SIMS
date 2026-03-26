@@ -123,6 +123,60 @@ const parseNumber = (str) => {
     return str.toString().replace(/\D/g, "");
 };
 
+const removeVietnameseTones = (str) => {
+    str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
+    str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
+    str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
+    str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+    str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+    str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
+    str = str.replace(/đ/g, "d");
+    str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
+    str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
+    str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
+    str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
+    str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
+    str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
+    str = str.replace(/Đ/g, "D");
+    return str;
+};
+
+const toColorAbbreviation = (color) => {
+    if (!color) return "";
+    if (color.toLowerCase() === "raw") return "raw";
+    let str = removeVietnameseTones(color);
+    return str.trim().split(/\s+/).map(w => w.charAt(0).toUpperCase()).join("");
+};
+
+const generateSKU = (line) => {
+    let prefix = "SP";
+    if (line.productName) {
+        const words = removeVietnameseTones(line.productName).trim().split(/\s+/);
+        prefix = words.slice(0, 3).map(w => w.charAt(0).toUpperCase()).join("");
+    }
+    const typeCode = PRODUCT_TYPES.find(t => t.value === line.productType)?.code || "XX";
+    const dim = `${line.length || "0"}x${line.width || "0"}x${line.height || "0"}`;
+    let colorCode = "raw";
+    if (line.color && line.color.trim() !== "") {
+        colorCode = toColorAbbreviation(line.color);
+    }
+    return `${prefix}-${typeCode}-${dim}-${colorCode}`;
+};
+
+const generateBundleSKU = (bundle) => {
+    let prefix = "BO";
+    if (bundle.bundleName) {
+        const words = removeVietnameseTones(bundle.bundleName).trim().split(/\s+/);
+        prefix = words.slice(0, 3).map(w => w.charAt(0).toUpperCase()).join("");
+    }
+    const typeCode = PRODUCT_TYPES.find(t => t.value === bundle.productType)?.code || "XX";
+    let colorCode = "raw";
+    if (bundle.color && bundle.color.trim() !== "") {
+        colorCode = toColorAbbreviation(bundle.color);
+    }
+    return `${prefix}-${typeCode}-${colorCode}`;
+};
+
 // ── Dòng đơn lẻ ────────────────────────────────────────
 const emptyLine = () => ({
     _id: Math.random(),
@@ -543,8 +597,8 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveFile, 
             ) : (
                 <>
                     {/* Row 1: Hình thức + Mã + Tên */}
-                    <div className="grid grid-cols-5 gap-3">
-                        <div>
+                    <div className="grid grid-cols-6 gap-3">
+                        <div className="col-span-1">
                             <label className={lbl} style={lblS}>Hình thức</label>
                             <div className="relative">
                                 <select value={line.formType} onChange={(e) => onUpdate("formType", e.target.value)}
@@ -554,9 +608,12 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveFile, 
                                 <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--text-placeholder)" }} />
                             </div>
                         </div>
-                        <div>
+                        <div className="col-span-2">
                             <label className={lbl} style={lblS}>Mã sản phẩm</label>
-                            <input value={line.productCode} onChange={(e) => onUpdate("productCode", e.target.value)} placeholder="Tự sinh/Nhập tay" className={inp} style={inpS} />
+                            <div className="relative">
+                                <input value={line.productCode} onChange={(e) => onUpdate("productCode", e.target.value)} placeholder="Tự sinh/Nhập tay" className={inp + " pr-16"} style={inpS} />
+                                <button type="button" onClick={() => onUpdate("productCode", generateSKU(line))} className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2 text-[10px] font-bold rounded bg-purple-50 text-purple-600 hover:bg-purple-100 transition">Tự sinh</button>
+                            </div>
                         </div>
                         <div className="col-span-3">
                             <label className={lbl} style={lblS}>Tên sản phẩm *</label>
@@ -567,7 +624,7 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveFile, 
                     {/* Row 2: Loại SP + Danh mục + Loại gỗ + Màu */}
                     <div className="grid grid-cols-4 gap-3">
                         <div>
-                            <label className={lbl} style={lblS}>Loại sản phẩm</label>
+                            <label className={lbl} style={lblS}>Loại hàng</label>
                             <div className="relative">
                                 <select value={line.productType} onChange={(e) => onUpdate("productType", e.target.value)}
                                     className={inp + " appearance-none pr-7 cursor-pointer"} style={inpS}>
@@ -718,8 +775,8 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
             <div className="pt-3 px-5 pb-5 space-y-4 " style={{ backgroundColor: "var(--bg-main)" }}>
 
                 {/* ── Row 1: Hình thức + Mã bộ + Tên bộ ── */}
-                <div className="grid grid-cols-5 gap-3">
-                    <div>
+                <div className="grid grid-cols-6 gap-3">
+                    <div className="col-span-1">
                         <label className={lbl} style={lblS}>Hình thức</label>
                         <div className="relative">
                             <select value={bundle.formType} onChange={(e) => onUpdate("formType", e.target.value)}
@@ -730,14 +787,19 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                         </div>
                     </div>
 
-                    <div>
+                    <div className="col-span-2">
                         <label className={lbl} style={lblS}>Mã bộ sản phẩm</label>
-                        <input value={bundle.bundleCode}
-                            onChange={(e) => onUpdate("bundleCode", e.target.value)}
-                            placeholder="Tự sinh / Nhập tay"
-                            className={inp}
-                            style={isReady ? { ...inpS, backgroundColor: "#F5F3FF", color: "#7C3AED", fontWeight: 600 } : inpS}
-                            readOnly={isReady} />
+                        <div className="relative">
+                            <input value={bundle.bundleCode}
+                                onChange={(e) => onUpdate("bundleCode", e.target.value)}
+                                placeholder="Tự sinh / Nhập tay"
+                                className={inp + (isReady ? "" : " pr-16")}
+                                style={isReady ? { ...inpS, backgroundColor: "#F5F3FF", color: "#7C3AED", fontWeight: 600 } : inpS}
+                                readOnly={isReady} />
+                            {!isReady && (
+                                <button type="button" onClick={() => onUpdate("bundleCode", generateBundleSKU(bundle))} className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2 text-[10px] font-bold rounded bg-purple-50 text-purple-600 hover:bg-purple-100 transition">Tự sinh</button>
+                            )}
+                        </div>
                     </div>
 
                     {isReady ? (
@@ -827,7 +889,7 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                     <div className="grid grid-cols-3 gap-3">
                         {[
                             { label: "Danh mục", field: "category", opts: CATEGORIES },
-                            { label: "Loại gỗ", field: "woodType", opts: WOOD_TYPES },
+                            { label: "Chất liệu", field: "woodType", opts: WOOD_TYPES },
                             { label: "Màu sắc", field: "color", opts: COLORS },
                         ].map(({ label, field, opts }) => (
                             <div key={field} className="relative">

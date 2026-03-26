@@ -226,7 +226,7 @@ export default function ViewProductModal({ product, onClose }) {
                     {/* ── Chi tiết ── */}
                     <div className="px-6 py-2">
                         <InfoRow icon={Layers} label="Danh mục" value={product.category} />
-                        <InfoRow icon={Tag} label="Loại gỗ" value={product.materialType} />
+                        <InfoRow icon={Tag} label="Chất liệu" value={product.materialType} />
                         <InfoRow icon={Palette} label="Màu sắc" value={product.color} />
                         {dims.length > 0 && (
                             <InfoRow icon={Ruler} label="Kích thước (Dài × Rộng × Cao)"
