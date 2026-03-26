@@ -1334,7 +1334,7 @@ const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remainin
 
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2.5 bg-[#F9F9F9] p-3 rounded-xl border border-dashed border-gray-200">
                       <div>
-                        <p className="text-[10px] uppercase font-bold text-gray-400">Loại gỗ</p>
+                        <p className="text-[10px] uppercase font-bold text-gray-400">Chất liệu</p>
                         <p className="text-[12px] font-semibold text-gray-700">{p.material}</p>
                       </div>
                       <div>
@@ -1648,7 +1648,7 @@ export default function SalesOrderDetail() {
                   className="text-[11px] font-bold mt-0.5"
                   style={{ color: "var(--text-placeholder)" }}
                 >
-                  Loại: <span className="text-blue-600">{o.type}</span> • Ngày
+                  Loại sản phẩm: <span className="text-blue-600">{o.type}</span> • Ngày
                   tạo: {fmtDateTime(o.date)}
                 </p>
               </div>

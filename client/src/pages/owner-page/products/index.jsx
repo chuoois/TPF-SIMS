@@ -1806,7 +1806,7 @@ export default function OwnerProducts() {
                 <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
                   <div>
                     <span className="text-gray-500 block text-xs">
-                      Phân loại
+                      Loại hàng
                     </span>
                     <span className="font-semibold text-gray-900">
                       {detailItem.productType}
@@ -2254,7 +2254,7 @@ export default function OwnerProducts() {
                         className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider"
                         style={{ color: "var(--text-placeholder)" }}
                       >
-                        Loại SP
+                        Loại Hàng
                       </th>
                       <th
                         className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider"

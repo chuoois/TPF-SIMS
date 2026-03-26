@@ -198,7 +198,6 @@ const INITIAL_ORDERS = [
 const ORDER_TYPES = ["Hàng sẵn", "Hàng mộc", "Hàng khách đặt"];
 
 const HANG_SAN_STATUSES = [
-  "Chờ xử lý",
   "Chờ giao hàng",
   "Đang giao hàng",
   "Hoàn thành",
@@ -498,7 +497,8 @@ export default function OwnerOrders() {
 
   // Filter & Search
   const filtered = useMemo(() => {
-    let result = orders;
+    // Owner doesn't process "Hàng sẵn" in "Chờ xử lý" (Sales does)
+    let result = orders.filter(o => !(o.type === "Hàng sẵn" && o.status === "Chờ xử lý"));
 
     // Filter by type (Tab)
     if (activeTab !== "Tất cả") {
@@ -538,7 +538,7 @@ export default function OwnerOrders() {
   }, [orders, activeTab, searchTerm, statusFilter, dateFrom, dateTo]);
 
   const { possibleStatuses, statusCounts } = useMemo(() => {
-    let baseOrders = orders;
+    let baseOrders = orders.filter(o => !(o.type === "Hàng sẵn" && o.status === "Chờ xử lý"));
     if (activeTab !== "Tất cả") {
       baseOrders = baseOrders.filter(o => o.type === activeTab);
     }
@@ -789,7 +789,7 @@ export default function OwnerOrders() {
                     "STT",
                     "Mã đơn",
                     "Khách hàng",
-                    "Loại đơn",
+                    "Loại hàng",
                     "Tổng tiền",
                     "Trạng thái",
                     ...(activeTab !== "Hàng khách đặt" ? ["Hình thức giao"] : []),
@@ -1041,12 +1041,42 @@ export default function OwnerOrders() {
                                 <Eye size={18} />
                               </Link>
 
-                              {["Chờ xử lý", "Đã nhập kho", "Đang gia công", "Chờ giao hàng"].includes(o.status) && (
+                              {["Chờ xử lý", "Chờ sản xuất", "Đã nhập kho", "Đang gia công", "Chờ giao hàng"].includes(o.status) && (
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    if (window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này?")) {
-                                      handleUpdateStatus(o.id, "Đơn đã hủy");
+                                    const isInitial = o.status === "Chờ xử lý" || o.status === "Chờ sản xuất";
+                                    const isDeepInProgress = ["Đang gia công", "Đang sản xuất", "Đã nhập kho", "Chờ giao hàng"].includes(o.status);
+                                    
+                                    let confirmMsg = "Xác nhận yêu cầu hủy đơn hàng này?";
+                                    if (isInitial) {
+                                      confirmMsg = "Đơn hàng mới - Xác nhận chuyển sang Chờ duyệt hủy để quyết định Hoàn hoặc Thu cọc?";
+                                    } else if (isDeepInProgress) {
+                                      confirmMsg = "HÀNG ĐÃ XONG/ĐANG LÀM - Xác nhận chuyển sang Chờ duyệt hủy để thực hiện THU CỌC bồi thường?";
+                                    }
+                                    
+                                    if (window.confirm(confirmMsg)) {
+                                      handleUpdateStatus(o.id, "Chờ duyệt hủy");
+                                      
+                                      const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
+                                      const updated = saved.map(order =>
+                                        (order.id === o.id) ? { 
+                                          ...order, 
+                                          status: "Chờ duyệt hủy", 
+                                          cancelReason: "Chủ cửa hàng chủ động yêu cầu hủy",
+                                          timeline: [
+                                            ...(order.timeline || []),
+                                            { 
+                                              time: new Date().toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }).replace(',', ' —'), 
+                                              label: "Yêu cầu hủy đơn", 
+                                              desc: `Hệ thống: Chủ cửa hàng yêu cầu hủy đơn. Giai đoạn: ${o.status}. Chờ xử lý Tiền cọc.`,
+                                              active: true 
+                                            }
+                                          ]
+                                        } : order
+                                      );
+                                      localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
+                                      setOrders(updated);
                                     }
                                   }}
                                   className="h-9 w-9 rounded-xl bg-white text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center shadow-sm active:scale-95 border border-red-50"
