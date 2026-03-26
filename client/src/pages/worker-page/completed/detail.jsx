@@ -1,32 +1,37 @@
-import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { Clock, CheckCircle2, Box, ArrowLeft, TreePine, Maximize2, Palette, Layers, Camera, ZoomIn, X } from "lucide-react";
-import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Clock, CheckCircle2, ArrowLeft, TreePine, Maximize2, Palette, Layers, Camera, ZoomIn, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { getItemById } from "../mock";
 
 export default function CompletedTaskDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const location = useLocation();
-  const task = location.state?.task;
+  
   const [zoomImage, setZoomImage] = useState(null);
+  const [task, setTask] = useState(null);
 
-  // Render similar to the drawer, but full width
+  useEffect(() => {
+    if (id) {
+      setTask(getItemById(id));
+    }
+  }, [id]);
+
   if (!task) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-64px)]">
         <p className="text-gray-500 font-medium">
-          Không tìm thấy thông tin công việc (hoặc chưa truyền dữ liệu).
+          Đang tải hoặc không tìm thấy thông tin công việc...
         </p>
         <button
           onClick={() => navigate(-1)}
           className="text-blue-600 font-semibold mt-4 hover:underline cursor-pointer"
         >
-          Quay lại trang trước
+          Quay lại trang chính
         </button>
       </div>
     );
   }
 
-  // Same status config
   const STATUS_CONFIG = {
     COMPLETED: {
       label: "Đã Xong",
@@ -54,10 +59,10 @@ export default function CompletedTaskDetail() {
             className="text-xl font-bold"
             style={{ color: "var(--text-main)" }}
           >
-            Chi tiết công việc hoàn thành
+            Chi tiết sản phẩm hoàn thành
           </h1>
           <p className="text-[13px] text-gray-500 mt-0.5">
-            Mã công việc: #{task.id}
+            Mã sản phẩm: #{task.id}
           </p>
         </div>
       </div>
@@ -75,7 +80,7 @@ export default function CompletedTaskDetail() {
             <img
               src={task.image}
               alt={task.productName}
-              className="w-full h-full object-cover grayscale-[20%] group-hover:scale-105 transition-transform duration-500"
+              className="w-full h-full object-cover grayscale-[10%] group-hover:scale-105 transition-transform duration-500"
             />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center">
               <ZoomIn
@@ -92,7 +97,7 @@ export default function CompletedTaskDetail() {
                 <div className="flex items-center gap-2">
                   <Camera size={14} className="text-blue-500" />
                   <span className="text-[12px] font-bold text-gray-500 uppercase tracking-wider">
-                    Ảnh từ khách hàng
+                    Ảnh đính kèm
                   </span>
                 </div>
               </div>
@@ -126,12 +131,10 @@ export default function CompletedTaskDetail() {
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-4">
             <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[13px] font-bold ${
-                STATUS_CONFIG[task.status].color
-              }`}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[13px] font-bold bg-green-100 text-green-700`}
             >
               <CheckCircle2 size={13} />
-              {STATUS_CONFIG[task.status].label}
+              ĐÃ XONG
             </span>
           </div>
 
@@ -154,9 +157,6 @@ export default function CompletedTaskDetail() {
             <span className="px-3 py-1.5 rounded-lg border bg-amber-50 border-amber-100 text-[13px] font-semibold text-amber-700 flex items-center gap-1.5">
               <Clock size={14} /> Hạn chót: {task.deadline || "—"}
             </span>
-            <span className="px-3 py-1.5 rounded-lg border bg-green-50 border-green-100 text-[13px] font-semibold text-green-700 flex items-center gap-1.5">
-              <Clock size={14} /> Hoàn thành: {task.completedAt}
-            </span>
           </div>
 
           <h3 className="text-[12px] font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
@@ -173,7 +173,7 @@ export default function CompletedTaskDetail() {
                   Loại
                 </p>
                 <p className="font-bold text-[14px] text-gray-800 leading-none mt-1">
-                  {task.woodType}
+                  {task.type}
                 </p>
               </div>
             </div>
@@ -187,7 +187,7 @@ export default function CompletedTaskDetail() {
                   Kích Thước
                 </p>
                 <p className="font-bold text-[14px] text-gray-800 mt-1 whitespace-nowrap">
-                  {task.dimensions}
+                  {task.size}
                 </p>
               </div>
             </div>
@@ -201,7 +201,7 @@ export default function CompletedTaskDetail() {
                   Màu sắc
                 </p>
                 <p className="font-bold text-[14px] text-gray-800 leading-none mt-1">
-                  {task.colorType || "Tiêu chuẩn"}
+                  {task.color || "Tiêu chuẩn"}
                 </p>
               </div>
             </div>
@@ -210,9 +210,9 @@ export default function CompletedTaskDetail() {
               <p className="text-[11px] text-gray-400 font-bold uppercase tracking-tight">
                 Ghi chú yêu cầu
               </p>
-              {task.notes ? (
+              {task.note ? (
                 <p className="font-medium text-[13px] text-gray-700 leading-relaxed italic">
-                  "{task.notes}"
+                  "{task.note}"
                 </p>
               ) : (
                 <p className="text-[13px] text-gray-400 italic">—</p>

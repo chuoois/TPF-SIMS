@@ -27,8 +27,9 @@ import {
   Calendar,
   Settings,
   X,
+  AlertTriangle,
 } from "lucide-react";
-import { updateMockTaskStatus, getTaskById, updateTaskFinishedImage, updateTaskDeadline } from "../mock";
+import { updateMockTaskStatus, getTaskById, updateTaskFinishedImage, updateTaskDeadline, reportTaskIssue } from "../mock";
 
 /* ─── Production Steps ─── */
 const STEPS = [
@@ -155,6 +156,11 @@ export default function TaskDetail() {
   const [isStartingProduction, setIsStartingProduction] = useState(false);
   const [zoomImage, setZoomImage] = useState(null);
 
+  // Issue Reporting State
+  const [showIssueModal, setShowIssueModal] = useState(false);
+  const [issueType, setIssueType] = useState("Thiếu vật liệu");
+  const [issueNote, setIssueNote] = useState("");
+
   useEffect(() => {
     const task = getTaskById(id);
     if (task) {
@@ -235,6 +241,25 @@ export default function TaskDetail() {
     setShowDeadlineModal(false);
     setSelectedDate("");
     toast.success(isStartingProduction ? `Đã bắt đầu & thiết lập hạn chót: ${dateStr}` : `Đã cập nhật hạn chót: ${dateStr}`);
+  };
+
+  const handleReportIssue = () => {
+    if (issueType === "Khác..." && !issueNote.trim()) {
+      toast.error("Vui lòng nhập chi tiết vấn đề!");
+      return;
+    }
+
+    reportTaskIssue(selectedTask.id, {
+      type: issueType,
+      note: issueNote.trim(),
+    });
+
+    const updated = getTaskById(selectedTask.id);
+    setSelectedTask(updated);
+    setShowIssueModal(false);
+    setIssueType("Thiếu vật liệu");
+    setIssueNote("");
+    toast.success("Đã báo cáo vấn đề thành công!");
   };
 
   if (!selectedTask) return null;
@@ -347,6 +372,14 @@ export default function TaskDetail() {
             <CheckCircle2 size={15} /> 
             {isPainting ? "Xác nhận gửi chủ duyệt" : "Hoàn thành đánh giấy ráp"}
           </button>
+          {!selectedTask.issue && (
+            <button
+              onClick={() => setShowIssueModal(true)}
+              className="h-9 px-4 rounded-lg font-semibold text-[13px] bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
+            >
+              <AlertTriangle size={14} /> Báo vấn đề
+            </button>
+          )}
         </div>
       );
     }
@@ -520,6 +553,35 @@ export default function TaskDetail() {
             Chi tiết #{selectedTask.id}
           </span>
         </div>
+
+        {/* ═══════════ ISSUE BANNER ═══════════ */}
+        {selectedTask.issue && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+              <AlertTriangle size={20} />
+            </div>
+            <div className="flex flex-col gap-1 flex-1">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-red-800 text-[15px]">
+                  Cảnh báo: Có vấn đề phát sinh
+                </h3>
+                <span className="text-[12px] font-medium text-red-500 bg-white px-2 py-0.5 rounded-md shadow-sm">
+                  Đã báo lúc {selectedTask.issue.reportedAt}
+                </span>
+              </div>
+              <div className="text-[14px] text-red-700 mt-1">
+                <p>
+                  <strong>Loại vấn đề:</strong> {selectedTask.issue.type}
+                </p>
+                {selectedTask.issue.note && (
+                  <p className="mt-1">
+                    <strong>Ghi chú:</strong> {selectedTask.issue.note}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ═══════════ HERO HEADER CARD ═══════════ */}
         <div
@@ -712,31 +774,7 @@ export default function TaskDetail() {
                         />
                       </div>
                     </div>
-                  {/* Thumbnail strip */}
-                  {productImages.length > 1 && (
-                    <div className="flex gap-2">
-                      {productImages.map((img, i) => (
-                        <button
-                          key={i}
-                          onClick={() => setActiveImageIndex(i)}
-                          className="w-16 h-12 rounded-lg overflow-hidden cursor-pointer transition-all"
-                          style={{
-                            border:
-                              activeImageIndex === i
-                                ? "2px solid var(--brand-primary)"
-                                : "2px solid var(--grid-border)",
-                            opacity: activeImageIndex === i ? 1 : 0.6,
-                          }}
-                        >
-                          <img
-                            src={img}
-                            alt={`Thumb ${i + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  )}
+
                 </div>
               ) : (
                 /* ── Custom Order Blueprint ── */
@@ -918,7 +956,7 @@ export default function TaskDetail() {
                       className="text-[14px] font-bold"
                       style={{ color: "var(--text-main)" }}
                     >
-                      {selectedTask.woodType}
+                      {selectedTask.type || "—"}
                     </p>
                   </div>
                 </div>
@@ -950,7 +988,7 @@ export default function TaskDetail() {
                       className="text-[14px] font-bold whitespace-nowrap"
                       style={{ color: "var(--text-main)" }}
                     >
-                      {selectedTask.dimensions}
+                      {selectedTask.size || "—"}
                     </p>
                   </div>
                 </div>
@@ -982,14 +1020,14 @@ export default function TaskDetail() {
                       className="text-[14px] font-bold"
                       style={{ color: "var(--text-main)" }}
                     >
-                      {selectedTask.colorType || "—"}
+                      {selectedTask.color || "—"}
                     </p>
                   </div>
                 </div>
               </div>
 
               {/* Notes */}
-              {selectedTask.notes && (
+              {selectedTask.note && (
                 <div
                   className="mt-3 rounded-xl p-4 flex gap-3"
                   style={{
@@ -1007,13 +1045,13 @@ export default function TaskDetail() {
                       className="text-[11px] font-bold mb-1"
                       style={{ color: "#e08a00" }}
                     >
-                      GHI CHÚ YÊU CẦU
+                      GHI CHÚ KỸ THUẬT
                     </p>
                     <p
-                      className="text-[13px] leading-relaxed"
+                      className="text-[13px] leading-relaxed break-words whitespace-pre-line"
                       style={{ color: "var(--text-main)" }}
                     >
-                      {selectedTask.notes}
+                      {selectedTask.note}
                     </p>
                   </div>
                 </div>
@@ -1226,6 +1264,91 @@ export default function TaskDetail() {
           </div>
         </div>
       )}
+      {/* ═══════════ ISSUE MODAL ═══════════ */}
+      {showIssueModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowIssueModal(false)}
+          />
+          <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-600 border border-red-100">
+                  <AlertTriangle size={24} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-[18px] text-gray-900">Báo cáo vấn đề</h3>
+                  <p className="text-[13px] text-gray-500">Gửi thông báo cho hệ thống quản lý</p>
+                </div>
+              </div>
+
+              <div className="space-y-5">
+                {/* Issue Type Selection */}
+                <div>
+                  <label className="block text-[13px] font-bold text-gray-700 mb-3">
+                    Loại vấn đề <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex flex-col gap-2">
+                    {["Thiếu vật liệu", "Không rõ màu sơn", "Bề mặt lỗi", "Khác..."].map((type) => (
+                      <label 
+                        key={type}
+                        onClick={() => setIssueType(type)}
+                        className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
+                          issueType === type 
+                            ? "border-red-500 bg-red-50/50" 
+                            : "border-gray-200 hover:bg-gray-50"
+                        }`}
+                      >
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                          issueType === type ? "border-red-500" : "border-gray-300"
+                        }`}>
+                          {issueType === type && <div className="w-2.5 h-2.5 rounded-full bg-red-500" />}
+                        </div>
+                        <span className={`font-medium text-[14px] ${
+                          issueType === type ? "text-red-700" : "text-gray-700"
+                        }`}>
+                          {type}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Additional Note */}
+                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                  <label className="block text-[13px] font-bold text-gray-700 mb-2 mt-2">
+                    Ghi chú chi tiết {issueType === "Khác..." && <span className="text-red-500">*</span>}
+                  </label>
+                  <textarea
+                    value={issueNote}
+                    onChange={(e) => setIssueNote(e.target.value)}
+                    placeholder="Mô tả cụ thể vấn đề (ví dụ: Thiếu 2 bản lề kẹp, màu hạt dẻ bị nhạt hơn mẫu...)"
+                    className="w-full p-4 rounded-xl border border-gray-200 focus:border-red-400 focus:ring-4 focus:ring-red-100/50 outline-none transition-all resize-none text-[14px]"
+                    rows={4}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-gray-50 border-t border-gray-100 flex gap-3">
+              <button
+                onClick={() => setShowIssueModal(false)}
+                className="flex-1 h-12 rounded-xl font-bold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-all text-[14px]"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={handleReportIssue}
+                className="flex-1 h-12 rounded-xl font-bold bg-red-600 text-white hover:bg-red-700 transition-all shadow-[0_4px_12px_rgba(220,38,38,0.2)] hover:shadow-[0_6px_16px_rgba(220,38,38,0.3)] hover:-translate-y-0.5 flex items-center justify-center gap-2 text-[14px]"
+              >
+                <AlertTriangle size={16} /> Gửi báo cáo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ═══════════ IMAGE ZOOM MODAL ═══════════ */}
       {zoomImage && (
         <div 

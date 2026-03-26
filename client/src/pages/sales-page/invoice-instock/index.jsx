@@ -64,7 +64,8 @@ const WOOD_PRODUCTS = [
     category: "Phòng ăn",
     productType: "Hàng sẵn",
     color: "Sồi tự nhiên",
-    description: "Bộ bàn ăn 6 ghế chất liệu gỗ sồi Nga tự nhiên, xử lý chống mối mọt, thiết kế hiện đại phù hợp cho phòng ăn gia đình. Kích thước (Bàn): 180 x 90 x 75 cm.",
+    description:
+      "Bộ bàn ăn 6 ghế chất liệu gỗ sồi Nga tự nhiên, xử lý chống mối mọt, thiết kế hiện đại phù hợp cho phòng ăn gia đình. Kích thước (Bàn): 180 x 90 x 75 cm.",
   },
   {
     id: 2,
@@ -76,7 +77,8 @@ const WOOD_PRODUCTS = [
     category: "Phòng làm việc",
     productType: "Hàng sẵn",
     color: "Óc chó đậm",
-    description: "Kệ sách 5 tầng bền bỉ, vân gỗ óc chó sang trọng, tạo điểm nhấn cho không gian làm việc hoặc phòng khách. Kích thước: 120 x 35 x 180 cm.",
+    description:
+      "Kệ sách 5 tầng bền bỉ, vân gỗ óc chó sang trọng, tạo điểm nhấn cho không gian làm việc hoặc phòng khách. Kích thước: 120 x 35 x 180 cm.",
   },
   {
     id: 3,
@@ -89,7 +91,8 @@ const WOOD_PRODUCTS = [
     category: "Phòng làm việc",
     productType: "Hàng mộc",
     color: "Trắng sồi",
-    description: "Bàn làm việc sơn trắng sồi thanh lịch, tích hợp 3 ngăn kéo tiện lợi cho việc lưu trữ hồ sơ, văn phòng phẩm. Kích thước: 140 x 70 x 75 cm.",
+    description:
+      "Bàn làm việc sơn trắng sồi thanh lịch, tích hợp 3 ngăn kéo tiện lợi cho việc lưu trữ hồ sơ, văn phòng phẩm. Kích thước: 140 x 70 x 75 cm.",
   },
   {
     id: 4,
@@ -552,7 +555,8 @@ const GIFT_PRODUCTS = [
     category: "Quà tặng",
     productType: "Quà tặng",
     color: "Họa tiết Vintage",
-    description: "Gối tựa lưng êm ái với họa tiết Vintage độc đáo, mang lại sự thoải mái và vẻ đẹp cổ điển cho bộ sofa nhà bạn. Kích thước: 45x45 cm.",
+    description:
+      "Gối tựa lưng êm ái với họa tiết Vintage độc đáo, mang lại sự thoải mái và vẻ đẹp cổ điển cho bộ sofa nhà bạn. Kích thước: 45x45 cm.",
   },
   {
     id: 1002,
@@ -593,7 +597,13 @@ const GIFT_PRODUCTS = [
 ];
 
 const ITEMS_PER_PAGE = 15;
-const CATEGORIES = ["Phòng khách", "Phòng ngủ", "Phòng ăn", "Phòng làm việc", "Quà tặng"];
+const CATEGORIES = [
+  "Phòng khách",
+  "Phòng ngủ",
+  "Phòng ăn",
+  "Phòng làm việc",
+  "Quà tặng",
+];
 
 const MOCK_CUSTOMERS = [
   {
@@ -657,8 +667,6 @@ const MOCK_CUSTOMERS = [
     address: "135 Trần Duy Hưng, Cầu Giấy, Hà Nội",
   },
 ];
-
-
 
 const fmt = (v) => new Intl.NumberFormat("vi-VN").format(v);
 
@@ -760,9 +768,11 @@ export default function InStockInvoicePage() {
   );
 
   const filteredProducts = useMemo(() => {
-    const source = productTypeTab === "Quà tặng" ? GIFT_PRODUCTS : WOOD_PRODUCTS;
+    const source =
+      productTypeTab === "Quà tặng" ? GIFT_PRODUCTS : WOOD_PRODUCTS;
     return source.filter((p) => {
-      const matchType = productTypeTab === "Quà tặng" ? true : p.productType === productTypeTab;
+      const matchType =
+        productTypeTab === "Quà tặng" ? true : p.productType === productTypeTab;
       const matchCategory =
         selectedCategories.length === 0 ||
         selectedCategories.includes(p.category);
@@ -873,7 +883,8 @@ export default function InStockInvoicePage() {
       const isGift = productTypeTab === "Quà tặng";
       let itemPrice = product.price;
       if (isGift) itemPrice = 0;
-      else if (isWood && woodPriceMode === "finished") itemPrice = Math.round(product.price * WOOD_FINISHING_RATE);
+      else if (isWood && woodPriceMode === "finished")
+        itemPrice = Math.round(product.price * WOOD_FINISHING_RATE);
 
       // Hàng mộc giá hoàn thiện: hỗ trợ giá cũ + giá đã giảm
       const isWoodFinished = isWood && woodPriceMode === "finished";
@@ -883,7 +894,10 @@ export default function InStockInvoicePage() {
           {
             id: cartItemId,
             name: product.name,
-            price: isWood && woodPriceMode === "finished" && product.discount ? Math.round(itemPrice * (1 - product.discount / 100)) : itemPrice,
+            price:
+              isWood && woodPriceMode === "finished" && product.discount
+                ? Math.round(itemPrice * (1 - product.discount / 100))
+                : itemPrice,
             stock: product.stock,
             sku: product.sku,
             quantity: 1,
@@ -894,7 +908,11 @@ export default function InStockInvoicePage() {
             priceMode: isWood ? woodPriceMode : null,
             // Dual pricing cho Hàng mộc hoàn thiện
             oldPrice: isWoodFinished ? itemPrice : null,
-            discountPrice: isWoodFinished ? (product.discount ? Math.round(itemPrice * (1 - product.discount / 100)) : itemPrice) : null,
+            discountPrice: isWoodFinished
+              ? product.discount
+                ? Math.round(itemPrice * (1 - product.discount / 100))
+                : itemPrice
+              : null,
           },
         ],
       });
@@ -989,9 +1007,7 @@ export default function InStockInvoicePage() {
   );
   const totalPayable = Math.max(
     0,
-    subtotal -
-      activeTab.discount -
-      activeTab.depositAmount,
+    subtotal - activeTab.discount - activeTab.depositAmount,
   );
   const itemCount = activeTab.cartItems.reduce((sum, i) => sum + i.quantity, 0);
 
@@ -1035,9 +1051,10 @@ export default function InStockInvoicePage() {
       deliveryMethod: activeTab.deliveryMethod,
       deliveryDate: activeTab.deliveryDate,
       // Lấy tại cửa hàng: trống = lấy ngay, có ngày = hẹn lấy
-      storePickupDate: activeTab.deliveryMethod === "store"
-        ? (activeTab.storePickupDate || null)
-        : null,
+      storePickupDate:
+        activeTab.deliveryMethod === "store"
+          ? activeTab.storePickupDate || null
+          : null,
       date: new Date().toISOString(),
     };
 
@@ -1288,42 +1305,58 @@ export default function InStockInvoicePage() {
                     </div>
 
                     {/* === Hàng mộc hoàn thiện: Giá cũ / Giá đã giảm + Upload ảnh === */}
-                    {item.productType === "Hàng mộc" && item.priceMode === "finished" && (
-                      <div className="mt-2 pl-11 space-y-2">
-                        {/* Dual pricing */}
-                       
+                    {item.productType === "Hàng mộc" &&
+                      item.priceMode === "finished" && (
+                        <div className="mt-2 pl-11 space-y-2">
+                          {/* Dual pricing */}
 
-                        {/* Image upload */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {(item.images || []).map((img, imgIdx) => (
-                            <div key={imgIdx} className="relative w-14 h-14 rounded-lg overflow-hidden border border-gray-200 group/img">
-                              <img src={typeof img === "string" ? img : URL.createObjectURL(img)} alt="" className="w-full h-full object-cover" />
-                              <button
-                                onClick={() => removeItemImage(item.id, imgIdx)}
-                                className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition cursor-pointer shadow"
+                          {/* Image upload */}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {(item.images || []).map((img, imgIdx) => (
+                              <div
+                                key={imgIdx}
+                                className="relative w-14 h-14 rounded-lg overflow-hidden border border-gray-200 group/img"
                               >
-                                <X size={10} />
-                              </button>
-                            </div>
-                          ))}
-                          <label className="w-14 h-14 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-green-400 hover:bg-green-50/50 transition">
-                            <ImagePlus size={18} className="text-gray-400" />
-                            <input
-                              type="file"
-                              accept="image/*"
-                              multiple
-                              className="hidden"
-                              onChange={(e) => {
-                                if (e.target.files?.length) {
-                                  updateItemImages(item.id, Array.from(e.target.files));
-                                }
-                                e.target.value = "";
-                              }}
-                            />
-                          </label>
+                                <img
+                                  src={
+                                    typeof img === "string"
+                                      ? img
+                                      : URL.createObjectURL(img)
+                                  }
+                                  alt=""
+                                  className="w-full h-full object-cover"
+                                />
+                                <button
+                                  onClick={() =>
+                                    removeItemImage(item.id, imgIdx)
+                                  }
+                                  className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition cursor-pointer shadow"
+                                >
+                                  <X size={10} />
+                                </button>
+                              </div>
+                            ))}
+                            <label className="w-14 h-14 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-green-400 hover:bg-green-50/50 transition">
+                              <ImagePlus size={18} className="text-gray-400" />
+                              <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                className="hidden"
+                                onChange={(e) => {
+                                  if (e.target.files?.length) {
+                                    updateItemImages(
+                                      item.id,
+                                      Array.from(e.target.files),
+                                    );
+                                  }
+                                  e.target.value = "";
+                                }}
+                              />
+                            </label>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
                   </div>
                 ))}
               </div>
@@ -2040,13 +2073,28 @@ export default function InStockInvoicePage() {
                               : product.color}
                           </span>
                         </div>
-                        {product.productType === "Hàng mộc" && woodPriceMode === "finished" && product.discount > 0 ? (
+                        {product.productType === "Hàng mộc" &&
+                        woodPriceMode === "finished" &&
+                        product.discount > 0 ? (
                           <div className="flex items-center gap-1.5">
                             <span className="text-[11px] line-through text-gray-400">
-                              {fmt(Math.round(product.price * WOOD_FINISHING_RATE))}đ
+                              {fmt(
+                                Math.round(product.price * WOOD_FINISHING_RATE),
+                              )}
+                              đ
                             </span>
-                            <span className="text-[13px] font-bold" style={{ color: "#EF4444" }}>
-                              {fmt(Math.round(product.price * WOOD_FINISHING_RATE * (1 - product.discount / 100)))}đ
+                            <span
+                              className="text-[13px] font-bold"
+                              style={{ color: "#EF4444" }}
+                            >
+                              {fmt(
+                                Math.round(
+                                  product.price *
+                                    WOOD_FINISHING_RATE *
+                                    (1 - product.discount / 100),
+                                ),
+                              )}
+                              đ
                             </span>
                           </div>
                         ) : (
@@ -2055,8 +2103,15 @@ export default function InStockInvoicePage() {
                             style={{ color: "var(--brand-primary)" }}
                           >
                             {product.productType === "Hàng mộc"
-                              ? fmt(woodPriceMode === "finished" ? Math.round(product.price * WOOD_FINISHING_RATE) : product.price)
-                              : fmt(product.price)}đ
+                              ? fmt(
+                                  woodPriceMode === "finished"
+                                    ? Math.round(
+                                        product.price * WOOD_FINISHING_RATE,
+                                      )
+                                    : product.price,
+                                )
+                              : fmt(product.price)}
+                            đ
                           </p>
                         )}
 
@@ -2151,14 +2206,16 @@ export default function InStockInvoicePage() {
 
       {/* ── Product Quick View Modal ── */}
       {selectedProductForView && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm font-sans">
           <div
             className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300"
             style={{ border: "1px solid var(--grid-border)" }}
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h3 className="text-[16px] font-bold text-gray-900">Chi tiết sản phẩm</h3>
+              <h3 className="text-[16px] font-bold text-gray-900">
+                Chi tiết sản phẩm
+              </h3>
               <button
                 onClick={() => setSelectedProductForView(null)}
                 className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 text-gray-400 hover:text-gray-900 transition cursor-pointer"
@@ -2168,7 +2225,7 @@ export default function InStockInvoicePage() {
             </div>
 
             {/* Modal Body */}
-            <div className="flex flex-col md:flex-row p-6 gap-6 max-h-[80vh] overflow-y-auto font-sans text-left">
+            <div className="flex flex-col md:flex-row p-6 gap-6 max-h-[80vh] overflow-y-auto text-left">
               {/* Product Image */}
               <div className="w-full md:w-1/2 aspect-square rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shadow-inner">
                 <img
@@ -2190,44 +2247,102 @@ export default function InStockInvoicePage() {
                 </div>
 
                 <div className="space-y-3">
-                  <div className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Màu sắc</p>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        Màu sắc
+                      </p>
                       <p className="text-[13px] font-semibold text-gray-700 mt-0.5">
-                        {selectedProductForView.productType === "Hàng mộc" ? "Nguyên mộc" : selectedProductForView.color || "—"}
+                        {selectedProductForView.productType === "Hàng mộc"
+                          ? "Nguyên mộc"
+                          : selectedProductForView.color || "—"}
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        Kích thước
+                      </p>
+                      <p
+                        className="text-[13px] font-semibold text-gray-700 mt-0.5 truncate"
+                        title={(() => {
+                          const match = selectedProductForView.description?.match(
+                            /Kích thước[:\s]([^\.]+)/i,
+                          );
+                          return match ? match[1].trim() : "—";
+                        })()}
+                      >
+                        {(() => {
+                          const match = selectedProductForView.description?.match(
+                            /Kích thước[:\s]([^\.]+)/i,
+                          );
+                          return match ? match[1].trim() : "—";
+                        })()}
                       </p>
                     </div>
                   </div>
 
                   <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Danh mục</p>
-                    <p className="text-[13px] font-semibold text-gray-700 mt-0.5">{selectedProductForView.category || "—"}</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                      Danh mục
+                    </p>
+                    <p className="text-[13px] font-semibold text-gray-700 mt-0.5">
+                      {selectedProductForView.category || "—"}
+                    </p>
                   </div>
 
                   {selectedProductForView.productType === "Hàng mộc" ? (
                     <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-left">
                       <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
-                        {woodPriceMode === "finished" ? "Giá hoàn thiện" : "Giá thô"}
+                        {woodPriceMode === "finished"
+                          ? "Giá hoàn thiện"
+                          : "Giá thô"}
                       </p>
-                      {woodPriceMode === "finished" && selectedProductForView.discount > 0 ? (
+                      {woodPriceMode === "finished" &&
+                      selectedProductForView.discount > 0 ? (
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-[14px] line-through text-emerald-600/60 font-medium">
-                            {fmt(Math.round(selectedProductForView.price * WOOD_FINISHING_RATE))}đ
+                            {fmt(
+                              Math.round(
+                                selectedProductForView.price *
+                                  WOOD_FINISHING_RATE,
+                              ),
+                            )}
+                            đ
                           </span>
                           <span className="text-[20px] font-black text-red-600">
-                            {fmt(Math.round(selectedProductForView.price * WOOD_FINISHING_RATE * (1 - selectedProductForView.discount / 100)))}đ
+                            {fmt(
+                              Math.round(
+                                selectedProductForView.price *
+                                  WOOD_FINISHING_RATE *
+                                  (1 -
+                                    selectedProductForView.discount / 100),
+                              ),
+                            )}
+                            đ
                           </span>
                         </div>
                       ) : (
                         <p className="text-[20px] font-black text-emerald-700 mt-0.5">
-                          {fmt(woodPriceMode === "finished" ? Math.round(selectedProductForView.price * WOOD_FINISHING_RATE) : selectedProductForView.price)}đ
+                          {fmt(
+                            woodPriceMode === "finished"
+                              ? Math.round(
+                                  selectedProductForView.price *
+                                    WOOD_FINISHING_RATE,
+                                )
+                              : selectedProductForView.price,
+                          )}
+                          đ
                         </p>
                       )}
                     </div>
                   ) : (
                     <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-left">
-                      <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Giá niêm yết</p>
-                      <p className="text-[20px] font-black text-emerald-700 mt-0.5">{fmt(selectedProductForView.price)}đ</p>
+                      <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
+                        Giá niêm yết
+                      </p>
+                      <p className="text-[20px] font-black text-emerald-700 mt-0.5">
+                        {fmt(selectedProductForView.price)}đ
+                      </p>
                     </div>
                   )}
 
@@ -2240,9 +2355,13 @@ export default function InStockInvoicePage() {
 
                   {selectedProductForView.description && (
                     <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Mô tả sản phẩm</p>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                        Mô tả sản phẩm
+                      </p>
                       <p className="text-[13px] text-gray-600 leading-relaxed italic">
-                        "{selectedProductForView.description}"
+                        "{selectedProductForView.description
+                          .replace(/Kích thước[\s\S]*/i, "")
+                          .trim()}"
                       </p>
                     </div>
                   )}
