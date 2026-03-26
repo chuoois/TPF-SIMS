@@ -130,8 +130,7 @@ const MOCK_ORDERS = {
     code: "DH-THO-001", type: "Hàng mộc", status: "Chờ xử lý",
     date: "2026-03-12T10:00:00", deliveryDate: "2026-03-20",
     customer: { name: "Hoàng Nguyệt Ánh", phone: "0978901234", address: "Đà Nẵng" },
-    salesPerson: "Bình Nguyễn", total: 56000000, deposit: 10000000, paymentStatus: "partial",
-    products: [{ name: "Sập thờ Tứ Linh", material: "Gỗ mít", size: "220", finish: "Mộc", qty: 1, price: 56000000, note: "Khách yêu cầu làm mộc kỹ" }],
+    products: [{ name: "Sập thờ Tứ Linh", material: "Gỗ mít", size: "197×107×108 (Lỗ Ban)", finish: "Mộc", qty: 1, price: 56000000, note: "Chân 18 phân, Dạ 5 phân,\nĐục Tứ Linh chạm tay kỹ" }],
     sampleImages: ["https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=800"],
     timeline: [{ time: "12/03/2026 10:00", label: "Tạo đơn", desc: "Nhận mộc", active: true }],
   },
@@ -140,7 +139,7 @@ const MOCK_ORDERS = {
     date: "2026-03-11T15:30:00", deliveryDate: "2026-03-15",
     customer: { name: "Đặng Tuấn Kiệt", phone: "0931234567", address: "TP.HCM" },
     salesPerson: "Bình Nguyễn", total: 8200000, deposit: 2000000, paymentStatus: "partial",
-    products: [{ name: "Trường kỷ gỗ lim", material: "Gỗ lim", size: "200cm", finish: "Mộc", qty: 1, price: 8200000, note: "Trơn" }],
+    products: [{ name: "Trường kỷ gỗ lim", material: "Gỗ lim", size: "200cm", finish: "Mộc", qty: 1, price: 8200000, note: "Chân 14, Gỗ dày 3 phân,\nMẫu trơn đánh lỳ" }],
     sampleImages: ["https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=800"],
     timeline: [{ time: "11/03/2026 16:00", label: "Đang gia công", desc: "Đang đóng mộng", active: true }],
   },
@@ -149,7 +148,7 @@ const MOCK_ORDERS = {
     date: "2026-03-10T08:00:00", deliveryDate: "2026-03-14",
     customer: { name: "Vũ Hải Đăng", phone: "0922334455", address: "Hà Nội" },
     salesPerson: "Bình Nguyễn", total: 12500000, deposit: 5000000, paymentStatus: "partial",
-    products: [{ name: "Bàn ghế ăn", material: "Gụ", size: "Chuẩn", finish: "Mộc", qty: 1, price: 12500000, note: "Chạm" }],
+    products: [{ name: "Bàn ghế ăn", material: "Gụ", size: "Chuẩn", finish: "Mộc", qty: 1, price: 12500000, note: "Chân 16, Dạ 4 phân,\nPhôi gỗ dày, đục chạm tay" }],
     sampleImages: ["https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=800"],
     timeline: [{ time: "13/03/2026 09:00", label: "Chờ giao hàng", desc: "Xong mộc", active: true }],
   },
@@ -198,7 +197,7 @@ const MOCK_ORDERS = {
     date: "2026-03-12T11:15:00", deliveryDate: "2026-03-30",
     customer: { name: "Nguyễn Thị Hồng", phone: "0912123123", address: "Hà Nội" },
     salesPerson: "Bình Nguyễn", total: 75000000, deposit: 25000000, paymentStatus: "partial",
-    products: [{ name: "Tủ thờ Hương Đá", material: "Hương đá", size: "160", finish: "PU", qty: 1, price: 75000000, note: "Hoa văn: Chạm" }],
+    products: [{ name: "Tủ thờ Hương Đá", material: "Hương đá", size: "197×107×108 (Lỗ Ban)", finish: "PU", qty: 1, price: 75000000, note: "Chân 18 phân, Dạ 5 phân,\nHoa văn đục ngũ phúc" }],
     sampleImages: ["https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=800"],
     designSketches: ["https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=800"],
     timeline: [{ time: "12/03/2026 11:15", label: "Tạo đơn", desc: "Đang lên thiết kế", active: true }],
@@ -208,7 +207,7 @@ const MOCK_ORDERS = {
     date: "2026-03-11T09:00:00", deliveryDate: "2026-03-25",
     customer: { name: "Lê Văn Tám", phone: "0321654987", address: "TP.HCM" },
     salesPerson: "Bình Nguyễn", total: 120000000, deposit: 40000000, paymentStatus: "partial",
-    products: [{ name: "Bộ Salon Hương", material: "Hương", size: "To", finish: "PU", qty: 1, price: 120000000, note: "Trơn" }],
+    products: [{ name: "Bộ Salon Hương", material: "Hương", size: "To", finish: "PU", qty: 1, price: 120000000, note: "Đóng mộng thủ công,\nChân 20, Dạ 6 phân,\nĐục chạm kỹ 2 mặt" }],
     sampleImages: ["https://images.unsplash.com/photo-1616486341351-70252447aece?q=80&w=800"],
     designSketches: ["https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=800"],
     timeline: [{ time: "14/03/2026 09:30", label: "Đã nhập kho", desc: "Mộc đã về kho", active: true }],
@@ -218,7 +217,7 @@ const MOCK_ORDERS = {
     date: "2026-03-10T10:15:00", deliveryDate: "2026-03-28",
     customer: { name: "Phan Văn Trị", phone: "0944123123", address: "Hà Nội" },
     salesPerson: "Bình Nguyễn", total: 45000000, deposit: 15000000, paymentStatus: "partial",
-    products: [{ name: "Tủ rượu gỗ sồi", material: "Sồi Nga", size: "12x200", finish: "Sơn óc chó", qty: 1, price: 45000000, note: "Mẫu hiện đại" }],
+    products: [{ name: "Tủ rượu gỗ sồi", material: "Sồi Nga", size: "12x200", finish: "Sơn óc chó", qty: 1, price: 45000000, note: "Gỗ sồi Nga dày 2 phân,\nChân 12, Đóng mộng mẹ con,\nSơn màu óc chó đậm" }],
     sampleImages: ["https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=800"],
     designSketches: ["https://images.unsplash.com/photo-1617806118233-ef203e91122b?q=80&w=800"],
     timeline: [{ time: "12/03/2026 14:00", label: "Đang gia công", desc: "Đang sơn hoàn thiện", active: true }],
@@ -633,11 +632,6 @@ const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remainin
                       </div>
                       <div>
                         <p className="text-[14px] font-bold" style={{ color: "var(--text-main)" }}>{p.name}</p>
-                        {p.note && (
-                          <p className="text-[12px] italic mt-0.5" style={{ color: "var(--status-error)" }}>
-                            * {p.note}
-                          </p>
-                        )}
                       </div>
                     </div>
 
@@ -659,6 +653,28 @@ const StandardOrderView = ({ o, productTotal, displayTotal, hasPricing, remainin
                         <p className="text-[12px] font-semibold text-gray-700">{p.warranty || "12 tháng"}</p>
                       </div>
                     </div>
+
+                    {/* ── GHI CHÚ KỸ THUẬT ── */}
+                    {p.note && o.type !== "Hàng sẵn" && (
+                      <div className="mt-2 p-3 rounded-xl border-2 border-amber-300 bg-amber-50/60">
+                        <p className="text-[10px] uppercase font-bold text-amber-600 tracking-wider flex items-center gap-1.5 mb-1.5">
+                          <FileText size={12} /> Ghi chú kỹ thuật (Sales)
+                        </p>
+                        <ul className="space-y-1">
+                          {p.note.split(/[,;\n]/).map((item, idx) => item.trim() && (
+                            <li key={idx} className="text-[13px] font-bold text-amber-900 flex items-start gap-1.5">
+                              <span className="text-amber-500 mt-0.5">•</span> {item.trim()}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {p.note && o.type === "Hàng sẵn" && (
+                      <div className="mt-2 p-2.5 rounded-lg bg-gray-50 border border-gray-200">
+                        <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Ghi chú</p>
+                        <p className="text-[12px] font-medium text-gray-700">{p.note}</p>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Số lượng & Giá */}
@@ -969,6 +985,16 @@ export default function OwnerOrderDetail() {
   const [paymentMethod, setPaymentMethod] = useState("Chuyển khoản");
   const [previewImage, setPreviewImage] = useState(null);
 
+  // ── Handover Checklist Modal ──
+  const [showHandoverModal, setShowHandoverModal] = useState(false);
+  const [handoverType, setHandoverType] = useState(null); // "moc" | "dat"
+  const [handoverChecks, setHandoverChecks] = useState({ dimension: false, material: false, techNotes: false });
+  const [handoverNotes, setHandoverNotes] = useState("");
+  const [handoverDeadline, setHandoverDeadline] = useState("");
+
+  // ── Painter Cost ──
+  const [painterCost, setPainterCost] = useState(0);
+
   // Effect to sync state when modal opens
   useEffect(() => {
     if (showCompleteModal) {
@@ -978,6 +1004,18 @@ export default function OwnerOrderDetail() {
       setFinalPayment(rem > 0 ? rem : 0);
     }
   }, [showCompleteModal, o.total, o.deposit, o.products]);
+
+  // Khởi tạo Deadline mặc định khi mở Modal Bàn giao
+  useEffect(() => {
+    if (showHandoverModal && o.deliveryDate) {
+      const delivery = new Date(o.deliveryDate);
+      // Giảm 2 ngày so với ngày giao khách
+      delivery.setDate(delivery.getDate() - 2);
+      const isoDate = delivery.toISOString().split('T')[0];
+      setHandoverDeadline(isoDate);
+      setHandoverNotes(""); // Reset ghi chú khi mở mới
+    }
+  }, [showHandoverModal, o.deliveryDate]);
 
   const handleFinishOrder = () => {
     if (!deliveryImage) {
@@ -996,7 +1034,8 @@ export default function OwnerOrderDetail() {
           status: "Hoàn thành", 
           deliveryImage,
           finalPayment,
-          paymentMethod
+          paymentMethod,
+          painter_cost: painterCost
         };
       }
       return order;
@@ -1084,32 +1123,15 @@ export default function OwnerOrderDetail() {
             <div className="flex items-center gap-2">
 
 
-              {/* Nút Bàn giao Xưởng (Hàng mộc) */}
+              {/* Nút Bàn giao Xưởng (Hàng mộc) → Mở Modal Đối soát */}
               {o.status === "Chờ xử lý" && o.type === "Hàng mộc" && (
                  <button
                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer shadow-sm"
                    style={{ backgroundColor: "#4F46E5", color: "#fff" }}
                    onClick={() => {
-                      if(window.confirm("Bàn giao đơn hàng này sang Xưởng sản xuất?")) {
-                        const updated = savedOrders.map(order => 
-                          (order.code === o.code || order.id === id) ? { 
-                            ...order, 
-                            status: "Đang sản xuất",
-                            timeline: [
-                              ...(order.timeline || []),
-                              { 
-                                time: new Date().toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }).replace(',', ' —'), 
-                                label: "Bàn giao gia công", 
-                                desc: "Owner đã duyệt và bàn giao xưởng sản xuất mộc.",
-                                active: true 
-                              }
-                            ]
-                          } : order
-                        );
-                        localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
-                        toast.success("Đã bàn giao Xưởng thành công!");
-                        navigate("/owner/production/LSX001");
-                      }
+                     setHandoverType("moc");
+                     setHandoverChecks({ dimension: false, material: false, techNotes: false });
+                     setShowHandoverModal(true);
                    }}
                  >
                    <Hammer size={14} />
@@ -1124,26 +1146,9 @@ export default function OwnerOrderDetail() {
                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer shadow-sm"
                    style={{ backgroundColor: "#4F46E5", color: "#fff" }}
                    onClick={() => {
-                      if(window.confirm("Xác nhận bàn giao gia công?")) {
-                        const updated = savedOrders.map(order => 
-                          (order.code === o.code || order.id === id) ? { 
-                            ...order, 
-                            status: "Đang gia công",
-                            timeline: [
-                              ...(order.timeline || []),
-                              { 
-                                time: new Date().toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }).replace(',', ' —'), 
-                                label: "Bàn giao gia công", 
-                                desc: "Đã duyệt mộc và chuyển sang bộ phận sơn hoàn thiện.",
-                                active: true 
-                              }
-                            ]
-                          } : order
-                        );
-                        localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
-                        toast.success("Đã bàn giao gia công thành công!");
-                        navigate(0);
-                      }
+                     setHandoverType("dat");
+                     setHandoverChecks({ dimension: false, material: false, techNotes: false });
+                     setShowHandoverModal(true);
                    }}
                  >
                    <Hammer size={14} />
@@ -1378,6 +1383,24 @@ export default function OwnerOrderDetail() {
               {/* Form Inputs */}
               <div className="space-y-4">
                 <div>
+                  <label className="text-[12px] font-bold text-slate-600 ml-1 mb-1.5 block">🎨 Tiền công thợ sơn (tính vào giá vốn)</label>
+                  <div className="relative">
+                    <input 
+                      type="text"
+                      value={formatNumberInput(painterCost)}
+                      onChange={(e) => {
+                        const val = parseNumberInput(e.target.value);
+                        setPainterCost(val === "" ? 0 : Number(val));
+                      }}
+                      className="w-full h-12 pl-10 pr-4 rounded-2xl border border-amber-200 bg-amber-50/50 focus:outline-none focus:ring-2 focus:ring-amber-500 font-bold text-slate-800 shadow-sm"
+                      placeholder="0"
+                    />
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-amber-500 font-bold">₫</div>
+                  </div>
+                  <p className="text-[11px] text-amber-600 mt-1 ml-1 italic">Số tiền này sẽ được cộng vào COGS của đơn hàng trên báo cáo lợi nhuận.</p>
+                </div>
+
+                <div>
                   <label className="text-[12px] font-bold text-slate-600 ml-1 mb-1.5 block">Số tiền thực tế thu tại chỗ</label>
                   <div className="relative">
                     <input 
@@ -1464,6 +1487,145 @@ export default function OwnerOrderDetail() {
       )}
 
       {/* AssignWorkerModal đã được gỡ bỏ khỏi đây để tránh chồng chéo logic với Quản lý Sản xuất */}
+
+      {/* ======================== MODAL ĐỐI SOÁT BÀN GIAO ======================== */}
+      {showHandoverModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-indigo-50/50">
+              <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                <Hammer className="text-indigo-600" size={24} /> ĐỐI SOÁT TRƯỚC KHI BÀN GIAO
+              </h3>
+              <button onClick={() => setShowHandoverModal(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-400 cursor-pointer">
+                <XCircle size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              {/* Thông tin sản phẩm */}
+              <div className="space-y-3">
+                {o.products.map((p, i) => (
+                  <div key={i} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-3">
+                    <p className="text-[14px] font-bold text-slate-800">{p.name}</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Chất liệu</p>
+                        <p className="text-[13px] font-semibold text-slate-700">{p.material}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Kích thước</p>
+                        <p className="text-[13px] font-semibold text-slate-700">{p.size}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Hoàn thiện</p>
+                        <p className="text-[13px] font-semibold text-slate-700">{p.finish}</p>
+                      </div>
+                    </div>
+
+                    {/* Ghi chú kỹ thuật nổi bật */}
+                    {p.note && (
+                      <div className="p-3 rounded-xl border-2 border-amber-300 bg-amber-50">
+                        <p className="text-[10px] uppercase font-bold text-amber-600 tracking-wider flex items-center gap-1.5 mb-1">
+                          <FileText size={12} /> GHI CHÚ KỸ THUẬT TỪ SALES
+                        </p>
+                        <ul className="space-y-1">
+                          {p.note.split(/[,;\n]/).map((item, idx) => item.trim() && (
+                            <li key={idx} className="text-[13px] font-bold text-amber-900 flex items-start gap-1.5">
+                              <span className="text-amber-500 mt-0.5">•</span> {item.trim()}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Hạn hoàn thành & Ghi chú cho thợ (NEW) */}
+              <div className="space-y-4 pt-2 border-t border-slate-100">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                      <Calendar size={14} className="text-indigo-500" /> Hạn hoàn thành xong
+                    </label>
+                    <input
+                      type="date"
+                      value={handoverDeadline}
+                      onChange={(e) => setHandoverDeadline(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-[14px] font-bold text-slate-700 bg-white"
+                    />
+                    <p className="text-[10px] text-indigo-500 font-medium italic">
+                      Gợi ý: Trước ngày giao khách {o.deliveryDate ? "2 ngày" : "... "} 
+                    </p>
+                  </div>
+                  <div className="flex flex-col justify-center">
+                    <div className="p-3 rounded-xl bg-amber-50 border border-amber-100">
+                      <p className="text-[11px] font-bold text-amber-700 uppercase flex items-center gap-1.5">
+                        <Truck size={14} /> Ngày giao khách
+                      </p>
+                      <p className="text-[14px] font-black text-amber-800 mt-0.5">{fmtDate(o.deliveryDate)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <FileText size={14} className="text-indigo-500" /> Ghi chú dặn thợ
+                  </label>
+                  <textarea
+                    placeholder="Nhập các yêu cầu cụ thể cho đội thợ gia công..."
+                    value={handoverNotes}
+                    onChange={(e) => setHandoverNotes(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-[13px] font-medium text-slate-700 min-h-[100px] bg-white"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-slate-50 border-t border-slate-100">
+              <button 
+                onClick={() => {
+                  const newStatus = handoverType === "moc" ? "Đang sản xuất" : "Đang gia công";
+                  const desc = handoverType === "moc" 
+                    ? `Owner bàn giao xưởng. Deadline: ${new Date(handoverDeadline).toLocaleDateString('vi-VN')}. Ghi chú: ${handoverNotes || "Không"}`
+                    : `Đã duyệt mộc & chuyển gia công. Deadline: ${new Date(handoverDeadline).toLocaleDateString('vi-VN')}`;
+                  
+                  const updated = savedOrders.map(order => 
+                    (order.code === o.code || order.id === id) ? { 
+                      ...order, 
+                      status: newStatus,
+                      worker_deadline: handoverDeadline,
+                      handover_notes: handoverNotes,
+                      handover_checklist: { 
+                        approved_at: new Date().toISOString(),
+                        notes: handoverNotes,
+                        deadline: handoverDeadline
+                      },
+                      timeline: [
+                        ...(order.timeline || []),
+                        { 
+                          time: new Date().toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }).replace(',', ' —'), 
+                          label: "Bàn giao gia công", 
+                          desc,
+                          active: true 
+                        }
+                      ]
+                    } : order
+                  );
+                  localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
+                  toast.success("Đã bàn giao xưởng thành công!");
+                  setShowHandoverModal(false);
+                  if (handoverType === "moc") navigate("/owner/production/LSX001");
+                  else navigate(0);
+                }}
+                className="w-full h-12 rounded-2xl bg-indigo-600 text-white font-black text-[14px] transition-all shadow-lg shadow-indigo-200 active:scale-95 hover:bg-indigo-700"
+              >
+                ✅ XÁC NHẬN BÀN GIAO XƯỞNG
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL XEM ẢNH PHÓNG TO */}
       {previewImage && (
