@@ -8,7 +8,7 @@ import {
   X,
   LayoutDashboard,
   Info,
-  ChevronRight as ChevronRightIcon
+  ChevronRight as ChevronRightIcon,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { getOrders, STATUS_CONFIG } from "../mock";
@@ -256,7 +256,8 @@ export default function WorkerDashboard() {
                   "#",
                   "Mã ĐH",
                   "Khách hàng",
-                  "Ngày đặt hàng",
+                  "Ngày đặt nội thất",
+                  "Hạn chót",
                   "Trạng thái",
                   "Số lượng",
                   "",
@@ -318,6 +319,39 @@ export default function WorkerDashboard() {
                         >
                           {order.orderDate}
                         </span>
+                      </td>
+
+                      <td className="px-4 py-4">
+                        {(() => {
+                          const deadlines = order.items
+                            .map((item) => item.deadline)
+                            .filter(Boolean);
+                          if (deadlines.length === 0) return <span className="text-[12px] text-gray-400">Chưa có</span>;
+                          
+                          const sorted = deadlines.sort((a, b) => {
+                            const [da, ma, ya] = a.split("/").map(Number);
+                            const [db, mb, yb] = b.split("/").map(Number);
+                            return new Date(ya, ma - 1, da) - new Date(yb, mb - 1, db);
+                          });
+                          
+                          const earliest = sorted[0];
+                          const [d, m, y] = earliest.split("/").map(Number);
+                          const expiryDate = new Date(y, m - 1, d);
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+
+                          let colorClass = "text-gray-600 bg-gray-50 border-gray-100";
+                          if (diffDays <= 1) colorClass = "text-orange-700 bg-orange-50 border-orange-100 font-bold animate-pulse";
+                          else if (diffDays <= 3) colorClass = "text-amber-700 bg-amber-50 border-amber-100 font-semibold";
+
+                          return (
+                            <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[11px] border ${colorClass}`}>
+                              {earliest}
+                              {diffDays >= 0 && diffDays <= 3 && <span className="text-[9px] uppercase">({diffDays === 0 ? "Hôm nay" : `Còn ${diffDays}n`})</span>}
+                            </div>
+                          );
+                        })()}
                       </td>
 
                       <td className="px-4 py-4">

@@ -29,7 +29,14 @@ import {
   X,
   AlertTriangle,
 } from "lucide-react";
-import { updateMockTaskStatus, getTaskById, updateTaskFinishedImage, updateTaskDeadline, reportTaskIssue } from "../mock";
+import {
+  updateMockTaskStatus,
+  getTaskById,
+  updateTaskFinishedImage,
+  updateTaskDeadline,
+  reportTaskIssue,
+  clearTaskIssue,
+} from "../mock";
 
 /* ─── Production Steps ─── */
 const STEPS = [
@@ -161,6 +168,33 @@ export default function TaskDetail() {
   const [issueType, setIssueType] = useState("Thiếu vật liệu");
   const [issueNote, setIssueNote] = useState("");
 
+  const getTimeRemaining = (deadline) => {
+    if (!deadline) return null;
+    const [d, m, y] = deadline.split("/").map(Number);
+    const target = new Date(y, m - 1, d);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffDays = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) return null;
+    if (diffDays === 0)
+      return {
+        label: "Hôm nay là hạn chót!",
+        color: "text-red-600 font-black animate-pulse",
+      };
+    if (diffDays === 1)
+      return {
+        label: "Gấp: Chỉ còn 1 ngày",
+        color: "text-orange-600 font-bold",
+      };
+    if (diffDays <= 3)
+      return {
+        label: `Còn lại ${diffDays} ngày`,
+        color: "text-amber-600 font-bold",
+      };
+    return { label: `Còn lại ${diffDays} ngày`, color: "text-emerald-600" };
+  };
+
   useEffect(() => {
     const task = getTaskById(id);
     if (task) {
@@ -204,17 +238,23 @@ export default function TaskDetail() {
     }, 1000);
   };
 
-  const handleSetDeadline = () => {
+  const handleStartProduction = () => {
+    updateMockTaskStatus(selectedTask.id, "SANDING");
+    const updated = getTaskById(selectedTask.id);
+    setSelectedTask(updated);
+    toast.success("Đã bắt đầu sản xuất!");
+  };
+
+  const handleSetPlanDate = () => {
     if (!selectedDate) {
-      toast.error("Vui lòng chọn ngày kết thúc");
+      toast.error("Vui lòng chọn ngày kế hoạch hoàn thành");
       return;
     }
 
     const targetDate = new Date(selectedDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
-    // Difference in days
+
     const diffTime = targetDate - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
@@ -224,7 +264,7 @@ export default function TaskDetail() {
     }
 
     const dateStr = `${targetDate.getDate().toString().padStart(2, "0")}/${(targetDate.getMonth() + 1).toString().padStart(2, "0")}/${targetDate.getFullYear()}`;
-    
+
     let urgency = "NORMAL";
     if (diffDays <= 1) urgency = "URGENT";
     else if (diffDays <= 3) urgency = "WARNING";
@@ -240,7 +280,11 @@ export default function TaskDetail() {
     setSelectedTask(updated);
     setShowDeadlineModal(false);
     setSelectedDate("");
-    toast.success(isStartingProduction ? `Đã bắt đầu & thiết lập hạn chót: ${dateStr}` : `Đã cập nhật hạn chót: ${dateStr}`);
+    toast.success(
+      isStartingProduction
+        ? `Đã bắt đầu & thiết lập hạn chót: ${dateStr}`
+        : `Đã cập nhật hạn chót: ${dateStr}`
+    );
   };
 
   const handleReportIssue = () => {
@@ -262,6 +306,15 @@ export default function TaskDetail() {
     toast.success("Đã báo cáo vấn đề thành công!");
   };
 
+  const handleCancelIssue = () => {
+    if (window.confirm("Bạn có chắc chắn muốn hủy báo cáo vấn đề này?")) {
+      clearTaskIssue(selectedTask.id);
+      const updated = getTaskById(selectedTask.id);
+      setSelectedTask(updated);
+      toast.success("Đã hủy báo cáo vấn đề!");
+    }
+  };
+
   if (!selectedTask) return null;
 
   const currentStepIndex = getStepIndex(selectedTask.status);
@@ -273,10 +326,7 @@ export default function TaskDetail() {
     if (selectedTask.status === "WAITING" || selectedTask.status === "REWORK") {
       return (
         <button
-          onClick={() => {
-            setIsStartingProduction(true);
-            setShowDeadlineModal(true);
-          }}
+          onClick={handleStartProduction}
           className="h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
           style={{
             background: "var(--brand-primary)",
@@ -358,7 +408,9 @@ export default function TaskDetail() {
               }
               updateTaskStatus(
                 selectedTask.id,
-                selectedTask.status === "SANDING" ? "PAINTING" : "OWNER_PENDING",
+                selectedTask.status === "SANDING"
+                  ? "PAINTING"
+                  : "OWNER_PENDING",
               );
             }}
             disabled={isUploading || (isPainting && !finishedImage)}
@@ -369,35 +421,39 @@ export default function TaskDetail() {
             }`}
             style={{ color: "#fff" }}
           >
-            <CheckCircle2 size={15} /> 
+            <CheckCircle2 size={15} />
             {isPainting ? "Xác nhận gửi chủ duyệt" : "Hoàn thành đánh giấy ráp"}
           </button>
-          {!selectedTask.issue && (
-            <button
-              onClick={() => setShowIssueModal(true)}
-              className="h-9 px-4 rounded-lg font-semibold text-[13px] bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
-            >
-              <AlertTriangle size={14} /> Báo vấn đề
-            </button>
-          )}
         </div>
       );
     }
 
     if (selectedTask.status === "QC_PENDING") {
       return (
-        <button
-          disabled
-          className="h-11 px-8 rounded-xl font-semibold text-[14px] flex items-center justify-center gap-2 cursor-not-allowed"
-          style={{
-            background: "rgba(255,153,0,0.08)",
-            color: "#e08a00",
-            border: "1px solid rgba(255,153,0,0.2)",
-          }}
-        >
-          <Clock size={15} />
-          Đang chờ QC duyệt
-        </button>
+        <div className="flex gap-3">
+          <button
+            disabled
+            className="h-11 px-6 rounded-xl font-semibold text-[14px] flex items-center justify-center gap-2 cursor-not-allowed opacity-70"
+            style={{
+              background: "rgba(255,153,0,0.08)",
+              color: "#e08a00",
+              border: "1px solid rgba(255,153,0,0.2)",
+            }}
+          >
+            <Clock size={15} />
+            Đang chờ QC duyệt
+          </button>
+          <button
+            onClick={() => {
+              if (window.confirm("Bắt đầu làm lại bước Phun sơn?")) {
+                updateTaskStatus(selectedTask.id, "PAINTING");
+              }
+            }}
+            className="h-11 px-6 rounded-xl font-bold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-all text-[14px] flex items-center gap-2 cursor-pointer"
+          >
+            <PenTool size={15} /> Làm lại
+          </button>
+        </div>
       );
     }
 
@@ -436,7 +492,7 @@ export default function TaskDetail() {
               </label>
             </div>
           </div>
-          
+
           <div className="flex gap-3">
             {finishedImage && (
               <button
@@ -457,15 +513,25 @@ export default function TaskDetail() {
             >
               {finishedImage ? (
                 <>
-                  <CheckCircle2 size={15} /> 
+                  <CheckCircle2 size={15} />
                   Cập nhật ảnh đã gửi
                 </>
               ) : (
                 <>
-                  <AlertCircle size={15} /> 
+                  <AlertCircle size={15} />
                   Đang chờ chủ duyệt
                 </>
               )}
+            </button>
+            <button
+              onClick={() => {
+                if (window.confirm("Xác nhận thợ làm lại bước Phun sơn?")) {
+                  updateTaskStatus(selectedTask.id, "PAINTING");
+                }
+              }}
+              className="h-11 px-6 rounded-xl font-bold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-all text-[14px] flex items-center gap-2 cursor-pointer"
+            >
+              <PenTool size={15} /> Làm lại (Sơn lại)
             </button>
           </div>
         </div>
@@ -518,10 +584,9 @@ export default function TaskDetail() {
   };
 
   /* ─── Mock images array ─── */
-  const productImages = [
-    selectedTask.image,
-    selectedTask.finishedImage,
-  ].filter(Boolean);
+  const productImages = [selectedTask.image, selectedTask.finishedImage].filter(
+    Boolean,
+  );
 
   return (
     <div
@@ -565,9 +630,17 @@ export default function TaskDetail() {
                 <h3 className="font-bold text-red-800 text-[15px]">
                   Cảnh báo: Có vấn đề phát sinh
                 </h3>
-                <span className="text-[12px] font-medium text-red-500 bg-white px-2 py-0.5 rounded-md shadow-sm">
-                  Đã báo lúc {selectedTask.issue.reportedAt}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-[12px] font-medium text-red-500 bg-white px-2 py-0.5 rounded-md shadow-sm">
+                    Đã báo lúc {selectedTask.issue.reportedAt}
+                  </span>
+                  <button
+                    onClick={handleCancelIssue}
+                    className="text-[12px] font-bold text-red-700 hover:text-red-800 hover:underline cursor-pointer flex items-center gap-1"
+                  >
+                    <X size={14} /> Hủy báo cáo 
+                  </button>
+                </div>
               </div>
               <div className="text-[14px] text-red-700 mt-1">
                 <p>
@@ -595,23 +668,24 @@ export default function TaskDetail() {
             {/* Left: Product title & badges */}
             <div className="flex flex-col gap-3">
               <div className="flex flex-wrap items-center gap-2.5">
-                {selectedTask.status !== "WAITING" && selectedTask.status !== "REWORK" && (
-                  <button
-                    onClick={() => {
-                      setIsStartingProduction(false);
-                      setShowDeadlineModal(true);
-                    }}
-                    className="px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 cursor-pointer"
-                    style={{
-                      background: "rgba(16,185,129,0.08)",
-                      color: "#10b981",
-                      border: "1px solid rgba(16,185,129,0.2)",
-                    }}
-                  >
-                    <Calendar size={12} />
-                    {selectedTask.deadline ? "Đổi hạn chót" : "Đặt hạn chót"}
-                  </button>
-                )}
+                {selectedTask.status !== "WAITING" &&
+                  selectedTask.status !== "REWORK" && (
+                    <button
+                      onClick={() => {
+                        setIsStartingProduction(false);
+                        setShowDeadlineModal(true);
+                      }}
+                      className="px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                      style={{
+                        background: "rgba(16,185,129,0.08)",
+                        color: "#10b981",
+                        border: "1px solid rgba(16,185,129,0.2)",
+                      }}
+                    >
+                      <Calendar size={12} />
+                      {selectedTask.deadline ? "Đổi hạn chót" : "Đặt hạn chót"}
+                    </button>
+                  )}
                 <span
                   className="px-2.5 py-1 rounded-lg text-[11px] font-bold"
                   style={{
@@ -631,6 +705,17 @@ export default function TaskDetail() {
                     {selectedTask.orderCode}
                   </strong>
                 </span>
+
+                {/* Global Report Issue Button */}
+                {!selectedTask.issue && selectedTask.status !== "COMPLETED" && (
+                  <button
+                    onClick={() => setShowIssueModal(true)}
+                    className="px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-all hover:scale-105 active:scale-95 cursor-pointer bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 shadow-sm"
+                  >
+                    <AlertTriangle size={12} />
+                    Báo vấn đề
+                  </button>
+                )}
               </div>
               <h1
                 className="text-[22px] lg:text-[26px] font-bold leading-tight"
@@ -687,14 +772,28 @@ export default function TaskDetail() {
                   {currentStepIndex}/{STEPS.length} bước
                 </span>
                 {selectedTask.deadline && (
-                  <div className="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-gray-100">
-                    <Clock size={12} className="text-gray-400" />
-                    <span 
-                      className="text-[14px] font-bold"
-                      style={{ color: "var(--text-main)" }}
-                    >
-                      Hạn chót: {selectedTask.deadline}
-                    </span>
+                  <div className="flex flex-col gap-1.5 mt-1.5 pt-1.5 border-t border-gray-100">
+                    <div className="flex items-center gap-1.5">
+                      <Clock size={12} className="text-gray-400" />
+                      <span
+                        className="text-[14px] font-bold"
+                        style={{ color: "var(--text-main)" }}
+                      >
+                        Hạn chót: {selectedTask.deadline}
+                      </span>
+                    </div>
+                    {(() => {
+                      const timeInfo = getTimeRemaining(selectedTask.deadline);
+                      return (
+                        timeInfo && (
+                          <span
+                            className={`text-[12px] ${timeInfo.color} flex items-center gap-1`}
+                          >
+                            <AlertCircle size={10} /> {timeInfo.label}
+                          </span>
+                        )
+                      );
+                    })()}
                   </div>
                 )}
               </div>
@@ -750,31 +849,32 @@ export default function TaskDetail() {
                       className="text-[13px] font-bold"
                       style={{ color: "var(--text-main)" }}
                     >
-                      Hình ảnh sản phẩm tham khảo
+                      Hình ảnh sản phẩm 
                     </h3>
                   </div>
                   {/* Main Image */}
-                    <div
-                      className="aspect-[4/3] rounded-xl overflow-hidden relative group cursor-zoom-in"
-                      style={{
-                        background: "var(--bg-main)",
-                        border: "1px solid var(--grid-border)",
-                      }}
-                      onClick={() => setZoomImage(productImages[activeImageIndex])}
-                    >
-                      <img
-                        src={productImages[activeImageIndex]}
-                        alt="Main preview"
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                  <div
+                    className="aspect-[4/3] rounded-xl overflow-hidden relative group cursor-zoom-in"
+                    style={{
+                      background: "var(--bg-main)",
+                      border: "1px solid var(--grid-border)",
+                    }}
+                    onClick={() =>
+                      setZoomImage(productImages[activeImageIndex])
+                    }
+                  >
+                    <img
+                      src={productImages[activeImageIndex]}
+                      alt="Main preview"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center">
+                      <ZoomIn
+                        size={28}
+                        className="text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow-lg"
                       />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center">
-                        <ZoomIn
-                          size={28}
-                          className="text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow-lg"
-                        />
-                      </div>
                     </div>
-
+                  </div>
                 </div>
               ) : (
                 /* ── Custom Order Blueprint ── */
@@ -863,49 +963,50 @@ export default function TaskDetail() {
               )}
 
               {/* Customer Provided Images */}
-              {selectedTask.customerImages && selectedTask.customerImages.length > 0 && (
-                <div
-                  className="p-5 flex flex-col gap-4"
-                  style={{ borderTop: "1px solid var(--grid-border)" }}
-                >
-                  <div className="flex items-center justify-between pb-1">
-                    <div className="flex items-center gap-2">
-                      <Camera size={15} className="text-blue-500" />
-                      <h3
-                        className="text-[13px] font-bold"
-                        style={{ color: "var(--text-main)" }}
-                      >
-                        Hình ảnh từ khách hàng
-                      </h3>
-                    </div>
-                    <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
-                      {selectedTask.customerImages.length} Ảnh
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTask.customerImages.map((img, i) => (
-                      <div
-                        key={i}
-                        className="w-24 h-20 rounded-lg overflow-hidden border border-gray-100 cursor-zoom-in hover:shadow-md transition-shadow group relative shrink-0"
-                        style={{ background: "var(--bg-main)" }}
-                        onClick={() => setZoomImage(img)}
-                      >
-                        <img
-                          src={img}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          alt={`Customer ${i + 1}`}
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center">
-                          <ZoomIn
-                            size={16}
-                            className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md"
-                          />
-                        </div>
+              {selectedTask.customerImages &&
+                selectedTask.customerImages.length > 0 && (
+                  <div
+                    className="p-5 flex flex-col gap-4"
+                    style={{ borderTop: "1px solid var(--grid-border)" }}
+                  >
+                    <div className="flex items-center justify-between pb-1">
+                      <div className="flex items-center gap-2">
+                        <Camera size={15} className="text-blue-500" />
+                        <h3
+                          className="text-[13px] font-bold"
+                          style={{ color: "var(--text-main)" }}
+                        >
+                          Hình ảnh từ khách hàng
+                        </h3>
                       </div>
-                    ))}
+                      <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
+                        {selectedTask.customerImages.length} Ảnh
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTask.customerImages.map((img, i) => (
+                        <div
+                          key={i}
+                          className="w-24 h-20 rounded-lg overflow-hidden border border-gray-100 cursor-zoom-in hover:shadow-md transition-shadow group relative shrink-0"
+                          style={{ background: "var(--bg-main)" }}
+                          onClick={() => setZoomImage(img)}
+                        >
+                          <img
+                            src={img}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            alt={`Customer ${i + 1}`}
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center">
+                            <ZoomIn
+                              size={16}
+                              className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
 
             {/* Specs Card */}
@@ -1084,16 +1185,30 @@ export default function TaskDetail() {
                   Tiến độ sản xuất
                 </h3>
                 {selectedTask.deadline && (
-                  <div
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-semibold"
-                    style={{
-                      background: "rgba(229,72,77,0.06)",
-                      color: "var(--status-error)",
-                      border: "1px solid rgba(229,72,77,0.12)",
-                    }}
-                  >
-                    <Clock size={12} />
-                    Hạn: {selectedTask.deadline}
+                  <div className="flex flex-col items-end gap-1">
+                    <div
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-semibold"
+                      style={{
+                        background: "rgba(229,72,77,0.06)",
+                        color: "var(--status-error)",
+                        border: "1px solid rgba(229,72,77,0.12)",
+                      }}
+                    >
+                      <Clock size={12} />
+                      Hạn chót: {selectedTask.deadline}
+                    </div>
+                    {(() => {
+                      const timeInfo = getTimeRemaining(selectedTask.deadline);
+                      return (
+                        timeInfo && (
+                          <span
+                            className={`text-[10px] uppercase tracking-wider ${timeInfo.color}`}
+                          >
+                            {timeInfo.label}
+                          </span>
+                        )
+                      );
+                    })()}
                   </div>
                 )}
               </div>
@@ -1179,8 +1294,6 @@ export default function TaskDetail() {
                               {statusUI.badge}
                             </span>
                           </div>
-
-                     
                         </div>
                       </div>
                     );
@@ -1202,37 +1315,41 @@ export default function TaskDetail() {
         </div>
       </div>
 
-      {/* ═══════════ DEADLINE MODAL ═══════════ */}
+      {/* ═══════════ PLAN DATE MODAL ═══════════ */}
       {showDeadlineModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div 
+          <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setShowDeadlineModal(false)}
           />
-          <div className="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+          <div className="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
                   <Calendar size={20} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900">Thiết lập hạn chót</h3>
-                  <p className="text-[12px] text-gray-500">Dành cho thợ cả / Quản lý</p>
+                  <h3 className="font-bold text-gray-900">
+                    Đặt hạn chót
+                  </h3>
+                  <p className="text-[12px] text-gray-500">
+                    Thời gian dự kiến thợ sẽ hoàn thành sản phẩm
+                  </p>
                 </div>
               </div>
 
               <div className="space-y-4">
                 <div>
                   <label className="block text-[12px] font-bold text-gray-500 mb-2 uppercase tracking-wider">
-                    Chọn ngày kết thúc dự kiến
+                    Chọn ngày bạn dự kiến hoàn thành
                   </label>
                   <div className="relative">
                     <input
                       type="date"
                       value={selectedDate}
-                      min={new Date().toLocaleDateString('en-CA')} // YYYY-MM-DD format
+                      min={new Date().toLocaleDateString("en-CA")}
                       onChange={(e) => setSelectedDate(e.target.value)}
-                      className="w-full h-12 px-4 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-semibold appearance-none"
+                      className="w-full h-12 px-4 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-semibold"
                     />
                   </div>
                 </div>
@@ -1240,7 +1357,10 @@ export default function TaskDetail() {
                 {selectedDate && (
                   <div className="p-3 rounded-xl bg-blue-50/50 border border-blue-100">
                     <p className="text-[12px] text-blue-700 leading-relaxed font-medium">
-                      Hệ thống sẽ ghi nhận hạn chót là ngày <strong>{new Date(selectedDate).toLocaleDateString('vi-VN')}</strong>.
+                      Hệ thống sẽ ghi nhận hạn chót là ngày{" "}
+                      <strong>
+                        {new Date(selectedDate).toLocaleDateString("vi-VN")}
+                      </strong>.
                     </p>
                   </div>
                 )}
@@ -1255,8 +1375,8 @@ export default function TaskDetail() {
                 Hủy bỏ
               </button>
               <button
-                onClick={handleSetDeadline}
-                className="flex-1 h-11 rounded-xl font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-sm shadow-emerald-200 text-[14px]"
+                onClick={handleSetPlanDate}
+                className="flex-1 h-11 rounded-xl font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-sm text-[14px]"
               >
                 Xác nhận
               </button>
@@ -1264,10 +1384,11 @@ export default function TaskDetail() {
           </div>
         </div>
       )}
+
       {/* ═══════════ ISSUE MODAL ═══════════ */}
       {showIssueModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div 
+          <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setShowIssueModal(false)}
           />
@@ -1278,8 +1399,12 @@ export default function TaskDetail() {
                   <AlertTriangle size={24} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-[18px] text-gray-900">Báo cáo vấn đề</h3>
-                  <p className="text-[13px] text-gray-500">Gửi thông báo cho hệ thống quản lý</p>
+                  <h3 className="font-bold text-[18px] text-gray-900">
+                    Báo cáo vấn đề
+                  </h3>
+                  <p className="text-[13px] text-gray-500">
+                    Gửi thông báo cho hệ thống quản lý
+                  </p>
                 </div>
               </div>
 
@@ -1290,24 +1415,40 @@ export default function TaskDetail() {
                     Loại vấn đề <span className="text-red-500">*</span>
                   </label>
                   <div className="flex flex-col gap-2">
-                    {["Thiếu vật liệu", "Không rõ màu sơn", "Bề mặt lỗi", "Khác..."].map((type) => (
-                      <label 
+                    {[
+                      "Thiếu vật liệu",
+                      "Không rõ màu sơn",
+                      "Bề mặt lỗi",
+                      "Hủy đơn / Dừng sản xuất",
+                      "Khác...",
+                    ].map((type) => (
+                      <label
                         key={type}
                         onClick={() => setIssueType(type)}
                         className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
-                          issueType === type 
-                            ? "border-red-500 bg-red-50/50" 
+                          issueType === type
+                            ? "border-red-500 bg-red-50/50"
                             : "border-gray-200 hover:bg-gray-50"
                         }`}
                       >
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                          issueType === type ? "border-red-500" : "border-gray-300"
-                        }`}>
-                          {issueType === type && <div className="w-2.5 h-2.5 rounded-full bg-red-500" />}
+                        <div
+                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                            issueType === type
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                        >
+                          {issueType === type && (
+                            <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                          )}
                         </div>
-                        <span className={`font-medium text-[14px] ${
-                          issueType === type ? "text-red-700" : "text-gray-700"
-                        }`}>
+                        <span
+                          className={`font-medium text-[14px] ${
+                            issueType === type
+                              ? "text-red-700"
+                              : "text-gray-700"
+                          }`}
+                        >
                           {type}
                         </span>
                       </label>
@@ -1318,7 +1459,10 @@ export default function TaskDetail() {
                 {/* Additional Note */}
                 <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                   <label className="block text-[13px] font-bold text-gray-700 mb-2 mt-2">
-                    Ghi chú chi tiết {issueType === "Khác..." && <span className="text-red-500">*</span>}
+                    Ghi chú chi tiết{" "}
+                    {issueType === "Khác..." && (
+                      <span className="text-red-500">*</span>
+                    )}
                   </label>
                   <textarea
                     value={issueNote}
@@ -1351,11 +1495,11 @@ export default function TaskDetail() {
 
       {/* ═══════════ IMAGE ZOOM MODAL ═══════════ */}
       {zoomImage && (
-        <div 
+        <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 transition-all animate-in fade-in duration-200"
           onClick={() => setZoomImage(null)}
         >
-          <button 
+          <button
             className="absolute top-6 right-6 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
@@ -1364,12 +1508,12 @@ export default function TaskDetail() {
           >
             <X size={24} />
           </button>
-          <div 
+          <div
             className="relative max-w-5xl w-full h-full flex items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <img 
-              src={zoomImage} 
+            <img
+              src={zoomImage}
               className="max-w-full max-h-full object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-300"
               alt="Zoomed preview"
             />

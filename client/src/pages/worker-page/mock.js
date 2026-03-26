@@ -28,8 +28,9 @@ export let MOCK_ORDERS = [
         quantity: 1,
         note: "Bo tròn các góc bàn bán kính 2cm, sơn lót kỹ mặt dưới",
         status: "WAITING",
-        startedAt: null,
-        deadline: null,
+        startedAt: "26/10/2023",
+        deliveryDate: "30/10/2023",
+        deadline: "26/10/2023",
         urgency: "NORMAL",
       },
       {
@@ -43,6 +44,7 @@ export let MOCK_ORDERS = [
         note: "Trang bị đệm mút D40, bọc nỉ màu xám lông chuột",
         status: "COMPLETED",
         startedAt: "24/10/2023 08:00",
+        deliveryDate: "28/10/2023",
         deadline: "26/10/2023",
         urgency: "NORMAL",
       },
@@ -66,6 +68,7 @@ export let MOCK_ORDERS = [
         note: "Hậu tủ phay rãnh lùa, chạy chỉ âm viền ngoài 5mm, dùng bản lề giảm chấn",
         status: "SANDING",
         startedAt: "25/10/2023 10:15",
+        deliveryDate: "30/10/2023",
         deadline: "28/10/2023",
         urgency: "WARNING",
       },
@@ -88,8 +91,9 @@ export let MOCK_ORDERS = [
         quantity: 1,
         note: "Đầu giường bọc da microfiber, may rút múi kim cương",
         status: "WAITING",
-        startedAt: null,
-        deadline: null,
+        startedAt: "06/11/2023",
+        deliveryDate: "05/11/2023",
+        deadline: "06/11/2023",
         urgency: "NORMAL",
       },
       {
@@ -229,6 +233,21 @@ export const reportTaskIssue = (itemId, issueData) => {
             reportedAt: new Date().toLocaleString("vi-VN"),
           },
         };
+      }
+      return item;
+    });
+    return orderChanged ? { ...order, items: newItems } : order;
+  });
+};
+
+export const clearTaskIssue = (itemId) => {
+  MOCK_ORDERS = MOCK_ORDERS.map((order) => {
+    let orderChanged = false;
+    const newItems = order.items.map((item) => {
+      if (item.id === itemId) {
+        orderChanged = true;
+        const { issue, ...rest } = item;
+        return rest;
       }
       return item;
     });

@@ -894,8 +894,7 @@ export default function InStockInvoicePage() {
           {
             id: cartItemId,
             name: product.name,
-            price:
-              isWood && woodPriceMode === "finished" && product.discount
+            price: product.discount
                 ? Math.round(itemPrice * (1 - product.discount / 100))
                 : itemPrice,
             stock: product.stock,
@@ -906,13 +905,11 @@ export default function InStockInvoicePage() {
             images: [],
             isGift,
             priceMode: isWood ? woodPriceMode : null,
-            // Dual pricing cho Hàng mộc hoàn thiện
-            oldPrice: isWoodFinished ? itemPrice : null,
-            discountPrice: isWoodFinished
-              ? product.discount
-                ? Math.round(itemPrice * (1 - product.discount / 100))
-                : itemPrice
-              : null,
+            // Dual pricing cho mọi sản phẩm có giảm giá
+            oldPrice: product.discount ? itemPrice : null,
+            discountPrice: product.discount
+              ? Math.round(itemPrice * (1 - product.discount / 100))
+              : itemPrice,
           },
         ],
       });
@@ -1049,8 +1046,11 @@ export default function InStockInvoicePage() {
       discount: activeTab.discount,
       deposit: activeTab.depositAmount,
       deliveryMethod: activeTab.deliveryMethod,
-      deliveryDate: activeTab.deliveryDate,
-      // Lấy tại cửa hàng: trống = lấy ngay, có ngày = hẹn lấy
+      // Hẹn ngày lấy hoặc lấy luôn (Hôm nay)
+      deliveryDate:
+        activeTab.deliveryMethod === "store"
+          ? activeTab.storePickupDate || new Date().toISOString().split("T")[0]
+          : activeTab.deliveryDate,
       storePickupDate:
         activeTab.deliveryMethod === "store"
           ? activeTab.storePickupDate || null
@@ -2073,13 +2073,16 @@ export default function InStockInvoicePage() {
                               : product.color}
                           </span>
                         </div>
-                        {product.productType === "Hàng mộc" &&
-                        woodPriceMode === "finished" &&
-                        product.discount > 0 ? (
+                        {product.discount > 0 ? (
                           <div className="flex items-center gap-1.5">
                             <span className="text-[11px] line-through text-gray-400">
                               {fmt(
-                                Math.round(product.price * WOOD_FINISHING_RATE),
+                                product.productType === "Hàng mộc" &&
+                                  woodPriceMode === "finished"
+                                  ? Math.round(
+                                      product.price * WOOD_FINISHING_RATE,
+                                    )
+                                  : product.price,
                               )}
                               đ
                             </span>
@@ -2089,8 +2092,10 @@ export default function InStockInvoicePage() {
                             >
                               {fmt(
                                 Math.round(
-                                  product.price *
-                                    WOOD_FINISHING_RATE *
+                                  (product.productType === "Hàng mộc" &&
+                                  woodPriceMode === "finished"
+                                    ? product.price * WOOD_FINISHING_RATE
+                                    : product.price) *
                                     (1 - product.discount / 100),
                                 ),
                               )}
@@ -2206,7 +2211,7 @@ export default function InStockInvoicePage() {
 
       {/* ── Product Quick View Modal ── */}
       {selectedProductForView && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm font-sans">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm font-sans text-left">
           <div
             className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300"
             style={{ border: "1px solid var(--grid-border)" }}
@@ -2225,7 +2230,7 @@ export default function InStockInvoicePage() {
             </div>
 
             {/* Modal Body */}
-            <div className="flex flex-col md:flex-row p-6 gap-6 max-h-[80vh] overflow-y-auto text-left">
+            <div className="flex flex-col md:flex-row p-6 gap-6 max-h-[80vh] overflow-y-auto">
               {/* Product Image */}
               <div className="w-full md:w-1/2 aspect-square rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shadow-inner">
                 <img
@@ -2290,41 +2295,21 @@ export default function InStockInvoicePage() {
                     </p>
                   </div>
 
-                  {selectedProductForView.productType === "Hàng mộc" ? (
+                  {selectedProductForView.discount > 0 ? (
                     <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-left">
                       <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
-                        {woodPriceMode === "finished"
-                          ? "Giá hoàn thiện"
-                          : "Giá thô"}
+                        {selectedProductForView.productType === "Hàng mộc"
+                          ? woodPriceMode === "finished"
+                            ? "Giá hoàn thiện"
+                            : "Giá thô"
+                          : "Giá niêm yết"}{" "}
+                        (Giảm {selectedProductForView.discount}%)
                       </p>
-                      {woodPriceMode === "finished" &&
-                      selectedProductForView.discount > 0 ? (
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[14px] line-through text-emerald-600/60 font-medium">
-                            {fmt(
-                              Math.round(
-                                selectedProductForView.price *
-                                  WOOD_FINISHING_RATE,
-                              ),
-                            )}
-                            đ
-                          </span>
-                          <span className="text-[20px] font-black text-red-600">
-                            {fmt(
-                              Math.round(
-                                selectedProductForView.price *
-                                  WOOD_FINISHING_RATE *
-                                  (1 -
-                                    selectedProductForView.discount / 100),
-                              ),
-                            )}
-                            đ
-                          </span>
-                        </div>
-                      ) : (
-                        <p className="text-[20px] font-black text-emerald-700 mt-0.5">
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[14px] line-through text-emerald-600/60 font-medium">
                           {fmt(
-                            woodPriceMode === "finished"
+                            selectedProductForView.productType === "Hàng mộc" &&
+                              woodPriceMode === "finished"
                               ? Math.round(
                                   selectedProductForView.price *
                                     WOOD_FINISHING_RATE,
@@ -2332,16 +2317,42 @@ export default function InStockInvoicePage() {
                               : selectedProductForView.price,
                           )}
                           đ
-                        </p>
-                      )}
+                        </span>
+                        <span className="text-[20px] font-black text-red-600">
+                          {fmt(
+                            Math.round(
+                              (selectedProductForView.productType ===
+                                "Hàng mộc" && woodPriceMode === "finished"
+                                ? selectedProductForView.price *
+                                  WOOD_FINISHING_RATE
+                                : selectedProductForView.price) *
+                                (1 - selectedProductForView.discount / 100),
+                            ),
+                          )}
+                          đ
+                        </span>
+                      </div>
                     </div>
                   ) : (
                     <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-left">
                       <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
-                        Giá niêm yết
+                        {selectedProductForView.productType === "Hàng mộc"
+                          ? woodPriceMode === "finished"
+                            ? "Giá hoàn thiện"
+                            : "Giá thô"
+                          : "Giá niêm yết"}
                       </p>
                       <p className="text-[20px] font-black text-emerald-700 mt-0.5">
-                        {fmt(selectedProductForView.price)}đ
+                        {fmt(
+                          selectedProductForView.productType === "Hàng mộc" &&
+                            woodPriceMode === "finished"
+                            ? Math.round(
+                                selectedProductForView.price *
+                                  WOOD_FINISHING_RATE,
+                              )
+                            : selectedProductForView.price,
+                        )}
+                        đ
                       </p>
                     </div>
                   )}
