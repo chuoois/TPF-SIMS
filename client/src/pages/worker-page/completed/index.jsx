@@ -1,135 +1,108 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  Clock,
-  Play,
-  Pause,
-  CheckCircle2,
-  AlertCircle,
-  X,
-  Camera,
-  Upload,
-  MessageSquare,
-  Box,
-  CornerDownRight,
-  TrendingUp,
-  Award,
   Search,
-  Filter,
-  MoreHorizontal,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  X,
   LayoutDashboard,
+  Info,
+  ChevronRight as ChevronRightIcon,
+  CheckCircle2,
+  Calendar
 } from "lucide-react";
+import { getOrders, STATUS_CONFIG } from "../mock";
 
-// Mock Data cho Thợ (Chỉ List Đã Hoàn Thành)
-const MOCK_TASKS = [
-  {
-    id: "T-0985",
-    productName: "Bàn ăn gỗ sồi 6 ghế",
-    woodType: "Gỗ Sồi",
-    dimensions: "160 x 80 x 75 ",
-    colorType: "Nâu tự nhiên",
-    status: "COMPLETED",
-    isCustomOrder: true,
-    orderCode: "DH-102",
-    notes: "Khách khen làm đúng yêu cầu bo tròn viền.",
-    startedAt: "05/03/2026 08:30",
-    completedAt: "14:30 Hôm nay",
-    deadline: "05/03/2026",
-    rating: 5,
-    image: "/wood_products.png",
-    customerImages: [
-      "https://images.unsplash.com/photo-1581428982868-e410dd047a90?auto=format&fit=crop&q=80&w=400",
-    ],
-  },
-  {
-    id: "T-0982",
-    productName: "Kệ sách treo tường thông minh",
-    woodType: "Gỗ Công Nghiệp MDF",
-    dimensions: "120 x 20 x 30 ",
-    colorType: "Trắng bóng mờ",
-    status: "COMPLETED",
-    isCustomOrder: false,
-    orderCode: "NK-09",
-    notes: "Xử lý bề mặt rất mịn, đạt chuẩn xuất xưởng.",
-    startedAt: "04/03/2026 09:00",
-    completedAt: "09:15 Hôm qua",
-    deadline: "04/03/2026",
-    rating: 4,
-    image: "/wood_products.png",
-    customerImages: [
-      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&q=80&w=400",
-    ],
-  },
-  {
-    id: "T-0987",
-    productName: "Tủ giày 3 cánh tối giản",
-    woodType: "Gỗ Công Nghiệp MDF",
-    dimensions: "100 x 35 x 110 ",
-    colorType: "Màu kem",
-    status: "COMPLETED",
-    isCustomOrder: false,
-    orderCode: "K-15",
-    notes: "Đã kiểm tra ngăn kéo mượt mà.",
-    startedAt: "03/03/2026 13:00",
-    completedAt: "16:45 Hôm qua",
-    deadline: "03/03/2026",
-    rating: 5,
-    image: "/wood_products.png",
-    customerImages: [
-      "https://images.unsplash.com/photo-1595428774223-ef52624120ec?auto=format&fit=crop&q=80&w=400",
-    ],
-  },
-  {
-    id: "T-0975",
-    productName: "Giường ngủ tân cổ điển",
-    woodType: "Gỗ Gõ Đỏ",
-    dimensions: "180 x 200 x 45 ",
-    colorType: "Nâu đỏ đậm",
-    status: "COMPLETED",
-    isCustomOrder: true,
-    orderCode: "DH-099",
-    notes: "Chạm trổ đầu giường rất tinh xảo.",
-    startedAt: "15/02/2026 14:00",
-    completedAt: "Thứ 4, 18/02",
-    deadline: "18/02/2026",
-    rating: 5,
-    image: "/wood_products.png",
-    customerImages: [
-      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&q=80&w=400",
-    ],
-  },
-  {
-    id: "T-0970",
-    productName: "Bàn làm việc Giám đốc",
-    woodType: "Gỗ Hương",
-    dimensions: "180 x 90 x 76 ",
-    colorType: "Nâu trầm",
-    status: "COMPLETED",
-    isCustomOrder: true,
-    orderCode: "DH-095",
-    notes: "Hàng cao cấp, yêu cầu độ bóng 50%.",
-    startedAt: "10/02/2026 08:00",
-    completedAt: "Thứ 2, 12/02",
-    rating: 5,
-    image: "/wood_products.png",
-    customerImages: [],
-  },
-];
+const OrderItemRow = ({ item }) => {
+  const navigate = useNavigate();
+  const config = STATUS_CONFIG[item.status] || STATUS_CONFIG.COMPLETED;
+  const StatusIcon = config.icon || CheckCircle2;
 
-const STATUS_CONFIG = {
-  COMPLETED: {
-    label: "Đã Xong",
-    color: "bg-green-100 text-green-700",
-    icon: CheckCircle2,
-  },
+  return (
+    <div
+      onClick={() => navigate(`/worker/completed/${item.id}`)}
+      className="flex flex-col sm:flex-row items-start sm:items-center gap-4 py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50/100 transition-colors px-3 rounded-lg cursor-pointer group"
+    >
+      <div
+        className="h-16 w-16 rounded-xl overflow-hidden shrink-0 border bg-white"
+        style={{ borderColor: "var(--grid-border)" }}
+      >
+        <img
+          src={item.picture}
+          alt={item.productName}
+          className="h-full w-full object-cover group-hover:scale-105 transition-transform grayscale-[15%]"
+        />
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-1 gap-2">
+          <h4
+            className="text-[13px] font-semibold truncate group-hover:text-[var(--brand-primary)] transition-colors"
+            style={{ color: "var(--text-main)" }}
+          >
+            {item.productName}
+          </h4>
+          <span className={`px-2.5 py-1 ${config.color} rounded-full text-[11px] font-bold border flex items-center gap-1 w-fit`}>
+            <StatusIcon size={12} />
+            {config.label}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-1 gap-x-4 text-[12px] mt-1.5" style={{ color: "var(--text-secondary)" }}>
+          <div className="flex items-center gap-1">
+            <strong className="font-semibold" style={{ color: "var(--text-main)" }}>Kích thước:</strong> {item.size}
+          </div>
+          <div className="flex items-center gap-1">
+            <strong className="font-semibold" style={{ color: "var(--text-main)" }}>Loại:</strong> {item.type}
+          </div>
+          <div className="flex items-center gap-1">
+            <strong className="font-semibold" style={{ color: "var(--text-main)" }}>Màu sắc:</strong> {item.color}
+          </div>
+          <div className="flex items-center gap-1">
+            <strong className="font-semibold" style={{ color: "var(--text-main)" }}>Số lượng:</strong> x{item.quantity}
+          </div>
+        </div>
+
+        {(item.startedAt || item.deadline) && (
+           <div className="mt-2 flex flex-wrap gap-4 text-[11px] font-medium" style={{ color: "var(--text-secondary)" }}>
+             {item.startedAt && <span><strong style={{ color: "var(--text-main)" }}>Ngày làm:</strong> {item.startedAt}</span>}
+             {item.deadline && <span><strong style={{ color: "var(--text-main)" }}>Hạn chót:</strong> {item.deadline}</span>}
+           </div>
+        )}
+
+        {item.note && (
+          <div className="mt-2 text-[11px] flex items-start gap-1.5 text-gray-500 bg-gray-50 px-2 py-1.5 rounded-md border border-gray-100 w-fit max-w-full">
+            <Info size={14} className="shrink-0 mt-0.5" />
+            <span className="truncate">{item.note}</span>
+          </div>
+        )}
+      </div>
+
+      <div className="shrink-0 w-full sm:w-auto mt-2 sm:mt-0 flex justify-end">
+        <button
+          className="px-3 py-1.5 text-[12px] font-bold rounded-lg border text-gray-500 bg-white group-hover:bg-green-50 group-hover:text-green-600 transition-colors flex items-center gap-1"
+          style={{ borderColor: "var(--grid-border)" }}
+        >
+          Xem lại
+          <ChevronRightIcon size={14} className="ml-0.5" />
+        </button>
+      </div>
+    </div>
+  );
 };
 
 export default function WorkerCompleted() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const tasks = MOCK_TASKS;
+  
+  const [orders, setOrders] = useState([]);
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
+
+  useEffect(() => {
+    // Fetch global mock state so returning from Detail Page reflects updates
+    setOrders(getOrders());
+  }, []);
 
   const activeFilter = searchParams.get("filter") || "Tất cả";
   const searchTerm = searchParams.get("search") || "";
@@ -147,7 +120,6 @@ export default function WorkerCompleted() {
         newParams.delete(key);
       }
     });
-    // Reset page to 1 if filters change, unless page is explicitly provided
     if (!updates.page && (updates.filter || updates.search || updates.from || updates.to)) {
       newParams.set("page", "1");
     }
@@ -161,71 +133,33 @@ export default function WorkerCompleted() {
   const setCurrentPage = (p) => updateParams({ page: p.toString() });
   const setItemsPerPage = (sp) => updateParams({ perPage: sp.toString() });
 
+  const toggleOrder = (orderId) => {
+    setExpandedOrderId((prev) => (prev === orderId ? null : orderId));
+  };
+
   const filters = ["Tất cả", "Hàng khách đặt", "Hàng mộc"];
 
-  // Filter tasks
-  const filteredTasks = tasks.filter((t) => {
-    // Filter by order type
-    if (activeFilter === "Hàng khách đặt" && !t.isCustomOrder) return false;
-    if (activeFilter === "Hàng mộc" && t.isCustomOrder) return false;
+  // Filter ONLY COMPLETED orders
+  const completedOrders = orders.filter(o => o.status === "COMPLETED");
 
-    // Filter by date range (mock logic, should use proper timestamps in prod)
-    if (fromDate || toDate) {
-      // In a real app with proper timestamps, we would convert completedAt to Date and compare:
-      // const taskDate = new Date(t.completedAt).getTime();
-      // const start = fromDate ? new Date(fromDate).getTime() : 0;
-      // const end = toDate ? new Date(toDate).setHours(23, 59, 59, 999) : Infinity;
-      // if (taskDate < start || taskDate > end) return false;
+  const filteredOrders = completedOrders.filter((o) => {
+    if (activeFilter === "Hàng khách đặt" && !o.isCustomOrder) return false;
+    if (activeFilter === "Hàng mộc" && o.isCustomOrder) return false;
 
-      // For mock data, we just check if it matches basic string formats
-      // This is a placeholder since mock data dates are strings like "14:30 Hôm nay"
-      const taskDateStr = t.completedAt.toLowerCase();
-
-      if (fromDate) {
-        const dObj = new Date(fromDate);
-        const df = `${String(dObj.getDate()).padStart(2, "0")}/${String(dObj.getMonth() + 1).padStart(2, "0")}`;
-        // Very basic mock check: if user picked a fromDate, tasks not mentioning it or generic terms are excluded (Demo only)
-        if (
-          !taskDateStr.includes(df) &&
-          !taskDateStr.includes("hôm nay") &&
-          !taskDateStr.includes("hôm qua")
-        ) {
-          return false;
-        }
-      }
-      if (toDate) {
-        const dObj = new Date(toDate);
-        const df = `${String(dObj.getDate()).padStart(2, "0")}/${String(dObj.getMonth() + 1).padStart(2, "0")}`;
-        if (
-          !taskDateStr.includes(df) &&
-          !taskDateStr.includes("hôm nay") &&
-          !taskDateStr.includes("hôm qua")
-        ) {
-          return false;
-        }
-      }
-    }
-
-    // Filter by search term
     if (!searchTerm.trim()) return true;
     const q = searchTerm.toLowerCase();
     return (
-      t.productName.toLowerCase().includes(q) ||
-      t.orderCode.toLowerCase().includes(q) ||
-      t.id.toLowerCase().includes(q)
+      o.id.toLowerCase().includes(q) ||
+      o.customerName.toLowerCase().includes(q) ||
+      o.items.some((item) => item.productName.toLowerCase().includes(q))
     );
   });
 
-
-  const totalPages = Math.ceil(filteredTasks.length / itemsPerPage);
-  const paginatedTasks = filteredTasks.slice(
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const paginatedOrders = filteredOrders.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+    currentPage * itemsPerPage
   );
-
-  const openTask = (task) => {
-    navigate(`/worker/completed/${task.id}`, { state: { task } });
-  };
 
   return (
     <div
@@ -246,12 +180,12 @@ export default function WorkerCompleted() {
             style={{ color: "var(--text-placeholder)" }}
           >
             Tuyệt vời! Bạn đã hoàn thành{" "}
-            <span className="text-green-600 font-bold">{tasks.length}</span>{" "}
-            công việc gần đây.
+            <span className="text-green-600 font-bold">{completedOrders.length}</span>{" "}
+            đơn hàng gần đây.
           </p>
         </div>
 
-        {/* Date Filters (Moved to header right side for better layout match) */}
+        {/* Filters */}
         <div
           className="flex gap-1 bg-white p-1 rounded-lg border shadow-sm shrink-0"
           style={{ borderColor: "var(--grid-border)" }}
@@ -295,7 +229,7 @@ export default function WorkerCompleted() {
             />
             <input
               type="text"
-              placeholder="Tìm tên sản phẩm, mã ĐH..."
+              placeholder="Tìm mã ĐH, tên KH, sản phẩm..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
@@ -317,7 +251,7 @@ export default function WorkerCompleted() {
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <div
-              className="flex items-center gap-1 border rounded-lg bg-[var(--bg-main)] focus-within:ring-2 focus-within:ring-blue-500/20 transition-all px-1"
+              className="flex items-center gap-1 border rounded-lg bg-[var(--bg-main)] focus-within:ring-2 focus-within:ring-green-500/20 transition-all px-1"
               style={{ borderColor: "var(--grid-border)" }}
             >
               <input
@@ -332,7 +266,7 @@ export default function WorkerCompleted() {
             <span className="text-[13px] text-gray-400 font-medium">đến</span>
 
             <div
-              className="flex items-center gap-1 border rounded-lg bg-[var(--bg-main)] focus-within:ring-2 focus-within:ring-blue-500/20 transition-all px-1"
+              className="flex items-center gap-1 border rounded-lg bg-[var(--bg-main)] focus-within:ring-2 focus-within:ring-green-500/20 transition-all px-1"
               style={{ borderColor: "var(--grid-border)" }}
             >
               <input
@@ -361,7 +295,7 @@ export default function WorkerCompleted() {
 
         {/* Table Content */}
         <div className="flex-1 overflow-y-auto">
-          <table className="w-full text-left relative">
+          <table className="w-full text-left relative" style={{ borderCollapse: 'collapse' }}>
             <thead
               className="sticky top-0 z-10"
               style={{
@@ -372,16 +306,18 @@ export default function WorkerCompleted() {
               <tr>
                 {[
                   "#",
-                  "Sản phẩm",
                   "Mã ĐH",
-                  "Ngày bắt đầu",
-                  "Hạn chót",
-                  "Thời gian hoàn thành",
+                  "Khách hàng",
+                  "Ngày đặt hàng",
+                  "Trạng thái",
+                  "Số lượng",
                   "",
                 ].map((h, i) => (
                   <th
                     key={i}
-                    className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 7 ? "text-right" : ""}`}
+                    className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${
+                      i === 6 ? "text-right" : ""
+                    }`}
                     style={{ color: "var(--text-placeholder)" }}
                   >
                     {h}
@@ -390,123 +326,135 @@ export default function WorkerCompleted() {
               </tr>
             </thead>
             <tbody>
-              {paginatedTasks.map((task, idx) => {
-                const StatusIcon = STATUS_CONFIG[task.status].icon;
+              {paginatedOrders.map((order, idx) => {
+                const isExpanded = expandedOrderId === order.id;
 
                 return (
-                  <tr
-                    key={task.id}
-                    className="hover:bg-gray-50/50 transition-colors cursor-pointer group"
-                    style={{ borderBottom: "1px solid var(--grid-border)" }}
-                    onClick={() => openTask(task)}
-                  >
-                    <td
-                      className="px-4 py-3 text-[12px] font-medium"
-                      style={{ color: "var(--text-placeholder)" }}
+                  <React.Fragment key={order.id}>
+                    <tr
+                      className={`transition-colors cursor-pointer group hover:bg-gray-50/50`}
+                      style={{ borderBottom: "1px solid var(--grid-border)" }}
+                      onClick={() => toggleOrder(order.id)}
                     >
-                      {(currentPage - 1) * itemsPerPage + idx + 1}
-                    </td>
-
-                    {/* Product Name & Image */}
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border overflow-hidden"
-                          style={{
-                            borderColor: "var(--grid-border)",
-                            backgroundColor: "var(--bg-main)",
-                          }}
-                        >
-                          <img
-                            src={task.image}
-                            alt={task.productName}
-                            className="w-full h-full object-cover grayscale-[20%]"
-                          />
-                        </div>
-                        <div>
-                          <p
-                            className="text-[13px] font-semibold group-hover:text-blue-600 transition-colors"
-                            style={{ color: "var(--text-main)" }}
-                          >
-                            {task.productName}
-                          </p>
-                          <p
-                            className="text-[10px] font-mono tracking-wide mt-0.5"
-                            style={{ color: "var(--text-placeholder)" }}
-                          >
-                            #{task.id}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Origin / Order Code */}
-                    <td className="px-4 py-3">
-                      <p
-                        className="text-[14px] font-bold font-mono tracking-wide"
-                        style={{ color: "var(--text-main)" }}
+                      <td
+                        className="px-4 py-4 text-[12px] font-medium"
+                        style={{ color: "var(--text-placeholder)" }}
                       >
-                        {task.orderCode}
-                      </p>
-                    </td>
+                        {(currentPage - 1) * itemsPerPage + idx + 1}
+                      </td>
 
+                      <td className="px-4 py-4">
+                        <p
+                          className="text-[14px] font-bold font-mono tracking-wide flex items-center gap-2 group-hover:text-green-600 transition-colors"
+                          style={{ color: "var(--text-main)" }}
+                        >
+                          {order.id}
+                        </p>
+                      </td>
 
-                    {/* Start Date */}
-                    <td className="px-4 py-3">
-                      {task.startedAt ? (
+                      <td className="px-4 py-4">
+                        <span
+                          className="text-[13px] font-semibold"
+                          style={{ color: "var(--text-main)" }}
+                        >
+                          {order.customerName}
+                        </span>
+                      </td>
+
+                      <td className="px-4 py-4">
                         <span
                           className="text-[12px] font-medium"
                           style={{ color: "var(--text-main)" }}
                         >
-                          {task.startedAt}
+                          {order.orderDate}
                         </span>
-                      ) : (
-                        <span
-                          className="text-[12px]"
-                          style={{ color: "var(--text-placeholder)" }}
+                      </td>
+
+                      <td className="px-4 py-4">
+                        <div
+                          className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-bold border bg-green-50 text-green-600 border-green-100`}
                         >
-                          —
+                          <CheckCircle2 size={12}/>
+                          ĐÃ HOÀN THÀNH
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-4">
+                        <span
+                          className="text-[12px] font-semibold px-2.5 py-1 bg-gray-100/80 rounded-md border"
+                          style={{
+                            color: "var(--text-main)",
+                            borderColor: "var(--grid-border)",
+                          }}
+                        >
+                          {order.items.length} SP
                         </span>
-                      )}
-                    </td>
+                      </td>
 
-                    {/* Deadline */}
-                    <td className="px-4 py-3">
-                      <span
-                        className="text-[12px] font-semibold"
-                        style={{ color: "var(--text-main)" }}
-                      >
-                        {task.deadline || "—"}
-                      </span>
-                    </td>
+                      <td className="px-4 py-4 text-right">
+                        <button
+                          className={`p-1.5 rounded-full transition-colors inline-flex items-center justify-center ${
+                            isExpanded
+                              ? "bg-green-100 text-green-600"
+                              : "text-gray-400 group-hover:bg-gray-200 group-hover:text-gray-700"
+                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleOrder(order.id);
+                          }}
+                        >
+                          <ChevronDown
+                            className={`transition-transform duration-300 ${
+                              isExpanded ? "rotate-180" : ""
+                            }`}
+                            size={18}
+                          />
+                        </button>
+                      </td>
+                    </tr>
 
-                    {/* Time */}
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-bold bg-green-50 text-green-700 border border-green-100 w-fit">
-                        <StatusIcon size={12} />
-                        {task.completedAt}
-                      </div>
-                    </td>
-
-                    {/* Action */}
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        className={`px-3 py-1.5 rounded-md font-semibold text-[12px] transition-colors bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openTask(task);
-                        }}
-                      >
-                        Xem Lại
-                      </button>
-                    </td>
-                  </tr>
+                    {/* Expandable Content inside Table Row */}
+                    <tr>
+                      <td colSpan={7} className="p-0 border-0">
+                        <div
+                          className={`grid transition-all duration-300 ease-in-out ${
+                            isExpanded
+                              ? "grid-rows-[1fr] opacity-100 border-b"
+                              : "grid-rows-[0fr] opacity-0"
+                          }`}
+                          style={{ borderColor: "var(--grid-border)" }}
+                        >
+                          <div className="overflow-hidden">
+                            <div className="bg-gray-50/50 px-6 py-4 shrink-0" style={{ boxShadow: "inset 0 4px 6px -4px rgba(0,0,0,0.05)" }}>
+                              <h4
+                                className="text-[11px] font-bold uppercase tracking-wider mb-3 pl-1"
+                                style={{ color: "var(--text-placeholder)" }}
+                              >
+                                Danh sách sản phẩm hoàn thành (# {order.id})
+                              </h4>
+                              <div
+                                className="bg-white border rounded-xl shadow-sm p-2 flex flex-col"
+                                style={{ borderColor: "var(--grid-border)" }}
+                              >
+                                {order.items.filter((item) => item.status === "COMPLETED").map((item) => (
+                                  <OrderItemRow
+                                    key={item.id}
+                                    item={item}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </React.Fragment>
                 );
               })}
 
-              {paginatedTasks.length === 0 && (
+              {paginatedOrders.length === 0 && (
                 <tr>
-                  <td colSpan="8" className="py-24 text-center">
+                  <td colSpan="7" className="py-24 text-center">
                     <div
                       className="flex flex-col items-center gap-2"
                       style={{ color: "var(--text-placeholder)" }}
@@ -519,13 +467,13 @@ export default function WorkerCompleted() {
                       </div>
                       <p className="text-sm font-medium mt-1">
                         {searchTerm
-                          ? `Không tìm thấy kết quả cho "${searchTerm}"`
-                          : "Chưa có công việc nào hoàn thành"}
+                          ? `Không tìm thấy đơn hàng hoàn thành cho "${searchTerm}"`
+                          : "Chưa có đơn hàng nào hoàn thành"}
                       </p>
                       {searchTerm && (
                         <button
                           onClick={() => setSearchTerm("")}
-                          className="text-[13px] font-medium cursor-pointer"
+                          className="text-[13px] font-medium cursor-pointer transition-colors hover:underline"
                           style={{ color: "var(--brand-primary)" }}
                         >
                           Xóa bộ lọc
@@ -540,7 +488,7 @@ export default function WorkerCompleted() {
         </div>
 
         {/* Pagination Footer */}
-        {filteredTasks.length > 0 && (
+        {filteredOrders.length > 0 && (
           <div
             className="flex items-center justify-between px-6 py-3 border-t shrink-0"
             style={{
@@ -554,12 +502,11 @@ export default function WorkerCompleted() {
             >
               Tổng số bản ghi:{" "}
               <span className="font-bold" style={{ color: "var(--text-main)" }}>
-                {filteredTasks.length}
+                {filteredOrders.length}
               </span>
             </div>
 
             <div className="flex items-center gap-6">
-              {/* Items per page indicator */}
               <div className="flex items-center gap-2">
                 <span
                   className="text-[13px]"
@@ -591,7 +538,6 @@ export default function WorkerCompleted() {
                 </select>
               </div>
 
-              {/* Range Info */}
               <div
                 className="text-[13px]"
                 style={{ color: "var(--text-secondary)" }}
@@ -601,12 +547,11 @@ export default function WorkerCompleted() {
                   style={{ color: "var(--text-main)" }}
                 >
                   {(currentPage - 1) * itemsPerPage + 1} -{" "}
-                  {Math.min(currentPage * itemsPerPage, filteredTasks.length)}
+                  {Math.min(currentPage * itemsPerPage, filteredOrders.length)}
                 </span>{" "}
                 bản ghi
               </div>
 
-              {/* Arrows */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}

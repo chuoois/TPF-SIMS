@@ -6,7 +6,7 @@
 import {
     X, Package, Tag, Layers, Palette, Ruler, MapPin,
     BarChart2, DollarSign, CheckCircle, Hammer, Users,
-    Image as ImageIcon, TrendingDown, TrendingUp, ArrowDownToLine, AlertTriangle,
+    Image as ImageIcon, TrendingDown, TrendingUp, ArrowDownToLine,
 } from "lucide-react";
 
 // ── Helpers ──────────────────────────────────────────────
@@ -44,39 +44,21 @@ const InfoRow = ({ icon: Icon, label, value, valueStyle }) => (
             <p className="text-[10px] font-bold uppercase tracking-widest mb-0.5"
                 style={{ color: "var(--text-placeholder)" }}>{label}</p>
             <p className="text-[13px] font-semibold break-words" style={{ color: "var(--text-main)", ...valueStyle }}>
-                {value || "—"}
+                {value != null && value !== "" ? value : "—"}
             </p>
         </div>
     </div>
 );
 
-// ── Bundle Items Table ───────────────────────────────────
-function BundleItemsTable({ items, bundlePrice }) {
-    const estimatedTotal = items.reduce((s, it) => s + (Number(it.qty) || 0) * (Number(it.unitPrice) || 0), 0);
-    const diff = estimatedTotal - (Number(bundlePrice) || 0);
-    const isMatch = estimatedTotal > 0 && Math.abs(diff) === 0;
-
+// ── Bundle Items Table ──────────────────────────────────────
+function BundleItemsTable({ items }) {
     return (
         <div className="rounded-xl overflow-hidden" style={{ border: "2px solid #7C3AED", margin: "0 24px" }}>
             {/* Header */}
-            <div className="px-4 py-2.5 flex items-center justify-between" style={{ backgroundColor: "#F5F3FF" }}>
+            <div className="px-4 py-2.5" style={{ backgroundColor: "#F5F3FF" }}>
                 <p className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "#7C3AED" }}>
                     <Layers size={12} /> Các món lẻ trong bộ
                 </p>
-                {estimatedTotal > 0 && bundlePrice && (
-                    isMatch ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                            style={{ backgroundColor: "#F0FDF4", color: "#15803D", border: "1px solid #BBF7D0" }}>
-                            <CheckCircle size={10} /> Khớp HĐ
-                        </span>
-                    ) : (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                            style={{ backgroundColor: "#FFFBEB", color: "#D97706", border: "1px solid #FDE68A" }}>
-                            <AlertTriangle size={10} />
-                            {diff > 0 ? "+" : ""}{fmtCurrency(Math.abs(diff))} chênh lệch
-                        </span>
-                    )
-                )}
             </div>
 
             {/* Table */}
@@ -86,43 +68,25 @@ function BundleItemsTable({ items, bundlePrice }) {
                         <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-wider w-8" style={{ color: "#7C3AED" }}>#</th>
                         <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-wider" style={{ color: "#7C3AED" }}>Tên món</th>
                         <th className="px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider w-20" style={{ color: "#7C3AED" }}>SL</th>
-                        <th className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider w-40" style={{ color: "#7C3AED" }}>Giá ước tính/đv</th>
-                        <th className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider w-36" style={{ color: "#7C3AED" }}>Thành tiền</th>
+                        <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider" style={{ color: "#7C3AED" }}>Ghi chú chi tiết</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {items.map((item, idx) => {
-                        const sub = (Number(item.qty) || 0) * (Number(item.unitPrice) || 0);
-                        return (
-                            <tr key={item._id || idx} style={{ borderBottom: "1px solid #F3F0FF" }}>
-                                <td className="px-4 py-2.5 text-[12px] font-semibold" style={{ color: "#7C3AED" }}>{idx + 1}</td>
-                                <td className="px-4 py-2.5 text-[13px] font-semibold" style={{ color: "var(--text-main)" }}>{item.name}</td>
-                                <td className="px-3 py-2.5 text-center">
-                                    <span className="text-[12px] font-bold px-2 py-0.5 rounded-lg" style={{ backgroundColor: "#EDE9FE", color: "#7C3AED" }}>
-                                        x{item.qty}
-                                    </span>
-                                </td>
-                                <td className="px-3 py-2.5 text-right text-[12px]" style={{ color: "var(--text-secondary)" }}>
-                                    {item.unitPrice ? fmtCurrency(item.unitPrice) : <span style={{ color: "var(--text-placeholder)" }}>Chưa có</span>}
-                                </td>
-                                <td className="px-3 py-2.5 text-right text-[12px] font-bold" style={{ color: sub > 0 ? "#5B21B6" : "var(--text-placeholder)" }}>
-                                    {sub > 0 ? fmtCurrency(sub) : "—"}
-                                </td>
-                            </tr>
-                        );
-                    })}
+                    {items.map((item, idx) => (
+                        <tr key={item._id || idx} style={{ borderBottom: "1px solid #F3F0FF" }}>
+                            <td className="px-4 py-2.5 text-[12px] font-semibold" style={{ color: "#7C3AED" }}>{idx + 1}</td>
+                            <td className="px-4 py-2.5 text-[13px] font-semibold" style={{ color: "var(--text-main)" }}>{item.name}</td>
+                            <td className="px-3 py-2.5 text-center">
+                                <span className="text-[12px] font-bold px-2 py-0.5 rounded-lg" style={{ backgroundColor: "#EDE9FE", color: "#7C3AED" }}>
+                                    x{item.qty}
+                                </span>
+                            </td>
+                            <td className="px-3 py-2.5 text-[12px] italic" style={{ color: item.productNote ? "var(--text-secondary)" : "var(--text-placeholder)" }}>
+                                {item.productNote || "—"}
+                            </td>
+                        </tr>
+                    ))}
                 </tbody>
-                {/* Footer tổng */}
-                <tfoot>
-                    <tr style={{ borderTop: "1px solid #DDD6FE" }}>
-                        <td colSpan={4} className="px-4 py-2.5 text-right text-[11px] font-bold" style={{ color: "#7C3AED" }}>
-                            Tổng ước tính
-                        </td>
-                        <td className="px-3 py-2.5 text-right text-[13px] font-black" style={{ color: "#7C3AED" }}>
-                            {fmtCurrency(estimatedTotal)}
-                        </td>
-                    </tr>
-                </tfoot>
             </table>
         </div>
     );
@@ -178,6 +142,11 @@ export default function ViewProductModal({ product, onClose }) {
                         style={{ color: cfg.text }}>
                         {product.name}
                     </h2>
+                    {product.bundleCode && (
+                        <p className="text-[11px] font-mono mt-1 opacity-70" style={{ color: cfg.text }}>
+                            {product.bundleCode}
+                        </p>
+                    )}
                 </div>
 
                 {/* ── Scrollable Body ── */}
@@ -250,7 +219,7 @@ export default function ViewProductModal({ product, onClose }) {
                     {/* ── Bundle Items Table ── */}
                     {isBundle && (
                         <div className="py-4">
-                            <BundleItemsTable items={product.items} bundlePrice={product.bundlePrice || product.importPrice} />
+                            <BundleItemsTable items={product.items} />
                         </div>
                     )}
 

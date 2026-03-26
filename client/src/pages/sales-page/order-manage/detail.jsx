@@ -976,76 +976,47 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
             ),
           )}
           {/* Breakdown Rows */}
-          {o.processingFee !== undefined ? (
-            <>
-              <tr>
-                <td
-                  colSpan={5}
-                  style={{
-                    border: "1px solid #d32f2f",
-                    padding: "6px 8px",
-                    textAlign: "right",
-                    color: "#d32f2f",
-                    fontSize: 13,
-                  }}
-                >
-                  PHÍ GIA CÔNG:
-                </td>
-                <td
-                  style={{
-                    border: "1px solid #d32f2f",
-                    padding: "6px 8px",
-                    textAlign: "right",
-                    color: "blue",
-                    fontFamily: "'Caveat', 'Dancing Script', cursive, serif",
-                    fontSize: 16,
-                  }}
-                >
-                  {fmtCurrency(o.processingFee)}
-                </td>
-              </tr>
-              <tr>
-                <td
-                  colSpan={5}
-                  style={{
-                    border: "1px solid #d32f2f",
-                    padding: "6px 8px",
-                    textAlign: "right",
-                    color: "#d32f2f",
-                    fontWeight: "bold",
-                    fontSize: 14,
-                  }}
-                >
-                  CỘNG
-                </td>
-                <td
-                  style={{
-                    border: "1px solid #d32f2f",
-                    padding: "6px 8px",
-                    textAlign: "right",
-                    color: "blue",
-                    fontFamily: "'Caveat', 'Dancing Script', cursive, serif",
-                    fontSize: 18,
-                    fontWeight: "bold",
-                  }}
-                >
-                  {fmtCurrency(displayTotal)}
-                </td>
-              </tr>
-            </>
-          ) : (
+          <tr>
+            <td
+              colSpan={5}
+              style={{
+                border: "1px solid #d32f2f",
+                padding: "6px 8px",
+                textAlign: "right",
+                color: "#d32f2f",
+                fontWeight: "bold",
+                fontSize: 14,
+              }}
+            >
+              CỘNG
+            </td>
+            <td
+              style={{
+                border: "1px solid #d32f2f",
+                padding: "6px 8px",
+                textAlign: "right",
+                color: "blue",
+                fontFamily: "'Caveat', 'Dancing Script', cursive, serif",
+                fontSize: 18,
+                fontWeight: "bold",
+              }}
+            >
+              {fmtCurrency(displayTotal + (o.discount || 0))}
+            </td>
+          </tr>
+          {o.discount > 0 && (
             <tr>
               <td
                 colSpan={5}
                 style={{
                   border: "1px solid #d32f2f",
                   padding: "6px 8px",
-                  textAlign: "center",
+                  textAlign: "right",
                   color: "#d32f2f",
-                  fontWeight: "normal",
+                  fontSize: 13,
                 }}
               >
-                CỘNG
+                CHIẾT KHẤU:
               </td>
               <td
                 style={{
@@ -1057,7 +1028,93 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
                   fontSize: 16,
                 }}
               >
-                {fmtCurrency(displayTotal)}
+                - {fmtCurrency(o.discount)}
+              </td>
+            </tr>
+          )}
+          <tr>
+            <td
+              colSpan={5}
+              style={{
+                border: "1px solid #d32f2f",
+                padding: "6px 8px",
+                textAlign: "right",
+                color: "#d32f2f",
+                fontWeight: "bold",
+                fontSize: 14,
+              }}
+            >
+              TỔNG CỘNG
+            </td>
+            <td
+              style={{
+                border: "1px solid #d32f2f",
+                padding: "6px 8px",
+                textAlign: "right",
+                color: "blue",
+                fontFamily: "'Caveat', 'Dancing Script', cursive, serif",
+                fontSize: 18,
+                fontWeight: "bold",
+              }}
+            >
+              {fmtCurrency(displayTotal)}
+            </td>
+          </tr>
+          {o.deposit > 0 && (
+            <tr>
+              <td
+                colSpan={5}
+                style={{
+                  border: "1px solid #d32f2f",
+                  padding: "6px 8px",
+                  textAlign: "right",
+                  color: "#d32f2f",
+                  fontSize: 13,
+                }}
+              >
+                TẠM ỨNG / ĐẶT CỌC:
+              </td>
+              <td
+                style={{
+                  border: "1px solid #d32f2f",
+                  padding: "6px 8px",
+                  textAlign: "right",
+                  color: "blue",
+                  fontFamily: "'Caveat', 'Dancing Script', cursive, serif",
+                  fontSize: 16,
+                }}
+              >
+                {fmtCurrency(o.deposit)}
+              </td>
+            </tr>
+          )}
+          {o.deposit > 0 && (
+            <tr>
+              <td
+                colSpan={5}
+                style={{
+                  border: "1px solid #d32f2f",
+                  padding: "6px 8px",
+                  textAlign: "right",
+                  color: "#d32f2f",
+                  fontWeight: "bold",
+                  fontSize: 14,
+                }}
+              >
+                CÒN LẠI PHẢI THANH TOÁN
+              </td>
+              <td
+                style={{
+                  border: "1px solid #d32f2f",
+                  padding: "6px 8px",
+                  textAlign: "right",
+                  color: "blue",
+                  fontFamily: "'Caveat', 'Dancing Script', cursive, serif",
+                  fontSize: 18,
+                  fontWeight: "bold",
+                }}
+              >
+                {fmtCurrency(displayTotal - (o.deposit || 0))}
               </td>
             </tr>
           )}
@@ -1077,7 +1134,7 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
             textTransform: "uppercase",
           }}
         >
-          THÀNH TIỀN BẰNG CHỮ:
+          {o.deposit > 0 ? "CÒN LẠI BẰNG CHỮ:" : "THÀNH TIỀN BẰNG CHỮ:"}
         </span>
         <span
           style={{

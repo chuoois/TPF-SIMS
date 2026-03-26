@@ -1,20 +1,107 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Search,
-  Filter,
-  MoreHorizontal,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   X,
   LayoutDashboard,
+  Info,
+  ChevronRight as ChevronRightIcon,
 } from "lucide-react";
-import { MOCK_TASKS, STATUS_CONFIG } from "../mock";
+import { toast } from "react-hot-toast";
+import { getOrders, STATUS_CONFIG } from "../mock";
+
+const OrderItemRow = ({ item }) => {
+  const navigate = useNavigate();
+  const config = STATUS_CONFIG[item.status] || STATUS_CONFIG.WAITING;
+  const StatusIcon = config.icon || LayoutDashboard;
+
+  return (
+    <div
+      onClick={() => navigate(`/worker/dashboard/${item.id}`)}
+      className="flex flex-col sm:flex-row items-start sm:items-center gap-4 py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50/100 transition-colors px-3 rounded-lg cursor-pointer group"
+    >
+      <div
+        className="h-16 w-16 rounded-xl overflow-hidden shrink-0 border bg-white"
+        style={{ borderColor: "var(--grid-border)" }}
+      >
+        <img
+          src={item.picture}
+          alt={item.productName}
+          className="h-full w-full object-cover group-hover:scale-105 transition-transform"
+        />
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-1 gap-2">
+          <h4
+            className="text-[13px] font-semibold truncate group-hover:text-[var(--brand-primary)] transition-colors"
+            style={{ color: "var(--text-main)" }}
+          >
+            {item.productName}
+          </h4>
+          <span className={`px-2.5 py-1 ${config.color} rounded-full text-[11px] font-bold border flex items-center gap-1 w-fit`}>
+            <StatusIcon size={12} className={(item.status === 'SANDING' || item.status === 'PAINTING') ? 'animate-pulse' : ''} />
+            {config.label}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-1 gap-x-4 text-[12px] mt-1.5" style={{ color: "var(--text-secondary)" }}>
+          <div className="flex items-center gap-1">
+            <strong className="font-semibold" style={{ color: "var(--text-main)" }}>Kích thước:</strong> {item.size}
+          </div>
+          <div className="flex items-center gap-1">
+            <strong className="font-semibold" style={{ color: "var(--text-main)" }}>Loại:</strong> {item.type}
+          </div>
+          <div className="flex items-center gap-1">
+            <strong className="font-semibold" style={{ color: "var(--text-main)" }}>Màu sắc:</strong> {item.color}
+          </div>
+          <div className="flex items-center gap-1">
+            <strong className="font-semibold" style={{ color: "var(--text-main)" }}>Số lượng:</strong> x{item.quantity}
+          </div>
+        </div>
+
+        {(item.startedAt || item.deadline) && (
+           <div className="mt-2 flex flex-wrap gap-4 text-[11px] font-medium" style={{ color: "var(--text-secondary)" }}>
+             {item.startedAt && <span><strong style={{ color: "var(--text-main)" }}>Ngày làm:</strong> {item.startedAt}</span>}
+             {item.deadline && <span><strong style={{ color: "var(--text-main)" }}>Hạn chót:</strong> {item.deadline}</span>}
+           </div>
+        )}
+
+        {item.note && (
+          <div className="mt-2 text-[11px] flex items-start gap-1.5 text-orange-600 bg-orange-50 px-2 py-1.5 rounded-md border border-orange-100 w-fit max-w-full">
+            <Info size={14} className="shrink-0 mt-0.5" />
+            <span className="truncate">{item.note}</span>
+          </div>
+        )}
+      </div>
+
+      <div className="shrink-0 w-full sm:w-auto mt-2 sm:mt-0 flex justify-end">
+        <button
+          className="px-3 py-1.5 text-[12px] font-bold rounded-lg border text-gray-500 bg-white group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors flex items-center gap-1"
+          style={{ borderColor: "var(--grid-border)" }}
+        >
+          Chi tiết trạng thái
+          <ChevronRightIcon size={14} className="ml-0.5" />
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export default function WorkerDashboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [tasks, setTasks] = useState([]);
+  
+  const [orders, setOrders] = useState([]);
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
+
+  useEffect(() => {
+    // Fetch global mock state so returning from Detail Page reflects updates
+    setOrders(getOrders());
+  }, []);
 
   const activeFilter = searchParams.get("filter") || "Tất cả";
   const searchTerm = searchParams.get("search") || "";
@@ -30,7 +117,6 @@ export default function WorkerDashboard() {
         newParams.delete(key);
       }
     });
-    // Reset page to 1 if filters change
     if (!updates.page && (updates.filter || updates.search)) {
       newParams.set("page", "1");
     }
@@ -42,109 +128,30 @@ export default function WorkerDashboard() {
   const setCurrentPage = (p) => updateParams({ page: p.toString() });
   const setItemsPerPage = (sp) => updateParams({ perPage: sp.toString() });
 
-  useEffect(() => {
-    setTasks(MOCK_TASKS);
-  }, []);
-
-  const openTask = (taskId) => {
-    navigate(`/worker/dashboard/${taskId}`);
-  };
-
-  const getPrimaryAction = (status) => {
-    switch (status) {
-      case "WAITING":
-      case "REWORK":
-        return {
-          label: "Bắt đầu làm",
-          color: "bg-blue-600 hover:bg-blue-700 text-white",
-        };
-      case "SANDING":
-      case "PAINTING":
-        return {
-          label: "Tiếp tục",
-          color: "bg-green-500 hover:bg-green-600 text-white",
-        };
-      case "QC_PENDING":
-        return {
-          label: "Đang kiểm duyệt",
-          color: "bg-orange-50 text-orange-600 cursor-default",
-          disabled: true,
-        };
-      case "OWNER_PENDING":
-        return {
-          label: "Chờ chủ duyệt",
-          color: "bg-amber-50 text-amber-600 cursor-default",
-          disabled: true,
-        };
-      case "COMPLETED":
-        return {
-          label: "Đã hoàn thành",
-          color: "bg-gray-100 text-gray-500 cursor-default",
-          disabled: true,
-        };
-      default:
-        return {
-          label: "Xem chi tiết",
-          color: "bg-blue-600 hover:bg-blue-700 text-white",
-        };
-    }
+  const toggleOrder = (orderId) => {
+    setExpandedOrderId((prev) => (prev === orderId ? null : orderId));
   };
 
   const filters = ["Tất cả", "Hàng khách đặt", "Hàng mộc"];
 
-  // Filter tasks
-  const filteredTasks = tasks.filter((t) => {
-    // Filter by order type
-    if (activeFilter === "Hàng khách đặt" && !t.isCustomOrder) return false;
-    if (activeFilter === "Hàng mộc" && t.isCustomOrder) return false;
+  // Filter orders
+  const filteredOrders = orders.filter((o) => {
+    if (activeFilter === "Hàng khách đặt" && !o.isCustomOrder) return false;
+    if (activeFilter === "Hàng mộc" && o.isCustomOrder) return false;
 
-    // Filter by search term
     if (!searchTerm.trim()) return true;
     const q = searchTerm.toLowerCase();
     return (
-      t.productName.toLowerCase().includes(q) ||
-      t.orderCode.toLowerCase().includes(q) ||
-      t.id.toLowerCase().includes(q)
+      o.id.toLowerCase().includes(q) ||
+      o.customerName.toLowerCase().includes(q) ||
+      o.items.some((item) => item.productName.toLowerCase().includes(q))
     );
   });
 
-  const getDeadlineStyle = (urgency) => {
-    switch (urgency) {
-      case "DANGER":
-        return {
-          bg: "rgba(229,72,77,0.08)",
-          color: "#e5484d",
-          border: "rgba(229,72,77,0.2)",
-          label: "Quá hạn",
-        };
-      case "URGENT":
-        return {
-          bg: "rgba(245,158,11,0.08)",
-          color: "#d97706",
-          border: "rgba(245,158,11,0.2)",
-          label: "Gấp",
-        };
-      case "WARNING":
-        return {
-          bg: "rgba(67,104,224,0.08)",
-          color: "#4368E0",
-          border: "rgba(67,104,224,0.2)",
-          label: "Sắp tới hạn",
-        };
-      default:
-        return {
-          bg: "rgba(158,158,158,0.1)",
-          color: "var(--text-secondary)",
-          border: "var(--grid-border)",
-          label: "Bình thường",
-        };
-    }
-  };
-
-  const totalPages = Math.ceil(filteredTasks.length / itemsPerPage);
-  const paginatedTasks = filteredTasks.slice(
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const paginatedOrders = filteredOrders.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   return (
@@ -165,10 +172,10 @@ export default function WorkerDashboard() {
             className="text-[13px] mt-0.5"
             style={{ color: "var(--text-placeholder)" }}
           >
-            {filteredTasks.length} công việc cần xử lý
+            {filteredOrders.length} đơn hàng cần xử lý
           </p>
         </div>
-        {/* Date Filters (Moved to header right side for better layout match) */}
+        {/* Filters */}
         <div
           className="flex gap-1 bg-white p-1 rounded-lg border shadow-sm shrink-0"
           style={{ borderColor: "var(--grid-border)" }}
@@ -212,7 +219,7 @@ export default function WorkerDashboard() {
             />
             <input
               type="text"
-              placeholder="Tìm tên sản phẩm, mã ĐH..."
+              placeholder="Tìm mã ĐH, tên KH, sản phẩm..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
@@ -234,9 +241,9 @@ export default function WorkerDashboard() {
           </div>
         </div>
 
-        {/* Table Container - Fixed Height Scroll */}
+        {/* Table Container */}
         <div className="flex-1 overflow-y-auto">
-          <table className="w-full text-left relative">
+          <table className="w-full text-left relative" style={{ borderCollapse: 'collapse' }}>
             <thead
               className="sticky top-0 z-10"
               style={{
@@ -247,16 +254,19 @@ export default function WorkerDashboard() {
               <tr>
                 {[
                   "#",
-                  "Sản phẩm",
                   "Mã ĐH",
-                  "Trạng thái",
-                  "Ngày bắt đầu",
+                  "Khách hàng",
+                  "Ngày đặt nội thất",
                   "Hạn chót",
+                  "Trạng thái",
+                  "Số lượng",
                   "",
                 ].map((h, i) => (
                   <th
                     key={i}
-                    className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 7 ? "text-right" : ""}`}
+                    className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${
+                      i === 6 ? "text-right" : ""
+                    }`}
                     style={{ color: "var(--text-placeholder)" }}
                   >
                     {h}
@@ -265,146 +275,175 @@ export default function WorkerDashboard() {
               </tr>
             </thead>
             <tbody>
-              {paginatedTasks.map((task, idx) => {
-                const StatusIcon = STATUS_CONFIG[task.status].icon;
-                const action = getPrimaryAction(task.status);
+              {paginatedOrders.map((order, idx) => {
+                const isExpanded = expandedOrderId === order.id;
 
                 return (
-                  <tr
-                    key={task.id}
-                    className="hover:bg-gray-50/50 transition-colors cursor-pointer group"
-                    style={{ borderBottom: "1px solid var(--grid-border)" }}
-                    onClick={() => openTask(task.id)}
-                  >
-                    <td
-                      className="px-4 py-3 text-[12px] font-medium"
-                      style={{ color: "var(--text-placeholder)" }}
+                  <React.Fragment key={order.id}>
+                    <tr
+                      className={`transition-colors cursor-pointer group ${
+                        isExpanded ? "bg-blue-50/20" : "hover:bg-gray-50/50"
+                      }`}
+                      style={{ borderBottom: "1px solid var(--grid-border)" }}
+                      onClick={() => toggleOrder(order.id)}
                     >
-                      {(currentPage - 1) * itemsPerPage + idx + 1}
-                    </td>
+                      <td
+                        className="px-4 py-4 text-[12px] font-medium"
+                        style={{ color: "var(--text-placeholder)" }}
+                      >
+                        {(currentPage - 1) * itemsPerPage + idx + 1}
+                      </td>
 
-                    {/* Product Name & Image */}
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border overflow-hidden"
-                          style={{
-                            borderColor: "var(--grid-border)",
-                            backgroundColor: "var(--bg-main)",
-                          }}
+                      <td className="px-4 py-4">
+                        <p
+                          className="text-[14px] font-bold font-mono tracking-wide flex items-center gap-2 group-hover:text-blue-600 transition-colors"
+                          style={{ color: "var(--text-main)" }}
                         >
-                          <img
-                            src={task.image}
-                            alt={task.productName}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div>
-                          <p
-                            className="text-[13px] font-semibold group-hover:text-blue-600 transition-colors"
-                            style={{ color: "var(--text-main)" }}
-                          >
-                            {task.productName}
-                          </p>
-                          <p
-                            className="text-[10px] font-mono tracking-wide mt-0.5"
-                            style={{ color: "var(--text-placeholder)" }}
-                          >
-                            #{task.id}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
+                          {order.id}
+                        </p>
+                      </td>
 
-                    <td className="px-4 py-3">
-                      <p
-                        className="text-[14px] font-bold font-mono tracking-wide"
-                        style={{ color: "var(--text-main)" }}
-                      >
-                        {task.orderCode}
-                      </p>
-                    </td>
+                      <td className="px-4 py-4">
+                        <span
+                          className="text-[13px] font-semibold"
+                          style={{ color: "var(--text-main)" }}
+                        >
+                          {order.customerName}
+                        </span>
+                      </td>
 
-
-                    {/* Status */}
-                    <td className="px-4 py-3">
-                      <div
-                        className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-bold border ${
-                          task.status === "QC_PENDING"
-                            ? "bg-orange-50 text-orange-600 border-orange-100"
-                            : task.status === "OWNER_PENDING"
-                              ? "bg-amber-50 text-amber-700 border-amber-100"
-                              : task.status === "REWORK"
-                              ? "bg-red-50 text-red-600 border-red-100"
-                              : task.status === "WAITING"
-                                ? "bg-gray-50 text-gray-600 border-gray-200"
-                                : task.status === "COMPLETED"
-                                  ? "bg-green-50 text-green-600 border-green-100"
-                                  : "bg-blue-50 text-blue-600 border-blue-100"
-                        }`}
-                      >
-                        <StatusIcon size={12} />
-                        {STATUS_CONFIG[task.status].label}
-                      </div>
-                    </td>
-
-                    {/* Start Date */}
-                    <td className="px-4 py-3">
-                      {task.startedAt ? (
+                      <td className="px-4 py-4">
                         <span
                           className="text-[12px] font-medium"
                           style={{ color: "var(--text-main)" }}
                         >
-                          {task.startedAt}
+                          {order.orderDate}
                         </span>
-                      ) : (
-                        <span
-                          className="text-[12px]"
-                          style={{ color: "var(--text-placeholder)" }}
-                        >
-                          —
-                        </span>
-                      )}
-                    </td>
+                      </td>
 
-                    <td className="px-4 py-3">
-                      {task.deadline ? (
-                        <span
-                          className="text-[12px] font-semibold"
-                          style={{ color: "var(--text-main)" }}
-                        >
-                          {task.deadline}
-                        </span>
-                      ) : (
-                        <span
-                          className="text-[12px]"
-                          style={{ color: "var(--text-placeholder)" }}
-                        >
-                          —
-                        </span>
-                      )}
-                    </td>
+                      <td className="px-4 py-4">
+                        {(() => {
+                          const deadlines = order.items
+                            .map((item) => item.deadline)
+                            .filter(Boolean);
+                          if (deadlines.length === 0) return <span className="text-[12px] text-gray-400">Chưa có</span>;
+                          
+                          const sorted = deadlines.sort((a, b) => {
+                            const [da, ma, ya] = a.split("/").map(Number);
+                            const [db, mb, yb] = b.split("/").map(Number);
+                            return new Date(ya, ma - 1, da) - new Date(yb, mb - 1, db);
+                          });
+                          
+                          const earliest = sorted[0];
+                          const [d, m, y] = earliest.split("/").map(Number);
+                          const expiryDate = new Date(y, m - 1, d);
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
 
-                    {/* Action */}
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        disabled={action.disabled}
-                        className={`px-3 py-1.5 rounded-md font-semibold text-[12px] transition-colors ${action.disabled ? "bg-gray-100 text-gray-400" : "bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white"}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!action.disabled) openTask(task.id);
-                        }}
-                      >
-                        {action.label}
-                      </button>
-                    </td>
-                  </tr>
+                          let colorClass = "text-gray-600 bg-gray-50 border-gray-100";
+                          if (diffDays <= 1) colorClass = "text-orange-700 bg-orange-50 border-orange-100 font-bold animate-pulse";
+                          else if (diffDays <= 3) colorClass = "text-amber-700 bg-amber-50 border-amber-100 font-semibold";
+
+                          return (
+                            <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[11px] border ${colorClass}`}>
+                              {earliest}
+                              {diffDays >= 0 && diffDays <= 3 && <span className="text-[9px] uppercase">({diffDays === 0 ? "Hôm nay" : `Còn ${diffDays}n`})</span>}
+                            </div>
+                          );
+                        })()}
+                      </td>
+
+                      <td className="px-4 py-4">
+                        <div
+                          className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-bold border ${
+                            order.status === "COMPLETED"
+                              ? "bg-green-50 text-green-600 border-green-100"
+                              : order.status === "PROCESSING"
+                              ? "bg-blue-50 text-blue-600 border-blue-100"
+                              : "bg-gray-50 text-gray-600 border-gray-200"
+                          }`}
+                        >
+                          {order.status === "PROCESSING" ? "ĐANG XỬ LÝ" : order.status === "COMPLETED" ? "HOÀN THÀNH" : "CHỜ XỬ LÝ"}
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-4">
+                        <span
+                          className="text-[12px] font-semibold px-2.5 py-1 bg-gray-100/80 rounded-md border"
+                          style={{
+                            color: "var(--text-main)",
+                            borderColor: "var(--grid-border)",
+                          }}
+                        >
+                          {order.items.length} SP
+                        </span>
+                      </td>
+
+                      <td className="px-4 py-4 text-right">
+                        <button
+                          className={`p-1.5 rounded-full transition-colors inline-flex items-center justify-center ${
+                            isExpanded
+                              ? "bg-blue-100 text-blue-600"
+                              : "text-gray-400 group-hover:bg-gray-200 group-hover:text-gray-700"
+                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleOrder(order.id);
+                          }}
+                        >
+                          <ChevronDown
+                            className={`transition-transform duration-300 ${
+                              isExpanded ? "rotate-180" : ""
+                            }`}
+                            size={18}
+                          />
+                        </button>
+                      </td>
+                    </tr>
+
+                    {/* Expandable Content inside Table Row */}
+                    <tr>
+                      <td colSpan={7} className="p-0 border-0">
+                        <div
+                          className={`grid transition-all duration-300 ease-in-out ${
+                            isExpanded
+                              ? "grid-rows-[1fr] opacity-100 border-b"
+                              : "grid-rows-[0fr] opacity-0"
+                          }`}
+                          style={{ borderColor: "var(--grid-border)" }}
+                        >
+                          <div className="overflow-hidden">
+                            <div className="bg-gray-50/50 px-6 py-4 shrink-0" style={{ boxShadow: "inset 0 4px 6px -4px rgba(0,0,0,0.05)" }}>
+                              <h4
+                                className="text-[11px] font-bold uppercase tracking-wider mb-3 pl-1"
+                                style={{ color: "var(--text-placeholder)" }}
+                              >
+                                Chi tiết sản phẩm trong đơn (# {order.id})
+                              </h4>
+                              <div
+                                className="bg-white border rounded-xl shadow-sm p-2 flex flex-col"
+                                style={{ borderColor: "var(--grid-border)" }}
+                              >
+                                {order.items.map((item) => (
+                                  <OrderItemRow
+                                    key={item.id}
+                                    item={item}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </React.Fragment>
                 );
               })}
 
-              {paginatedTasks.length === 0 && (
+              {paginatedOrders.length === 0 && (
                 <tr>
-                  <td colSpan="8" className="py-24 text-center">
+                  <td colSpan="7" className="py-24 text-center">
                     <div
                       className="flex flex-col items-center gap-2"
                       style={{ color: "var(--text-placeholder)" }}
@@ -417,13 +456,13 @@ export default function WorkerDashboard() {
                       </div>
                       <p className="text-sm font-medium mt-1">
                         {searchTerm
-                          ? `Không tìm thấy bộ lọc cho "${searchTerm}"`
-                          : "Chưa có công việc nào"}
+                          ? `Không tìm thấy đơn hàng cho "${searchTerm}"`
+                          : "Chưa có đơn hàng nào"}
                       </p>
                       {searchTerm && (
                         <button
                           onClick={() => setSearchTerm("")}
-                          className="text-[13px] font-medium cursor-pointer"
+                          className="text-[13px] font-medium cursor-pointer transition-colors hover:underline"
                           style={{ color: "var(--brand-primary)" }}
                         >
                           Xóa bộ lọc
@@ -438,7 +477,7 @@ export default function WorkerDashboard() {
         </div>
 
         {/* Pagination Footer */}
-        {filteredTasks.length > 0 && (
+        {filteredOrders.length > 0 && (
           <div
             className="flex items-center justify-between px-6 py-3 border-t shrink-0"
             style={{
@@ -452,12 +491,11 @@ export default function WorkerDashboard() {
             >
               Tổng số bản ghi:{" "}
               <span className="font-bold" style={{ color: "var(--text-main)" }}>
-                {filteredTasks.length}
+                {filteredOrders.length}
               </span>
             </div>
 
             <div className="flex items-center gap-6">
-              {/* Items per page indicator */}
               <div className="flex items-center gap-2">
                 <span
                   className="text-[13px]"
@@ -489,7 +527,6 @@ export default function WorkerDashboard() {
                 </select>
               </div>
 
-              {/* Range Info */}
               <div
                 className="text-[13px]"
                 style={{ color: "var(--text-secondary)" }}
@@ -499,12 +536,11 @@ export default function WorkerDashboard() {
                   style={{ color: "var(--text-main)" }}
                 >
                   {(currentPage - 1) * itemsPerPage + 1} -{" "}
-                  {Math.min(currentPage * itemsPerPage, filteredTasks.length)}
+                  {Math.min(currentPage * itemsPerPage, filteredOrders.length)}
                 </span>{" "}
                 bản ghi
               </div>
 
-              {/* Arrows */}
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
