@@ -74,9 +74,9 @@ function BundleLineCard({ line, idx }) {
                     <p className="text-[14px] font-bold" style={{ color: "var(--text-main)" }}>
                         {line.bundleName || "—"}
                     </p>
-                    {line.bundleCode && (
+                    {(line.bundleCode || line.productCode) && (
                         <p className="text-[11px] font-mono mt-0.5" style={{ color: "var(--text-placeholder)" }}>
-                            {line.bundleCode}
+                            Mã SKU: {line.bundleCode || line.productCode}
                         </p>
                     )}
                 </div>
@@ -86,7 +86,7 @@ function BundleLineCard({ line, idx }) {
                     <InfoBlock label="Số bộ" value={line.bundleQty ? `${line.bundleQty} bộ` : "—"} />
                     <InfoBlock label="Giá cả bộ (HĐ)" value={fmtCurrency(line.bundlePrice)} />
                     {line.category && <InfoBlock icon={Layers} label="Danh mục" value={line.category} />}
-                    {line.woodType && <InfoBlock label="Loại gỗ" value={line.woodType} />}
+                    {line.woodType && <InfoBlock label="Chất liệu" value={line.woodType} />}
                     {line.color && <InfoBlock label="Màu sắc" value={line.color} />}
                 </div>
 
@@ -186,11 +186,11 @@ function SingleLineCard({ line, idx }) {
                     </span>
                     <p className="text-[14px] font-bold" style={{ color: "var(--text-main)" }}>{line.productName || "—"}</p>
                     {line.productCode && (
-                        <p className="text-[11px] font-mono mt-0.5" style={{ color: "var(--text-placeholder)" }}>{line.productCode}</p>
+                        <p className="text-[11px] font-mono mt-0.5" style={{ color: "var(--text-placeholder)" }}>Mã SKU: {line.productCode}</p>
                     )}
                 </div>
                 {line.category && <InfoBlock icon={Layers} label="Danh mục" value={line.category} />}
-                {line.woodType && <InfoBlock label="Loại gỗ" value={line.woodType} />}
+                {line.woodType && <InfoBlock label="Chất liệu" value={line.woodType} />}
                 {line.color && <InfoBlock label="Màu sắc" value={line.color} />}
                 {dims && <InfoBlock icon={Ruler} label="Kích thước (cm)" value={`${dims} cm`} />}
                 <InfoBlock label="Số lượng" value={line.qty ? `${line.qty} cái` : "—"} />

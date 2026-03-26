@@ -30,8 +30,8 @@ const INIT_IMPORTS = [
         qty: 5, unitPrice: 38000000, totalPrice: 190000000,
         warehouse: "Kho chính",
         lines: [
-            { _id: 1, isBundle: true, bundleName: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món", productCode: "BO-PK-001", formType: "READY", productType: "FINISHED", category: "Phòng Khách", woodType: "Gỗ Hương", color: "Hương", bundleQty: 3, bundlePrice: 38000000, details: "Bộ 6 món gồm 1 bàn + 4 ghế + 1 ghế chủ", items: [{ _id: 1, name: "Bàn lớn", qty: 1, unitPrice: 14000000 }, { _id: 2, name: "Ghế tựa", qty: 4, unitPrice: 4500000 }, { _id: 3, name: "Ghế chủ", qty: 1, unitPrice: 5500000 }] },
-            { _id: 2, isBundle: true, bundleName: "Bộ bàn ghế Nghê Bảo Đỉnh 4 món", productCode: "BO-PK-002", formType: "NEW", productType: "FINISHED", category: "Phòng Khách", woodType: "Gỗ Hương", color: "Hương", bundleQty: 2, bundlePrice: 28000000, details: "Bộ 4 món", items: [{ _id: 1, name: "Bàn lớn", qty: 1, unitPrice: 10000000 }, { _id: 2, name: "Ghế tựa", qty: 2, unitPrice: 5000000 }, { _id: 3, name: "Ghế chủ", qty: 1, unitPrice: 8000000 }] },
+            { _id: 1, isBundle: true, bundleName: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món", bundleCode: "BO-PK-001", formType: "READY", productType: "FINISHED", category: "Phòng Khách", woodType: "Gỗ Hương", color: "Hương", bundleQty: 3, bundlePrice: 38000000, details: "Bộ 6 món gồm 1 bàn + 4 ghế + 1 ghế chủ", items: [{ _id: 1, name: "Bàn lớn", qty: 1, unitPrice: 14000000 }, { _id: 2, name: "Ghế tựa", qty: 4, unitPrice: 4500000 }, { _id: 3, name: "Ghế chủ", qty: 1, unitPrice: 5500000 }] },
+            { _id: 2, isBundle: true, bundleName: "Bộ bàn ghế Nghê Bảo Đỉnh 4 món", bundleCode: "BO-PK-002", formType: "NEW", productType: "FINISHED", category: "Phòng Khách", woodType: "Gỗ Hương", color: "Hương", bundleQty: 2, bundlePrice: 28000000, details: "Bộ 4 món", items: [{ _id: 1, name: "Bàn lớn", qty: 1, unitPrice: 10000000 }, { _id: 2, name: "Ghế tựa", qty: 2, unitPrice: 5000000 }, { _id: 3, name: "Ghế chủ", qty: 1, unitPrice: 8000000 }] },
         ],
     },
     {
@@ -58,7 +58,7 @@ const INIT_IMPORTS = [
         qty: 4, unitPrice: 32000000, totalPrice: 128000000,
         warehouse: "Kho chính",
         lines: [
-            { _id: 1, isBundle: true, bundleName: "Bộ bàn ăn 8 ghế nguyên khối", productCode: "BO-PA-001", formType: "READY", productType: "FINISHED", category: "Phòng Ăn", woodType: "Gỗ Hương", color: "Hương", bundleQty: 4, bundlePrice: 32000000, details: "Gồm 1 bàn + 8 ghế. Mặt bàn nguyên khối liền.", items: [{ _id: 1, name: "Bàn ăn", qty: 1, unitPrice: 20000000 }, { _id: 2, name: "Ghế ăn", qty: 8, unitPrice: 1500000 }] },
+            { _id: 1, isBundle: true, bundleName: "Bộ bàn ăn 8 ghế nguyên khối", bundleCode: "BO-PA-001", formType: "READY", productType: "FINISHED", category: "Phòng Ăn", woodType: "Gỗ Hương", color: "Hương", bundleQty: 4, bundlePrice: 32000000, details: "Gồm 1 bàn + 8 ghế. Mặt bàn nguyên khối liền.", items: [{ _id: 1, name: "Bàn ăn", qty: 1, unitPrice: 20000000 }, { _id: 2, name: "Ghế ăn", qty: 8, unitPrice: 1500000 }] },
         ],
     },
     {
@@ -85,7 +85,7 @@ const INIT_IMPORTS = [
         qty: 8, unitPrice: 9500000, totalPrice: 76000000,
         warehouse: "Kho chính",
         lines: [
-            { _id: 1, isBundle: true, bundleName: "Hoành phi câu đối chạm rồng", productCode: "BO-PT-002", formType: "NEW", productType: "RAW", category: "Phòng Thờ", woodType: "Gỗ Mít", color: "Trần", bundleQty: 4, bundlePrice: 9500000, details: "Bộ 1 hoành phi + 1 cặp câu đối. Chạm rồng 5 móng, sơn thiếp vàng.", items: [{ _id: 1, name: "Hoành phi", qty: 1, unitPrice: 4000000 }, { _id: 2, name: "Câu đối chạm rồng", qty: 2, unitPrice: 2750000 }] },
+            { _id: 1, isBundle: true, bundleName: "Hoành phi câu đối chạm rồng", bundleCode: "BO-PT-002", formType: "NEW", productType: "RAW", category: "Phòng Thờ", woodType: "Gỗ Mít", color: "Trần", bundleQty: 4, bundlePrice: 9500000, details: "Bộ 1 hoành phi + 1 cặp câu đối. Chạm rồng 5 móng, sơn thiếp vàng.", items: [{ _id: 1, name: "Hoành phi", qty: 1, unitPrice: 4000000 }, { _id: 2, name: "Câu đối chạm rồng", qty: 2, unitPrice: 2750000 }] },
         ],
     },
     {
