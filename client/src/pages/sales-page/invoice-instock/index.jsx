@@ -42,6 +42,7 @@ import {
   Info,
   ToggleLeft,
   ToggleRight,
+  Clock,
 } from "lucide-react";
 import { PrintableInvoice } from "../order-manage/detail";
 import { PageHelmet } from "@/components/seo/PageHelmet";
@@ -64,6 +65,7 @@ const WOOD_PRODUCTS = [
     category: "Phòng ăn",
     productType: "Hàng sẵn",
     color: "Sồi tự nhiên",
+    leadTime: 0,
     description: "Bộ bàn ăn 6 ghế chất liệu gỗ sồi Nga tự nhiên, xử lý chống mối mọt, thiết kế hiện đại phù hợp cho phòng ăn gia đình. Kích thước (Bàn): 180 x 90 x 75 cm.",
   },
   {
@@ -76,6 +78,7 @@ const WOOD_PRODUCTS = [
     category: "Phòng làm việc",
     productType: "Hàng sẵn",
     color: "Óc chó đậm",
+    leadTime: 0,
     description: "Kệ sách 5 tầng bền bỉ, vân gỗ óc chó sang trọng, tạo điểm nhấn cho không gian làm việc hoặc phòng khách. Kích thước: 120 x 35 x 180 cm.",
   },
   {
@@ -89,6 +92,7 @@ const WOOD_PRODUCTS = [
     category: "Phòng làm việc",
     productType: "Hàng mộc",
     color: "Trắng sồi",
+    leadTime: 7,
     description: "Bàn làm việc sơn trắng sồi thanh lịch, tích hợp 3 ngăn kéo tiện lợi cho việc lưu trữ hồ sơ, văn phòng phẩm. Kích thước: 140 x 70 x 75 cm.",
   },
   {
@@ -101,6 +105,7 @@ const WOOD_PRODUCTS = [
     category: "Phòng ngủ",
     productType: "Hàng mộc",
     color: "Nguyên mộc",
+    leadTime: 7,
     description: "Kích thước: 100 x 45 x 120 cm.",
   },
   {
@@ -895,6 +900,7 @@ export default function InStockInvoicePage() {
             // Dual pricing cho Hàng mộc hoàn thiện
             oldPrice: isWoodFinished ? itemPrice : null,
             discountPrice: isWoodFinished ? (product.discount ? Math.round(itemPrice * (1 - product.discount / 100)) : itemPrice) : null,
+            leadTime: product.leadTime || 0,
           },
         ],
       });
@@ -987,6 +993,44 @@ export default function InStockInvoicePage() {
     (sum, i) => sum + i.price * i.quantity,
     0,
   );
+
+  const maxLeadTime = useMemo(() => {
+    return activeTab.cartItems.reduce((max, item) => Math.max(max, item.leadTime || 0), 0);
+  }, [activeTab.cartItems]);
+
+  const workshopStats = useMemo(() => {
+    try {
+      const stored = localStorage.getItem("tpf_simulated_orders");
+      if (!stored) return { count: 0, level: "Bình thường", buffer: 0 };
+      const orders = JSON.parse(stored);
+      // Đếm các đơn đang chờ gia công hoặc đang gia công
+      const activeProduction = orders.filter(o => 
+        (o.status === "Đang gia công" || o.status === "Chờ xử lý") && 
+        (o.type === "Hàng mộc" || o.type === "Hàng khách đặt")
+      );
+      const count = activeProduction.length;
+      if (count > 8) return { count, level: "Quá tải", buffer: 7, color: "text-red-600", bg: "bg-red-50", border: "border-red-200" };
+      if (count > 4) return { count, level: "Khá bận", buffer: 3, color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200" };
+      return { count, level: "Bình thường", buffer: 0, color: "text-green-600", bg: "bg-green-50", border: "border-green-200" };
+    } catch (e) { return { count: 0, level: "Bình thường", buffer: 0 }; }
+  }, [activeTab.cartItems]);
+
+  const needsWorkshop = useMemo(() => {
+    return activeTab.cartItems.some(item => 
+      item.productType === "Hàng mộc" || 
+      item.productType === "Hàng khách đặt" || 
+      (item.leadTime && item.leadTime > 0)
+    );
+  }, [activeTab.cartItems]);
+
+  const expectedReadyDate = useMemo(() => {
+    if (!needsWorkshop || maxLeadTime === 0) return null;
+    const totalDays = maxLeadTime + workshopStats.buffer;
+    const d = new Date();
+    d.setDate(d.getDate() + totalDays);
+    return d.toISOString().split("T")[0];
+  }, [maxLeadTime, workshopStats.buffer, needsWorkshop]);
+
   const totalPayable = Math.max(
     0,
     subtotal -
@@ -1016,7 +1060,7 @@ export default function InStockInvoicePage() {
         phone: activeTab.selectedCustomer?.phone || "",
         address: activeTab.selectedCustomer?.address || "",
       },
-      type: "Hàng sẵn",
+      type: activeTab.cartItems.some(i => i.productType === "Hàng mộc") ? "Hàng mộc" : "Hàng sẵn",
       salesPerson: "Nhân viên bán hàng",
       products: activeTab.cartItems.map((item) => ({
         name: item.name,
@@ -1027,11 +1071,14 @@ export default function InStockInvoicePage() {
         warranty: item.isGift ? "Không bảo hành" : SYSTEM_WARRANTY,
         note: item.note || "",
         images: item.images || [],
+        leadTime: item.leadTime || 0,
       })),
       total: totalPayable,
       subtotal: subtotal,
       discount: activeTab.discount,
       deposit: activeTab.depositAmount,
+      leadTime: maxLeadTime,
+      expectedReadyDate: expectedReadyDate,
       deliveryMethod: activeTab.deliveryMethod,
       deliveryDate: activeTab.deliveryDate,
       // Lấy tại cửa hàng: trống = lấy ngay, có ngày = hẹn lấy
@@ -1496,6 +1543,8 @@ export default function InStockInvoicePage() {
               </div>
             </div>
 
+
+
             {/* Delivery Method */}
             <div
               className="px-4 py-3 space-y-3 border-t"
@@ -1503,12 +1552,20 @@ export default function InStockInvoicePage() {
                 borderColor: "var(--grid-border)",
               }}
             >
-              <p
-                className="text-[12px] font-semibold uppercase tracking-wider"
-                style={{ color: "var(--text-placeholder)" }}
-              >
-                Phương thức nhận hàng
-              </p>
+              <div className="flex items-center justify-between">
+                <p
+                  className="text-[12px] font-semibold uppercase tracking-wider"
+                  style={{ color: "var(--text-placeholder)" }}
+                >
+                  Giao hàng
+                </p>
+                {needsWorkshop && maxLeadTime > 0 && (
+                  <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-bold ${workshopStats.bg} ${workshopStats.color} ${workshopStats.border}`}>
+                    <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${workshopStats.level === 'Quá tải' ? 'bg-red-500' : workshopStats.level === 'Khá bận' ? 'bg-amber-500' : 'bg-green-500'}`} />
+                    Xưởng {workshopStats.level} ({workshopStats.count} đơn chờ)
+                  </div>
+                )}
+              </div>
               <div className="flex items-center gap-6">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -1598,6 +1655,13 @@ export default function InStockInvoicePage() {
                       ? `Khách hẹn lấy tại cửa hàng ngày ${activeTab.storePickupDate.split("-").reverse().join("/")}`
                       : "Để trống nếu khách lấy ngay tại cửa hàng"}
                   </p>
+                  {expectedReadyDate && (
+                    <p className={`text-[10px] font-bold flex items-center gap-1 ml-1 ${workshopStats.buffer > 0 ? 'text-amber-600 animate-pulse' : 'text-blue-600'}`}>
+                      <AlertCircle size={10} />
+                      Gợi ý xưởng xong: {expectedReadyDate.split("-").reverse().join("/")} 
+                      {workshopStats.buffer > 0 && ` (+${workshopStats.buffer}n chờ xưởng)`}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -1630,6 +1694,13 @@ export default function InStockInvoicePage() {
                       }}
                     />
                   </div>
+                  {expectedReadyDate && (
+                    <p className={`text-[10px] font-bold flex items-center gap-1 mt-1 ${workshopStats.buffer > 0 ? 'text-amber-600 animate-pulse' : 'text-blue-600'}`}>
+                      <AlertCircle size={10} />
+                      Gợi ý xưởng xong: {expectedReadyDate.split("-").reverse().join("/")} 
+                      {workshopStats.buffer > 0 && ` (+${workshopStats.buffer}n chờ xưởng)`}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -2039,6 +2110,11 @@ export default function InStockInvoicePage() {
                               ? "Nguyên mộc"
                               : product.color}
                           </span>
+                          {product.leadTime > 0 && (
+                            <span className="text-[10px] font-bold text-amber-600 flex items-center gap-1 mt-0.5">
+                              <Clock size={10} /> Hoàn thiện: {product.leadTime} ngày
+                            </span>
+                          )}
                         </div>
                         {product.productType === "Hàng mộc" && woodPriceMode === "finished" && product.discount > 0 ? (
                           <div className="flex items-center gap-1.5">

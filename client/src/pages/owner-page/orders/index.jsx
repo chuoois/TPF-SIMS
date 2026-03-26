@@ -22,6 +22,7 @@ import {
   CreditCard,
   Wallet,
   Ban,
+  Truck,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import toast from "react-hot-toast";
@@ -84,7 +85,21 @@ const INITIAL_ORDERS = [
     id: "DH-T01", code: "DH-THO-001", customerName: "Hoàng Nguyệt Ánh", phone: "0978901234",
     type: "Hàng mộc", total: 56000000, status: "Chờ xử lý",
     date: "2026-03-12T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-20",
-    deposit: 10000000, fulfillmentType: "Giao hàng"
+    deposit: 10000000, fulfillmentType: "Giao hàng",
+    products: [{
+      name: "Sập thờ Tứ Linh", material: "Gỗ mít", size: "197×107×108 (Lỗ Ban)", finish: "Mộc",
+      note: "Chân 18 phân\nDạ 5 phân\nĐục Tứ Linh chạm tay kỹ"
+    }]
+  },
+  {
+    id: "DH-T11", code: "DH-THO-0011", customerName: "Hoàng Nguyệt Ánh", phone: "0978901234",
+    type: "Hàng mộc", total: 56000000, status: "Chờ xử lý",
+    date: "2026-03-12T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-20",
+    deposit: 10000000, fulfillmentType: "Giao hàng",
+    products: [{
+      name: "Sập thờ Tứ Linh", material: "Gỗ mít", size: "197×107×108 (Lỗ Ban)", finish: "Mộc",
+      note: "Chân 18 phân\nDạ 5 phân\nĐục Tứ Linh chạm tay kỹ"
+    }]
   },
   {
     id: "DH-T02", code: "DH-THO-002", customerName: "Đặng Tuấn Kiệt", phone: "0931234567",
@@ -135,7 +150,11 @@ const INITIAL_ORDERS = [
     id: "DH-D02", code: "DH-DAT-002", customerName: "Lê Văn Tám", phone: "0321654987",
     type: "Hàng khách đặt", total: 120000000, status: "Đã nhập kho",
     date: "2026-03-11T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-25",
-    deposit: 40000000, fulfillmentType: "Giao hàng"
+    deposit: 40000000, fulfillmentType: "Giao hàng",
+    products: [{
+      name: "Trường kỷ Sen Vịt", material: "Gỗ Gụ", size: "2m17", finish: "Sơn Lau",
+      note: "Vách đục Sen Vịt kỹ\nChân 12 chỉ"
+    }]
   },
   {
     id: "DH-D03", code: "DH-DAT-003", customerName: "Phan Văn Trị", phone: "0944123123",
@@ -297,10 +316,40 @@ export default function OwnerOrders() {
   const [deliveryImage, setDeliveryImage] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
 
+  // ── Handover Modal State (Ported from Detail) ──
+  const [showHandoverModal, setShowHandoverModal] = useState(false);
+  const [handoverOrder, setHandoverOrder] = useState(null);
+  const [handoverType, setHandoverType] = useState(null); // "moc" | "dat"
+  const [handoverNotes, setHandoverNotes] = useState("");
+  const [handoverDeadline, setHandoverDeadline] = useState("");
+
   // Helper để cập nhật Search Params mượt mà
   const updateParams = (newParams) => {
     const current = Object.fromEntries(searchParams.entries());
     setSearchParams({ ...current, ...newParams });
+  };
+
+  // Khởi tạo Deadline mặc định khi mở Modal Bàn giao
+  useEffect(() => {
+    if (showHandoverModal && handoverOrder?.deliveryDate) {
+      const delivery = new Date(handoverOrder.deliveryDate);
+      // Giảm 2 ngày so với ngày giao khách
+      delivery.setDate(delivery.getDate() - 2);
+      const isoDate = delivery.toISOString().split('T')[0];
+      setHandoverDeadline(isoDate);
+      setHandoverNotes("");
+    }
+  }, [showHandoverModal, handoverOrder]);
+
+  const openHandoverModal = (order, type) => {
+    setHandoverOrder(order);
+    setHandoverType(type);
+    setShowHandoverModal(true);
+  };
+
+  const fmtDate = (dateStr) => {
+    if (!dateStr) return "---";
+    return new Date(dateStr).toLocaleDateString("vi-VN");
   };
 
   const setActiveTab = (tab) => {
@@ -314,17 +363,17 @@ export default function OwnerOrders() {
   // Logic kích hoạt bảo hành tự động (Software Standard Design)
   const activateWarrantyForOrder = (order) => {
     const savedWarranties = JSON.parse(localStorage.getItem("tpf_simulated_warranties") || "[]");
-    
+
     // Phân loại chính sách dựa trên SKU/Tên sản phẩm
-    const isNaturalWood = order.items?.some(item => 
-      item.productName.toLowerCase().includes("gụ") || 
-      item.productName.toLowerCase().includes("hương") || 
+    const isNaturalWood = order.items?.some(item =>
+      item.productName.toLowerCase().includes("gụ") ||
+      item.productName.toLowerCase().includes("hương") ||
       item.productName.toLowerCase().includes("mít")
     ) || order.code.includes("-Mit") || order.code.includes("-Huong") || order.code.includes("-Gu");
 
     const policy = isNaturalWood ? {
-      label: "Gỗ tự nhiên (Gụ, Hương, Mít)", 
-      duration: 36, 
+      label: "Gỗ tự nhiên (Gụ, Hương, Mít)",
+      duration: 36,
       coverage: [
         "Bảo hành nứt nẻ, cong vênh do lỗi xử lý gỗ.",
         "Xử lý gỗ bị co ngót, hở mộng do thời tiết.",
@@ -332,8 +381,8 @@ export default function OwnerOrders() {
       ],
       conditions: "Không để sản phẩm dưới ánh nắng trực tiếp hoặc nơi quá ẩm ướt."
     } : {
-      label: "Gỗ công nghiệp (MDF, HDF)", 
-      duration: 12, 
+      label: "Gỗ công nghiệp (MDF, HDF)",
+      duration: 12,
       coverage: [
         "Bảo hành bong tróc cạnh, bề mặt gỗ.",
         "Lỗi phụ kiện (bản lề, tay nắm) trong 12 tháng."
@@ -377,7 +426,7 @@ export default function OwnerOrders() {
   // Logic cập nhật trạng thái đơn hàng (Simulated)
   const handleUpdateStatus = (id, newStatus) => {
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
-    
+
     // Đồng bộ lại localStorage nếu là hàng giả lập
     const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
     const updatedSaved = saved.map(o => o.id === id ? { ...o, status: newStatus } : o);
@@ -401,21 +450,21 @@ export default function OwnerOrders() {
     }
 
     const { id } = selectedOrder;
-    setOrders(prev => prev.map(o => o.id === id ? { 
-      ...o, 
-      status: "Hoàn thành", 
-      deliveryImage, 
-      finalPayment, 
-      paymentMethod 
+    setOrders(prev => prev.map(o => o.id === id ? {
+      ...o,
+      status: "Hoàn thành",
+      deliveryImage,
+      finalPayment,
+      paymentMethod
     } : o));
 
     const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
-    const updatedSaved = saved.map(o => o.id === id ? { 
-      ...o, 
-      status: "Hoàn thành", 
-      deliveryImage, 
-      finalPayment, 
-      paymentMethod 
+    const updatedSaved = saved.map(o => o.id === id ? {
+      ...o,
+      status: "Hoàn thành",
+      deliveryImage,
+      finalPayment,
+      paymentMethod
     } : o);
     localStorage.setItem("tpf_simulated_orders", JSON.stringify(updatedSaved));
 
@@ -432,7 +481,7 @@ export default function OwnerOrders() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setOrders(prev => prev.map(o => o.id === id ? { ...o, status: "Hoàn thành", deliveryImage: reader.result } : o));
-        
+
         const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
         const updatedSaved = saved.map(o => o.id === id ? { ...o, status: "Hoàn thành", deliveryImage: reader.result } : o);
         localStorage.setItem("tpf_simulated_orders", JSON.stringify(updatedSaved));
@@ -493,7 +542,7 @@ export default function OwnerOrders() {
     if (activeTab !== "Tất cả") {
       baseOrders = baseOrders.filter(o => o.type === activeTab);
     }
-    
+
     let statuses = [];
     if (activeTab === "Hàng sẵn") statuses = HANG_SAN_STATUSES;
     else if (activeTab === "Hàng mộc") statuses = HANG_THO_STATUSES;
@@ -504,7 +553,7 @@ export default function OwnerOrders() {
     statuses.forEach(s => {
       counts[s] = baseOrders.filter(o => o.status === s).length;
     });
-    
+
     return { possibleStatuses: ["Tất cả", ...statuses], statusCounts: counts };
   }, [orders, activeTab]);
 
@@ -744,12 +793,11 @@ export default function OwnerOrders() {
                     "Tổng tiền",
                     "Trạng thái",
                     ...(activeTab !== "Hàng khách đặt" ? ["Hình thức giao"] : []),
-                    "Ngày giao dự kiến",
-                    "Ảnh giao hàng"
+                    "Ngày giao dự kiến"
                   ].map((h, i) => (
                     <th
                       key={i}
-                      className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 4 ? "text-right pr-8" : ""} ${i === 0 ? "text-center w-[50px]" : ""} ${ (activeTab !== "Hàng khách đặt" ? (i >= 7 && i < 9) : (i >= 6 && i < 8)) ? "text-center whitespace-nowrap" : ""}`}
+                      className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 4 ? "text-right pr-8" : ""} ${i === 0 ? "text-center w-[50px]" : ""} ${(activeTab !== "Hàng khách đặt" ? (i >= 7 && i < 9) : (i >= 6 && i < 8)) ? "text-center whitespace-nowrap" : ""}`}
                       style={{ color: "var(--text-placeholder)" }}
                     >
                       {h}
@@ -841,213 +889,187 @@ export default function OwnerOrders() {
                           </span>
                         </td>
                       )}
-                      <td className="px-4 py-3 text-center">
-                        <div className="flex items-center justify-center gap-1.5 text-gray-600">
-                          <Clock size={12} className="text-gray-400" />
-                          <span className="text-[13px] font-bold">
-                            {o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString("vi-VN") : "---"}
-                          </span>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col items-center justify-center gap-1.5">
+                          <div className="flex items-center gap-1.5 text-gray-600">
+                            <Clock size={12} className="text-gray-400" />
+                            <span className="text-[13px] font-bold">
+                              {o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString("vi-VN") : "---"}
+                            </span>
+                          </div>
+                          {(() => {
+                            if (o.status === "Hoàn thành" || o.status === "Đơn đã hủy" || o.status === "Chờ xử lý" || o.status === "Chờ sản xuất") return null;
+                            const orderDate = new Date(o.date);
+                            const today = new Date();
+                            const diffDays = Math.floor((today - orderDate) / (1000 * 60 * 60 * 24));
+                            let expectedLT = 0;
+                            if (o.type === "Hàng mộc") expectedLT = 7;
+                            if (o.type === "Hàng khách đặt") expectedLT = 30;
+                            if (expectedLT === 0) return null;
+                            const remaining = expectedLT - diffDays;
+                            if (remaining < 0) return <span className="text-[9px] font-black uppercase tracking-tighter text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-100 whitespace-nowrap">Quá hạn {Math.abs(remaining)}n</span>;
+                            if (remaining <= 2) return <span className="text-[9px] font-black uppercase tracking-tighter text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100 whitespace-nowrap">Sắp hạn ({remaining}n)</span>;
+                            return <span className="text-[9px] font-black uppercase tracking-tighter text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 whitespace-nowrap">Còn {remaining}n</span>;
+                          })()}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-center">
-                        {o.deliveryImage ? (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setPreviewImage(o.deliveryImage);
-                            }}
-                            className="relative z-30 w-10 h-10 rounded-lg overflow-hidden border border-green-200 hover:ring-2 ring-green-400 transition cursor-pointer ml-auto mr-4 block"
-                          >
-                            <img src={o.deliveryImage} alt="delivery" className="w-full h-full object-cover" />
-                          </button>
-                        ) : (
-                          <p className="text-[11px] text-gray-300 italic">Chưa có ảnh</p>
-                        )}
+                      <td className="px-4 py-3 text-center relative">
+                        {/* ===================== VÙNG HOVER (TẤC CẢ THAO TÁC) ===================== */}
+                        <div className="absolute inset-y-0 right-10 flex items-center pr-4 pointer-events-none opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-300 translate-x-4 group-hover:translate-x-0 z-50">
+                          <div className="flex items-center gap-2.5 p-2 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200 shadow-2xl shadow-indigo-100/50">
 
-                        {/* ===================== HOVER ACTIONS AREA ===================== */}
-                        <div className="absolute inset-y-0 right-36 flex items-center pr-4 pointer-events-none opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-300 translate-x-4 group-hover:translate-x-0 z-20">
-                          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200 shadow-2xl shadow-indigo-200/50">
-                            
-                            {/* OWNER ACTIONS - CONTEXTUAL BY TYPE & STATUS */}
-                            
-                            {/* HOÀN TOÀN CHUNG */}
-                            {o.status === "Chờ duyệt hủy" && (
-                              <div className="flex items-center gap-2">
-                                {o.type === "Hàng sẵn" ? (
-                                  <>
-                                    <button
-                                      onClick={(e) => { 
-                                        e.stopPropagation(); 
-                                        if(window.confirm("Duyệt hủy đơn và HOÀN TRẢ TIỀN CỌC?")) {
-                                          handleUpdateStatus(o.id, "Đơn đã hủy");
-                                          // Cập nhật resolution vào localStorage
-                                          const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
-                                          const updated = saved.map(order => 
-                                            (order.id === o.id) ? { ...order, status: "Đơn đã hủy", depositResolution: "refunded" } : order
-                                          );
-                                          localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
-                                          setOrders(updated);
-                                        }
-                                      }}
-                                      className="h-8 px-3 rounded-xl bg-red-500 text-white text-[10px] font-black uppercase tracking-wider hover:bg-red-600 transition-all shadow-lg shadow-red-100 flex items-center gap-2 active:scale-95"
-                                    >
-                                      <XCircle size={14} /> HOÀN CỌC
-                                    </button>
-                                    <button
-                                      onClick={(e) => { 
-                                        e.stopPropagation(); 
-                                        if(window.confirm("Duyệt hủy đơn và THU HỒI TIỀN CỌC?")) {
-                                          handleUpdateStatus(o.id, "Đơn đã hủy");
-                                          const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
-                                          const updated = saved.map(order => 
-                                            (order.id === o.id) ? { ...order, status: "Đơn đã hủy", depositResolution: "forfeited" } : order
-                                          );
-                                          localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
-                                          setOrders(updated);
-                                        }
-                                      }}
-                                      className="h-8 px-3 rounded-xl bg-amber-700 text-white text-[10px] font-black uppercase tracking-wider hover:bg-amber-800 transition-all shadow-lg shadow-amber-100 flex items-center gap-2 active:scale-95"
-                                    >
-                                      <Ban size={14} /> THU CỌC
-                                    </button>
-                                  </>
-                                ) : (
-                                  <button
-                                    onClick={(e) => { 
-                                      e.stopPropagation(); 
-                                      if(window.confirm("Xác nhận hủy đơn: Khách MẤT CỌC do đã triển khai sản xuất?")) {
-                                        handleUpdateStatus(o.id, "Đơn đã hủy");
-                                        const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
-                                        const updated = saved.map(order => 
-                                          (order.id === o.id) ? { ...order, status: "Đơn đã hủy", depositResolution: "forfeited" } : order
-                                        );
-                                        localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
-                                        setOrders(updated);
-                                      }
-                                    }}
-                                    className="h-8 px-3 rounded-xl bg-red-600 text-white text-[10px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-red-100 flex items-center gap-2 active:scale-95"
-                                  >
-                                    <XCircle size={14} /> DUYỆT HỦY (THU CỌC)
-                                  </button>
-                                )}
+                            {/* 1. CÁC THAO TÁC CHÍNH (THEO TRẠNG THÁI) */}
+                            <div className="flex items-center gap-2 pr-2 border-r border-slate-100 empty:hidden">
+                              {/* Bàn giao gia công */}
+                              {((o.status === "Chờ xử lý" && o.type === "Hàng mộc") || (o.status === "Đã nhập kho" && o.type === "Hàng khách đặt")) && (
                                 <button
-                                  onClick={(e) => { 
-                                    e.stopPropagation(); 
-                                    const restoreStatus = o.type === "Hàng sẵn" ? "Chờ giao hàng" : "Đang gia công";
-                                    handleUpdateStatus(o.id, restoreStatus);
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openHandoverModal(o, o.type === "Hàng mộc" ? "moc" : "dat");
                                   }}
-                                  className="h-8 px-3 rounded-xl bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-wider hover:bg-slate-200 transition-all active:scale-95"
+                                  className="h-9 px-4 rounded-xl text-[12px] font-bold text-white transition-all shadow-md active:scale-95 whitespace-nowrap bg-indigo-600 hover:bg-indigo-700 flex items-center gap-2"
                                 >
-                                  TỪ CHỐI
+                                  <Hammer size={15} /> Bàn giao xưởng
+                                </button>
+                              )}
+
+                              {/* Xác nhận đơn */}
+                              {o.status === "Chờ xử lý" && o.type === "Hàng sẵn" && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (window.confirm("Xác nhận đơn hàng và Chờ giao hàng?")) {
+                                      handleUpdateStatus(o.id, "Chờ giao hàng");
+                                    }
+                                  }}
+                                  className="h-9 px-4 rounded-xl bg-emerald-600 text-white text-[12px] font-bold transition-all shadow-md active:scale-95 whitespace-nowrap flex items-center gap-2"
+                                >
+                                  <CheckCircle size={15} /> Xác nhận đơn
+                                </button>
+                              )}
+
+                              {/* Hoàn tất gia công */}
+                              {o.status === "Đang gia công" && (o.type === "Hàng mộc" || o.type === "Hàng khách đặt") && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (window.confirm("Xác nhận sản phẩm đã hoàn thiện và sẵn sàng để giao?")) {
+                                      handleUpdateStatus(o.id, "Chờ giao hàng");
+                                    }
+                                  }}
+                                  className="h-9 px-4 rounded-xl bg-emerald-600 text-white text-[12px] font-bold transition-all shadow-md active:scale-95 whitespace-nowrap flex items-center gap-2"
+                                >
+                                  <CheckCircle size={15} /> Hoàn tất gia công
+                                </button>
+                              )}
+
+                              {/* Bắt đầu giao hàng */}
+                              {o.status === "Chờ giao hàng" && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleUpdateStatus(o.id, "Đang giao hàng");
+                                  }}
+                                  className="h-9 px-4 rounded-xl bg-blue-600 text-white text-[12px] font-bold transition-all shadow-md active:scale-95 whitespace-nowrap flex items-center gap-2"
+                                >
+                                  <RefreshCw size={15} /> Bắt đầu giao
+                                </button>
+                              )}
+
+                              {/* Hoàn tất đơn hàng */}
+                              {o.status === "Đang giao hàng" && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openCompleteModal(o);
+                                  }}
+                                  className="h-9 px-4 rounded-xl bg-emerald-600 text-white text-[12px] font-bold transition-all shadow-md active:scale-95 whitespace-nowrap flex items-center gap-2"
+                                >
+                                  <CheckCircle size={15} /> Hoàn tất đơn
+                                </button>
+                              )}
+                            </div>
+
+                            {/* 2. DUYỆT HỦY (NẾU CẦN) */}
+                            {o.status === "Chờ duyệt hủy" && (
+                              <div className="flex items-center gap-2 px-2 border-r border-slate-100">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (window.confirm("Duyệt hủy đơn và HOÀN TRẢ TIỀN CỌC?")) {
+                                      handleUpdateStatus(o.id, "Đơn đã hủy");
+                                      const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
+                                      const updated = saved.map(order =>
+                                        (order.id === o.id) ? { ...order, status: "Đơn đã hủy", depositResolution: "refunded" } : order
+                                      );
+                                      localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
+                                      setOrders(updated);
+                                    }
+                                  }}
+                                  className="h-9 px-3 rounded-xl bg-red-500 text-white text-[10px] font-black uppercase tracking-wider hover:bg-red-600 transition-all flex items-center gap-1.5 active:scale-95"
+                                >
+                                  <XCircle size={14} /> Hoàn cọc
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (window.confirm("Duyệt hủy đơn và THU HỒI TIỀN CỌC?")) {
+                                      handleUpdateStatus(o.id, "Đơn đã hủy");
+                                      const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
+                                      const updated = saved.map(order =>
+                                        (order.id === o.id) ? { ...order, status: "Đơn đã hủy", depositResolution: "forfeited" } : order
+                                      );
+                                      localStorage.setItem("tpf_simulated_orders", JSON.stringify(updated));
+                                      setOrders(updated);
+                                    }
+                                  }}
+                                  className="h-9 px-3 rounded-xl bg-amber-700 text-white text-[10px] font-black uppercase tracking-wider hover:bg-amber-800 transition-all flex items-center gap-1.5 active:scale-95"
+                                >
+                                  <Ban size={14} /> Thu cọc
                                 </button>
                               </div>
                             )}
 
-                            {/* FLOW THEO LOẠI HÀNG */}
-                            {o.type === "Hàng sẵn" ? (
-                              <>
-                                {o.status === "Chờ xử lý" && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if(window.confirm("Xác nhận đơn hàng và Chờ giao hàng?")) {
-                                        handleUpdateStatus(o.id, "Chờ giao hàng");
-                                      }
-                                    }}
-                                    className="h-8 px-3 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center gap-2 active:scale-95"
-                                  >
-                                    <CheckCircle size={14} /> XÁC NHẬN ĐƠN
-                                  </button>
-                                )}
-                              </>
-                            ) : (
-                              <>
-                                {/* Hàng mộc VÀ ĐẶT */}
-                                
-                                {o.status === "Chờ xử lý" && o.type === "Hàng mộc" && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if(window.confirm("Xác nhận bàn giao gia công?")) {
-                                        handleUpdateStatus(o.id, "Đang gia công");
-                                      }
-                                    }}
-                                    className="h-8 px-3 rounded-xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-wider hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2 active:scale-95"
-                                  >
-                                    <Hammer size={14} /> BÀN GIAO GIA CÔNG
-                                  </button>
-                                )}
-
-
-
-                                {/* Hàng khách đặt: Đã nhập kho -> Đang gia công */}
-                                {o.status === "Đã nhập kho" && o.type === "Hàng khách đặt" && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if(window.confirm("Bắt đầu quá trình gia công và hoàn thiện sản phẩm?")) {
-                                        handleUpdateStatus(o.id, "Đang gia công");
-                                      }
-                                    }}
-                                    className="h-8 px-3 rounded-xl bg-amber-600 text-white text-[10px] font-black uppercase tracking-wider hover:bg-amber-700 transition-all shadow-lg shadow-amber-200 flex items-center gap-2 active:scale-95"
-                                  >
-                                    <Hammer size={14} /> BẮT ĐẦU GIA CÔNG
-                                  </button>
-                                )}
-
-                                {/* Hàng mộc VÀ ĐẶT: Đang gia công -> Chờ giao hàng */}
-                                {o.status === "Đang gia công" && (o.type === "Hàng mộc" || o.type === "Hàng khách đặt") && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if(window.confirm("Xác nhận sản phẩm đã hoàn thiện và sẵn sàng để giao?")) {
-                                        handleUpdateStatus(o.id, "Chờ giao hàng");
-                                      }
-                                    }}
-                                    className="h-8 px-3 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center gap-2 active:scale-95"
-                                  >
-                                    <CheckCircle size={14} /> HOÀN TẤT GIA CÔNG
-                                  </button>
-                                )}
-
-                              
-                                   
-                              
-                              </>
-                            )}
-
-                            {/* CHUNG PHẦN GIAO VẬN */}
-                            {o.status === "Chờ giao hàng" && (
-                              <button
-                                onClick={(e) => { 
-                                  e.stopPropagation(); 
-                                  handleUpdateStatus(o.id, "Đang giao hàng");
-                                }}
-                                className="h-8 px-3 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-wider hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 flex items-center gap-2 active:scale-95"
+                            {/* 3. CÁC TÁC VỤ PHỤ (CHI TIẾT, HỦY) */}
+                            <div className="flex items-center gap-2 pl-1">
+                              <Link
+                                to={`/owner/orders/${o.id}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="h-9 w-9 rounded-xl bg-slate-50 text-slate-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center shadow-sm active:scale-95 border border-slate-100"
+                                title="Xem chi tiết"
                               >
-                                <RefreshCw size={14} /> BẮT ĐẦU GIAO
-                              </button>
-                            )}
+                                <Eye size={18} />
+                              </Link>
 
-                            {o.status === "Đang giao hàng" && (
-                              <button
-                                onClick={(e) => { 
-                                  e.stopPropagation(); 
-                                  openCompleteModal(o);
-                                }}
-                                className="h-8 px-3 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center gap-2 active:scale-95"
-                              >
-                                <CheckCircle size={14} /> HOÀN TẤT ĐƠN
-                              </button>
-                            )}
+                              {["Chờ xử lý", "Đã nhập kho", "Đang gia công", "Chờ giao hàng"].includes(o.status) && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này?")) {
+                                      handleUpdateStatus(o.id, "Đơn đã hủy");
+                                    }
+                                  }}
+                                  className="h-9 w-9 rounded-xl bg-white text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center shadow-sm active:scale-95 border border-red-50"
+                                  title="Hủy đơn hàng"
+                                >
+                                  <XCircle size={18} />
+                                </button>
+                              )}
 
-                            <Link
-                              to={`/owner/orders/${o.id}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="h-8 px-3 rounded-xl bg-white border border-slate-200 text-slate-600 text-[10px] font-black uppercase tracking-wider hover:bg-slate-50 transition-all flex items-center gap-2 active:scale-95 whitespace-nowrap"
-                            >
-                              <Eye size={14} /> CHI TIẾT
-                            </Link>
+                              {/* Preview ảnh giao hàng nếu có */}
+                              {o.deliveryImage && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPreviewImage(o.deliveryImage);
+                                  }}
+                                  className="h-9 w-9 rounded-xl border border-slate-200 overflow-hidden hover:ring-2 ring-indigo-500 transition-all cursor-pointer shadow-sm"
+                                  title="Xem ảnh giao hàng"
+                                >
+                                  <img src={o.deliveryImage} alt="delivery" className="w-full h-full object-cover" />
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -1204,26 +1226,26 @@ export default function OwnerOrders() {
               {/* Summary Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                   <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tổng đơn hàng</p>
-                   <p className="text-lg font-black text-slate-800">{formatCurrency(selectedOrder.total)}</p>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tổng đơn hàng</p>
+                  <p className="text-lg font-black text-slate-800">{formatCurrency(selectedOrder.total)}</p>
                 </div>
                 <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
-                   <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Đã đặt cọc</p>
-                   <p className="text-lg font-black text-emerald-700">{formatCurrency(selectedOrder.deposit || 0)}</p>
+                  <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Đã đặt cọc</p>
+                  <p className="text-lg font-black text-emerald-700">{formatCurrency(selectedOrder.deposit || 0)}</p>
                 </div>
               </div>
 
               {/* Balance Due */}
               <div className="p-5 rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-200">
-                 <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-[11px] font-bold text-indigo-100 uppercase tracking-wider">Số tiền còn lại cần thu</p>
-                      <p className="text-2xl font-black">{formatCurrency(selectedOrder.total - (selectedOrder.deposit || 0))}</p>
-                    </div>
-                    <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center">
-                      <Banknote size={24} />
-                    </div>
-                 </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] font-bold text-indigo-100 uppercase tracking-wider">Số tiền còn lại cần thu</p>
+                    <p className="text-2xl font-black">{formatCurrency(selectedOrder.total - (selectedOrder.deposit || 0))}</p>
+                  </div>
+                  <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center">
+                    <Banknote size={24} />
+                  </div>
+                </div>
               </div>
 
               {/* Form Inputs */}
@@ -1231,7 +1253,7 @@ export default function OwnerOrders() {
                 <div>
                   <label className="text-[12px] font-bold text-slate-600 ml-1 mb-1.5 block">Số tiền thực tế thu tại chỗ</label>
                   <div className="relative">
-                    <input 
+                    <input
                       type="text"
                       value={formatNumberInput(finalPayment)}
                       onChange={(e) => {
@@ -1246,71 +1268,69 @@ export default function OwnerOrders() {
                 </div>
 
                 <div>
-                   <label className="text-[12px] font-bold text-slate-600 ml-1 mb-1.5 block">Hình thức thanh toán cuối</label>
-                   <div className="grid grid-cols-2 gap-3">
-                      {["Chuyển khoản", "Tiền mặt"].map(m => (
-                        <button
-                          key={m}
-                          onClick={() => setPaymentMethod(m)}
-                          className={`h-12 rounded-2xl border font-bold text-[13px] flex items-center justify-center gap-2 transition-all ${
-                            paymentMethod === m ? 'bg-indigo-50 border-indigo-600 text-indigo-700' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                  <label className="text-[12px] font-bold text-slate-600 ml-1 mb-1.5 block">Hình thức thanh toán cuối</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {["Chuyển khoản", "Tiền mặt"].map(m => (
+                      <button
+                        key={m}
+                        onClick={() => setPaymentMethod(m)}
+                        className={`h-12 rounded-2xl border font-bold text-[13px] flex items-center justify-center gap-2 transition-all ${paymentMethod === m ? 'bg-indigo-50 border-indigo-600 text-indigo-700' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
                           }`}
-                        >
-                          {m === "Chuyển khoản" ? <CreditCard size={16} /> : <Wallet size={16} />}
-                          {m}
-                        </button>
-                      ))}
-                   </div>
+                      >
+                        {m === "Chuyển khoản" ? <CreditCard size={16} /> : <Wallet size={16} />}
+                        {m}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div>
-                   <label className="text-[12px] font-bold text-slate-600 ml-1 mb-1.5 block">Ảnh giao hàng (Thực tế tại nhà khách)</label>
-                   <div className="relative group">
-                     <label className={`w-full h-28 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${
-                        deliveryImage ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
-                     }`}>
-                        {deliveryImage ? (
-                          <div className="flex items-center gap-4 px-4">
-                            <img src={deliveryImage} className="w-20 h-20 rounded-xl object-cover border border-emerald-200 shadow-md" alt="Delivery" />
-                            <div className="flex flex-col">
-                              <span className="text-emerald-700 font-bold text-[13px]">Ảnh đã tải lên</span>
-                              <button 
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeliveryImage(null); }} 
-                                className="text-[11px] text-slate-400 font-bold hover:text-red-500 transition-colors uppercase tracking-wider text-left mt-1"
-                              >
-                                Thay đổi ảnh
-                              </button>
-                            </div>
+                  <label className="text-[12px] font-bold text-slate-600 ml-1 mb-1.5 block">Ảnh giao hàng (Thực tế tại nhà khách)</label>
+                  <div className="relative group">
+                    <label className={`w-full h-28 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${deliveryImage ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
+                      }`}>
+                      {deliveryImage ? (
+                        <div className="flex items-center gap-4 px-4">
+                          <img src={deliveryImage} className="w-20 h-20 rounded-xl object-cover border border-emerald-200 shadow-md" alt="Delivery" />
+                          <div className="flex flex-col">
+                            <span className="text-emerald-700 font-bold text-[13px]">Ảnh đã tải lên</span>
+                            <button
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeliveryImage(null); }}
+                              className="text-[11px] text-slate-400 font-bold hover:text-red-500 transition-colors uppercase tracking-wider text-left mt-1"
+                            >
+                              Thay đổi ảnh
+                            </button>
                           </div>
-                        ) : (
-                          <>
-                            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm mb-2 group-hover:scale-110 transition-transform">
-                              <Camera size={20} className="text-slate-400" />
-                            </div>
-                            <span className="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Nhấp để chụp hoặc tải ảnh</span>
-                          </>
-                        )}
-                        <input 
-                          type="file" 
-                          accept="image/*" 
-                          className="hidden" 
-                          onChange={(e) => {
-                            const file = e.target.files[0];
-                            if(file) {
-                              const reader = new FileReader();
-                              reader.onloadend = () => setDeliveryImage(reader.result);
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                        />
-                     </label>
-                   </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm mb-2 group-hover:scale-110 transition-transform">
+                            <Camera size={20} className="text-slate-400" />
+                          </div>
+                          <span className="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Nhấp để chụp hoặc tải ảnh</span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => setDeliveryImage(reader.result);
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
 
             <div className="p-6 bg-slate-50 border-t border-slate-100">
-              <button 
+              <button
                 onClick={handleFinishOrder}
                 className="w-full h-12 rounded-2xl bg-indigo-600 text-white font-black text-[14px] hover:bg-slate-900 transition-all shadow-lg shadow-indigo-100 active:scale-95"
               >
@@ -1321,22 +1341,166 @@ export default function OwnerOrders() {
         </div>
       )}
 
+      {/* Handover Modal (Ported from Detail) */}
+      {showHandoverModal && handoverOrder && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-indigo-50/50">
+              <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                <Hammer className="text-indigo-600" size={24} /> ĐỐI SOÁT TRƯỚC KHI BÀN GIAO
+              </h3>
+              <button onClick={() => setShowHandoverModal(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-400 cursor-pointer">
+                <XCircle size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5 max-h-[65vh] overflow-y-auto">
+              {/* Thông tin sản phẩm */}
+              <div className="space-y-3">
+                {(handoverOrder.products || handoverOrder.items || []).map((p, i) => (
+                  <div key={i} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-3 shadow-sm">
+                    <p className="text-[14px] font-bold text-slate-800">{p.name || p.productName}</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Chất liệu</p>
+                        <p className="text-[13px] font-semibold text-slate-700">{p.material || "Gỗ mít"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Kích thước</p>
+                        <p className="text-[13px] font-semibold text-slate-700">{p.size || "197×107×108"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Hoàn thiện</p>
+                        <p className="text-[13px] font-semibold text-slate-700">{p.finish || "Mộc"}</p>
+                      </div>
+                    </div>
+
+                    {/* Ghi chú kỹ thuật nổi bật */}
+                    {(p.note || p.notes) && (
+                      <div className="p-3 rounded-xl border-2 border-amber-300 bg-amber-50">
+                        <p className="text-[10px] uppercase font-bold text-amber-600 tracking-wider flex items-center gap-1.5 mb-1">
+                          <FileText size={12} /> GHI CHÚ KỸ THUẬT TỪ SALES
+                        </p>
+                        <ul className="space-y-1">
+                          {(p.note || p.notes).split(/[,;\n]/).map((item, idx) => item.trim() && (
+                            <li key={idx} className="text-[13px] font-bold text-amber-900 flex items-start gap-1.5">
+                              <span className="text-amber-500 mt-0.5">•</span> {item.trim()}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Hạn hoàn thành & Ghi chú cho thợ */}
+              <div className="space-y-4 pt-4 border-t border-slate-100">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                      <Calendar size={14} className="text-indigo-500" /> Hạn hoàn thành xong
+                    </label>
+                    <input
+                      type="date"
+                      value={handoverDeadline}
+                      onChange={(e) => setHandoverDeadline(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-[14px] font-bold text-slate-700 bg-white"
+                    />
+                    <p className="text-[10px] text-indigo-500 font-medium italic">
+                      Gợi ý: Trước ngày giao khách {handoverOrder.deliveryDate ? "2 ngày" : "... "}
+                    </p>
+                  </div>
+                  <div className="flex flex-col justify-center">
+                    <div className="p-3 rounded-xl bg-amber-50 border border-amber-100">
+                      <p className="text-[11px] font-bold text-amber-700 uppercase flex items-center gap-1.5">
+                        <Truck size={14} /> Ngày giao khách
+                      </p>
+                      <p className="text-[14px] font-black text-amber-800 mt-0.5">{fmtDate(handoverOrder.deliveryDate)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <FileText size={14} className="text-indigo-500" /> Ghi chú dặn thợ
+                  </label>
+                  <textarea
+                    placeholder="Nhập các yêu cầu cụ thể cho đội thợ gia công..."
+                    value={handoverNotes}
+                    onChange={(e) => setHandoverNotes(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-[13px] font-medium text-slate-700 min-h-[100px] bg-white shadow-sm"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-slate-50 border-t border-slate-100">
+              <button
+                onClick={() => {
+                  const newStatus = handoverType === "moc" ? "Đang sản xuất" : "Đang gia công";
+                  const desc = handoverType === "moc"
+                    ? `Owner bàn giao xưởng. Deadline: ${new Date(handoverDeadline).toLocaleDateString('vi-VN')}. Ghi chú: ${handoverNotes || "Không"}`
+                    : `Đã duyệt mộc & chuyển gia công. Deadline: ${new Date(handoverDeadline).toLocaleDateString('vi-VN')}`;
+
+                  const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
+                  let needsAdd = !saved.find(so => so.id === handoverOrder.id || so.code === handoverOrder.code);
+
+                  const updated = needsAdd ? [...saved, { ...handoverOrder }] : saved;
+
+                  const finalUpdated = updated.map(order =>
+                    (order.code === handoverOrder.code || order.id === handoverOrder.id) ? {
+                      ...order,
+                      status: newStatus,
+                      worker_deadline: handoverDeadline,
+                      handover_notes: handoverNotes,
+                      handover_checklist: {
+                        approved_at: new Date().toISOString(),
+                        notes: handoverNotes,
+                        deadline: handoverDeadline
+                      },
+                      timeline: [
+                        ...(order.timeline || []),
+                        {
+                          time: new Date().toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }).replace(',', ' —'),
+                          label: "Bàn giao gia công",
+                          desc,
+                          active: true
+                        }
+                      ]
+                    } : order
+                  );
+                  localStorage.setItem("tpf_simulated_orders", JSON.stringify(finalUpdated));
+                  setOrders(finalUpdated);
+                  toast.success("Đã bàn giao xưởng thành công!");
+                  setShowHandoverModal(false);
+                  if (handoverType === "moc") navigate("/owner/production/LSX001");
+                }}
+                className="w-full h-12 rounded-2xl bg-indigo-600 text-white font-black text-[14px] transition-all shadow-lg shadow-indigo-200 active:scale-95 hover:bg-indigo-700"
+              >
+                ✅ XÁC NHẬN BÀN GIAO XƯỞNG
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODAL XEM ẢNH PHÓNG TO */}
       {previewImage && (
-        <div 
+        <div
           className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md animate-in fade-in duration-200"
           onClick={() => setPreviewImage(null)}
         >
           <div className="relative max-w-5xl w-full h-full flex items-center justify-center">
-            <button 
+            <button
               onClick={() => setPreviewImage(null)}
               className="absolute top-0 right-0 m-4 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-[210]"
             >
               <X size={24} />
             </button>
-            <img 
-              src={previewImage} 
-              alt="Preview" 
+            <img
+              src={previewImage}
+              alt="Preview"
               className="max-w-full max-h-full object-contain rounded-xl shadow-2xl animate-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
             />

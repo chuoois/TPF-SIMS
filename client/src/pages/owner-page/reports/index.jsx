@@ -288,7 +288,7 @@ export default function OwnerReports() {
                            </tbody>
                            <tfoot className="sticky bottom-0 z-10 bg-emerald-50 shadow-[0_-1px_0_0_#cbd5e1]">
                               <tr>
-                                 <td colSpan={5} className="py-3 px-4 text-[13px] font-black text-slate-800 border-r border-slate-300/30 text-right uppercase">Tổng Cộng:</td>
+                                 <td colSpan={4} className="py-3 px-4 text-[13px] font-black text-slate-800 border-r border-slate-300/30 text-right uppercase">Tổng Cộng:</td>
                                  <td className="py-3 px-4 text-[14px] font-black text-slate-900 text-right border-r border-slate-300/30">{formatCurrency(salesTotals.grossSales)}</td>
                                  <td className="py-3 px-4 text-[13px] font-bold text-rose-600 text-right border-r border-slate-300/30">-{formatCurrency(salesTotals.discount)}</td>
                                  <td className="py-3 px-4 text-[14px] font-black text-amber-700 text-right border-r border-slate-300/30 bg-amber-100/30">{formatCurrency(salesTotals.compensation)}</td>

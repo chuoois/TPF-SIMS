@@ -92,23 +92,6 @@ const INITIAL_WARRANTIES = [
       { date: "2025-10-15", type: "Xử lý co ngót", detail: "Chỉnh lại mộng bàn bị hở do gỗ co lại trong mùa hanh khô.", status: "Done" }
     ],
   },
-  {
-    id: "BH-DH-THO-002",
-    customerName: "Đặng Tuấn Kiệt",
-    customerPhone: "0931234567",
-    productName: "Kệ tivi cột nho 2m4 (Hàng mộc)",
-    productCode: "KTV-HM-CotNho-Huong",
-    productImg: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=300",
-    warrantyMonths: 36,
-    startDate: null,
-    endDate: null,
-    status: "Pending",
-    policy: WARRANTY_POLICIES.NATURAL_WOOD,
-    history: [
-      { date: "2026-03-11", action: "Khởi tạo phiếu (Chờ giao hàng)", note: "Đơn hàng đang trong quá trình gia công" },
-    ],
-    maintenanceLogs: []
-  },
 ];
 
 // ===================== REUSABLE COMPONENTS =====================
@@ -133,8 +116,7 @@ const StatusBadge = ({ status, endDate }) => {
     (new Date(endDate) - new Date()) / (1000 * 60 * 60 * 24) < 30;
 
   const config = getStatusColor(status);
-  const label = status === "Pending" ? "Chờ kích hoạt" : 
-                status === "Active" ? (isExpiringSoon ? "Sắp hết hạn" : "Bảo hành") :
+  const label = status === "Active" ? (isExpiringSoon ? "Sắp hết hạn" : "Bảo hành") :
                 status === "Claimed" ? "Đang sửa chữa" : "Hết hạn";
 
   return (
@@ -321,29 +303,18 @@ const WarrantyDetailsModal = ({ isOpen, onClose, warranty, onCreateRepair }) => 
         <div className="px-8 py-6 border-t bg-gray-50/50 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
              <div className="w-2 h-2 rounded-full bg-emerald-500 scale-125"></div>
-             <span className="text-[11px] font-black text-gray-600 uppercase tracking-widest italic">TPF-SIMS • Wood Specialist System</span>
+             <span className="text-[11px] font-black text-gray-600 uppercase tracking-widest italic">TPF-SIMS</span>
           </div>
           <div className="flex items-center gap-3">
-            {warranty.status === "Pending" ? (
-              <div className="flex flex-col items-end gap-1">
-                <span className="text-[12px] font-black text-blue-600 animate-pulse flex items-center gap-2">
-                  <Clock size={16} /> Tự động kích hoạt sau khi giao hàng
-                </span>
-                <span className="text-[10px] text-gray-400 italic">Theo dõi trạng thái tại mục Quản lý Đơn hàng</span>
-              </div>
-            ) : (
-              <>
-                <button className="h-11 px-6 rounded-2xl border border-gray-200 bg-white text-gray-600 text-[13px] font-black hover:bg-gray-100 transition-all flex items-center gap-2">
-                  <ExternalLink size={16} /> Phiếu bảo hành (In)
-                </button>
-                <button 
-                  onClick={() => onCreateRepair(warranty)}
-                  className="h-11 px-6 rounded-2xl bg-[#1e1e1e] text-white text-[13px] font-black hover:bg-black transition-all flex items-center gap-2 shadow-lg shadow-black/10"
-                >
-                  <Wrench size={16} /> Ghi nhận nứt nẻ/co ngót
-                </button>
-              </>
-            )}
+            <button className="h-11 px-6 rounded-2xl border border-gray-200 bg-white text-gray-600 text-[13px] font-black hover:bg-gray-100 transition-all flex items-center gap-2">
+              <ExternalLink size={16} /> Phiếu bảo hành (In)
+            </button>
+            <button 
+              onClick={() => onCreateRepair(warranty)}
+              className="h-11 px-6 rounded-2xl bg-[#1e1e1e] text-white text-[13px] font-black hover:bg-black transition-all flex items-center gap-2 shadow-lg shadow-black/10"
+            >
+              <Wrench size={16} /> Ghi nhận nứt nẻ/co ngót
+            </button>
           </div>
         </div>
       </div>
@@ -560,7 +531,9 @@ export default function WarrantyManagement() {
         w.productCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
         w.id.toLowerCase().includes(searchQuery.toLowerCase());
       
-      const matchStatus = statusFilter === "All" || w.status === statusFilter;
+      const matchStatus = statusFilter === "All" 
+        ? w.status !== "Pending" 
+        : w.status === statusFilter;
       
       return matchSearch && matchStatus;
     });
@@ -581,7 +554,6 @@ export default function WarrantyManagement() {
   const stats = {
     total: warranties.length,
     active: warranties.filter((w) => w.status === "Active").length,
-    pending: warranties.filter((w) => w.status === "Pending").length,
     claiming: warranties.filter((w) => w.status === "Claimed").length,
     expired: warranties.filter((w) => w.status === "Expired").length,
   };
@@ -609,10 +581,9 @@ export default function WarrantyManagement() {
         </div>
 
         {/* STATS CARDS */}
-        <div className="grid grid-cols-5 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           {[
-            { label: "Tổng số", value: stats.total, color: "text-gray-600", bg: "bg-white", status: "All" },
-            { label: "Chờ kích hoạt", value: stats.pending, color: "text-blue-600", bg: "bg-blue-50", status: "Pending" },
+            { label: "Tổng số", value: stats.total - (warranties.filter(w => w.status === "Pending").length), color: "text-gray-600", bg: "bg-white", status: "All" },
             { label: "Đang hiệu lực", value: stats.active, color: "text-emerald-600", bg: "bg-emerald-50", status: "Active" },
             { label: "Đang bảo trì", value: stats.claiming, color: "text-amber-600", bg: "bg-amber-50", status: "Claimed" },
             { label: "Đã hết hạn", value: stats.expired, color: "text-red-600", bg: "bg-red-50", status: "Expired" },
@@ -685,7 +656,6 @@ export default function WarrantyManagement() {
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="All">Tất cả</option>
-              <option value="Pending">Chờ kích hoạt</option>
               <option value="Active">Đang hiệu lực</option>
               <option value="Claimed">Đang sửa chữa</option>
               <option value="Expired">Hết hạn</option>

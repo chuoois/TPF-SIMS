@@ -28,6 +28,7 @@ import {
   Info,
   Armchair,
   Bed,
+  Calculator,
   Lock,
   Monitor,
   Utensils,
@@ -37,6 +38,8 @@ import {
   Clock,
   Settings,
   ShieldCheck,
+  Hammer,
+  AlertCircle,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import toast from "react-hot-toast";
@@ -92,8 +95,14 @@ const INITIAL_PRODUCTS = [
     stock: 2,
     isPriced: true,
     warrantyMonths: 12,
+    leadTime: 0,
     img: "https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=300",
     description: "Sập thờ trạm khắc tỉ mỉ tinh xảo, chất liệu gỗ mít lõi liền khối.",
+    techNotes: {
+      leg: "Chân 20",
+      apron: "Dạ đục tay Mai Điểu",
+      other: "Hàng sạch rác, gỗ chọn vân."
+    }
   },
   {
     id: "SP002",
@@ -111,6 +120,7 @@ const INITIAL_PRODUCTS = [
     stock: 0,
     isPriced: true,
     img: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=300",
+    leadTime: 30,
     description: "Hàng khách đặt theo kích thước riêng, tay 12 vách 4 phân.",
   },
   {
@@ -132,7 +142,13 @@ const INITIAL_PRODUCTS = [
     stock: 3,
     isPriced: true,
     img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=300",
+    leadTime: 7,
     description: "Hàng mộc sẵn tại kho, chờ sơn hoàn thiện.",
+    techNotes: {
+      leg: "Chân quỳ 12",
+      apron: "Dạ trơn, yếm dầy 4 phân",
+      other: "Khách có thể kiểm tra mộc trước khi sơn."
+    }
   },
   {
     id: "SP-NEW-01",
@@ -191,6 +207,11 @@ const INITIAL_PRODUCTS = [
     isPriced: true,
     img: "https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=300",
     description: "Hàng mộc đục tay kỹ, gỗ gụ chọn lọc không rác.",
+    techNotes: {
+      leg: "Chân 24",
+      apron: "Dạ đục Ngũ Phúc Kim Tiền",
+      other: "Mặt sập 2 lá, dầy 2 phân đậu."
+    }
   },
   {
     id: "SP-HM-02",
@@ -893,9 +914,23 @@ export default function OwnerProducts() {
   const [retailPrice, setRetailPrice] = useState(0);
   const [rawRetailPrice, setRawRetailPrice] = useState(0);
   const [finishedRetailPrice, setFinishedRetailPrice] = useState(0);
+  const [laborCost, setLaborCost] = useState(0);
+  const [materialCost, setMaterialCost] = useState(0);
+  const [setupCost, setSetupCost] = useState(0);
   const [productType, setProductType] = useState("Hàng sẵn");
   const [productCategory, setProductCategory] = useState("");
   const [warrantyMonths, setWarrantyMonths] = useState(12);
+  const [targetMargin, setTargetMargin] = useState(20);
+  const [taxPercent, setTaxPercent] = useState(0);
+  const [woodType, setWoodType] = useState("");
+  const [color, setColor] = useState("");
+  const [dimL, setDimL] = useState("");
+  const [dimW, setDimW] = useState("");
+  const [dimH, setDimH] = useState("");
+  const [origin, setOrigin] = useState("Việt Nam");
+  const [finishing, setFinishing] = useState("");
+  const [leadTime, setLeadTime] = useState(0);
+  const [techNotes, setTechNotes] = useState({ leg: "", apron: "", other: "" });
 
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailItem, setDetailItem] = useState(null);
@@ -928,9 +963,24 @@ export default function OwnerProducts() {
     setRetailPrice(product.retailPrice || 0);
     setRawRetailPrice(product.rawRetailPrice || 0);
     setFinishedRetailPrice(product.finishedRetailPrice || 0);
+    setLaborCost(product.laborCost || 0);
+    setMaterialCost(product.materialCost || 0);
+    setSetupCost(product.setupCost || 0);
     setProductType(product.productType || "Hàng sẵn");
     setProductCategory(product.category || "");
     setWarrantyMonths(product.warrantyMonths || 12);
+    setTargetMargin(product.targetMargin || 20);
+    setTaxPercent(product.taxPercent || 0);
+    setWoodType(product.woodType || "");
+    setColor(product.color || "");
+    const dims = (product.dimensions || "").split(/[xX*×]/).map(d => d.trim());
+    setDimL(dims[0] || "");
+    setDimW(dims[1] || "");
+    setDimH(dims[2] || "");
+    setOrigin(product.origin || "Việt Nam");
+    setFinishing(product.finishing || "");
+    setLeadTime(product.leadTime || 0);
+    setTechNotes(product.techNotes || { leg: "", apron: "", other: "" });
     setShowAddEditModal(true);
   };
 
@@ -1048,9 +1098,21 @@ export default function OwnerProducts() {
                 retailPrice: Number(retailPrice),
                 rawRetailPrice: Number(rawRetailPrice),
                 finishedRetailPrice: Number(finishedRetailPrice),
+                laborCost: Number(laborCost),
+                materialCost: Number(materialCost),
+                setupCost: Number(setupCost),
                 productType,
                 category: productCategory,
                 warrantyMonths: Number(warrantyMonths),
+                targetMargin: Number(targetMargin),
+                taxPercent: Number(taxPercent),
+                woodType,
+                color,
+                dimensions: [dimL, dimW, dimH].filter(Boolean).join(" × "),
+                origin,
+                finishing,
+                leadTime: Number(leadTime),
+                techNotes: { ...techNotes },
                 isPriced: true,
                 status: newStatus,
               }
@@ -1200,43 +1262,34 @@ export default function OwnerProducts() {
 
                 {/* Section 2: Thuộc tính hàng mộc */}
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-4 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Chất liệu
+                        Loại gỗ
                       </label>
-                      <select className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
-                        <option value="">Chọn loại gỗ hoặc chất liệu</option>
-                        <optgroup label="Chất liệu Gỗ">
-                          {woods.map((w) => (
-                            <option
-                              key={w}
-                              value={w}
-                              selected={editItem?.material === w}
-                            >
-                              {w}
-                            </option>
-                          ))}
-                        </optgroup>
-                        <optgroup label="Vật liệu phối hợp">
-                          {otherMaterials.map((m) => (
-                            <option
-                              key={m}
-                              value={m}
-                              selected={editItem?.material === m}
-                            >
-                              {m}
-                            </option>
-                          ))}
-                        </optgroup>
+                      <select
+                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none"
+                        value={woodType}
+                        onChange={(e) => setWoodType(e.target.value)}
+                      >
+                        <option value="">Chọn loại gỗ</option>
+                        {WOOD_TYPES.map((w) => (
+                          <option key={w} value={w}>
+                            {w}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 mb-1">
                         Màu sắc
                       </label>
-                      <select className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
-                        <option value="">Chọn màu sắc</option>
+                      <select
+                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none"
+                        value={color}
+                        onChange={(e) => setColor(e.target.value)}
+                      >
+                        <option value="">Chọn màu</option>
                         {COLORS.map((c) => (
                           <option
                             key={c}
@@ -1252,135 +1305,337 @@ export default function OwnerProducts() {
                       <label className="block text-xs font-semibold text-gray-600 mb-1">
                         Kích thước (D×R×C) (cm)
                       </label>
-                      <input
-                        type="text"
-                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                        placeholder="Dài x Rộng x Cao (cm)"
-                        defaultValue={editItem?.dimensions || ""}
-                      />
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-center"
+                          placeholder="Dài"
+                          value={dimL}
+                          onChange={(e) => setDimL(e.target.value)}
+                        />
+                        <span className="text-gray-400 text-xs font-bold">×</span>
+                        <input
+                          type="text"
+                          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-center"
+                          placeholder="Rộng"
+                          value={dimW}
+                          onChange={(e) => setDimW(e.target.value)}
+                        />
+                        <span className="text-gray-400 text-xs font-bold">×</span>
+                        <input
+                          type="text"
+                          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-center"
+                          placeholder="Cao"
+                          value={dimH}
+                          onChange={(e) => setDimH(e.target.value)}
+                        />
+                      </div>
                     </div>
+                  </div>
+
+
+                {/* Section 3: Cấu trúc Chi phí */}
+                <div className="space-y-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                       Cấu trúc Chi phí
+                    </h3>
+                    <select
+                      className="border rounded-lg px-2 py-1 text-[11px] font-bold text-gray-600 outline-none bg-white"
+                      value={productType}
+                      onChange={(e) => {
+                        const newType = e.target.value;
+                        setProductType(newType);
+                        if (newType === "Hàng sẵn") {
+                          setLaborCost(0);
+                          setMaterialCost(0);
+                        }
+                      }}
+                    >
+                      <option value="Hàng sẵn">Hàng sẵn</option>
+                      <option value="Hàng mộc">Hàng mộc</option>
+                    </select>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">
+                          Giá vốn mộc (đ)
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full border rounded-xl px-4 py-2.5 text-lg font-bold outline-none bg-white text-gray-800 focus:ring-1 focus:ring-blue-500 transition-all"
+                          value={formatNumberInput(costPrice)}
+                          onChange={(e) => {
+                            const val = parseNumberInput(e.target.value);
+                            setCostPrice(val === "" ? 0 : Number(val));
+                          }}
+                        />
+                    </div>
+                  </div>
+
+                  {productType === "Hàng mộc" ? (
+                    <div className="grid grid-cols-3 gap-4">
+                       <div className="space-y-1">
+                         <label className="text-[10px] font-bold text-gray-400 uppercase block">Công hoàn thiện (đ)</label>
+                         <input
+                           type="text"
+                           className="w-full border rounded-lg px-3 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                           value={formatNumberInput(laborCost)}
+                           onChange={(e) => {
+                             const val = parseNumberInput(e.target.value);
+                             setLaborCost(val === "" ? 0 : Number(val));
+                           }}
+                         />
+                       </div>
+                       <div className="space-y-1">
+                         <label className="text-[10px] font-bold text-gray-400 uppercase block">Vật tư (đ)</label>
+                         <input
+                           type="text"
+                           className="w-full border rounded-lg px-3 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                           value={formatNumberInput(materialCost)}
+                           onChange={(e) => {
+                             const val = parseNumberInput(e.target.value);
+                             setMaterialCost(val === "" ? 0 : Number(val));
+                           }}
+                         />
+                       </div>
+                       <div className="space-y-1">
+                         <label className="text-[10px] font-bold text-blue-400 uppercase block">Vận hành (đ)</label>
+                         <input
+                           type="text"
+                           className="w-full border rounded-lg px-3 py-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                           value={formatNumberInput(setupCost)}
+                           onChange={(e) => {
+                             const val = parseNumberInput(e.target.value);
+                             setSetupCost(val === "" ? 0 : Number(val));
+                           }}
+                         />
+                       </div>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-white rounded-xl border border-gray-100 flex items-center justify-between">
+                       <div className="flex flex-col">
+                          <label className="text-[10px] font-bold text-blue-500 uppercase">Vận hành & Giao hàng (đ)</label>
+                          <input
+                            type="text"
+                            className="w-32 border-none p-0 text-lg font-bold text-blue-600 outline-none bg-transparent"
+                            value={formatNumberInput(setupCost)}
+                            onChange={(e) => {
+                              const val = parseNumberInput(e.target.value);
+                              setSetupCost(val === "" ? 0 : Number(val));
+                            }}
+                          />
+                       </div>
+                       <span className="text-[10px] text-gray-400 italic">Mặt hàng sẵn không tốn phí gia công</span>
+                    </div>
+                  )}
+
+                  <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-gray-400 uppercase">Tổng giá thành thực tế</span>
+                    <span className="text-xl font-black text-gray-800">
+                      {fmtCurrency(costPrice + laborCost + materialCost + setupCost)}
+                    </span>
                   </div>
                 </div>
 
-                {/* Section 3: Thương mại */}
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="col-span-2">
-                        <label className="text-xs font-semibold text-gray-400 mb-1 block">
-                          Giá nhập (đ)
-                        </label>
-                        <div className="relative">
+                {/* Section 4: Thiết lập Giá bán */}
+                <div className="space-y-4 pt-4 border-t border-gray-100">
+                   <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                     Thiết lập Mục tiêu & Thuế
+                   </h3>
+
+                   <div className="grid grid-cols-2 gap-4">
+                     <div>
+                       <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">
+                         Biên lợi nhuận gộp mong muốn (%)
+                       </label>
+                       <input
+                         type="number"
+                         className="w-full border rounded-xl px-4 py-2.5 text-[15px] font-bold outline-none text-emerald-700 bg-emerald-50 focus:ring-1 focus:ring-emerald-500 transition-all border-emerald-100"
+                         value={targetMargin}
+                         onChange={(e) => setTargetMargin(e.target.value)}
+                       />
+                     </div>
+                     <div>
+                       <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">
+                         Thuế (VAT / Thu nhập) (%)
+                       </label>
+                       <input
+                         type="number"
+                         className="w-full border rounded-xl px-4 py-2.5 text-[15px] font-bold outline-none text-indigo-700 bg-indigo-50 focus:ring-1 focus:ring-indigo-500 transition-all border-indigo-100"
+                         value={taxPercent}
+                         onChange={(e) => setTaxPercent(e.target.value)}
+                       />
+                     </div>
+                   </div>
+                </div>
+
+                <div className="space-y-4 bg-gray-50 p-5 rounded-2xl border border-gray-200">
+                   <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+                     <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">
+                       Giá bán Chính thức
+                     </h3>
+                   </div>
+
+                  {productType === "Hàng mộc" ? (
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="block text-[10px] font-bold text-gray-500 uppercase">Giá bán MỘC (đ)</label>
+                          <div className="flex flex-col gap-1.5 mb-3 bg-white p-2.5 rounded-xl border border-orange-100 shadow-sm">
+                             <div className="flex items-center justify-between">
+                               <span className="text-[10px] text-gray-500 font-medium">1. Giá sau lãi (gốc + {targetMargin}%):</span>
+                               <span className="text-[11.5px] font-bold text-gray-700">
+                                 {fmtCurrency(Math.round((costPrice + setupCost) * (1 + targetMargin / 100)))}
+                               </span>
+                             </div>
+                             <div className="flex items-center justify-between">
+                               <span className="text-[10px] text-blue-600 font-medium">2. Giá gợi ý (đã cộng VAT {taxPercent}%):</span>
+                               <button
+                                 onClick={() => {
+                                    const cost = costPrice + setupCost;
+                                    const suggested = Math.round(cost * (1 + targetMargin / 100) * (1 + taxPercent / 100));
+                                    setRawRetailPrice(suggested);
+                                 }}
+                                 className="text-[11.5px] font-black text-orange-600 bg-orange-100 px-2.5 py-1 rounded-md cursor-pointer hover:bg-orange-200 hover:text-orange-800 transition shadow-sm active:scale-95"
+                                 title="Click để tự động nhập vào ô bên dưới"
+                               >
+                                 {fmtCurrency(Math.round((costPrice + setupCost) * (1 + targetMargin / 100) * (1 + taxPercent / 100)))}
+                               </button>
+                             </div>
+                          </div>
                           <input
                             type="text"
-                            className="w-full border rounded-lg px-3 py-2 text-[15px] font-black outline-none bg-white text-gray-700 focus:ring-2 focus:ring-blue-500"
-                            value={formatNumberInput(costPrice)}
+                            className="w-full border rounded-xl px-4 py-3 text-xl font-black text-orange-600 outline-none focus:ring-2 focus:ring-orange-500"
+                            value={formatNumberInput(rawRetailPrice)}
                             onChange={(e) => {
                               const val = parseNumberInput(e.target.value);
-                              setCostPrice(val === "" ? 0 : Number(val));
+                              setRawRetailPrice(val === "" ? 0 : Number(val));
                             }}
-                            placeholder="0"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="block text-[10px] font-bold text-gray-500 uppercase">Giá bán THÀNH PHẨM (đ)</label>
+                          <div className="flex flex-col gap-1.5 mb-3 bg-white p-2.5 rounded-xl border border-emerald-100 shadow-sm">
+                             <div className="flex items-center justify-between">
+                               <span className="text-[10px] text-gray-500 font-medium">1. Giá sau lãi (gốc + {targetMargin}%):</span>
+                               <span className="text-[11.5px] font-bold text-gray-700">
+                                 {fmtCurrency(Math.round((costPrice + laborCost + materialCost + setupCost) * (1 + targetMargin / 100)))}
+                               </span>
+                             </div>
+                             <div className="flex items-center justify-between">
+                               <span className="text-[10px] text-blue-600 font-medium">2. Giá gợi ý (đã cộng VAT {taxPercent}%):</span>
+                               <button
+                                 onClick={() => {
+                                    const cost = costPrice + laborCost + materialCost + setupCost;
+                                    const suggested = Math.round(cost * (1 + targetMargin / 100) * (1 + taxPercent / 100));
+                                    setFinishedRetailPrice(suggested);
+                                 }}
+                                 className="text-[11.5px] font-black text-emerald-600 bg-emerald-100 px-2.5 py-1 rounded-md cursor-pointer hover:bg-emerald-200 hover:text-emerald-800 transition shadow-sm active:scale-95"
+                                 title="Click để tự động nhập vào ô bên dưới"
+                               >
+                                 {fmtCurrency(Math.round((costPrice + laborCost + materialCost + setupCost) * (1 + targetMargin / 100) * (1 + taxPercent / 100)))}
+                               </button>
+                             </div>
+                          </div>
+                          <input
+                            type="text"
+                            className="w-full border rounded-xl px-4 py-3 text-xl font-black text-emerald-600 outline-none focus:ring-2 focus:ring-emerald-500"
+                            value={formatNumberInput(finishedRetailPrice)}
+                            onChange={(e) => {
+                              const val = parseNumberInput(e.target.value);
+                              setFinishedRetailPrice(val === "" ? 0 : Number(val));
+                            }}
                           />
                         </div>
                     </div>
-
-                    {productType === "Hàng mộc" ? (
-                      <div className="col-span-2 grid grid-cols-2 gap-4 pt-2">
-                          <div className="p-3 rounded-xl border-2 border-orange-100 space-y-2 bg-orange-50/20">
-                            <label className="block text-xs font-bold text-orange-700">Giá bán MỘC (đ)</label>
-                            <input
-                              type="text"
-                              className="w-full border-none p-0 text-lg font-black text-orange-600 bg-transparent outline-none"
-                              value={formatNumberInput(rawRetailPrice)}
-                              onChange={(e) => {
-                                const val = parseNumberInput(e.target.value);
-                                setRawRetailPrice(val === "" ? 0 : Number(val));
-                              }}
-                            />
-                            <div className="flex items-center justify-between border-t border-orange-100 pt-2">
-                              <MarginDisplay cost={costPrice} price={rawRetailPrice} label="Lợi nhuận gộp" />
-                            </div>
-                          </div>
-
-                          <div className="p-3 rounded-xl border-2 border-emerald-100 space-y-2 bg-emerald-50/20">
-                            <label className="block text-xs font-bold text-emerald-700">Giá bán HOÀN THIỆN (đ)</label>
-                            <input
-                              type="text"
-                              className="w-full border-none p-0 text-lg font-black text-emerald-600 bg-transparent outline-none"
-                              value={formatNumberInput(finishedRetailPrice)}
-                              onChange={(e) => {
-                                const val = parseNumberInput(e.target.value);
-                                setFinishedRetailPrice(val === "" ? 0 : Number(val));
-                              }}
-                            />
-                            <div className="flex items-center justify-between border-t border-emerald-100 pt-2">
-                              <MarginDisplay cost={costPrice} price={finishedRetailPrice} label="Lợi nhuận gộp" />
-                            </div>
-                          </div>
+                  ) : (
+                    <div className="space-y-3 bg-white p-5 rounded-2xl border border-gray-100">
+                      <div className="flex items-center justify-between">
+                         <label className="block text-[10px] font-bold text-gray-500 uppercase">Giá bán lẻ niêm yết (đ)</label>
                       </div>
-                    ) : (
-                      <div className="col-span-2 p-4 border-2 border-blue-100 rounded-2xl bg-blue-50/30 space-y-3">
-                        <label className="block text-xs font-bold text-blue-700 uppercase tracking-wider">Giá bán lẻ (đ)</label>
-                        <input
-                          type="text"
-                          className="w-full border-none p-0 text-3xl font-black text-blue-600 bg-transparent outline-none"
-                          value={formatNumberInput(retailPrice)}
-                          onChange={(e) => {
-                            const val = parseNumberInput(e.target.value);
-                            setRetailPrice(val === "" ? 0 : Number(val));
-                          }}
-                          placeholder="0"
+                      
+                      <div className="flex flex-col gap-1.5 mb-1 bg-blue-50/50 p-2.5 rounded-xl border border-blue-100">
+                         <div className="flex items-center justify-between">
+                           <span className="text-[10px] text-gray-500 font-medium">1. Giá sau lãi (gốc + {targetMargin}%):</span>
+                           <span className="text-[11.5px] font-bold text-gray-700">
+                             {fmtCurrency(Math.round((costPrice + setupCost) * (1 + targetMargin / 100)))}
+                           </span>
+                         </div>
+                         <div className="flex items-center justify-between">
+                           <span className="text-[10px] text-blue-600 font-medium">2. Giá gợi ý (đã cộng VAT {taxPercent}%):</span>
+                           <button
+                             onClick={() => {
+                                const cost = costPrice + setupCost;
+                                const suggested = Math.round(cost * (1 + targetMargin / 100) * (1 + taxPercent / 100));
+                                setRetailPrice(suggested);
+                             }}
+                             className="text-[11.5px] font-black text-blue-600 bg-blue-100 px-2.5 py-1 rounded-md cursor-pointer hover:bg-blue-200 hover:text-blue-800 transition shadow-sm active:scale-95"
+                             title="Click để tự động nhập vào ô bên dưới"
+                           >
+                             {fmtCurrency(Math.round((costPrice + setupCost) * (1 + targetMargin / 100) * (1 + taxPercent / 100)))}
+                           </button>
+                         </div>
+                      </div>
+                      <input
+                        type="text"
+                        className="w-full border-2 border-gray-200 rounded-2xl px-5 py-4 text-3xl font-black text-blue-600 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 shadow-sm"
+                        value={formatNumberInput(retailPrice)}
+                        onChange={(e) => {
+                          const val = parseNumberInput(e.target.value);
+                          setRetailPrice(val === "" ? 0 : Number(val));
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-3 gap-4 pt-2">
+                    <div className="flex items-center justify-between p-3 border rounded-xl bg-white shadow-sm">
+                      <span className="text-[10px] font-bold text-gray-500 uppercase">Bảo hành</span>
+                      <div className="flex items-center gap-1">
+                         <input
+                          type="number"
+                          className="w-10 border-none p-0 text-center font-bold text-blue-600 outline-none"
+                          value={warrantyMonths}
+                          onChange={(e) => setWarrantyMonths(e.target.value)}
                         />
-                        <div className="flex items-center justify-between border-t border-blue-100 pt-3">
-                          <MarginDisplay cost={costPrice} price={retailPrice} label="Lãi dự kiến" />
-                        </div>
+                        <span className="text-[10px] font-bold text-gray-400">tháng</span>
                       </div>
-                    )}
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Loại sản phẩm
-                      </label>
-                      <select
-                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                        value={productType}
-                        onChange={(e) => setProductType(e.target.value)}
-                      >
-                        <option value="Hàng sẵn">Hàng sẵn</option>
-                        <option value="Hàng mộc">Hàng mộc</option>
-                        <option value="Hàng khách đặt">Hàng khách đặt</option>
-                      </select>
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1 flex items-center gap-1">
-                        <ShieldCheck size={14} className="text-blue-500" />
-                        Bảo hành (tháng)
-                      </label>
-                      <input
-                        type="number"
-                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                        value={warrantyMonths}
-                        onChange={(e) => setWarrantyMonths(e.target.value)}
-                        placeholder="12"
-                      />
+                    {/* THỜI GIAN HOÀN THIỆN (LEAD TIME) */}
+                    <div className="flex items-center justify-between p-3 border rounded-xl bg-amber-50 border-amber-200 shadow-sm shadow-amber-50">
+                      <span className="text-[10px] font-bold text-amber-700 uppercase">Hoàn thiện</span>
+                      <div className="flex items-center gap-1">
+                         <input
+                          type="number"
+                          className="w-10 border-none p-0 text-center font-bold text-amber-700 outline-none bg-transparent"
+                          value={leadTime}
+                          onChange={(e) => setLeadTime(e.target.value)}
+                        />
+                        <span className="text-[10px] font-bold text-amber-600/60">ngày</span>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Tồn kho ban đầu
-                      </label>
-                      <input
-                        type="number"
-                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100"
-                        defaultValue={editItem ? editItem.stock : 0}
-                        disabled={editItem?.productType === "Hàng khách đặt"}
-                        title="Hàng khách đặt không quản lý kho theo mẫu"
-                      />
+                    <div className="flex items-center justify-between p-3 border rounded-xl bg-white shadow-sm">
+                      <span className="text-[10px] font-bold text-gray-500 uppercase">Tồn kho</span>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          className="w-10 border-none p-0 text-center font-bold text-gray-600 outline-none disabled:bg-transparent"
+                          defaultValue={editItem ? editItem.stock : 0}
+                          disabled={editItem?.productType === "Hàng khách đặt"}
+                        />
+                        <span className="text-[10px] font-bold text-gray-400">sp</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="px-6 py-4 border-t flex items-center justify-end gap-3 bg-gray-50/80">
+        <div className="px-6 py-4 border-t flex items-center justify-end gap-3 bg-gray-50/80">
             <button
               onClick={() => setShowAddEditModal(false)}
               className="px-5 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-200 transition cursor-pointer"
@@ -1627,7 +1882,7 @@ export default function OwnerProducts() {
                       </span>
                     </div>
                   )}
-                  <div className="col-span-2 border-t border-gray-100 mt-2 pt-4">
+                  <div className="col-span-2 border-t border-gray-100 mt-2 pt-4 space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-500 text-xs">
                         Tồn kho hiện tại
@@ -1637,6 +1892,42 @@ export default function OwnerProducts() {
                           ? "—"
                           : detailItem.stock}
                       </span>
+                    </div>
+                    {/* THỜI GIAN HOÀN THIỆN */}
+                    <div className="flex justify-between items-center bg-amber-50/50 p-2 rounded-lg border border-amber-100/50">
+                       <span className="text-amber-700 text-xs font-bold flex items-center gap-1">
+                         <Clock size={12} /> Thời gian hoàn thiện dự kiến
+                       </span>
+                       <span className="text-[13px] font-black text-amber-800">
+                         {detailItem.leadTime || 0} ngày
+                       </span>
+                    </div>
+                  </div>
+
+                  {/* THÔNG SỐ KĨ THUẬT / GHI CHÚ CHUNG */}
+                  <div className="mt-4 border-t border-gray-100 pt-4">
+                    <span className="text-gray-500 block text-[10px] font-bold mb-2 flex items-center gap-1.5 uppercase tracking-widest">
+                      <Hammer size={12} className="text-gray-400" />
+                      {detailItem.productType === "Hàng mộc" || detailItem.productType === "Hàng khách đặt" 
+                        ? "Thông số kĩ thuật (Xưởng sản xuất)" 
+                        : "Ghi chú sản phẩm (Bán lẻ)"}
+                    </span>
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-2">
+                      {detailItem.techNotes ? (
+                        <>
+
+                          <div className="pt-2 border-t border-slate-200/50 mt-1">
+                            <span className="text-gray-400 text-[9px] uppercase font-black block mb-1">
+                              {detailItem.productType === "Hàng sẵn" ? "Ghi chú chi tiết:" : "Thông số kĩ thuật & Yêu cầu sản xuất:"}
+                            </span>
+                            <p className="text-[12.5px] text-slate-600 italic leading-relaxed">
+                              {detailItem.techNotes.other || "Không có nội dung ghi chú."}
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="text-[12.5px] text-gray-400 italic font-medium">Chưa có thông tin kĩ thuật/ghi chú.</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1966,6 +2257,12 @@ export default function OwnerProducts() {
                         Loại SP
                       </th>
                       <th
+                        className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider"
+                        style={{ color: "var(--text-placeholder)" }}
+                      >
+                        Hoàn thiện
+                      </th>
+                      <th
                         className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-right"
                         style={{ color: "var(--text-placeholder)" }}
                       >
@@ -2068,6 +2365,12 @@ export default function OwnerProducts() {
                                   <ShieldCheck size={10} /> BH: {p.warrantyMonths || 12}T
                                 </span>
                               )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-1 font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100 w-fit">
+                              <Clock size={12} className="text-amber-500" />
+                              {p.leadTime || 0} n
                             </div>
                           </td>
                           <td className="px-4 py-4 text-right">

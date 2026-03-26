@@ -42,6 +42,7 @@ const MOCK_REQUIREMENTS = [
     salesPerson: "Bình Nguyễn",
     createdDate: "2026-03-12",
     status: "Đang xử lý",
+    leadTime: 30,
     notes:
       "Khách nâng cấp căn hộ, cần giường Master và kệ Tivi phòng khách đồng bộ gỗ Sồi.",
     surveyNotes: "",
@@ -85,6 +86,7 @@ const MOCK_REQUIREMENTS = [
     salesPerson: "Bình Nguyễn",
     createdDate: "2026-03-11",
     status: "Đang xử lý",
+    leadTime: 45,
     notes: "Khách muốn bộ bàn ăn cổ điển kiểu Louis XVI",
     surveyNotes: "",
     proposedSolution: "",
@@ -358,6 +360,23 @@ const RequirementDetailModal = ({ req, onClose, onEnlarge, onOpenCancel }) => {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* THỜI GIAN HOÀN THIỆN (LEAD TIME) */}
+          <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/40 flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+                <Clock size={20} />
+              </div>
+              <div>
+                <p className="text-[14px] font-bold text-amber-900">Tiến độ sản xuất cam kết</p>
+                <p className="text-[12px] text-amber-700">Dự kiến hoàn thiện cho toàn bộ yêu cầu kỹ thuật</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="text-[24px] font-black text-amber-600 leading-none">{req.leadTime || 0}</span>
+              <span className="ml-1 text-[13px] font-bold text-amber-500 uppercase tracking-wider">Ngày</span>
+            </div>
           </div>
 
           {/* Section 3: Chi tiết Sản phẩm & Thông số kỹ thuật */}
@@ -799,6 +818,7 @@ export default function SalesRequirements() {
                     "Mã yêu cầu",
                     "Khách hàng",
                     "Ngày nhận",
+                    "Tiến độ",
                     "Trạng thái",
                   ].map((h, i) => (
                     <th
@@ -875,6 +895,12 @@ export default function SalesRequirements() {
                         style={{ color: "var(--text-secondary)" }}
                       >
                         {r.createdDate?.split("-").reverse().join("/")}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1.5 font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100 w-fit">
+                          <Clock size={12} className="text-amber-500" />
+                          {r.leadTime || 0} n
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-right pr-6">
                         <div className="inline-flex items-center relative">

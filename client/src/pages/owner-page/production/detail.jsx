@@ -81,6 +81,8 @@ const MOCK_PRODUCTIONS = {
     startDate: "2026-03-03",
     expectedEndDate: "2026-03-25",
     date: "2026-03-03T08:00:00",
+    isDelayed: true,
+    delayReason: "Thời tiết nồm ẩm báo thợ sơn không khô kịp, xin thêm 3 ngày.",
     customerName: "Hoàng Nguyệt Ánh",
     productName: "Bàn trà phòng khách",
     productImage: "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=300",
@@ -402,7 +404,10 @@ export default function ProductionDetail() {
 
   // States
   const [showRedoModal, setShowRedoModal] = useState(false);
+  const [showDelayModal, setShowDelayModal] = useState(false);
   const [selectedWorker, setSelectedWorker] = useState(null);
+  const [newDeadline, setNewDeadline] = useState("");
+
 
   // Fake data fallback logic
   const fallbackRef = ["LSX001", "LSX002", "LSX010", "LSX015"].includes(id) ? "LSX001"
@@ -433,7 +438,7 @@ export default function ProductionDetail() {
     toast((t) => (
       <div className="flex flex-col gap-3">
         <p className="text-[13px] font-medium text-gray-700">
-          Xác nhận <strong>Duyệt & Hoàn thành</strong> mã lệnh <strong>{p.code}</strong>?
+          Xác nhận <strong>Duyệt & Hoàn thành</strong> cho đơn hàng <strong>{p.orderCode || p.code}</strong>?
         </p>
         <div className="flex justify-end gap-2">
           <button 
@@ -445,7 +450,7 @@ export default function ProductionDetail() {
           <button 
             onClick={() => {
               toast.dismiss(t.id);
-              toast.success(`Lệnh sản xuất ${p.code} đã hoàn thành xuất sắc!`);
+              toast.success(`Đơn hàng ${p.orderCode || p.code} đã hoàn thành xuất sắc!`);
               setTimeout(() => navigate("/owner/production"), 1000);
             }}
             className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition"
@@ -463,12 +468,22 @@ export default function ProductionDetail() {
   };
 
   const handleClearRedo = () => {
-    toast.success(`Đã xác nhận bác thợ sửa xong lệnh ${p.code}. Trạng thái trở lại bình thường.`);
+    toast.success(`Đã xác nhận bác thợ sửa xong đơn ${p.orderCode || p.code}. Trạng thái trở lại bình thường.`);
+  };
+
+  const handleDelaySubmit = () => {
+    if (!newDeadline) {
+      toast.error("Vui lòng chọn ngày giao mới!");
+      return;
+    }
+    setShowDelayModal(false);
+    toast.success(`Đã gia hạn tiến độ thành công. Ngày giao mới là ${fmtDate(newDeadline)}.`);
+    // Since this uses static MOCK data, we pretend it applied.
   };
 
   return (
     <>
-      <PageHelmet title={`${p.code} | Chi tiết lệnh SX`} />
+      <PageHelmet title={`${p.orderCode || p.code} | Chi tiết sản xuất`} />
 
       <div className="flex flex-col h-full -m-6" style={{ backgroundColor: "var(--bg-main)" }}>
         {/* ═══════ STICKY HEADER ═══════ */}
@@ -491,7 +506,7 @@ export default function ProductionDetail() {
               </Link>
               <div>
                 <div className="flex items-center gap-2.5 flex-wrap">
-                  <h1 className="text-[16px] font-bold" style={{ color: "var(--text-main)" }}>{p.code}</h1>
+                  <h1 className="text-[16px] font-bold" style={{ color: "var(--text-main)" }}>{p.orderCode || p.code}</h1>
                   <Badge style={{ backgroundColor: sc.primaryBadge.bg, color: sc.primaryBadge.text, border: `1px solid ${sc.primaryBadge.border}` }}>
                     <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: sc.primaryBadge.text }} />
                     {sc.primaryBadge.label}
@@ -501,9 +516,15 @@ export default function ProductionDetail() {
                       {sc.detailBadge.label}
                     </Badge>
                   )}
+                  {p.isDelayed && (
+                    <Badge style={{ backgroundColor: "#FEF2F2", color: "#DC2626", border: "1px solid #FCA5A5" }}>
+                      <AlertTriangle size={10} />
+                      Báo chậm
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-[11px] mt-0.5" style={{ color: "var(--text-placeholder)" }}>
-                  Đơn hàng: {p.orderCode} • Khách: {p.customerName}
+                  Khách hàng: {p.customerName}
                 </p>
               </div>
             </div>
@@ -531,15 +552,27 @@ export default function ProductionDetail() {
                 </div>
               )}
 
-
-
-
-
-
-
-
-
-
+              {p.isDelayed && (
+                <button
+                  onClick={() => {
+                    setNewDeadline(p.expectedEndDate || "");
+                    setShowDelayModal(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold transition hover:bg-red-600 cursor-pointer shadow-xl border border-red-200"
+                  style={{ backgroundColor: "#FEF2F2", color: "#DC2626" }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#DC2626";
+                    e.currentTarget.style.color = "#FFF";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "#FEF2F2";
+                    e.currentTarget.style.color = "#DC2626";
+                  }}
+                >
+                  <Calendar size={14} />
+                  Xử lý chậm
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -548,6 +581,22 @@ export default function ProductionDetail() {
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
 
           {/* ── BANNERS ── */}
+          {p.isDelayed && (
+            <div
+              className="flex items-start gap-3 p-4 rounded-2xl animate-[shake_0.5s_ease-in-out] shadow-sm"
+              style={{ backgroundColor: "#FEF2F2", border: "1px solid #FCA5A5" }}
+            >
+              <AlertTriangle size={18} className="shrink-0 mt-0.5" style={{ color: "#EF4444" }} />
+              <div>
+                <p className="text-[13px] font-bold" style={{ color: "#991B1B" }}>Thợ báo chậm tiến độ</p>
+                <p className="text-[12px] mt-0.5" style={{ color: "#B91C1C" }}>
+                  <strong>Lý do:</strong> {p.delayReason}
+                  <span className="block mt-1 italic opacity-80">Hãy liên hệ với khách hàng ({p.customerName}) trước khi cập nhật lại hạn giao.</span>
+                </p>
+              </div>
+            </div>
+          )}
+
           {p.needsRedo && !isDone && (
             <div
               className="flex items-start gap-3 p-4 rounded-2xl animate-[shake_0.5s_ease-in-out] shadow-sm"
@@ -723,25 +772,15 @@ export default function ProductionDetail() {
                 >
                   <ClipboardList size={14} style={{ color: "var(--brand-primary)" }} />
                   <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-main)" }}>
-                    Thông tin lệnh sản xuất
+                    Thông tin sản xuất
                   </span>
                 </div>
 
                 <div className="px-5 py-4">
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3">
                     <div>
-                      <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "var(--text-placeholder)" }}>Mã lệnh SX</p>
-                      <p className="text-[13px] font-semibold mt-0.5 font-mono" style={{ color: "var(--text-main)" }}>{p.code}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "var(--text-placeholder)" }}>Đơn hàng</p>
-                      <Link
-                        to={`/owner/orders/${p.orderId}`}
-                        className="text-[13px] font-semibold mt-0.5 hover:underline"
-                        style={{ color: "var(--brand-primary)" }}
-                      >
-                        {p.orderCode}
-                      </Link>
+                      <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "var(--text-placeholder)" }}>Mã đơn hàng</p>
+                      <p className="text-[13px] font-semibold mt-0.5 font-mono" style={{ color: "var(--text-main)" }}>{p.orderCode || p.code}</p>
                     </div>
                     <div>
                       <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "var(--text-placeholder)" }}>Khách hàng</p>
@@ -839,6 +878,70 @@ export default function ProductionDetail() {
         </div>
 
 
+
+        {/* ── MODAL: CẬP NHẬT TIẾN ĐỘ CHẬM ── */}
+        {showDelayModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-red-50/50">
+                <div className="flex items-center gap-2 text-red-600">
+                  <AlertTriangle size={18} />
+                  <h3 className="text-[15px] font-bold uppercase tracking-tight">Xử lý báo cáo chậm</h3>
+                </div>
+                <button onClick={() => setShowDelayModal(false)} className="text-gray-400 hover:text-gray-600 transition p-1 hover:bg-white rounded-lg">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-5">
+                <div className="p-4 rounded-2xl bg-red-50 border border-red-100">
+                  <p className="text-[11px] text-red-400 font-bold uppercase mb-1">Lý do thợ báo lùi ngày</p>
+                  <p className="text-[13px] font-medium text-red-900 leading-relaxed italic border-l-2 border-red-300 pl-3 py-1">
+                    "{p.delayReason}"
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-2">
+                  <p className="text-[11px] text-gray-400 font-bold uppercase">Thông tin liên hệ</p>
+                  <div className="text-[13px] font-bold text-gray-900">
+                    Khách hàng: {p.customerName}
+                  </div>
+                  <div className="text-[13px] text-gray-600">
+                    Sản phẩm: {p.productName}
+                  </div>
+                  <div className="mt-2 text-[12px] text-blue-600 font-medium">
+                    Hãy liên hệ với khách để thông báo trước khi gia hạn.
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[12px] font-bold text-gray-400 uppercase mb-2 ml-1">Lùi ngày giao mới</label>
+                  <input
+                    type="date"
+                    value={newDeadline}
+                    onChange={(e) => setNewDeadline(e.target.value)}
+                    className="w-full h-11 px-4 rounded-xl border border-gray-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-300 transition"
+                  />
+                </div>
+              </div>
+
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
+                <button
+                  onClick={() => setShowDelayModal(false)}
+                  className="px-5 py-2 rounded-xl text-[13px] font-bold text-gray-400 hover:bg-gray-100 transition"
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  onClick={handleDelaySubmit}
+                  className="px-5 py-2 rounded-xl text-[13px] font-bold bg-red-600 text-white hover:bg-red-700 transition shadow-md"
+                >
+                  Cập nhật tiến độ
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── MODAL: YÊU CẦU SỬA LẠI ── */}
         {showRedoModal && (
