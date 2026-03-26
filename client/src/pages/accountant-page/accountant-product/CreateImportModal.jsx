@@ -9,7 +9,7 @@ import { useState, useRef } from "react";
 import {
     X, Plus, Trash2, Upload, FileImage,
     Building2, Calendar, Package, ChevronDown, AlignLeft,
-    BarChart2, Image, Layers, CheckCircle, AlertTriangle,
+    BarChart2, Image, Layers, CheckCircle,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -150,12 +150,13 @@ const emptyBundleItem = () => ({
     _id: Math.random(),
     name: "",
     qty: 1,
-    unitPrice: "",
+    productNote: "",
 });
 
 const emptyBundle = () => ({
     _id: Math.random(),
     isBundle: true,
+    bundleCode: "",    // Mã bộ sản phẩm
     bundleName: "",
     bundleQty: 1,
     bundlePrice: "",   // Giá cả bộ theo HĐ thực
@@ -251,8 +252,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
         return l.qty && l.importPrice ? Number(l.qty) * Number(l.importPrice) : 0;
     };
 
-    const bundleItemsTotal = (bundle) =>
-        bundle.items.reduce((s, it) => s + (Number(it.qty) || 0) * (Number(it.unitPrice) || 0), 0);
+    // bundleItemsTotal removed — pricing is per-bundle only (no per-item price estimation)
 
     const grandTotal = lines.reduce((s, l) => s + lineTotal(l), 0);
 
@@ -381,13 +381,13 @@ export default function CreateImportModal({ onClose, onSaved }) {
                             <div className="flex items-center justify-between">
                                 <p className="text-[11px] font-bold uppercase tracking-widest flex items-center gap-2" style={{ color: "var(--brand-primary)" }}>
                                     <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-[10px] font-black" style={{ backgroundColor: "var(--brand-primary)" }}>2</span>
-                                    Chi tiết sản phẩm nhập
+                                    Chi tiết nhập
                                 </p>
                                 <div className="flex items-center gap-2">
                                     <button type="button" onClick={() => setLines(p => [...p, emptyLine()])}
                                         className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-[12px] font-bold cursor-pointer hover:opacity-80 transition"
                                         style={{ backgroundColor: "var(--brand-primary)", color: "#fff" }}>
-                                        <Plus size={13} /> Thêm dòng
+                                        <Plus size={13} /> Thêm theo sản phẩm lẻ
                                     </button>
                                     <button type="button" onClick={() => setLines(p => [...p, emptyBundle()])}
                                         className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-[12px] font-bold cursor-pointer hover:opacity-80 transition"
@@ -409,7 +409,6 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                         onRemoveFile={() => removeLineFile(line._id)}
                                         canRemove={lines.length > 1}
                                         lineTotal={lineTotal(line)}
-                                        bundleItemsTotal={bundleItemsTotal(line)}
                                         activeDropdown={activeDropdown}
                                         setActiveDropdown={setActiveDropdown}
                                         inp={inp} inpS={inpS} lbl={lbl} lblS={lblS}
@@ -469,7 +468,7 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveFile, 
         <div className="p-5 rounded-2xl space-y-4 shadow-sm" style={{ backgroundColor: "var(--bg-main)", border: "1px solid var(--grid-border)" }}>
             <div className="flex items-center justify-between">
                 <p className="text-[11px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "var(--text-secondary)" }}>
-                    <Package size={11} /> Mặt hàng #{idx + 1}
+                    <Package size={11} /> Sản phẩm lẻ {idx + 1}
                 </p>
                 {canRemove && (
                     <button type="button" onClick={onRemove} className="p-1 rounded hover:bg-red-50 text-gray-300 hover:text-red-500 cursor-pointer transition">
@@ -543,35 +542,40 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveFile, 
                 </>
             ) : (
                 <>
-                    {/* Row 1: Mã + Tên */}
-                    <div className="grid grid-cols-3 gap-4">
+                    {/* Row 1: Hình thức + Mã + Tên */}
+                    <div className="grid grid-cols-5 gap-3">
+                        <div>
+                            <label className={lbl} style={lblS}>Hình thức</label>
+                            <div className="relative">
+                                <select value={line.formType} onChange={(e) => onUpdate("formType", e.target.value)}
+                                    className={inp + " appearance-none pr-7 cursor-pointer"} style={inpS}>
+                                    {FORM_TYPES.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                                </select>
+                                <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--text-placeholder)" }} />
+                            </div>
+                        </div>
                         <div>
                             <label className={lbl} style={lblS}>Mã sản phẩm</label>
                             <input value={line.productCode} onChange={(e) => onUpdate("productCode", e.target.value)} placeholder="Tự sinh/Nhập tay" className={inp} style={inpS} />
                         </div>
-                        <div className="col-span-2">
+                        <div className="col-span-3">
                             <label className={lbl} style={lblS}>Tên sản phẩm *</label>
                             <input value={line.productName} onChange={(e) => onUpdate("productName", e.target.value)} placeholder="VD: Bàn thờ Kim Tiền..." className={inp} style={inpS} />
                         </div>
                     </div>
 
-                    {/* Row 2: Hình thức + Loại SP + Danh mục + Loại gỗ + Màu */}
-                    <div className="grid grid-cols-5 gap-3">
-                        {[
-                            { label: "Hình thức", field: "formType", options: FORM_TYPES, isSelect: true },
-                            { label: "Loại sản phẩm", field: "productType", options: PRODUCT_TYPES, isSelect: true },
-                        ].map(({ label, field, options, isSelect }) => (
-                            <div key={field}>
-                                <label className={lbl} style={lblS}>{label}</label>
-                                <div className="relative">
-                                    <select value={line[field]} onChange={(e) => onUpdate(field, e.target.value)}
-                                        className={inp + " appearance-none pr-7 cursor-pointer"} style={inpS}>
-                                        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                                    </select>
-                                    <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--text-placeholder)" }} />
-                                </div>
+                    {/* Row 2: Loại SP + Danh mục + Loại gỗ + Màu */}
+                    <div className="grid grid-cols-4 gap-3">
+                        <div>
+                            <label className={lbl} style={lblS}>Loại sản phẩm</label>
+                            <div className="relative">
+                                <select value={line.productType} onChange={(e) => onUpdate("productType", e.target.value)}
+                                    className={inp + " appearance-none pr-7 cursor-pointer"} style={inpS}>
+                                    {PRODUCT_TYPES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                                </select>
+                                <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--text-placeholder)" }} />
                             </div>
-                        ))}
+                        </div>
 
                         {[
                             { label: "Danh mục", field: "category", opts: CATEGORIES },
@@ -598,6 +602,7 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveFile, 
                             </div>
                         ))}
                     </div>
+
 
                     {/* Row 3: Kích thước */}
                     <div className="grid grid-cols-3 gap-4">
@@ -679,32 +684,29 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveFile, 
 // BUNDLE ROW – Dòng bộ sản phẩm
 // ══════════════════════════════════════════════════════════
 function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, onUpdateItem,
-    onFileChange, onRemoveFile, canRemove, lineTotal, bundleItemsTotal,
+    onFileChange, onRemoveFile, canRemove, lineTotal,
     activeDropdown, setActiveDropdown,
     inp, inpS, lbl, lblS, fmtCurrency, formatNumber, parseNumber }) {
 
-    const invoiceTotal = (Number(bundle.bundleQty) || 0) * (Number(bundle.bundlePrice) || 0);
-    const diff = bundleItemsTotal - invoiceTotal;
-    const isMatch = bundleItemsTotal > 0 && Math.abs(diff) === 0;
-    const hasEstimate = bundleItemsTotal > 0;
     const isReady = bundle.formType === "READY";
 
     // Khi chọn bộ có sẵn → tự điền thông tin
     const applyBundle = (b) => {
+        onUpdate("bundleCode", b.code);
         onUpdate("bundleName", b.bundleName);
         onUpdate("category", b.category);
         onUpdate("woodType", b.woodType);
         onUpdate("color", b.color);
         onUpdate("productType", b.productType);
-        onUpdate("items", b.items.map(it => ({ ...it, _id: Math.random() })));
+        onUpdate("items", b.items.map(it => ({ ...it, _id: Math.random(), productNote: "" })));
     };
 
     return (
         <div className="rounded-2xl shadow-sm overflow-hidden" style={{ border: "2px solid #7C3AED" }}>
             {/* Bundle header bar */}
             <div className="px-5 py-2.5 flex items-center justify-between" style={{ backgroundColor: "#F5F3FF" }}>
-                <p className="text-[11px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "#7C3AED" }}>
-                    <Layers size={12} /> Bộ sản phẩm #{idx + 1}
+                <p className="pt-3 text-[11px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "#7C3AED" }}>
+                    <Layers size={11} /> Bộ sản phẩm {idx + 1}
                 </p>
                 {canRemove && (
                     <button type="button" onClick={onRemove} className="p-1 rounded hover:bg-red-50 text-purple-300 hover:text-red-500 cursor-pointer transition">
@@ -713,9 +715,9 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                 )}
             </div>
 
-            <div className="p-5 space-y-4" style={{ backgroundColor: "var(--bg-main)" }}>
+            <div className="pt-3 px-5 pb-5 space-y-4 " style={{ backgroundColor: "var(--bg-main)" }}>
 
-                {/* ── Row 1: Hình thức + Tên bộ (hoặc search nếu READY) ── */}
+                {/* ── Row 1: Hình thức + Mã bộ + Tên bộ ── */}
                 <div className="grid grid-cols-5 gap-3">
                     <div>
                         <label className={lbl} style={lblS}>Hình thức</label>
@@ -728,8 +730,18 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                         </div>
                     </div>
 
+                    <div>
+                        <label className={lbl} style={lblS}>Mã bộ sản phẩm</label>
+                        <input value={bundle.bundleCode}
+                            onChange={(e) => onUpdate("bundleCode", e.target.value)}
+                            placeholder="Tự sinh / Nhập tay"
+                            className={inp}
+                            style={isReady ? { ...inpS, backgroundColor: "#F5F3FF", color: "#7C3AED", fontWeight: 600 } : inpS}
+                            readOnly={isReady} />
+                    </div>
+
                     {isReady ? (
-                        <div className="col-span-4 relative">
+                        <div className="col-span-3 relative">
                             <label className={lbl} style={lblS}>
                                 Tìm bộ đã có trong kho *
                                 {bundle.category && <span className="ml-2 normal-case font-normal text-purple-500">✓ Đã chọn — chỉ cần nhập số bộ &amp; giá HĐ</span>}
@@ -773,7 +785,7 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                             )}
                         </div>
                     ) : (
-                        <div className="col-span-4">
+                        <div className="col-span-3">
                             <label className={lbl} style={lblS}>Tên bộ sản phẩm *</label>
                             <input value={bundle.bundleName} onChange={(e) => onUpdate("bundleName", e.target.value)}
                                 placeholder="VD: Bộ bàn ăn 8 ghế nguyên khối..."
@@ -848,7 +860,7 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                         {[bundle.category, bundle.woodType, bundle.color].filter(Boolean).map(v => (
                             <span key={v} className="text-[11px] px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: "#DCFCE7", color: "#15803D" }}>{v}</span>
                         ))}
-                        <span className="text-[11px]" style={{ color: "#15803D" }}>· {bundle.items.length} món lẻ (có thể chỉnh lại giá ước tính)</span>
+                        <span className="text-[11px]" style={{ color: "#15803D" }}>· {bundle.items.length} món lẻ (có thể chỉnh lại thông tin)</span>
                     </div>
                 )}
 
@@ -856,9 +868,7 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                 <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #DDD6FE" }}>
                     <div className="px-4 py-2.5 flex items-center justify-between" style={{ backgroundColor: "#EDE9FE" }}>
                         <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#5B21B6" }}>
-                            Các món lẻ trong bộ <span className="opacity-60 font-normal normal-case">
-                                {isReady ? "(ước tính đã tự điền – có thể chỉnh lại)" : "(kế toán ước tính giá vốn)"}
-                            </span>
+                            Các món lẻ trong bộ
                         </p>
                     </div>
                     <table className="w-full" style={{ backgroundColor: "#fff" }}>
@@ -867,80 +877,54 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                                 <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-wider w-6" style={{ color: "#7C3AED" }}>#</th>
                                 <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-wider" style={{ color: "#7C3AED" }}>Tên món</th>
                                 <th className="px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider w-20" style={{ color: "#7C3AED" }}>SL/bộ</th>
-                                <th className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider w-44" style={{ color: "#7C3AED" }}>Giá ước tính (₫/đơn vị)</th>
-                                <th className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider w-36" style={{ color: "#7C3AED" }}>Thành</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider" style={{ color: "#7C3AED" }}>Ghi chú chi tiết</th>
                                 <th className="w-10" />
                             </tr>
                         </thead>
                         <tbody>
-                            {bundle.items.map((item, iIdx) => {
-                                const sub = (Number(item.qty) || 0) * (Number(item.unitPrice) || 0);
-                                return (
-                                    <tr key={item._id} style={{ borderBottom: "1px solid #F3F0FF" }}>
-                                        <td className="px-4 py-2 text-[12px]" style={{ color: "#7C3AED" }}>{iIdx + 1}</td>
-                                        <td className="px-4 py-2">
-                                            <input value={item.name}
-                                                onChange={(e) => onUpdateItem(item._id, "name", e.target.value)}
-                                                placeholder="VD: Bàn ăn, Ghế ăn..."
-                                                className="w-full h-8 px-2 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-purple-200 transition"
-                                                style={{ borderColor: "#DDD6FE", backgroundColor: "#FAFAFA" }} />
-                                        </td>
-                                        <td className="px-3 py-2">
-                                            <input type="number" min="1" value={item.qty}
-                                                onChange={(e) => onUpdateItem(item._id, "qty", e.target.value)}
-                                                className="w-full h-8 px-2 rounded-md text-[13px] border text-center focus:outline-none focus:ring-1 focus:ring-purple-200 transition"
-                                                style={{ borderColor: "#DDD6FE", backgroundColor: "#FAFAFA" }} />
-                                        </td>
-                                        <td className="px-3 py-2">
-                                            <input type="text" value={formatNumber(item.unitPrice)}
-                                                onChange={(e) => onUpdateItem(item._id, "unitPrice", parseNumber(e.target.value))}
-                                                placeholder="0"
-                                                className="w-full h-8 px-2 rounded-md text-[13px] border text-right focus:outline-none focus:ring-1 focus:ring-purple-200 transition"
-                                                style={{ borderColor: "#DDD6FE", backgroundColor: "#FAFAFA" }} />
-                                        </td>
-                                        <td className="px-3 py-2 text-right text-[12px] font-semibold" style={{ color: sub > 0 ? "#5B21B6" : "var(--text-placeholder)" }}>
-                                            {sub > 0 ? fmtCurrency(sub) : "—"}
-                                        </td>
-                                        <td className="px-2 py-2 text-center">
-                                            {bundle.items.length > 1 && (
-                                                <button type="button" onClick={() => onRemoveItem(item._id)}
-                                                    className="p-1 rounded hover:bg-red-50 text-gray-300 hover:text-red-500 cursor-pointer transition">
-                                                    <Trash2 size={12} />
-                                                </button>
-                                            )}
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                            {bundle.items.map((item, iIdx) => (
+                                <tr key={item._id} style={{ borderBottom: "1px solid #F3F0FF" }}>
+                                    <td className="px-4 py-2 text-[12px]" style={{ color: "#7C3AED" }}>{iIdx + 1}</td>
+                                    <td className="px-4 py-2">
+                                        <input value={item.name}
+                                            onChange={(e) => onUpdateItem(item._id, "name", e.target.value)}
+                                            placeholder="VD: Bàn ăn, Ghế ăn..."
+                                            className="w-full h-8 px-2 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-purple-200 transition"
+                                            style={{ borderColor: "#DDD6FE", backgroundColor: "#FAFAFA" }} />
+                                    </td>
+                                    <td className="px-3 py-2">
+                                        <input type="number" min="1" value={item.qty}
+                                            onChange={(e) => onUpdateItem(item._id, "qty", e.target.value)}
+                                            className="w-full h-8 px-2 rounded-md text-[13px] border text-center focus:outline-none focus:ring-1 focus:ring-purple-200 transition"
+                                            style={{ borderColor: "#DDD6FE", backgroundColor: "#FAFAFA" }} />
+                                    </td>
+                                    <td className="px-3 py-2">
+                                        <input type="text" value={item.productNote}
+                                            onChange={(e) => onUpdateItem(item._id, "productNote", e.target.value)}
+                                            placeholder="Ghi chú màu sắc, kích thước..."
+                                            className="w-full h-8 px-2 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-purple-200 transition"
+                                            style={{ borderColor: "#DDD6FE", backgroundColor: "#FAFAFA" }} />
+                                    </td>
+                                    <td className="px-2 py-2 text-center">
+                                        {bundle.items.length > 1 && (
+                                            <button type="button" onClick={() => onRemoveItem(item._id)}
+                                                className="p-1 rounded hover:bg-red-50 text-gray-300 hover:text-red-500 cursor-pointer transition">
+                                                <Trash2 size={12} />
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
 
-                    {/* Add item + summary */}
-                    <div className="px-4 py-3 flex items-center justify-between" style={{ borderTop: "1px solid #EDE9FE", backgroundColor: "#FAFAFE" }}>
+                    {/* Add item */}
+                    <div className="px-4 py-3" style={{ borderTop: "1px solid #EDE9FE", backgroundColor: "#FAFAFE" }}>
                         <button type="button" onClick={onAddItem}
                             className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-[12px] font-bold cursor-pointer hover:opacity-80 transition"
                             style={{ backgroundColor: "#EDE9FE", color: "#7C3AED" }}>
                             <Plus size={12} /> Thêm món
                         </button>
-
-                        {/* Match indicator */}
-                        {hasEstimate && bundle.bundlePrice && (
-                            <div className="flex items-center gap-2">
-                                <span className="text-[11px]" style={{ color: "var(--text-placeholder)" }}>
-                                    Tổng ước tính: <span className="font-bold" style={{ color: "#5B21B6" }}>{fmtCurrency(bundleItemsTotal)}</span>
-                                </span>
-                                {isMatch ? (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#F0FDF4", color: "#15803D", border: "1px solid #BBF7D0" }}>
-                                        <CheckCircle size={10} /> Khớp HĐ
-                                    </span>
-                                ) : (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#FFFBEB", color: "#D97706", border: "1px solid #FDE68A" }}>
-                                        <AlertTriangle size={10} />
-                                        {diff > 0 ? "+" : ""}{fmtCurrency(Math.abs(diff))} chênh lệch
-                                    </span>
-                                )}
-                            </div>
-                        )}
                     </div>
                 </div>
 

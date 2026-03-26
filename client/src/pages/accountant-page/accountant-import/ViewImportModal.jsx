@@ -5,7 +5,7 @@
 
 import {
     X, ArrowDownToLine, Building2, Calendar, Warehouse,
-    StickyNote, Package, Ruler, Tag, Layers, CheckCircle, AlertTriangle,
+    StickyNote, Package, Ruler, Tag, Layers,
 } from "lucide-react";
 
 // ── Helpers ──────────────────────────────────────────────
@@ -30,15 +30,9 @@ const InfoBlock = ({ icon: Icon, label, value, className = "" }) => (
     </div>
 );
 
-// ── Bundle card ───────────────────────────────────────────
+// ── Bundle card ───────────────────────────────────────────────────
 function BundleLineCard({ line, idx }) {
-    const estimatedTotal = (line.items || []).reduce(
-        (s, it) => s + (Number(it.qty) || 0) * (Number(it.unitPrice) || 0), 0
-    );
     const invoiceTotal = (Number(line.bundleQty) || 0) * (Number(line.bundlePrice) || 0);
-    const diff = estimatedTotal - invoiceTotal;
-    const isMatch = estimatedTotal > 0 && Math.abs(diff) === 0;
-
     const formLabel = line.formType === "READY" ? "Hàng nhập thêm" : "Hàng mới";
     const productTypeLabel = { RAW: "Hàng mộc", CUSTOM: "Hàng khách đặt", FINISHED: "Hàng có sẵn" }[line.productType] || "";
 
@@ -71,7 +65,7 @@ function BundleLineCard({ line, idx }) {
             </div>
 
             <div className="p-4 space-y-4" style={{ backgroundColor: "#FAFAFE" }}>
-                {/* Tên bộ + mã */}
+                {/* Tên bộ + mã bộ */}
                 <div>
                     <span className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 mb-1"
                         style={{ color: "var(--text-placeholder)" }}>
@@ -80,9 +74,9 @@ function BundleLineCard({ line, idx }) {
                     <p className="text-[14px] font-bold" style={{ color: "var(--text-main)" }}>
                         {line.bundleName || "—"}
                     </p>
-                    {line.productCode && (
+                    {line.bundleCode && (
                         <p className="text-[11px] font-mono mt-0.5" style={{ color: "var(--text-placeholder)" }}>
-                            {line.productCode}
+                            {line.bundleCode}
                         </p>
                     )}
                 </div>
@@ -99,25 +93,10 @@ function BundleLineCard({ line, idx }) {
                 {/* Bảng các món lẻ */}
                 {line.items && line.items.length > 0 && (
                     <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #DDD6FE" }}>
-                        <div className="px-4 py-2 flex items-center justify-between" style={{ backgroundColor: "#EDE9FE" }}>
+                        <div className="px-4 py-2" style={{ backgroundColor: "#EDE9FE" }}>
                             <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#5B21B6" }}>
                                 Các món lẻ trong bộ
-                                <span className="ml-1 opacity-60 normal-case font-normal">(ước tính giá vốn)</span>
                             </p>
-                            {estimatedTotal > 0 && invoiceTotal > 0 && (
-                                isMatch ? (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                        style={{ backgroundColor: "#F0FDF4", color: "#15803D", border: "1px solid #BBF7D0" }}>
-                                        <CheckCircle size={9} /> Khớp HĐ
-                                    </span>
-                                ) : (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                        style={{ backgroundColor: "#FFFBEB", color: "#D97706", border: "1px solid #FDE68A" }}>
-                                        <AlertTriangle size={9} />
-                                        {diff > 0 ? "+" : ""}{fmtCurrency(Math.abs(diff))} chênh lệch
-                                    </span>
-                                )
-                            )}
                         </div>
                         <table className="w-full" style={{ backgroundColor: "#fff" }}>
                             <thead>
@@ -125,36 +104,23 @@ function BundleLineCard({ line, idx }) {
                                     <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-wider w-8" style={{ color: "#7C3AED" }}>#</th>
                                     <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-wider" style={{ color: "#7C3AED" }}>Tên món</th>
                                     <th className="px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider w-20" style={{ color: "#7C3AED" }}>SL</th>
-                                    <th className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider w-40" style={{ color: "#7C3AED" }}>Giá ước tính/đv</th>
-                                    <th className="px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider w-36" style={{ color: "#7C3AED" }}>Thành</th>
+                                    <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider" style={{ color: "#7C3AED" }}>Ghi chú chi tiết</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {line.items.map((item, iIdx) => {
-                                    const sub = (Number(item.qty) || 0) * (Number(item.unitPrice) || 0);
-                                    return (
-                                        <tr key={item._id || iIdx} style={{ borderBottom: "1px solid #F3F0FF" }}>
-                                            <td className="px-4 py-2.5 text-[12px] font-semibold" style={{ color: "#7C3AED" }}>{iIdx + 1}</td>
-                                            <td className="px-4 py-2.5 text-[13px] font-semibold" style={{ color: "var(--text-main)" }}>{item.name}</td>
-                                            <td className="px-3 py-2.5 text-center">
-                                                <span className="text-[12px] font-bold px-2 py-0.5 rounded-lg" style={{ backgroundColor: "#EDE9FE", color: "#7C3AED" }}>x{item.qty}</span>
-                                            </td>
-                                            <td className="px-3 py-2.5 text-right text-[12px]" style={{ color: "var(--text-secondary)" }}>
-                                                {item.unitPrice ? fmtCurrency(item.unitPrice) : <span style={{ color: "var(--text-placeholder)" }}>Chưa có</span>}
-                                            </td>
-                                            <td className="px-3 py-2.5 text-right text-[12px] font-bold" style={{ color: sub > 0 ? "#5B21B6" : "var(--text-placeholder)" }}>
-                                                {sub > 0 ? fmtCurrency(sub) : "—"}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
+                                {line.items.map((item, iIdx) => (
+                                    <tr key={item._id || iIdx} style={{ borderBottom: "1px solid #F3F0FF" }}>
+                                        <td className="px-4 py-2.5 text-[12px] font-semibold" style={{ color: "#7C3AED" }}>{iIdx + 1}</td>
+                                        <td className="px-4 py-2.5 text-[13px] font-semibold" style={{ color: "var(--text-main)" }}>{item.name}</td>
+                                        <td className="px-3 py-2.5 text-center">
+                                            <span className="text-[12px] font-bold px-2 py-0.5 rounded-lg" style={{ backgroundColor: "#EDE9FE", color: "#7C3AED" }}>x{item.qty}</span>
+                                        </td>
+                                        <td className="px-3 py-2.5 text-[12px] italic" style={{ color: item.productNote ? "var(--text-secondary)" : "var(--text-placeholder)" }}>
+                                            {item.productNote || "—"}
+                                        </td>
+                                    </tr>
+                                ))}
                             </tbody>
-                            <tfoot>
-                                <tr style={{ borderTop: "1px solid #DDD6FE" }}>
-                                    <td colSpan={4} className="px-4 py-2 text-right text-[10px] font-bold" style={{ color: "#7C3AED" }}>Tổng ước tính</td>
-                                    <td className="px-3 py-2 text-right text-[12px] font-black" style={{ color: "#7C3AED" }}>{fmtCurrency(estimatedTotal)}</td>
-                                </tr>
-                            </tfoot>
                         </table>
                     </div>
                 )}
