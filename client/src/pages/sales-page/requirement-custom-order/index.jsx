@@ -608,52 +608,44 @@ export default function CustomOrderRequirementsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
-                    Số lượng
-                  </label>
-                  <div className="relative">
-                    <Package
-                      size={13}
-                      className="absolute left-3 top-1/2 -translate-y-1/2"
-                      style={{ color: "var(--text-placeholder)" }}
-                    />
-                    <input
-                      type="number"
-                      placeholder="0"
-                      value={newItem.quantity}
-                      onChange={(e) =>
-                        updateNewItem(
-                          "quantity",
-                          e.target.value === "" ? "" : parseInt(e.target.value)
-                        )
-                      }
-                      className={`${inputBase} pl-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
-                      style={inputStyle}
-                    />
-                  </div>
+              <div className="w-1/2 pr-1.5 space-y-1.5">
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+                  Số lượng
+                </label>
+                <div className="relative">
+                  <Package
+                    size={13}
+                    className="absolute left-3 top-1/2 -translate-y-1/2"
+                    style={{ color: "var(--text-placeholder)" }}
+                  />
+                  <input
+                    type="number"
+                    placeholder="0"
+                    value={newItem.quantity}
+                    onChange={(e) =>
+                      updateNewItem(
+                        "quantity",
+                        e.target.value === "" ? "" : parseInt(e.target.value)
+                      )
+                    }
+                    className={`${inputBase} pl-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                    style={inputStyle}
+                  />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
-                    Ghi chú
-                  </label>
-                  <div className="relative">
-                    <ClipboardEdit
-                      size={13}
-                      className="absolute left-3 top-1/2 -translate-y-1/2"
-                      style={{ color: "var(--text-placeholder)" }}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Chạm khắc,..."
-                      value={newItem.note}
-                      onChange={(e) => updateNewItem("note", e.target.value)}
-                      className={`${inputBase} pl-9`}
-                      style={inputStyle}
-                    />
-                  </div>
-                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1">
+                  <ClipboardEdit size={11} /> 
+                  Yêu cầu kỹ thuật chi tiết
+                </label>
+                <textarea
+                  placeholder="Mô tả chi tiết các yêu cầu kỹ thuật (Ví dụ: Chạm khắc hoa văn nổi, bo tròn viền cạnh bàn 2cm, sơn phủ viền màu hạt dẻ, thiết kế bản lề giấu kín...)"
+                  value={newItem.note}
+                  onChange={(e) => updateNewItem("note", e.target.value)}
+                  className={`${inputBase} resize-none min-h-[100px] leading-relaxed`}
+                  style={inputStyle}
+                />
               </div>
 
               {/* Image upload */}
