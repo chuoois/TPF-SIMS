@@ -16,6 +16,9 @@ import {
   Truck,
   BadgeDollarSign,
   CheckCircle2,
+  Camera,
+  Plus,
+  Image as ImageIcon,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { cn } from "@/lib/utils";
@@ -34,6 +37,12 @@ const INITIAL_SUPPLIERS = [
     debt: 350000000,
     group: "Xưởng nội thất mỹ nghệ",
     notes: ["Đối tác chiến lược khu vực phía Bắc", "Cung cấp gỗ sồi chất lượng loại 1"],
+    ledger: [
+      { id: "TXP001", date: "2024-02-15 09:00", note: "Nhập lô gỗ sồi PN-2580", change: 200000000, balance: 200000000 },
+      { id: "TXP002", date: "2024-02-20 15:30", note: "Chuyển khoản thanh toán đợt 1", change: -100000000, balance: 100000000, bill_img: "https://placehold.co/400x600?text=Bill+1" },
+      { id: "TXP003", date: "2024-03-01 11:00", note: "Nhập lô gỗ hương PN-2601", change: 150000000, balance: 250000000 },
+      { id: "TXP004", date: "2024-03-05 16:00", note: "Tiền mặt thanh toán đợt 2", change: -100000000, balance: 150000000, bill_img: "https://placehold.co/400x600?text=Bill+2" },
+    ],
   },
   {
     id: "NCC002",
@@ -47,6 +56,7 @@ const INITIAL_SUPPLIERS = [
     debt: 0,
     group: "Tổng kho gỗ nguyên liệu",
     notes: ["Chuyên gỗ lim và gỗ hương Nam Phi"],
+    ledger: [],
   },
   {
     id: "NCC003",
@@ -60,6 +70,7 @@ const INITIAL_SUPPLIERS = [
     debt: 120000000,
     group: "Xưởng mộc gia công",
     notes: [],
+    ledger: [],
   },
   {
     id: "NCC004",
@@ -73,6 +84,7 @@ const INITIAL_SUPPLIERS = [
     debt: 80000000,
     group: "Xưởng mộc gia công",
     notes: ["Chuyên gỗ óc chó nhập khẩu"],
+    ledger: [],
   },
 ];
 
@@ -97,12 +109,6 @@ const MOCK_SHIPMENT_ITEMS = {
   ],
 };
 
-const buildLedger = (debt) => [
-  { id: "TXP001", date: "2024-02-15 09:00", note: "Nhập lô gỗ sồi PN-2580", change: 200000000, balance: 200000000 },
-  { id: "TXP002", date: "2024-02-20 15:30", note: "Chuyển khoản thanh toán đợt 1", change: -100000000, balance: 100000000 },
-  { id: "TXP003", date: "2024-03-01 11:00", note: "Nhập lô gỗ hương PN-2601", change: 150000000, balance: 250000000 },
-  { id: "TXP004", date: "2024-03-05 16:00", note: "Tiền mặt thanh toán đợt 2", change: -100000000, balance: debt },
-];
 
 // ===================== HELPERS =====================
 const formatCurrency = (amount) =>
@@ -126,13 +132,25 @@ const ModalContainer = ({ title, onClose, children, maxWidth = "max-w-2xl" }) =>
 // ===================== PAYMENT MODAL =====================
 const PaymentModal = ({ supplier, onClose, onConfirm }) => {
   const [amount, setAmount] = useState("");
+  const [billPhoto, setBillPhoto] = useState(null);
   const [note, setNote] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const num = parseInt(amount.replace(/\D/g, ""), 10);
     if (!num || num <= 0) return;
-    onConfirm({ amount: num, note: note.trim() || "Thanh toán nợ nhà cung cấp" });
+    if (!billPhoto) {
+      alert("Vui lòng đính kèm ảnh Bill bằng chứng thanh toán!");
+      return;
+    }
+    onConfirm({ amount: num, note: note.trim() || "Thanh toán nợ nhà cung cấp", bill_img: billPhoto });
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setBillPhoto(URL.createObjectURL(file));
+    }
   };
 
   const formatted = amount
@@ -159,6 +177,33 @@ const PaymentModal = ({ supplier, onClose, onConfirm }) => {
             className="w-full h-11 px-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[15px] font-bold text-right"
             required
           />
+        </div>
+
+        {/* Upload Bill */}
+        <div className="space-y-2">
+          <label className="text-[12px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+            <Camera size={14} /> Ảnh Bill/Chuyển khoản (Bắt buộc)
+          </label>
+          {!billPhoto ? (
+            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl cursor-pointer hover:bg-gray-50 transition border-gray-300">
+              <div className="flex flex-col items-center justify-center pt-5 pb-6 text-gray-400">
+                <Plus size={24} className="mb-2" />
+                <p className="text-[11px] font-medium">Chọn ảnh chụp màn hình bill</p>
+              </div>
+              <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+            </label>
+          ) : (
+            <div className="relative group rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+              <img src={billPhoto} alt="Bill Preview" className="w-full h-40 object-cover" />
+              <button
+                type="button"
+                onClick={() => setBillPhoto(null)}
+                className="absolute top-2 right-2 p-1.5 bg-black/50 text-white rounded-lg hover:bg-red-500 transition shadow-lg backdrop-blur-sm"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -191,8 +236,9 @@ const SupplierDashboardModal = ({ supplier, onClose, onPayment }) => {
   const [activeTab, setActiveTab] = useState("profile");
   const [activeShipment, setActiveShipment] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showFullBill, setShowFullBill] = useState(null);
 
-  const ledger = buildLedger(supplier.debt);
+  const ledger = supplier.ledger || [];
   const shipmentItems = activeShipment ? MOCK_SHIPMENT_ITEMS[activeShipment.code] || [] : [];
   const totalIncurred = ledger.reduce((acc, t) => (t.change > 0 ? acc + t.change : acc), 0);
   const totalPaid = Math.abs(ledger.reduce((acc, t) => (t.change < 0 ? acc + t.change : acc), 0));
@@ -203,8 +249,8 @@ const SupplierDashboardModal = ({ supplier, onClose, onPayment }) => {
     { id: "ledger", label: "Sổ công nợ", icon: FileText },
   ];
 
-  const handleConfirmPayment = ({ amount, note }) => {
-    onPayment(supplier.id, amount, note);
+  const handleConfirmPayment = ({ amount, note, bill_img }) => {
+    onPayment(supplier.id, amount, note, bill_img);
     setShowPaymentModal(false);
   };
 
@@ -490,8 +536,20 @@ const SupplierDashboardModal = ({ supplier, onClose, onPayment }) => {
                           <td className="px-4 py-5 text-center text-[13px] font-medium text-gray-500">{idx + 1}</td>
                           <td className="px-6 py-5 text-gray-500 whitespace-nowrap font-medium">{t.date}</td>
                           <td className="px-6 py-5">
-                            <p className="font-bold text-gray-800">{t.note}</p>
-                            <p className="text-[11px] text-gray-400 font-bold mt-0.5">{t.id}</p>
+                            <div className="flex items-start gap-3">
+                              {t.bill_img && (
+                                <div
+                                  className="w-10 h-10 rounded bg-gray-100 flex-shrink-0 cursor-pointer overflow-hidden border border-gray-100 hover:scale-110 transition-transform shadow-xs"
+                                  onClick={() => setShowFullBill(t.bill_img)}
+                                >
+                                  <img src={t.bill_img} alt="Bill" className="w-full h-full object-cover" />
+                                </div>
+                              )}
+                              <div>
+                                <p className="font-bold text-gray-800">{t.note}</p>
+                                <p className="text-[11px] text-gray-400 font-bold mt-0.5">{t.id}</p>
+                              </div>
+                            </div>
                           </td>
                           <td className="px-6 py-5 text-right font-black">
                             {t.change > 0 ? (
@@ -513,6 +571,18 @@ const SupplierDashboardModal = ({ supplier, onClose, onPayment }) => {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Full Bill Preview */}
+                {showFullBill && (
+                  <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setShowFullBill(null)}>
+                    <div className="relative max-w-2xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+                      <button onClick={() => setShowFullBill(null)} className="absolute -top-10 right-0 p-2 text-white hover:text-gray-300">
+                        <X size={24} />
+                      </button>
+                      <img src={showFullBill} alt="Bill Full" className="max-w-full max-h-full rounded-lg object-contain" />
+                    </div>
+                  </div>
+                )}
 
                 {/* Legend */}
                 <div className="flex items-center justify-end gap-6 text-[11px] text-gray-400">
@@ -574,18 +644,48 @@ export default function AccountantSupplierDebt() {
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handlePayment = (supplierId, amount, note) => {
+  const handlePayment = (supplierId, amount, note, bill_img) => {
     setSuppliers((prev) =>
-      prev.map((s) =>
-        s.id === supplierId
-          ? { ...s, debt: Math.max(0, s.debt - amount) }
-          : s
-      )
+      prev.map((s) => {
+        if (s.id === supplierId) {
+          const newDebt = Math.max(0, s.debt - amount);
+          const newTransaction = {
+            id: `TXP${Date.now().toString().slice(-4)}`,
+            date: new Date().toLocaleString("vi-VN", { hour12: false }).replace(/\//g, "-"),
+            note: note,
+            change: -amount,
+            balance: newDebt,
+            bill_img: bill_img
+          };
+          return {
+            ...s,
+            debt: newDebt,
+            ledger: [...(s.ledger || []), newTransaction]
+          };
+        }
+        return s;
+      })
     );
     // Reflect update in selected supplier
-    setSelectedSupplier((prev) =>
-      prev && prev.id === supplierId ? { ...prev, debt: Math.max(0, prev.debt - amount) } : prev
-    );
+    setSelectedSupplier((prev) => {
+      if (prev && prev.id === supplierId) {
+        const newDebt = Math.max(0, prev.debt - amount);
+        const newTransaction = {
+          id: `TXP${Date.now().toString().slice(-4)}`,
+          date: new Date().toLocaleString("vi-VN", { hour12: false }).replace(/\//g, "-"),
+          note: note,
+          change: -amount,
+          balance: newDebt,
+          bill_img: bill_img
+        };
+        return {
+          ...prev,
+          debt: newDebt,
+          ledger: [...(prev.ledger || []), newTransaction]
+        };
+      }
+      return prev;
+    });
   };
 
   return (

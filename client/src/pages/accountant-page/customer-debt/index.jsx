@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
-import { Users, Search, CheckCircle, Package, X, ChevronLeft, ChevronRight, Eye } from "lucide-react";
+import { Users, Search, CheckCircle, Package, X, ChevronLeft, ChevronRight, Eye, Camera, DollarSign, Calendar, FileText, Plus, Image as ImageIcon } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 /**
@@ -23,6 +23,9 @@ const MOCK_DEBTS = [
         total_amount: 15500000,
         deposit_amount: 5000000,
         order_date: "10/03/2026",
+        payment_history: [
+            { date: "10/03/2026", amount: 5000000, bill_img: "https://placehold.co/400x600?text=Deposit+Bill", note: "Đặt cọc tiền bàn ghế" }
+        ]
     },
     {
         id: "2",
@@ -32,6 +35,9 @@ const MOCK_DEBTS = [
         total_amount: 8200000,
         deposit_amount: 3000000,
         order_date: "12/03/2026",
+        payment_history: [
+            { date: "12/03/2026", amount: 3000000, bill_img: "https://placehold.co/400x600?text=Payment+Bill+1", note: "Thanh toán đợt 1" }
+        ]
     },
     {
         id: "3",
@@ -41,6 +47,9 @@ const MOCK_DEBTS = [
         total_amount: 25000000,
         deposit_amount: 10000000,
         order_date: "05/03/2026",
+        payment_history: [
+            { date: "05/03/2026", amount: 10000000, bill_img: "https://placehold.co/400x600?text=Deposit+Bill", note: "Đặt cọc thi công" }
+        ]
     },
     {
         id: "4",
@@ -50,6 +59,9 @@ const MOCK_DEBTS = [
         total_amount: 4500000,
         deposit_amount: 1500000,
         order_date: "01/03/2026",
+        payment_history: [
+            { date: "01/03/2026", amount: 1500000, bill_img: "https://placehold.co/400x600?text=Deposit+Bill", note: "Đặt cọc hàng mộc" }
+        ]
     },
     {
         id: "5",
@@ -59,6 +71,9 @@ const MOCK_DEBTS = [
         total_amount: 10000000,
         deposit_amount: 10000000,
         order_date: "05/03/2026",
+        payment_history: [
+            { date: "05/03/2026", amount: 10000000, bill_img: "https://placehold.co/400x600?text=Full+Payment+Bill", note: "Đã thanh toán hết" }
+        ]
     },
 ];
 
@@ -69,6 +84,10 @@ export default function AccountantCustomerDebt() {
     const [selectedDebt, setSelectedDebt] = useState(null);
     const [isSettleModalOpen, setIsSettleModalOpen] = useState(false);
     const [viewDebtDetails, setViewDebtDetails] = useState(null);
+    const [payAmount, setPayAmount] = useState("");
+    const [billPhoto, setBillPhoto] = useState(null);
+    const [paymentNote, setPaymentNote] = useState("");
+    const [showFullBill, setShowFullBill] = useState(null);
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
@@ -104,23 +123,60 @@ export default function AccountantCustomerDebt() {
 
     const handleOpenSettleModal = (debt) => {
         setSelectedDebt(debt);
+        setPayAmount(getRemainingAmount(debt.total_amount, debt.deposit_amount));
+        setBillPhoto(null);
+        setPaymentNote("");
         setIsSettleModalOpen(true);
     };
 
     const handleConfirmSettle = () => {
-        if (!selectedDebt) return;
+        if (!selectedDebt || !payAmount || !billPhoto) {
+            toast.error("Vui lòng nhập số tiền và đính kèm ảnh Bill bằng chứng!", { style: { fontSize: "14px", fontWeight: "bold" } });
+            return;
+        }
+
+        const amountNum = Number(payAmount);
+        if (amountNum <= 0) {
+            toast.error("Số tiền không hợp lệ!");
+            return;
+        }
+
+        const remaining = getRemainingAmount(selectedDebt.total_amount, selectedDebt.deposit_amount);
+        if (amountNum > remaining) {
+            toast.error("Số tiền thanh toán vượt quá dư nợ hiện tại!");
+            return;
+        }
+
+        const newPayment = {
+            date: new Date().toLocaleDateString("vi-VN"),
+            amount: amountNum,
+            bill_img: billPhoto, // Trong thực tế là URL, ở đây mock bằng preview
+            note: paymentNote || (amountNum === remaining ? "Tất toán công nợ" : "Thanh toán một phần")
+        };
 
         setDebts((prevDebts) =>
             prevDebts.map((debt) =>
                 debt.id === selectedDebt.id
-                    ? { ...debt, deposit_amount: debt.total_amount }
+                    ? { 
+                        ...debt, 
+                        deposit_amount: debt.deposit_amount + amountNum,
+                        payment_history: [...(debt.payment_history || []), newPayment]
+                      }
                     : debt
             )
         );
 
         setIsSettleModalOpen(false);
         setSelectedDebt(null);
-        toast.success("Đã thanh toán công nợ thành công!", { style: { fontSize: "14px", fontWeight: "bold" } });
+        toast.success(amountNum === remaining ? "Đã tất toán công nợ thành công!" : "Đã ghi nhận thanh toán một phần!", { style: { fontSize: "14px", fontWeight: "bold" } });
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Mock preview URL
+            setBillPhoto(URL.createObjectURL(file));
+        }
     };
 
     return (
@@ -334,35 +390,64 @@ export default function AccountantCustomerDebt() {
                                 className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-black/5 cursor-pointer transition">
                                 <X size={18} style={{ color: "var(--text-secondary)" }}/>
                             </button>
-                            <h2 className="text-[17px] font-black" style={{ color: "var(--text-main)" }}>Xác nhận thanh toán</h2>
+                            <h2 className="text-[17px] font-black" style={{ color: "var(--text-main)" }}>Ghi nhận thanh toán</h2>
                             <p className="text-[13px] mt-1" style={{ color: "var(--text-secondary)" }}>
-                                Thu phần tiền còn lại của đơn hàng này.
+                                Nhập số tiền thu và đính kèm bằng chứng.
                             </p>
                         </div>
 
                         {selectedDebt && (
-                            <div className="p-6 space-y-3 flex-1">
-                                <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: "var(--grid-border)" }}>
-                                    <span className="text-[13px] font-bold text-gray-500 uppercase tracking-wide">Mã Đơn:</span>
-                                    <span className="text-[13px] font-bold font-mono px-2 py-1 rounded" style={{ backgroundColor: "var(--bg-main)", color: "var(--text-main)" }}>{selectedDebt.order_code}</span>
-                                </div>
-                                <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: "var(--grid-border)" }}>
-                                    <span className="text-[13px] font-bold text-gray-500 uppercase tracking-wide">Khách Hàng:</span>
-                                    <span className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>{selectedDebt.customer_name}</span>
-                                </div>
-                                <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: "var(--grid-border)" }}>
-                                    <span className="text-[13px] font-bold text-gray-500 uppercase tracking-wide">Tổng Tiền:</span>
-                                    <span className="text-[14px] font-bold block" style={{ color: "var(--text-main)" }}>{formatCurrency(selectedDebt.total_amount)}</span>
-                                </div>
-                                <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: "var(--grid-border)" }}>
-                                    <span className="text-[13px] font-bold text-gray-500 uppercase tracking-wide">Đã Thu:</span>
-                                    <span className="text-[14px] font-bold block" style={{ color: "var(--text-secondary)" }}>{formatCurrency(selectedDebt.deposit_amount)}</span>
-                                </div>
-                                <div className="flex justify-between items-center pt-2">
-                                    <span className="text-[13px] font-black uppercase tracking-wide" style={{ color: "var(--brand-primary)" }}>Cần Thu Thêm:</span>
-                                    <span className="text-[18px] font-black" style={{ color: "var(--brand-primary)" }}>
+                            <div className="p-6 space-y-4 flex-1 overflow-y-auto max-h-[60vh]">
+                                <div className="p-3 rounded-xl bg-blue-50/50 border border-blue-100 flex justify-between items-center text-[13px]">
+                                    <span className="font-bold text-blue-800">Dư nợ hiện tại:</span>
+                                    <span className="font-black text-blue-900 text-[15px]">
                                         {formatCurrency(getRemainingAmount(selectedDebt.total_amount, selectedDebt.deposit_amount))}
                                     </span>
+                                </div>
+
+                                {/* Số tiền thu */}
+                                <div className="space-y-1.5">
+                                    <label className="text-[11px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-1.5">
+                                        <DollarSign size={12} /> Số tiền thu lần này (₫)
+                                    </label>
+                                    <input type="number" value={payAmount} onChange={e => setPayAmount(e.target.value)}
+                                        className="w-full h-10 px-3 rounded-xl text-[15px] font-black border focus:outline-none focus:ring-2 transition"
+                                        style={{ borderColor: "var(--grid-border)", color: "var(--brand-primary)" }} placeholder="0" />
+                                </div>
+
+                                {/* Upload Bill */}
+                                <div className="space-y-1.5">
+                                    <label className="text-[11px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-1.5">
+                                        <Camera size={12} /> Ảnh Bill/Chuyển khoản (Bắt buộc)
+                                    </label>
+                                    {!billPhoto ? (
+                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl cursor-pointer hover:bg-gray-50 transition"
+                                            style={{ borderColor: "var(--grid-border)" }}>
+                                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                <Plus size={24} className="mb-2 text-gray-400" />
+                                                <p className="text-[12px] text-gray-500 font-medium">Bấm để chọn hoặc kéo thả ảnh</p>
+                                            </div>
+                                            <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                                        </label>
+                                    ) : (
+                                        <div className="relative group rounded-xl overflow-hidden border" style={{ borderColor: "var(--grid-border)" }}>
+                                            <img src={billPhoto} alt="Bill Preview" className="w-full h-40 object-cover" />
+                                            <button onClick={() => setBillPhoto(null)} 
+                                                className="absolute top-2 right-2 p-1.5 bg-black/50 text-white rounded-lg hover:bg-red-500 transition shadow-lg backdrop-blur-sm">
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Ghi chú */}
+                                <div className="space-y-1.5">
+                                    <label className="text-[11px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-1.5">
+                                        <FileText size={12} /> Ghi chú thanh toán
+                                    </label>
+                                    <textarea value={paymentNote} onChange={e => setPaymentNote(e.target.value)}
+                                        className="w-full p-3 rounded-xl text-[13px] border focus:outline-none focus:ring-2 transition min-h-[80px]"
+                                        style={{ borderColor: "var(--grid-border)" }} placeholder="Ví dụ: Chuyển khoản Vietcombank..." />
                                 </div>
                             </div>
                         )}
@@ -371,9 +456,11 @@ export default function AccountantCustomerDebt() {
                             <button className="h-10 px-6 rounded-xl text-[13px] font-bold border cursor-pointer hover:bg-gray-50 transition"
                                 style={{ borderColor: "var(--grid-border)", color: "var(--text-secondary)" }}
                                 onClick={() => setIsSettleModalOpen(false)}>Hủy</button>
-                            <button className="h-10 px-6 rounded-xl text-[13px] font-bold cursor-pointer hover:opacity-90 transition"
+                            <button className="h-10 px-6 rounded-xl text-[13px] font-bold cursor-pointer hover:opacity-90 transition flex items-center gap-2"
                                 style={{ backgroundColor: "var(--brand-primary)", color: "#fff" }}
-                                onClick={handleConfirmSettle}>Xác Nhận Thu Đủ</button>
+                                onClick={handleConfirmSettle}>
+                                <CheckCircle size={14} /> Xác Nhận Thanh Toán
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -400,11 +487,11 @@ export default function AccountantCustomerDebt() {
                         <div className="p-6 overflow-y-auto space-y-6">
                             {/* Summary Cards */}
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="p-4 rounded-xl border flex flex-col items-center justify-center text-center" style={{ borderColor: "var(--grid-border)", backgroundColor: "var(--bg-main)" }}>
+                                <div className="p-4 rounded-xl border flex flex-col items-center justify-center text-center shadow-sm" style={{ borderColor: "var(--grid-border)", backgroundColor: "var(--bg-main)" }}>
                                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Tổng tiền khách mua</p>
                                     <p className="text-xl font-bold" style={{ color: "var(--text-main)" }}>{formatCurrency(viewDebtDetails.total_amount)}</p>
                                 </div>
-                                <div className="p-4 rounded-xl border flex flex-col items-center justify-center text-center" style={{ borderColor: "var(--grid-border)", backgroundColor: "rgba(220, 38, 38, 0.05)" }}>
+                                <div className="p-4 rounded-xl border flex flex-col items-center justify-center text-center shadow-sm" style={{ borderColor: "var(--grid-border)", backgroundColor: "rgba(220, 38, 38, 0.05)" }}>
                                     <p className="text-[11px] font-bold text-red-500 uppercase tracking-widest mb-1">Tổng nợ hiện tại</p>
                                     <p className="text-xl font-black text-red-600">
                                         {formatCurrency(getRemainingAmount(viewDebtDetails.total_amount, viewDebtDetails.deposit_amount))}
@@ -412,17 +499,58 @@ export default function AccountantCustomerDebt() {
                                 </div>
                             </div>
 
-                            {/* Table of specific debts */}
+                            {/* Payment History Listing */}
                             <div className="space-y-3">
-                                <h3 className="text-[14px] font-bold text-gray-800 border-b pb-2" style={{ borderColor: "var(--grid-border)" }}>Danh sách đơn hàng phát sinh nợ</h3>
-                                <div className="overflow-hidden rounded-xl border" style={{ borderColor: "var(--grid-border)" }}>
+                                <h3 className="text-[14px] font-bold text-gray-800 flex items-center gap-2 mb-2">
+                                    <Calendar size={16} className="text-blue-500" />
+                                    Lịch sử các đợt thanh toán
+                                </h3>
+                                <div className="space-y-3">
+                                    {viewDebtDetails.payment_history && viewDebtDetails.payment_history.length > 0 ? (
+                                        viewDebtDetails.payment_history.map((pay, pIdx) => (
+                                            <div key={pIdx} className="flex gap-4 p-3 rounded-xl border bg-white shadow-sm transition-all hover:bg-gray-50/50" style={{ borderColor: "var(--grid-border)" }}>
+                                                {/* Bill Thumbnail */}
+                                                <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0 border cursor-pointer relative group" 
+                                                    style={{ borderColor: "var(--grid-border)" }}
+                                                    onClick={() => setShowFullBill(pay.bill_img)}>
+                                                    <img src={pay.bill_img} alt="Bill" className="w-full h-full object-cover" />
+                                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                                        <Search size={14} className="text-white" />
+                                                    </div>
+                                                </div>
+                                                {/* Info */}
+                                                <div className="flex-1">
+                                                    <div className="flex justify-between items-start mb-0.5">
+                                                        <span className="text-[14px] font-black text-green-700">+{formatCurrency(pay.amount)}</span>
+                                                        <span className="text-[11px] font-bold text-gray-400">{pay.date}</span>
+                                                    </div>
+                                                    <p className="text-[12px] text-gray-600 line-clamp-2 italic leading-snug">
+                                                        {pay.note || "Không có ghi chú"}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="py-8 text-center border-2 border-dashed rounded-2xl" style={{ borderColor: "var(--grid-border)" }}>
+                                            <p className="text-[13px] text-gray-400 font-medium">Chưa có lịch sử thanh toán</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Table of specific debts (Details of items/orders) */}
+                            <div className="space-y-3 pt-4 border-t" style={{ borderColor: "var(--grid-border)" }}>
+                                <h3 className="text-[14px] font-bold text-gray-800 border-b pb-2 flex items-center gap-2" style={{ borderColor: "var(--grid-border)" }}>
+                                    <FileText size={16} className="text-orange-500" />
+                                    Thông tin đơn hàng phát sinh nợ
+                                </h3>
+                                <div className="overflow-hidden rounded-xl border shadow-sm" style={{ borderColor: "var(--grid-border)" }}>
                                     <table className="w-full text-left text-[13px]">
                                         <thead className="bg-[#F8FAFC] border-b" style={{ borderColor: "var(--grid-border)" }}>
                                             <tr>
                                                 <th className="px-4 py-3 font-bold text-gray-500 uppercase text-[11px] tracking-wider">Mã Đơn</th>
-                                                <th className="px-4 py-3 font-bold text-gray-500 uppercase text-[11px] tracking-wider text-center">Ngày đặt</th>
                                                 <th className="px-4 py-3 font-bold text-gray-500 text-right uppercase text-[11px] tracking-wider">Giá trị đơn</th>
-                                                <th className="px-4 py-3 font-bold text-gray-500 text-right uppercase text-[11px] tracking-wider">Số tiền nợ</th>
+                                                <th className="px-4 py-3 font-bold text-gray-500 text-right uppercase text-[11px] tracking-wider">Còn nợ</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y" style={{ borderColor: "var(--grid-border)" }}>
@@ -432,24 +560,12 @@ export default function AccountantCustomerDebt() {
                                                         {viewDebtDetails.order_code}
                                                     </span>
                                                 </td>
-                                                <td className="px-4 py-3 text-center text-gray-500">{viewDebtDetails.order_date}</td>
                                                 <td className="px-4 py-3 text-right font-semibold text-gray-800">{formatCurrency(viewDebtDetails.total_amount)}</td>
                                                 <td className="px-4 py-3 text-right font-bold text-red-600">
                                                     {formatCurrency(getRemainingAmount(viewDebtDetails.total_amount, viewDebtDetails.deposit_amount))}
                                                 </td>
                                             </tr>
-                                            {/* Note: since MOCK_DEBTS currently groups debts uniquely by order_code, 
-                                                this represents 1 row. When real data is hooked up, mapping through an array of orders here would show 
-                                                multiple orders for the single customer. */}
                                         </tbody>
-                                        <tfoot className="bg-[#F8FAFC] border-t" style={{ borderColor: "var(--grid-border)" }}>
-                                            <tr>
-                                                <td colSpan={3} className="px-4 py-3 text-right font-black text-gray-600 text-[13px] uppercase tracking-wide">Tổng Nợ</td>
-                                                <td className="px-4 py-3 text-right font-black text-red-600 text-[15px]">
-                                                    {formatCurrency(getRemainingAmount(viewDebtDetails.total_amount, viewDebtDetails.deposit_amount))}
-                                                </td>
-                                            </tr>
-                                        </tfoot>
                                     </table>
                                 </div>
                             </div>
@@ -460,6 +576,18 @@ export default function AccountantCustomerDebt() {
                                 style={{ borderColor: "var(--grid-border)", color: "var(--text-secondary)" }}
                                 onClick={() => setViewDebtDetails(null)}>Đóng</button>
                         </div>
+                    </div>
+                </div>
+            )}
+            {/* Full Image Preview Modal */}
+            {showFullBill && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" onClick={() => setShowFullBill(null)}>
+                    <div className="relative max-w-4xl max-h-[90vh] flex items-center justify-center" onClick={e => e.stopPropagation()}>
+                        <button onClick={() => setShowFullBill(null)}
+                            className="absolute -top-10 right-0 p-2 bg-white/10 text-white rounded-full hover:bg-white/20 transition">
+                            <X size={24} />
+                        </button>
+                        <img src={showFullBill} alt="Full Bill Proof" className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" />
                     </div>
                 </div>
             )}
