@@ -171,18 +171,18 @@ export default function ViewProductModal({ product, onClose }) {
                         {/* Stats */}
                         <div className="flex-1 flex flex-col divide-y" style={{ divideColor: "var(--grid-border)" }}>
                             <div className="grid grid-cols-3 divide-x" style={{ borderColor: "var(--grid-border)" }}>
-                                {/* Tồn kho */}
+                                {/* Tồn kho (Tổng) */}
                                 <div className="p-4 flex flex-col gap-1">
                                     <span className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1"
                                         style={{ color: "var(--text-placeholder)" }}>
-                                        <BarChart2 size={10} /> Tồn kho
+                                        <BarChart2 size={10} /> Tổng tồn kho
                                     </span>
                                     <span className="text-[26px] font-black leading-none"
                                         style={{ color: product.stock === 0 ? "#DC2626" : product.stock <= 3 ? "#D97706" : "#15803D" }}>
                                         {product.stock}
                                     </span>
                                     <span className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
-                                        {product.stock === 0 ? "Hết hàng" : product.stock <= 3 ? "Sắp hết" : "Còn hàng"}
+                                        {product.stock === 0 ? "Hết hàng" : product.stock <= 3 ? "Sắp hết" : "Tổng trong kho"}
                                         {isBundle ? " bộ" : ""}
                                     </span>
                                 </div>
@@ -213,6 +213,41 @@ export default function ViewProductModal({ product, onClose }) {
                                     <p className="text-[15px] font-bold" style={{ color: "var(--text-main)" }}>{product.minStock ?? "—"}</p>
                                 </div>
                             </div>
+                            
+                            {/* ── Bảng phân rã trạng thái hàng (Breakdown) ── */}
+                            {product.stockBreakdown && (
+                                <div className="p-4 border-t" style={{ borderColor: "var(--grid-border)", backgroundColor: "#FAFAFA" }}>
+                                    <p className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 mb-3"
+                                        style={{ color: "var(--text-secondary)" }}>
+                                        <Layers size={11} />
+                                        Chi tiết tình trạng hàng trong kho
+                                    </p>
+                                    <div className={`grid gap-2 ${product.type === "FINISHED" ? "grid-cols-3" : "grid-cols-4"}`}>
+                                        {/* Sẵn sàng */}
+                                        <div className="flex flex-col items-center justify-center p-2 rounded-lg" style={{ backgroundColor: "#F0FDF4", border: "1px solid #BBF7D0" }}>
+                                            <span className="text-[18px] font-black leading-none text-green-700">{product.stockBreakdown.available}</span>
+                                            <span className="text-[9px] font-bold text-green-700 uppercase mt-1 text-center leading-tight">Sẵn sàng<br/>xuất bán</span>
+                                        </div>
+                                        {/* Đang gia công - Chỉ hiển thị cho hàng không phải FINISHED */}
+                                        {product.type !== "FINISHED" && (
+                                            <div className="flex flex-col items-center justify-center p-2 rounded-lg" style={{ backgroundColor: "#FFF7ED", border: "1px solid #FED7AA" }}>
+                                                <span className="text-[18px] font-black leading-none text-orange-700">{product.stockBreakdown.processing}</span>
+                                                <span className="text-[9px] font-bold text-orange-700 uppercase mt-1 text-center leading-tight">Đang<br/>gia công</span>
+                                            </div>
+                                        )}
+                                        {/* Lỗi */}
+                                        <div className="flex flex-col items-center justify-center p-2 rounded-lg" style={{ backgroundColor: "#FEF2F2", border: "1px solid #FECACA" }}>
+                                            <span className="text-[18px] font-black leading-none text-red-600">{product.stockBreakdown.defective}</span>
+                                            <span className="text-[9px] font-bold text-red-600 uppercase mt-1 text-center leading-tight">Hàng<br/>bị lỗi</span>
+                                        </div>
+                                        {/* Chờ giao */}
+                                        <div className="flex flex-col items-center justify-center p-2 rounded-lg" style={{ backgroundColor: "#EFF6FF", border: "1px solid #BFDBFE" }}>
+                                            <span className="text-[18px] font-black leading-none text-blue-700">{product.stockBreakdown.delivering}</span>
+                                            <span className="text-[9px] font-bold text-blue-700 uppercase mt-1 text-center leading-tight">Đang<br/>chờ giao</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 

@@ -54,7 +54,6 @@ const InfoRow = ({ icon: Icon, label, value, valueStyle }) => (
 export default function EditProductModal({ product, onClose, onSave }) {
     if (!product) return null;
 
-    const [importPrice, setImportPrice] = useState(product.importPrice || "");
     const [minStock, setMinStock] = useState(product.minStock || "");
 
     const cfg = TYPE_CONFIG[product.type] || TYPE_CONFIG.FINISHED;
@@ -66,12 +65,11 @@ export default function EditProductModal({ product, onClose, onSave }) {
         e.preventDefault();
         onSave({
             ...product, // giữ nguyên các field khác
-            importPrice: importPrice === "" ? null : Number(importPrice),
             minStock: minStock === "" ? null : Number(minStock),
         });
     };
 
-    const inpStr = "w-full h-9 px-3 mt-1 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-purple-300 transition font-bold";
+    const inpStr = "w-full h-10 px-4 mt-2 rounded-xl text-[14px] border focus:outline-none focus:ring-2 focus:ring-purple-300 transition font-bold";
     const inpS = { borderColor: "var(--grid-border)", backgroundColor: "#fff", color: "var(--text-main)" };
 
     return (
@@ -107,7 +105,7 @@ export default function EditProductModal({ product, onClose, onSave }) {
                     {/* Product name */}
                     <h2 className="text-[17px] font-black leading-snug pr-8"
                         style={{ color: cfg.text }}>
-                        Chỉnh sửa: {product.name}
+                        Cập nhật định mức: {product.name}
                     </h2>
                 </div>
 
@@ -130,38 +128,28 @@ export default function EditProductModal({ product, onClose, onSave }) {
                             }
                         </div>
 
-                        {/* Input form for Prices and MinStock */}
-                        <div className="flex-1 flex flex-col divide-y bg-gray-50/30" style={{ borderColor: "var(--grid-border)" }}>
-                            <div className="grid grid-cols-2 lg:grid-cols-2 divide-x" style={{ borderColor: "var(--grid-border)" }}>
-                                {/* Giá nhập */}
-                                <div className="p-4 flex flex-col gap-1">
-                                    <label className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1"
-                                        style={{ color: "var(--text-placeholder)" }}>
-                                        <ArrowDownToLine size={10} /> Giá nhập (₫)
-                                    </label>
-                                    <input type="number" min="0" step="1000"
-                                        value={importPrice} onChange={e => setImportPrice(e.target.value)}
-                                        className={inpStr} style={inpS} placeholder="0" />
-                                </div>
-
-
-                            </div>
-
-                            {/* Tồn min */}
-                            <div className="p-4 flex flex-col gap-1">
-                                <label className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1"
+                        {/* Input form for MinStock Only */}
+                        <div className="flex-1 p-6 bg-gray-50/30 flex flex-col justify-center">
+                            <div className="max-w-xs">
+                                <label className="text-[11px] font-bold uppercase tracking-widest flex items-center gap-2"
                                     style={{ color: "var(--text-placeholder)" }}>
-                                    <TrendingDown size={10} /> Tồn kho tối thiểu
+                                    <TrendingDown size={14} /> Tồn kho tối thiểu (Định mức)
                                 </label>
+                                <p className="text-[11px] mt-1 mb-2" style={{ color: "var(--text-secondary)" }}>
+                                    Hệ thống sẽ cảnh báo khi số lượng Sẵn sàng thấp hơn mức này.
+                                </p>
                                 <input type="number" min="0"
                                     value={minStock} onChange={e => setMinStock(e.target.value)}
-                                    className={inpStr} style={inpS} placeholder="0" />
+                                    className={inpStr} style={inpS} placeholder="Ví dụ: 2" />
                             </div>
                         </div>
                     </div>
 
                     {/* ── Chi tiết (Read-only) ── */}
                     <div className="px-6 py-2 pb-6">
+                        <InfoRow icon={ArrowDownToLine} label="Giá nhập hiện tại" 
+                            value={product.importPrice ? new Intl.NumberFormat("vi-VN").format(product.importPrice) + " ₫" : "—"} 
+                            valueStyle={{ color: "#C2410C", fontSize: "15px" }} />
                         <InfoRow icon={Layers} label="Danh mục" value={product.category} />
                         <InfoRow icon={Tag} label="Loại" value={product.materialType || product.woodType} />
                         <InfoRow icon={Palette} label="Màu sắc" value={product.color} />
