@@ -1590,7 +1590,7 @@ export default function InStockInvoicePage() {
                 {needsWorkshop && maxLeadTime > 0 && (
                   <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-bold ${workshopStats.bg} ${workshopStats.color} ${workshopStats.border}`}>
                     <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${workshopStats.level === 'Quá tải' ? 'bg-red-500' : workshopStats.level === 'Khá bận' ? 'bg-amber-500' : 'bg-green-500'}`} />
-                    Xưởng {workshopStats.level} ({workshopStats.count} đơn chờ)
+                    Xưởng {workshopStats.level}
                   </div>
                 )}
               </div>

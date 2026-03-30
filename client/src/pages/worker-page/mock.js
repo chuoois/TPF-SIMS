@@ -10,6 +10,21 @@ export const STATUS_CONFIG = {
   COMPLETED: { label: "Hoàn thành", color: "bg-green-100 text-green-700", icon: CheckCircle2 },
 };
 
+let WAREHOUSE_STATUS = {
+  isOverloaded: false,
+  updatedAt: null,
+};
+
+export const getWarehouseStatus = () => WAREHOUSE_STATUS;
+
+export const updateWarehouseStatus = (isOverloaded) => {
+  WAREHOUSE_STATUS = {
+    isOverloaded,
+    updatedAt: new Date().toLocaleString("vi-VN"),
+  };
+  return WAREHOUSE_STATUS;
+};
+
 export let MOCK_ORDERS = [
   {
     id: "ORD-2023-001",
