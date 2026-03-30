@@ -827,7 +827,6 @@ export default function SalesRequirements() {
                     "Mã yêu cầu",
                     "Khách hàng",
                     "Ngày nhận",
-                    "Tiến độ",
                     "Trạng thái",
                   ].map((h, i) => (
                     <th
@@ -835,9 +834,7 @@ export default function SalesRequirements() {
                       className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${
                         i === 0
                           ? "text-center w-[50px]"
-                          : i === 4
-                            ? "text-right pr-4"
-                            : ""
+                          : ""
                       }`}
                       style={{ color: "var(--text-placeholder)" }}
                     >
@@ -906,12 +903,6 @@ export default function SalesRequirements() {
                         {r.createdDate?.split("-").reverse().join("/")}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5 font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100 w-fit">
-                          <Clock size={12} className="text-amber-500" />
-                          {r.leadTime || 0} n
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-right pr-6">
                         <div className="inline-flex items-center relative">
                           <div className="absolute right-full top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 flex items-center gap-2 transition-all transform translate-x-3 group-hover:translate-x-0 z-20 mr-4">
                             {r.status === "Đang xử lý" && (

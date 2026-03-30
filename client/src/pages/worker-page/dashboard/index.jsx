@@ -9,9 +9,10 @@ import {
   LayoutDashboard,
   Info,
   ChevronRight as ChevronRightIcon,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { getOrders, STATUS_CONFIG } from "../mock";
+import { getOrders, STATUS_CONFIG, getWarehouseStatus, updateWarehouseStatus } from "../mock";
 
 const OrderItemRow = ({ item }) => {
   const navigate = useNavigate();
@@ -97,11 +98,34 @@ export default function WorkerDashboard() {
   
   const [orders, setOrders] = useState([]);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [isWarehouseOverloaded, setIsWarehouseOverloaded] = useState(false);
 
   useEffect(() => {
     // Fetch global mock state so returning from Detail Page reflects updates
     setOrders(getOrders());
+    setIsWarehouseOverloaded(getWarehouseStatus().isOverloaded);
   }, []);
+
+  const handleToggleWarehouseStatus = () => {
+    const newStatus = !isWarehouseOverloaded;
+    updateWarehouseStatus(newStatus);
+    setIsWarehouseOverloaded(newStatus);
+    if (newStatus) {
+      toast.success("Đã báo cáo kho quá tải cho Sales", {
+        icon: '⚠️',
+        style: {
+          borderRadius: '10px',
+          background: '#fff',
+          color: '#d97706',
+          border: '1px solid #fcd34d'
+        },
+      });
+    } else {
+      toast.success("Đã cập nhật: Kho đã ổn định", {
+        icon: '✅',
+      });
+    }
+  };
 
   const activeFilter = searchParams.get("filter") || "Tất cả";
   const searchTerm = searchParams.get("search") || "";
@@ -175,27 +199,43 @@ export default function WorkerDashboard() {
             {filteredOrders.length} đơn hàng cần xử lý
           </p>
         </div>
-        {/* Filters */}
-        <div
-          className="flex gap-1 bg-white p-1 rounded-lg border shadow-sm shrink-0"
-          style={{ borderColor: "var(--grid-border)" }}
-        >
-          {filters.map((f) => (
-            <button
-              key={f}
-              onClick={() => setActiveFilter(f)}
-              className={`px-4 py-1.5 rounded-md text-[13px] font-semibold transition-all ${
-                activeFilter === f
-                  ? "bg-[var(--bg-main)] text-[var(--text-main)] shadow-sm border"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-main)]"
-              }`}
-              style={
-                activeFilter === f ? { borderColor: "var(--grid-border)" } : {}
-              }
-            >
-              {f}
-            </button>
-          ))}
+
+        <div className="flex items-center gap-3">
+          {/* Warehouse Overload Toggle Button */}
+          <button
+            onClick={handleToggleWarehouseStatus}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-bold transition-all duration-300 shadow-sm border ${
+              isWarehouseOverloaded
+                ? "bg-red-50 text-red-600 border-red-200 hover:bg-red-100 animate-pulse"
+                : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+            }`}
+          >
+            <AlertTriangle size={18} className={isWarehouseOverloaded ? "text-red-600" : "text-amber-500"} />
+            {isWarehouseOverloaded ? "KHO ĐANG QUÁ TẢI" : "BÁO KHO QUÁ TẢI"}
+          </button>
+
+          {/* Filters */}
+          <div
+            className="flex gap-1 bg-white p-1 rounded-lg border shadow-sm shrink-0"
+            style={{ borderColor: "var(--grid-border)" }}
+          >
+            {filters.map((f) => (
+              <button
+                key={f}
+                onClick={() => setActiveFilter(f)}
+                className={`px-4 py-1.5 rounded-md text-[13px] font-semibold transition-all ${
+                  activeFilter === f
+                    ? "bg-[var(--bg-main)] text-[var(--text-main)] shadow-sm border"
+                    : "text-[var(--text-secondary)] hover:text-[var(--text-main)]"
+                }`}
+                style={
+                  activeFilter === f ? { borderColor: "var(--grid-border)" } : {}
+                }
+              >
+                {f}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
