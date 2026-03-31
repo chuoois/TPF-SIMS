@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import toast from "react-hot-toast";
+import InvoiceDetailsPopup from "./components/InvoiceDetailsPopup";
 
 
 const INITIAL_ORDERS = [
@@ -137,6 +138,18 @@ const INITIAL_ORDERS = [
     type: "Hàng mộc", total: 9000000, status: "Đơn đã hủy",
     date: "2026-03-05T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-08",
     deposit: 0, fulfillmentType: "Giao hàng"
+  },
+  {
+    id: "DH-T08", code: "DH-MOC-001", customerName: "Lý Mạc Sầu", phone: "0911223344",
+    type: "Hàng mộc", total: 18500000, status: "Chờ xử lý",
+    date: "2026-03-29T11:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-04-05",
+    deposit: 5000000, fulfillmentType: "Giao hàng"
+  },
+  {
+    id: "DH-T09", code: "DH-MOC-002", customerName: "Đoàn Dự", phone: "0944556677",
+    type: "Hàng mộc", total: 65000000, status: "Chờ xử lý",
+    date: "2026-03-29T14:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-04-12",
+    deposit: 20000000, fulfillmentType: "Giao hàng"
   },
 
   // ========== NHÓM 3: HÀNG KHÁCH ĐẶT (8 trạng thái) ==========
@@ -314,6 +327,7 @@ export default function OwnerOrders() {
   const [paymentMethod, setPaymentMethod] = useState("Chuyển khoản");
   const [deliveryImage, setDeliveryImage] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
+  const [detailId, setDetailId] = useState(null);
 
   // ── Handover Modal State (Ported from Detail) ──
   const [showHandoverModal, setShowHandoverModal] = useState(false);
@@ -1032,14 +1046,16 @@ export default function OwnerOrders() {
 
                             {/* 3. CÁC TÁC VỤ PHỤ (CHI TIẾT, HỦY) */}
                             <div className="flex items-center gap-2 pl-1">
-                              <Link
-                                to={`/owner/orders/${o.id}`}
-                                onClick={(e) => e.stopPropagation()}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDetailId(o.id);
+                                }}
                                 className="h-9 w-9 rounded-xl bg-slate-50 text-slate-600 hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center shadow-sm active:scale-95 border border-slate-100"
                                 title="Xem chi tiết"
                               >
                                 <Eye size={18} />
-                              </Link>
+                              </button>
 
                               {["Chờ xử lý", "Chờ sản xuất", "Đã nhập kho", "Đang gia công", "Chờ giao hàng"].includes(o.status) && (
                                 <button
@@ -1537,6 +1553,13 @@ export default function OwnerOrders() {
           </div>
         </div>
       )}
+
+      <InvoiceDetailsPopup 
+        invoiceId={detailId} 
+        isOpen={!!detailId} 
+        onClose={() => setDetailId(null)}
+        onStatusChanged={handleUpdateStatus}
+      />
 
     </>
   );
