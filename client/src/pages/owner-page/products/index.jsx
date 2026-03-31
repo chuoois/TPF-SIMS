@@ -784,8 +784,65 @@ const PropertiesTab = ({
 
 // ===================== COMPONENT =====================
 export default function OwnerProducts() {
-  const [products, setProducts] = useState(INITIAL_PRODUCTS);
-  const [inventoryLogs, setInventoryLogs] = useState(INITIAL_INVENTORY_LOGS);
+  const [products, setProducts] = useState(() => {
+    const saved = localStorage.getItem("tpf_simulated_products");
+    if (!saved) {
+      // First time: save default products to localStorage
+      localStorage.setItem("tpf_simulated_products", JSON.stringify(INITIAL_PRODUCTS));
+      return INITIAL_PRODUCTS;
+    }
+    return JSON.parse(saved);
+  });
+  const [inventoryLogs, setInventoryLogs] = useState(() => {
+    const saved = localStorage.getItem("tpf_simulated_inventory_logs");
+    return saved ? JSON.parse(saved) : INITIAL_INVENTORY_LOGS;
+  });
+
+  // Sync logs to localStorage
+  useEffect(() => {
+    localStorage.setItem("tpf_simulated_inventory_logs", JSON.stringify(inventoryLogs));
+  }, [inventoryLogs]);
+
+  // Sync to localStorage
+  useEffect(() => {
+    localStorage.setItem("tpf_simulated_products", JSON.stringify(products));
+  }, [products]);
+
+  // Listen for storage changes (from other tabs/pages)
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === "tpf_simulated_products" && e.newValue) {
+        setProducts(JSON.parse(e.newValue));
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
+  // Sync Cats & Props as well for consistency
+  const [categories, setCategories] = useState(() => {
+    const saved = localStorage.getItem("tpf_simulated_categories");
+    return saved ? JSON.parse(saved) : CATEGORIES;
+  });
+  const [woods, setWoods] = useState(() => {
+    const saved = localStorage.getItem("tpf_simulated_woods");
+    return saved ? JSON.parse(saved) : WOOD_TYPES;
+  });
+  const [otherMaterials, setOtherMaterials] = useState(() => {
+    const saved = localStorage.getItem("tpf_simulated_other_materials");
+    return saved ? JSON.parse(saved) : OTHER_MATERIALS;
+  });
+  const [colors, setColors] = useState(() => {
+    const saved = localStorage.getItem("tpf_simulated_colors");
+    return saved ? JSON.parse(saved) : COLORS;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("tpf_simulated_categories", JSON.stringify(categories));
+    localStorage.setItem("tpf_simulated_woods", JSON.stringify(woods));
+    localStorage.setItem("tpf_simulated_other_materials", JSON.stringify(otherMaterials));
+    localStorage.setItem("tpf_simulated_colors", JSON.stringify(colors));
+  }, [categories, woods, otherMaterials, colors]);
 
   // Filter States
   const [activeTab, setActiveTab] = useState("products"); // products | categories | properties | inventory_log
@@ -794,12 +851,6 @@ export default function OwnerProducts() {
   const [statusFilter, setStatusFilter] = useState("Tất cả");
   const [categoryFilter, setCategoryFilter] = useState("Tất cả");
   const [materialFilter, setMaterialFilter] = useState("Tất cả");
-
-  // Mock State for Cats & Props
-  const [categories, setCategories] = useState(CATEGORIES);
-  const [woods, setWoods] = useState(WOOD_TYPES);
-  const [otherMaterials, setOtherMaterials] = useState(OTHER_MATERIALS);
-  const [colors, setColors] = useState(COLORS);
 
   // Simple Input Modal State
   const [simpleModal, setSimpleModal] = useState({

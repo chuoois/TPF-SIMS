@@ -58,6 +58,7 @@ const getPolicyByProductCode = (code) => {
 const INITIAL_WARRANTIES = [
   {
     id: "BH-DH-SAN-004",
+    orderId: "DH-SAN-004",
     customerName: "Phạm Thành Nam",
     customerPhone: "0987654321",
     productName: "Sập thờ Mai Điểu chân 20",
@@ -75,6 +76,7 @@ const INITIAL_WARRANTIES = [
   },
   {
     id: "BH-DH-EXP-001",
+    orderId: "DH-EXP-001",
     customerName: "Nguyễn Hoàng Nam",
     customerPhone: "0912344556",
     productName: "Bàn ăn gỗ sồi 6 ghế",
@@ -91,6 +93,38 @@ const INITIAL_WARRANTIES = [
     maintenanceLogs: [
       { date: "2025-10-15", type: "Xử lý co ngót", detail: "Chỉnh lại mộng bàn bị hở do gỗ co lại trong mùa hanh khô.", status: "Done" }
     ],
+  },
+  {
+    id: "BH-DH-MUL-001-1",
+    orderId: "DH-MUL-001",
+    customerName: "Trần Thế Anh",
+    customerPhone: "0944556677",
+    productName: "Bộ bàn ghế Âu Á gỗ Hương",
+    productCode: "BG-AA-HUONG-001",
+    productImg: "https://images.unsplash.com/photo-1592078615290-033ee584e267?q=80&w=300",
+    warrantyMonths: 36,
+    startDate: "2026-03-15",
+    endDate: "2029-03-15",
+    status: "Active",
+    policy: WARRANTY_POLICIES.NATURAL_WOOD,
+    history: [{ date: "2026-03-15", action: "Kích hoạt", note: "Bộ sản phẩm thuộc đơn DH-MUL-001" }],
+    maintenanceLogs: [],
+  },
+  {
+    id: "BH-DH-MUL-001-2",
+    orderId: "DH-MUL-001",
+    customerName: "Trần Thế Anh",
+    customerPhone: "0944556677",
+    productName: "Kệ tivi gỗ Gụ",
+    productCode: "KT-GU-001",
+    productImg: "https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?q=80&w=300",
+    warrantyMonths: 36,
+    startDate: "2026-03-15",
+    endDate: "2029-03-15",
+    status: "Active",
+    policy: WARRANTY_POLICIES.NATURAL_WOOD,
+    history: [{ date: "2026-03-15", action: "Kích hoạt", note: "Kệ tivi thuộc đơn DH-MUL-001" }],
+    maintenanceLogs: [],
   },
 ];
 
@@ -117,7 +151,7 @@ const StatusBadge = ({ status, endDate }) => {
 
   const config = getStatusColor(status);
   const label = status === "Active" ? (isExpiringSoon ? "Sắp hết hạn" : "Bảo hành") :
-                status === "Claimed" ? "Đang sửa chữa" : "Hết hạn";
+                status === "Claimed" ? "Đang bảo hành" : "Hết hạn";
 
   return (
     <span
@@ -163,7 +197,7 @@ const WarrantyDetailsModal = ({ isOpen, onClose, warranty, onCreateRepair }) => 
               <ShieldCheck size={28} />
             </div>
             <div>
-              <h2 className="text-xl font-black text-gray-900 leading-tight">Mã phiếu: {warranty.id}</h2>
+              <h2 className="text-xl font-black text-gray-900 leading-tight">Mã đơn hàng: {warranty.orderId || warranty.id.replace(/^BH-/, "")}</h2>
               <p className="text-xs text-gray-400 font-bold flex items-center gap-2 uppercase tracking-tight">
                 <Package size={12} /> {warranty.productName}
               </p>
@@ -342,7 +376,7 @@ const CreateRepairModal = ({ isOpen, onClose, warranty, onSubmit }) => {
             </div>
             <div>
               <h2 className="text-xl font-black text-gray-900 leading-tight">Ghi nhận Bảo trì</h2>
-              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest">{warranty.id} • {warranty.productCode}</p>
+              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest">{warranty.orderId || warranty.id.replace(/^BH-/, "")} • {warranty.productCode}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
@@ -423,9 +457,15 @@ const CreateRepairModal = ({ isOpen, onClose, warranty, onSubmit }) => {
 export default function WarrantyManagement() {
   const [warranties, setWarranties] = useState(() => {
     const saved = localStorage.getItem("tpf_simulated_warranties");
-    if (saved) return JSON.parse(saved);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Force refresh if new mock data (multi-product) is added or schema changed
+      if (parsed.length >= INITIAL_WARRANTIES.length && parsed.some(w => w.orderId)) {
+        return parsed;
+      }
+    }
     
-    // Nếu chưa có thì dùng initial và lưu luôn vào localStorage
+    // Initialize or refresh from INITIAL_WARRANTIES
     const initialized = INITIAL_WARRANTIES.map(w => ({
       ...w,
       policy: w.policy || getPolicyByProductCode(w.productCode),
@@ -529,6 +569,7 @@ export default function WarrantyManagement() {
         w.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (w.customerPhone && w.customerPhone.includes(searchQuery)) ||
         w.productCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (w.orderId && w.orderId.toLowerCase().includes(searchQuery.toLowerCase())) ||
         w.id.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchStatus = statusFilter === "All" 
@@ -572,7 +613,7 @@ export default function WarrantyManagement() {
             <div>
               <h1 className="text-2xl font-black text-gray-900 tracking-tight">Quản lý Bảo hành</h1>
               <p className="text-gray-400 text-sm font-medium mt-0.5">
-                Quản lý phiếu và chính sách bảo hành sản phẩm
+                Quản lý bảo hành và chính sách sản phẩm
               </p>
             </div>
           </div>
@@ -585,7 +626,7 @@ export default function WarrantyManagement() {
           {[
             { label: "Tổng số", value: stats.total - (warranties.filter(w => w.status === "Pending").length), color: "text-gray-600", bg: "bg-white", status: "All" },
             { label: "Đang hiệu lực", value: stats.active, color: "text-emerald-600", bg: "bg-emerald-50", status: "Active" },
-            { label: "Đang bảo trì", value: stats.claiming, color: "text-amber-600", bg: "bg-amber-50", status: "Claimed" },
+            { label: "Đang bảo hành", value: stats.claiming, color: "text-amber-600", bg: "bg-amber-50", status: "Claimed" },
             { label: "Đã hết hạn", value: stats.expired, color: "text-red-600", bg: "bg-red-50", status: "Expired" },
           ].map((s, i) => (
             <div 
@@ -600,7 +641,7 @@ export default function WarrantyManagement() {
               <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">{s.label}</p>
               <div className="flex items-end gap-2">
                 <span className={`text-2xl font-black ${s.color}`}>{s.value}</span>
-                <span className="text-[12px] font-medium text-gray-400 mb-1">phiếu</span>
+                <span className="text-[12px] font-medium text-gray-400 mb-1">đơn hàng</span>
               </div>
             </div>
           ))}
@@ -621,7 +662,7 @@ export default function WarrantyManagement() {
             />
             <input
               type="text"
-              placeholder="Tìm theo tên khách, SĐT, mã SKU hoặc mã phiếu..."
+              placeholder="Tìm theo tên khách, SĐT, mã SKU hoặc mã đơn hàng..."
               className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] border focus:outline-none focus:ring-1 transition font-medium"
               style={{
                 borderColor: "var(--grid-border)",
@@ -657,7 +698,7 @@ export default function WarrantyManagement() {
             >
               <option value="All">Tất cả</option>
               <option value="Active">Đang hiệu lực</option>
-              <option value="Claimed">Đang sửa chữa</option>
+              <option value="Claimed">Đang bảo hành</option>
               <option value="Expired">Hết hạn</option>
             </select>
           </div>
@@ -672,7 +713,7 @@ export default function WarrantyManagement() {
               <thead className="sticky top-0 z-10" style={{ backgroundColor: "var(--bg-main)", borderBottom: "1px solid var(--grid-border)" }}>
                 <tr className="bg-gray-50/30">
                   <th className="pl-6 pr-3 py-3 text-[11px] font-bold uppercase tracking-wider w-[60px]" style={{ color: "var(--text-placeholder)" }}>STT</th>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider w-[140px]" style={{ color: "var(--text-placeholder)" }}>Mã Phiếu</th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider w-[140px]" style={{ color: "var(--text-placeholder)" }}>Mã Đơn Hàng</th>
                   <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider w-[200px]" style={{ color: "var(--text-placeholder)" }}>Khách hàng</th>
                   <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-placeholder)" }}>Sản phẩm</th>
                   <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider w-[180px]" style={{ color: "var(--text-placeholder)" }}>Thời hạn</th>
@@ -694,7 +735,7 @@ export default function WarrantyManagement() {
                       {(currentPage - 1) * itemsPerPage + index + 1}
                     </td>
                     <td className="px-4 py-3 font-bold text-[13px] tracking-tight" style={{ color: "var(--text-main)" }}>
-                      {w.id}
+                      {w.orderId || w.id.replace(/^BH-/, "")}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-0.5">
