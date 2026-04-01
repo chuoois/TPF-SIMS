@@ -356,7 +356,7 @@ const AutocompleteSelector = ({
       </div>
 
       {isOpen && !disabled && (
-        <div className="absolute z-[60] left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute z-[60] left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="max-h-[200px] overflow-y-auto pt-1 pb-1">
             {filteredOptions.length > 0 ? (
               filteredOptions.map((o, i) => (
@@ -561,7 +561,7 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
         onClick={onClose}
       />
       <div
-        className="relative bg-white w-full max-w-5xl h-full max-h-[90vh] rounded-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+        className="relative bg-white w-full max-w-5xl h-full max-h-[90vh] rounded-lg flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
         style={{ boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
       >
         {/* Header */}
@@ -605,7 +605,7 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                 <h3 className="text-[13px] font-bold text-gray-800 uppercase tracking-wider mb-2 flex items-center gap-2">
                   <User size={16} className="text-gray-400" /> Khách hàng
                 </h3>
-                <div className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 space-y-2">
+                <div className="p-4 rounded-lg border border-gray-100 bg-gray-50/50 space-y-2">
                   <p className="text-[14px] font-bold text-gray-900">
                     {req.customer}
                   </p>
@@ -640,7 +640,7 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                     value={estimatedDeliveryDate}
                     onChange={(e) => setEstimatedDeliveryDate(e.target.value)}
                     disabled={!isProcessing}
-                    className="w-full h-11 pl-10 pr-4 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-600 transition-shadow"
+                    className="w-full h-11 pl-10 pr-4 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-600 transition-shadow"
                   />
                 </div>
               </div>
@@ -657,7 +657,7 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                     onChange={(e) => setSurveyNotes(e.target.value)}
                     disabled={!isProcessing}
                     placeholder="Ghi chú lại các nhu cầu ban đầu của khách và thông tin khảo sát thực tế..."
-                    className="w-full h-[104px] p-4 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-600 transition-shadow resize-none"
+                    className="w-full h-[104px] p-4 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-600 transition-shadow resize-none"
                   />
                 </div>
               </div>
@@ -677,7 +677,7 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                 return (
                   <div
                     key={spec.id}
-                    className="p-5 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden"
+                    className="p-5 rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden"
                   >
                     {/* Item Header */}
                     <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
@@ -823,7 +823,7 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                     </div>
 
                     {/* Item Images Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50/50 rounded-xl border border-gray-100">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50/50 rounded-lg border border-gray-100">
                       {/* Customer Images */}
                       <div>
                         <p className="text-[12px] font-bold text-gray-700 mb-2 flex items-center gap-1.5">
@@ -914,7 +914,7 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
         <div className="p-4 border-t border-gray-100 bg-gray-50 shrink-0">
           <div className="flex items-center justify-between">
             {/* Financial Summary Breakdown - ERP Style Vertical Box */}
-            <div className="bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm min-w-[320px]">
+            <div className="bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm min-w-[320px]">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[12px] font-bold text-gray-400 uppercase tracking-wider">Tổng tiền hàng</span>
@@ -1212,24 +1212,17 @@ export default function OwnerRequirements() {
     {
       header: "STT",
       headerClassName: "text-center w-[60px]",
-      render: (_, idx) => (currentPage - 1) * itemsPerPage + idx + 1,
-      className: "text-center text-[13px] font-medium",
+      className: "text-center font-medium",
       style: { color: "var(--text-secondary)" },
+      render: (_, idx) => (currentPage - 1) * itemsPerPage + idx + 1,
     },
-    {
-      header: "Mã yêu cầu",
-      render: (r) => (
-        <span className="text-[13px] font-bold font-mono" style={{ color: "var(--text-main)" }}>
-          {r.code}
-        </span>
-      ),
-    },
+    { header: "Mã yêu cầu", key: "code", className: "font-bold font-mono" },
     {
       header: "Khách hàng",
       render: (r) => (
         <div className="flex items-center gap-3">
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[12px] group-hover:bg-white border transition"
+            className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[12px] group-hover:bg-white border transition shrink-0"
             style={{
               backgroundColor: "var(--bg-main)",
               color: "var(--text-placeholder)",
@@ -1238,11 +1231,11 @@ export default function OwnerRequirements() {
           >
             {r.customer.charAt(0)}
           </div>
-          <div>
-            <p className="text-[13px] font-semibold" style={{ color: "var(--text-main)" }}>
+          <div className="min-w-0">
+            <p className="text-[13px] font-semibold truncate" style={{ color: "var(--text-main)" }}>
               {r.customer}
             </p>
-            <p className="text-[11px]" style={{ color: "var(--text-placeholder)" }}>
+            <p className="text-[11px] truncate" style={{ color: "var(--text-placeholder)" }}>
               {r.phone}
             </p>
           </div>
@@ -1250,21 +1243,15 @@ export default function OwnerRequirements() {
       ),
     },
     {
-      header: "Ngày tạo yêu cầu",
+      header: "Ngày tạo",
+      key: "createdDate",
       headerClassName: "text-center",
-      render: (r) => (
-        <div className="flex items-center justify-center gap-1.5 text-gray-500 leading-none">
-          <Calendar size={12} className="text-gray-400" />
-          <span className="text-[13px] font-bold">
-            {r.createdDate}
-          </span>
-        </div>
-      ),
       className: "text-center",
     },
     {
       header: "Trạng thái",
       headerClassName: "text-right pr-6",
+      className: "text-right",
       render: (r) => {
         const sc = STATUS_CONFIG[r.status] || STATUS_CONFIG["Đang xử lý"];
         return (
@@ -1283,7 +1270,6 @@ export default function OwnerRequirements() {
           </div>
         );
       },
-      className: "text-right",
     },
   ];
 
@@ -1323,7 +1309,7 @@ export default function OwnerRequirements() {
               <button
                 key={s}
                 onClick={() => updateParams({ status: s })}
-                className="px-4 py-1.5 rounded-xl text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border"
+                className="px-4 py-1.5 rounded-lg text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border"
                 style={{
                   backgroundColor: isActive
                     ? sc
@@ -1358,10 +1344,6 @@ export default function OwnerRequirements() {
           columns={columns}
           data={paginatedRequirements}
           onRowClick={(r) => setSelectedReqId(r.id)}
-          rowDetailAction={{
-            label: "Chi tiết",
-            onClick: (r) => setSelectedReqId(r.id)
-          }}
           rowClassName={(item) => ""}
           rowStyle={(item) => ({
             backgroundColor: selectedIds.includes(item.id) ? "var(--status-focus)" : "transparent"
@@ -1377,6 +1359,22 @@ export default function OwnerRequirements() {
           clearAllFilters={clearAllFilters}
           selectedIds={selectedIds}
           setSelectedIds={setSelectedIds}
+          rowActions={[
+            {
+              icon: Eye,
+              label: "Chi tiết",
+              onClick: (r) => setSelectedReqId(r.id),
+            },
+            {
+              icon: Trash2,
+              label: "Hủy yêu cầu",
+              onClick: (r) => {
+                setSelectedIds([r.id]);
+                setShowBulkConfirm(true);
+              },
+              className: "bg-white border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200",
+            },
+          ]}
           bulkActions={[
             {
               label: "HỦY HÀNG LOẠT",

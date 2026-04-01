@@ -1,9 +1,9 @@
 import React from "react";
-import { 
-  Search, 
-  X, 
-  Calendar, 
-  ChevronLeft, 
+import {
+  Search,
+  X,
+  Calendar,
+  ChevronLeft,
   ChevronRight,
   Eye,
   CheckCircle2
@@ -38,20 +38,20 @@ const DataTable = ({
   setSelectedIds,
   onSelectAll, // Optional: if not provided, will calculate internally
   onSelectOne, // Optional: if not provided, will calculate internally
-  
-  // Hover Actions
-  rowDetailAction, // { label, icon, onClick }
-  
+
+  // Row Actions (per-row buttons shown on hover)
+  rowActions = [], // [{ icon: Icon, onClick: (item) => {}, label, className }]
+
   // Bulk Actions
-  bulkActions = [], // { label, icon: Icon, onClick, colorClass }
-  
+  bulkActions = [], // [{ label, icon: Icon, onClick, colorClass }]
+
   // Pagination
   pagination = {
     total: 0,
     currentPage: 1,
-    setCurrentPage: () => {},
+    setCurrentPage: () => { },
     itemsPerPage: 15,
-    setItemsPerPage: () => {},
+    setItemsPerPage: () => { },
   }
 }) => {
   const totalPages = Math.ceil(pagination.total / pagination.itemsPerPage);
@@ -68,7 +68,7 @@ const DataTable = ({
 
   const handleSelectOne = (id) => {
     if (onSelectOne) return onSelectOne(id);
-    setSelectedIds(prev => 
+    setSelectedIds(prev =>
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
@@ -98,6 +98,34 @@ const DataTable = ({
     });
   }
 
+  // Inject Row Actions column if provided
+  if (rowActions.length > 0) {
+    enhancedColumns.push({
+      header: "",
+      headerClassName: "w-[100px]",
+      className: "text-right",
+      render: (item) => (
+        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {rowActions.map((action, idx) => {
+            const Icon = action.icon;
+            return (
+              <button
+                key={idx}
+                onClick={(e) => { e.stopPropagation(); action.onClick(item); }}
+                title={action.label || ""}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all cursor-pointer hover:shadow-sm ${
+                  action.className || 'bg-white border-gray-200 text-gray-400 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                {Icon && <Icon size={14} />}
+              </button>
+            );
+          })}
+        </div>
+      ),
+    });
+  }
+
   return (
     <div
       className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden"
@@ -116,10 +144,10 @@ const DataTable = ({
       >
         {selectedIds.length > 0 ? (
           <div className="flex items-center justify-start gap-4 w-full animate-in fade-in slide-in-from-left-2 duration-300">
-            <span 
+            <span
               className="text-[12px] font-bold px-4 py-1.5 border flex items-center gap-2 rounded-lg"
-              style={{ 
-                color: "var(--brand-primary)", 
+              style={{
+                color: "var(--brand-primary)",
                 backgroundColor: "var(--status-focus)",
                 borderColor: "rgba(52, 176, 87, 0.2)"
               }}
@@ -160,7 +188,7 @@ const DataTable = ({
                 placeholder={searchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-10 pl-10 pr-8 rounded-xl text-[13px] border focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                className="w-full h-10 pl-10 pr-8 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
                 style={{
                   borderColor: "var(--grid-border)",
                   backgroundColor: "#fff",
@@ -190,7 +218,7 @@ const DataTable = ({
                     type="date"
                     value={dateFrom}
                     onChange={(e) => setDateFrom(e.target.value)}
-                    className="h-10 pl-9 pr-3 rounded-xl text-[13px] border focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                    className="h-10 pl-9 pr-3 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
                     style={{
                       borderColor: dateFrom ? "var(--brand-primary)" : "var(--grid-border)",
                       backgroundColor: "#fff",
@@ -203,7 +231,7 @@ const DataTable = ({
                   type="date"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
-                  className="h-10 px-3 rounded-xl text-[13px] border focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                  className="h-10 px-3 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
                   style={{
                     borderColor: dateTo ? "var(--brand-primary)" : "var(--grid-border)",
                     backgroundColor: "#fff",
@@ -215,7 +243,7 @@ const DataTable = ({
               {hasActiveFilters && (
                 <button
                   onClick={clearAllFilters}
-                  className="h-10 px-4 rounded-xl text-[12px] font-bold text-red-600 hover:bg-red-50 transition border border-transparent hover:border-red-100 cursor-pointer"
+                  className="h-10 px-4 rounded-lg text-[12px] font-bold text-red-600 hover:bg-red-50 transition border border-transparent hover:border-red-100 cursor-pointer"
                 >
                   Xóa bộ lọc
                 </button>
@@ -261,24 +289,28 @@ const DataTable = ({
                       ${isSelected ? '!bg-[var(--status-focus)]' : ''} 
                       ${rowClassName ? rowClassName(item) : ''}
                     `}
-                    style={{ 
+                    style={{
                       borderBottom: "1px solid var(--grid-border)",
                       ...rowStyle && rowStyle(item)
                     }}
                   >
-                  {enhancedColumns.map((col, colIdx) => (
-                    <td
-                      key={colIdx}
-                      className={`px-4 py-3 ${col.className || ''}`}
-                      style={col.style}
-                    >
-                      {col.render ? col.render(item, rowIdx) : item[col.key]}
-
-                    </td>
-                  ))}
-                </tr>
-              );
-            })
+                    {enhancedColumns.map((col, colIdx) => (
+                      <td
+                        key={colIdx}
+                        className={`px-4 py-3 text-[13px] ${col.className || ''}`}
+                        style={{ color: "var(--text-main)", ...col.style }}
+                      >
+                        {col.render
+                          ? col.render(item, rowIdx)
+                          : col.key
+                            ? item[col.key]
+                            : ""
+                        }
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })
             ) : (
               <tr>
                 <td colSpan={enhancedColumns.length} className="py-24 text-center">
@@ -314,7 +346,7 @@ const DataTable = ({
                   pagination.setItemsPerPage(Number(e.target.value));
                   pagination.setCurrentPage(1);
                 }}
-                className="h-8 px-2 pr-6 rounded-md text-[13px] border cursor-pointer focus:outline-none appearance-none bg-white font-bold"
+                className="h-8 px-2 pr-6 rounded-lg text-[13px] border cursor-pointer focus:outline-none appearance-none bg-white font-bold"
                 style={{
                   borderColor: "var(--grid-border)",
                   // Simple hack for custom arrow if needed
