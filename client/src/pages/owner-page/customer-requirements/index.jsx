@@ -3,6 +3,9 @@ import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
+import ConfirmModal from "@/components/control/ConfirmModal";
+import DataTable from "@/components/control/DataTable";
+import CustomCheckbox from "@/components/control/CustomCheckbox";
 import {
   Search,
   Phone,
@@ -31,6 +34,7 @@ import {
   MapPin,
   ChevronDown,
   Truck,
+  Check,
 } from "lucide-react";
 
 // ===================== MOCK DATA =====================
@@ -48,7 +52,7 @@ const MOCK_REQUIREMENTS = [
       "Khách nâng cấp căn hộ, cần giường Master và kệ Tivi phòng khách đồng bộ gỗ Sồi.",
     surveyNotes: "",
     proposedSolution: "",
-    estimatedPrice: 0,
+    estimatedPrice: 45000000,
     deposit: 0,
     estimatedDeliveryDate: "2026-04-10",
     items: [
@@ -63,7 +67,7 @@ const MOCK_REQUIREMENTS = [
         customerImages: [
           "https://scontent.fhan15-1.fna.fbcdn.net/v/t39.30808-6/637459691_1977013123217579_6531168230899229053_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=1d70fc&_nc_ohc=HOM3FFuOUaEQ7kNvwF0Or8M&_nc_oc=AdlPq2yOHwV4yoeTTB1yyX6uN-SlODZh2T7HU8FBUl5IKzJ9UtupGabqX5HIHRdAG1dTYgwmvnvFh0AeaEj0ZfYC&_nc_zt=23&_nc_ht=scontent.fhan15-1.fna&_nc_gid=jadTa4V6nf_sWyNQtwAVXw&_nc_ss=8&oh=00_AfxV5mxqXC-Q0Z3pylSWXN4aVjrVQk7jD1C0CITFUeZnrw&oe=69BC9542",
         ],
-        quotedPrice: 0,
+        quotedPrice: 25000000,
       },
       {
         id: "ITM-005",
@@ -76,7 +80,7 @@ const MOCK_REQUIREMENTS = [
         customerImages: [
           "https://images.unsplash.com/photo-1594913785162-e6785b42defa?auto=format&fit=crop&q=80&w=600",
         ],
-        quotedPrice: 0,
+        quotedPrice: 20000000,
       },
     ],
   },
@@ -246,9 +250,9 @@ const STATUS_CONFIG = {
     bg: "#FEF3C7",
     text: "#D97706",
     border: "#FDE68A",
-    icon: "Clock",
+    icon: Clock,
     description: "Đang trong quá trình khảo sát, thiết kế & báo giá",
-    actionLabel: "Tạo đơn",
+    actionLabel: null,
     actionIcon: Package,
     actionType: "create_order",
     actionColor: "bg-emerald-600",
@@ -257,9 +261,9 @@ const STATUS_CONFIG = {
     bg: "#F0FDF4",
     text: "#166534",
     border: "#BBF7D0",
-    icon: "CheckCircle2",
+    icon: CheckCircle2,
     description: "Đã lập lệnh sản xuất & chuyển sang phân xưởng",
-    actionLabel: "Tiến độ",
+    actionLabel: null,
     actionIcon: Activity,
     actionType: "view_production",
     actionColor: "bg-indigo-600",
@@ -268,7 +272,7 @@ const STATUS_CONFIG = {
     bg: "#F3F4F6",
     text: "#6B7280",
     border: "#E5E7EB",
-    icon: "X",
+    icon: X,
     description: "Yêu cầu đã bị hủy hoặc khách dừng tư vấn",
     actionLabel: null,
     actionIcon: RefreshCw,
@@ -432,49 +436,6 @@ const PriceInput = ({
   );
 };
 
-const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel }) => {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-      <div
-        className="absolute inset-0 bg-black/30 backdrop-blur-[2px] animate-in fade-in duration-200"
-        onClick={onCancel}
-      />
-      <div
-        className="relative bg-white w-full max-w-sm rounded-2xl overflow-hidden animate-in zoom-in-95 duration-200"
-        style={{ boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
-      >
-        <div className="p-6 space-y-4">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto bg-red-50 text-red-600">
-            <AlertCircle size={22} />
-          </div>
-          <div className="text-center">
-            <h3 className="text-[15px] font-bold text-gray-900">{title}</h3>
-            <p className="text-[13px] text-gray-500 mt-2 leading-relaxed">
-              {message}
-            </p>
-          </div>
-          <div className="flex gap-2.5 pt-2">
-            <Button
-              variant="outline"
-              onClick={onCancel}
-              className="flex-1 rounded-lg cursor-pointer text-[13px] h-10"
-            >
-              Hủy
-            </Button>
-            <Button
-              onClick={onConfirm}
-              className="flex-1 rounded-lg text-[13px] font-bold text-white cursor-pointer h-10"
-              style={{ backgroundColor: "var(--status-error)" }}
-            >
-              Xác nhận
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
   const [surveyNotes, setSurveyNotes] = useState("");
@@ -502,9 +463,9 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
           prev.map((item) =>
             item.id === itemId
               ? {
-                  ...item,
-                  designImages: [...(item.designImages || []), ...newUrls],
-                }
+                ...item,
+                designImages: [...(item.designImages || []), ...newUrls],
+              }
               : item,
           ),
         );
@@ -519,9 +480,9 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
       prev.map((item) =>
         item.id === itemId
           ? {
-              ...item,
-              designImages: item.designImages.filter((_, i) => i !== index),
-            }
+            ...item,
+            designImages: item.designImages.filter((_, i) => i !== index),
+          }
           : item,
       ),
     );
@@ -578,17 +539,6 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
     );
   };
 
-  const handleSave = () => {
-    onAction("save_progress", req.id, {
-      surveyNotes,
-      proposedSolution,
-      estimatedPrice: Number(estimatedPrice),
-      estimatedDeliveryDate,
-      ownerNotes,
-      deposit: Number(deposit),
-      itemSpecs, // Passing these back for persistence
-    });
-  };
 
   const handleFixPrice = () => {
     if (!estimatedPrice)
@@ -626,13 +576,14 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                   {req.code}
                 </span>
                 <span
-                  className="px-2.5 py-1 rounded-md text-[12px] font-medium border"
+                  className="px-2.5 py-1 rounded-md text-[12px] font-medium border flex items-center gap-1.5"
                   style={{
                     backgroundColor: statusConfig.bg,
                     color: statusConfig.text,
                     borderColor: statusConfig.border,
                   }}
                 >
+                  {statusConfig.icon && <statusConfig.icon size={14} />}
                   {req.status}
                 </span>
               </div>
@@ -814,7 +765,7 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                             onChange={(e) => {
                               const parts = (spec.dimensions || "").split(/[xX×*]/).map(d => d.trim());
                               parts[0] = e.target.value;
-                              handleUpdateItemSpec(spec.id, "dimensions", [parts[0]||"", parts[1]||"", parts[2]||""].filter(Boolean).join(" x "));
+                              handleUpdateItemSpec(spec.id, "dimensions", [parts[0] || "", parts[1] || "", parts[2] || ""].filter(Boolean).join(" x "));
                             }}
                             disabled={!isProcessing}
                             className="w-full h-9 px-2 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-700 font-medium text-center"
@@ -827,7 +778,7 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                             onChange={(e) => {
                               const parts = (spec.dimensions || "").split(/[xX×*]/).map(d => d.trim());
                               parts[1] = e.target.value;
-                              handleUpdateItemSpec(spec.id, "dimensions", [parts[0]||"", parts[1]||"", parts[2]||""].filter(Boolean).join(" x "));
+                              handleUpdateItemSpec(spec.id, "dimensions", [parts[0] || "", parts[1] || "", parts[2] || ""].filter(Boolean).join(" x "));
                             }}
                             disabled={!isProcessing}
                             className="w-full h-9 px-2 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-700 font-medium text-center"
@@ -840,7 +791,7 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                             onChange={(e) => {
                               const parts = (spec.dimensions || "").split(/[xX×*]/).map(d => d.trim());
                               parts[2] = e.target.value;
-                              handleUpdateItemSpec(spec.id, "dimensions", [parts[0]||"", parts[1]||"", parts[2]||""].filter(Boolean).join(" x "));
+                              handleUpdateItemSpec(spec.id, "dimensions", [parts[0] || "", parts[1] || "", parts[2] || ""].filter(Boolean).join(" x "));
                             }}
                             disabled={!isProcessing}
                             className="w-full h-9 px-2 rounded-lg border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[13px] disabled:bg-gray-50 disabled:text-gray-700 font-medium text-center"
@@ -1002,14 +953,8 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
               {isProcessing && (
                 <>
                   <button
-                    onClick={handleSave}
-                    className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg text-[13px] font-bold hover:bg-gray-50 transition-colors shadow-sm"
-                  >
-                    Lưu nháp
-                  </button>
-                  <button
                     onClick={() => onAction("create_order", req.id)}
-                    className="px-5 py-2 bg-emerald-600 text-white rounded-lg text-[13px] font-bold hover:bg-emerald-700 transition-colors shadow-sm flex items-center gap-2"
+                    className="px-5 py-2 bg-emerald-600 text-white rounded-lg text-[13px] font-bold hover:bg-emerald-700 transition-colors flex items-center gap-2"
                   >
                     <Package size={16} /> Tạo Đơn Hàng
                   </button>
@@ -1028,11 +973,10 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                   <button
                     disabled={req.hasImportedGoods}
                     onClick={() => setShowConfirmCancel(true)}
-                    className={`px-4 py-2 rounded-lg text-[13px] font-medium transition-colors ${
-                      req.hasImportedGoods
-                        ? "text-gray-400 bg-gray-100 cursor-not-allowed"
-                        : "text-red-600 hover:bg-red-50"
-                    }`}
+                    className={`px-4 py-2 rounded-lg text-[13px] font-bold transition-all border ${req.hasImportedGoods
+                      ? "text-gray-400 bg-gray-100 cursor-not-allowed border-transparent"
+                      : "bg-red-50 text-red-600 border-red-100 hover:bg-red-100 active:scale-95"
+                      }`}
                   >
                     Hủy bỏ
                   </button>
@@ -1071,7 +1015,32 @@ export default function OwnerRequirements() {
   const [dateTo, setDateTo] = useState("");
   const [requirements, setRequirements] = useState(MOCK_REQUIREMENTS);
   const [selectedReqId, setSelectedReqId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [showBulkConfirm, setShowBulkConfirm] = useState(false);
   const [enlargedImg, setEnlargedImg] = useState(null);
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === paginatedRequirements.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(paginatedRequirements.map((r) => r.id));
+    }
+  };
+
+  const toggleSelectOne = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    );
+  };
+
+  const handleBulkCancel = () => {
+    setRequirements((prev) =>
+      prev.map((r) => (selectedIds.includes(r.id) ? { ...r, status: "Đơn đã hủy" } : r)),
+    );
+    setSelectedIds([]);
+    setShowBulkConfirm(false);
+    toast.success("Đã hủy hàng loạt thành công!");
+  };
 
   const statusFilter = searchParams.get("status") || "Tất cả";
   const [currentPage, setCurrentPage] = useState(1);
@@ -1124,19 +1093,12 @@ export default function OwnerRequirements() {
     return counts;
   }, [requirements]);
 
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const paginatedRequirements = filtered.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
-
   const selectedReq = requirements.find((r) => r.id === selectedReqId);
 
   const handleAction = (type, reqId, data = null) => {
     setRequirements((prev) =>
       prev.map((r) => {
         if (r.id !== reqId) return r;
-        if (type === "save_progress") return { ...r, ...data };
         if (type === "fix_price")
           return { ...r, status: "Đã chốt giá", ...data };
         if (type === "create_order") return { ...r, status: "Đã tạo đơn" };
@@ -1149,8 +1111,6 @@ export default function OwnerRequirements() {
         return r;
       }),
     );
-    if (type === "save_progress")
-      toast.success("Đã lưu tiến độ & thông số kỹ thuật!");
     if (type === "create_order") {
       // Find the finalized requirement data
       const finalizingReq = requirements.find((r) => r.id === reqId);
@@ -1241,6 +1201,92 @@ export default function OwnerRequirements() {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, dateFrom, dateTo]);
 
+  const paginatedRequirements = useMemo(() => {
+    return filtered.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage,
+    );
+  }, [filtered, currentPage, itemsPerPage]);
+
+  const columns = [
+    {
+      header: "STT",
+      headerClassName: "text-center w-[60px]",
+      render: (_, idx) => (currentPage - 1) * itemsPerPage + idx + 1,
+      className: "text-center text-[13px] font-medium",
+      style: { color: "var(--text-secondary)" },
+    },
+    {
+      header: "Mã yêu cầu",
+      render: (r) => (
+        <span className="text-[13px] font-bold font-mono" style={{ color: "var(--text-main)" }}>
+          {r.code}
+        </span>
+      ),
+    },
+    {
+      header: "Khách hàng",
+      render: (r) => (
+        <div className="flex items-center gap-3">
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[12px] group-hover:bg-white border transition"
+            style={{
+              backgroundColor: "var(--bg-main)",
+              color: "var(--text-placeholder)",
+              borderColor: "var(--grid-border)",
+            }}
+          >
+            {r.customer.charAt(0)}
+          </div>
+          <div>
+            <p className="text-[13px] font-semibold" style={{ color: "var(--text-main)" }}>
+              {r.customer}
+            </p>
+            <p className="text-[11px]" style={{ color: "var(--text-placeholder)" }}>
+              {r.phone}
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Ngày tạo yêu cầu",
+      headerClassName: "text-center",
+      render: (r) => (
+        <div className="flex items-center justify-center gap-1.5 text-gray-500 leading-none">
+          <Calendar size={12} className="text-gray-400" />
+          <span className="text-[13px] font-bold">
+            {r.createdDate}
+          </span>
+        </div>
+      ),
+      className: "text-center",
+    },
+    {
+      header: "Trạng thái",
+      headerClassName: "text-right pr-6",
+      render: (r) => {
+        const sc = STATUS_CONFIG[r.status] || STATUS_CONFIG["Đang xử lý"];
+        return (
+          <div className="flex justify-end pr-2">
+            <span
+              className="inline-flex items-center justify-center w-[140px] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-md border gap-1.5"
+              style={{
+                backgroundColor: sc.bg,
+                color: sc.text,
+                borderColor: sc.border,
+              }}
+            >
+              {sc.icon && <sc.icon size={12} />}
+              {r.status}
+            </span>
+          </div>
+        );
+      },
+      className: "text-right",
+    },
+  ];
+
   return (
     <>
       <PageHelmet title="Yêu cầu khách hàng | Quản lý" />
@@ -1297,13 +1343,8 @@ export default function OwnerRequirements() {
                   boxShadow: isActive ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
                 }}
               >
-                {s !== "Tất cả" && (
-                  <span
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{
-                      backgroundColor: sc ? sc.text : "var(--brand-primary)",
-                    }}
-                  />
+                {s !== "Tất cả" && sc?.icon && (
+                  <sc.icon size={14} />
                 )}
                 {s}
                 <span className="text-[10px] opacity-60 bg-black/5 px-1.5 rounded-md ml-0.5">
@@ -1313,354 +1354,65 @@ export default function OwnerRequirements() {
             );
           })}
         </div>
-
-        {/* Search + Table Card */}
-        <div
-          className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden"
-          style={{
-            boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+        <DataTable
+          columns={columns}
+          data={paginatedRequirements}
+          onRowClick={(r) => setSelectedReqId(r.id)}
+          rowDetailAction={{
+            label: "Chi tiết",
+            onClick: (r) => setSelectedReqId(r.id)
           }}
-        >
-          {/* Search Header */}
-          <div
-            className="px-4 py-3 shrink-0 flex flex-wrap items-center justify-between gap-4"
-            style={{
-              backgroundColor: "var(--grid-header-bg)",
-              borderBottom: "1px solid var(--grid-border)",
-            }}
-          >
-            {/* Search (Start) */}
-            <div className="relative flex-1 max-w-sm min-w-[300px]">
-              <Search
-                size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2"
-                style={{ color: "var(--text-placeholder)" }}
-              />
-              <input
-                type="text"
-                placeholder="Mã yêu cầu, khách hàng..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] border focus:outline-none focus:ring-1 transition"
-                style={{
-                  borderColor: "var(--grid-border)",
-                  backgroundColor: "#fff",
-                  color: "var(--text-main)",
-                }}
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full cursor-pointer"
-                >
-                  <X size={14} style={{ color: "var(--text-placeholder)" }} />
-                </button>
-              )}
-            </div>
-
-            {/* Date Filter + Actions (End) */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Calendar
-                    size={14}
-                    className="absolute left-2.5 top-1/2 -translate-y-1/2"
-                    style={{ color: "var(--text-placeholder)" }}
-                  />
-                  <input
-                    type="date"
-                    value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
-                    className="h-9 pl-9 pr-3 rounded-lg text-[13px] border focus:outline-none shadow-xs"
-                    style={{
-                      borderColor: dateFrom
-                        ? "var(--brand-primary)"
-                        : "var(--grid-border)",
-                      backgroundColor: "#fff",
-                      color: "var(--text-main)",
-                    }}
-                  />
-                </div>
-                <span className="text-gray-400 text-xs font-bold">~</span>
-                <input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  className="h-9 px-3 rounded-lg text-[13px] border focus:outline-none shadow-xs"
-                  style={{
-                    borderColor: dateTo
-                      ? "var(--brand-primary)"
-                      : "var(--grid-border)",
-                    backgroundColor: "#fff",
-                    color: "var(--text-main)",
-                  }}
-                />
-              </div>
-
-              {hasActiveFilters && (
-                <button
-                  onClick={clearAllFilters}
-                  className="h-9 px-3 rounded-lg text-[12px] font-bold text-red-600 hover:bg-red-50 transition border border-transparent hover:border-red-100 cursor-pointer"
-                >
-                  Xóa bộ lọc
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            <table className="w-full text-left relative">
-              <thead
-                className="sticky top-0 z-10"
-                style={{
-                  backgroundColor: "var(--grid-header-bg)",
-                  borderBottom: "1px solid var(--grid-border)",
-                }}
-              >
-                <tr>
-                  {[
-                    "STT",
-                    "Mã yêu cầu",
-                    "Khách hàng",
-                    "Ngày tạo yêu cầu",
-                    "Trạng thái",
-                  ].map((h, i) => (
-                    <th
-                      key={i}
-                      className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${
-                        i === 0
-                          ? "text-center w-[60px]"
-                          : i === 3
-                            ? "text-center"
-                            : i === 4
-                              ? "text-right pr-6"
-                              : "text-left"
-                      }`}
-                      style={{ color: "var(--text-placeholder)" }}
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedRequirements.map((r, idx) => {
-                  const statusConfig =
-                    STATUS_CONFIG[r.status] || STATUS_CONFIG["Đang xử lý"];
-                  return (
-                    <tr
-                      key={r.id}
-                      onClick={() => setSelectedReqId(r.id)}
-                      className="group relative hover:bg-gray-50/50 transition-colors cursor-pointer"
-                      style={{ borderBottom: "1px solid var(--grid-border)" }}
-                    >
-                      <td
-                        className="px-4 py-3 text-center text-[13px] font-medium"
-                        style={{ color: "var(--text-secondary)" }}
-                      >
-                        {(currentPage - 1) * itemsPerPage + idx + 1}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className="text-[13px] font-bold font-mono"
-                          style={{ color: "var(--text-main)" }}
-                        >
-                          {r.code}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[12px] transition group-hover:bg-white border"
-                            style={{
-                              backgroundColor: "var(--bg-main)",
-                              color: "var(--text-placeholder)",
-                              borderColor: "var(--grid-border)",
-                            }}
-                          >
-                            {r.customer.charAt(0)}
-                          </div>
-                          <div>
-                            <p
-                              className="text-[13px] font-semibold"
-                              style={{ color: "var(--text-main)" }}
-                            >
-                              {r.customer}
-                            </p>
-                            <p
-                              className="text-[11px]"
-                              style={{ color: "var(--text-placeholder)" }}
-                            >
-                              {r.phone}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td
-                        className="px-4 py-3 text-[13px] font-medium text-center"
-                        style={{ color: "var(--text-secondary)" }}
-                      >
-                        {r.createdDate}
-                      </td>
-                      <td className="px-4 py-3 text-right pr-6 relative">
-                        <div className="flex items-center justify-end gap-3">
-                          <span
-                            className="inline-flex items-center px-2.5 py-1 text-[11px] font-bold rounded-md"
-                            style={{
-                              backgroundColor: statusConfig.bg,
-                              color: statusConfig.text,
-                              border: `1px solid ${statusConfig.border}`,
-                            }}
-                          >
-                            <span
-                              className="w-1.5 h-1.5 rounded-full mr-1.5"
-                              style={{ backgroundColor: statusConfig.text }}
-                            ></span>
-                            {r.status}
-                          </span>
-
-                          {/* Guided Review Actions */}
-                          <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 flex items-center gap-2 transition-all transform translate-x-4 group-hover:translate-x-0 z-20">
-                            {statusConfig.actionLabel && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedReqId(r.id);
-                                }}
-                                className={`flex items-center gap-2 ${statusConfig.actionColor} text-white px-3 py-1.5 rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all outline-none`}
-                              >
-                                <span className="text-[10px] font-black uppercase tracking-wider">
-                                  {statusConfig.actionLabel}
-                                </span>
-                                <statusConfig.actionIcon size={14} />
-                              </button>
-                            )}
-
-                            {/* View Detail Button */}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedReqId(r.id);
-                              }}
-                              className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-xl shadow-sm hover:bg-slate-50 active:scale-95 transition-all text-[10px] font-black uppercase tracking-wider outline-none"
-                            >
-                              Chi tiết
-                              <Eye size={14} />
-                            </button>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination Footer */}
-          {filtered.length > 0 && (
-            <div
-              className="flex items-center justify-between px-6 py-3 border-t shrink-0"
-              style={{
-                borderColor: "var(--grid-border)",
-                backgroundColor: "var(--bg-main)",
-              }}
-            >
-              <div
-                className="text-[13px]"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                Tổng số bản ghi:{" "}
-                <span
-                  className="font-bold"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  {filtered.length}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <span
-                    className="text-[13px]"
-                    style={{ color: "var(--text-secondary)" }}
-                  >
-                    Số bản ghi/trang
-                  </span>
-                  <select
-                    value={itemsPerPage}
-                    onChange={(e) => {
-                      setItemsPerPage(Number(e.target.value));
-                      setCurrentPage(1);
-                    }}
-                    className="h-8 px-2 pr-6 rounded-md text-[13px] border cursor-pointer focus:outline-none focus:ring-1 transition appearance-none"
-                    style={{
-                      borderColor: "var(--grid-border)",
-                      backgroundColor: "#fff",
-                      color: "var(--text-main)",
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-                      backgroundRepeat: "no-repeat",
-                      backgroundPosition: "right 8px center",
-                    }}
-                  >
-                    {[15, 30, 50, 100].map((size) => (
-                      <option key={size} value={size}>
-                        {size}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div
-                  className="text-[13px]"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  <span
-                    className="font-bold"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    {(currentPage - 1) * itemsPerPage + 1} -{" "}
-                    {Math.min(currentPage * itemsPerPage, filtered.length)}
-                  </span>{" "}
-                  bản ghi
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    <ChevronLeft size={16} strokeWidth={2.5} />
-                  </button>
-                  <button
-                    onClick={() =>
-                      setCurrentPage((p) => Math.min(totalPages, p + 1))
-                    }
-                    disabled={currentPage === totalPages || totalPages === 0}
-                    className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    <ChevronRight size={16} strokeWidth={2.5} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Modal */}
-        <RequirementDetailModal
-          req={selectedReq}
-          onClose={() => setSelectedReqId(null)}
-          onAction={handleAction}
-          onEnlarge={(src) => setEnlargedImg(src)}
+          rowClassName={(item) => ""}
+          rowStyle={(item) => ({
+            backgroundColor: selectedIds.includes(item.id) ? "var(--status-focus)" : "transparent"
+          })}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          searchPlaceholder="Mã yêu cầu, khách hàng..."
+          dateFrom={dateFrom}
+          setDateFrom={setDateFrom}
+          dateTo={dateTo}
+          setDateTo={setDateTo}
+          hasActiveFilters={hasActiveFilters}
+          clearAllFilters={clearAllFilters}
+          selectedIds={selectedIds}
+          setSelectedIds={setSelectedIds}
+          bulkActions={[
+            {
+              label: "HỦY HÀNG LOẠT",
+              icon: Trash2,
+              onClick: () => setShowBulkConfirm(true),
+              colorClass: "bg-rose-600",
+            }
+          ]}
+          pagination={{
+            total: filtered.length,
+            currentPage: currentPage,
+            setCurrentPage: setCurrentPage,
+            itemsPerPage: itemsPerPage,
+            setItemsPerPage: setItemsPerPage,
+          }}
         />
-
-        {/* Image Viewer */}
-        <ImageViewer src={enlargedImg} onClose={() => setEnlargedImg(null)} />
       </div>
+
+      {/* Modal section - moved outside main layout to prevent jump */}
+      <RequirementDetailModal
+        req={selectedReq}
+        onClose={() => setSelectedReqId(null)}
+        onAction={handleAction}
+        onEnlarge={(src) => setEnlargedImg(src)}
+      />
+
+      {/* Image Viewer */}
+      <ImageViewer src={enlargedImg} onClose={() => setEnlargedImg(null)} />
+      {/* Confirm Bulk Cancel Modal */}
+      <ConfirmModal
+        isOpen={showBulkConfirm}
+        title="Xác nhận hủy hàng loạt"
+        message={`Bạn có chắc chắn muốn hủy ${selectedIds.length} yêu cầu đang được chọn không? Hành động này không thể hoàn tác.`}
+        onCancel={() => setShowBulkConfirm(false)}
+        onConfirm={handleBulkCancel}
+      />
     </>
   );
 }
