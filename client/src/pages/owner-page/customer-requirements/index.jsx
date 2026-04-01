@@ -1183,7 +1183,7 @@ export default function OwnerRequirements() {
 
       toast.success(`Đã tạo đơn hàng thành công`);
       setSelectedReqId(null);
-      navigate("/owner/orders?tab=Hàng đặt");
+      navigate("/owner/orders?tab=Hàng+khách+đặt&status=Tất+cả");
     }
   };
 
