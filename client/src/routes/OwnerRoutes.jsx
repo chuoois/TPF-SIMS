@@ -1,10 +1,7 @@
 import { Navigate } from "react-router-dom";
 import OwnerLayout from "../layouts/owner-layout/index";
-
 import Dashboard from "../pages/owner-page/dashboard";
 import Orders from "../pages/owner-page/orders";
-import OrderDetail from "../pages/owner-page/orders/detail";
-
 import Production from "../pages/owner-page/production";
 import ProductionDetail from "../pages/owner-page/production/detail";
 import Products from "../pages/owner-page/products";
@@ -30,10 +27,6 @@ export const ownerRoutes = {
     {
       path: "orders",
       element: <Orders />,
-    },
-    {
-      path: "orders/:id",
-      element: <OrderDetail />,
     },
     {
       path: "coupons",
