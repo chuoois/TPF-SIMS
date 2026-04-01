@@ -3,7 +3,7 @@ import OwnerLayout from "../layouts/owner-layout/index";
 
 import Dashboard from "../pages/owner-page/dashboard";
 import Orders from "../pages/owner-page/orders";
-import OrderDetail from "../pages/owner-page/orders/detail";
+
 
 import Production from "../pages/owner-page/production";
 import ProductionDetail from "../pages/owner-page/production/detail";
@@ -31,10 +31,7 @@ export const ownerRoutes = {
       path: "orders",
       element: <Orders />,
     },
-    {
-      path: "orders/:id",
-      element: <OrderDetail />,
-    },
+
     {
       path: "coupons",
       element: <Coupons />,
