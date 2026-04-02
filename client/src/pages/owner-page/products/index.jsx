@@ -85,6 +85,7 @@ const INITIAL_PRODUCTS = [
     costPrice: 8500000,
     laborCost: 1500000,
     materialCost: 500000,
+    paintCost: 1200000,
     rawRetailPrice: 10500000,
     finishedRetailPrice: 13500000,
     unit: "Chiếc",
@@ -148,6 +149,7 @@ const INITIAL_PRODUCTS = [
     costPrice: 28000000,
     laborCost: 6000000,
     materialCost: 2000000,
+    paintCost: 3500000,
     rawRetailPrice: 35000000,
     finishedRetailPrice: 42000000,
     unit: "Chiếc",
@@ -408,6 +410,7 @@ export default function OwnerProducts() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("Tất cả");
   const [categoryFilter, setCategoryFilter] = useState("Tất cả");
+  const [productTypeFilter, setProductTypeFilter] = useState("Tất cả");
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -421,6 +424,7 @@ export default function OwnerProducts() {
   const [finishedRetailPrice, setFinishedRetailPrice] = useState(0);
   const [laborCost, setLaborCost] = useState(0);
   const [materialCost, setMaterialCost] = useState(0);
+  const [paintCost, setPaintCost] = useState(0);
   const [setupCost, setSetupCost] = useState(0);
   const [productType, setProductType] = useState("Hàng sẵn");
   const [productCategory, setProductCategory] = useState("");
@@ -475,6 +479,7 @@ export default function OwnerProducts() {
         setFinishedRetailPrice(product.finishedRetailPrice || 0);
         setLaborCost(product.laborCost || 0);
         setMaterialCost(product.materialCost || 0);
+        setPaintCost(product.paintCost || 0);
         setSetupCost(product.setupCost || 0);
         setProductType(product.productType || "Hàng sẵn");
         setProductCategory(product.category || "");
@@ -520,6 +525,9 @@ export default function OwnerProducts() {
     if (statusFilter !== "Tất cả") {
       result = result.filter((p) => p.status === statusFilter);
     }
+    if (productTypeFilter !== "Tất cả") {
+      result = result.filter((p) => p.productType === productTypeFilter);
+    }
     if (categoryFilter !== "Tất cả") {
       result = result.filter((p) => p.category === categoryFilter);
     }
@@ -532,12 +540,14 @@ export default function OwnerProducts() {
     }
 
     return result;
-  }, [products, statusFilter, categoryFilter, searchQuery]);
+  }, [products, statusFilter, productTypeFilter, categoryFilter, searchQuery]);
 
-  const hasActiveFilters = categoryFilter !== "Tất cả" || searchQuery;
+  const hasActiveFilters = categoryFilter !== "Tất cả" || searchQuery || productTypeFilter !== "Tất cả";
   const clearFilters = () => {
     setCategoryFilter("Tất cả");
     setSearchQuery("");
+    setStatusFilter("Tất cả");
+    setProductTypeFilter("Tất cả");
   };
 
   useEffect(() => {
@@ -578,6 +588,7 @@ export default function OwnerProducts() {
               finishedRetailPrice: Number(finishedRetailPrice),
               laborCost: Number(laborCost),
               materialCost: Number(materialCost),
+              paintCost: Number(paintCost),
               setupCost: Number(setupCost),
               productType,
               category: productCategory,
@@ -851,7 +862,7 @@ export default function OwnerProducts() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-                          Mã SKU <span className="text-[var(--status-error)]">*</span>
+                          Mã sản phẩm <span className="text-[var(--status-error)]">*</span>
                         </label>
                         <input
                           type="text"
@@ -891,7 +902,7 @@ export default function OwnerProducts() {
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-                          Đơn vị tính
+                          Đơn vị
                         </label>
                         <select
                           className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--brand-primary)] outline-none bg-white"
@@ -1036,7 +1047,7 @@ export default function OwnerProducts() {
                       </div>
 
                       {productType === "Hàng mộc" ? (
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                           <div className="space-y-1">
                             <label className="text-[10px] font-bold text-[var(--text-placeholder)] uppercase block">
                               Công hoàn thiện (đ)
@@ -1053,7 +1064,7 @@ export default function OwnerProducts() {
                           </div>
                           <div className="space-y-1">
                             <label className="text-[10px] font-bold text-[var(--text-placeholder)] uppercase block">
-                              Vật tư (đ)
+                              Vật tư khác (đ)
                             </label>
                             <input
                               type="text"
@@ -1062,6 +1073,20 @@ export default function OwnerProducts() {
                               onChange={(e) => {
                                 const val = parseNumberInput(e.target.value);
                                 setMaterialCost(val === "" ? 0 : Number(val));
+                              }}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-purple-600 uppercase block">
+                              Tiền công Thợ Sơn (đ)
+                            </label>
+                            <input
+                              type="text"
+                              className="w-full border rounded-lg px-3 py-2 text-sm font-bold text-purple-700 outline-none focus:ring-1 focus:ring-purple-500 bg-purple-50/30"
+                              value={formatNumberInput(paintCost)}
+                              onChange={(e) => {
+                                const val = parseNumberInput(e.target.value);
+                                setPaintCost(val === "" ? 0 : Number(val));
                               }}
                             />
                           </div>
@@ -1108,7 +1133,7 @@ export default function OwnerProducts() {
                         </span>
                         <span className="text-xl font-black text-[var(--text-main)]">
                           {fmtCurrency(
-                            costPrice + laborCost + materialCost + setupCost,
+                            costPrice + laborCost + materialCost + paintCost + setupCost,
                           )}
                         </span>
                       </div>
@@ -1226,6 +1251,7 @@ export default function OwnerProducts() {
                                       (costPrice +
                                         laborCost +
                                         materialCost +
+                                        paintCost +
                                         setupCost) *
                                       (1 + targetMargin / 100),
                                     ),
@@ -1242,6 +1268,7 @@ export default function OwnerProducts() {
                                       costPrice +
                                       laborCost +
                                       materialCost +
+                                      paintCost +
                                       setupCost;
                                     const suggested = Math.round(
                                       cost *
@@ -1258,6 +1285,7 @@ export default function OwnerProducts() {
                                       (costPrice +
                                         laborCost +
                                         materialCost +
+                                        paintCost +
                                         setupCost) *
                                       (1 + targetMargin / 100) *
                                       (1 + taxPercent / 100),
@@ -1476,7 +1504,7 @@ export default function OwnerProducts() {
       ),
     },
     {
-      header: "Mã SKU",
+      header: "Mã Sản Ph",
       render: (item) => (
         <div className="inline-block bg-gray-100 border border-gray-200 rounded-lg px-2 py-1 leading-none shadow-sm">
           <p
@@ -1617,7 +1645,7 @@ export default function OwnerProducts() {
   // ===================== MAIN UI =====================
   return (
     <>
-      <PageHelmet title="Quản lý hàng hóa | TPF-SIMS" />
+      <PageHelmet title="Quản lý sản phẩm | TPF-SIMS" />
 
       {renderProductModal()}
 
@@ -1625,128 +1653,127 @@ export default function OwnerProducts() {
         className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 space-y-4"
         style={{ backgroundColor: "var(--bg-main)" }}
       >
-        {/* HEADER */}
-        <div className="flex items-center justify-between shrink-0">
+        {/* HEADER & TABS (Top Right Style) */}
+        <div className="flex items-start justify-between shrink-0 relative pr-[320px]">
           <div>
-            <h1
-              className="text-xl font-bold flex items-center gap-2"
-              style={{ color: "var(--text-main)" }}
-            >
-              <Package size={22} style={{ color: "var(--brand-primary)" }} />
-              Quản lý hàng hóa
+            <h1 className="text-[17px] font-bold text-slate-800 flex items-center gap-2">
+              <Package size={20} className="text-green-600" />
+              Quản lý sản phẩm
             </h1>
-            <p
-              className="text-[13px] mt-0.5"
-              style={{ color: "var(--text-placeholder)" }}
-            >
-              {filteredProducts.length} sản phẩm
+            <p className="text-[12px] text-slate-400 mt-0.5">
+              {filteredProducts.length} sản phẩm ({productTypeFilter === "Tất cả" ? "tất cả loại" : productTypeFilter.toLowerCase()})
             </p>
           </div>
 
-          <div className="flex items-center gap-3"></div>
+          <div className="absolute top-0 right-0 flex items-center gap-1 bg-gray-100/80 p-1 rounded-xl border border-gray-100 shadow-sm">
+            {["Tất cả", "Hàng sẵn", "Hàng mộc", "Hàng khách đặt"].map((type) => (
+              <button
+                key={type}
+                onClick={() => setProductTypeFilter(productTypeFilter === type ? "Tất cả" : type)}
+                className={`px-4 py-1.5 rounded-lg text-[12px] font-medium transition-all ${productTypeFilter === type
+                    ? "bg-white text-slate-900 shadow-md shadow-gray-200/40"
+                    : "text-slate-500 hover:text-slate-700 hover:bg-gray-200/50"
+                  }`}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <>
-          {/* STATUS BAR FILTER */}
-          <div className="flex items-center gap-2 shrink-0 flex-wrap px-1">
-            {["Tất cả", ...PRODUCT_STATUSES].map((s) => {
-              const isActive = statusFilter === s;
-              const sc = s !== "Tất cả" ? getStatusConfig(s) : null;
-              return (
-                <button
-                  key={s}
-                  onClick={() => setStatusFilter(s)}
-                  className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all cursor-pointer flex items-center gap-1.5"
-                  style={{
-                    backgroundColor: isActive
-                      ? sc
-                        ? sc.bg
-                        : "#fff"
-                      : "transparent",
-                    color: isActive
-                      ? sc
-                        ? sc.text
-                        : "var(--brand-primary)"
-                      : "var(--text-secondary)",
-                    border: isActive
-                      ? `1.5px solid ${sc ? sc.border : "var(--grid-border)"}`
-                      : "1.5px solid transparent",
-                  }}
-                >
-                  {s !== "Tất cả" && (
-                    <span
-                      className="w-1.5 h-1.5 rounded-full"
-                      style={{
-                        backgroundColor: sc ? sc.text : "var(--text-secondary)",
-                        opacity: isActive ? 1 : 0.5,
-                      }}
-                    />
-                  )}
-                  {s}
-                  <span className="text-[11px] opacity-70 bg-black/5 px-1.5 rounded-md ml-1">
-                    {statusCounts[s] || 0}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+        {/* STATUS BAR (Admin Alerts Style) */}
+        <div className="flex items-center gap-3 shrink-0 flex-wrap py-1">
+          {[
+            { id: "Tất cả", label: "Tất cả" },
+            { id: "Chưa định giá", label: "Chưa định giá", color: "red", icon: AlertCircle },
+            { id: "Hết hàng", label: "Hết hàng", color: "red", icon: AlertCircle },
+            { id: "Quà tặng", label: "Quà tặng", color: "purple" }
+          ].map((s) => {
+            const isActive = statusFilter === s.id;
+            const isRedForce = s.color === "red";
 
-          {/* DATA TABLE */}
-          <DataTable
-            columns={columns}
-            data={paginatedProducts}
-            onRowClick={(item) => handleOpenModal("detail", item)}
-            rowStyle={(item) => ({
-              backgroundColor:
-                item.status === "Chưa định giá"
-                  ? "rgba(229, 72, 77, 0.03)"
-                  : "transparent",
-            })}
-            searchTerm={searchQuery}
-            setSearchTerm={setSearchQuery}
-            searchPlaceholder="Theo mã SKU, tên sản phẩm..."
-            hasActiveFilters={!!hasActiveFilters}
-            clearAllFilters={clearFilters}
-            selectedIds={selectedIds}
-            setSelectedIds={setSelectedIds}
-            rowActions={[
-              {
-                icon: Eye,
-                label: "Xem chi tiết",
-                onClick: (item) => handleOpenModal("detail", item),
+            return (
+              <button
+                key={s.id}
+                onClick={() => setStatusFilter(s.id)}
+                className={`px-4 py-2 rounded-xl text-[12px] font-medium transition-all border flex items-center gap-2 ${isActive
+                    ? isRedForce
+                      ? "bg-red-50 border-red-200 text-red-600 shadow-sm"
+                      : "bg-white border-green-500 text-green-600 shadow-sm"
+                    : "bg-white border-gray-100 text-slate-500 hover:border-gray-200"
+                  }`}
+              >
+                {s.icon && <s.icon size={14} className={isActive ? "text-red-500" : "text-slate-400"} />}
+                <span className={isActive ? (isRedForce ? "text-red-700" : "text-green-600") : "text-slate-400"}>
+                  {s.label}
+                </span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isActive
+                    ? isRedForce ? "bg-red-100 text-red-600" : "bg-green-50 text-green-600"
+                    : "bg-gray-100 text-slate-400"
+                  }`}>
+                  {statusCounts[s.id] || 0}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* DATA TABLE */}
+        <DataTable
+          columns={columns}
+          data={paginatedProducts}
+          onRowClick={(item) => handleOpenModal("detail", item)}
+          rowStyle={(item) => ({
+            backgroundColor:
+              item.status === "Chưa định giá"
+                ? "rgba(229, 72, 77, 0.03)"
+                : "transparent",
+          })}
+          searchTerm={searchQuery}
+          setSearchTerm={setSearchQuery}
+          searchPlaceholder="Theo Mã sản phẩm, tên sản phẩm..."
+          hasActiveFilters={!!hasActiveFilters}
+          clearAllFilters={clearFilters}
+          selectedIds={selectedIds}
+          setSelectedIds={setSelectedIds}
+          rowActions={[
+            {
+              icon: Eye,
+              label: "Xem chi tiết",
+              onClick: (item) => handleOpenModal("detail", item),
+            },
+            {
+              icon: Pencil,
+              label: "Chỉnh sửa",
+              onClick: (item) => handleOpenModal("form", item),
+            },
+            {
+              icon: Trash2,
+              label: "Xóa sản phẩm",
+              onClick: (item) => handleConfirmDelete(item),
+              className: "text-red-500 hover:bg-red-50",
+            },
+          ]}
+          bulkActions={[
+            {
+              label: "XÓA HÀNG LOẠT",
+              icon: Trash2,
+              onClick: () => {
+                setProducts((prev) =>
+                  prev.filter((p) => !selectedIds.includes(p.id)),
+                );
+                setSelectedIds([]);
+                toast.success(
+                  `Đã xóa ${selectedIds.length} sản phẩm đã chọn thành công!`,
+                );
               },
-              {
-                icon: Pencil,
-                label: "Chỉnh sửa",
-                onClick: (item) => handleOpenModal("form", item),
-              },
-              {
-                icon: Trash2,
-                label: "Xóa sản phẩm",
-                onClick: (item) => handleConfirmDelete(item),
-                className: "text-red-500 hover:bg-red-50",
-              },
-            ]}
-            bulkActions={[
-              {
-                label: "XÓA HÀNG LOẠT",
-                icon: Trash2,
-                onClick: () => {
-                  setProducts((prev) =>
-                    prev.filter((p) => !selectedIds.includes(p.id)),
-                  );
-                  setSelectedIds([]);
-                  toast.success(
-                    `Đã xóa ${selectedIds.length} sản phẩm đã chọn thành công!`,
-                  );
-                },
-                requireConfirm: true,
-                confirmTitle: "Xóa hàng loạt sản phẩm?",
-                confirmMessage: `Bạn có chắc chắn muốn xóa ${selectedIds.length} sản phẩm đang chọn? Hành động này không thể hoàn tác.`,
-              },
-            ]}
-            extraFilters={
-              <>
+              requireConfirm: true,
+              confirmTitle: "Xóa hàng loạt sản phẩm?",
+              confirmMessage: `Bạn có chắc chắn muốn xóa ${selectedIds.length} sản phẩm đang chọn? Hành động này không thể hoàn tác.`,
+            },
+          ]}
+          extraFilters={
+            <>
               <div className="relative flex items-center">
                 <select
                   value={categoryFilter}
@@ -1786,17 +1813,16 @@ export default function OwnerProducts() {
                   strokeWidth={2.5}
                 />
               </div>
-              </>
-            }
-            pagination={{
-              total: filteredProducts.length,
-              currentPage,
-              setCurrentPage,
-              itemsPerPage,
-              setItemsPerPage,
-            }}
-          />
-        </>
+            </>
+          }
+          pagination={{
+            total: filteredProducts.length,
+            currentPage,
+            setCurrentPage,
+            itemsPerPage,
+            setItemsPerPage,
+          }}
+        />
       </div>
 
       <ConfirmModal
