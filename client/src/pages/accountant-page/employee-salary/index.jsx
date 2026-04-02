@@ -33,7 +33,7 @@ const MOCK_EMPLOYEES = [
         name: "Nguyễn Thị Mai",
         role: "Nhân viên bán hàng",
         type: "SALES",
-        base_salary: 10000000,
+        base_rate: 400000,
         days_worked: 26,
         allowance: 1000000,
         products_finished: 0,
@@ -47,7 +47,7 @@ const MOCK_EMPLOYEES = [
         name: "Trần Văn Khoa",
         role: "Nhân viên bán hàng",
         type: "SALES",
-        base_salary: 8000000,
+        base_rate: 350000,
         days_worked: 24,
         allowance: 500000,
         products_finished: 0,
@@ -61,7 +61,7 @@ const MOCK_EMPLOYEES = [
         name: "Lê Thị Hương",
         role: "Kế toán",
         type: "ACCOUNTANT",
-        base_salary: 12000000,
+        base_rate: 450000,
         days_worked: 26,
         allowance: 500000,
         products_finished: 0,
@@ -153,11 +153,7 @@ const getRoleIcon = (type) => {
 
 const calculateTotalSalary = (emp) => {
     let total = 0;
-    if (emp.type === "SALES") {
-        total = emp.base_salary + emp.allowance;
-    } else if (emp.type === "ACCOUNTANT") {
-        total = emp.base_salary + emp.allowance;
-    } else if (emp.type === "SANDER") {
+    if (["SALES", "ACCOUNTANT", "SANDER"].includes(emp.type)) {
         total = (emp.base_rate * emp.days_worked) + emp.allowance;
     } else if (emp.type === "PAINTER") {
         // Sum each log entry individually (supports per-product price)
@@ -455,10 +451,7 @@ export default function AccountantEmployeeSalary() {
                                     const isPainter = emp.type === "PAINTER";
                                     const isExpanded = expandedPainter === emp.id;
 
-                                    if (emp.type === "SALES" || emp.type === "ACCOUNTANT") {
-                                        calcFormula = "Lương tháng cố định";
-                                        specData = formatCurrency(emp.base_salary);
-                                    } else if (emp.type === "SANDER") {
+                                    if (["SALES", "ACCOUNTANT", "SANDER"].includes(emp.type)) {
                                         calcFormula = `${formatCurrency(emp.base_rate)} / ngày`;
                                         specData = `${emp.days_worked} ngày công`;
                                     } else if (emp.type === "PAINTER") {
@@ -725,7 +718,7 @@ export default function AccountantEmployeeSalary() {
                                 <div className="flex justify-between items-center text-[12px]">
                                     <span className="text-gray-500">Lương cơ bản / Đơn giá:</span>
                                     <span className="font-semibold text-gray-700">
-                                        {selectedEmpForPayment.type === "PAINTER" || selectedEmpForPayment.type === "SANDER"
+                                        {["PAINTER", "SANDER", "SALES", "ACCOUNTANT"].includes(selectedEmpForPayment.type)
                                             ? formatCurrency(selectedEmpForPayment.base_rate)
                                             : formatCurrency(selectedEmpForPayment.base_salary)}
                                     </span>
