@@ -1,11 +1,11 @@
-import { 
-  Hammer, 
-  Paintbrush, 
-  CheckCircle, 
-  Clock, 
-  Layers, 
-  Settings, 
-  CheckCircle2, 
+import {
+  Hammer,
+  Paintbrush,
+  CheckCircle,
+  Clock,
+  Layers,
+  Settings,
+  CheckCircle2,
   Package,
   AlertTriangle
 } from "lucide-react";
@@ -31,7 +31,7 @@ export const MOCK_PRODUCTIONS = {
     customerName: "Nguyễn Văn A",
     customerPhone: "0912345678",
     productName: "Tủ bếp chữ L",
-    productImage: "https://images.unsplash.com/photo-1556912177-c54030639a03?q=80&w=300",
+    productImage: "https://images.unsplash.com/photo-1541888946425-d81bb193005f?q=80&w=800",
     variantName: "Gỗ sồi Nga — Sơn PU",
     material: "Gỗ sồi Nga",
     size: "320cm + 280cm",

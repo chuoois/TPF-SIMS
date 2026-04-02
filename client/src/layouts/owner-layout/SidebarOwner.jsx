@@ -36,7 +36,7 @@ const menuItems = [
     icon: Package,
     path: "/owner/products",
     subItems: [
-      { text: "Danh sách sản phẩm", path: "/owner/products", exactMatch: true },
+      { text: "Hàng hóa", path: "/owner/products", exactMatch: true },
       { text: "Danh mục sản phẩm", path: "/owner/products/categories" },
     ],
     settingsGroup: {
@@ -52,13 +52,24 @@ const menuItems = [
   { text: "Quản lý sản xuất", icon: Hammer, path: "/owner/production" },
   { text: "Nhà cung cấp", icon: Building2, path: "/owner/suppliers" },
   { text: "Quản lý tài khoản", icon: UserCog, path: "/owner/employees" },
-  { text: "Bảo hành", icon: ShieldCheck, path: "/owner/warranty" },
+  {
+    text: "Bảo hành",
+    icon: ShieldCheck,
+    path: "/owner/warranty",
+    subItems: [
+      { text: "Danh sách", path: "/owner/warranty/list" },
+      { text: "Tra cứu", path: "/owner/warranty/lookup" },
+    ],
+  },
   { text: "Báo cáo", icon: BarChart3, path: "/owner/reports" },
   { text: "Nhật ký hệ thống", icon: History, path: "/owner/system-logs" },
 ];
 
 // ─── Helper ────────────────────────────────────────────────────────────────────
-function isProductSectionActive(item, pathname) {
+function isCollapsibleSectionActive(item, pathname) {
+  // Parent path match (e.g., /owner/warranty)
+  if (pathname === item.path) return true;
+
   if (!item.subItems && !item.settingsGroup) return false;
   const subActive = item.subItems?.some((s) =>
     s.exactMatch ? pathname === s.path : pathname.startsWith(s.path)
@@ -152,18 +163,18 @@ function SettingsGroup({ group }) {
   );
 }
 
-// ─── Product menu item ────────────────────────────────────────────────────────
-function ProductMenuItem({ item }) {
+// ─── Collapsible menu item (Products, Warranty, etc.) ────────────────────────
+function CollapsibleMenuItem({ item }) {
   const location = useLocation();
   const [expanded, setExpanded] = useState(
-    isProductSectionActive(item, location.pathname)
+    isCollapsibleSectionActive(item, location.pathname)
   );
 
   useEffect(() => {
-    if (isProductSectionActive(item, location.pathname)) setExpanded(true);
+    if (isCollapsibleSectionActive(item, location.pathname)) setExpanded(true);
   }, [location.pathname]);
 
-  const isActive = isProductSectionActive(item, location.pathname);
+  const isActive = isCollapsibleSectionActive(item, location.pathname);
   const Icon = item.icon;
 
   return (
@@ -212,7 +223,7 @@ function MenuItem({ item }) {
     : location.pathname.startsWith(item.path);
 
   if (item.subItems || item.settingsGroup) {
-    return <ProductMenuItem item={item} />;
+    return <CollapsibleMenuItem item={item} />;
   }
 
   return (
