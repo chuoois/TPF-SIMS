@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
-const WOOD_TYPES = [
+const MATERIAL_TYPES = [
     "Gỗ Mít", "Gỗ Hương", "Gỗ Gụ", "Gỗ Gõ Đỏ",
     "Gỗ Sồi Nga", "Gỗ Óc Chó", "Gỗ Xà Cừ", "Gỗ Dổi",
     "Gỗ Lim", "Gỗ Trắc", "Gỗ Căm Xe",
@@ -41,14 +41,15 @@ const PRODUCT_TYPES = [
     { value: "RAW", label: "Hàng mộc", code: "HM" },
     { value: "CUSTOM", label: "Hàng khách đặt", code: "KD" },
     { value: "FINISHED", label: "Hàng có sẵn", code: "HS" },
+    { value: "PROCESSING", label: "Đang gia công", code: "GC" },
 ];
 
 const MOCK_PRODUCTS = [
-    { code: "SP-PK-001", name: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món", category: "Phòng Khách", woodType: "Gỗ Hương", importPrice: 25000000 },
-    { code: "HS-PK-001", name: "Sofa nguyên khối chữ L", category: "Phòng Khách", woodType: "Gỗ Gõ Đỏ", importPrice: 45000000 },
-    { code: "SP-PT-001", name: "Sập thờ Mai Điểu chân 20", category: "Phòng Thờ", woodType: "Gỗ Gụ", importPrice: 18000000 },
-    { code: "HS-PA-001", name: "Bộ bàn ăn 8 ghế nguyên khối", category: "Phòng Ăn", woodType: "Gỗ Hương", importPrice: 32000000 },
-    { code: "HS-PN-001", name: "Giường ngủ hoa hồng Tân cổ điển", category: "Phòng Ngủ", woodType: "Gỗ Sồi Nga", importPrice: 12000000 },
+    { code: "SP-PK-001", name: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món", category: "Phòng Khách", materialType: "Gỗ Hương", importPrice: 25000000 },
+    { code: "HS-PK-001", name: "Sofa nguyên khối chữ L", category: "Phòng Khách", materialType: "Gỗ Gõ Đỏ", importPrice: 45000000 },
+    { code: "SP-PT-001", name: "Sập thờ Mai Điểu chân 20", category: "Phòng Thờ", materialType: "Gỗ Gụ", importPrice: 18000000 },
+    { code: "HS-PA-001", name: "Bộ bàn ăn 8 ghế nguyên khối", category: "Phòng Ăn", materialType: "Gỗ Hương", importPrice: 32000000 },
+    { code: "HS-PN-001", name: "Giường ngủ hoa hồng Tân cổ điển", category: "Phòng Ngủ", materialType: "Gỗ Sồi Nga", importPrice: 12000000 },
 ];
 
 // ── Bộ sản phẩm đã có trong kho (dùng cho chế độ "Hàng nhập thêm") ─────────
@@ -57,7 +58,7 @@ const MOCK_BUNDLES = [
         code: "BO-PK-001",
         bundleName: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món",
         category: "Phòng Khách",
-        woodType: "Gỗ Hương",
+        materialType: "Gỗ Hương",
         color: "Hương",
         productType: "FINISHED",
         items: [
@@ -70,7 +71,7 @@ const MOCK_BUNDLES = [
         code: "BO-PA-001",
         bundleName: "Bộ bàn ăn 8 ghế nguyên khối",
         category: "Phòng Ăn",
-        woodType: "Gỗ Hương",
+        materialType: "Gỗ Hương",
         color: "Hương",
         productType: "FINISHED",
         items: [
@@ -82,7 +83,7 @@ const MOCK_BUNDLES = [
         code: "BO-PN-001",
         bundleName: "Bộ phòng ngủ tân cổ điển",
         category: "Phòng Ngủ",
-        woodType: "Gỗ Sồi Nga",
+        materialType: "Gỗ Sồi Nga",
         color: "Óc chó",
         productType: "FINISHED",
         items: [
@@ -95,7 +96,7 @@ const MOCK_BUNDLES = [
         code: "BO-PT-001",
         bundleName: "Bộ đồ thờ 5 món",
         category: "Phòng Thờ",
-        woodType: "Gỗ Gụ",
+        materialType: "Gỗ Gụ",
         color: "Chay",
         productType: "FINISHED",
         items: [
@@ -148,7 +149,7 @@ const toColorAbbreviation = (color) => {
     return str.trim().split(/\s+/).map(w => w.charAt(0).toUpperCase()).join("");
 };
 
-const generateSKU = (line) => {
+const generateProductCode = (line) => {
     let prefix = "SP";
     if (line.productName) {
         const words = removeVietnameseTones(line.productName).trim().split(/\s+/);
@@ -163,7 +164,7 @@ const generateSKU = (line) => {
     return `${prefix}-${typeCode}-${dim}-${colorCode}`;
 };
 
-const generateBundleSKU = (bundle) => {
+const generateBundleCode = (bundle) => {
     let prefix = "BO";
     if (bundle.bundleName) {
         const words = removeVietnameseTones(bundle.bundleName).trim().split(/\s+/);
@@ -177,6 +178,19 @@ const generateBundleSKU = (bundle) => {
     return `${prefix}-${typeCode}-${colorCode}`;
 };
 
+// Hàm tự sinh mã định danh (Unit ID)
+const generateUnitIds = (line, count) => {
+    const sku = line.productCode || generateProductCode(line);
+    const timestamp = new Date().getTime().toString().slice(-4);
+    return Array.from({ length: count }, (_, i) => `${sku}-U${timestamp}${String(i + 1).padStart(2, '0')}`);
+};
+
+const generateBundleUnitIds = (bundle, count) => {
+    const sku = bundle.bundleCode || generateBundleCode(bundle);
+    const timestamp = new Date().getTime().toString().slice(-4);
+    return Array.from({ length: count }, (_, i) => `${sku}-U${timestamp}${String(i + 1).padStart(2, '0')}`);
+};
+
 // ── Dòng đơn lẻ ────────────────────────────────────────
 const emptyLine = () => ({
     _id: Math.random(),
@@ -186,7 +200,7 @@ const emptyLine = () => ({
     imageFile: null,
     imagePreview: null,
     category: "",
-    woodType: "",
+    materialType: "",
     color: "",
     formType: "NEW",
     productType: "RAW",
@@ -197,6 +211,8 @@ const emptyLine = () => ({
     importPrice: "",
     minStock: "",
     details: "",
+    unitIds: [], // Danh sách mã định danh riêng
+    showUnitIds: false,
 });
 
 // ── Dòng bộ sản phẩm ───────────────────────────────────
@@ -215,7 +231,7 @@ const emptyBundle = () => ({
     bundleQty: 1,
     bundlePrice: "",   // Giá cả bộ theo HĐ thực
     category: "",
-    woodType: "",
+    materialType: "",
     color: "",
     formType: "NEW",
     productType: "FINISHED",
@@ -223,6 +239,8 @@ const emptyBundle = () => ({
     imagePreview: null,
     details: "",
     items: [emptyBundleItem()],
+    unitIds: [], // Mã định danh cho từng bộ
+    showUnitIds: false,
 });
 
 // ── Component chính ────────────────────────────────────
@@ -563,7 +581,7 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveFile, 
                                                 onMouseDown={(e) => {
                                                     e.preventDefault();
                                                     onUpdate("productName", p.name); onUpdate("productCode", p.code);
-                                                    onUpdate("category", p.category); onUpdate("woodType", p.woodType);
+                                                    onUpdate("category", p.category); onUpdate("materialType", p.materialType);
                                                     onUpdate("importPrice", p.importPrice || "");
                                                     setActiveDropdown({ id: null, field: null });
                                                 }}>
@@ -611,8 +629,19 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveFile, 
                         <div className="col-span-2">
                             <label className={lbl} style={lblS}>Mã sản phẩm</label>
                             <div className="relative">
-                                <input value={line.productCode} onChange={(e) => onUpdate("productCode", e.target.value)} placeholder="Tự sinh/Nhập tay" className={inp + " pr-16"} style={inpS} />
-                                <button type="button" onClick={() => onUpdate("productCode", generateSKU(line))} className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2 text-[10px] font-bold rounded bg-purple-50 text-purple-600 hover:bg-purple-100 transition">Tự sinh</button>
+                                <input value={line.productCode} onChange={(e) => {
+                                    onUpdate("productCode", e.target.value);
+                                    if (line.unitIds.length > 0) {
+                                        onUpdate("unitIds", generateUnitIds({ ...line, productCode: e.target.value }, line.qty));
+                                    }
+                                }} placeholder="Tự sinh/Nhập tay" className={inp + " pr-16"} style={inpS} />
+                                <button type="button" onClick={() => {
+                                    const newCode = generateProductCode(line);
+                                    onUpdate("productCode", newCode);
+                                    if (line.unitIds.length > 0) {
+                                        onUpdate("unitIds", generateUnitIds({ ...line, productCode: newCode }, line.qty));
+                                    }
+                                }} className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2 text-[10px] font-bold rounded bg-purple-50 text-purple-600 hover:bg-purple-100 transition">Tự sinh</button>
                             </div>
                         </div>
                         <div className="col-span-3">
@@ -636,7 +665,7 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveFile, 
 
                         {[
                             { label: "Danh mục", field: "category", opts: CATEGORIES },
-                            { label: "Loại", field: "woodType", opts: WOOD_TYPES },
+                            { label: "Loại", field: "materialType", opts: MATERIAL_TYPES },
                             { label: "Màu sắc", field: "color", opts: COLORS },
                         ].map(({ label, field, opts }) => (
                             <div key={field} className="relative">
@@ -675,7 +704,15 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveFile, 
                     <div className={`grid ${line.productType === "CUSTOM" ? "grid-cols-2" : "grid-cols-3"} gap-4`}>
                         <div>
                             <label className={lbl} style={lblS}>Số lượng *</label>
-                            <input type="number" min="1" value={line.qty} onChange={(e) => onUpdate("qty", e.target.value)} placeholder="0" className={inp} style={inpS} />
+                            <input type="number" min="1" value={line.qty} onChange={(e) => {
+                                const q = e.target.value;
+                                onUpdate("qty", q);
+                                if (q > 0) {
+                                    onUpdate("unitIds", generateUnitIds(line, q));
+                                } else {
+                                    onUpdate("unitIds", []);
+                                }
+                            }} placeholder="0" className={inp} style={inpS} />
                         </div>
                         <div>
                             <label className={lbl} style={lblS}>Giá gốc (₫) *</label>
@@ -722,6 +759,39 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveFile, 
                                 style={{ ...inpS, lineHeight: 1.4, minHeight: "3.5rem" }} />
                         </div>
                     </div>
+
+                    {/* Quản lý mã định danh đơn vị */}
+                    {line.qty > 0 && (
+                        <div className="pt-2 border-t" style={{ borderColor: "var(--grid-border)" }}>
+                            <button type="button" onClick={() => onUpdate("showUnitIds", !line.showUnitIds)}
+                                className="text-[11px] font-bold flex items-center gap-1.5 hover:opacity-80 transition"
+                                style={{ color: "var(--brand-primary)" }}>
+                                <ChevronDown size={14} style={{ transform: line.showUnitIds ? "rotate(0)" : "rotate(-90deg)", transition: "0.2s" }} />
+                                {line.showUnitIds ? "Ẩn danh sách mã định danh" : `Quản lý ${line.qty} mã định danh đơn vị (tự sinh/nhập tay)`}
+                            </button>
+                            
+                            {line.showUnitIds && (
+                                <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                    {Array.from({ length: Number(line.qty) }).map((_, i) => (
+                                        <div key={i} className="flex flex-col gap-1">
+                                            <span className="text-[9px] font-bold uppercase text-gray-400">Đơn vị #{i + 1}</span>
+                                            <input 
+                                                value={line.unitIds[i] || ""}
+                                                onChange={(e) => {
+                                                    const newIds = [...line.unitIds];
+                                                    newIds[i] = e.target.value;
+                                                    onUpdate("unitIds", newIds);
+                                                }}
+                                                placeholder={`Mã ĐV ${i + 1}`}
+                                                className="h-7 px-2 rounded-md text-[11px] font-mono border focus:outline-none focus:ring-1 focus:ring-purple-200"
+                                                style={{ borderColor: "var(--grid-border)", backgroundColor: "#fff" }}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </>
             )}
 
@@ -752,7 +822,7 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
         onUpdate("bundleCode", b.code);
         onUpdate("bundleName", b.bundleName);
         onUpdate("category", b.category);
-        onUpdate("woodType", b.woodType);
+        onUpdate("materialType", b.materialType);
         onUpdate("color", b.color);
         onUpdate("productType", b.productType);
         onUpdate("items", b.items.map(it => ({ ...it, _id: Math.random(), productNote: "" })));
@@ -797,7 +867,13 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                                 style={isReady ? { ...inpS, backgroundColor: "#F5F3FF", color: "#7C3AED", fontWeight: 600 } : inpS}
                                 readOnly={isReady} />
                             {!isReady && (
-                                <button type="button" onClick={() => onUpdate("bundleCode", generateBundleSKU(bundle))} className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2 text-[10px] font-bold rounded bg-purple-50 text-purple-600 hover:bg-purple-100 transition">Tự sinh</button>
+                                <button type="button" onClick={() => {
+                                    const newCode = generateBundleCode(bundle);
+                                    onUpdate("bundleCode", newCode);
+                                    if (bundle.unitIds.length > 0) {
+                                        onUpdate("unitIds", generateBundleUnitIds({ ...bundle, bundleCode: newCode }, bundle.bundleQty));
+                                    }
+                                }} className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2 text-[10px] font-bold rounded bg-purple-50 text-purple-600 hover:bg-purple-100 transition">Tự sinh</button>
                             )}
                         </div>
                     </div>
@@ -837,7 +913,7 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                                                 </div>
                                                 <div className="flex items-center gap-2 mt-1">
                                                     <span className="text-[10px] px-1.5 py-0.5 rounded font-medium" style={{ backgroundColor: "#F0FDF4", color: "#15803D" }}>{b.category}</span>
-                                                    <span className="text-[10px] text-gray-500">{b.woodType} · {b.color}</span>
+                                                    <span className="text-[10px] text-gray-500">{b.materialType} · {b.color}</span>
                                                     <span className="text-[10px] text-gray-400">{b.items.length} món lẻ</span>
                                                 </div>
                                             </div>
@@ -872,7 +948,15 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                     )}
                     <div>
                         <label className={lbl} style={lblS}>Số bộ nhập *</label>
-                        <input type="number" min="1" value={bundle.bundleQty} onChange={(e) => onUpdate("bundleQty", e.target.value)}
+                        <input type="number" min="1" value={bundle.bundleQty} onChange={(e) => {
+                            const q = e.target.value;
+                            onUpdate("bundleQty", q);
+                            if (q > 0) {
+                                onUpdate("unitIds", generateBundleUnitIds(bundle, q));
+                            } else {
+                                onUpdate("unitIds", []);
+                            }
+                        }}
                             placeholder="1" className={inp} style={inpS} />
                     </div>
                     <div>
@@ -889,7 +973,7 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                     <div className="grid grid-cols-3 gap-3">
                         {[
                             { label: "Danh mục", field: "category", opts: CATEGORIES },
-                            { label: "Chất liệu", field: "woodType", opts: WOOD_TYPES },
+                            { label: "Chất liệu", field: "materialType", opts: MATERIAL_TYPES },
                             { label: "Màu sắc", field: "color", opts: COLORS },
                         ].map(({ label, field, opts }) => (
                             <div key={field} className="relative">
@@ -919,7 +1003,7 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                     <div className="flex items-center gap-2 flex-wrap px-3 py-2 rounded-lg" style={{ backgroundColor: "#F0FDF4", border: "1px solid #BBF7D0" }}>
                         <CheckCircle size={13} style={{ color: "#15803D" }} />
                         <span className="text-[12px] font-semibold" style={{ color: "#15803D" }}>Đã tự điền:</span>
-                        {[bundle.category, bundle.woodType, bundle.color].filter(Boolean).map(v => (
+                        {[bundle.category, bundle.materialType, bundle.color].filter(Boolean).map(v => (
                             <span key={v} className="text-[11px] px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: "#DCFCE7", color: "#15803D" }}>{v}</span>
                         ))}
                         <span className="text-[11px]" style={{ color: "#15803D" }}>· {bundle.items.length} món lẻ (có thể chỉnh lại thông tin)</span>
@@ -989,6 +1073,39 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                         </button>
                     </div>
                 </div>
+
+                {/* Quản lý mã định danh bộ */}
+                {bundle.bundleQty > 0 && (
+                    <div className="pt-2 border-t" style={{ borderColor: "var(--grid-border)" }}>
+                        <button type="button" onClick={() => onUpdate("showUnitIds", !bundle.showUnitIds)}
+                            className="text-[11px] font-bold flex items-center gap-1.5 hover:opacity-80 transition"
+                            style={{ color: "#7C3AED" }}>
+                            <ChevronDown size={14} style={{ transform: bundle.showUnitIds ? "rotate(0)" : "rotate(-90deg)", transition: "0.2s" }} />
+                            {bundle.showUnitIds ? "Ẩn danh sách mã định danh bộ" : `Quản lý ${bundle.bundleQty} mã định danh bộ (tự sinh/nhập tay)`}
+                        </button>
+                        
+                        {bundle.showUnitIds && (
+                            <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                {Array.from({ length: Number(bundle.bundleQty) }).map((_, i) => (
+                                    <div key={i} className="flex flex-col gap-1">
+                                        <span className="text-[9px] font-bold uppercase text-gray-400">Bộ #{i + 1}</span>
+                                        <input 
+                                            value={bundle.unitIds[i] || ""}
+                                            onChange={(e) => {
+                                                const newIds = [...bundle.unitIds];
+                                                newIds[i] = e.target.value;
+                                                onUpdate("unitIds", newIds);
+                                            }}
+                                            placeholder={`Mã bộ ${i + 1}`}
+                                            className="h-7 px-2 rounded-md text-[11px] font-mono border focus:outline-none focus:ring-1 focus:ring-purple-200"
+                                            style={{ borderColor: "#DDD6FE", backgroundColor: "#fff" }}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Ảnh + Chi tiết bộ */}
                 <div className="grid grid-cols-12 gap-4">

@@ -76,7 +76,7 @@ function BundleLineCard({ line, idx }) {
                     </p>
                     {(line.bundleCode || line.productCode) && (
                         <p className="text-[11px] font-mono mt-0.5" style={{ color: "var(--text-placeholder)" }}>
-                            Mã SKU: {line.bundleCode || line.productCode}
+                            Mã sản phẩm: {line.bundleCode || line.productCode}
                         </p>
                     )}
                 </div>
@@ -84,7 +84,7 @@ function BundleLineCard({ line, idx }) {
                 {/* Metadata */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-3">
                     <InfoBlock label="Số bộ" value={line.bundleQty ? `${line.bundleQty} bộ` : "—"} />
-                    <InfoBlock label="Giá cả bộ (HĐ)" value={fmtCurrency(line.bundlePrice)} />
+                    <InfoBlock label="Giá nhập" value={fmtCurrency(line.bundlePrice)} />
                     {line.category && <InfoBlock icon={Layers} label="Danh mục" value={line.category} />}
                     {line.woodType && <InfoBlock label="Chất liệu" value={line.woodType} />}
                     {line.color && <InfoBlock label="Màu sắc" value={line.color} />}
@@ -186,7 +186,7 @@ function SingleLineCard({ line, idx }) {
                     </span>
                     <p className="text-[14px] font-bold" style={{ color: "var(--text-main)" }}>{line.productName || "—"}</p>
                     {line.productCode && (
-                        <p className="text-[11px] font-mono mt-0.5" style={{ color: "var(--text-placeholder)" }}>Mã SKU: {line.productCode}</p>
+                        <p className="text-[11px] font-mono mt-0.5" style={{ color: "var(--text-placeholder)" }}>Mã Sản Phẩm: {line.productCode}</p>
                     )}
                 </div>
                 {line.category && <InfoBlock icon={Layers} label="Danh mục" value={line.category} />}

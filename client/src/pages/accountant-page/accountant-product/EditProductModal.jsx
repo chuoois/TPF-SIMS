@@ -1,7 +1,7 @@
 /**
  * EditProductModal – Chỉnh Sửa Sản Phẩm (Giá nhập,  Tồn tối thiểu)
  *
- * Created By: AI
+ * Created By: HieuNM
  */
 
 import { useState } from "react";
@@ -98,7 +98,7 @@ export default function EditProductModal({ product, onClose, onSave }) {
                         </span>
                         <span className="text-[11px] font-mono font-bold px-2 py-1 rounded-lg bg-white/70"
                             style={{ color: cfg.text }}>
-                            {product.code || product.sku}
+                            Mã sản phẩm: {product.code || product.sku}
                         </span>
                     </div>
 
@@ -147,11 +147,11 @@ export default function EditProductModal({ product, onClose, onSave }) {
 
                     {/* ── Chi tiết (Read-only) ── */}
                     <div className="px-6 py-2 pb-6">
-                        <InfoRow icon={ArrowDownToLine} label="Giá nhập hiện tại" 
-                            value={product.importPrice ? new Intl.NumberFormat("vi-VN").format(product.importPrice) + " ₫" : "—"} 
+                        <InfoRow icon={ArrowDownToLine} label="Giá nhập hiện tại"
+                            value={product.importPrice ? new Intl.NumberFormat("vi-VN").format(product.importPrice) + " ₫" : "—"}
                             valueStyle={{ color: "#C2410C", fontSize: "15px" }} />
                         <InfoRow icon={Layers} label="Danh mục" value={product.category} />
-                        <InfoRow icon={Tag} label="Loại" value={product.materialType || product.woodType} />
+                        <InfoRow icon={Tag} label="Loại" value={product.materialType || product.materialType} />
                         <InfoRow icon={Palette} label="Màu sắc" value={product.color} />
                         {dims.length > 0 && (
                             <InfoRow icon={Ruler} label="Kích thước (Dài × Rộng × Cao)"
