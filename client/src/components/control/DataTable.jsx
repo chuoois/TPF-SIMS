@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
+  ChevronUp,
   Eye,
   CheckCircle2
 } from "lucide-react";
@@ -15,7 +16,7 @@ import ConfirmModal from "./ConfirmModal";
 /**
  * DataTable Component
  * Standard layout for Dashboard tables with search, filters, and pagination.
- * Now automatically handles checkboxes and row hover actions.
+ * Now automatically handles checkboxes, row hover actions, and EXPANDABLE rows.
  */
 const DataTable = ({
   columns = [],
@@ -47,6 +48,11 @@ const DataTable = ({
   // Bulk Actions
   bulkActions = [], // [{ label, icon: Icon, onClick, colorClass }]
 
+  // Expansion (Dropdown Rows)
+  renderDetail, // (item) => ReactNode
+  expandedIds: controlledExpandedIds, // Optional controlled state
+  onToggleExpand: controlledOnToggleExpand, // Optional controlled callback
+
   pagination = {
     total: 0,
     currentPage: 1,
@@ -59,7 +65,19 @@ const DataTable = ({
   extraFilters = null
 }) => {
   const [activeConfirmAction, setActiveConfirmAction] = useState(null);
+  const [localExpanded, setLocalExpanded] = useState([]); // Default for uncontrolled
   const totalPages = Math.ceil(pagination.total / pagination.itemsPerPage);
+
+  // Determine which expansion state to use
+  const isControlledExpansion = controlledExpandedIds !== undefined;
+  const expandedList = isControlledExpansion ? controlledExpandedIds : localExpanded;
+
+  const handleToggleExpand = (id) => {
+    if (controlledOnToggleExpand) return controlledOnToggleExpand(id);
+    setLocalExpanded(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
 
   // Internal Selection Handlers
   const handleSelectAll = (checked) => {
@@ -78,8 +96,37 @@ const DataTable = ({
     );
   };
 
-  // Inject Checkbox Column if selection is enabled
+  // Build columns list
   const enhancedColumns = [...columns];
+
+  // 1. Inject Expansion Chevron at the beginning
+  if (renderDetail) {
+    enhancedColumns.unshift({
+      header: "",
+      headerClassName: "w-[40px] text-center",
+      render: (item) => {
+        const isExpanded = expandedList.includes(item.id);
+        const Icon = isExpanded ? ChevronUp : ChevronDown;
+        return (
+          <div className="flex items-center justify-center">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggleExpand(item.id);
+              }}
+              className={`p-1.5 rounded-lg transition-all border ${isExpanded ? 'bg-indigo-50 border-indigo-100 text-indigo-600 shadow-sm' : 'hover:bg-gray-50 border-transparent text-gray-400 hover:text-gray-600'
+                }`}
+            >
+              <Icon size={14} strokeWidth={3} />
+            </button>
+          </div>
+        );
+      },
+      className: "text-center",
+    });
+  }
+
+  // 2. Inject Checkbox Column if selection is enabled
   if (setSelectedIds) {
     enhancedColumns.unshift({
       header: (
@@ -103,7 +150,7 @@ const DataTable = ({
     });
   }
 
-  // Inject Row Actions column if provided
+  // 3. Inject Row Actions column if provided
   if (rowActions.length > 0) {
     enhancedColumns.push({
       header: "",
@@ -116,23 +163,22 @@ const DataTable = ({
             return (
               <button
                 key={idx}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (action.requireConfirm) {
-                      setActiveConfirmAction({ ...action, __targetItem: item });
-                    } else {
-                      action.onClick(item);
-                    }
-                  }}
-                  title={action.label || ""}
-                  className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all cursor-pointer hover:shadow-sm ${
-                    action.className || 'bg-white border-gray-200 text-gray-400 hover:text-gray-700 hover:border-gray-300'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (action.requireConfirm) {
+                    setActiveConfirmAction({ ...action, __targetItem: item });
+                  } else {
+                    action.onClick(item);
+                  }
+                }}
+                title={action.label || ""}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all cursor-pointer hover:shadow-sm ${action.className || 'bg-white border-gray-200 text-gray-400 hover:text-gray-700 hover:border-gray-300'
                   }`}
-                >
-                  {Icon && <Icon size={14} />}
-                </button>
-              );
-            })}
+              >
+                {Icon && <Icon size={14} />}
+              </button>
+            );
+          })}
         </div>
       ),
     });
@@ -158,10 +204,12 @@ const DataTable = ({
           isOpen={!!activeConfirmAction}
           title={activeConfirmAction?.confirmTitle || "Xác nhận hành động?"}
           message={
-            activeConfirmAction?.confirmMessage ||
-            (activeConfirmAction?.__targetItem
-              ? `Bạn có chắc chắn muốn thực hiện "${activeConfirmAction?.label}" cho mục này?`
-              : `Bạn có chắc chắn muốn thực hiện "${activeConfirmAction?.label}" cho ${selectedIds.length} mục đã chọn?`)
+            typeof activeConfirmAction?.confirmMessage === 'function' && activeConfirmAction?.__targetItem
+              ? activeConfirmAction.confirmMessage(activeConfirmAction.__targetItem)
+              : activeConfirmAction?.confirmMessage ||
+              (activeConfirmAction?.__targetItem
+                ? `Bạn có chắc chắn muốn thực hiện "${activeConfirmAction?.label}" cho mục này?`
+                : `Bạn có chắc chắn muốn thực hiện "${activeConfirmAction?.label}" cho ${selectedIds.length} mục đã chọn?`)
           }
           onConfirm={() => {
             if (activeConfirmAction?.__targetItem) {
@@ -174,7 +222,7 @@ const DataTable = ({
           onCancel={() => setActiveConfirmAction(null)}
         />
 
-        {selectedIds.length > 0 ? (
+        {setSelectedIds && selectedIds.length > 0 ? (
           <div className="flex items-center justify-start gap-4 w-full animate-in fade-in slide-in-from-left-2 duration-300">
             <span
               className="text-[12px] font-bold px-4 py-1.5 border flex items-center gap-2 rounded-lg"
@@ -327,36 +375,60 @@ const DataTable = ({
             {data.length > 0 ? (
               data.map((item, rowIdx) => {
                 const isSelected = selectedIds.includes(item.id);
+                const isExpanded = expandedList.includes(item.id);
                 return (
-                  <tr
-                    key={item.id || rowIdx}
-                    onClick={() => onRowClick && onRowClick(item)}
-                    className={`
-                      group relative transition-colors cursor-pointer 
-                      hover:!bg-[var(--status-focus)] 
-                      ${isSelected ? '!bg-[var(--status-focus)]' : ''} 
-                      ${rowClassName ? rowClassName(item) : ''}
-                    `}
-                    style={{
-                      borderBottom: "1px solid var(--grid-border)",
-                      ...rowStyle && rowStyle(item)
-                    }}
-                  >
-                    {enhancedColumns.map((col, colIdx) => (
-                      <td
-                        key={colIdx}
-                        className={`px-4 py-3 text-[13px] ${col.className || ''}`}
-                        style={{ color: "var(--text-main)", ...col.style }}
-                      >
-                        {col.render
-                          ? col.render(item, rowIdx)
-                          : col.key
-                            ? item[col.key]
-                            : ""
+                  <React.Fragment key={item.id || rowIdx}>
+                    <tr
+                      onClick={() => {
+                        if (renderDetail) {
+                          handleToggleExpand(item.id);
+                        } else if (onRowClick) {
+                          onRowClick(item);
                         }
-                      </td>
-                    ))}
-                  </tr>
+                      }}
+                      className={`
+                        group relative transition-colors cursor-pointer 
+                        hover:!bg-[var(--status-focus)] 
+                        ${isSelected ? '!bg-[var(--status-focus)]' : ''} 
+                        ${isExpanded ? '!bg-[var(--status-focus)]/50' : ''}
+                        ${rowClassName ? rowClassName(item) : ''}
+                      `}
+                      style={{
+                        borderBottom: "1px solid var(--grid-border)",
+                        ...rowStyle && rowStyle(item)
+                      }}
+                    >
+                      {enhancedColumns.map((col, colIdx) => (
+                        <td
+                          key={colIdx}
+                          className={`px-4 py-3 text-[13px] ${col.className || ''}`}
+                          style={{ color: "var(--text-main)", ...col.style }}
+                        >
+                          {col.render
+                            ? col.render(item, rowIdx)
+                            : col.key
+                              ? item[col.key]
+                              : ""
+                          }
+                        </td>
+                      ))}
+                    </tr>
+
+                    {/* Expandable Detail Row */}
+                    {renderDetail && isExpanded && (
+                      <tr className="animate-in fade-in slide-in-from-top-1 duration-200">
+                        <td
+                          colSpan={enhancedColumns.length}
+                          className="bg-white"
+                          style={{
+                            borderBottom: "1px solid var(--grid-border)",
+                          }}
+                        >
+                          {renderDetail(item)}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 );
               })
             ) : (

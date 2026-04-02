@@ -13,6 +13,10 @@ import SystemLogs from "../pages/owner-page/system-logs";
 import Warranty from "../pages/owner-page/warranty";
 import Coupons from "../pages/owner-page/coupon/index";
 import CouponCreate from "../pages/owner-page/coupon/create-coupon";
+import ProductCategories from "../pages/owner-page/products/management/CategoriesPage";
+import ProductColors from "../pages/owner-page/products/management/ColorsPage";
+import ProductUnits from "../pages/owner-page/products/management/UnitsPage";
+import ProductMaterials from "../pages/owner-page/products/management/MaterialsPage";
 
 export const ownerRoutes = {
   path: "/owner",
@@ -53,7 +57,13 @@ export const ownerRoutes = {
     },
     {
       path: "products",
-      element: <Products />,
+      children: [
+        { index: true, element: <Products /> },
+        { path: "categories", element: <ProductCategories /> },
+        { path: "properties/colors", element: <ProductColors /> },
+        { path: "properties/units", element: <ProductUnits /> },
+        { path: "properties/materials", element: <ProductMaterials /> },
+      ],
     },
     {
       path: "suppliers",

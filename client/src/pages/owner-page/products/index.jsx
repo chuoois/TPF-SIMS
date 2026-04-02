@@ -1,71 +1,32 @@
-/**
- * Component OwnerProducts
- * Quản lý Sản phẩm — Cửa hàng Nội thất Gỗ
- *
- * Designed following Kiotviet/MISA layout: 1 unified list, 5 statuses, category & material filtering.
- */
-
 import { useState, useMemo, useEffect } from "react";
 import {
-  Plus,
-  Package,
   Pencil,
   Eye,
   X,
   Image as ImageIcon,
   Gift,
-  TreePine,
-  Box,
+  Package,
   Banknote,
   Info,
-  Armchair,
-  Bed,
-  Monitor,
-  Utensils,
-  Flower2,
-  Briefcase,
   Clock,
   ShieldCheck,
   Hammer,
   Trash2,
+  AlertCircle,
+  ChevronDown,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import toast from "react-hot-toast";
 import DataTable from "@/components/control/DataTable";
-
-
-// ===================== STATIC DATA =====================
-const CATEGORIES = [
-  "Phòng khách",
-  "Phòng thờ",
-  "Phòng ngủ",
-  "Trang trí",
-  "Phòng làm việc",
-  "Phòng ăn",
-];
-
-const WOOD_TYPES = [
-  "Gỗ Hương",
-  "Gỗ Gụ",
-  "Gỗ Mít",
-  "Gỗ Trắc",
-  "Gỗ Gõ đỏ",
-  "Gỗ Sồi",
-  "Gỗ Óc chó",
-];
-
-const OTHER_MATERIALS = ["Đồng vàng", "Gốm sứ"];
-
-const COLORS = ["Cánh gián", "Hạt dẻ", "Mun", "Tự nhiên", "Sơn PU", "Để mộc"];
-
-const PRODUCT_STATUSES = [
-  "Chưa định giá",
-  "Hàng sẵn",
-  "Hàng mộc",
-  "Hàng khách đặt",
-  "Hết hàng",
-  "Quà tặng",
-];
+import ConfirmModal from "@/components/control/ConfirmModal";
+import {
+  CATEGORIES,
+  WOOD_TYPES,
+  OTHER_MATERIALS,
+  COLORS,
+  PRODUCT_STATUSES,
+  UNITS,
+} from "./constants";
 
 const INITIAL_PRODUCTS = [
   {
@@ -86,12 +47,13 @@ const INITIAL_PRODUCTS = [
     warrantyMonths: 12,
     leadTime: 0,
     img: "https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=300",
-    description: "Sập thờ trạm khắc tỉ mỉ tinh xảo, chất liệu gỗ mít lõi liền khối.",
+    description:
+      "Sập thờ trạm khắc tỉ mỉ tinh xảo, chất liệu gỗ mít lõi liền khối.",
     techNotes: {
       leg: "Chân 20",
       apron: "Dạ đục tay Mai Điểu",
-      other: "Hàng sạch rác, gỗ chọn vân."
-    }
+      other: "Hàng sạch rác, gỗ chọn vân.",
+    },
   },
   {
     id: "SP002",
@@ -136,8 +98,8 @@ const INITIAL_PRODUCTS = [
     techNotes: {
       leg: "Chân quỳ 12",
       apron: "Dạ trơn, yếm dầy 4 phân",
-      other: "Khách có thể kiểm tra mộc trước khi sơn."
-    }
+      other: "Khách có thể kiểm tra mộc trước khi sơn.",
+    },
   },
   {
     id: "SP-NEW-01",
@@ -175,7 +137,6 @@ const INITIAL_PRODUCTS = [
     img: null,
     description: "Hàng mới nhập kho, chưa định giá bán lẻ.",
   },
-  // --- BỔ SUNG HÀNG MỘC ---
   {
     id: "SP-HM-01",
     code: "ST-HM-197x107-GoGu",
@@ -199,8 +160,8 @@ const INITIAL_PRODUCTS = [
     techNotes: {
       leg: "Chân 24",
       apron: "Dạ đục Ngũ Phúc Kim Tiền",
-      other: "Mặt sập 2 lá, dầy 2 phân đậu."
-    }
+      other: "Mặt sập 2 lá, dầy 2 phân đậu.",
+    },
   },
   {
     id: "SP-HM-02",
@@ -370,58 +331,6 @@ const INITIAL_PRODUCTS = [
   },
 ];
 
-const INITIAL_INVENTORY_LOGS = [
-  {
-    id: "LOG001",
-    timestamp: "2026-03-17T14:30:00",
-    type: "Nhập kho",
-    productName: "Sập thờ Mai Điểu chân 20",
-    productCode: "ST-HS-197x107x108-Mit",
-    productImg: "https://placehold.co/100x100?text=SapTho",
-    change: +2,
-    balance: 2,
-    reference: "PN-2603-001",
-    authorizedBy: "Kế toán (Linh)",
-  },
-  {
-    id: "LOG002",
-    timestamp: "2026-03-17T15:45:00",
-    type: "Xuất bán",
-    productName: "Tủ áo gỗ xoan đào (Hàng mộc)",
-    productCode: "TA-HM-160x200x55-XoanDao",
-    productImg: "https://placehold.co/100x100?text=TuAoTho",
-    change: -1,
-    balance: 3,
-    reference: "DH-2603-0012",
-    authorizedBy: "NV. Bán hàng",
-  },
-  {
-    id: "LOG003",
-    timestamp: "2026-03-17T16:20:00",
-    type: "Kiểm kho",
-    productName: "Sofa nguyên khối chữ L (Mộc)",
-    productCode: "SF-HS-260x180x85-GoDo",
-    productImg: "https://placehold.co/100x100?text=Sofa",
-    change: -1,
-    balance: 5,
-    reference: "Kiểm kho định kỳ",
-    authorizedBy: "Bác chủ (Admin)",
-    note: "Hàng bị xước sơn, chuyển kho bảo hành",
-  },
-  {
-    id: "LOG004",
-    timestamp: "2026-03-16T09:00:00",
-    type: "Nhập kho",
-    productName: "Lộc bình cao 1m8",
-    productCode: "LB-HS-180m-Huong",
-    productImg: null,
-    change: +1,
-    balance: 1,
-    reference: "PN-2603-002",
-    authorizedBy: "Kế toán (Linh)",
-  },
-];
-
 // ===================== HELPERS =====================
 const fmtCurrency = (n) => {
   if (n === undefined || n === null || isNaN(n) || n === 0) return "—";
@@ -436,64 +345,6 @@ const formatNumberInput = (value) => {
 const parseNumberInput = (value) => {
   if (!value) return "";
   return value.toString().replace(/\./g, "").replace(/[^\d]/g, "");
-};
-
-const MarginDisplay = ({ cost, price, label = "Lợi nhuận" }) => {
-  if (!price || price <= 0) return null;
-  const profit = price - cost;
-  const margin = (profit / price) * 100;
-
-  let colorClass = "text-red-500";
-  if (margin >= 30) colorClass = "text-emerald-600";
-  else if (margin >= 15) colorClass = "text-amber-600";
-
-  return (
-    <div className="mt-1.5 flex items-center justify-between px-1">
-      <div className="flex items-center gap-1.5">
-        <span className={`text-[11px] font-bold ${colorClass}`}>
-          {label}: {fmtCurrency(profit)}
-        </span>
-        <span className="text-gray-300">|</span>
-        <span className={`text-[11px] font-black ${colorClass}`}>
-          {margin.toFixed(1)}%
-        </span>
-      </div>
-      {margin < 15 && (
-        <span className="text-[10px] font-bold text-red-400 italic">Biên thấp!</span>
-      )}
-    </div>
-  );
-};
-
-const ProfitabilityIndicator = ({ cost, profit }) => {
-  if (!cost || cost <= 0) return null;
-
-  // If price is 0, profit will be exactly -cost. Show "Chờ định giá" instead of -100%
-  if (Math.abs(profit + cost) < 1) {
-    return (
-      <div className="flex flex-col items-end opacity-30">
-        <div className="text-[10px] font-bold uppercase text-gray-400">Chờ định giá</div>
-        <div className="text-[14px] font-black text-gray-300">--%</div>
-      </div>
-    );
-  }
-
-  const roi = (profit / cost) * 100;
-
-  // Only show if it's "Good" (>= 50%)
-  if (roi < 50) return null;
-
-  return (
-    <div className="flex flex-col items-end">
-      <div className="text-[10px] font-bold uppercase text-emerald-600 flex items-center gap-1">
-        <div className="w-1.5 h-1.5 rounded-full bg-current" />
-        Tỷ suất Tốt
-      </div>
-      <div className="text-[14px] font-black text-emerald-600">
-        {roi.toFixed(1)}%
-      </div>
-    </div>
-  );
 };
 
 const getStatusConfig = (status) => {
@@ -517,304 +368,25 @@ const getStatusConfig = (status) => {
 
 // ===================== SUB-COMPONENTS =====================
 
-const CategoriesTab = ({ categories, onAdd, onEdit, onDelete }) => {
-  const getCategoryIcon = (name) => {
-    const n = name.toLowerCase();
-    if (n.includes("phòng khách"))
-      return <Armchair size={18} className="text-orange-500" />;
-    if (n.includes("phòng thờ"))
-      return <Monitor size={18} className="text-red-500" />;
-    if (n.includes("phòng ngủ"))
-      return <Bed size={18} className="text-blue-500" />;
-    if (n.includes("trang trí"))
-      return <Flower2 size={18} className="text-purple-500" />;
-    if (n.includes("làm việc"))
-      return <Briefcase size={18} className="text-gray-600" />;
-    if (n.includes("phòng ăn") || n.includes("bếp"))
-      return <Utensils size={18} className="text-emerald-500" />;
-    return <Box size={18} className="text-blue-500" />;
-  };
-
-  return (
-    <div
-      className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden"
-      style={{
-        boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
-      }}
-    >
-      <div
-        className="px-6 py-4 border-b flex items-center justify-between shrink-0"
-        style={{ borderColor: "var(--grid-border)" }}
-      >
-        <div>
-          <h2 className="text-[15px] font-bold text-gray-900">
-            Danh mục sản phẩm
-          </h2>
-          <p className="text-[12px] text-gray-400 mt-0.5 font-medium">
-            Quản lý các nhóm hàng hóa trong kho
-          </p>
-        </div>
-        <button
-          onClick={onAdd}
-          className="h-9 px-4 rounded-xl flex items-center gap-2 text-[13px] font-bold transition hover:opacity-90 shadow-sm"
-          style={{ backgroundColor: "var(--brand-primary)", color: "#fff" }}
-        >
-          <Plus size={16} /> Thêm danh mục
-        </button>
-      </div>
-      <div className="flex-1 overflow-y-auto">
-        <table className="w-full text-left relative text-[13px]">
-          <thead
-            className="sticky top-0 z-10"
-            style={{
-              backgroundColor: "var(--grid-header-bg)",
-              borderBottom: "1px solid var(--grid-border)",
-            }}
-          >
-            <tr>
-              <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 w-16">
-                STT
-              </th>
-              <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                Tên nhóm
-              </th>
-              <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 text-center w-32">
-                Số hàng
-              </th>
-              <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 text-right w-32">
-                Thao tác
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {categories.map((c, i) => (
-              <tr
-                key={c}
-                className="hover:bg-gray-50/50 transition-colors group"
-                style={{ borderBottom: "1px solid var(--grid-border)" }}
-              >
-                <td className="px-6 py-4 font-medium text-gray-400">
-                  {String(i + 1).padStart(2, "0")}
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100 group-hover:scale-110 transition-transform">
-                      {getCategoryIcon(c)}
-                    </div>
-                    <span className="font-bold text-gray-900 text-[14px]">
-                      {c}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <span className="inline-flex px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-50 text-gray-500 border border-gray-100">
-                    10 món
-                  </span>
-                </td>
-                <td className="px-6 py-4 relative">
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-end gap-1.5 translate-x-2 group-hover:translate-x-0">
-                    <button
-                      onClick={() => onEdit(c)}
-                      className="h-8 px-3 text-[12px] font-bold text-gray-600 hover:text-blue-600 bg-white border border-gray-200 hover:border-blue-200 rounded-lg transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
-                    >
-                      <Pencil size={14} /> Sửa
-                    </button>
-                    <button
-                      onClick={() => onDelete(c)}
-                      className="h-8 px-3 text-[12px] font-bold text-gray-600 hover:text-red-600 bg-white border border-gray-200 hover:border-red-200 rounded-lg transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
-                    >
-                      <X size={14} /> Xóa
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
-
-const PropertiesTab = ({
-  woods,
-  onAddWood,
-  onEditWood,
-  onDeleteWood,
-  otherMaterials,
-  onAddOtherMaterial,
-  onEditOtherMaterial,
-  onDeleteOtherMaterial,
-  colors,
-  onAddColor,
-  onEditColor,
-  onDeleteColor,
-  units,
-  onAddUnit,
-  onEditUnit,
-  onDeleteUnit,
-}) => {
-  return (
-    <div className="flex gap-6 h-full overflow-hidden">
-      {/* 1. CHẤT LIỆU TỔNG HỢP (Gỗ, Đồng, Đá...) */}
-      <div className="flex-1 flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
-        <div className="px-5 py-4 border-b flex items-center justify-between shrink-0 bg-gray-50/50">
-          <div>
-            <h2 className="text-[15px] font-bold text-gray-900">Danh mục Chất liệu</h2>
-            <p className="text-[11px] text-gray-400 mt-0.5">Quản lý tất cả các loại gỗ & phụ liệu</p>
-          </div>
-          <button 
-            onClick={onAddWood} 
-            className="h-9 px-5 rounded-xl flex items-center gap-2 text-[12px] font-black text-white shadow-md transform active:scale-95 transition-all hover:opacity-90"
-            style={{ backgroundColor: "var(--brand-primary)" }}
-          >
-            <Plus size={18} /> Thêm chất liệu mới
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto">
-          <table className="w-full text-left text-[13px]">
-            <thead className="sticky top-0 bg-white border-b border-gray-100 z-10 shadow-sm">
-              <tr>
-                <th className="px-6 py-3 text-[10px] uppercase font-bold text-gray-400 w-16 text-center">STT</th>
-                <th className="px-6 py-3 text-[10px] uppercase font-bold text-gray-400">Tên chất liệu</th>
-                <th className="px-6 py-3 text-[10px] uppercase font-bold text-gray-400 text-right w-24">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {/* Combine Woods and OtherMaterials for display */}
-              {woods.map((w, i) => (
-                <tr key={`wood-${i}`} className="hover:bg-blue-50/20 group transition-colors">
-                  <td className="px-6 py-3 text-center text-gray-400 font-medium">{i + 1}</td>
-                  <td className="px-6 py-3 font-bold text-gray-700">{w}</td>
-                  <td className="px-6 py-3 text-right opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="flex items-center justify-end gap-1">
-                      <button onClick={() => onEditWood(w)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition"><Pencil size={14} /></button>
-                      <button onClick={() => onDeleteWood(w)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition"><X size={14} /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {otherMaterials.map((m, i) => (
-                <tr key={`mat-${i}`} className="hover:bg-blue-50/20 group transition-colors">
-                  <td className="px-6 py-3 text-center text-gray-400 font-medium">{woods.length + i + 1}</td>
-                  <td className="px-6 py-3 font-bold text-gray-700">{m}</td>
-                  <td className="px-6 py-3 text-right opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="flex items-center justify-end gap-1">
-                      <button onClick={() => onEditOtherMaterial(m)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition"><Pencil size={14} /></button>
-                      <button onClick={() => onDeleteOtherMaterial(m)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition"><X size={14} /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="w-1/3 flex flex-col gap-6">
-        {/* 2. NGOẠI QUAN (Màu sắc) */}
-        <div className="flex-1 flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
-          <div className="px-5 py-4 border-b flex items-center justify-between shrink-0 bg-gray-50/50">
-            <div>
-              <h2 className="text-[15px] font-bold text-gray-900">Màu sắc & Hoàn thiện</h2>
-              <p className="text-[11px] text-gray-400 mt-0.5">Quy cách sơn & bề mặt</p>
-            </div>
-            <button 
-              onClick={onAddColor} 
-              className="h-9 px-4 rounded-xl flex items-center gap-1.5 text-[11px] font-black text-white shadow-md transform active:scale-95 transition-all hover:opacity-90"
-              style={{ backgroundColor: "var(--brand-primary)" }}
-            >
-              <Plus size={16} /> Thêm màu
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            <table className="w-full text-left text-[13px]">
-              <tbody className="divide-y divide-gray-50">
-                {colors.map((c, i) => (
-                  <tr key={c} className="hover:bg-gray-50/30 group transition-colors">
-                    <td className="px-5 py-3 font-medium text-gray-400 w-10">{i + 1}</td>
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full border border-gray-200 shadow-sm" style={{ backgroundColor: c.toLowerCase().includes("gián") ? "#8B4513" : c.toLowerCase().includes("mun") ? "#1a1a1a" : "#DEB887" }} />
-                        <span className="font-bold text-gray-700">{c}</span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3 text-right opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => onEditColor(c)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition"><Pencil size={14} /></button>
-                        <button onClick={() => onDeleteColor(c)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition"><X size={14} /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* 3. ĐƠN VỊ TÍNH */}
-        <div className="flex-1 flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
-          <div className="px-5 py-4 border-b flex items-center justify-between shrink-0 bg-gray-50/50">
-            <div>
-              <h2 className="text-[15px] font-bold text-gray-900">Đơn vị tính</h2>
-              <p className="text-[11px] text-gray-400 mt-0.5">Quy chuẩn nhập/xuất kho</p>
-            </div>
-            <button 
-              onClick={onAddUnit} 
-              className="h-8 px-3 rounded-xl flex items-center gap-1.5 text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-100 hover:bg-blue-100 transition-all shadow-sm active:scale-95"
-            >
-              <Plus size={14} /> Thêm
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            <table className="w-full text-left text-[13px]">
-              <tbody className="divide-y divide-gray-50">
-                {units.map((u, i) => (
-                  <tr key={u} className="hover:bg-gray-50/30 group transition-colors">
-                    <td className="px-5 py-2.5 font-medium text-gray-400 w-10">{i + 1}</td>
-                    <td className="px-5 py-2.5 font-bold text-gray-700">{u}</td>
-                    <td className="px-5 py-2.5 text-right opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => onEditUnit(u)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition"><Pencil size={13} /></button>
-                        <button onClick={() => onDeleteUnit(u)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition"><X size={13} /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // ===================== COMPONENT =====================
 export default function OwnerProducts() {
   const [products, setProducts] = useState(() => {
     const saved = localStorage.getItem("tpf_simulated_products");
     if (!saved) {
       // First time: save default products to localStorage
-      localStorage.setItem("tpf_simulated_products", JSON.stringify(INITIAL_PRODUCTS));
+      localStorage.setItem(
+        "tpf_simulated_products",
+        JSON.stringify(INITIAL_PRODUCTS),
+      );
       return INITIAL_PRODUCTS;
     }
     const parsed = JSON.parse(saved);
     // Auto-fix any old 'Ngừng kinh doanh' status to 'Hết hàng'
-    parsed.forEach(p => {
+    parsed.forEach((p) => {
       if (p.status === "Ngừng kinh doanh") p.status = "Hết hàng";
     });
     return parsed;
   });
-  const [inventoryLogs, setInventoryLogs] = useState(() => {
-    const saved = localStorage.getItem("tpf_simulated_inventory_logs");
-    return saved ? JSON.parse(saved) : INITIAL_INVENTORY_LOGS;
-  });
-
-  // Sync logs to localStorage
-  useEffect(() => {
-    localStorage.setItem("tpf_simulated_inventory_logs", JSON.stringify(inventoryLogs));
-  }, [inventoryLogs]);
 
   // Sync to localStorage
   useEffect(() => {
@@ -832,173 +404,17 @@ export default function OwnerProducts() {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  // Sync Cats & Props as well for consistency
-  const [categories, setCategories] = useState(() => {
-    const saved = localStorage.getItem("tpf_simulated_categories");
-    return saved ? JSON.parse(saved) : CATEGORIES;
-  });
-  const [woods, setWoods] = useState(() => {
-    const saved = localStorage.getItem("tpf_simulated_woods");
-    return saved ? JSON.parse(saved) : WOOD_TYPES;
-  });
-  const [otherMaterials, setOtherMaterials] = useState(() => {
-    const saved = localStorage.getItem("tpf_simulated_other_materials");
-    return saved ? JSON.parse(saved) : OTHER_MATERIALS;
-  });
-  const [colors, setColors] = useState(() => {
-    const saved = localStorage.getItem("tpf_simulated_colors");
-    return saved ? JSON.parse(saved) : COLORS;
-  });
-  const [units, setUnits] = useState(() => {
-    const saved = localStorage.getItem("tpf_simulated_units");
-    return saved ? JSON.parse(saved) : ["Chiếc", "Bộ", "Bộ 6 ghế", "Bộ 8 ghế", "m", "m2"];
-  });
-
-  useEffect(() => {
-    localStorage.setItem("tpf_simulated_categories", JSON.stringify(categories));
-    localStorage.setItem("tpf_simulated_woods", JSON.stringify(woods));
-    localStorage.setItem("tpf_simulated_other_materials", JSON.stringify(otherMaterials));
-    localStorage.setItem("tpf_simulated_colors", JSON.stringify(colors));
-    localStorage.setItem("tpf_simulated_units", JSON.stringify(units));
-  }, [categories, woods, otherMaterials, colors, units]);
-
   // Filter States
-  const [activeTab, setActiveTab] = useState("products"); // products | categories | properties | inventory_log
   const [searchQuery, setSearchQuery] = useState("");
-  const [logSearchQuery, setLogSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("Tất cả");
   const [categoryFilter, setCategoryFilter] = useState("Tất cả");
-
-  // Simple Input Modal State
-  const [simpleModal, setSimpleModal] = useState({
-    isOpen: false,
-    type: "",
-    title: "",
-    value: "",
-    originalValue: null,
-  });
-
-  const handleOpenSimpleModal = (type, title, originalValue = null) => {
-    setSimpleModal({
-      isOpen: true,
-      type,
-      title,
-      value: originalValue || "",
-      originalValue,
-    });
-  };
-
-  const handleSaveSimpleModal = () => {
-    if (!simpleModal.value.trim()) return;
-    const { type, value, originalValue } = simpleModal;
-
-    if (type === "category") {
-      if (originalValue) {
-        setCategories(categories.map((c) => (c === originalValue ? value : c)));
-      } else {
-        setCategories([...categories, value]);
-      }
-    } else if (type === "wood") {
-      if (originalValue) {
-        setWoods(woods.map((w) => (w === originalValue ? value : w)));
-      } else {
-        setWoods([...woods, value]);
-      }
-    } else if (type === "material") {
-      if (originalValue) {
-        setOtherMaterials(otherMaterials.map((m) => (m === originalValue ? value : m)));
-      } else {
-        setOtherMaterials([...otherMaterials, value]);
-      }
-    } else if (type === "color") {
-      if (originalValue) {
-        setColors(colors.map((c) => (c === originalValue ? value : c)));
-      } else {
-        setColors([...colors, value]);
-      }
-    } else if (type === "unit") {
-      if (originalValue) {
-        setUnits(units.map((u) => (u === originalValue ? value : u)));
-        toast.success("Đã cập nhật đơn vị tính!");
-      } else {
-        if (!units.includes(value)) {
-          setUnits([...units, value]);
-          toast.success("Đã thêm đơn vị tính mới!");
-        }
-      }
-    }
-    setSimpleModal({
-      isOpen: false,
-      type: "",
-      title: "",
-      value: "",
-      originalValue: null,
-    });
-  };
-
-  const handleDeleteCategory = (c) => {
-    if (products.some((p) => p.category === c)) {
-      alert(`Không thể xóa nhóm "${c}" vì đang có sản phẩm thuộc nhóm này.`);
-      return;
-    }
-    if (window.confirm(`Bạn có chắc chắn muốn xóa nhóm "${c}"?`)) {
-      setCategories(categories.filter((x) => x !== c));
-    }
-  };
-
-  const handleDeleteWood = (w) => {
-    if (products.some((p) => p.material === w)) {
-      alert(`Không thể xóa loại gỗ "${w}" vì đang có sản phẩm thuộc loại này.`);
-      return;
-    }
-    if (window.confirm(`Bạn có chắc chắn muốn xóa loại gỗ "${w}"?`)) {
-      setWoods(woods.filter((x) => x !== w));
-    }
-  };
-
-  const handleDeleteMaterial = (m) => {
-    if (products.some((p) => p.material === m)) {
-      alert(
-        `Không thể xóa chất liệu "${m}" vì đang có sản phẩm sử dụng chất liệu này.`,
-      );
-      return;
-    }
-    if (window.confirm(`Bạn có chắc chắn muốn xóa chất liệu "${m}"?`)) {
-      setOtherMaterials(otherMaterials.filter((x) => x !== m));
-    }
-  };
-
-  const handleDeleteColor = (c) => {
-    if (products.some((p) => p.color === c)) {
-      alert(
-        `Không thể xóa màu sắc "${c}" vì đang có sản phẩm áp dụng màu này.`,
-      );
-      return;
-    }
-    if (window.confirm(`Bạn có chắc chắn muốn xóa màu sắc "${c}"?`)) {
-      setColors(colors.filter((x) => x !== c));
-    }
-  };
-
-  const handleDeleteUnit = (u) => {
-    if (products.some((p) => p.unit === u)) {
-      alert(`Không thể xóa đơn vị "${u}" vì đang có sản phẩm sử dụng đơn vị này.`);
-      return;
-    }
-    if (window.confirm(`Bạn có chắc chắn muốn xóa đơn vị tính "${u}"?`)) {
-      setUnits(units.filter((x) => x !== u));
-      toast.success("Đã xóa đơn vị tính!");
-    }
-  };
-
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
 
-  // Modal states
-  const [showAddEditModal, setShowAddEditModal] = useState(false);
-  const [editItem, setEditItem] = useState(null);
+  const [modal, setModal] = useState({ isOpen: false, view: null, data: null }); // view: 'detail' | 'form'
+
   const [costPrice, setCostPrice] = useState(0);
   const [retailPrice, setRetailPrice] = useState(0);
   const [rawRetailPrice, setRawRetailPrice] = useState(0);
@@ -1016,18 +432,12 @@ export default function OwnerProducts() {
   const [dimL, setDimL] = useState("");
   const [dimW, setDimW] = useState("");
   const [dimH, setDimH] = useState("");
-  const [origin, setOrigin] = useState("Việt Nam");
-  const [finishing, setFinishing] = useState("");
   const [leadTime, setLeadTime] = useState(0);
   const [techNotes, setTechNotes] = useState({ leg: "", apron: "", other: "" });
 
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [detailItem, setDetailItem] = useState(null);
-
-  const [showGiftModal, setShowGiftModal] = useState(false);
-  const [giftItem, setGiftItem] = useState(null);
-
   const [selectedIds, setSelectedIds] = useState([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
   // Actions
   const toggleStatus = (id, newStatus) => {
@@ -1040,45 +450,54 @@ export default function OwnerProducts() {
     toast.success(`Đã cập nhật trạng thái: ${newStatus}`);
   };
 
-  const handleOpenEdit = (product, e) => {
-    e.stopPropagation();
-    setEditItem(product);
-    setCostPrice(product.costPrice || 0);
-    setRetailPrice(product.retailPrice || 0);
-    setRawRetailPrice(product.rawRetailPrice || 0);
-    setFinishedRetailPrice(product.finishedRetailPrice || 0);
-    setLaborCost(product.laborCost || 0);
-    setMaterialCost(product.materialCost || 0);
-    setSetupCost(product.setupCost || 0);
-    setProductType(product.productType || "Hàng sẵn");
-    setProductCategory(product.category || "");
-    setWarrantyMonths(product.warrantyMonths || 12);
-    setTargetMargin(product.targetMargin || 20);
-    setTaxPercent(product.taxPercent || 0);
-    setWoodType(product.woodType || "");
-    setColor(product.color || "");
-    const dims = (product.dimensions || "").split(/[xX*×]/).map(d => d.trim());
-    setDimL(dims[0] || "");
-    setDimW(dims[1] || "");
-    setDimH(dims[2] || "");
-    setOrigin(product.origin || "Việt Nam");
-    setFinishing(product.finishing || "");
-    setLeadTime(product.leadTime || 0);
-    setTechNotes(product.techNotes || { leg: "", apron: "", other: "" });
-    setShowAddEditModal(true);
+  const handleDeleteProduct = (id) => {
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+    toast.success("Đã xóa sản phẩm thành công!");
+    closeModal();
+    setShowDeleteConfirm(false);
+    setItemToDelete(null);
   };
 
-  const handleOpenDetail = (product, e) => {
-    e.stopPropagation();
-    setDetailItem(product);
-    setShowDetailModal(true);
+  const handleConfirmDelete = (item, e = null) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    setItemToDelete(item);
+    setShowDeleteConfirm(true);
   };
 
-  const handleOpenGift = (product, e) => {
-    e.stopPropagation();
-    setGiftItem(product);
-    setShowGiftModal(true);
+  const handleOpenModal = (view, product = null, e = null) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+
+    if (view === "form") {
+      if (product) {
+        setCostPrice(product.costPrice || 0);
+        setRetailPrice(product.retailPrice || 0);
+        setRawRetailPrice(product.rawRetailPrice || 0);
+        setFinishedRetailPrice(product.finishedRetailPrice || 0);
+        setLaborCost(product.laborCost || 0);
+        setMaterialCost(product.materialCost || 0);
+        setSetupCost(product.setupCost || 0);
+        setProductType(product.productType || "Hàng sẵn");
+        setProductCategory(product.category || "");
+        setWarrantyMonths(product.warrantyMonths || 12);
+        setTargetMargin(product.targetMargin || 20);
+        setTaxPercent(product.taxPercent || 0);
+        setWoodType(product.material || ""); // Fix: material mapping
+        setColor(product.color || "");
+        const dims = (product.dimensions || "")
+          .split(/[xX*×]/)
+          .map((d) => d.trim());
+        setDimL(dims[0] || "");
+        setDimW(dims[1] || "");
+        setDimH(dims[2] || "");
+        setLeadTime(product.leadTime || 0);
+        setTechNotes(product.techNotes || { leg: "", apron: "", other: "" });
+      }
+    }
+
+    setModal({ isOpen: true, view, data: product });
   };
+
+  const closeModal = () => setModal({ isOpen: false, view: null, data: null });
 
   // Filter logic
   const statusCounts = useMemo(() => {
@@ -1115,26 +534,7 @@ export default function OwnerProducts() {
     return result;
   }, [products, statusFilter, categoryFilter, searchQuery]);
 
-  const filteredLogs = useMemo(() => {
-    let result = inventoryLogs;
-
-    if (logSearchQuery.trim()) {
-      const q = logSearchQuery.toLowerCase();
-      result = result.filter(
-        (l) =>
-          l.productName.toLowerCase().includes(q) ||
-          l.productCode.toLowerCase().includes(q) ||
-          l.reference.toLowerCase().includes(q) ||
-          l.authorizedBy.toLowerCase().includes(q),
-      );
-    }
-
-    return result.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-  }, [inventoryLogs, logSearchQuery]);
-
-  const hasActiveFilters =
-    categoryFilter !== "Tất cả" ||
-    searchQuery;
+  const hasActiveFilters = categoryFilter !== "Tất cả" || searchQuery;
   const clearFilters = () => {
     setCategoryFilter("Tất cả");
     setSearchQuery("");
@@ -1151,6 +551,7 @@ export default function OwnerProducts() {
   );
 
   const handleSaveAddEdit = () => {
+    const editItem = modal.data;
     if (editItem) {
       // Logic for editing existing product
       let newStatus = editItem.status;
@@ -1162,7 +563,7 @@ export default function OwnerProducts() {
         if (productType === "Hàng sẵn") {
           newStatus = editItem.stock > 0 ? "Hàng sẵn" : "Hết hàng";
         } else {
-          newStatus = "Đặt theo mẫu";
+          newStatus = "Hàng khách đặt";
         }
       }
 
@@ -1186,8 +587,6 @@ export default function OwnerProducts() {
               woodType,
               color,
               dimensions: [dimL, dimW, dimH].filter(Boolean).join(" × "),
-              origin,
-              finishing,
               leadTime: Number(leadTime),
               techNotes: { ...techNotes },
               isPriced: true,
@@ -1197,832 +596,846 @@ export default function OwnerProducts() {
         ),
       );
       toast.success("Đã cập nhật thông tin sản phẩm và định giá thành công!");
-    } else {
-      // Simple mock for adding new product
-      toast.success("Đã thêm sản phẩm mới thành công!");
     }
-    setShowAddEditModal(false);
+    closeModal();
   };
 
-  // 1. ADD / EDIT MODAL (Simplified mock form)
-  const renderAddEditModal = () => {
-    if (!showAddEditModal) return null;
+  // ===================== UNIFIED MODAL (DETAIL & PRICING) =====================
+  const renderProductModal = () => {
+    if (!modal.isOpen || !modal.view) return null;
+    const editing = modal.view === "form";
+    const detailItem = modal.data;
+    const editItem = modal.data;
+    const sc = detailItem ? getStatusConfig(detailItem.status) : null;
+
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-        <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-          <div className="px-6 py-4 border-b flex items-center justify-between bg-gray-50/80">
+      <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6">
+        <div
+          className="absolute inset-0 bg-black/30 backdrop-blur-[2px] animate-in fade-in duration-200"
+          onClick={closeModal}
+        />
+        <div
+          className={`bg-white w-full max-w-5xl h-[90vh] md:h-[85vh] rounded-lg shadow-2xl overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-300`}
+          style={{ boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
+        >
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0 bg-white">
             <h2
               className="text-lg font-bold flex items-center gap-2"
               style={{ color: "var(--text-main)" }}
             >
-              {editItem?.status === "Chưa định giá" ? (
-                <span className="flex items-center gap-2 text-red-600">
-                  <Banknote size={20} /> Định giá sản phẩm mới
-                </span>
-              ) : editItem ? (
-                "Sửa sản phẩm"
+              {editing ? (
+                editItem?.status === "Chưa định giá" ? (
+                  <span className="flex items-center gap-2 text-[var(--status-error)]">
+                    <Banknote size={20} /> Định giá sản phẩm mới
+                  </span>
+                ) : (
+                  "Sửa sản phẩm"
+                )
               ) : (
-                "Thêm mới sản phẩm"
+                <>
+                  Chi tiết sản phẩm
+                  <span className="text-[var(--brand-primary)] font-mono text-sm tracking-wider px-2 py-0.5 bg-[var(--brand-primary)]/5 rounded-md ml-2">
+                    {detailItem?.code}
+                  </span>
+                </>
               )}
-            </h2>
-            <button
-              onClick={() => setShowAddEditModal(false)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200 transition cursor-pointer"
-            >
-              <X size={18} />
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-6">
-            <div className="grid grid-cols-3 gap-6">
-              {/* Left Column: Image & Barcode */}
-              <div className="col-span-1 space-y-4">
-                <div className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center bg-gray-50 hover:bg-blue-50 hover:border-blue-300 transition cursor-pointer relative overflow-hidden group">
-                  {editItem?.img ? (
-                    <>
-                      <img
-                        src={editItem.img}
-                        alt="Product"
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="text-white text-sm font-semibold flex items-center gap-2">
-                          <Pencil size={14} /> Đổi ảnh
-                        </span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <ImageIcon
-                        size={40}
-                        className="text-gray-400 mb-2 group-hover:text-blue-500 transition-colors"
-                      />
-                      <span className="text-sm font-medium text-gray-500 group-hover:text-blue-600 transition-colors">
-                        Tải ảnh lên (Max 5MB)
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Right Column: Form */}
-              <div className="col-span-2 space-y-6">
-                {/* Section 1: Thông tin cơ bản */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                    <Info size={14} /> Thông tin cơ bản
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Mã SKU <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                        placeholder="VD: BBG-HS-1.8x0.9x0.75-Huong"
-                        defaultValue={editItem?.code || ""}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Tên sản phẩm <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                        placeholder="Nhập tên sản phẩm"
-                        defaultValue={editItem?.name || ""}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Danh mục sản phẩm{" "}
-                        <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                        value={productCategory}
-                        onChange={(e) => setProductCategory(e.target.value)}
-                      >
-                        <option value="">Chọn danh mục sản phẩm</option>
-                        {CATEGORIES.map((c) => (
-                          <option key={c} value={c}>
-                            {c}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Đơn vị tính
-                      </label>
-                      <select 
-                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                        defaultValue={editItem?.unit || ""}
-                      >
-                        <option value="">Chọn đơn vị</option>
-                        {units.map((u) => (
-                          <option key={u} value={u}>
-                            {u}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">
-                      Mô tả chi tiết
-                    </label>
-                    <textarea
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none min-h-[80px]"
-                      placeholder="Nhập mô tả sản phẩm..."
-                      defaultValue={editItem?.description || ""}
-                    ></textarea>
-                  </div>
-                </div>
-
-                {/* Section 2: Thuộc tính hàng mộc */}
-                <div className="space-y-4">
-                  <div className="grid grid-cols-4 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Chất liệu
-                      </label>
-                      <select
-                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none"
-                        value={woodType}
-                        onChange={(e) => setWoodType(e.target.value)}
-                      >
-                        <option value="">Chọn chất liệu</option>
-                        {WOOD_TYPES.map((w) => (
-                          <option key={w} value={w}>
-                            {w}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Màu sắc
-                      </label>
-                      <select
-                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 outline-none"
-                        value={color}
-                        onChange={(e) => setColor(e.target.value)}
-                      >
-                        <option value="">Chọn màu</option>
-                        {COLORS.map((c) => (
-                          <option
-                            key={c}
-                            value={c}
-                            selected={editItem?.color === c}
-                          >
-                            {c}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="col-span-2">
-                      <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Kích thước (D×R×C) (cm)
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-center"
-                          placeholder="Dài"
-                          value={dimL}
-                          onChange={(e) => setDimL(e.target.value)}
-                        />
-                        <span className="text-gray-400 text-xs font-bold">×</span>
-                        <input
-                          type="text"
-                          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-center"
-                          placeholder="Rộng"
-                          value={dimW}
-                          onChange={(e) => setDimW(e.target.value)}
-                        />
-                        <span className="text-gray-400 text-xs font-bold">×</span>
-                        <input
-                          type="text"
-                          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-center"
-                          placeholder="Cao"
-                          value={dimH}
-                          onChange={(e) => setDimH(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-
-                  {/* Section 3: Cấu trúc Chi phí */}
-                  <div className="space-y-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
-                    <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">
-                        Cấu trúc Chi phí
-                      </h3>
-                      <select
-                        className="border rounded-lg px-2 py-1 text-[11px] font-bold text-gray-600 outline-none bg-white"
-                        value={productType}
-                        onChange={(e) => {
-                          const newType = e.target.value;
-                          setProductType(newType);
-                          if (newType === "Hàng sẵn") {
-                            setLaborCost(0);
-                            setMaterialCost(0);
-                          }
-                        }}
-                      >
-                        <option value="Hàng sẵn">Hàng sẵn</option>
-                        <option value="Hàng mộc">Hàng mộc</option>
-                      </select>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">
-                          Giá vốn mộc (đ)
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full border rounded-xl px-4 py-2.5 text-lg font-bold outline-none bg-white text-gray-800 focus:ring-1 focus:ring-blue-500 transition-all"
-                          value={formatNumberInput(costPrice)}
-                          onChange={(e) => {
-                            const val = parseNumberInput(e.target.value);
-                            setCostPrice(val === "" ? 0 : Number(val));
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {productType === "Hàng mộc" ? (
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase block">Công hoàn thiện (đ)</label>
-                          <input
-                            type="text"
-                            className="w-full border rounded-lg px-3 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-1 focus:ring-blue-500 bg-white"
-                            value={formatNumberInput(laborCost)}
-                            onChange={(e) => {
-                              const val = parseNumberInput(e.target.value);
-                              setLaborCost(val === "" ? 0 : Number(val));
-                            }}
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase block">Vật tư (đ)</label>
-                          <input
-                            type="text"
-                            className="w-full border rounded-lg px-3 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-1 focus:ring-blue-500 bg-white"
-                            value={formatNumberInput(materialCost)}
-                            onChange={(e) => {
-                              const val = parseNumberInput(e.target.value);
-                              setMaterialCost(val === "" ? 0 : Number(val));
-                            }}
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-blue-400 uppercase block">Vận hành (đ)</label>
-                          <input
-                            type="text"
-                            className="w-full border rounded-lg px-3 py-2 text-sm font-bold text-blue-600 outline-none focus:ring-1 focus:ring-blue-500 bg-white"
-                            value={formatNumberInput(setupCost)}
-                            onChange={(e) => {
-                              const val = parseNumberInput(e.target.value);
-                              setSetupCost(val === "" ? 0 : Number(val));
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="p-3 bg-white rounded-xl border border-gray-100 flex items-center justify-between">
-                        <div className="flex flex-col">
-                          <label className="text-[10px] font-bold text-blue-500 uppercase">Vận hành & Giao hàng (đ)</label>
-                          <input
-                            type="text"
-                            className="w-32 border-none p-0 text-lg font-bold text-blue-600 outline-none bg-transparent"
-                            value={formatNumberInput(setupCost)}
-                            onChange={(e) => {
-                              const val = parseNumberInput(e.target.value);
-                              setSetupCost(val === "" ? 0 : Number(val));
-                            }}
-                          />
-                        </div>
-                        <span className="text-[10px] text-gray-400 italic">Mặt hàng sẵn không tốn phí gia công</span>
-                      </div>
-                    )}
-
-                    <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-gray-400 uppercase">Tổng giá thành thực tế</span>
-                      <span className="text-xl font-black text-gray-800">
-                        {fmtCurrency(costPrice + laborCost + materialCost + setupCost)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Section 4: Thiết lập Giá bán */}
-                  <div className="space-y-4 pt-4 border-t border-gray-100">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">
-                      Thiết lập Mục tiêu & Thuế
-                    </h3>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">
-                          Biên lợi nhuận gộp mong muốn (%)
-                        </label>
-                        <input
-                          type="number"
-                          className="w-full border rounded-xl px-4 py-2.5 text-[15px] font-bold outline-none text-emerald-700 bg-emerald-50 focus:ring-1 focus:ring-emerald-500 transition-all border-emerald-100"
-                          value={targetMargin}
-                          onChange={(e) => setTargetMargin(e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">
-                          Thuế (VAT / Thu nhập) (%)
-                        </label>
-                        <input
-                          type="number"
-                          className="w-full border rounded-xl px-4 py-2.5 text-[15px] font-bold outline-none text-indigo-700 bg-indigo-50 focus:ring-1 focus:ring-indigo-500 transition-all border-indigo-100"
-                          value={taxPercent}
-                          onChange={(e) => setTaxPercent(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4 bg-gray-50 p-5 rounded-2xl border border-gray-200">
-                    <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-gray-900">
-                        Giá bán Chính thức
-                      </h3>
-                    </div>
-
-                    {productType === "Hàng mộc" ? (
-                      <div className="grid grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <label className="block text-[10px] font-bold text-gray-500 uppercase">Giá bán MỘC (đ)</label>
-                          <div className="flex flex-col gap-1.5 mb-3 bg-white p-2.5 rounded-xl border border-orange-100 shadow-sm">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-gray-500 font-medium">1. Giá sau lãi (gốc + {targetMargin}%):</span>
-                              <span className="text-[11.5px] font-bold text-gray-700">
-                                {fmtCurrency(Math.round((costPrice + setupCost) * (1 + targetMargin / 100)))}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-blue-600 font-medium">2. Giá gợi ý (đã cộng VAT {taxPercent}%):</span>
-                              <button
-                                onClick={() => {
-                                  const cost = costPrice + setupCost;
-                                  const suggested = Math.round(cost * (1 + targetMargin / 100) * (1 + taxPercent / 100));
-                                  setRawRetailPrice(suggested);
-                                }}
-                                className="text-[11.5px] font-black text-orange-600 bg-orange-100 px-2.5 py-1 rounded-md cursor-pointer hover:bg-orange-200 hover:text-orange-800 transition shadow-sm active:scale-95"
-                                title="Click để tự động nhập vào ô bên dưới"
-                              >
-                                {fmtCurrency(Math.round((costPrice + setupCost) * (1 + targetMargin / 100) * (1 + taxPercent / 100)))}
-                              </button>
-                            </div>
-                          </div>
-                          <input
-                            type="text"
-                            className="w-full border rounded-xl px-4 py-3 text-xl font-black text-orange-600 outline-none focus:ring-2 focus:ring-orange-500"
-                            value={formatNumberInput(rawRetailPrice)}
-                            onChange={(e) => {
-                              const val = parseNumberInput(e.target.value);
-                              setRawRetailPrice(val === "" ? 0 : Number(val));
-                            }}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <label className="block text-[10px] font-bold text-gray-500 uppercase">Giá bán THÀNH PHẨM (đ)</label>
-                          <div className="flex flex-col gap-1.5 mb-3 bg-white p-2.5 rounded-xl border border-emerald-100 shadow-sm">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-gray-500 font-medium">1. Giá sau lãi (gốc + {targetMargin}%):</span>
-                              <span className="text-[11.5px] font-bold text-gray-700">
-                                {fmtCurrency(Math.round((costPrice + laborCost + materialCost + setupCost) * (1 + targetMargin / 100)))}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-blue-600 font-medium">2. Giá gợi ý (đã cộng VAT {taxPercent}%):</span>
-                              <button
-                                onClick={() => {
-                                  const cost = costPrice + laborCost + materialCost + setupCost;
-                                  const suggested = Math.round(cost * (1 + targetMargin / 100) * (1 + taxPercent / 100));
-                                  setFinishedRetailPrice(suggested);
-                                }}
-                                className="text-[11.5px] font-black text-emerald-600 bg-emerald-100 px-2.5 py-1 rounded-md cursor-pointer hover:bg-emerald-200 hover:text-emerald-800 transition shadow-sm active:scale-95"
-                                title="Click để tự động nhập vào ô bên dưới"
-                              >
-                                {fmtCurrency(Math.round((costPrice + laborCost + materialCost + setupCost) * (1 + targetMargin / 100) * (1 + taxPercent / 100)))}
-                              </button>
-                            </div>
-                          </div>
-                          <input
-                            type="text"
-                            className="w-full border rounded-xl px-4 py-3 text-xl font-black text-emerald-600 outline-none focus:ring-2 focus:ring-emerald-500"
-                            value={formatNumberInput(finishedRetailPrice)}
-                            onChange={(e) => {
-                              const val = parseNumberInput(e.target.value);
-                              setFinishedRetailPrice(val === "" ? 0 : Number(val));
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-3 bg-white p-5 rounded-2xl border border-gray-100">
-                        <div className="flex items-center justify-between">
-                          <label className="block text-[10px] font-bold text-gray-500 uppercase">Giá bán lẻ niêm yết (đ)</label>
-                        </div>
-
-                        <div className="flex flex-col gap-1.5 mb-1 bg-blue-50/50 p-2.5 rounded-xl border border-blue-100">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] text-gray-500 font-medium">1. Giá sau lãi (gốc + {targetMargin}%):</span>
-                            <span className="text-[11.5px] font-bold text-gray-700">
-                              {fmtCurrency(Math.round((costPrice + setupCost) * (1 + targetMargin / 100)))}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] text-blue-600 font-medium">2. Giá gợi ý (đã cộng VAT {taxPercent}%):</span>
-                            <button
-                              onClick={() => {
-                                const cost = costPrice + setupCost;
-                                const suggested = Math.round(cost * (1 + targetMargin / 100) * (1 + taxPercent / 100));
-                                setRetailPrice(suggested);
-                              }}
-                              className="text-[11.5px] font-black text-blue-600 bg-blue-100 px-2.5 py-1 rounded-md cursor-pointer hover:bg-blue-200 hover:text-blue-800 transition shadow-sm active:scale-95"
-                              title="Click để tự động nhập vào ô bên dưới"
-                            >
-                              {fmtCurrency(Math.round((costPrice + setupCost) * (1 + targetMargin / 100) * (1 + taxPercent / 100)))}
-                            </button>
-                          </div>
-                        </div>
-                        <input
-                          type="text"
-                          className="w-full border-2 border-gray-200 rounded-2xl px-5 py-4 text-3xl font-black text-blue-600 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 shadow-sm"
-                          value={formatNumberInput(retailPrice)}
-                          onChange={(e) => {
-                            const val = parseNumberInput(e.target.value);
-                            setRetailPrice(val === "" ? 0 : Number(val));
-                          }}
-                        />
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-3 gap-4 pt-2">
-                      <div className="flex items-center justify-between p-3 border rounded-xl bg-white shadow-sm">
-                        <span className="text-[10px] font-bold text-gray-500 uppercase">Bảo hành</span>
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="number"
-                            className="w-10 border-none p-0 text-center font-bold text-blue-600 outline-none"
-                            value={warrantyMonths}
-                            onChange={(e) => setWarrantyMonths(e.target.value)}
-                          />
-                          <span className="text-[10px] font-bold text-gray-400">tháng</span>
-                        </div>
-                      </div>
-                      {/* THỜI GIAN HOÀN THIỆN (LEAD TIME) */}
-                      <div className="flex items-center justify-between p-3 border rounded-xl bg-amber-50 border-amber-200 shadow-sm shadow-amber-50">
-                        <span className="text-[10px] font-bold text-amber-700 uppercase">Hoàn thiện</span>
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="number"
-                            className="w-10 border-none p-0 text-center font-bold text-amber-700 outline-none bg-transparent"
-                            value={leadTime}
-                            onChange={(e) => setLeadTime(e.target.value)}
-                          />
-                          <span className="text-[10px] font-bold text-amber-600/60">ngày</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between p-3 border rounded-xl bg-white shadow-sm">
-                        <span className="text-[10px] font-bold text-gray-500 uppercase">Tồn kho</span>
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="number"
-                            className="w-10 border-none p-0 text-center font-bold text-gray-600 outline-none disabled:bg-transparent"
-                            defaultValue={editItem ? editItem.stock : 0}
-                            disabled={editItem?.productType === "Hàng khách đặt"}
-                          />
-                          <span className="text-[10px] font-bold text-gray-400">sp</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="px-6 py-4 border-t flex items-center justify-end gap-3 bg-gray-50/80">
-            <button
-              onClick={() => setShowAddEditModal(false)}
-              className="px-5 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-200 transition cursor-pointer"
-            >
-              Hủy bỏ
-            </button>
-            <button
-              onClick={handleSaveAddEdit}
-              className={`px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all shadow-lg hover:shadow-xl flex items-center gap-2 transform active:scale-95 ${editItem?.status === "Chưa định giá" ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}`}
-            >
-              <Banknote size={16} />
-              {editItem?.status === "Chưa định giá" ? "Xác nhận định giá & Mở bán" : "Lưu thay đổi"}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // 2. GIFT MODAL
-  const renderGiftModal = () => {
-    if (!showGiftModal || !giftItem) return null;
-    return (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-          <div className="p-6 text-center">
-            <div className="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Gift size={32} />
-            </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">
-              Chuyển thành Quà tặng?
-            </h3>
-            <p className="text-sm text-gray-500 mb-6">
-              Bạn có chắc chắn muốn chuyển sản phẩm{" "}
-              <strong>"{giftItem.name}"</strong> thành Quà tặng không? Các sản
-              phẩm quà tặng sẽ không được bán trực tiếp mà dùng để tặng kèm đơn
-              hàng khác.
-            </p>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowGiftModal(false)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition cursor-pointer"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={() => {
-                  toggleStatus(giftItem.id, "Quà tặng");
-                  setShowGiftModal(false);
-                }}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 transition cursor-pointer"
-              >
-                Chuyển đổi
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // 3. DETAIL MODAL
-  const renderDetailModal = () => {
-    if (!showDetailModal || !detailItem) return null;
-    const sc = getStatusConfig(detailItem.status);
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-        <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-          <div className="px-6 py-4 border-b flex items-center justify-between">
-            <h2 className="text-lg font-bold flex items-center gap-2">
-              Chi tiết sản phẩm
-              <span className="text-blue-600 font-mono text-sm tracking-wider px-2 py-0.5 bg-blue-50 rounded-md ml-2">
-                {detailItem.code}
-              </span>
             </h2>
             <div className="flex items-center gap-2">
-              {detailItem?.status === "Chưa định giá" ? (
-                <>
-                  <button
-                    onClick={(e) => {
-                      setShowDetailModal(false);
-                      handleOpenEdit(detailItem, e);
-                    }}
-                    className="h-8 px-3 rounded-lg text-[12px] font-bold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 transition-all shadow-sm flex items-center gap-1.5"
-                  >
-                    Sửa
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      setShowDetailModal(false);
-                      handleOpenEdit(detailItem, e);
-                    }}
-                    className="h-8 px-3 rounded-lg text-[12px] font-bold text-white bg-red-600 hover:bg-red-700 transition-all shadow-sm flex items-center gap-1.5"
-                  >
-                    <Banknote size={14} />
-                    Định giá ngay
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={(e) => {
-                    setShowDetailModal(false);
-                    handleOpenEdit(detailItem, e);
-                  }}
-                  className="h-8 px-3 rounded-lg text-[12px] font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-sm flex items-center gap-1.5"
-                >
-                  <Pencil size={14} />
-                  Sửa
-                </button>
-              )}
               <button
-                onClick={() => setShowDetailModal(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition cursor-pointer text-gray-400"
+                onClick={closeModal}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200 transition cursor-pointer text-[var(--text-placeholder)]"
               >
                 <X size={18} />
               </button>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-6">
-            <div className="flex gap-6">
-              <div className="w-1/3 shrink-0 space-y-3">
-                {detailItem.img ? (
-                  <img
-                    src={detailItem.img}
-                    alt={detailItem.name}
-                    className="w-full aspect-square object-cover rounded-xl border"
-                  />
-                ) : (
-                  <div className="w-full aspect-square bg-gray-100 rounded-xl border flex flex-col items-center justify-center text-gray-400">
-                    <ImageIcon size={40} className="mb-2" />
-                    <span className="text-sm">Chưa có ảnh</span>
-                  </div>
-                )}
 
-                <div className="flex justify-center">
-                  <span
-                    className="inline-flex items-center px-3 py-1 text-[13px] font-bold rounded-lg"
-                    style={{
-                      backgroundColor: sc.bg,
-                      color: sc.text,
-                      border: `1px solid ${sc.border}`,
-                    }}
-                  >
-                    <span
-                      className="w-2 h-2 rounded-full mr-2"
-                      style={{ backgroundColor: sc.text }}
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+            {!editing ? (
+              /* ================= DETAIL VIEW ================= */
+              <div className="flex gap-6">
+                <div className="w-1/3 shrink-0 space-y-3">
+                  {detailItem.img ? (
+                    <img
+                      src={detailItem.img}
+                      alt={detailItem.name}
+                      className="w-full aspect-square object-cover rounded-xl border"
                     />
-                    Trạng thái: {detailItem.status}
-                  </span>
-                </div>
-              </div>
-              <div className="flex-1 space-y-5">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h1 className="text-xl font-bold text-gray-900 mb-1">
-                      {detailItem.name}
-                    </h1>
-                    <p className="text-sm text-gray-500">{detailItem.category}</p>
-                  </div>
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 flex flex-col items-end">
-                    <span className="text-[10px] uppercase font-bold text-gray-400 mb-0.5 tracking-wider">Mã SKU</span>
-                    <span className="text-[13px] font-bold font-mono text-blue-600">
-                      {detailItem.code}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
-                  <div>
-                    <span className="text-gray-500 block text-xs">
-                      Loại hàng
-                    </span>
-                    <span className="font-semibold text-gray-900">
-                      {detailItem.productType}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 block text-xs">Chất liệu</span>
-                    <span className="font-semibold text-gray-900">
-                      {detailItem.material}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 block text-xs">Màu sắc</span>
-                    <span className="font-semibold text-gray-900">
-                      {detailItem.color}
-                    </span>
-                  </div>
-                  {detailItem.status !== "Chưa định giá" && (
-                    <div>
-                      <span className="text-gray-500 block text-xs italic">Bảo hành</span>
-                      <span className="font-bold text-blue-700 flex items-center gap-1">
-                        <ShieldCheck size={14} /> {detailItem.warrantyMonths || 12} tháng
-                      </span>
-                    </div>
-                  )}
-                  <div>
-                    <span className="text-gray-500 block text-xs">
-                      Kích thước
-                    </span>
-                    <span className="font-semibold text-gray-900">
-                      {detailItem.dimensions}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-gray-50 rounded-xl grid grid-cols-2 gap-4">
-                  {detailItem.productType === "Hàng mộc" ? (
-                    <>
-                      <div>
-                        <span className="text-gray-500 block text-xs mb-1">
-                          Giá bán mộc
-                        </span>
-                        <span className="text-lg font-bold text-orange-600">
-                          {fmtCurrency(detailItem.rawRetailPrice)}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500 block text-xs mb-1">
-                          Giá bán hoàn thiện
-                        </span>
-                        <span className="text-lg font-bold text-green-600">
-                          {fmtCurrency(detailItem.finishedRetailPrice)}
-                        </span>
-                      </div>
-                    </>
                   ) : (
-                    <div>
-                      <span className="text-gray-500 block text-xs mb-1">
-                        Giá bán lẻ
-                      </span>
-                      <span className={`text-lg font-bold ${detailItem.status === "Chưa định giá" ? "text-red-500" : "text-blue-600"}`}>
-                        {detailItem.status === "Chưa định giá" ? "Chờ định giá" : fmtCurrency(detailItem.retailPrice)}
-                      </span>
+                    <div className="w-full aspect-square bg-gray-100 rounded-xl border flex flex-col items-center justify-center text-[var(--text-placeholder)]">
+                      <ImageIcon size={40} className="mb-2" />
+                      <span className="text-sm">Chưa có ảnh</span>
                     </div>
                   )}
-                  {detailItem.costPrice && (
-                    <div className={detailItem.productType === "Hàng mộc" ? "col-span-2 border-t pt-2" : ""}>
-                      <span className="text-gray-500 block text-xs mb-1">
-                        Giá nhập (vốn)
-                      </span>
-                      <span className="text-[15px] font-bold text-gray-700">
-                        {fmtCurrency(detailItem.costPrice)}
-                      </span>
-                    </div>
-                  )}
-                  <div className="col-span-2 border-t border-gray-100 mt-2 pt-4 space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-500 text-xs">
-                        Tồn kho hiện tại
-                      </span>
-                      <span className="text-lg font-bold text-gray-900">
-                        {detailItem.productType === "Hàng khách đặt"
-                          ? "—"
-                          : detailItem.stock}
-                      </span>
-                    </div>
-                    {/* THỜI GIAN HOÀN THIỆN */}
-                    <div className="flex justify-between items-center bg-amber-50/50 p-2 rounded-lg border border-amber-100/50">
-                      <span className="text-amber-700 text-xs font-bold flex items-center gap-1">
-                        <Clock size={12} /> Thời gian hoàn thiện dự kiến
-                      </span>
-                      <span className="text-[13px] font-black text-amber-800">
-                        {detailItem.leadTime || 0} ngày
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* THÔNG SỐ KĨ THUẬT / GHI CHÚ CHUNG */}
-                  <div className="mt-4 border-t border-gray-100 pt-4">
-                    <span className="text-gray-500 block text-[10px] font-bold mb-2 flex items-center gap-1.5 uppercase tracking-widest">
-                      <Hammer size={12} className="text-gray-400" />
-                      {detailItem.productType === "Hàng mộc" || detailItem.productType === "Hàng khách đặt"
-                        ? "Thông số kĩ thuật (Xưởng sản xuất)"
-                        : "Ghi chú sản phẩm (Bán lẻ)"}
+                  <div className="flex justify-center">
+                    <span
+                      className="inline-flex items-center px-3 py-1 text-[13px] font-bold rounded-lg"
+                      style={{
+                        backgroundColor: sc?.bg,
+                        color: sc?.text,
+                        border: `1px solid ${sc?.border}`,
+                      }}
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full mr-2"
+                        style={{ backgroundColor: sc?.text }}
+                      />
+                      Trạng thái: {detailItem.status}
                     </span>
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-2">
-                      {detailItem.techNotes ? (
-                        <>
-
-                          <div className="pt-2 border-t border-slate-200/50 mt-1">
-                            <span className="text-gray-400 text-[9px] uppercase font-black block mb-1">
-                              {detailItem.productType === "Hàng sẵn" ? "Ghi chú chi tiết:" : "Thông số kĩ thuật & Yêu cầu sản xuất:"}
-                            </span>
-                            <p className="text-[12.5px] text-slate-600 italic leading-relaxed">
-                              {detailItem.techNotes.other || "Không có nội dung ghi chú."}
-                            </p>
-                          </div>
-                        </>
-                      ) : (
-                        <p className="text-[12.5px] text-gray-400 italic font-medium">Chưa có thông tin kĩ thuật/ghi chú.</p>
-                      )}
-                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <span className="text-gray-500 block text-xs font-semibold mb-1">
-                    Mô tả chi tiết
-                  </span>
-                  <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg leading-relaxed">
-                    {detailItem.description || "Chưa có mô tả."}
-                  </p>
+                <div className="flex-1 space-y-5">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h1 className="text-xl font-bold text-[var(--text-main)] mb-1">
+                        {detailItem.name}
+                      </h1>
+                      <p className="text-sm text-[var(--text-secondary)]">
+                        {detailItem.category}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
+                    <div>
+                      <span className="text-[var(--text-secondary)] block text-xs">
+                        Loại hàng
+                      </span>
+                      <span className="font-semibold text-[var(--text-main)]">
+                        {detailItem.productType}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[var(--text-secondary)] block text-xs">
+                        Chất liệu
+                      </span>
+                      <span className="font-semibold text-[var(--text-main)]">
+                        {detailItem.material}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[var(--text-secondary)] block text-xs">
+                        Màu sắc
+                      </span>
+                      <span className="font-semibold text-[var(--text-main)]">
+                        {detailItem.color}
+                      </span>
+                    </div>
+                    {detailItem.status !== "Chưa định giá" && (
+                      <div>
+                        <span className="text-[var(--text-secondary)] block text-xs italic">
+                          Bảo hành
+                        </span>
+                        <span className="font-bold text-[var(--brand-primary)] flex items-center gap-1">
+                          <ShieldCheck size={14} />{" "}
+                          {detailItem.warrantyMonths || 12} tháng
+                        </span>
+                      </div>
+                    )}
+                    <div>
+                      <span className="text-[var(--text-secondary)] block text-xs">
+                        Kích thước
+                      </span>
+                      <span className="font-semibold text-[var(--text-main)]">
+                        {detailItem.dimensions}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-[var(--bg-main)] rounded-xl grid grid-cols-2 gap-4">
+                    {detailItem.productType === "Hàng mộc" ? (
+                      <>
+                        <div>
+                          <span className="text-[var(--text-secondary)] block text-xs mb-1">
+                            Giá bán mộc
+                          </span>
+                          <span className="text-lg font-bold text-[var(--palette-orange)]">
+                            {fmtCurrency(detailItem.rawRetailPrice)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[var(--text-secondary)] block text-xs mb-1">
+                            Giá bán hoàn thiện
+                          </span>
+                          <span className="text-lg font-bold text-green-600">
+                            {fmtCurrency(detailItem.finishedRetailPrice)}
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <div>
+                        <span className="text-[var(--text-secondary)] block text-xs mb-1">
+                          Giá bán lẻ
+                        </span>
+                        <span
+                          className={`text-lg font-bold ${detailItem.status === "Chưa định giá" ? "text-[var(--status-error)]" : "text-[var(--brand-primary)]"}`}
+                        >
+                          {detailItem.status === "Chưa định giá"
+                            ? "Chờ định giá"
+                            : fmtCurrency(detailItem.retailPrice)}
+                        </span>
+                      </div>
+                    )}
+                    <div className="col-span-2 border-t border-gray-100 mt-2 pt-4 space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[var(--text-secondary)] text-xs">
+                          Tồn kho hiện tại
+                        </span>
+                        <span className="text-lg font-bold text-[var(--text-main)]">
+                          {detailItem.productType === "Hàng khách đặt"
+                            ? "—"
+                            : detailItem.stock}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center bg-[var(--status-pending)]/10/50 p-2 rounded-lg border border-[var(--status-pending)]/20/50">
+                        <span className="text-[var(--status-pending)] text-xs font-bold flex items-center gap-1">
+                          <Clock size={12} /> Hoàn thiện dự kiến
+                        </span>
+                        <span className="text-[13px] font-black text-[var(--status-pending)]">
+                          {detailItem.leadTime || 0} ngày
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-[var(--text-secondary)] block text-xs font-semibold mb-1">
+                      Mô tả
+                    </span>
+                    <p className="text-sm text-gray-700 bg-[var(--bg-main)] p-3 rounded-lg leading-relaxed">
+                      {detailItem.description || "Chưa có mô tả."}
+                    </p>
+                  </div>
                 </div>
               </div>
+            ) : (
+              /* ================= FORM VIEW (Original) ================= */
+              <div className="grid grid-cols-3 gap-6">
+                {/* Left Column: Image & Barcode */}
+                <div className="col-span-1 space-y-4">
+                  <div className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center bg-[var(--bg-main)] hover:bg-[var(--brand-primary)]/5 hover:border-[var(--brand-primary)] transition cursor-pointer relative overflow-hidden group">
+                    {editItem?.img ? (
+                      <>
+                        <img
+                          src={editItem.img}
+                          alt="Product"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="text-white text-sm font-semibold flex items-center gap-2">
+                            <Pencil size={14} /> Đổi ảnh
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <ImageIcon
+                          size={40}
+                          className="text-[var(--text-placeholder)] mb-2 group-hover:text-[var(--brand-primary)] transition-colors"
+                        />
+                        <span className="text-sm font-medium text-[var(--text-secondary)] group-hover:text-[var(--brand-primary)] transition-colors">
+                          Tải ảnh lên (Max 5MB)
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Column: Form */}
+                <div className="col-span-2 space-y-6">
+                  {/* Section 1: Thông tin cơ bản */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-placeholder)] flex items-center gap-2">
+                      <Info size={14} /> Thông tin cơ bản
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+                          Mã SKU <span className="text-[var(--status-error)]">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--brand-primary)] outline-none"
+                          placeholder="VD: BBG-HS-1.8x0.9x0.75-Huong"
+                          defaultValue={editItem?.code || ""}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+                          Tên sản phẩm <span className="text-[var(--status-error)]">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--brand-primary)] outline-none"
+                          placeholder="Nhập tên sản phẩm"
+                          defaultValue={editItem?.name || ""}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+                          Danh mục sản phẩm{" "}
+                          <span className="text-[var(--status-error)]">*</span>
+                        </label>
+                        <select
+                          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--brand-primary)] outline-none bg-white"
+                          value={productCategory}
+                          onChange={(e) => setProductCategory(e.target.value)}
+                        >
+                          <option value="">Chọn danh mục sản phẩm</option>
+                          {CATEGORIES.map((c) => (
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+                          Đơn vị tính
+                        </label>
+                        <select
+                          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--brand-primary)] outline-none bg-white"
+                          defaultValue={editItem?.unit || ""}
+                        >
+                          <option value="">Chọn đơn vị</option>
+                          {UNITS.map((u) => (
+                            <option key={u} value={u}>
+                              {u}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+                        Mô tả chi tiết
+                      </label>
+                      <textarea
+                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--brand-primary)] outline-none min-h-[80px]"
+                        placeholder="Nhập mô tả sản phẩm..."
+                        defaultValue={editItem?.description || ""}
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  {/* Section 2: Thuộc tính hàng mộc */}
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-4 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+                          Chất liệu
+                        </label>
+                        <select
+                          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[var(--brand-primary)] outline-none"
+                          value={woodType}
+                          onChange={(e) => setWoodType(e.target.value)}
+                        >
+                          <option value="">Chọn chất liệu</option>
+                          {WOOD_TYPES.map((w) => (
+                            <option key={w} value={w}>
+                              {w}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+                          Màu sắc
+                        </label>
+                        <select
+                          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[var(--brand-primary)] outline-none"
+                          value={color}
+                          onChange={(e) => setColor(e.target.value)}
+                        >
+                          <option value="">Chọn màu</option>
+                          {COLORS.map((c) => (
+                            <option
+                              key={c}
+                              value={c}
+                              selected={editItem?.color === c}
+                            >
+                              {c}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+                          Kích thước (D×R×C) (cm)
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--brand-primary)] outline-none text-center"
+                            placeholder="Dài"
+                            value={dimL}
+                            onChange={(e) => setDimL(e.target.value)}
+                          />
+                          <span className="text-[var(--text-placeholder)] text-xs font-bold">
+                            ×
+                          </span>
+                          <input
+                            type="text"
+                            className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--brand-primary)] outline-none text-center"
+                            placeholder="Rộng"
+                            value={dimW}
+                            onChange={(e) => setDimW(e.target.value)}
+                          />
+                          <span className="text-[var(--text-placeholder)] text-xs font-bold">
+                            ×
+                          </span>
+                          <input
+                            type="text"
+                            className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--brand-primary)] outline-none text-center"
+                            placeholder="Cao"
+                            value={dimH}
+                            onChange={(e) => setDimH(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 3: Cấu trúc Chi phí */}
+                    <div className="space-y-4 bg-[var(--bg-main)] p-5 rounded-lg border border-gray-100">
+                      <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-placeholder)]">
+                          Cấu trúc Chi phí
+                        </h3>
+                        <select
+                          className="border rounded-lg px-2 py-1 text-[11px] font-bold text-[var(--text-secondary)] outline-none bg-white"
+                          value={productType}
+                          onChange={(e) => {
+                            const newType = e.target.value;
+                            setProductType(newType);
+                            if (newType === "Hàng sẵn") {
+                              setLaborCost(0);
+                              setMaterialCost(0);
+                            }
+                          }}
+                        >
+                          <option value="Hàng sẵn">Hàng sẵn</option>
+                          <option value="Hàng mộc">Hàng mộc</option>
+                        </select>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-4">
+                        <div>
+                          <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1 block">
+                            Giá vốn mộc (đ)
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full border rounded-xl px-4 py-2.5 text-lg font-bold outline-none bg-white text-[var(--text-main)] focus:ring-1 focus:ring-[var(--brand-primary)] transition-all"
+                            value={formatNumberInput(costPrice)}
+                            onChange={(e) => {
+                              const val = parseNumberInput(e.target.value);
+                              setCostPrice(val === "" ? 0 : Number(val));
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {productType === "Hàng mộc" ? (
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-[var(--text-placeholder)] uppercase block">
+                              Công hoàn thiện (đ)
+                            </label>
+                            <input
+                              type="text"
+                              className="w-full border rounded-lg px-3 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-1 focus:ring-[var(--brand-primary)] bg-white"
+                              value={formatNumberInput(laborCost)}
+                              onChange={(e) => {
+                                const val = parseNumberInput(e.target.value);
+                                setLaborCost(val === "" ? 0 : Number(val));
+                              }}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-[var(--text-placeholder)] uppercase block">
+                              Vật tư (đ)
+                            </label>
+                            <input
+                              type="text"
+                              className="w-full border rounded-lg px-3 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-1 focus:ring-[var(--brand-primary)] bg-white"
+                              value={formatNumberInput(materialCost)}
+                              onChange={(e) => {
+                                const val = parseNumberInput(e.target.value);
+                                setMaterialCost(val === "" ? 0 : Number(val));
+                              }}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-blue-400 uppercase block">
+                              Vận hành (đ)
+                            </label>
+                            <input
+                              type="text"
+                              className="w-full border rounded-lg px-3 py-2 text-sm font-bold text-[var(--brand-primary)] outline-none focus:ring-1 focus:ring-[var(--brand-primary)] bg-white"
+                              value={formatNumberInput(setupCost)}
+                              onChange={(e) => {
+                                const val = parseNumberInput(e.target.value);
+                                setSetupCost(val === "" ? 0 : Number(val));
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-white rounded-xl border border-gray-100 flex items-center justify-between">
+                          <div className="flex flex-col">
+                            <label className="text-[10px] font-bold text-[var(--brand-primary)] uppercase">
+                              Vận hành & Giao hàng (đ)
+                            </label>
+                            <input
+                              type="text"
+                              className="w-32 border-none p-0 text-lg font-bold text-[var(--brand-primary)] outline-none bg-transparent"
+                              value={formatNumberInput(setupCost)}
+                              onChange={(e) => {
+                                const val = parseNumberInput(e.target.value);
+                                setSetupCost(val === "" ? 0 : Number(val));
+                              }}
+                            />
+                          </div>
+                          <span className="text-[10px] text-[var(--text-placeholder)] italic">
+                            Mặt hàng sẵn không tốn phí gia công
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-[var(--text-placeholder)] uppercase">
+                          Tổng giá thành thực tế
+                        </span>
+                        <span className="text-xl font-black text-[var(--text-main)]">
+                          {fmtCurrency(
+                            costPrice + laborCost + materialCost + setupCost,
+                          )}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Section 4: Thiết lập Giá bán */}
+                    <div className="space-y-4 pt-4 border-t border-gray-100">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-placeholder)]">
+                        Thiết lập Mục tiêu & Thuế
+                      </h3>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase block mb-1">
+                            Biên lợi nhuận gộp mong muốn (%)
+                          </label>
+                          <input
+                            type="number"
+                            className="w-full border rounded-xl px-4 py-2.5 text-[15px] font-bold outline-none text-[var(--brand-primary)] bg-[var(--brand-primary)]/10 focus:ring-1 focus:ring-[var(--status-success)] transition-all border-[var(--status-success)]/20"
+                            value={targetMargin}
+                            onChange={(e) => setTargetMargin(e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase block mb-1">
+                            Thuế (VAT / Thu nhập) (%)
+                          </label>
+                          <input
+                            type="number"
+                            className="w-full border rounded-xl px-4 py-2.5 text-[15px] font-bold outline-none text-[var(--brand-primary)] bg-[var(--brand-primary)]/10 focus:ring-1 focus:ring-[var(--brand-primary)] transition-all border-[var(--brand-primary)]/20"
+                            value={taxPercent}
+                            onChange={(e) => setTaxPercent(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 bg-[var(--bg-main)] p-5 rounded-2xl border border-gray-200">
+                      <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-main)]">
+                          Giá bán Chính thức
+                        </h3>
+                      </div>
+
+                      {productType === "Hàng mộc" ? (
+                        <div className="grid grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                            <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase">
+                              Giá bán MỘC (đ)
+                            </label>
+                            <div className="flex flex-col gap-1.5 mb-3 bg-white p-2.5 rounded-xl border border-[var(--palette-orange)]/20 shadow-sm">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] text-[var(--text-secondary)] font-medium">
+                                  1. Giá sau lãi (gốc + {targetMargin}%):
+                                </span>
+                                <span className="text-[11.5px] font-bold text-gray-700">
+                                  {fmtCurrency(
+                                    Math.round(
+                                      (costPrice + setupCost) *
+                                      (1 + targetMargin / 100),
+                                    ),
+                                  )}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] text-[var(--brand-primary)] font-medium">
+                                  2. Giá gợi ý (đã cộng VAT {taxPercent}%):
+                                </span>
+                                <button
+                                  onClick={() => {
+                                    const cost = costPrice + setupCost;
+                                    const suggested = Math.round(
+                                      cost *
+                                      (1 + targetMargin / 100) *
+                                      (1 + taxPercent / 100),
+                                    );
+                                    setRawRetailPrice(suggested);
+                                  }}
+                                  className="text-[11.5px] font-black text-[var(--palette-orange)] bg-[var(--palette-orange)]/10 px-2.5 py-1 rounded-md cursor-pointer hover:opacity-90 transition shadow-sm active:scale-95"
+                                  title="Click để tự động nhập vào ô bên dưới"
+                                >
+                                  {fmtCurrency(
+                                    Math.round(
+                                      (costPrice + setupCost) *
+                                      (1 + targetMargin / 100) *
+                                      (1 + taxPercent / 100),
+                                    ),
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                            <input
+                              type="text"
+                              className="w-full border rounded-lg px-4 py-3 text-xl font-black text-[var(--palette-orange)] outline-none focus:ring-2 focus:ring-[var(--palette-orange)]"
+                              value={formatNumberInput(rawRetailPrice)}
+                              onChange={(e) => {
+                                const val = parseNumberInput(e.target.value);
+                                setRawRetailPrice(val === "" ? 0 : Number(val));
+                              }}
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase">
+                              Giá bán THÀNH PHẨM (đ)
+                            </label>
+                            <div className="flex flex-col gap-1.5 mb-3 bg-white p-2.5 rounded-lg border border-[var(--status-success)]/20 shadow-sm">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] text-[var(--text-secondary)] font-medium">
+                                  1. Giá sau lãi (gốc + {targetMargin}%):
+                                </span>
+                                <span className="text-[11.5px] font-bold text-gray-700">
+                                  {fmtCurrency(
+                                    Math.round(
+                                      (costPrice +
+                                        laborCost +
+                                        materialCost +
+                                        setupCost) *
+                                      (1 + targetMargin / 100),
+                                    ),
+                                  )}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] text-[var(--brand-primary)] font-medium">
+                                  2. Giá gợi ý (đã cộng VAT {taxPercent}%):
+                                </span>
+                                <button
+                                  onClick={() => {
+                                    const cost =
+                                      costPrice +
+                                      laborCost +
+                                      materialCost +
+                                      setupCost;
+                                    const suggested = Math.round(
+                                      cost *
+                                      (1 + targetMargin / 100) *
+                                      (1 + taxPercent / 100),
+                                    );
+                                    setFinishedRetailPrice(suggested);
+                                  }}
+                                  className="text-[11.5px] font-black text-[var(--brand-primary)] bg-[var(--brand-primary)]/10 px-2.5 py-1 rounded-md cursor-pointer hover:opacity-90 transition shadow-sm active:scale-95"
+                                  title="Click để tự động nhập vào ô bên dưới"
+                                >
+                                  {fmtCurrency(
+                                    Math.round(
+                                      (costPrice +
+                                        laborCost +
+                                        materialCost +
+                                        setupCost) *
+                                      (1 + targetMargin / 100) *
+                                      (1 + taxPercent / 100),
+                                    ),
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                            <input
+                              type="text"
+                              className="w-full border rounded-xl px-4 py-3 text-xl font-black text-[var(--status-success)] outline-none focus:ring-2 focus:ring-[var(--status-success)]"
+                              value={formatNumberInput(finishedRetailPrice)}
+                              onChange={(e) => {
+                                const val = parseNumberInput(e.target.value);
+                                setFinishedRetailPrice(
+                                  val === "" ? 0 : Number(val),
+                                );
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-3 bg-white p-5 rounded-2xl border border-gray-100">
+                          <div className="flex items-center justify-between">
+                            <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase">
+                              Giá bán lẻ niêm yết (đ)
+                            </label>
+                          </div>
+
+                          <div className="flex flex-col gap-1.5 mb-1 bg-[var(--brand-primary)]/5 p-2.5 rounded-xl border border-blue-100">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] text-[var(--text-secondary)] font-medium">
+                                1. Giá sau lãi (gốc + {targetMargin}%):
+                              </span>
+                              <span className="text-[11.5px] font-bold text-gray-700">
+                                {fmtCurrency(
+                                  Math.round(
+                                    (costPrice + setupCost) *
+                                    (1 + targetMargin / 100),
+                                  ),
+                                )}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] text-[var(--brand-primary)] font-medium">
+                                2. Giá gợi ý (đã cộng VAT {taxPercent}%):
+                              </span>
+                              <button
+                                onClick={() => {
+                                  const cost = costPrice + setupCost;
+                                  const suggested = Math.round(
+                                    cost *
+                                    (1 + targetMargin / 100) *
+                                    (1 + taxPercent / 100),
+                                  );
+                                  setRetailPrice(suggested);
+                                }}
+                                className="text-[11.5px] font-black text-[var(--brand-primary)] bg-blue-100 px-2.5 py-1 rounded-md cursor-pointer hover:bg-blue-200 hover:text-blue-800 transition shadow-sm active:scale-95"
+                                title="Click để tự động nhập vào ô bên dưới"
+                              >
+                                {fmtCurrency(
+                                  Math.round(
+                                    (costPrice + setupCost) *
+                                    (1 + targetMargin / 100) *
+                                    (1 + taxPercent / 100),
+                                  ),
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                          <input
+                            type="text"
+                            className="w-full border-2 border-gray-200 rounded-2xl px-5 py-4 text-3xl font-black text-[var(--brand-primary)] outline-none focus:border-[var(--brand-primary)] focus:ring-4 focus:ring-blue-100 shadow-sm"
+                            value={formatNumberInput(retailPrice)}
+                            onChange={(e) => {
+                              const val = parseNumberInput(e.target.value);
+                              setRetailPrice(val === "" ? 0 : Number(val));
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-3 gap-4 pt-2">
+                        <div className="flex items-center justify-between p-3 border rounded-xl bg-white shadow-sm">
+                          <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase">
+                            Bảo hành
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              className="w-10 border-none p-0 text-center font-bold text-[var(--brand-primary)] outline-none"
+                              value={warrantyMonths}
+                              onChange={(e) =>
+                                setWarrantyMonths(e.target.value)
+                              }
+                            />
+                            <span className="text-[10px] font-bold text-[var(--text-placeholder)]">
+                              tháng
+                            </span>
+                          </div>
+                        </div>
+                        {/* THỜI GIAN HOÀN THIỆN (LEAD TIME) */}
+                        <div className="flex items-center justify-between p-3 border rounded-xl bg-[var(--status-pending)]/10 border-[var(--status-pending)]/20 shadow-sm shadow-sm">
+                          <span className="text-[10px] font-bold text-[var(--status-pending)] uppercase">
+                            Hoàn thiện
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              className="w-10 border-none p-0 text-center font-bold text-[var(--status-pending)] outline-none bg-transparent"
+                              value={leadTime}
+                              onChange={(e) => setLeadTime(e.target.value)}
+                            />
+                            <span className="text-[10px] font-bold text-[var(--status-pending)]/60">
+                              ngày
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between p-3 border rounded-xl bg-white shadow-sm">
+                          <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase">
+                            Tồn kho
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              className="w-10 border-none p-0 text-center font-bold text-[var(--text-secondary)] outline-none disabled:bg-transparent"
+                              defaultValue={editItem ? editItem.stock : 0}
+                              disabled={
+                                editItem?.productType === "Hàng khách đặt"
+                              }
+                            />
+                            <span className="text-[10px] font-bold text-[var(--text-placeholder)]">
+                              sp
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="px-6 py-4 border-t border-[var(--grid-border)] flex items-center justify-between bg-white shrink-0">
+            <button
+              onClick={(e) => handleConfirmDelete(detailItem, e)}
+              className="px-4 py-2 rounded-lg text-[13px] font-bold transition-all border bg-red-50 text-red-600 border-red-100 hover:bg-red-100 flex items-center gap-2"
+            >
+              <Trash2 size={16} /> Xóa sản phẩm
+            </button>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={closeModal}
+                className="px-5 py-2 rounded-lg text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-main)] transition cursor-pointer border border-transparent hover:border-[var(--grid-border)]"
+              >
+                Đóng
+              </button>
+              {!editing && (
+                <button
+                  onClick={() => setModal((prev) => ({ ...prev, view: "form" }))}
+                  className="px-6 py-2.5 rounded-lg text-[13px] font-bold text-white bg-[var(--brand-primary)] hover:opacity-90 transition-all shadow-sm flex items-center gap-2"
+                >
+                  <Pencil size={16} /> Sửa / Định giá
+                </button>
+              )}
+              {editing && (
+                <button
+                  onClick={handleSaveAddEdit}
+                  className={`px-6 py-2.5 rounded-lg text-sm font-bold text-white transition-all shadow-lg hover:shadow-xl flex items-center gap-2 transform active:scale-95 ${editItem?.status === "Chưa định giá" ? "bg-[var(--status-error)] hover:opacity-90" : "bg-[var(--brand-primary)] hover:opacity-90"}`}
+                >
+                  <Banknote size={16} />
+                  {editItem?.status === "Chưa định giá"
+                    ? "Xác nhận định giá & Mở bán"
+                    : "Lưu thay đổi"}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -2041,24 +1454,35 @@ export default function OwnerProducts() {
     {
       header: "Ảnh",
       headerClassName: "w-[80px]",
-      render: (item) =>
-        item.img ? (
-          <img
-            src={item.img}
-            alt={item.name}
-            className="w-12 h-12 rounded-lg object-cover border bg-white shadow-sm"
-          />
-        ) : (
-          <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-gray-50 border text-gray-300">
-            <ImageIcon size={18} />
-          </div>
-        ),
+      render: (item) => (
+        <div className="relative w-12 h-12 shrink-0">
+          {item.img ? (
+            <img
+              src={item.img}
+              alt={item.name}
+              className={`w-12 h-12 rounded-lg object-cover border bg-white shadow-sm transition-all ${item.status === "Chưa định giá" ? "ring-2 ring-[var(--status-error)] ring-offset-1" : ""}`}
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-[var(--bg-main)] border text-gray-300">
+              <ImageIcon size={18} />
+            </div>
+          )}
+          {item.status === "Chưa định giá" && (
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--status-error)] rounded-full border-2 border-white animate-pulse flex items-center justify-center">
+              <span className="w-1.5 h-1.5 bg-white rounded-full"></span>
+            </div>
+          )}
+        </div>
+      ),
     },
     {
       header: "Mã SKU",
       render: (item) => (
         <div className="inline-block bg-gray-100 border border-gray-200 rounded-lg px-2 py-1 leading-none shadow-sm">
-          <p className="text-[12px] font-bold font-mono" style={{ color: "var(--text-main)" }}>
+          <p
+            className="text-[12px] font-bold font-mono"
+            style={{ color: "var(--text-main)" }}
+          >
             {item.code}
           </p>
         </div>
@@ -2067,25 +1491,41 @@ export default function OwnerProducts() {
     {
       header: "Tên sản phẩm",
       render: (item) => (
-        <>
-          <p className="text-[13px] font-semibold text-gray-900 line-clamp-1 mb-0.5">{item.name}</p>
-          <span className="text-[11px] font-medium" style={{ color: "var(--text-placeholder)" }}>
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-2">
+            <p className="text-[13px] font-semibold text-[var(--text-main)] line-clamp-1">
+              {item.name}
+            </p>
+            {item.status === "Chưa định giá" && (
+              <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[var(--status-error)]/10 text-[var(--status-error)] text-[9px] font-black uppercase tracking-tighter border border-[var(--status-error)]/20 animate-in fade-in zoom-in duration-500">
+                <AlertCircle size={10} /> Cần định giá
+              </span>
+            )}
+          </div>
+          <span
+            className="text-[11px] font-medium"
+            style={{ color: "var(--text-placeholder)" }}
+          >
             {item.category}
           </span>
-        </>
+        </div>
       ),
     },
     {
       header: "Chất liệu",
-      render: (item) => <div className="text-gray-700 font-medium">{item.material}</div>,
+      render: (item) => (
+        <div className="text-gray-700 font-medium">{item.material}</div>
+      ),
     },
     {
       header: "Loại hàng",
       render: (item) => (
         <div className="flex flex-col">
-          <span className="font-medium text-gray-900 text-[13px]">{item.productType}</span>
+          <span className="font-medium text-[var(--text-main)] text-[13px]">
+            {item.productType}
+          </span>
           {item.status !== "Chưa định giá" && (
-            <span className="text-[10px] text-blue-600 font-bold flex items-center gap-0.5 mt-1 bg-blue-50 px-1.5 py-0.5 rounded-sm border border-blue-100 self-start">
+            <span className="text-[10px] text-[var(--brand-primary)] font-bold flex items-center gap-0.5 mt-1 bg-[var(--brand-primary)]/5 px-1.5 py-0.5 rounded-sm border border-blue-100 self-start">
               <ShieldCheck size={10} /> BH: {item.warrantyMonths || 12}T
             </span>
           )}
@@ -2095,8 +1535,8 @@ export default function OwnerProducts() {
     {
       header: "Hoàn thiện",
       render: (item) => (
-        <div className="flex items-center gap-1 font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100 w-fit">
-          <Clock size={12} className="text-amber-500" />
+        <div className="flex items-center gap-1 font-bold text-[var(--status-pending)] bg-[var(--status-pending)]/10 px-2 py-0.5 rounded-md border border-[var(--status-pending)]/20 w-fit">
+          <Clock size={12} className="text-[var(--status-pending)]" />
           {item.leadTime || 0} n
         </div>
       ),
@@ -2107,18 +1547,29 @@ export default function OwnerProducts() {
       className: "text-right",
       render: (item) => {
         if (item.status === "Chưa định giá") {
-          return <span className="text-[12px] font-bold text-red-500 italic">Chờ định giá</span>;
+          return (
+            <span className="text-[12px] font-bold text-[var(--status-error)] italic">
+              Chờ định giá
+            </span>
+          );
         }
         if (item.productType === "Hàng mộc") {
           return (
             <div className="flex flex-col items-end">
-              <span className="text-[12px] font-bold text-orange-600">{fmtCurrency(item.rawRetailPrice)} (Mộc)</span>
-              <span className="text-[12px] font-bold text-green-600">{fmtCurrency(item.finishedRetailPrice)} (HT)</span>
+              <span className="text-[12px] font-bold text-[var(--palette-orange)]">
+                {fmtCurrency(item.rawRetailPrice)} (Mộc)
+              </span>
+              <span className="text-[12px] font-bold text-green-600">
+                {fmtCurrency(item.finishedRetailPrice)} (HT)
+              </span>
             </div>
           );
         }
         return (
-          <p className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>
+          <p
+            className="text-[13px] font-bold"
+            style={{ color: "var(--text-main)" }}
+          >
             {fmtCurrency(item.retailPrice)}
           </p>
         );
@@ -2130,11 +1581,13 @@ export default function OwnerProducts() {
       className: "text-right",
       render: (item) =>
         item.productType === "Hàng sẵn" ? (
-          <span className={`font-bold ${item.stock === 0 ? "text-red-600" : "text-gray-900"}`}>
+          <span
+            className={`font-bold ${item.stock === 0 ? "text-[var(--status-error)]" : "text-[var(--text-main)]"}`}
+          >
             {item.stock}
           </span>
         ) : (
-          <span className="text-gray-400">—</span>
+          <span className="text-[var(--text-placeholder)]">—</span>
         ),
     },
     {
@@ -2144,9 +1597,16 @@ export default function OwnerProducts() {
         return (
           <span
             className="inline-flex items-center justify-center w-[130px] px-2 py-1 text-[11px] font-bold rounded-md whitespace-nowrap gap-1.5"
-            style={{ backgroundColor: sc.bg, color: sc.text, border: `1px solid ${sc.border}` }}
+            style={{
+              backgroundColor: sc.bg,
+              color: sc.text,
+              border: `1px solid ${sc.border}`,
+            }}
           >
-            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: sc.text }} />
+            <span
+              className="w-1.5 h-1.5 rounded-full shrink-0"
+              style={{ backgroundColor: sc.text }}
+            />
             {item.status}
           </span>
         );
@@ -2157,11 +1617,9 @@ export default function OwnerProducts() {
   // ===================== MAIN UI =====================
   return (
     <>
-      <PageHelmet title="Quản lý sản phẩm | TPF-SIMS" />
+      <PageHelmet title="Quản lý hàng hóa | TPF-SIMS" />
 
-      {renderAddEditModal()}
-      {renderDetailModal()}
-      {renderGiftModal()}
+      {renderProductModal()}
 
       <div
         className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 space-y-4"
@@ -2175,7 +1633,7 @@ export default function OwnerProducts() {
               style={{ color: "var(--text-main)" }}
             >
               <Package size={22} style={{ color: "var(--brand-primary)" }} />
-              Quản lý sản phẩm
+              Quản lý hàng hóa
             </h1>
             <p
               className="text-[13px] mt-0.5"
@@ -2185,130 +1643,172 @@ export default function OwnerProducts() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2"></div>
-          </div>
+          <div className="flex items-center gap-3"></div>
         </div>
 
-        {activeTab === "products" && (
-          <>
-            {/* STATUS BAR FILTER */}
-            <div className="flex items-center gap-2 shrink-0 flex-wrap px-1">
-              {["Tất cả", ...PRODUCT_STATUSES].map((s) => {
-                const isActive = statusFilter === s;
-                const sc = s !== "Tất cả" ? getStatusConfig(s) : null;
-                return (
-                  <button
-                    key={s}
-                    onClick={() => setStatusFilter(s)}
-                    className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all cursor-pointer flex items-center gap-1.5"
-                    style={{
-                      backgroundColor: isActive
-                        ? sc
-                          ? sc.bg
-                          : "#fff"
-                        : "transparent",
-                      color: isActive
-                        ? sc
-                          ? sc.text
-                          : "var(--brand-primary)"
-                        : "var(--text-secondary)",
-                      border: isActive
-                        ? `1.5px solid ${sc ? sc.border : "var(--grid-border)"}`
-                        : "1.5px solid transparent",
-                    }}
-                  >
-                    {s !== "Tất cả" && (
-                      <span
-                        className="w-1.5 h-1.5 rounded-full"
-                        style={{
-                          backgroundColor: sc
-                            ? sc.text
-                            : "var(--text-secondary)",
-                          opacity: isActive ? 1 : 0.5,
-                        }}
-                      />
-                    )}
-                    {s}
-                    <span className="text-[11px] opacity-70 bg-black/5 px-1.5 rounded-md ml-1">
-                      {statusCounts[s] || 0}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+        <>
+          {/* STATUS BAR FILTER */}
+          <div className="flex items-center gap-2 shrink-0 flex-wrap px-1">
+            {["Tất cả", ...PRODUCT_STATUSES].map((s) => {
+              const isActive = statusFilter === s;
+              const sc = s !== "Tất cả" ? getStatusConfig(s) : null;
+              return (
+                <button
+                  key={s}
+                  onClick={() => setStatusFilter(s)}
+                  className="px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all cursor-pointer flex items-center gap-1.5"
+                  style={{
+                    backgroundColor: isActive
+                      ? sc
+                        ? sc.bg
+                        : "#fff"
+                      : "transparent",
+                    color: isActive
+                      ? sc
+                        ? sc.text
+                        : "var(--brand-primary)"
+                      : "var(--text-secondary)",
+                    border: isActive
+                      ? `1.5px solid ${sc ? sc.border : "var(--grid-border)"}`
+                      : "1.5px solid transparent",
+                  }}
+                >
+                  {s !== "Tất cả" && (
+                    <span
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{
+                        backgroundColor: sc ? sc.text : "var(--text-secondary)",
+                        opacity: isActive ? 1 : 0.5,
+                      }}
+                    />
+                  )}
+                  {s}
+                  <span className="text-[11px] opacity-70 bg-black/5 px-1.5 rounded-md ml-1">
+                    {statusCounts[s] || 0}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-            {/* DATA TABLE */}
-            <DataTable
-              columns={columns}
-              data={paginatedProducts}
-              onRowClick={(item) => { setDetailItem(item); setShowDetailModal(true); }}
-              searchTerm={searchQuery}
-              setSearchTerm={setSearchQuery}
-              searchPlaceholder="Theo mã SKU, tên sản phẩm..."
-              hasActiveFilters={!!hasActiveFilters}
-              clearAllFilters={clearFilters}
-              selectedIds={selectedIds}
-              setSelectedIds={setSelectedIds}
-              rowActions={[
-                {
-                  icon: Eye,
-                  label: "Xem chi tiết",
-                  onClick: (item) => { setDetailItem(item); setShowDetailModal(true); },
+          {/* DATA TABLE */}
+          <DataTable
+            columns={columns}
+            data={paginatedProducts}
+            onRowClick={(item) => handleOpenModal("detail", item)}
+            rowStyle={(item) => ({
+              backgroundColor:
+                item.status === "Chưa định giá"
+                  ? "rgba(229, 72, 77, 0.03)"
+                  : "transparent",
+            })}
+            searchTerm={searchQuery}
+            setSearchTerm={setSearchQuery}
+            searchPlaceholder="Theo mã SKU, tên sản phẩm..."
+            hasActiveFilters={!!hasActiveFilters}
+            clearAllFilters={clearFilters}
+            selectedIds={selectedIds}
+            setSelectedIds={setSelectedIds}
+            rowActions={[
+              {
+                icon: Eye,
+                label: "Xem chi tiết",
+                onClick: (item) => handleOpenModal("detail", item),
+              },
+              {
+                icon: Pencil,
+                label: "Chỉnh sửa",
+                onClick: (item) => handleOpenModal("form", item),
+              },
+              {
+                icon: Trash2,
+                label: "Xóa sản phẩm",
+                onClick: (item) => handleConfirmDelete(item),
+                className: "text-red-500 hover:bg-red-50",
+              },
+            ]}
+            bulkActions={[
+              {
+                label: "XÓA HÀNG LOẠT",
+                icon: Trash2,
+                onClick: () => {
+                  setProducts((prev) =>
+                    prev.filter((p) => !selectedIds.includes(p.id)),
+                  );
+                  setSelectedIds([]);
+                  toast.success(
+                    `Đã xóa ${selectedIds.length} sản phẩm đã chọn thành công!`,
+                  );
                 },
-                {
-                  icon: Pencil,
-                  label: "Chỉnh sửa",
-                  onClick: (item) => handleOpenEdit(item, { stopPropagation: () => { } }),
-                },
-              ]}
-              bulkActions={[
-                {
-                  label: "XÓA HÀNG LOẠT",
-                  icon: Trash2,
-                  onClick: () => {
-                    setProducts(prev => prev.filter(p => !selectedIds.includes(p.id)));
-                    setSelectedIds([]);
-                    toast.success(`Đã xóa ${selectedIds.length} sản phẩm đã chọn thành công!`);
-                  },
-                  requireConfirm: true,
-                  confirmTitle: "Xóa hàng loạt sản phẩm?",
-                  confirmMessage: `Bạn có chắc chắn muốn xóa ${selectedIds.length} sản phẩm đang chọn? Hành động này không thể hoàn tác.`
-                },
-              ]}
-              extraFilters={
-                <>
-                  <select
-                    value={categoryFilter}
-                    onChange={(e) => setCategoryFilter(e.target.value)}
-                    className="h-10 px-3 pr-8 rounded-lg text-[13px] font-medium outline-none cursor-pointer focus:ring-2 transition appearance-none"
-                    style={{
-                      border: categoryFilter !== "Tất cả" ? "1px solid var(--brand-primary)" : "1px solid var(--grid-border)",
-                      backgroundColor: categoryFilter !== "Tất cả" ? "var(--status-focus)" : "#fff",
-                      color: categoryFilter !== "Tất cả" ? "var(--brand-primary)" : "var(--text-main)",
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-                      backgroundRepeat: "no-repeat",
-                      backgroundPosition: "right 8px center",
-                    }}
-                  >
-                    <option value="Tất cả">Danh mục sản phẩm</option>
-                    {CATEGORIES.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </>
-              }
-              pagination={{
-                total: filteredProducts.length,
-                currentPage,
-                setCurrentPage,
-                itemsPerPage,
-                setItemsPerPage,
-              }}
-            />
-          </>
-        )}
+                requireConfirm: true,
+                confirmTitle: "Xóa hàng loạt sản phẩm?",
+                confirmMessage: `Bạn có chắc chắn muốn xóa ${selectedIds.length} sản phẩm đang chọn? Hành động này không thể hoàn tác.`,
+              },
+            ]}
+            extraFilters={
+              <>
+              <div className="relative flex items-center">
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="h-10 px-3 pr-9 rounded-lg text-[13px] font-medium outline-none cursor-pointer focus:ring-2 transition appearance-none"
+                  style={{
+                    border:
+                      categoryFilter !== "Tất cả"
+                        ? "1px solid var(--brand-primary)"
+                        : "1px solid var(--grid-border)",
+                    backgroundColor:
+                      categoryFilter !== "Tất cả"
+                        ? "var(--status-focus)"
+                        : "#fff",
+                    color:
+                      categoryFilter !== "Tất cả"
+                        ? "var(--brand-primary)"
+                        : "var(--text-main)",
+                  }}
+                >
+                  <option value="Tất cả">Danh mục sản phẩm</option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={14}
+                  className="absolute right-3 pointer-events-none opacity-50"
+                  style={{
+                    color:
+                      categoryFilter !== "Tất cả"
+                        ? "var(--brand-primary)"
+                        : "var(--text-main)",
+                  }}
+                  strokeWidth={2.5}
+                />
+              </div>
+              </>
+            }
+            pagination={{
+              total: filteredProducts.length,
+              currentPage,
+              setCurrentPage,
+              itemsPerPage,
+              setItemsPerPage,
+            }}
+          />
+        </>
       </div>
+
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title="Xác nhận xóa sản phẩm"
+        message={`Bạn có chắc chắn muốn xóa sản phẩm "${itemToDelete?.name}" (${itemToDelete?.code}) không? Hành động này không thể hoàn tác.`}
+        onCancel={() => {
+          setShowDeleteConfirm(false);
+          setItemToDelete(null);
+        }}
+        onConfirm={() => handleDeleteProduct(itemToDelete?.id)}
+      />
     </>
   );
 }

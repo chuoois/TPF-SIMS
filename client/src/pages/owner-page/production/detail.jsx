@@ -1,7 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import toast from "react-hot-toast";
+import { MOCK_PRODUCTIONS, STAGES } from "./mockData";
 import {
   ArrowLeft,
   Package,
@@ -24,203 +25,6 @@ import {
   Eye,
 } from "lucide-react";
 
-// ===================== CONSTANTS =====================
-const STAGES = [
-  { key: "gia_cong_moc", label: "Đánh giấy ráp", icon: Hammer, color: "#7C3AED", bg: "#F5F3FF" },
-  { key: "son_hoan_thien", label: "Sơn hoàn thiện", icon: Paintbrush, color: "#0891B2", bg: "#ECFEFF" },
-];
-
-// ===================== MOCK DATA =====================
-const MOCK_PRODUCTIONS = {
-  // CHỜ GIAO THỢ
-  LSX001: {
-    code: "LSX-2603-0001",
-    orderCode: "DH-2603-0001",
-    orderId: "DH001",
-    productName: "Tủ bếp chữ L",
-    productImage: "https://images.unsplash.com/photo-1556912177-c54030639a03?q=80&w=300",
-    variantName: "Gỗ sồi Nga — Sơn PU",
-    material: "Gỗ sồi Nga",
-    size: "320cm + 280cm",
-    finish: "Sơn PU cánh gián",
-    specs: { hardware: "Hafele / DTC", notes: "Lắp chung cư. Yêu cầu: Soi chỉ hiện đại" },
-    quantityPlanned: 1,
-    quantityCompleted: 0,
-    status: "Đánh giấy ráp",
-    subStage: "gia_cong_moc",
-    isPendingApproval: false,
-    needsRedo: false,
-    assignedWorker: "Thợ cả",
-    startDate: "2026-03-05",
-    expectedEndDate: "2026-03-20",
-    date: "2026-03-05T16:30:00",
-    customerName: "Vũ Phương Thảo",
-    notes: "Khách tự trang bị phụ kiện bếp",
-    customerNotes: "Yêu cầu tủ bếp hiện đại, mặt đá trắng sứ vân mây. Các ô ngăn kéo làm ray giảm chấn xịn.",
-    customerSampleImages: [
-      "https://images.unsplash.com/photo-1556912177-c54030639a03?q=80&w=800",
-      "https://images.unsplash.com/photo-1556911223-43a03b30ad51?q=80&w=800"
-    ],
-    timeline: [
-      { time: "05/03/2026 16:45", label: "Bắt đầu đánh giấy ráp", desc: "Tự động bàn giao Xưởng", active: true },
-    ],
-    shippingNotes: "Giao trong giờ hành chính. Nhà có thang máy, báo trước 30p.",
-    images: [
-      "https://images.unsplash.com/photo-1541888946425-d81bb193005f?q=80&w=800",
-      "https://images.unsplash.com/photo-1503387762-592dea58ef4e?q=80&w=800"
-    ],
-  },
-  // ĐANG LÀM MỘC (MOCK_PRODUCTIONS.LSX003)
-  LSX003: {
-    code: "LSX-2603-0003",
-    orderCode: "DH-2603-0008",
-    orderId: "DH008",
-    status: "Đánh giấy ráp",
-    subStage: "gia_cong_moc",
-    assignedWorker: "Nguyễn Văn Đức",
-    startDate: "2026-03-03",
-    expectedEndDate: "2026-03-25",
-    date: "2026-03-03T08:00:00",
-    isDelayed: true,
-    delayReason: "Thời tiết nồm ẩm báo thợ sơn không khô kịp, xin thêm 3 ngày.",
-    customerName: "Hoàng Nguyệt Ánh",
-    productName: "Bàn trà phòng khách",
-    productImage: "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=300",
-    variantName: "Gỗ hương đá — Chạm nghê",
-    customerNotes: "Mẫu đục chạm nghê cổ điển, đục tay kỹ. Màu vecni sáng vân gỗ.",
-    customerSampleImages: ["https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=800"],
-    material: "Gỗ hương đá",
-    size: "6 món (1 đoản, 2 đơn)",
-    finish: "Vecni truyền thống",
-    specs: { hardware: "Không", notes: "Gỗ lõi 100%. Yêu cầu: Chạm Nghê đỉnh" },
-    quantityPlanned: 1,
-    quantityCompleted: 0,
-    notes: "Mặt bàn đục nguyên khối không ghép",
-    images: [
-      "https://images.unsplash.com/photo-1541888946425-d81bb193005f?q=80&w=800"
-    ],
-    progressPhotos: [],
-    timeline: [
-      { time: "03/03/2026 09:00", label: "Bắt đầu đánh giấy ráp", desc: "Thợ xác nhận nhận việc", active: true },
-    ],
-    shippingNotes: "Giao nhà phố, đường rộng xe tải vào được.",
-  },
-  // HÀNG THÔ (MOCK_PRODUCTIONS.LSX007)
-  LSX007: {
-    code: "LSX-2603-0007",
-    orderCode: "DH-THO-001",
-    orderId: "DH017",
-    isRaw: true,
-    status: "Đang sơn",
-    subStage: "son_hoan_thien",
-    assignedWorker: "Thợ sơn B",
-    startDate: "2026-03-12",
-    expectedEndDate: "2026-03-20",
-    date: "2026-03-12T10:00:00",
-    customerName: "Hoàng Nguyệt Ánh",
-    productName: "Sập thờ gỗ mít",
-    productImage: "https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=300",
-    variantName: "Gỗ mít — Mộc sẵn",
-    customerNotes: "Hàng mộc có sẵn tại xưởng. Chỉ cần đánh giấy giáp và lên màu vecni cánh gián.",
-    customerSampleImages: [
-      "https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=800"
-    ],
-    material: "Gỗ mít",
-    size: "220cm",
-    finish: "Mộc / Vecni",
-    specs: { hardware: "Không", notes: "Hoa văn: Tứ linh. Làm kỹ phần chân." },
-    quantityPlanned: 1,
-    quantityCompleted: 0,
-    notes: "Mộc có sẵn, kiểm tra kỹ các mối ghép trước khi sơn",
-    images: [],
-    progressPhotos: [],
-    timeline: [
-      { time: "12/03/2026 10:15", label: "Bắt đầu sơn", desc: "Chuyển từ kho mộc sang tổ sơn", active: true },
-    ],
-    shippingNotes: "Giao lắp tầng 1, đường rộng xe tải vào được.",
-  },
-  // ĐANG SƠN (MOCK_PRODUCTIONS.LSX005)
-  LSX005: {
-    code: "LSX-2603-0012",
-    orderCode: "DH-2603-0012",
-    orderId: "DH012",
-    customerName: "Nguyễn Công Vinh",
-    productName: "Bàn thờ chạm rồng",
-    productImage: "https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=300",
-    variantName: "Gỗ gụ mật — Vecni",
-    material: "Gỗ gụ mật",
-    size: "197x107x127cm",
-    finish: "Vecni cánh gián",
-    specs: { hardware: "Không", notes: "Làm mộc kỹ. Yêu cầu: Chạm Tùng Hạc" },
-    quantityPlanned: 1,
-    quantityCompleted: 0,
-    status: "Đang sơn",
-    subStage: "son_hoan_thien",
-    isPendingApproval: true,
-    needsRedo: false,
-    assignedWorker: "Lê Văn Hùng",
-    startDate: "2026-03-04",
-    expectedEndDate: "2026-03-20",
-    date: "2026-03-04T09:00:00",
-    customerName: "Nguyễn Công Vinh",
-    notes: "Hàng tâm linh, làm kỹ khâu hoàn thiện",
-    customerNotes: "Làm đúng theo mẫu ảnh cũ, màu vecni cánh gián đậm. Lưu ý các góc đục rồng phải bén.",
-    customerSampleImages: [
-      "https://images.unsplash.com/photo-1615529328322-92c90680fd74?q=80&w=800"
-    ],
-    images: [
-      "https://images.unsplash.com/photo-1541888946425-d81bb193005f?q=80&w=800"
-    ],
-    progressPhotos: [
-      { url: "https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=800", time: "12/03/2026 15:30", stage: "Sơn" }
-    ],
-    timeline: [
-      { time: "12/03/2026 15:30", label: "Báo cáo hoàn thành", desc: "Thợ báo xong, chờ chủ xưởng nghiệm thu", active: true },
-    ],
-    shippingNotes: "Lắp đặt phòng thờ tầng 5, có thang máy nhưng cần bê bộ phận rời.",
-  },
-  // HOÀN THÀNH
-  LSX004: {
-    code: "LSX-2603-0004",
-    orderCode: "DH-2603-0008",
-    orderId: "DH008",
-    productName: "Kệ tivi nguyên khối",
-    productImage: "https://images.unsplash.com/photo-1577145745727-42b77daeb623?q=80&w=300",
-    variantName: "Gỗ gụ — Sơn PU",
-    material: "Gỗ gụ",
-    size: "240x40x50cm",
-    finish: "Sơn PU bóng mờ",
-    specs: { hardware: "Ray nhấn mở Hafele", notes: "Gỗ vỉ nguyên miếng. Yêu cầu: Trơn hiện đại" },
-    quantityPlanned: 1,
-    quantityCompleted: 1,
-    status: "Hoàn thành",
-    subStage: null,
-    isPendingApproval: false,
-    needsRedo: false,
-    assignedWorker: "Trần Minh Tâm",
-    startDate: "2026-03-01",
-    expectedEndDate: "2026-03-12",
-    date: "2026-03-01T10:00:00",
-    customerName: "Hoàng Nguyệt Ánh",
-    customerNotes: "Mẫu hiện đại, không đục chạm. Mặt kệ làm nhẵn mịn.",
-    customerSampleImages: [
-      "https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=800"
-    ],
-    images: ["https://images.unsplash.com/photo-1541888946425-d81bb193005f?q=80&w=800"],
-    timeline: [
-      { time: "12/03/2026 16:00", label: "Đã nghiệm thu", desc: "Chủ xưởng đã duyệt sản phẩm", active: true },
-    ],
-    shippingNotes: "Sập nặng, cần ít nhất 4 người khiêng. Tầng 1.",
-  },
-};
-
-const MOCK_WORKERS = [
-  { id: "W001", name: "Nguyễn Văn Đức", role: "Thợ sản xuất", avatar: "Đ" },
-  { id: "W002", name: "Trần Minh Tâm", role: "Thợ sản xuất", avatar: "T" },
-  { id: "W003", name: "Lê Văn Hùng", role: "Thợ sơn", avatar: "H" },
-  { id: "W004", name: "Phạm Quốc Bảo", role: "Thợ mộc", avatar: "B" },
-];
-
 // ===================== HELPERS =====================
 const fmtDate = (s) => (s ? new Date(s).toLocaleDateString("vi-VN") : "Chưa xác định");
 
@@ -231,14 +35,15 @@ const fmtDateTime = (s) => {
 };
 
 const getStatusColor = (status, subStage = null, isPendingApproval = false, needsRedo = false) => {
-  // 1. Primary Status
+  const displayStatus = isPendingApproval ? "Chờ duyệt" : status;
+
   const primaryBadge = {
     "Đánh giấy ráp": { label: "Đánh giấy ráp", bg: "#FDF4FF", text: "#A21CAF", border: "#F5D0FE" },
-    "Đang sơn": { label: "Đang sơn", bg: "#FDF2F8", text: "#DB2777", border: "#FBCFE8" },
-    "Hoàn thành": { label: "Hoàn thành", bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" },
-  }[status] || { label: status, bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
+    "Đang sơn": { label: "Đang sơn", bg: "#E0F2FE", text: "#0369A1", border: "#BAE6FD" },
+    "Chờ duyệt": { label: "Chờ duyệt", bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" },
+    "Hoàn thành": { label: "Hoàn thành", bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" },
+  }[displayStatus] || { label: displayStatus, bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
 
-  // 2. Detail Status
   let detailBadge = null;
   if (isPendingApproval && status === "Đang sơn") {
     detailBadge = { label: "Chờ duyệt", bg: "#EFF6FF", text: "#1D4ED8", border: "#DBEAFE" };
@@ -402,28 +207,36 @@ export default function ProductionDetail() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // States
+  // Shared productions state
+  const [productions, setProductions] = useState(() => {
+    try {
+      const saved = localStorage.getItem("tpf_simulated_productions");
+      const parsed = saved ? JSON.parse(saved) : null;
+      if (Array.isArray(parsed)) return parsed;
+    } catch (e) {
+      console.error("Error loading productions from localStorage", e);
+    }
+    return Object.values(MOCK_PRODUCTIONS);
+  });
+
+  useEffect(() => {
+    localStorage.setItem("tpf_simulated_productions", JSON.stringify(productions));
+  }, [productions]);
+
+  const p = useMemo(() => {
+    if (!Array.isArray(productions)) return Object.values(MOCK_PRODUCTIONS)[0];
+    return productions.find(item => item.id === id) || productions[0];
+  }, [productions, id]);
+
+  // UI States
   const [showRedoModal, setShowRedoModal] = useState(false);
   const [showDelayModal, setShowDelayModal] = useState(false);
   const [selectedWorker, setSelectedWorker] = useState(null);
   const [newDeadline, setNewDeadline] = useState("");
 
-
-  // Fake data fallback logic
-  const fallbackRef = ["LSX001", "LSX002", "LSX010", "LSX015"].includes(id) ? "LSX001"
-    : ["LSX004", "LSX006", "LSX012", "LSX016"].includes(id) ? "LSX004"
-      : ["LSX003", "LSX011", "LSX007"].includes(id) ? "LSX003"
-        : "LSX003";
-
-  const p = MOCK_PRODUCTIONS[id] || {
-    ...MOCK_PRODUCTIONS[fallbackRef],
-    code: `LSX-2603-${id?.replace(/\D/g, '') || "9999"}`,
-    needsRedo: false,
-    isPendingApproval: false,
-  };
   const sc = getStatusColor(p.status, p.subStage, p.isPendingApproval, p.needsRedo);
   const progress = p.quantityPlanned > 0 ? Math.round((p.quantityCompleted / p.quantityPlanned) * 100) : 0;
-  const isProducing = p.status === "Đang sản xuất";
+  const isProducing = p.status === "Đang sơn" || p.status === "Đánh giấy ráp" || p.status === "Đang đánh giấy ráp";
   const isDone = p.status === "Hoàn thành";
   const isHold = false;
 
@@ -432,43 +245,25 @@ export default function ProductionDetail() {
   const isLastStage = currentStageIdx === STAGES.length - 1;
 
   // Handlers
-
+  const updateProduction = (updates) => {
+    setProductions(prev => prev.map(item => item.id === p.id ? { ...item, ...updates } : item));
+  };
 
   const handleOwnerApprove = () => {
-    toast((t) => (
-      <div className="flex flex-col gap-3">
-        <p className="text-[13px] font-medium text-gray-700">
-          Xác nhận <strong>Duyệt & Hoàn thành</strong> cho đơn hàng <strong>{p.orderCode || p.code}</strong>?
-        </p>
-        <div className="flex justify-end gap-2">
-          <button 
-            onClick={() => toast.dismiss(t.id)}
-            className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-gray-400 hover:bg-gray-50 transition"
-          >
-            Hủy
-          </button>
-          <button 
-            onClick={() => {
-              toast.dismiss(t.id);
-              toast.success(`Đơn hàng ${p.orderCode || p.code} đã hoàn thành xuất sắc!`);
-              setTimeout(() => navigate("/owner/production"), 1000);
-            }}
-            className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition"
-          >
-            Xác nhận
-          </button>
-        </div>
-      </div>
-    ), { duration: 5000 });
+    updateProduction({ status: "Hoàn thành", isPendingApproval: false, quantityCompleted: p.quantityPlanned });
+    toast.success(`Đơn hàng ${p.orderCode || p.code} đã hoàn thành xuất sắc!`);
+    setTimeout(() => navigate("/owner/production"), 1000);
   };
 
   const handleRedo = (reason, backToStage) => {
-    toast.error(`Đã yêu cầu sửa lại: ${reason}. Quay lại khâu: ${backToStage === "gia_cong_moc" ? "Mộc" : "Sơn"}`);
+    updateProduction({
+      needsRedo: true,
+      isPendingApproval: false,
+      redoReason: reason,
+      subStage: backToStage
+    });
+    toast.error(`Đã yêu cầu sửa lại: ${reason}.`);
     setShowRedoModal(false);
-  };
-
-  const handleClearRedo = () => {
-    toast.success(`Đã xác nhận bác thợ sửa xong đơn ${p.orderCode || p.code}. Trạng thái trở lại bình thường.`);
   };
 
   const handleDelaySubmit = () => {
@@ -476,9 +271,9 @@ export default function ProductionDetail() {
       toast.error("Vui lòng chọn ngày giao mới!");
       return;
     }
+    updateProduction({ expectedEndDate: newDeadline, isDelayed: true });
     setShowDelayModal(false);
-    toast.success(`Đã gia hạn tiến độ thành công. Ngày giao mới là ${fmtDate(newDeadline)}.`);
-    // Since this uses static MOCK data, we pretend it applied.
+    toast.success(`Đã gia hạn tiến độ thành công.`);
   };
 
   return (
@@ -698,9 +493,9 @@ export default function ProductionDetail() {
                     <SpecItem label="Chất liệu" value={p.material} />
                     <SpecItem label="Kích thước" value={p.size} />
                     <SpecItem label="Màu sắc" value={p.finish} />
-                    <SpecItem 
-                      label="Ghi chú" 
-                      value={[p.specs?.notes, p.notes, p.customerNotes, p.shippingNotes].filter(Boolean).join(" | ")} 
+                    <SpecItem
+                      label="Ghi chú"
+                      value={[p.specs?.notes, p.notes, p.customerNotes, p.shippingNotes].filter(Boolean).join(" | ")}
                       className="md:col-span-2 text-blue-700"
                     />
                   </div>
@@ -725,7 +520,7 @@ export default function ProductionDetail() {
                     </div>
                     <div className="p-4">
                       <div className="grid grid-cols-3 gap-2">
-                        {p.customerSampleImages.map((img, idx) => (
+                        {p.customerSampleImages?.map((img, idx) => (
                           <PhotoCardSmall key={idx} url={img} />
                         ))}
                       </div>
@@ -750,7 +545,7 @@ export default function ProductionDetail() {
                     </div>
                     <div className="p-4">
                       <div className="grid grid-cols-3 gap-2">
-                        {p.images.slice(0, 3).map((img, idx) => (
+                        {p.images?.slice(0, 3).map((img, idx) => (
                           <PhotoCardSmall key={idx} url={img} />
                         ))}
                       </div>
@@ -845,7 +640,7 @@ export default function ProductionDetail() {
                   <span className="text-[12px] font-bold uppercase tracking-wider" style={{ color: "var(--text-main)" }}>Lịch sử</span>
                 </div>
                 <div className="px-5 py-4">
-                  {p.timeline.map((t, i) => {
+                  {p.timeline?.map((t, i) => {
                     const isLast = i === p.timeline.length - 1;
                     return (
                       <div key={i} className="flex gap-3">

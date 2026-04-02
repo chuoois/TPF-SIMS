@@ -19,10 +19,13 @@ import {
   Factory,
   Mail,
   MoreVertical,
-  Calendar
+  Calendar,
+  Trash2
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
+import DataTable from "@/components/control/DataTable";
+import { toast } from "react-hot-toast";
 import { cn } from "@/lib/utils";
 
 // ===================== STATIC DATA =====================
@@ -68,7 +71,7 @@ const formatCurrency = (amount) => {
 // ===================== SUB-COMPONENTS =====================
 const ModalContainer = ({ title, onClose, children, maxWidth = "max-w-2xl" }) => (
   <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-    <div className={`bg-white rounded-2xl w-full ${maxWidth} shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200`}>
+    <div className={`bg-white rounded-lg w-full ${maxWidth} shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200`}>
       <div className="px-6 py-4 border-b flex items-center justify-between shrink-0" style={{ borderColor: "var(--grid-border)" }}>
         <h3 className="text-base font-bold text-gray-900">{title}</h3>
         <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition text-gray-400 hover:text-gray-600">
@@ -140,9 +143,9 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Cột trái: Hồ sơ chi tiết */}
                 <div className="lg:col-span-2 space-y-6">
-                  <div className="p-7 rounded-2xl border border-gray-100 bg-white shadow-xs">
+                  <div className="p-7 rounded-lg border border-gray-100 bg-white shadow-xs">
                     <div className="flex items-center gap-3 mb-6 font-sans">
-                      <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-green-600">
+                      <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center text-green-600">
                         <Building2 size={20} />
                       </div>
                       <div>
@@ -160,7 +163,7 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
                         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Tên nhà cung cấp</p>
                         <p className="text-[13px] font-bold text-gray-900">{supplier.contactPerson}</p>
                       </div>
-                      <div className="space-y-1 flex items-start gap-3 md:col-span-2 p-4 rounded-xl bg-gray-50 border border-gray-100">
+                      <div className="space-y-1 flex items-start gap-3 md:col-span-2 p-4 rounded-lg bg-gray-50 border border-gray-100">
                         <MapPin size={18} className="text-gray-400 mt-0.5 shrink-0" />
                         <div>
                           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Địa chỉ kinh doanh</p>
@@ -170,7 +173,7 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
                     </div>
                   </div>
 
-                  <div className="p-7 rounded-2xl border border-gray-100 bg-white shadow-xs">
+                  <div className="p-7 rounded-lg border border-gray-100 bg-white shadow-xs">
                     <h5 className="text-[12px] font-bold text-gray-900 mb-6 flex items-center gap-2">
                       <Phone size={16} className="text-gray-400" />
                       Thông tin liên hệ
@@ -198,7 +201,7 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
                   </div>
 
                   {/* Notes Section in Dashboard */}
-                  <div className="p-7 rounded-2xl border border-gray-100 bg-white shadow-xs">
+                  <div className="p-7 rounded-lg border border-gray-100 bg-white shadow-xs">
                     <h5 className="text-[12px] font-bold text-gray-900 mb-4 flex items-center gap-2">
                       <FileText size={16} className="text-gray-400" />
                       Ghi chú nội bộ
@@ -206,7 +209,7 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
                     <div className="space-y-3">
                       {supplier.notes && supplier.notes.length > 0 ? (
                         supplier.notes.map((note, idx) => (
-                          <div key={idx} className="p-3 rounded-xl bg-gray-50 border border-gray-100 text-[13px] text-gray-700 font-medium">
+                          <div key={idx} className="p-3 rounded-lg bg-gray-50 border border-gray-100 text-[13px] text-gray-700 font-medium">
                             {note}
                           </div>
                         ))
@@ -219,7 +222,7 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
 
                 {/* Cột phải: Tổng quan tài chính */}
                 <div className="space-y-6">
-                  <div className="p-6 rounded-2xl border border-green-100 bg-green-50/20 relative overflow-hidden group">
+                  <div className="p-6 rounded-lg border border-green-100 bg-green-50/20 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
                       <FileText size={80} />
                     </div>
@@ -257,7 +260,7 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
           {activeTab === "history" && (
             <div className="animate-in fade-in duration-300">
               {!activeShipment ? (
-                <div className="rounded-2xl border border-gray-100 overflow-hidden shadow-xs bg-white">
+                <div className="rounded-lg border border-gray-100 overflow-hidden shadow-xs bg-white">
                   <table className="w-full text-left text-[13px]">
                     <thead className="bg-[#F8FAFC] border-b border-gray-100">
                       <tr>
@@ -310,7 +313,7 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+                  <div className="rounded-lg border border-gray-200 overflow-hidden shadow-sm bg-white">
                     <table className="w-full text-left text-[13px]">
                       <thead className="bg-[#F8FAFC] border-b border-gray-200">
                         <tr>
@@ -343,24 +346,24 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
           {activeTab === "ledger" && !activeShipment && (
             <div className="space-y-6 animate-in fade-in duration-300">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div className="p-5 rounded-2xl bg-white border-2 border-gray-50 shadow-sm relative overflow-hidden group">
+                <div className="p-5 rounded-lg bg-white border-2 border-gray-50 shadow-sm relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-red-50 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform duration-500" />
                   <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 relative z-10"> Tổng tiền nhập hàng</p>
                   <p className="text-2xl font-bold text-gray-900 relative z-10">{formatCurrency(totalIncurred)}</p>
                 </div>
-                <div className="p-5 rounded-2xl bg-white border-2 border-gray-50 shadow-sm relative overflow-hidden group">
+                <div className="p-5 rounded-lg bg-white border-2 border-gray-50 shadow-sm relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform duration-500" />
                   <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 relative z-10">Đã thanh toán (-)</p>
                   <p className="text-2xl font-bold text-gray-900 relative z-10">{formatCurrency(totalPaid)}</p>
                 </div>
-                <div className="p-5 rounded-2xl bg-green-600 text-white shadow-lg relative overflow-hidden group">
+                <div className="p-5 rounded-lg bg-green-600 text-white shadow-lg relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform duration-500" />
                   <p className="text-[11px] font-bold text-white/70 uppercase tracking-widest mb-2 relative z-10">Nợ hiện tại</p>
                   <p className="text-2xl font-bold text-white relative z-10">{formatCurrency(supplier.debt)}</p>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+              <div className="rounded-lg border border-gray-200 overflow-hidden shadow-sm bg-white">
                 <table className="w-full text-left text-[13px]">
                   <thead className="bg-[#F8FAFC] border-b border-gray-200">
                     <tr>
@@ -506,7 +509,7 @@ const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
               value={formData.code}
               onChange={handleChange}
               placeholder="NCC-XXX"
-              className="w-full h-11 px-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 font-mono text-[13px] font-bold"
+              className="w-full h-11 px-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 font-mono text-[13px] font-bold"
               required
             />
           </div>
@@ -517,7 +520,7 @@ const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
               value={formData.name}
               onChange={handleChange}
               placeholder="Nhập tên xưởng, tổng kho..."
-              className="w-full h-11 px-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[13px] font-bold"
+              className="w-full h-11 px-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[13px] font-bold"
               required
             />
           </div>
@@ -528,7 +531,7 @@ const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
               value={formData.contactPerson}
               onChange={handleChange}
               placeholder="Tên đại diện kinh doanh"
-              className="w-full h-11 px-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[13px] font-medium"
+              className="w-full h-11 px-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[13px] font-medium"
             />
           </div>
           <div className="space-y-2">
@@ -537,7 +540,7 @@ const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
               name="group"
               value={formData.group}
               onChange={handleChange}
-              className="w-full h-11 px-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[13px] font-medium appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236b7280%22 stroke-width=%222%22%3E%3Cpath d=%22m6 9 6 6 6-6%22/%3E%3C/svg%3E')] bg-[length:14px] bg-[right_1rem_center] bg-no-repeat"
+              className="w-full h-11 px-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[13px] font-medium appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236b7280%22 stroke-width=%222%22%3E%3Cpath d=%22m6 9 6 6 6-6%22/%3E%3C/svg%3E')] bg-[length:14px] bg-[right_1rem_center] bg-no-repeat"
             >
               <option value="">-- Chọn nhóm --</option>
               <option value="Xưởng mộc gia công">Xưởng mộc gia công</option>
@@ -555,7 +558,7 @@ const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="09xx xxx xxx"
-                className="w-full h-11 pl-10 pr-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[13px] font-medium"
+                className="w-full h-11 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[13px] font-medium"
               />
             </div>
           </div>
@@ -568,7 +571,7 @@ const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="example@gmail.com"
-                className="w-full h-11 pl-10 pr-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[13px] font-medium"
+                className="w-full h-11 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[13px] font-medium"
               />
             </div>
           </div>
@@ -582,7 +585,7 @@ const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
                 onChange={handleChange}
                 rows={2}
                 placeholder="Địa chỉ cụ thể của xưởng/kho..."
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[13px] font-medium resize-none"
+                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[13px] font-medium resize-none"
               />
             </div>
           </div>
@@ -651,7 +654,7 @@ const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
                 </div>
               ))
             ) : (
-              <div className="text-center py-4 text-gray-400 text-[12px] italic border-2 border-dashed border-gray-100 rounded-xl">
+              <div className="text-center py-4 text-gray-400 text-[12px] italic border-2 border-dashed border-gray-100 rounded-lg">
                 Chưa có ghi chú nào về đối tác này
               </div>
             )}
@@ -663,7 +666,7 @@ const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
             <button
               type="button"
               onClick={() => onDelete(supplier.id)}
-              className="px-6 py-2.5 text-red-600 font-bold text-[13px] hover:bg-red-50 rounded-xl transition cursor-pointer"
+              className="px-6 py-2.5 text-red-600 font-bold text-[13px] hover:bg-red-50 rounded-lg transition cursor-pointer"
             >
               Xoá nhà cung cấp
             </button>
@@ -672,13 +675,13 @@ const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2.5 text-gray-500 font-bold text-[13px] hover:bg-gray-100 rounded-xl transition cursor-pointer"
+              className="px-6 py-2.5 text-gray-500 font-bold text-[13px] hover:bg-gray-100 rounded-lg transition cursor-pointer"
             >
               Đóng
             </button>
             <button
               type="submit"
-              className="px-8 py-2.5 bg-green-600 text-white font-bold text-[13px] rounded-xl hover:bg-green-700 shadow-lg shadow-green-100 transition cursor-pointer"
+              className="px-8 py-2.5 bg-green-600 text-white font-bold text-[13px] rounded-lg hover:bg-green-700 shadow-lg shadow-green-100 transition cursor-pointer"
             >
               {supplier ? "Cập nhật thông tin" : "Tạo mới nhà cung cấp"}
             </button>
@@ -692,8 +695,7 @@ const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
 
 // ===================== MAIN COMPONENT =====================
 export default function OwnerSuppliers() {
-  const [searchParams] = useSearchParams();
-  const currentTab = searchParams.get("tab") || "all";
+  const [modalType, setModalType] = useState(null); // 'dashboard' | 'action'
 
   const [suppliers, setSuppliers] = useState(INITIAL_SUPPLIERS);
   const [searchTerm, setSearchTerm] = useState("");
@@ -701,20 +703,100 @@ export default function OwnerSuppliers() {
   const [dateTo, setDateTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
-
-  // Modals state
   const [selectedSupplier, setSelectedSupplier] = useState(null);
-  const [modalType, setModalType] = useState(null); // 'dashboard' | 'action'
+  const [selectedIds, setSelectedIds] = useState([]);
+
+  // Standardize DataTable Columns
+  const columns = [
+    {
+      header: "STT",
+      headerClassName: "w-[60px] text-center",
+      className: "text-center font-medium text-gray-400",
+      render: (s, idx) => (currentPage - 1) * itemsPerPage + idx + 1,
+    },
+    {
+      header: "Nhà cung cấp",
+      render: (s) => (
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[13px] font-bold text-gray-900 group-hover:text-green-600 transition-colors uppercase tracking-tight">
+            {s.name}
+          </span>
+          <span className="text-[10px] font-bold text-gray-400 font-mono tracking-widest">{s.code}</span>
+        </div>
+      ),
+    },
+    {
+      header: "Người liên hệ",
+      render: (s) => (
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[13px] font-medium text-gray-600">{s.contactPerson}</span>
+          <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-bold">
+            <Phone size={10} />
+            {s.phone}
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Phân nhóm",
+      render: (s) => (
+        <span className="px-2.5 py-1 rounded-lg bg-gray-50 border border-gray-100 text-[11px] font-bold text-gray-500">
+          {s.group || "Chưa phân loại"}
+        </span>
+      ),
+    },
+    {
+      header: "Tổng nhập hàng",
+      headerClassName: "text-right",
+      className: "text-right",
+      render: (s) => (
+        <span className="text-[13px] font-black text-gray-900">{formatCurrency(s.totalImport)}</span>
+      ),
+    },
+    {
+      header: "Dư nợ NCC",
+      headerClassName: "text-right",
+      className: "text-right",
+      render: (s) => (
+        <div className="flex flex-col items-end gap-0.5">
+          <span className={cn("text-[14px] font-black", s.debt > 0 ? "text-red-600" : "text-green-600")}>
+            {s.debt > 0 ? formatCurrency(s.debt) : "0 ₫"}
+          </span>
+          {s.debt > 0 && <span className="text-[9px] font-black text-red-400 uppercase tracking-tighter">Cần thanh toán</span>}
+        </div>
+      ),
+    },
+  ];
+
+  const rowActions = [
+    {
+      icon: Eye,
+      label: "Bảng điều khiển",
+      className: "bg-white border-green-100 text-green-500 hover:bg-green-50 hover:border-green-200",
+      onClick: (s) => openModal(s, "dashboard"),
+    },
+    {
+      icon: Pencil,
+      label: "Chỉnh sửa",
+      className: "bg-white border-gray-100 text-gray-400 hover:text-blue-500 hover:border-blue-200",
+      onClick: (s) => openModal(s, "action"),
+    },
+    {
+      icon: Trash2,
+      label: "Xóa nhà cung cấp",
+      className: "bg-white border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200",
+      onClick: (s) => handleDeleteSupplier(s.id),
+      requireConfirm: true,
+      confirmTitle: "Xác nhận xóa nhà cung cấp?",
+      confirmMessage: (s) => `Bạn có chắc chắn muốn xóa đối tác "${s.name}" không? Hành động này không thể hoàn tác.`
+    },
+  ];
 
   // Filter & Search
   const filtered = useMemo(() => {
     let result = suppliers;
 
-    // Tab filter
-    if (currentTab === "debt") {
-      result = result.filter((s) => s.debt > 0);
-    }
-
+    // Search
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
       result = result.filter(
@@ -738,7 +820,7 @@ export default function OwnerSuppliers() {
     }
 
     return result;
-  }, [suppliers, searchTerm, dateFrom, dateTo, currentTab]);
+  }, [suppliers, searchTerm, dateFrom, dateTo]);
 
   const hasActiveFilters = !!(searchTerm || dateFrom || dateTo);
 
@@ -781,6 +863,12 @@ export default function OwnerSuppliers() {
     setModalType(null);
   };
 
+  const handleBulkDelete = () => {
+    setSuppliers(prev => prev.filter(s => !selectedIds.includes(s.id)));
+    setSelectedIds([]);
+    toast.success(`Đã xóa ${selectedIds.length} nhà cung cấp thành công!`);
+  };
+
   return (
     <>
       <PageHelmet title="Quản lý nhà cung cấp - Chủ cửa hàng | TPF-SIMS" />
@@ -789,369 +877,60 @@ export default function OwnerSuppliers() {
         {/* Header */}
         <div className="flex items-center justify-between shrink-0 px-1">
           <div>
-            <h1
-              className="text-[22px] font-bold flex items-center gap-2.5"
-              style={{ color: "var(--text-main)", letterSpacing: "-0.01em" }}
-            >
-              <Factory size={24} style={{ color: "var(--brand-primary)" }} />
+            <h1 className="text-xl font-bold flex items-center gap-2" style={{ color: "var(--text-main)" }}>
+              <Factory size={22} style={{ color: "var(--brand-primary)" }} />
               Quản lý nhà cung cấp
             </h1>
-            <p
-              className="text-[13px] mt-1 font-medium italic"
-              style={{ color: "var(--text-placeholder)" }}
-            >
-              {filtered.length} nguồn hàng đối tác đang hợp tác
+            <p className="text-[13px] mt-0.5" style={{ color: "var(--text-placeholder)" }}>
+              {filtered.length} đối tác cung cấp nguyên liệu gỗ và vật liệu
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <Button
-              onClick={() => openModal(null, "action")}
-              className="h-10 px-6 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-green-100 transition transform hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <Plus size={18} />
-              Thêm nhà cung cấp
-            </Button>
-          </div>
-        </div>
 
-
-
-        {/* Main Content Card */}
-        <div className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden" style={{ boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)" }}>
-          {/* Search Header */}
-          <div
-            className="px-4 py-3 shrink-0 flex flex-wrap items-center justify-between gap-4"
-            style={{
-              backgroundColor: "var(--grid-header-bg)",
-              borderBottom: "1px solid var(--grid-border)",
-            }}
+          <Button
+            onClick={() => openModal(null, "action")}
+            className="h-10 px-6 bg-green-600 hover:bg-green-700 text-white font-bold text-[13px] rounded-lg flex items-center gap-2 shadow-lg shadow-green-100 transition-all active:scale-95"
           >
-            <div className="flex items-center gap-4 flex-1 min-w-[300px]">
-              {/* Search */}
-              <div className="relative flex-1 max-w-sm">
-                <Search
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2"
-                  style={{ color: "var(--text-placeholder)" }}
-                />
-                <input
-                  type="text"
-                  placeholder="Tìm mã NCC, tên nhà cung cấp, SĐT..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] border focus:outline-none focus:ring-1 transition"
-                  style={{
-                    borderColor: "var(--grid-border)",
-                    backgroundColor: "#fff",
-                    color: "var(--text-main)",
-                  }}
-                />
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm("")}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full cursor-pointer"
-                  >
-                    <X size={14} style={{ color: "var(--text-placeholder)" }} />
-                  </button>
-                )}
-              </div>
-
-              {/* Date Filter */}
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Calendar
-                    size={14}
-                    className="absolute left-2.5 top-1/2 -translate-y-1/2"
-                    style={{ color: "var(--text-placeholder)" }}
-                  />
-                  <input
-                    type="date"
-                    value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
-                    className="h-9 pl-9 pr-3 rounded-lg text-[13px] border focus:outline-none shadow-xs"
-                    style={{
-                      borderColor: dateFrom
-                        ? "var(--brand-primary)"
-                        : "var(--grid-border)",
-                      backgroundColor: "#fff",
-                      color: "var(--text-main)",
-                    }}
-                  />
-                </div>
-                <span className="text-gray-400 text-xs font-bold">~</span>
-                <input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  className="h-9 px-3 rounded-lg text-[13px] border focus:outline-none shadow-xs"
-                  style={{
-                    borderColor: dateTo
-                      ? "var(--brand-primary)"
-                      : "var(--grid-border)",
-                    backgroundColor: "#fff",
-                    color: "var(--text-main)",
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {hasActiveFilters && (
-                <button
-                  onClick={clearAllFilters}
-                  className="h-9 px-3 rounded-lg text-[12px] font-bold text-red-600 hover:bg-red-50 transition border border-transparent hover:border-red-100 cursor-pointer"
-                >
-                  Xóa bộ lọc
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Table Area */}
-          <div className="flex-1 overflow-y-auto">
-            <table className="w-full text-left relative">
-              <thead
-                className="sticky top-0 z-10"
-                style={{
-                  backgroundColor: "var(--grid-header-bg)",
-                  borderBottom: "1px solid var(--grid-border)",
-                }}
-              >
-                <tr>
-                  <th
-                    className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider w-16"
-                    style={{ color: "var(--text-placeholder)" }}
-                  >
-                    STT
-                  </th>
-                  <th
-                    className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider"
-                    style={{ color: "var(--text-placeholder)" }}
-                  >
-                    Mã NCC
-                  </th>
-                  <th
-                    className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider"
-                    style={{ color: "var(--text-placeholder)" }}
-                  >
-                    Nhà cung cấp
-                  </th>
-                  <th
-                    className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider"
-                    style={{ color: "var(--text-placeholder)" }}
-                  >
-                    Thông tin liên hệ
-                  </th>
-                  <th
-                    className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider"
-                    style={{ color: "var(--text-placeholder)" }}
-                  >
-                    Ghi chú
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {paginatedSuppliers.map((s, idx) => {
-                  return (
-                    <tr
-                      key={s.id}
-                      className="group relative hover:bg-gray-50/50 transition-colors cursor-pointer"
-                      style={{ borderBottom: "1px solid var(--grid-border)" }}
-                    >
-                      <td className="px-4 py-3" style={{ color: "var(--text-placeholder)" }}>
-                        <p className="text-[13px] font-bold">{(currentPage - 1) * itemsPerPage + idx + 1}</p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p
-                          className="text-[13px] font-bold font-mono"
-                          style={{ color: "var(--text-main)" }}
-                        >
-                          {s.code}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p
-                          className="text-[13px] font-semibold"
-                          style={{ color: "var(--text-main)" }}
-                        >
-                          {s.name}
-                        </p>
-                        <p
-                          className="text-[11px]"
-                          style={{ color: "var(--text-placeholder)" }}
-                        >
-                          <Building2 size={12} className="inline mr-1" />{s.group}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p
-                          className="text-[13px]"
-                          style={{ color: "var(--text-main)" }}
-                        >
-                          {s.phone}
-                        </p>
-                        <p
-                          className="text-[11px] truncate max-w-[180px]"
-                          style={{ color: "var(--text-placeholder)" }}
-                        >
-                          {s.address}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="text-[13px] text-gray-500 truncate max-w-[200px]" title={s.notes && s.notes.length > 0 ? s.notes[s.notes.length - 1] : ""}>
-                          {s.notes && s.notes.length > 0 ? s.notes[s.notes.length - 1] : <span className="text-gray-300 italic">—</span>}
-                        </p>
-                      </td>
-
-                      {/* Hover Actions */}
-                      <td className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 pointer-events-none group-hover:pointer-events-auto">
-                        <button
-                          onClick={() => openModal(s, "dashboard")}
-                          className="h-8 px-3 rounded-lg bg-white border border-gray-200 shadow-sm flex items-center gap-1.5 text-[12px] font-bold text-gray-600 hover:text-blue-600 hover:border-blue-200 transition cursor-pointer"
-                        >
-                          <Eye size={14} /> Hồ sơ
-                        </button>
-                        <button
-                          onClick={() => openModal(s, "action")}
-                          className="h-8 w-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 shadow-sm text-gray-600 hover:text-green-600 hover:border-green-200 transition cursor-pointer"
-                        >
-                          <Pencil size={14} />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-
-                {paginatedSuppliers.length === 0 && (
-                  <tr>
-                    <td colSpan="5" className="py-24 text-center">
-                      <div
-                        className="flex flex-col items-center gap-2"
-                        style={{ color: "var(--text-placeholder)" }}
-                      >
-                        <div
-                          className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                          style={{ backgroundColor: "var(--bg-main)" }}
-                        >
-                          <Factory size={28} strokeWidth={1.5} />
-                        </div>
-                        <p className="text-sm font-medium mt-1">
-                          {searchTerm
-                            ? `Không tìm thấy nhà cung cấp "${searchTerm}"`
-                            : "Chưa có nhà cung cấp nào"}
-                        </p>
-                        {searchTerm && (
-                          <button
-                            onClick={() => setSearchTerm("")}
-                            className="text-[13px] font-medium cursor-pointer"
-                            style={{ color: "var(--brand-primary)" }}
-                          >
-                            Xóa bộ lọc
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination Footer */}
-          {filtered.length > 0 && (
-            <div
-              className="flex items-center justify-between px-6 py-3 border-t shrink-0"
-              style={{
-                borderColor: "var(--grid-border)",
-                backgroundColor: "var(--bg-main)",
-              }}
-            >
-              <div
-                className="text-[13px]"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                Tổng số bản ghi:{" "}
-                <span
-                  className="font-bold"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  {filtered.length}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-6">
-                {/* Items per page indicator */}
-                <div className="flex items-center gap-2">
-                  <span
-                    className="text-[13px]"
-                    style={{ color: "var(--text-secondary)" }}
-                  >
-                    Số bản ghi/trang
-                  </span>
-                  <select
-                    value={itemsPerPage}
-                    onChange={(e) => {
-                      setItemsPerPage(Number(e.target.value));
-                      setCurrentPage(1); // Reset to page 1 when changing items per page
-                    }}
-                    className="h-8 px-2 pr-6 rounded-md text-[13px] border cursor-pointer focus:outline-none focus:ring-1 transition appearance-none"
-                    style={{
-                      borderColor: "var(--grid-border)",
-                      backgroundColor: "#fff",
-                      color: "var(--text-main)",
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-                      backgroundRepeat: "no-repeat",
-                      backgroundPosition: "right 8px center",
-                    }}
-                  >
-                    {[15, 30, 50, 100].map((size) => (
-                      <option key={size} value={size}>
-                        {size}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Range Info */}
-                <div
-                  className="text-[13px]"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  <span
-                    className="font-bold"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    {(currentPage - 1) * itemsPerPage + 1} -{" "}
-                    {Math.min(currentPage * itemsPerPage, filtered.length)}
-                  </span>{" "}
-                  bản ghi
-                </div>
-
-                {/* Arrows */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    <ChevronLeft size={16} strokeWidth={2.5} />
-                  </button>
-                  <button
-                    onClick={() =>
-                      setCurrentPage((p) => Math.min(totalPages, p + 1))
-                    }
-                    disabled={currentPage === totalPages || totalPages === 0}
-                    className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    <ChevronRight size={16} strokeWidth={2.5} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+            <Plus size={18} />
+            Thêm nhà cung cấp
+          </Button>
         </div>
+
+        {/* Standard DataTable Integration */}
+        <DataTable
+          columns={columns}
+          data={filtered}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          searchPlaceholder="Tìm mã NCC, tên nhà cung cấp, SĐT..."
+          dateFrom={dateFrom}
+          setDateFrom={setDateFrom}
+          dateTo={dateTo}
+          setDateTo={setDateTo}
+          hasActiveFilters={hasActiveFilters}
+          clearAllFilters={clearAllFilters}
+          rowActions={rowActions}
+          selectedIds={selectedIds}
+          setSelectedIds={setSelectedIds}
+          bulkActions={[
+            {
+              label: "XÓA HÀNG LOẠT",
+              icon: Trash2,
+              onClick: handleBulkDelete,
+              requireConfirm: true,
+              confirmTitle: "Xóa hàng loạt nhà cung cấp?",
+              confirmMessage: `Bạn có chắc chắn muốn xóa ${selectedIds.length} nhà cung cấp đã chọn không? Hành động này không thể hoàn tác.`
+            }
+          ]}
+          pagination={{
+            total: filtered.length,
+            currentPage,
+            setCurrentPage,
+            itemsPerPage,
+            setItemsPerPage
+          }}
+          rowClassName={() => "group"}
+          onRowClick={(s) => openModal(s, "dashboard")}
+        />
       </div>
 
       {/* Modals */}
