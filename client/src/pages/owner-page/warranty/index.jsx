@@ -821,7 +821,7 @@ export default function WarrantyManagement() {
                         className={`group hover:bg-slate-50 transition-all cursor-pointer ${isExpanded ? 'bg-indigo-50/20' : ''}`}
                         onClick={() => toggleOrder(group.orderId)}
                       >
-                        <td className="px-3 py-4 text-[13px] font-medium text-gray-400 italic text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                        <td className="px-3 py-4 text-[13px] font-medium text-gray-400 text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                         <td className="px-4 py-4 font-black text-[13px] text-gray-800">{group.orderId}</td>
                         <td className="px-4 py-4">
                           <div className="flex flex-col">
@@ -831,7 +831,7 @@ export default function WarrantyManagement() {
                         </td>
                         <td className="px-4 py-4">
                           <span className="px-3 py-1 bg-gray-50 text-gray-600 rounded-lg text-[11px] font-bold border border-gray-100 w-fit flex items-center gap-1.5 group-hover:bg-white group-hover:border-indigo-100 group-hover:text-indigo-600 transition-all">
-                            <Package size={13} /> {group.items.length} món sản phẩm
+                            <Package size={13} /> {group.items.length}  Sản Phẩm
                           </span>
                         </td>
                         <td className="px-4 py-4 text-center">
