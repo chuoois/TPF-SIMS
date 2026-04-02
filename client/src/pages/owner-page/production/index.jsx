@@ -40,6 +40,7 @@ const INITIAL_PRODUCTIONS = [
     orderCode: "DH-2603-0001",
     orderId: "DH001",
     customerName: "Nguyễn Văn A",
+    customerPhone: "0912345678",
     productName: "Tủ bếp chữ L",
     productImage: "https://images.unsplash.com/photo-1556912177-c54030639a03?q=80&w=300",
     variantName: "Gỗ sồi Nga — Sơn PU",
@@ -48,7 +49,7 @@ const INITIAL_PRODUCTIONS = [
     quantityCompleted: 0,
     status: "Đang đánh giấy ráp",
     subStage: "gia_cong_moc",
-    assignedWorker: "Thợ cả",
+    assignedWorker: "Thợ cả: Trần Minh Tâm",
     startDate: null,
     expectedEndDate: "2026-03-20",
     date: "2026-03-05T16:30:00",
@@ -59,15 +60,18 @@ const INITIAL_PRODUCTIONS = [
     orderCode: "DH-2603-0001",
     orderId: "DH001",
     customerName: "Nguyễn Văn A",
+    customerPhone: "0912345678",
     productName: "Đảo bếp",
     productImage: "https://images.unsplash.com/photo-1588854337221-4cf9fa96059c?q=80&w=300",
     variantName: "Đồng bộ tủ bếp",
     orderType: "Hàng khách đặt",
     quantityPlanned: 1,
-    quantityCompleted: 0,
-    status: "Đang đánh giấy ráp",
-    subStage: "gia_cong_moc",
-    assignedWorker: "Thợ cả",
+    quantityCompleted: 1,
+    status: "Đang sơn",
+    subStage: "son_hoan_thien",
+    isPendingApproval: true,
+    completionPhoto: "https://images.unsplash.com/photo-1588854337221-4cf9fa96059c?q=80&w=300",
+    assignedWorker: "Thợ cả: Trần Minh Tâm",
     startDate: null,
     expectedEndDate: "2026-03-22",
     date: "2026-03-05T16:32:00",
@@ -78,15 +82,16 @@ const INITIAL_PRODUCTIONS = [
     orderCode: "DH-2603-0001",
     orderId: "DH001",
     customerName: "Nguyễn Văn A",
+    customerPhone: "0912345678",
     productName: "Kệ trang trí",
     productImage: "https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?q=80&w=300",
     variantName: "Gỗ sồi Nga — Sơn PU",
     orderType: "Hàng khách đặt",
     quantityPlanned: 2,
-    quantityCompleted: 0,
-    status: "Đang đánh giấy ráp",
-    subStage: "gia_cong_moc",
-    assignedWorker: "Thợ cả",
+    quantityCompleted: 2,
+    status: "Hoàn thành",
+    subStage: "son_hoan_thien",
+    assignedWorker: "Thợ cả: Trần Minh Tâm",
     startDate: null,
     expectedEndDate: "2026-03-22",
     date: "2026-03-05T16:33:00",
@@ -98,6 +103,7 @@ const INITIAL_PRODUCTIONS = [
     orderCode: "DH-2603-0002",
     orderId: "DH002",
     customerName: "Trần Thị B",
+    customerPhone: "0988777666",
     productName: "Bàn ăn nguyên tấm",
     productImage: "https://images.unsplash.com/photo-1577145745727-42b77daeb623?q=80&w=300",
     variantName: "Gỗ gõ đỏ — Live Edge",
@@ -106,7 +112,7 @@ const INITIAL_PRODUCTIONS = [
     quantityCompleted: 0,
     status: "Đang đánh giấy ráp",
     subStage: "gia_cong_moc",
-    assignedWorker: "Thợ cả",
+    assignedWorker: "Thợ cả: Trần Minh Tâm",
     startDate: null,
     expectedEndDate: "2026-03-25",
     date: "2026-03-05T16:35:00",
@@ -118,6 +124,7 @@ const INITIAL_PRODUCTIONS = [
     orderCode: "DH-2603-0008",
     orderId: "DH008",
     customerName: "Lê Văn C",
+    customerPhone: "0903111222",
     productName: "Bàn trà phòng khách",
     productImage: "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&w=300",
     variantName: "Gỗ hương đá — Chạm nghê",
@@ -126,9 +133,11 @@ const INITIAL_PRODUCTIONS = [
     quantityCompleted: 0,
     status: "Đang đánh giấy ráp",
     subStage: "gia_cong_moc",
+    needsRedo: true,
+    redoReason: "Mộng còn bị hở, yêu cầu chỉnh lại khít hơn.",
     isDelayed: true,
     delayReason: "Thời tiết nồm ẩm báo thợ sơn không khô kịp, xin thêm 3 ngày.",
-    assignedWorker: "Nguyễn Văn Đức",
+    assignedWorker: "Thợ cả: Trần Minh Tâm",
     startDate: "2026-03-03",
     expectedEndDate: "2026-03-25",
     date: "2026-03-03T08:00:00",
@@ -140,6 +149,7 @@ const INITIAL_PRODUCTIONS = [
     orderCode: "DH-2603-0012",
     orderId: "DH012",
     customerName: "Phạm Văn D",
+    customerPhone: "0915999888",
     productName: "Tủ quần áo 4 cánh",
     productImage: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=300",
     variantName: "Gỗ công nghiệp MDF — Phủ Melamine",
@@ -150,7 +160,7 @@ const INITIAL_PRODUCTIONS = [
     subStage: "son_hoan_thien",
     isPendingApproval: true,
     completionPhoto: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=3000&auto=format&fit=crop",
-    assignedWorker: "Lê Văn Hùng",
+    assignedWorker: "Thợ cả: Trần Minh Tâm",
     startDate: "2026-03-01",
     expectedEndDate: "2026-03-10",
     date: "2026-03-01T09:00:00",
@@ -162,6 +172,7 @@ const INITIAL_PRODUCTIONS = [
     orderCode: "DH-2603-0015",
     orderId: "DH015",
     customerName: "Hoàng Anh Tuấn",
+    customerPhone: "0334555666",
     productName: "Giường ngủ 1m8",
     productImage: "https://images.unsplash.com/photo-1505693419173-42b925b406af?q=80&w=300",
     variantName: "Gỗ xoan đào — Kiểu hiện đại",
@@ -170,7 +181,7 @@ const INITIAL_PRODUCTIONS = [
     quantityCompleted: 0,
     status: "Đang sơn",
     subStage: "son_hoan_thien",
-    assignedWorker: "Phạm Quốc Bảo",
+    assignedWorker: "Thợ cả: Trần Minh Tâm",
     startDate: "2026-03-02",
     expectedEndDate: "2026-03-12",
     date: "2026-03-02T10:00:00",
@@ -181,6 +192,7 @@ const INITIAL_PRODUCTIONS = [
     orderCode: "DH-2603-0015",
     orderId: "DH015",
     customerName: "Hoàng Anh Tuấn",
+    customerPhone: "0334555666",
     productName: "Tủ đầu giường",
     productImage: "https://images.unsplash.com/photo-1616137509918-62f4f22c1926?q=80&w=300",
     variantName: "Gỗ xoan đào — Đồng bộ giường",
@@ -189,7 +201,7 @@ const INITIAL_PRODUCTIONS = [
     quantityCompleted: 0,
     status: "Đang đánh giấy ráp",
     subStage: "gia_cong_moc",
-    assignedWorker: "Thợ cả",
+    assignedWorker: "Thợ cả: Trần Minh Tâm",
     startDate: null,
     expectedEndDate: "2026-03-15",
     date: "2026-03-02T09:58:00",
@@ -201,6 +213,7 @@ const INITIAL_PRODUCTIONS = [
     orderCode: "DH-2603-0018",
     orderId: "DH018",
     customerName: "Nguyễn Thu Hà",
+    customerPhone: "0888222333",
     productName: "Bộ bàn ghế ăn 6 ghế",
     productImage: "https://images.unsplash.com/photo-1617806118233-ef203e91122b?q=80&w=300",
     variantName: "Gỗ sồi — Màu óc chó",
@@ -208,7 +221,7 @@ const INITIAL_PRODUCTIONS = [
     quantityPlanned: 1,
     quantityCompleted: 1,
     status: "Hoàn thành",
-    assignedWorker: "Trần Minh Tâm",
+    assignedWorker: "Thợ cả",
     startDate: "2026-02-28",
     expectedEndDate: "2026-03-08",
     date: "2026-02-27T14:20:00",
@@ -226,8 +239,11 @@ const STATUSES = [
   "Tất cả",
   "Đang đánh giấy ráp",
   "Đang sơn",
+  "Chờ duyệt",
   "Hoàn thành",
 ];
+
+const ORDER_TYPES = ["Tất cả", "Hàng mộc", "Hàng khách đặt"];
 
 // ===================== HELPERS =====================
 const formatDateTime = (dateString) => {
@@ -258,26 +274,136 @@ const getDeadlineStyle = (dateString) => {
 
 const getStatusColor = (status, subStage = null, isPendingApproval = false, needsRedo = false) => {
   // 1. Primary Status (Matching the Tabs)
+  const displayStatus = isPendingApproval ? "Chờ duyệt" : status;
+  
   const primaryBadge = {
     "Đang đánh giấy ráp": { label: "Đang đánh giấy ráp", bg: "#FDF4FF", text: "#A21CAF", border: "#F5D0FE" },
     "Đang sơn": { label: "Đang sơn", bg: "#FDF2F8", text: "#DB2777", border: "#FBCFE8" },
+    "Chờ duyệt": { label: "Chờ duyệt", bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" },
     "Hoàn thành": { label: "Hoàn thành", bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" },
-  }[status] || { label: status, bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
+  }[displayStatus] || { label: displayStatus, bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
 
   // 2. Detail Status (The Nuance)
   let detailBadge = null;
-  if (isPendingApproval && status === "Đang sơn") {
-    detailBadge = { label: "Chờ duyệt", bg: "#EFF6FF", text: "#1D4ED8", border: "#DBEAFE" };
-  } else if (needsRedo && status === "Đang sơn") {
+  if (needsRedo) {
     detailBadge = { label: "Sửa lại", bg: "#FEF2F2", text: "#EF4444", border: "#FEE2E2" };
   }
 
   return { primaryBadge, detailBadge };
 };
 
+// ===================== SUB-COMPONENTS =====================
+const ProductionItemRow = ({ item, onInspect, onRedo, onDelay }) => {
+  const sc = getStatusColor(item.status, item.subStage, item.isPendingApproval, item.needsRedo);
+  const ds = getDeadlineStyle(item.expectedEndDate);
+
+  return (
+    <div className="flex items-center gap-6 py-4 px-6 border-b border-gray-100 last:border-0 hover:bg-slate-50/50 transition-all rounded-xl group/item">
+      {/* Product Image */}
+      <div className="h-12 w-12 rounded-xl overflow-hidden shrink-0 border border-gray-100 shadow-sm bg-gray-50">
+        <img
+          src={item.productImage}
+          alt={item.productName}
+          className="h-full w-full object-cover group-hover/item:scale-110 transition-transform duration-500"
+        />
+      </div>
+
+      {/* Main Info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-4 mb-1.5">
+          <h4 className="text-[13px] font-bold text-gray-900 truncate uppercase tracking-tighter">
+            {item.productName}
+          </h4>
+        </div>
+
+        <div className="flex items-center gap-4 text-[11px]">
+          <div className="flex items-center gap-1.5 min-w-[120px]">
+            <span className="text-gray-400 font-medium italic">Thợ cả:</span>
+            <span className="font-bold text-gray-900 bg-blue-50 px-1.5 py-0.5 rounded-md border border-blue-100">{item.assignedWorker}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+             <span className="text-gray-400 font-medium italic">Hạn giao:</span>
+             <span className="font-bold" style={{ color: ds.color }}>{ds.text}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Status & Actions */}
+      <div className="shrink-0 flex items-center gap-4">
+        <div className="flex flex-col items-end gap-1">
+          <div className="flex items-center gap-1.5">
+            <span
+              className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-tighter"
+              style={{
+                backgroundColor: sc.primaryBadge.bg,
+                color: sc.primaryBadge.text,
+                border: `1px solid ${sc.primaryBadge.border}`,
+              }}
+            >
+              {sc.primaryBadge.label}
+            </span>
+            {sc.detailBadge && (
+              <span
+                className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-tighter"
+                style={{
+                  backgroundColor: sc.detailBadge.bg,
+                  color: sc.detailBadge.text,
+                  border: `1px solid ${sc.detailBadge.border}`
+                }}
+              >
+                {sc.detailBadge.label}
+              </span>
+            )}
+          </div>
+          {item.isDelayed && (
+            <span className="flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded uppercase bg-red-50 text-red-600 border border-red-100 italic">
+              <AlertTriangle size={10} /> Báo chậm trễ
+            </span>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-1.5 opacity-0 group-hover/item:opacity-100 transition-opacity">
+           {item.isPendingApproval ? (
+              <button
+                onClick={(e) => { e.stopPropagation(); onInspect(item); }}
+                className="h-8 px-3 rounded-lg bg-blue-600 text-white text-[11px] font-bold hover:bg-blue-700 transition shadow-sm flex items-center gap-1.5"
+              >
+                <Camera size={13} /> Duyệt
+              </button>
+           ) : null}
+           {item.isDelayed && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelay(item); }}
+                className="h-8 px-3 rounded-lg bg-red-600 text-white text-[11px] font-bold hover:bg-red-700 transition shadow-sm flex items-center gap-1.5"
+              >
+                <Calendar size={13} /> Gia hạn
+              </button>
+           )}
+           <Link
+             to={`/owner/production/${item.id}`}
+             className="h-8 w-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:border-emerald-200 transition bg-white"
+           >
+             <Eye size={14} />
+           </Link>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ===================== COMPONENT =====================
 export default function OwnerProduction() {
-  const [productions, setProductions] = useState(INITIAL_PRODUCTIONS);
+  const [productions, setProductions] = useState(() => {
+    const saved = localStorage.getItem("tpf_simulated_productions");
+    if (saved) return JSON.parse(saved);
+    return INITIAL_PRODUCTIONS;
+  });
+
+  // Persist to localStorage
+  useEffect(() => {
+    localStorage.setItem("tpf_simulated_productions", JSON.stringify(productions));
+  }, [productions]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("Tất cả");
   const [dateFrom, setDateFrom] = useState("");
@@ -289,6 +415,17 @@ export default function OwnerProduction() {
   const [showDelayModal, setShowDelayModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [newDeadline, setNewDeadline] = useState("");
+  const [expandedOrders, setExpandedOrders] = useState(new Set());
+  const [orderTypeFilter, setOrderTypeFilter] = useState("Tất cả");
+
+  const toggleOrder = (orderId) => {
+    setExpandedOrders(prev => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId);
+      else next.add(orderId);
+      return next;
+    });
+  };
 
 
   const navigate = () => { }; // Dummy for now since we're using static data update alerts
@@ -299,7 +436,13 @@ export default function OwnerProduction() {
 
     // Filter by status
     if (statusFilter !== "Tất cả") {
-      result = result.filter((p) => p.status === statusFilter);
+      if (statusFilter === "Chờ duyệt") {
+        result = result.filter(p => p.isPendingApproval);
+      } else if (statusFilter === "Đang sơn") {
+        result = result.filter(p => p.status === "Đang sơn" && !p.isPendingApproval);
+      } else {
+        result = result.filter((p) => p.status === statusFilter);
+      }
     }
 
     // Filter by date range
@@ -314,28 +457,72 @@ export default function OwnerProduction() {
       result = result.filter((p) => new Date(p.date) <= to);
     }
 
+    // Filter by order type
+    if (orderTypeFilter !== "Tất cả") {
+      result = result.filter((p) => p.orderType === orderTypeFilter);
+    }
+
     // Search
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
       result = result.filter(
         (p) =>
-          p.code.toLowerCase().includes(q) ||
           p.orderCode?.toLowerCase().includes(q) ||
           p.productName.toLowerCase().includes(q)
       );
     }
 
     return result.sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, [productions, searchTerm, statusFilter, dateFrom, dateTo]);
+  }, [productions, searchTerm, statusFilter, dateFrom, dateTo, orderTypeFilter]);
+
+  const groupedItems = useMemo(() => {
+    const groups = {};
+    filtered.forEach(p => {
+      const gid = p.orderId || p.orderCode; // Grouping by Order ID or Order Code
+      if (!groups[gid]) {
+        groups[gid] = {
+          orderId: gid,
+          orderCode: p.orderCode,
+          customerName: p.customerName,
+          customerPhone: p.customerPhone,
+          orderType: p.orderType,
+          items: [],
+          date: p.date,
+          status: "Hoàn thành" 
+        };
+      }
+      groups[gid].items.push(p);
+    });
+
+    // Determine aggregate status for the group
+    return Object.values(groups).map(g => {
+      const total = g.items.length;
+      const completed = g.items.filter(i => i.status === "Hoàn thành").length;
+      g.totalCount = total;
+      g.completedCount = completed;
+
+      if (g.items.some(i => i.needsRedo)) g.status = "Sửa lại";
+      else if (g.items.some(i => i.isDelayed)) g.status = "Báo chậm";
+      else if (g.items.some(i => i.isPendingApproval)) g.status = "Chờ duyệt";
+      else if (completed === total) g.status = "Hoàn thành";
+      else {
+        // Find the earliest stage among incomplete items (bottleneck)
+        if (g.items.some(i => i.status === "Đang đánh giấy ráp")) g.status = "Đang đánh giấy ráp";
+        else g.status = "Đang sơn";
+      }
+      return g;
+    });
+  }, [filtered]);
 
   const hasActiveFilters =
-    statusFilter !== "Tất cả" || searchTerm !== "" || dateFrom !== "" || dateTo !== "";
+    statusFilter !== "Tất cả" || searchTerm !== "" || dateFrom !== "" || dateTo !== "" || orderTypeFilter !== "Tất cả";
 
   const clearAllFilters = () => {
     setStatusFilter("Tất cả");
     setSearchTerm("");
     setDateFrom("");
     setDateTo("");
+    setOrderTypeFilter("Tất cả");
   };
 
   const handleQuickComplete = (item) => {
@@ -345,7 +532,7 @@ export default function OwnerProduction() {
     } else {
       toast((t) => (
         <div className="flex flex-col gap-3">
-            Xác nhận <strong>Duyệt & Hoàn thành</strong> cho <strong>{item.orderCode || item.code}</strong>?
+            Xác nhận <strong>Duyệt & Hoàn thành</strong> cho <strong>{item.orderCode}</strong>?
           <div className="flex justify-end gap-2">
             <button
               onClick={() => toast.dismiss(t.id)}
@@ -361,7 +548,7 @@ export default function OwnerProduction() {
                     ? { ...p, isPendingApproval: true, quantityCompleted: p.quantityPlanned }
                     : p
                 ));
-                toast.success(`Đã ghi nhận yêu cầu duyệt cho ${item.code}`);
+                toast.success(`Đã ghi nhận yêu cầu duyệt cho ${item.orderCode}`);
               }}
               className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition"
             >
@@ -383,11 +570,25 @@ export default function OwnerProduction() {
   };
 
   const handleQuickRedo = (reason, backToStage) => {
+    if (!selectedItem) return;
+    
+    const newStatus = backToStage === 'gia_cong_moc' ? "Đang đánh giấy ráp" : "Đang sơn";
+    
     setProductions(prev => prev.map(p =>
       p.id === selectedItem.id
-        ? { ...p, status: "Đang sản xuất", isPendingApproval: false, needsRedo: true, redoReason: reason, subStage: backToStage }
+        ? { 
+            ...p, 
+            status: newStatus, 
+            isPendingApproval: false, 
+            needsRedo: true, 
+            redoReason: reason, 
+            subStage: backToStage,
+            date: new Date().toISOString() // Update timestamp for sorting
+          }
         : p
     ));
+    
+    toast.success(`Đã gửi yêu cầu sửa lại thành công tới ${selectedItem.assignedWorker || 'thợ phụ trách'}`);
     setShowRedoModal(false);
   };
 
@@ -410,22 +611,23 @@ export default function OwnerProduction() {
 
   const statusCounts = useMemo(() => {
     const validProductions = productions.filter(p => p.orderType !== "Hàng sẵn");
-    const counts = { "Tất cả": validProductions.length };
-    STATUSES.forEach(s => {
-      if (s !== "Tất cả") {
-        counts[s] = validProductions.filter(p => p.status === s).length;
-      }
-    });
+    const counts = { 
+      "Tất cả": validProductions.length,
+      "Đang đánh giấy ráp": validProductions.filter(p => p.status === "Đang đánh giấy ráp").length,
+      "Đang sơn": validProductions.filter(p => p.status === "Đang sơn" && !p.isPendingApproval).length,
+      "Chờ duyệt": validProductions.filter(p => p.isPendingApproval).length,
+      "Hoàn thành": validProductions.filter(p => p.status === "Hoàn thành").length,
+    };
     return counts;
   }, [productions]);
 
   // Reset page on filter change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, dateFrom, dateTo]);
+  }, [searchTerm, statusFilter, dateFrom, dateTo, orderTypeFilter]);
 
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const paginatedItems = filtered.slice(
+  const totalPages = Math.ceil(groupedItems.length / itemsPerPage);
+  const paginatedGroups = groupedItems.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
   );
@@ -453,7 +655,7 @@ export default function OwnerProduction() {
               className="text-[13px] mt-1 font-medium italic"
               style={{ color: "var(--text-placeholder)" }}
             >
-              {filtered.length} đơn hàng đang sản xuất
+              {groupedItems.length} đơn hàng đang sản xuất
             </p>
           </div>
         </div>
@@ -580,6 +782,27 @@ export default function OwnerProduction() {
                 />
               </div>
 
+              {/* Order Type Filter */}
+              <div className="flex items-center gap-2 ml-2">
+                <Package size={14} style={{ color: "var(--text-placeholder)" }} />
+                <select
+                  value={orderTypeFilter}
+                  onChange={(e) => setOrderTypeFilter(e.target.value)}
+                  className="h-9 px-3 pr-8 rounded-lg text-[13px] border focus:outline-none shadow-xs appearance-none cursor-pointer bg-white"
+                  style={{
+                    borderColor: orderTypeFilter !== "Tất cả" ? "var(--brand-primary)" : "var(--grid-border)",
+                    color: "var(--text-main)",
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 8px center",
+                  }}
+                >
+                  {ORDER_TYPES.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+
             </div>
 
             <div className="flex items-center gap-2">
@@ -596,7 +819,7 @@ export default function OwnerProduction() {
 
           {/* Table */}
           <div className="flex-1 overflow-y-auto">
-            <table className="w-full text-left relative text-[13px]">
+            <table className="w-full table-fixed text-left relative text-[13px]">
               <thead
                 className="sticky top-0 z-10"
                 style={{
@@ -605,218 +828,110 @@ export default function OwnerProduction() {
                 }}
               >
                 <tr>
-                  <th
-                    className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500 w-16"
-                    style={{ color: "var(--text-placeholder)" }}
-                  >
-                    STT
-                  </th>
-                  <th
-                    className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500"
-                    style={{ color: "var(--text-placeholder)" }}
-                  >
-                    Mã đơn hàng
-                  </th>
-                  <th
-                    className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500"
-                    style={{ color: "var(--text-placeholder)" }}
-                  >
-                    Loại sản phẩm
-                  </th>
-                  <th
-                    className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500"
-                    style={{ color: "var(--text-placeholder)" }}
-                  >
-                    Khách hàng
-                  </th>
-                  <th
-                    className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500"
-                    style={{ color: "var(--text-placeholder)" }}
-                  >
-                    Sản phẩm
-                  </th>
-                  <th
-                    className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500"
-                    style={{ color: "var(--text-placeholder)" }}
-                  >
-                    Trạng thái
-                  </th>
-                  <th
-                    className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-500"
-                    style={{ color: "var(--text-placeholder)" }}
-                  >
-                    Hạn giao
-                  </th>
+                  <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider w-[5%] text-center text-gray-400 shrink-0">STT</th>
+                  <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider w-[15%] text-center text-gray-400">Mã đơn hàng</th>
+                  <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider w-[30%] text-gray-400">Khách hàng</th>
+                  <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider w-[15%] text-center text-gray-400">Loại hàng</th>
+                  <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider w-[15%] text-center text-gray-400">Sản phẩm</th>
+                  <th className="px-6 py-3 text-[11px] font-bold uppercase tracking-wider w-[20%] text-center text-gray-400">Trạng thái tổng</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {paginatedItems.map((p, idx) => {
-                  const sc = getStatusColor(p.status, p.subStage, p.isPendingApproval, p.needsRedo);
-                  const ds = getDeadlineStyle(p.expectedEndDate);
-                  const progress =
-                    p.quantityPlanned > 0
-                      ? Math.round((p.quantityCompleted / p.quantityPlanned) * 100)
-                      : 0;
-
-                  // Check if this item belongs to a group (same order) on this page
-                  const sameOrderItems = paginatedItems.filter(item => item.orderId === p.orderId && p.orderId !== null);
-                  const isFirstInGroup = sameOrderItems.length > 1 && sameOrderItems[0].id === p.id;
-                  const isLastInGroup = sameOrderItems.length > 1 && sameOrderItems[sameOrderItems.length - 1].id === p.id;
-                  const isInGroup = sameOrderItems.length > 1;
+                {paginatedGroups.map((group, idx) => {
+                  const isExpanded = expandedOrders.has(group.orderId);
+                  const statusColors = {
+                    "Sửa lại": { bg: "#FEF2F2", text: "#EF4444", border: "#FEE2E2" },
+                    "Chờ duyệt": { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" },
+                    "Báo chậm": { bg: "#FEF2F2", text: "#B91C1C", border: "#FECACA" },
+                    "Đang sơn": { bg: "#FDF2F8", text: "#DB2777", border: "#FBCFE8" },
+                    "Đang đánh giấy ráp": { bg: "#FDF4FF", text: "#A21CAF", border: "#F5D0FE" },
+                    "Hoàn thành": { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" },
+                  }[group.status] || { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
 
                   return (
-                    <tr
-                      key={p.id}
-                      className="group relative border-b hover:bg-emerald-50/10 transition-colors"
-                      style={{
-                        borderBottom: "1px solid var(--grid-border)",
-                      }}
-                    >
-                      <td className="px-6 py-4 font-medium text-gray-400">
-                        {(currentPage - 1) * itemsPerPage + idx + 1}
-                      </td>
-                      <td className="px-6 py-4 relative">
-                        {/* Group Indicator Line */}
-                        {isInGroup && (
-                          <div
-                            className={`absolute left-0 w-1 bg-blue-400/30 ${isFirstInGroup ? 'top-4 rounded-t-full' : 'top-0'} ${isLastInGroup ? 'bottom-4 rounded-b-full' : 'bottom-0'}`}
-                          />
-                        )}
-
-                        <div className="flex flex-col gap-1.5">
-                          <p className="text-[13px] font-bold font-mono text-gray-900 tracking-tight">
-                            {p.orderCode || p.code}
+                    <React.Fragment key={group.orderId}>
+                      <tr 
+                        className={`group hover:bg-slate-50 transition-all cursor-pointer ${isExpanded ? 'bg-emerald-50/20' : ''}`}
+                        onClick={() => toggleOrder(group.orderId)}
+                      >
+                        <td className="px-6 py-5 text-[13px] font-medium text-gray-400 text-center">
+                          {(currentPage - 1) * itemsPerPage + idx + 1}
+                        </td>
+                        <td className="px-6 py-5 text-center">
+                          <p className="text-[13px] font-black font-mono text-gray-900 tracking-tight">
+                             {group.orderCode}
                           </p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        {p.orderType && (
-                          <span className="text-[10px] font-black px-2 py-1 rounded-lg bg-slate-100 text-slate-500 border border-slate-200 uppercase w-fit tracking-tight">
-                            {p.orderType}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-[13px] font-bold text-gray-900">
-                            {p.customerName || "—"}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col gap-1.5">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[13px] font-bold text-gray-900 truncate">
-                              {p.productName}
-                            </span>
+                        </td>
+                        <td className="px-6 py-5 whitespace-nowrap">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-[13px] text-gray-900 leading-tight">{group.customerName}</span>
+                            {group.customerPhone && (
+                              <span className="text-[11px] text-gray-400 font-medium mt-0.5">{group.customerPhone}</span>
+                            )}
                           </div>
-                          <div className="flex flex-wrap gap-1">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded bg-gray-50 border border-gray-100 text-[10px] font-bold text-gray-500">
-                              {p.variantName}
-                            </span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span
-                            className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold whitespace-nowrap"
-                            style={{
-                              backgroundColor: sc.primaryBadge.bg,
-                              color: sc.primaryBadge.text,
-                              border: `1px solid ${sc.primaryBadge.border}`,
-                            }}
-                          >
-                            <span
-                              className="w-1.5 h-1.5 rounded-full mr-1.5"
-                              style={{ backgroundColor: sc.primaryBadge.text }}
-                            />
-                            {sc.primaryBadge.label}
+                        </td>
+                        <td className="px-6 py-5 text-center">
+                          <span className="text-[11px] font-bold text-gray-400 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-lg uppercase tracking-tighter whitespace-nowrap shadow-xs">
+                             {group.orderType}
                           </span>
-                          {sc.detailBadge && (
-                            <span
-                              className="px-2 py-0.5 rounded-md text-[10px] font-bold"
-                              style={{
-                                backgroundColor: sc.detailBadge.bg,
-                                color: sc.detailBadge.text,
-                                border: `1px solid ${sc.detailBadge.border}`
-                              }}
-                            >
-                              {sc.detailBadge.label}
-                            </span>
-                          )}
-                          {p.isDelayed && (
-                            <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-red-50 text-red-600 border border-red-100">
-                              <AlertTriangle size={10} />
-                              Báo chậm
-                            </span>
-                          )}
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-4 text-[13px] font-bold relative" style={{ color: ds.color }}>
-                        {ds.text}
-
-                        {/* HOVER QUICK ACTIONS BAR */}
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 flex items-center gap-2 bg-white border border-gray-100 shadow-2xl rounded-2xl p-1.5 z-10">
-                          {p.isDelayed && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedItem(p);
-                                setNewDeadline(p.expectedEndDate || "");
-                                setShowDelayModal(true);
-                              }}
-                              className="h-9 px-4 rounded-xl bg-red-50 text-red-600 text-[12px] font-bold hover:bg-red-600 hover:text-white transition-all flex items-center gap-1.5"
-                            >
-                              <Calendar size={14} /> Xử lý chậm
-                            </button>
-                          )}
-                          <Link
-                            to={`/owner/production/${p.id}`}
-                            className="inline-flex items-center gap-1.5 px-4 h-9 rounded-xl bg-emerald-50 text-emerald-700 text-[12px] font-bold hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
-                          >
-                            <Eye size={14} />
-                            Chi tiết
-                          </Link>
-
-
-
-                          {p.status === "Đang sơn" && (
-                            <>
-                              {p.isPendingApproval ? (
-                                <button
-                                  onClick={() => {
-                                    setSelectedItem(p);
-                                    setShowInspectModal(true);
-                                  }}
-                                  className="h-9 px-5 rounded-xl bg-blue-600 flex items-center gap-2 text-[12px] font-bold text-white hover:bg-blue-700 transition-all shadow-lg active:scale-95"
-                                >
-                                  <Camera size={16} /> Duyệt
-                                </button>
-                              ) : (
-                                <>
-                                  <button
-                                    onClick={() => {
-                                      setSelectedItem(p);
-                                      setShowRedoModal(true);
-                                    }}
-                                    className="h-9 px-3 rounded-xl bg-white border border-red-200 flex items-center gap-1.5 text-[12px] font-bold text-red-500 hover:bg-red-50 transition-all shadow-sm"
-                                  >
-                                    <RotateCcw size={16} /> Sửa lại
-                                  </button>
-                                </>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
+                        </td>
+                        <td className="px-6 py-5 text-center">
+                          <span className="px-3 py-1 bg-gray-50 text-gray-400 rounded-lg text-[10px] font-black border border-gray-100 uppercase tracking-tighter flex items-center gap-1.5 w-fit mx-auto">
+                            <Package size={12} className="opacity-50" /> {group.items.length} sản phẩm
+                          </span>
+                        </td>
+                        <td className="px-6 py-5 text-center">
+                           <div className="flex flex-col items-center gap-1.5">
+                             {/* Progress Info for multi-item orders */}
+                             {group.totalCount > 1 && (
+                               <span className="text-[10px] font-black text-gray-400 bg-gray-100/50 px-2 py-0.5 rounded-full border border-gray-100 uppercase tracking-tighter">
+                                 {group.completedCount}/{group.totalCount} hoàn thành
+                               </span>
+                             )}
+                             
+                             <span
+                               className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-tighter border"
+                               style={{
+                                 backgroundColor: statusColors.bg,
+                                 color: statusColors.text,
+                                 borderColor: statusColors.border
+                               }}
+                             >
+                               <span className="w-1.5 h-1.5 rounded-full mr-2" style={{ backgroundColor: statusColors.text }} />
+                               {group.status}
+                             </span>
+                           </div>
+                        </td>
+                      </tr>
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan={6} className="p-0 bg-white">
+                            <div className="px-12 py-6">
+                              <div className="bg-white border border-gray-200 rounded-3xl shadow-xl overflow-hidden divide-y divide-gray-50 border-l-[6px] border-l-emerald-500">
+                                <div className="px-6 py-3 bg-gray-50/50 flex items-center justify-between border-b border-gray-100">
+                                  <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Chi tiết lệnh sản xuất</span>
+                                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Đơn hàng: {group.orderCode}</span>
+                                </div>
+                                {group.items.map((item) => (
+                                  <ProductionItemRow
+                                    key={item.id}
+                                    item={item}
+                                    onInspect={(p) => { setSelectedItem(p); setShowInspectModal(true); }}
+                                    onRedo={(p) => { setSelectedItem(p); setShowRedoModal(true); }}
+                                    onDelay={(p) => { setSelectedItem(p); setNewDeadline(p.expectedEndDate || ""); setShowDelayModal(true); }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   );
                 })}
-                {paginatedItems.length === 0 && (
+                {groupedItems.length === 0 && (
                   <tr>
-                    <td colSpan="6" className="py-24 text-center">
+                    <td colSpan="7" className="py-24 text-center">
                       <div
                         className="flex flex-col items-center gap-2"
                         style={{ color: "var(--text-placeholder)" }}
@@ -862,12 +977,12 @@ export default function OwnerProduction() {
                 className="text-[13px]"
                 style={{ color: "var(--text-secondary)" }}
               >
-                Tổng số bản ghi:{" "}
+                Tổng số đơn hàng:{" "}
                 <span
                   className="font-bold"
                   style={{ color: "var(--text-main)" }}
                 >
-                  {filtered.length}
+                  {groupedItems.length}
                 </span>
               </div>
 
@@ -914,9 +1029,9 @@ export default function OwnerProduction() {
                     style={{ color: "var(--text-main)" }}
                   >
                     {(currentPage - 1) * itemsPerPage + 1} -{" "}
-                    {Math.min(currentPage * itemsPerPage, filtered.length)}
+                    {Math.min(currentPage * itemsPerPage, groupedItems.length)}
                   </span>{" "}
-                  bản ghi
+                  đơn hàng
                 </div>
 
                 {/* Arrows */}
@@ -960,8 +1075,8 @@ export default function OwnerProduction() {
 
               <div className="p-6 space-y-5">
                 <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200">
-                  <p className="text-[11px] text-gray-400 font-bold uppercase mb-1">Đang xử lý lệnh</p>
-                  <p className="text-[13px] font-bold text-gray-900">{selectedItem.code} - {selectedItem.productName}</p>
+                  <p className="text-[11px] text-gray-400 font-bold uppercase mb-1">Sản phẩm đang xử lý</p>
+                  <p className="text-[13px] font-bold text-gray-900">{selectedItem.productName}</p>
                 </div>
 
                 <div>
@@ -1039,13 +1154,13 @@ export default function OwnerProduction() {
                   <div className="flex-1 flex flex-col justify-between py-2">
                     <div className="space-y-4">
                       <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
-                        <p className="text-[11px] text-gray-400 font-bold uppercase mb-1">Thông tin lệnh</p>
-                        <p className="text-[15px] font-bold text-gray-900">{selectedItem.code}</p>
+                        <p className="text-[11px] text-gray-400 font-bold uppercase mb-1">Đơn hàng</p>
+                        <p className="text-[15px] font-bold text-gray-900">{selectedItem.orderCode}</p>
                         <p className="text-[13px] text-gray-600 mt-1">{selectedItem.productName}</p>
                       </div>
 
                       <div className="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100">
-                        <p className="text-[11px] text-emerald-600/60 font-bold uppercase mb-1">Người báo xong</p>
+                        <p className="text-[11px] text-emerald-600/60 font-bold uppercase mb-1">Thợ cả báo xong</p>
                         <p className="text-[14px] font-bold text-emerald-900">{selectedItem.assignedWorker}</p>
                         <p className="text-[12px] text-emerald-600 mt-0.5">Thời gian: {formatDateTime(new Date())}</p>
                       </div>
@@ -1089,7 +1204,7 @@ export default function OwnerProduction() {
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-red-50/50">
                 <div className="flex items-center gap-2 text-red-600">
                   <AlertTriangle size={18} />
-                  <h3 className="text-[15px] font-bold uppercase tracking-tight">Xử lý báo cáo chậm</h3>
+                  <h3 className="text-[15px] font-bold uppercase tracking-tight">Gia hạn sản xuất</h3>
                 </div>
                 <button onClick={() => setShowDelayModal(false)} className="text-gray-400 hover:text-gray-600 transition p-1 hover:bg-white rounded-lg">
                   <X size={20} />
@@ -1098,7 +1213,7 @@ export default function OwnerProduction() {
 
               <div className="p-6 space-y-5">
                 <div className="p-4 rounded-2xl bg-red-50 border border-red-100">
-                  <p className="text-[11px] text-red-400 font-bold uppercase mb-1">Lý do thợ báo lùi ngày</p>
+                  <p className="text-[11px] text-red-400 font-bold uppercase mb-1">Lý do thợ cả báo chậm</p>
                   <p className="text-[13px] font-medium text-red-900 leading-relaxed italic border-l-2 border-red-300 pl-3 py-1">
                     "{selectedItem.delayReason}"
                   </p>
@@ -1139,7 +1254,7 @@ export default function OwnerProduction() {
                   onClick={handleDelaySubmit}
                   className="px-5 py-2 rounded-xl text-[13px] font-bold bg-red-600 text-white hover:bg-red-700 transition shadow-md"
                 >
-                  Cập nhật tiến độ
+                  Xác nhận gia hạn
                 </button>
               </div>
             </div>

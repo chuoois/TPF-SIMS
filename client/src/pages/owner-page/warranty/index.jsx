@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   ShieldCheck,
   Search,
@@ -16,10 +16,13 @@ import {
   Wrench,
   User,
   Package,
+  Layers,
   Truck,
   RefreshCw,
   X,
-  FileText
+  FileText,
+  DollarSign,
+  BadgeDollarSign
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import toast from "react-hot-toast";
@@ -29,6 +32,7 @@ import { vi } from "date-fns/locale";
 // ===================== BUSINESS POLICIES =====================
 const WARRANTY_POLICIES = {
   NATURAL_WOOD: { 
+    id: "NATURAL_WOOD",
     label: "Gỗ tự nhiên (Gụ, Hương, Mít)", 
     duration: 36, 
     coverage: [
@@ -39,6 +43,7 @@ const WARRANTY_POLICIES = {
     conditions: "Không để sản phẩm dưới ánh nắng trực tiếp hoặc nơi quá ẩm ướt."
   },
   INDUSTRIAL_WOOD: { 
+    id: "INDUSTRIAL_WOOD",
     label: "Gỗ công nghiệp (MDF, HDF)", 
     duration: 12, 
     coverage: [
@@ -49,8 +54,41 @@ const WARRANTY_POLICIES = {
   }
 };
 
+const calculateWarrantyDates = (startDateStr, policyOrDuration) => {
+  if (!startDateStr) return { startDate: "N/A", endDate: "N/A", status: "Pending" };
+  
+  try {
+    const start = new Date(startDateStr);
+    if (isNaN(start.getTime())) {
+      return { startDate: "N/A", endDate: "N/A", status: "Pending" };
+    }
+    
+    // Support both the policy object and a raw duration number
+    const duration = typeof policyOrDuration === "object" ? policyOrDuration.duration : policyOrDuration;
+    const months = parseInt(duration) || 12;
+    
+    const end = addMonths(start, months);
+    const now = new Date();
+    
+    let status = "Active";
+    if (now > end) {
+      status = "Expired";
+    }
+    
+    return {
+      startDate: format(start, "yyyy-MM-dd"),
+      endDate: format(end, "yyyy-MM-dd"),
+      status: status
+    };
+  } catch (error) {
+    console.error("Lỗi tính toán ngày bảo hành:", error);
+    return { startDate: "N/A", endDate: "N/A", status: "Pending" };
+  }
+};
+
 const getPolicyByProductCode = (code) => {
-  if (code.includes("-Mit") || code.includes("-Huong") || code.includes("-Gu")) return WARRANTY_POLICIES.NATURAL_WOOD;
+  const c = (code || "").toUpperCase();
+  if (c.includes("-MIT") || c.includes("-HUONG") || c.includes("-GU")) return WARRANTY_POLICIES.NATURAL_WOOD;
   return WARRANTY_POLICIES.INDUSTRIAL_WOOD;
 };
 
@@ -95,37 +133,47 @@ const INITIAL_WARRANTIES = [
     ],
   },
   {
-    id: "BH-DH-MUL-001-1",
-    orderId: "DH-MUL-001",
-    customerName: "Trần Thế Anh",
-    customerPhone: "0944556677",
-    productName: "Bộ bàn ghế Âu Á gỗ Hương",
-    productCode: "BG-AA-HUONG-001",
-    productImg: "https://images.unsplash.com/photo-1592078615290-033ee584e267?q=80&w=300",
+    id: "BH-DH-FIX-001",
+    orderId: "DH-FIX-001",
+    customerName: "Lê Văn Tám",
+    customerPhone: "0933445566",
+    productName: "Tủ quần áo 4 cánh gỗ Sồi",
+    productCode: "TA-SOI-004",
+    productImg: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=300",
     warrantyMonths: 36,
-    startDate: "2026-03-15",
-    endDate: "2029-03-15",
-    status: "Active",
+    startDate: "2025-01-10",
+    endDate: "2028-01-10",
+    status: "Claimed",
     policy: WARRANTY_POLICIES.NATURAL_WOOD,
-    history: [{ date: "2026-03-15", action: "Kích hoạt", note: "Bộ sản phẩm thuộc đơn DH-MUL-001" }],
-    maintenanceLogs: [],
+    history: [
+      { date: "2025-01-10", action: "Kích hoạt", note: "Đã giao hàng" },
+      { date: "2026-03-20", action: "Yêu cầu bảo hành", note: "Cánh tủ bị xệ" }
+    ],
+    maintenanceLogs: [
+      { date: "2026-03-22", type: "Chỉnh sửa bản lề", detail: "Cánh tủ bị xệ do ốc lỏng, đã siết lại và tra dầu.", status: "Done" }
+    ],
   },
   {
-    id: "BH-DH-MUL-001-2",
-    orderId: "DH-MUL-001",
-    customerName: "Trần Thế Anh",
-    customerPhone: "0944556677",
-    productName: "Kệ tivi gỗ Gụ",
-    productCode: "KT-GU-001",
-    productImg: "https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?q=80&w=300",
-    warrantyMonths: 36,
-    startDate: "2026-03-15",
-    endDate: "2029-03-15",
-    status: "Active",
-    policy: WARRANTY_POLICIES.NATURAL_WOOD,
-    history: [{ date: "2026-03-15", action: "Kích hoạt", note: "Kệ tivi thuộc đơn DH-MUL-001" }],
-    maintenanceLogs: [],
-  },
+    id: "BH-DH-OLD-001",
+    orderId: "DH-OLD-001",
+    customerName: "Hoàng Thị Loan",
+    customerPhone: "0977889900",
+    productName: "Kệ giày 3 tầng gỗ Cao su",
+    productCode: "KG-CS-003",
+    productImg: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?q=80&w=300",
+    warrantyMonths: 12,
+    startDate: "2023-01-01",
+    endDate: "2024-01-01",
+    status: "Expired",
+    policy: WARRANTY_POLICIES.INDUSTRIAL_WOOD,
+    history: [
+      { date: "2023-01-01", action: "Kích hoạt", note: "Sản phẩm thanh lý" },
+      { date: "2024-03-25", action: "Sửa chữa ngoài bảo hành", note: "Sơn lại mặt kệ" }
+    ],
+    maintenanceLogs: [
+      { date: "2024-03-25", type: "Sơn lại làm mới", detail: "Khách yêu cầu sơn lại mặt kệ bị trầy xước.", status: "Done" }
+    ],
+  }
 ];
 
 // ===================== REUSABLE COMPONENTS =====================
@@ -141,8 +189,79 @@ const getStatusColor = (status) => {
     case "Expired":
       return { bg: "#FEF2F2", text: "#B91C1C", border: "#FECACA" }; // Red
     default:
-      return { bg: "var(--bg-main)", text: "var(--text-secondary)", border: "var(--grid-border)" };
+      return { bg: "var(--bg-white)", text: "var(--text-secondary)", border: "var(--grid-border)" };
   }
+};
+
+const WarrantyItemRow = ({ item, onDetail, onRepair }) => {
+  const woodType = getWoodName(item);
+  return (
+    <div
+      onClick={onDetail}
+      className="flex flex-col sm:flex-row items-center gap-6 py-4 border-b border-gray-100 last:border-0 hover:bg-slate-50/50 transition-all px-4 rounded-xl cursor-pointer group"
+    >
+      {/* Product Image */}
+      <div 
+        className="h-14 w-14 rounded-xl overflow-hidden shrink-0 border border-gray-100 shadow-sm bg-gray-50"
+      >
+        <img
+          src={item.productImg}
+          alt={item.productName}
+          className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"
+        />
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-4 mb-2">
+          <h4 className="text-[14px] font-bold text-gray-900 truncate">
+            {item.productName}
+          </h4>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-1.5 text-[12px]">
+          <div className="flex items-center gap-1.5 min-w-[120px]">
+             <span className="text-gray-400 font-medium">Mã:</span>
+             <span className="font-bold text-gray-600 uppercase font-mono tracking-tight">{item.productCode}</span>
+          </div>
+          <div className="flex items-center gap-1.5 min-w-[120px]">
+             <span className="text-gray-400 font-medium">Chất liệu:</span>
+             <span className="font-bold text-gray-700">{woodType}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+             <span className="text-gray-400 font-medium">Hết hạn:</span>
+             <span className="font-bold text-gray-800">{item.endDate ? format(new Date(item.endDate), "dd/MM/yyyy") : "N/A"}</span>
+          </div>
+        </div>
+
+        <div className="mt-2.5 flex items-center gap-3">
+           <StatusBadge status={item.status} endDate={item.endDate} />
+        </div>
+      </div>
+
+      {/* Action Buttons Area */}
+      <div className="shrink-0 flex items-center gap-2">
+        <button
+          onClick={(e) => { e.stopPropagation(); onRepair(); }}
+          className={`h-9 px-4 rounded-xl border transition-all font-bold text-[12px] flex items-center gap-2 ${
+            item.status === "Expired"
+              ? "border-indigo-200 text-indigo-600 bg-white hover:bg-indigo-600 hover:text-white hover:shadow-lg hover:shadow-indigo-200"
+              : "border-orange-200 text-orange-600 bg-white hover:bg-orange-600 hover:text-white hover:shadow-lg hover:shadow-orange-200"
+          }`}
+        >
+          <Wrench size={14} />
+          {item.status === "Expired" ? "SỬA CHỮA" : "BẢO TRÌ"}
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onDetail(); }}
+          className="h-9 w-9 rounded-xl border border-gray-200 text-gray-400 bg-white hover:bg-gray-50 hover:text-gray-900 transition-all flex items-center justify-center"
+          title="Xem chi tiết"
+        >
+          <ChevronRight size={18} />
+        </button>
+      </div>
+    </div>
+  );
 };
 
 const StatusBadge = ({ status, endDate }) => {
@@ -150,7 +269,7 @@ const StatusBadge = ({ status, endDate }) => {
     (new Date(endDate) - new Date()) / (1000 * 60 * 60 * 24) < 30;
 
   const config = getStatusColor(status);
-  const label = status === "Active" ? (isExpiringSoon ? "Sắp hết hạn" : "Bảo hành") :
+  const label = status === "Active" ? (isExpiringSoon ? "Sắp hết hạn" : "Đang hiệu lực") :
                 status === "Claimed" ? "Đang bảo hành" : "Hết hạn";
 
   return (
@@ -174,16 +293,17 @@ const StatusBadge = ({ status, endDate }) => {
 // Helper to extract specific wood name from product name or code
 const getWoodName = (w) => {
   if (!w) return "N/A";
-  const combined = (w.productName + " " + (w.productCode || "")).toLowerCase();
-  if (combined.includes("mít") || combined.includes("-mit")) return "Gỗ Mít";
-  if (combined.includes("hương") || combined.includes("-huong")) return "Gỗ Hương";
-  if (combined.includes("gụ") || combined.includes("-gu")) return "Gỗ Gụ";
-  if (combined.includes("sồi") || combined.includes("-soi")) return "Gỗ Sồi";
-  if (combined.includes("mdf") || combined.includes("hdf")) return "Gỗ công nghiệp (MDF/HDF)";
+  const combined = (w.productName + " " + (w.productCode || "")).toUpperCase();
+  if (combined.includes("MÍT") || combined.includes("-MIT")) return "Gỗ Mít";
+  if (combined.includes("HƯƠNG") || combined.includes("-HUONG")) return "Gỗ Hương";
+  if (combined.includes("GỤ") || combined.includes("-GU")) return "Gỗ Gụ";
+  if (combined.includes("SỒI") || combined.includes("-SOI")) return "Gỗ Sồi";
+  if (combined.includes("XOAN") || combined.includes("-XOAN")) return "Gỗ Xoan Đào";
+  if (combined.includes("MDF") || combined.includes("HDF") || combined.includes("COMPOSITE")) return "Gỗ công nghiệp (MDF/HDF)";
   return w.policy?.label?.split(" (")[0] || "Gỗ tự nhiên";
 };
 
-const WarrantyDetailsModal = ({ isOpen, onClose, warranty, onCreateRepair }) => {
+const WarrantyDetailsModal = ({ isOpen, onClose, warranty, onCreateRepair, onCollectPayment }) => {
   const woodType = getWoodName(warranty);
   if (!isOpen || !warranty) return null;
 
@@ -198,8 +318,8 @@ const WarrantyDetailsModal = ({ isOpen, onClose, warranty, onCreateRepair }) => 
             </div>
             <div>
               <h2 className="text-xl font-black text-gray-900 leading-tight">Mã đơn hàng: {warranty.orderId || warranty.id.replace(/^BH-/, "")}</h2>
-              <p className="text-xs text-gray-400 font-bold flex items-center gap-2 uppercase tracking-tight">
-                <Package size={12} /> {warranty.productName}
+              <p className="text-[11px] text-gray-400 font-bold flex items-center gap-2 uppercase tracking-widest">
+                <Package size={12} /> {warranty.productName} • {warranty.productCode}
               </p>
             </div>
           </div>
@@ -216,8 +336,12 @@ const WarrantyDetailsModal = ({ isOpen, onClose, warranty, onCreateRepair }) => 
               <div className="aspect-square rounded-2xl overflow-hidden border-4 border-gray-50 shadow-inner">
                 <img src={warranty.productImg} alt={warranty.productName} className="w-full h-full object-cover" />
               </div>
-              <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100">
-                <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3">Thông tin Khách hàng</h3>
+              <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100 italic text-[13px] text-gray-600">
+                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 not-italic">Ghi chú chính sách</h3>
+                {warranty.policy?.conditions || "Sử dụng đúng hướng dẫn để được bảo hành tốt nhất."}
+              </div>
+              <div className="p-5 bg-emerald-50/50 rounded-2xl border border-emerald-100">
+                <h3 className="text-[11px] font-black text-emerald-600 uppercase tracking-widest mb-3">Thông tin Khách hàng</h3>
                 <p className="font-bold text-gray-900 flex items-center gap-2 mb-1">
                   <User size={14} className="text-emerald-500" /> {warranty.customerName}
                 </p>
@@ -225,57 +349,21 @@ const WarrantyDetailsModal = ({ isOpen, onClose, warranty, onCreateRepair }) => 
                   <Phone size={14} className="text-blue-500" /> {warranty.customerPhone}
                 </p>
               </div>
-              <div className="p-5 bg-emerald-50 rounded-2xl border border-emerald-100">
-                 <h3 className="text-[11px] font-black text-emerald-600 uppercase mb-3 tracking-widest">Chi tiết Sản phẩm</h3>
-                 <div className="space-y-3">
-                   <div>
-                     <p className="text-[10px] font-bold text-emerald-600/60 uppercase">Tên sản phẩm</p>
-                     <p className="text-sm font-black text-emerald-800">{warranty.productName}</p>
-                   </div>
-                   <div>
-                     <p className="text-[10px] font-bold text-emerald-600/60 uppercase">Mã số (SKU)</p>
-                     <p className="text-[11px] font-black bg-emerald-600 text-white px-2 py-0.5 rounded inline-block uppercase italic">{warranty.productCode}</p>
-                   </div>
-                   <div>
-                     <p className="text-[10px] font-bold text-emerald-600/60 uppercase">Loại gỗ</p>
-                     <p className="text-[13px] font-bold text-emerald-700">{woodType}</p>
-                   </div>
-                 </div>
-              </div>
             </div>
 
             {/* Column 2: Warranty & History */}
             <div className="col-span-8 space-y-8">
               {/* Policies & Dates */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-5 rounded-2xl bg-white border border-gray-100 shadow-sm">
+                <div className="p-5 rounded-2xl bg-white border border-gray-100 shadow-sm relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-2 opacity-5 group-hover:scale-110 transition-transform"><Calendar size={40} /></div>
                   <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Ngày kích hoạt</p>
                   <p className="text-lg font-black text-gray-900">{warranty.startDate ? format(new Date(warranty.startDate), "dd/MM/yyyy") : "Chờ kích hoạt"}</p>
                 </div>
-                <div className="p-5 rounded-2xl bg-white border border-gray-100 shadow-sm">
+                <div className="p-5 rounded-2xl bg-white border border-gray-100 shadow-sm relative overflow-hidden group">
+                   <div className="absolute top-0 right-0 p-2 opacity-5 group-hover:scale-110 transition-transform"><Clock size={40} /></div>
                   <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Ngày hết hạn</p>
                   <p className="text-lg font-black text-red-600">{warranty.endDate ? format(new Date(warranty.endDate), "dd/MM/yyyy") : "Chờ kích hoạt"}</p>
-                </div>
-              </div>
-
-              {/* Specific Wood Policy */}
-              <div className="p-6 bg-slate-900 text-white rounded-3xl relative overflow-hidden">
-                <div className="absolute right-0 bottom-0 opacity-10">
-                  <ShieldCheck size={120} />
-                </div>
-                <h3 className="text-sm font-black uppercase tracking-widest text-emerald-400 mb-4 flex items-center gap-2">
-                  <FileText size={16} /> Chính sách bảo hành Gỗ
-                </h3>
-                <ul className="space-y-3 relative z-10">
-                  {warranty.policy?.coverage.map((item, i) => (
-                    <li key={i} className="text-sm font-medium flex gap-3">
-                      <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-6 pt-4 border-t border-white/10 text-[11px] text-gray-400 italic">
-                  * Ghi chú: {warranty.policy?.conditions}
                 </div>
               </div>
 
@@ -283,18 +371,17 @@ const WarrantyDetailsModal = ({ isOpen, onClose, warranty, onCreateRepair }) => 
               <div className="space-y-6">
                 <div className="flex items-center justify-between px-1">
                   <h3 className="font-extrabold text-gray-900 uppercase tracking-tight text-sm flex items-center gap-2">
-                    <Clock size={18} className="text-emerald-600" /> Nhật ký bảo hành & bảo trì
+                    <Clock size={18} className="text-emerald-600" /> Nhật ký sửa chữa & bảo trì
                   </h3>
                   <button 
                     onClick={() => onCreateRepair(warranty)}
-                    className="h-8 px-4 rounded-full bg-blue-50 text-blue-700 text-[11px] font-black hover:bg-blue-100 transition-all border border-blue-100 flex items-center gap-2"
+                    className="h-8 px-4 rounded-full bg-[#1e1e1e] text-white text-[11px] font-black hover:bg-black transition-all shadow-lg shadow-black/5 flex items-center gap-2"
                   >
                     + Ghi nhận bảo trì
                   </button>
                 </div>
 
                 <div className="relative pl-4 space-y-0">
-                  {/* Vertical line mapping from first to last log */}
                   <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-gray-100"></div>
 
                   {[
@@ -304,9 +391,8 @@ const WarrantyDetailsModal = ({ isOpen, onClose, warranty, onCreateRepair }) => 
                   .sort((a, b) => new Date(b.date) - new Date(a.date))
                   .map((log, i) => (
                     <div key={i} className="relative pl-8 pb-8 last:pb-0">
-                      {/* Timeline Dot */}
                       <div className={`absolute left-0 top-1 w-4 h-4 rounded-full border-2 border-white shadow-sm z-10 
-                        ${log.isMaintenance ? 'bg-amber-500' : 'bg-emerald-500'}`}></div>
+                        ${log.isMaintenance ? (log.serviceType === "Paid" ? 'bg-indigo-500' : 'bg-orange-500') : 'bg-emerald-500'}`}></div>
                       
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center justify-between">
@@ -314,15 +400,15 @@ const WarrantyDetailsModal = ({ isOpen, onClose, warranty, onCreateRepair }) => 
                             {format(new Date(log.date), "dd/MM/yyyy • HH:mm", { locale: vi })}
                           </span>
                           {log.isMaintenance && (
-                            <span className="text-[9px] font-black px-1.5 py-0.5 bg-amber-50 text-amber-600 border border-amber-100 rounded uppercase">
-                              {log.type}
+                            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase border ${log.serviceType === "Paid" ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
+                              {log.serviceType === "Paid" ? 'Sửa chữa tính phí' : 'Bảo hành miễn phí'}
                             </span>
                           )}
                         </div>
-                        <p className="text-[13px] font-bold text-gray-800 leading-relaxed">
-                          {log.isMaintenance ? log.detail : log.action}
+                        <p className="text-[13px] font-bold text-gray-800 leading-relaxed uppercase tracking-tighter">
+                          {log.isMaintenance ? log.type : log.action}
                         </p>
-                        {log.note && <p className="text-[11px] text-gray-500 font-medium italic">{log.note}</p>}
+                        <p className="text-[12px] text-gray-500 font-medium">{log.isMaintenance ? log.detail : log.note}</p>
                         
                       </div>
                     </div>
@@ -332,25 +418,6 @@ const WarrantyDetailsModal = ({ isOpen, onClose, warranty, onCreateRepair }) => 
             </div>
           </div>
         </div>
-
-        {/* Modal Footer */}
-        <div className="px-8 py-6 border-t bg-gray-50/50 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-             <div className="w-2 h-2 rounded-full bg-emerald-500 scale-125"></div>
-             <span className="text-[11px] font-black text-gray-600 uppercase tracking-widest italic">TPF-SIMS</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="h-11 px-6 rounded-2xl border border-gray-200 bg-white text-gray-600 text-[13px] font-black hover:bg-gray-100 transition-all flex items-center gap-2">
-              <ExternalLink size={16} /> Phiếu bảo hành (In)
-            </button>
-            <button 
-              onClick={() => onCreateRepair(warranty)}
-              className="h-11 px-6 rounded-2xl bg-[#1e1e1e] text-white text-[13px] font-black hover:bg-black transition-all flex items-center gap-2 shadow-lg shadow-black/10"
-            >
-              <Wrench size={16} /> Ghi nhận nứt nẻ/co ngót
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -358,93 +425,102 @@ const WarrantyDetailsModal = ({ isOpen, onClose, warranty, onCreateRepair }) => 
 
 const CreateRepairModal = ({ isOpen, onClose, warranty, onSubmit }) => {
   const [formData, setFormData] = useState({
-    type: "Bảo hành Co ngót",
+    serviceType: "Warranty",
     detail: "",
-    status: "Done"
   });
+
+  useEffect(() => {
+    if (isOpen && warranty) {
+      const isExpired = warranty.status === "Expired";
+      setFormData({
+        serviceType: isExpired ? "Maintenance" : "Warranty",
+        detail: "",
+      });
+    }
+  }, [isOpen, warranty]);
 
   if (!isOpen || !warranty) return null;
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-        {/* Modal Header */}
-        <div className="px-10 py-8 border-b flex items-center justify-between bg-white relative">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-              <Wrench size={24} />
+      <div className="bg-white w-full max-w-[480px] rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col">
+        <div className="px-8 py-6 border-b flex items-center justify-between bg-white">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
+              <Wrench size={20} />
             </div>
             <div>
-              <h2 className="text-xl font-black text-gray-900 leading-tight">Ghi nhận Bảo trì</h2>
-              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest">{warranty.orderId || warranty.id.replace(/^BH-/, "")} • {warranty.productCode}</p>
+              <h2 className="text-lg font-black text-gray-900 leading-tight italic uppercase italic">Ghi nhận xử lý nhanh</h2>
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{warranty.productName}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
-            <X size={20} className="text-gray-400" />
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-400">
+            <X size={20} />
           </button>
         </div>
 
-        {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-10 space-y-8">
-          <div className="space-y-6">
-            <div>
-              <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Phân loại xử lý</label>
-              <div className="grid grid-cols-2 gap-3">
-                {["Bảo hành Co ngót", "Xử lý Nứt nẻ", "Chỉnh mộng", "Đánh bóng", "Sửa chữa tính phí"].map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => setFormData({...formData, type})}
-                    className={`h-11 px-4 rounded-xl text-xs font-bold transition-all border ${
-                      formData.type === type 
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/10' 
-                      : 'bg-gray-50 text-gray-600 border-gray-100 hover:border-gray-300'
-                    }`}
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
-            </div>
+        <div className="p-8 space-y-6">
+          <div className="flex bg-gray-100 p-1 rounded-xl">
+            <button
+              onClick={() => setFormData({...formData, serviceType: "Warranty"})}
+              className={`flex-1 h-10 rounded-lg text-xs font-bold transition-all ${
+                formData.serviceType === "Warranty" 
+                ? 'bg-white text-orange-600 shadow-sm' 
+                : 'text-gray-400 hover:text-gray-500'
+              }`}
+            >
+              BẢO HÀNH (0đ)
+            </button>
+            <button
+              onClick={() => setFormData({...formData, serviceType: "Paid"})}
+              className={`flex-1 h-10 rounded-lg text-xs font-bold transition-all ${
+                formData.serviceType === "Paid" 
+                ? 'bg-white text-indigo-600 shadow-sm' 
+                : 'text-gray-400 hover:text-gray-500'
+              }`}
+            >
+              CÓ PHÍ
+            </button>
+          </div>
 
-
+          <div className="space-y-4">
             <div>
-              <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3 block">Nội dung chi tiết & Ghi chú</label>
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Nội dung xử lý</label>
               <textarea 
                 rows={4}
-                placeholder="Nhập chi tiết tình trạng lỗi và cách thức đã xử lý cho khách hàng..."
+                placeholder="Ví dụ: Sơn lại mặt bàn, Chỉnh mộng bị hở..."
                 value={formData.detail}
                 onChange={(e) => setFormData({...formData, detail: e.target.value})}
-                className="w-full p-5 bg-gray-50 border border-gray-100 rounded-[1.5rem] text-sm font-medium outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all resize-none leading-relaxed"
+                className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold text-gray-700 outline-none focus:bg-white focus:border-blue-500 transition-all resize-none leading-relaxed"
               />
             </div>
           </div>
         </div>
 
-        {/* Modal Footer */}
-        <div className="px-10 py-8 bg-gray-50/50 border-t flex gap-4">
-          <button onClick={onClose} className="flex-1 h-14 rounded-2xl bg-white border border-gray-200 text-gray-600 font-black text-sm hover:bg-gray-100 transition-all">
-            Đóng
+        <div className="px-8 py-6 bg-gray-50/50 border-t flex gap-3">
+          <button onClick={onClose} className="flex-1 h-12 rounded-xl bg-white border border-gray-200 text-gray-500 font-black text-xs hover:bg-gray-100 transition-all">
+            HỦY
           </button>
           <button 
             onClick={() => {
-              // Ensure we have at least a basic detail
-              const finalData = {
-                ...formData,
-                detail: formData.detail.trim() || formData.type,
-                date: new Date().toISOString()
-              };
-              
-              if (!finalData.detail) {
-                toast.error("Vui lòng nhập nội dung chi tiết");
+              if (!formData.detail.trim()) {
+                toast.error("Vui lòng nhập nội dung xử lý");
                 return;
               }
+              const finalData = {
+                type: formData.serviceType === "Maintenance" ? "Bảo trì định kỳ" : "Bảo hành miễn phí",
+                detail: formData.detail.trim(),
+                date: new Date().toISOString(),
+                status: "Done",
+                serviceType: formData.serviceType
+              };
               
               onSubmit(warranty.id, finalData);
               onClose();
             }}
-            className="flex-[2] h-14 rounded-2xl bg-[#1e1e1e] text-white font-black text-sm hover:bg-black transition-all shadow-xl shadow-black/10 flex items-center justify-center gap-2"
+            className="flex-[2] h-12 rounded-xl bg-[#1e1e1e] text-white font-black text-xs hover:bg-black transition-all shadow-xl shadow-black/10"
           >
-            Lưu vào nhật ký bảo trì
+            LƯU VÀO NHẬT KÝ
           </button>
         </div>
       </div>
@@ -457,468 +533,399 @@ const CreateRepairModal = ({ isOpen, onClose, warranty, onSubmit }) => {
 export default function WarrantyManagement() {
   const [warranties, setWarranties] = useState(() => {
     const saved = localStorage.getItem("tpf_simulated_warranties");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      // Force refresh if new mock data (multi-product) is added or schema changed
-      if (parsed.length >= INITIAL_WARRANTIES.length && parsed.some(w => w.orderId)) {
-        return parsed;
-      }
-    }
-    
-    // Initialize or refresh from INITIAL_WARRANTIES
-    const initialized = INITIAL_WARRANTIES.map(w => ({
-      ...w,
-      policy: w.policy || getPolicyByProductCode(w.productCode),
-      maintenanceLogs: w.maintenanceLogs || []
-    }));
-    localStorage.setItem("tpf_simulated_warranties", JSON.stringify(initialized));
-    return initialized;
+    if (saved) return JSON.parse(saved);
+    return INITIAL_WARRANTIES;
   });
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const [itemsPerPage, setItemsPerPage] = useState(8);
 
-  // Modal states
+  const [expandedOrders, setExpandedOrders] = useState(new Set());
   const [selectedWarrantyId, setSelectedWarrantyId] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isRepairModalOpen, setIsRepairModalOpen] = useState(false);
 
-  const selectedWarranty = useMemo(() => 
-    warranties.find(w => w.id === selectedWarrantyId),
-    [warranties, selectedWarrantyId]
-  );
-
-  // Lắng nghe thay đổi từ localStorage (để sync khi Order update)
+  // Sync with other tabs/windows
   useEffect(() => {
     const handleStorageChange = () => {
       const updated = localStorage.getItem("tpf_simulated_warranties");
       if (updated) setWarranties(JSON.parse(updated));
     };
-
     window.addEventListener('storage', handleStorageChange);
-    // Shortcut cho cùng window (vì event storage chỉ trigger cho các window KHÁC)
-    const interval = setInterval(handleStorageChange, 1000); 
-    
+    const interval = setInterval(handleStorageChange, 2000); 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
     };
   }, []);
 
-  const activateWarranty = (id) => {
-    setWarranties(prevWarranties => {
-      const updated = prevWarranties.map(w => {
-        if (w.id === id) {
-          const startDate = new Date();
-          const policy = getPolicyByProductCode(w.productCode);
-          const endDate = addMonths(startDate, policy.duration);
-          
-          return {
-            ...w,
-            status: "Active",
-            startDate: startDate.toISOString().split('T')[0],
-            endDate: endDate.toISOString().split('T')[0],
-            policy,
-            warrantyMonths: policy.duration,
-            maintenanceLogs: [],
-            history: [
-              ...(w.history || []),
-              { date: new Date().toISOString(), action: "Kích hoạt Bảo hành Gỗ", note: `Bảo hành ${policy.label} chính thức có hiệu lực.` }
-            ]
-          };
-        }
-        return w;
-      });
-      localStorage.setItem("tpf_simulated_warranties", JSON.stringify(updated));
-      return updated;
+  const toggleOrder = (orderId) => {
+    setExpandedOrders(prev => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId);
+      else next.add(orderId);
+      return next;
     });
-    toast.success("Đã kích hoạt bảo hành gỗ thành công!");
   };
 
-  const handleCreateRepair = (id, repairData) => {
-    setWarranties(prevWarranties => {
-      const updated = prevWarranties.map(w => {
-        if (w.id === id) {
-          return {
-            ...w,
-            status: (repairData.type || "").includes("Bảo hành") || (repairData.type || "").includes("Sửa chữa") ? "Claimed" : w.status,
-            maintenanceLogs: [
-              { ...repairData, date: repairData.date || new Date().toISOString() },
-              ...(w.maintenanceLogs || [])
-            ]
-          };
-        }
-        return w;
-      });
-      localStorage.setItem("tpf_simulated_warranties", JSON.stringify(updated));
-      return updated;
-    });
-    toast.success("Đã lưu yêu cầu sửa chữa/bảo trì");
-  };
+  const selectedWarranty = useMemo(() => 
+    warranties.find(w => w.id === selectedWarrantyId),
+    [warranties, selectedWarrantyId]
+  );
 
-  const saveAndSync = (updated) => {
-    localStorage.setItem("tpf_simulated_warranties", JSON.stringify(updated));
+  const handleCreateRepair = (id, log) => {
+    const updated = warranties.map(w => {
+      if (w.id === id) {
+        return {
+          ...w,
+          status: "Claimed",
+          maintenanceLogs: [log, ...(w.maintenanceLogs || [])],
+          history: [
+            { 
+              date: log.date, 
+              action: log.type, 
+              note: log.detail
+            }, 
+            ...(w.history || [])
+          ]
+        };
+      }
+      return w;
+    });
     setWarranties(updated);
+    localStorage.setItem("tpf_simulated_warranties", JSON.stringify(updated));
+    toast.success("Đã ghi nhận xử lý thành công");
   };
 
-  const filteredWarranties = useMemo(() => {
-    return warranties.filter((w) => {
-      const matchSearch =
-        w.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (w.customerPhone && w.customerPhone.includes(searchQuery)) ||
-        w.productCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (w.orderId && w.orderId.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        w.id.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchStatus = statusFilter === "All" 
-        ? w.status !== "Pending" 
-        : w.status === statusFilter;
-      
+  const handleCollectPayment = (warrantyId, logDate) => {
+    const updated = warranties.map(w => {
+      if (w.id === warrantyId) {
+        return {
+          ...w,
+          maintenanceLogs: w.maintenanceLogs.map(log => 
+            log.date === logDate ? { ...log, isPaid: true } : log
+          )
+        };
+      }
+      return w;
+    });
+    setWarranties(updated);
+    localStorage.setItem("tpf_simulated_warranties", JSON.stringify(updated));
+    toast.success("Đã thu tiền thành công!");
+  };
+
+  const stats = useMemo(() => {
+    const validWarranties = warranties.filter(w => w.status !== "Pending");
+    
+    let totalServices = 0;
+    validWarranties.forEach(w => {
+      totalServices += (w.maintenanceLogs || []).length;
+    });
+
+    return {
+      total: validWarranties.length,
+      active: validWarranties.filter(w => {
+        const d = calculateWarrantyDates(w.startDate, w.policy);
+        return d.status === "Active" && !(w.maintenanceLogs?.some(l => l.status !== "Done"));
+      }).length,
+      claiming: validWarranties.filter(w => {
+        const d = calculateWarrantyDates(w.startDate, w.policy);
+        return d.status === "Claimed" || w.maintenanceLogs?.some(l => l.status !== "Done");
+      }).length,
+      expired: validWarranties.filter(w => {
+        const d = calculateWarrantyDates(w.startDate, w.policy);
+        return d.status === "Expired";
+      }).length,
+      totalServices
+    };
+  }, [warranties]);
+
+  const filteredGroupedWarranties = useMemo(() => {
+    const groups = {};
+    warranties.forEach(w => {
+      if (w.status === "Pending") return; 
+      if (!groups[w.orderId]) {
+        groups[w.orderId] = {
+          orderId: w.orderId,
+          customerName: w.customerName,
+          customerPhone: w.customerPhone,
+          items: [],
+          status: "Active"
+        };
+      }
+      const dates = calculateWarrantyDates(w.startDate, w.policy);
+      groups[w.orderId].items.push({ ...w, ...dates });
+    });
+
+    const result = Object.values(groups).filter(group => {
+      const matchSearch = 
+        group.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        group.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (group.customerPhone && group.customerPhone.includes(searchQuery)) ||
+        group.items.some(item => 
+          item.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.productCode.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+
+      let matchStatus = true;
+      if (statusFilter !== "All") {
+        if (statusFilter === "Claimed") {
+          matchStatus = group.items.some(i => i.status === "Claimed");
+        } else if (statusFilter === "Active") {
+          matchStatus = group.items.every(i => i.status === "Active");
+        } else if (statusFilter === "Expired") {
+          matchStatus = group.items.every(i => i.status === "Expired");
+        }
+      }
+
       return matchSearch && matchStatus;
+    });
+
+    return result.map(g => {
+      if (g.items.some(i => i.status === "Claimed")) g.status = "Claimed";
+      else if (g.items.every(i => i.status === "Expired")) g.status = "Expired";
+      else g.status = "Active";
+      return g;
     });
   }, [warranties, searchQuery, statusFilter]);
 
-  const paginatedWarranties = useMemo(() => {
+  const paginatedGroups = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredWarranties.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredWarranties, currentPage]);
+    return filteredGroupedWarranties.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredGroupedWarranties, currentPage, itemsPerPage]);
 
-  const totalPages = Math.ceil(filteredWarranties.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredGroupedWarranties.length / itemsPerPage);
 
-  // Reset page when filter changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, statusFilter]);
-
-  const stats = {
-    total: warranties.length,
-    active: warranties.filter((w) => w.status === "Active").length,
-    claiming: warranties.filter((w) => w.status === "Claimed").length,
-    expired: warranties.filter((w) => w.status === "Expired").length,
-  };
-
+  // ===================== RENDER =====================
   return (
-    <div className="flex flex-col h-full bg-[#f8f9fa]">
-      <PageHelmet title="Quản lý Bảo hành | TPF-SIMS" description="Quản lý chính sách và phiếu bảo hành sản phẩm" />
+    <>
+      <PageHelmet title="Quản lý Bảo hành | TPF-SIMS" />
 
-      {/* HEADER SECTION */}
-      <div className="bg-white border-b px-8 py-6 shrink-0">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-100">
-              <ShieldCheck size={28} />
-            </div>
-            <div>
-              <h1 className="text-2xl font-black text-gray-900 tracking-tight">Quản lý Bảo hành</h1>
-              <p className="text-gray-400 text-sm font-medium mt-0.5">
-                Quản lý bảo hành và chính sách sản phẩm
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
+      <div
+        className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 space-y-4"
+        style={{ backgroundColor: "var(--bg-main)" }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between shrink-0">
+          <div>
+            <h1
+              className="text-xl font-bold flex items-center gap-2"
+              style={{ color: "var(--text-main)" }}
+            >
+              <ShieldCheck size={22} style={{ color: "var(--brand-primary)" }} />
+              Quản lý Bảo hành
+            </h1>
+            <p
+              className="text-[13px] mt-0.5"
+              style={{ color: "var(--text-placeholder)" }}
+            >
+              {filteredGroupedWarranties.length} đơn hàng ({statusFilter === "All" ? "Hệ thống" : statusFilter})
+            </p>
           </div>
         </div>
 
-        {/* STATS CARDS */}
-        <div className="grid grid-cols-4 gap-4">
+        {/* Status Pills Filter (Order Page Style) */}
+        <div className="flex items-center gap-2 shrink-0 px-1 flex-wrap">
           {[
-            { label: "Tổng số", value: stats.total - (warranties.filter(w => w.status === "Pending").length), color: "text-gray-600", bg: "bg-white", status: "All" },
-            { label: "Đang hiệu lực", value: stats.active, color: "text-emerald-600", bg: "bg-emerald-50", status: "Active" },
-            { label: "Đang bảo hành", value: stats.claiming, color: "text-amber-600", bg: "bg-amber-50", status: "Claimed" },
-            { label: "Đã hết hạn", value: stats.expired, color: "text-red-600", bg: "bg-red-50", status: "Expired" },
-          ].map((s, i) => (
-            <div 
-              key={i} 
-              onClick={() => setStatusFilter(s.status)}
-              className={`${s.bg} rounded-2xl p-5 border cursor-pointer transition-all hover:-translate-y-1 ${
-                statusFilter === s.status 
-                ? 'ring-2 ring-offset-2 ring-blue-500 shadow-md border-transparent scale-[1.02]' 
-                : 'border-gray-100 shadow-sm opacity-80 hover:opacity-100'
-              }`}
-            >
-              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">{s.label}</p>
-              <div className="flex items-end gap-2">
-                <span className={`text-2xl font-black ${s.color}`}>{s.value}</span>
-                <span className="text-[12px] font-medium text-gray-400 mb-1">đơn hàng</span>
+            { id: "All", label: "Tất cả", count: stats.total, color: "text-gray-600", bg: "bg-white", dot: "bg-gray-400" },
+            { id: "Active", label: "Đang hiệu lực", count: stats.active, color: "text-emerald-700", bg: "#F0FDF4", dot: "bg-emerald-500" },
+            { id: "Claimed", label: "Đang bảo hành", count: stats.claiming, color: "text-amber-700", bg: "#FFF7ED", dot: "bg-amber-500" },
+            { id: "Expired", label: "Hết hạn", count: stats.expired, color: "text-red-700", bg: "#FEF2F2", dot: "bg-red-500" },
+          ].map((s) => {
+            const isActive = statusFilter === s.id;
+            return (
+              <button
+                key={s.id}
+                onClick={() => { setStatusFilter(s.id); setCurrentPage(1); }}
+                className="px-4 py-1.5 rounded-xl text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border"
+                style={{
+                  backgroundColor: isActive ? s.bg : "transparent",
+                  color: isActive ? s.color : "var(--text-secondary)",
+                  borderColor: isActive ? "rgba(0,0,0,0.05)" : "transparent",
+                  boxShadow: isActive ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
+                }}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                {s.label}
+                <span className="text-[10px] opacity-60 bg-black/5 px-1.5 rounded-md ml-0.5">
+                  {s.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Search + Table Card */}
+        <div
+          className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden"
+          style={{
+            boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+          }}
+        >
+          {/* Search Header */}
+          <div
+            className="px-4 py-3 shrink-0 flex flex-wrap items-center justify-between gap-4"
+            style={{
+              backgroundColor: "var(--grid-header-bg)",
+              borderBottom: "1px solid var(--grid-border)",
+            }}
+          >
+            <div className="flex items-center gap-4 flex-1 min-w-[300px]">
+              <div className="relative flex-1 max-w-sm">
+                <Search
+                  size={16}
+                  className="absolute left-3 top-1/2 -translate-y-1/2"
+                  style={{ color: "var(--text-placeholder)" }}
+                />
+                <input
+                  type="text"
+                  placeholder="Khách hàng, mã đơn, SKU gỗ..."
+                  value={searchQuery}
+                  onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                  className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] border focus:outline-none focus:ring-1 transition"
+                  style={{
+                    borderColor: "var(--grid-border)",
+                    backgroundColor: "#fff",
+                    color: "var(--text-main)",
+                  }}
+                />
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* FILTER BAR - EXACTLY LIKE orders/index.jsx */}
-      <div 
-        className="flex items-center justify-between p-4 px-6 border-b shrink-0"
-        style={{ backgroundColor: "var(--bg-main)", borderColor: "var(--grid-border)" }}
-      >
-        <div className="flex items-center gap-4 flex-1">
-          <div className="relative flex-1 max-w-sm group">
-            <Search 
-              size={16} 
-              className="absolute left-3 top-1/2 -translate-y-1/2 transition-colors" 
-              style={{ color: "var(--text-placeholder)" }}
-            />
-            <input
-              type="text"
-              placeholder="Tìm theo tên khách, SĐT, mã SKU hoặc mã đơn hàng..."
-              className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] border focus:outline-none focus:ring-1 transition font-medium"
-              style={{
-                borderColor: "var(--grid-border)",
-                backgroundColor: "#fff",
-                color: "var(--text-main)",
-              }}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full cursor-pointer"
-              >
-                <X size={14} style={{ color: "var(--text-placeholder)" }} />
-              </button>
-            )}
           </div>
-          
-          <div className="flex items-center gap-2">
-            <span className="text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>Trạng thái:</span>
-            <select
-              className="h-9 px-3 pr-8 rounded-lg text-[13px] font-bold border cursor-pointer focus:outline-none focus:ring-1 transition appearance-none bg-white"
-              style={{
-                borderColor: "var(--grid-border)",
-                color: "var(--text-main)",
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-                backgroundRepeat: "no-repeat",
-                backgroundPosition: "right 8px center",
-              }}
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="All">Tất cả</option>
-              <option value="Active">Đang hiệu lực</option>
-              <option value="Claimed">Đang bảo hành</option>
-              <option value="Expired">Hết hạn</option>
-            </select>
-          </div>
-        </div>
-      </div>
 
-      {/* TABLE AREA */}
-      <div className="flex-1 overflow-hidden" style={{ backgroundColor: "var(--bg-main)" }}>
-        <div className="h-full flex flex-col">
           <div className="flex-1 overflow-y-auto">
             <table className="w-full text-left relative border-collapse table-fixed">
-              <thead className="sticky top-0 z-10" style={{ backgroundColor: "var(--bg-main)", borderBottom: "1px solid var(--grid-border)" }}>
-                <tr className="bg-gray-50/30">
-                  <th className="pl-6 pr-3 py-3 text-[11px] font-bold uppercase tracking-wider w-[60px]" style={{ color: "var(--text-placeholder)" }}>STT</th>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider w-[140px]" style={{ color: "var(--text-placeholder)" }}>Mã Đơn Hàng</th>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider w-[200px]" style={{ color: "var(--text-placeholder)" }}>Khách hàng</th>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-placeholder)" }}>Sản phẩm</th>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider w-[180px]" style={{ color: "var(--text-placeholder)" }}>Thời hạn</th>
-                  <th className="pr-6 pl-4 py-3 text-[11px] font-bold uppercase tracking-wider w-[140px]" style={{ color: "var(--text-placeholder)" }}>Trạng thái</th>
+              <thead
+                className="sticky top-0 z-10"
+                style={{
+                  backgroundColor: "var(--grid-header-bg)",
+                  borderBottom: "1px solid var(--grid-border)",
+                }}
+              >
+                <tr>
+                  <th className="px-3 py-3 text-[11px] font-bold uppercase tracking-wider w-[80px] text-gray-400 text-center">#</th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider w-[180px] text-gray-400">Mã Đơn Hàng</th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider w-[300px] text-gray-400">Khách hàng</th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">Sản phẩm</th>
+                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider w-[220px] text-gray-400 text-center">Trạng thái</th>
                 </tr>
               </thead>
-              <tbody className="">
-                {paginatedWarranties.map((w, index) => (
-                  <tr 
-                    key={w.id} 
-                    className="group hover:bg-slate-50/50 transition-all duration-300 cursor-pointer"
-                    style={{ borderBottom: "1px solid var(--grid-border)" }}
-                    onClick={() => {
-                      setSelectedWarrantyId(w.id);
-                      setIsDetailModalOpen(true);
-                    }}
-                  >
-                    <td className="pl-6 pr-3 py-3 text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>
-                      {(currentPage - 1) * itemsPerPage + index + 1}
-                    </td>
-                    <td className="px-4 py-3 font-bold text-[13px] tracking-tight" style={{ color: "var(--text-main)" }}>
-                      {w.orderId || w.id.replace(/^BH-/, "")}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-bold text-[14px]" style={{ color: "var(--text-main)" }}>
-                          {w.customerName}
-                        </span>
-                        <span className="text-[12px] font-medium tracking-tight" style={{ color: "var(--text-secondary)" }}>
-                          {w.customerPhone}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gray-50 overflow-hidden shrink-0 border border-gray-100">
-                          <img src={w.productImg} alt={w.productName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="font-bold text-[13px] line-clamp-1" style={{ color: "var(--text-main)" }}>{w.productName}</span>
-                          <span className="text-[10px] font-black bg-gray-50 px-1.5 py-0.5 rounded mt-1 w-fit uppercase tracking-tighter border border-gray-100" style={{ color: "var(--text-placeholder)" }}>{w.productCode}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 font-medium text-[13px]" style={{ color: "var(--text-secondary)" }}>
-                      {w.startDate ? (
-                        <div className="flex flex-col gap-0.5">
-                          <div className="flex items-center gap-2">
-                            <span>{new Date(w.startDate).toLocaleDateString('vi-VN')}</span>
-                            <span className="text-gray-300">~</span>
-                            <span>{new Date(w.endDate).toLocaleDateString('vi-VN')}</span>
+              <tbody className="divide-y divide-gray-100">
+                {paginatedGroups.map((group, index) => {
+                  const isExpanded = expandedOrders.has(group.orderId);
+                  return (
+                    <React.Fragment key={group.orderId}>
+                      <tr 
+                        className={`group hover:bg-slate-50 transition-all cursor-pointer ${isExpanded ? 'bg-indigo-50/20' : ''}`}
+                        onClick={() => toggleOrder(group.orderId)}
+                      >
+                        <td className="px-3 py-4 text-[13px] font-medium text-gray-400 text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                        <td className="px-4 py-4 font-black text-[13px] text-gray-800">{group.orderId}</td>
+                        <td className="px-4 py-4">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-[13px] text-gray-900">{group.customerName}</span>
+                            <span className="text-[12px] text-gray-500">{group.customerPhone}</span>
                           </div>
-                          <span className="text-[11px]" style={{ color: "var(--text-placeholder)" }}>
-                            {w.status === "Expired" ? "Đã hết hạn" : `Thời hạn ${w.warrantyMonths} tháng`}
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="px-3 py-1 bg-gray-50 text-gray-600 rounded-lg text-[11px] font-bold border border-gray-100 w-fit flex items-center gap-1.5 group-hover:bg-white group-hover:border-indigo-100 group-hover:text-indigo-600 transition-all">
+                            <Package size={13} /> {group.items.length}  Sản Phẩm
                           </span>
-                        </div>
-                      ) : (
-                        <span className="italic" style={{ color: "var(--text-placeholder)" }}>Tự động kích hoạt khi giao</span>
+                        </td>
+                        <td className="px-4 py-4 text-center">
+                          <div className="inline-flex">
+                            <StatusBadge status={group.status} />
+                          </div>
+                        </td>
+                      </tr>
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan={5} className="p-0 bg-gray-50/30">
+                            <div className="px-10 py-6">
+                              <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                                {group.items.map((w) => (
+                                  <WarrantyItemRow
+                                    key={w.id}
+                                    item={w}
+                                    onDetail={() => { setSelectedWarrantyId(w.id); setIsDetailModalOpen(true); }}
+                                    onRepair={() => { setSelectedWarrantyId(w.id); setIsRepairModalOpen(true); }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
                       )}
-                    </td>
-                    <td className="pr-6 pl-4 py-3 relative h-full">
-                      <div className="flex items-center h-full relative">
-                        <StatusBadge status={w.status} endDate={w.endDate} />
-                        
-                        {/* CHI TIẾT Button Overlay - Exactly like orders/index.jsx */}
-                        <div className="absolute inset-0 flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity bg-white/40 backdrop-blur-[1px] z-10">
-                           <button
-                             onClick={(e) => {
-                               e.stopPropagation();
-                               setSelectedWarrantyId(w.id);
-                               setIsDetailModalOpen(true);
-                             }}
-                             className="h-8 px-3 rounded-xl bg-white border border-slate-200 text-slate-600 text-[10px] font-black uppercase tracking-wider hover:bg-slate-50 transition-all flex items-center gap-2 active:scale-95 whitespace-nowrap shadow-sm"
-                           >
-                             <Eye size={14} /> CHI TIẾT
-                           </button>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
-          </div>
-          
-          {/* Pagination Footer - VERBATIM FROM orders/index.jsx */}
-          {filteredWarranties.length > 0 && (
-            <div
-              className="flex items-center justify-between px-6 py-3 border-t shrink-0"
-              style={{
-                borderColor: "var(--grid-border)",
-                backgroundColor: "var(--bg-main)",
-              }}
-            >
-              <div
-                className="text-[13px]"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                Tổng số bản ghi:{" "}
-                <span
-                  className="font-bold"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  {filteredWarranties.length}
-                </span>
+            {filteredGroupedWarranties.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-20 text-gray-400 space-y-4">
+                <Search size={48} className="opacity-20" />
+                <p className="text-sm font-medium">Không tìm thấy đơn hàng nào khớp với yêu cầu</p>
               </div>
+            )}
+          </div>
 
+          {/* Pagination Footer (Order Style) */}
+          {filteredGroupedWarranties.length > 0 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t bg-gray-50/30 shrink-0">
               <div className="flex items-center gap-6">
-                {/* Items per page indicator */}
+                <div className="text-[13px] text-gray-500 font-medium">
+                  Hiển thị <span className="font-bold text-gray-900">{paginatedGroups.length}</span> / {filteredGroupedWarranties.length} đơn hàng
+                </div>
+                <div className="h-4 w-px bg-gray-200" />
                 <div className="flex items-center gap-2">
-                  <span
-                    className="text-[13px]"
-                    style={{ color: "var(--text-secondary)" }}
-                  >
-                    Số bản ghi/trang
-                  </span>
+                  <span className="text-[12px] text-gray-400 font-bold uppercase tracking-wider">Hàng / Trang</span>
                   <select
                     value={itemsPerPage}
-                    onChange={(e) => {
-                      setItemsPerPage(Number(e.target.value));
-                      setCurrentPage(1);
-                    }}
-                    className="h-8 px-2 pr-6 rounded-md text-[13px] border cursor-pointer focus:outline-none focus:ring-1 transition appearance-none"
-                    style={{
-                      borderColor: "var(--grid-border)",
-                      backgroundColor: "#fff",
-                      color: "var(--text-main)",
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-                      backgroundRepeat: "no-repeat",
-                      backgroundPosition: "right 8px center",
-                    }}
+                    onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                    className="h-8 px-2 rounded-md text-[13px] border bg-white cursor-pointer font-bold outline-none"
                   >
-                    {[8, 15, 30, 50, 100].map((size) => (
-                      <option key={size} value={size}>
-                        {size}
-                      </option>
-                    ))}
+                    {[8, 15, 30].map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
-
-                {/* Range Info */}
-                <div
-                  className="text-[13px]"
-                  style={{ color: "var(--text-secondary)" }}
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-white border border-transparent hover:border-gray-200 disabled:opacity-30 transition-all shadow-sm"
                 >
-                  <span
-                    className="font-bold"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    {(currentPage - 1) * itemsPerPage + 1} -{" "}
-                    {Math.min(currentPage * itemsPerPage, filteredWarranties.length)}
-                  </span>{" "}
-                  bản ghi
+                  <ChevronLeft size={18} />
+                </button>
+                <div className="flex items-center px-4 h-10 bg-white border border-gray-200 rounded-xl text-[13px] font-black shadow-sm">
+                  {currentPage} <span className="mx-2 text-gray-300">/</span> {totalPages || 1}
                 </div>
-
-                {/* Arrows */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setCurrentPage((p) => Math.max(1, p - 1)); }}
-                    disabled={currentPage === 1}
-                    className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    <ChevronLeft size={16} strokeWidth={2.5} />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setCurrentPage((p) => Math.min(totalPages, p + 1)); }}
-                    disabled={currentPage === totalPages || totalPages === 0}
-                    className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    <ChevronRight size={16} strokeWidth={2.5} />
-                  </button>
-                </div>
+                <button
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-white border border-transparent hover:border-gray-200 disabled:opacity-30 transition-all shadow-sm"
+                >
+                  <ChevronRight size={18} />
+                </button>
               </div>
-            </div>
-          )}
-          
-          {/* EMPTY STATE */}
-          {filteredWarranties.length === 0 && (
-            <div className="flex-1 flex flex-col items-center justify-center py-20 bg-gray-50/50">
-              <div className="w-20 h-20 bg-white border border-dashed border-gray-300 rounded-3xl flex items-center justify-center text-gray-300 mb-4 animate-pulse">
-                <ShieldCheck size={40} />
-              </div>
-              <p className="text-gray-500 font-bold">Không tìm thấy phiếu bảo hành nào</p>
             </div>
           )}
         </div>
       </div>
-      {/* MODALS */}
-      <WarrantyDetailsModal 
-        isOpen={isDetailModalOpen}
-        onClose={() => setIsDetailModalOpen(false)}
-        warranty={selectedWarranty}
-        onCreateRepair={(w) => {
-          setSelectedWarrantyId(w.id);
-          setIsRepairModalOpen(true);
-        }}
-      />
+
       <CreateRepairModal 
-        isOpen={isRepairModalOpen}
-        onClose={() => setIsRepairModalOpen(false)}
+        isOpen={isRepairModalOpen} 
+        onClose={() => setIsRepairModalOpen(false)} 
         warranty={selectedWarranty}
         onSubmit={handleCreateRepair}
       />
-    </div>
+
+      <WarrantyDetailsModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        warranty={selectedWarranty}
+      />
+    </>
   );
 }
