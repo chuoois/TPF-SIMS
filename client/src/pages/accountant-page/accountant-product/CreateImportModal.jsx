@@ -197,8 +197,8 @@ const emptyLine = () => ({
     isBundle: false,
     productCode: "",
     productName: "",
-    imageFile: null,
-    imagePreview: null,
+    imageFiles: [],
+    imagePreviews: [],
     category: "",
     materialType: "",
     color: "",
@@ -235,8 +235,8 @@ const emptyBundle = () => ({
     color: "",
     formType: "NEW",
     productType: "FINISHED",
-    imageFile: null,
-    imagePreview: null,
+    imageFiles: [],
+    imagePreviews: [],
     details: "",
     items: [emptyBundleItem()],
     unitIds: [], // Mã định danh cho từng bộ
@@ -266,20 +266,32 @@ export default function CreateImportModal({ onClose, onSaved }) {
     };
 
     const handleLineFile = (lineId, e) => {
-        const f = e.target.files[0];
-        if (!f) return;
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+        
         setLines(prev => prev.map(l => {
             if (l._id !== lineId) return l;
-            if (l.imagePreview) URL.revokeObjectURL(l.imagePreview);
-            return { ...l, imageFile: f, imagePreview: URL.createObjectURL(f) };
+            const newPreviews = files.map(f => URL.createObjectURL(f));
+            return { 
+                ...l, 
+                imageFiles: [...l.imageFiles, ...files], 
+                imagePreviews: [...l.imagePreviews, ...newPreviews] 
+            };
         }));
     };
 
-    const removeLineFile = (lineId) => {
+    const removeLineImage = (lineId, idx) => {
         setLines(prev => prev.map(l => {
             if (l._id !== lineId) return l;
-            if (l.imagePreview) URL.revokeObjectURL(l.imagePreview);
-            return { ...l, imageFile: null, imagePreview: null };
+            const newFiles = [...l.imageFiles];
+            const newPreviews = [...l.imagePreviews];
+            
+            if (newPreviews[idx]) URL.revokeObjectURL(newPreviews[idx]);
+            
+            newFiles.splice(idx, 1);
+            newPreviews.splice(idx, 1);
+            
+            return { ...l, imageFiles: newFiles, imagePreviews: newPreviews };
         }));
     };
 
@@ -290,7 +302,9 @@ export default function CreateImportModal({ onClose, onSaved }) {
     const removeLine = (id) => {
         setLines(prev => {
             const line = prev.find(l => l._id === id);
-            if (line?.imagePreview) URL.revokeObjectURL(line.imagePreview);
+            if (line?.imagePreviews) {
+                line.imagePreviews.forEach(p => URL.revokeObjectURL(p));
+            }
             return prev.filter(l => l._id !== id);
         });
     };
@@ -478,7 +492,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                         onRemoveItem={(iid) => removeBundleItem(line._id, iid)}
                                         onUpdateItem={(iid, f, v) => updateBundleItem(line._id, iid, f, v)}
                                         onFileChange={(e) => handleLineFile(line._id, e)}
-                                        onRemoveFile={() => removeLineFile(line._id)}
+                                        onRemoveImage={(idx) => removeLineImage(line._id, idx)}
                                         canRemove={lines.length > 1}
                                         lineTotal={lineTotal(line)}
                                         activeDropdown={activeDropdown}
@@ -490,7 +504,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                         onUpdate={(f, v) => updateLine(line._id, f, v)}
                                         onRemove={() => removeLine(line._id)}
                                         onFileChange={(e) => handleLineFile(line._id, e)}
-                                        onRemoveFile={() => removeLineFile(line._id)}
+                                        onRemoveImage={(idx) => removeLineImage(line._id, idx)}
                                         canRemove={lines.length > 1}
                                         lineTotal={lineTotal(line)}
                                         activeDropdown={activeDropdown}
@@ -534,7 +548,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
 // ══════════════════════════════════════════════════════════
 // SINGLE ROW – Dòng sản phẩm đơn lẻ
 // ══════════════════════════════════════════════════════════
-function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveFile, canRemove, lineTotal,
+function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveImage, canRemove, lineTotal,
     activeDropdown, setActiveDropdown, inp, inpS, lbl, lblS, fmtCurrency, formatNumber, parseNumber }) {
     return (
         <div className="p-5 rounded-2xl space-y-4 shadow-sm" style={{ backgroundColor: "var(--bg-main)", border: "1px solid var(--grid-border)" }}>
@@ -741,39 +755,42 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveFile, 
                         )}
                     </div>
 
-                    {/* Ảnh + Chi tiết */}
-                    <div className="grid grid-cols-12 gap-4">
-                        <div className="col-span-2">
-                            <label className={lbl} style={lblS}>Ảnh sản phẩm</label>
-                            <div className="relative w-full aspect-square rounded-xl border-dashed border-2 flex items-center justify-center cursor-pointer overflow-hidden group hover:border-purple-400"
-                                style={{ borderColor: "var(--grid-border)", backgroundColor: "var(--bg-main)" }}>
-                                {line.imagePreview ? (
-                                    <>
-                                        <img src={line.imagePreview} alt="SP" className="w-full h-full object-cover" />
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                            <button type="button" onClick={(e) => { e.stopPropagation(); onRemoveFile(); }}
-                                                className="p-1.5 bg-red-500 rounded-lg text-white hover:bg-red-600 transition">
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="flex flex-col items-center gap-1.5" style={{ color: "var(--text-placeholder)" }}>
-                                        <Image size={24} strokeWidth={1.5} />
-                                        <span className="text-[10px] font-medium uppercase">Tải ảnh</span>
-                                    </div>
-                                )}
-                                <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" onChange={onFileChange} title="" />
+            {/* Ảnh + Chi tiết */}
+            <div className="space-y-3">
+                <div>
+                    <label className={lbl} style={lblS}>Ảnh sản phẩm (Có thể chọn nhiều)</label>
+                    <div className="flex flex-wrap gap-3">
+                        {line.imagePreviews.map((pre, i) => (
+                            <div key={i} className="relative w-24 h-24 rounded-xl border overflow-hidden group shadow-sm" style={{ borderColor: "var(--grid-border)" }}>
+                                <img src={pre} alt="SP" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <button type="button" onClick={() => onRemoveImage(i)}
+                                        className="p-1.5 bg-red-500 rounded-lg text-white hover:bg-red-600 transition shadow-lg">
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <div className="col-span-10 flex flex-col">
-                            <label className={lbl} style={lblS}><AlignLeft size={11} className="inline mr-1" />Chi tiết sản phẩm</label>
-                            <textarea value={line.details} onChange={(e) => onUpdate("details", e.target.value)}
-                                placeholder="Ghi chú thêm thông tin chi tiết mặt hàng..."
-                                className="w-full p-2.5 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-purple-300 transition resize-none flex-1"
-                                style={{ ...inpS, lineHeight: 1.4, minHeight: "3.5rem" }} />
+                        ))}
+                        
+                        <div className="relative w-24 h-24 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition hover:border-purple-400 hover:bg-purple-50/30"
+                            style={{ borderColor: "var(--grid-border)", backgroundColor: "var(--bg-main)" }}>
+                            <div className="flex flex-col items-center gap-1" style={{ color: "var(--text-placeholder)" }}>
+                                <Plus size={20} strokeWidth={2.5} />
+                                <span className="text-[10px] font-bold uppercase">Thêm ảnh</span>
+                            </div>
+                            <input type="file" multiple accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={onFileChange} title="Chọn nhiều ảnh" />
                         </div>
                     </div>
+                </div>
+
+                <div className="flex flex-col">
+                    <label className={lbl} style={lblS}><AlignLeft size={11} className="inline mr-1" />Chi tiết sản phẩm</label>
+                    <textarea value={line.details} onChange={(e) => onUpdate("details", e.target.value)}
+                        placeholder="Ghi chú thêm thông tin chi tiết mặt hàng..."
+                        className="w-full p-2.5 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-purple-300 transition resize-none"
+                        style={{ ...inpS, lineHeight: 1.4, minHeight: "4rem" }} />
+                </div>
+            </div>
                 </>
             )}
 
@@ -826,7 +843,7 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveFile, 
 // BUNDLE ROW – Dòng bộ sản phẩm
 // ══════════════════════════════════════════════════════════
 function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, onUpdateItem,
-    onFileChange, onRemoveFile, canRemove, lineTotal,
+    onFileChange, onRemoveImage, canRemove, lineTotal,
     activeDropdown, setActiveDropdown,
     inp, inpS, lbl, lblS, fmtCurrency, formatNumber, parseNumber }) {
 
@@ -1150,36 +1167,39 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                 )}
 
                 {/* Ảnh + Chi tiết bộ */}
-                <div className="grid grid-cols-12 gap-4">
-                    <div className="col-span-2">
-                        <label className={lbl} style={lblS}>Ảnh bộ</label>
-                        <div className="relative w-full aspect-square rounded-xl border-dashed border-2 flex items-center justify-center cursor-pointer overflow-hidden group hover:border-purple-400"
-                            style={{ borderColor: "#DDD6FE", backgroundColor: "#F5F3FF" }}>
-                            {bundle.imagePreview ? (
-                                <>
-                                    <img src={bundle.imagePreview} alt="Bộ SP" className="w-full h-full object-cover" />
+                <div className="space-y-4">
+                    <div>
+                        <label className={lbl} style={lblS}>Ảnh bộ sản phẩm (Nhiều ảnh)</label>
+                        <div className="flex flex-wrap gap-3">
+                            {bundle.imagePreviews.map((pre, i) => (
+                                <div key={i} className="relative w-24 h-24 rounded-xl border overflow-hidden group shadow-sm" style={{ borderColor: "#DDD6FE" }}>
+                                    <img src={pre} alt="Bộ SP" className="w-full h-full object-cover" />
                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                        <button type="button" onClick={(e) => { e.stopPropagation(); onRemoveFile(); }}
-                                            className="p-1.5 bg-red-500 rounded-lg text-white hover:bg-red-600 transition">
+                                        <button type="button" onClick={() => onRemoveImage(i)}
+                                            className="p-1.5 bg-red-500 rounded-lg text-white hover:bg-red-600 transition shadow-lg">
                                             <Trash2 size={14} />
                                         </button>
                                     </div>
-                                </>
-                            ) : (
-                                <div className="flex flex-col items-center gap-1.5" style={{ color: "#A78BFA" }}>
-                                    <Image size={24} strokeWidth={1.5} />
-                                    <span className="text-[10px] font-medium uppercase">Tải ảnh</span>
                                 </div>
-                            )}
-                            <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" onChange={onFileChange} title="" />
+                            ))}
+                            
+                            <div className="relative w-24 h-24 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition hover:border-purple-400 hover:bg-purple-50/20"
+                                style={{ borderColor: "#DDD6FE", backgroundColor: "#F5F3FF" }}>
+                                <div className="flex flex-col items-center gap-1" style={{ color: "#A78BFA" }}>
+                                    <Plus size={20} strokeWidth={2.5} />
+                                    <span className="text-[10px] font-bold uppercase">Thêm ảnh</span>
+                                </div>
+                                <input type="file" multiple accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={onFileChange} title="Chọn nhiều ảnh bộ" />
+                            </div>
                         </div>
                     </div>
-                    <div className="col-span-10 flex flex-col">
+
+                    <div className="flex flex-col">
                         <label className={lbl} style={lblS}><AlignLeft size={11} className="inline mr-1" />Chi tiết bộ sản phẩm</label>
                         <textarea value={bundle.details} onChange={(e) => onUpdate("details", e.target.value)}
                             placeholder="Ghi chú thêm thông tin về bộ hàng này..."
-                            className="w-full p-2.5 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-purple-300 transition resize-none flex-1"
-                            style={{ borderColor: "var(--grid-border)", backgroundColor: "#fff", color: "var(--text-main)", lineHeight: 1.4, minHeight: "3.5rem" }} />
+                            className="w-full p-2.5 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-purple-300 transition resize-none"
+                            style={{ borderColor: "var(--grid-border)", backgroundColor: "#fff", color: "var(--text-main)", lineHeight: 1.4, minHeight: "4rem" }} />
                     </div>
                 </div>
 
