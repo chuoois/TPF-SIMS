@@ -84,19 +84,9 @@ export default function EmployeeModal({
       payment_date: formData.paymentDate,
     };
 
-    if (formData.type === "SALES") {
-      employeeData.base_salary = Number(formData.baseSalary) || 0;
-      employeeData.days_worked = Number(formData.daysWorked) || 0; 
-      employeeData.products_finished = 0;
-      employeeData.products_log = [];
-    } else if (formData.type === "ACCOUNTANT") {
-      employeeData.base_salary = Number(formData.baseSalary) || 0;
-      employeeData.days_worked = Number(formData.daysWorked) || 0;
-      employeeData.products_finished = 0;
-      employeeData.products_log = [];
-    } else if (formData.type === "SANDER") {
+    if (["SALES", "ACCOUNTANT", "SANDER"].includes(formData.type)) {
       employeeData.base_rate = Number(formData.baseRate) || 0;
-      employeeData.days_worked = Number(formData.daysWorked) || 0;
+      employeeData.days_worked = Number(formData.daysWorked) || 0; 
       employeeData.products_finished = 0;
       employeeData.products_log = [];
     } else if (formData.type === "PAINTER") {
@@ -165,24 +155,8 @@ export default function EmployeeModal({
                  <h4 className="text-[12px] font-bold uppercase tracking-wider text-gray-500">Thông số tính lương</h4>
               </div>
 
-              {/* SALES & ACCOUNTANT – Same monthly salary structure */}
-              {(formData.type === "SALES" || formData.type === "ACCOUNTANT") && (
-                <>
-<div className="space-y-1.5">
-                      <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Lương tháng cố định (VNĐ) <span className="text-red-500">*</span></label>
-                      <input type="text" value={formatNumber(formData.baseSalary)} onChange={e => setFormData({...formData, baseSalary: parseNumber(e.target.value)})} required
-                          className={inputClass} placeholder="Ví dụ: 10.000.000" style={inputStyle} />
-                  </div>
-                  <div className="space-y-1.5">
-                      <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Số ngày công (chấm công)</label>
-                      <input type="number" min="0" value={formData.daysWorked} onChange={e => setFormData({...formData, daysWorked: e.target.value})}
-                          className={inputClass} placeholder="26" style={inputStyle} />
-                  </div>
-                </>
-              )}
-
-              {/* SANDER */}
-              {formData.type === "SANDER" && (
+              {/* SALES, ACCOUNTANT & SANDER – Same daily rate structure */}
+              {(["SALES", "ACCOUNTANT", "SANDER"].includes(formData.type)) && (
                 <>
                   <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">

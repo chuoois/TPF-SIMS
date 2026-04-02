@@ -1005,7 +1005,10 @@ export default function InStockInvoicePage() {
   );
 
   const maxLeadTime = useMemo(() => {
-    return activeTab.cartItems.reduce((max, item) => Math.max(max, item.leadTime || 0), 0);
+    return activeTab.cartItems.reduce((max, item) => {
+      const lt = item.priceMode === "raw" ? 0 : (item.leadTime || 0);
+      return Math.max(max, lt);
+    }, 0);
   }, [activeTab.cartItems]);
 
   const workshopStats = useMemo(() => {
@@ -1026,11 +1029,12 @@ export default function InStockInvoicePage() {
   }, [activeTab.cartItems]);
 
   const needsWorkshop = useMemo(() => {
-    return activeTab.cartItems.some(item => 
-      item.productType === "Hàng mộc" || 
-      item.productType === "Hàng khách đặt" || 
-      (item.leadTime && item.leadTime > 0)
-    );
+    return activeTab.cartItems.some(item => {
+      if (item.priceMode === "raw") return false;
+      return item.productType === "Hàng mộc" || 
+             item.productType === "Hàng khách đặt" || 
+             (item.leadTime && item.leadTime > 0);
+    });
   }, [activeTab.cartItems]);
 
   const expectedReadyDate = useMemo(() => {

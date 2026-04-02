@@ -583,6 +583,9 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveFile, 
                                                     onUpdate("productName", p.name); onUpdate("productCode", p.code);
                                                     onUpdate("category", p.category); onUpdate("materialType", p.materialType);
                                                     onUpdate("importPrice", p.importPrice || "");
+                                                    if (line.qty > 0 && p.code) {
+                                                        onUpdate("unitIds", generateUnitIds({ ...line, productCode: p.code }, line.qty));
+                                                    }
                                                     setActiveDropdown({ id: null, field: null });
                                                 }}>
                                                 <p className="text-[13px] font-semibold text-gray-800 truncate">{p.name}</p>
@@ -600,7 +603,15 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveFile, 
                     <div className="grid grid-cols-3 gap-4 border-t pt-4" style={{ borderColor: "var(--grid-border)" }}>
                         <div>
                             <label className={lbl} style={lblS}>Số lượng nhập *</label>
-                            <input type="number" min="1" value={line.qty} onChange={(e) => onUpdate("qty", e.target.value)} placeholder="0" className={inp} style={inpS} />
+                            <input type="number" min="1" value={line.qty} onChange={(e) => {
+                                const q = e.target.value;
+                                onUpdate("qty", q);
+                                if (q > 0 && line.productCode?.trim()) {
+                                    onUpdate("unitIds", generateUnitIds(line, q));
+                                } else {
+                                    onUpdate("unitIds", []);
+                                }
+                            }} placeholder="0" className={inp} style={inpS} />
                         </div>
                         <div>
                             <label className={lbl} style={lblS}>Giá nhập (₫) *</label>
@@ -631,15 +642,19 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveFile, 
                             <div className="relative">
                                 <input value={line.productCode} onChange={(e) => {
                                     onUpdate("productCode", e.target.value);
-                                    if (line.unitIds.length > 0) {
+                                    if (line.qty > 0 && e.target.value.trim() !== "") {
                                         onUpdate("unitIds", generateUnitIds({ ...line, productCode: e.target.value }, line.qty));
+                                    } else {
+                                        onUpdate("unitIds", []);
                                     }
                                 }} placeholder="Tự sinh/Nhập tay" className={inp + " pr-16"} style={inpS} />
                                 <button type="button" onClick={() => {
                                     const newCode = generateProductCode(line);
                                     onUpdate("productCode", newCode);
-                                    if (line.unitIds.length > 0) {
+                                    if (line.qty > 0 && newCode.trim() !== "") {
                                         onUpdate("unitIds", generateUnitIds({ ...line, productCode: newCode }, line.qty));
+                                    } else {
+                                        onUpdate("unitIds", []);
                                     }
                                 }} className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2 text-[10px] font-bold rounded bg-purple-50 text-purple-600 hover:bg-purple-100 transition">Tự sinh</button>
                             </div>
@@ -707,7 +722,7 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveFile, 
                             <input type="number" min="1" value={line.qty} onChange={(e) => {
                                 const q = e.target.value;
                                 onUpdate("qty", q);
-                                if (q > 0) {
+                                if (q > 0 && line.productCode?.trim()) {
                                     onUpdate("unitIds", generateUnitIds(line, q));
                                 } else {
                                     onUpdate("unitIds", []);
@@ -759,40 +774,40 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveFile, 
                                 style={{ ...inpS, lineHeight: 1.4, minHeight: "3.5rem" }} />
                         </div>
                     </div>
+                </>
+            )}
 
-                    {/* Quản lý mã định danh đơn vị */}
-                    {line.qty > 0 && (
-                        <div className="pt-2 border-t" style={{ borderColor: "var(--grid-border)" }}>
-                            <button type="button" onClick={() => onUpdate("showUnitIds", !line.showUnitIds)}
-                                className="text-[11px] font-bold flex items-center gap-1.5 hover:opacity-80 transition"
-                                style={{ color: "var(--brand-primary)" }}>
-                                <ChevronDown size={14} style={{ transform: line.showUnitIds ? "rotate(0)" : "rotate(-90deg)", transition: "0.2s" }} />
-                                {line.showUnitIds ? "Ẩn danh sách mã định danh" : `Quản lý ${line.qty} mã định danh đơn vị (tự sinh/nhập tay)`}
-                            </button>
-                            
-                            {line.showUnitIds && (
-                                <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                    {Array.from({ length: Number(line.qty) }).map((_, i) => (
-                                        <div key={i} className="flex flex-col gap-1">
-                                            <span className="text-[9px] font-bold uppercase text-gray-400">Đơn vị #{i + 1}</span>
-                                            <input 
-                                                value={line.unitIds[i] || ""}
-                                                onChange={(e) => {
-                                                    const newIds = [...line.unitIds];
-                                                    newIds[i] = e.target.value;
-                                                    onUpdate("unitIds", newIds);
-                                                }}
-                                                placeholder={`Mã ĐV ${i + 1}`}
-                                                className="h-7 px-2 rounded-md text-[11px] font-mono border focus:outline-none focus:ring-1 focus:ring-purple-200"
-                                                style={{ borderColor: "var(--grid-border)", backgroundColor: "#fff" }}
-                                            />
-                                        </div>
-                                    ))}
+            {/* Quản lý mã định danh đơn vị */}
+            {line.qty > 0 && (
+                <div className="pt-2 border-t" style={{ borderColor: "var(--grid-border)" }}>
+                    <button type="button" onClick={() => onUpdate("showUnitIds", !line.showUnitIds)}
+                        className="text-[11px] font-bold flex items-center gap-1.5 hover:opacity-80 transition"
+                        style={{ color: "var(--brand-primary)" }}>
+                        <ChevronDown size={14} style={{ transform: line.showUnitIds ? "rotate(0)" : "rotate(-90deg)", transition: "0.2s" }} />
+                        {line.showUnitIds ? "Ẩn danh sách mã định danh" : `Quản lý ${line.qty} mã định danh đơn vị (tự sinh/nhập tay)`}
+                    </button>
+                    
+                    {line.showUnitIds && (
+                        <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {Array.from({ length: Number(line.qty) }).map((_, i) => (
+                                <div key={i} className="flex flex-col gap-1">
+                                    <span className="text-[9px] font-bold uppercase text-gray-400">Đơn vị #{i + 1}</span>
+                                    <input 
+                                        value={line.unitIds[i] || ""}
+                                        onChange={(e) => {
+                                            const newIds = [...line.unitIds];
+                                            newIds[i] = e.target.value;
+                                            onUpdate("unitIds", newIds);
+                                        }}
+                                        placeholder={`Mã ĐV ${i + 1}`}
+                                        className="h-7 px-2 rounded-md text-[11px] font-mono border focus:outline-none focus:ring-1 focus:ring-purple-200"
+                                        style={{ borderColor: "var(--grid-border)", backgroundColor: "#fff" }}
+                                    />
                                 </div>
-                            )}
+                            ))}
                         </div>
                     )}
-                </>
+                </div>
             )}
 
             {/* Line total */}
@@ -826,6 +841,9 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
         onUpdate("color", b.color);
         onUpdate("productType", b.productType);
         onUpdate("items", b.items.map(it => ({ ...it, _id: Math.random(), productNote: "" })));
+        if (bundle.bundleQty > 0 && b.code) {
+           onUpdate("unitIds", generateBundleUnitIds({ ...bundle, bundleCode: b.code }, bundle.bundleQty));
+        }
     };
 
     return (
@@ -861,7 +879,14 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                         <label className={lbl} style={lblS}>Mã bộ sản phẩm</label>
                         <div className="relative">
                             <input value={bundle.bundleCode}
-                                onChange={(e) => onUpdate("bundleCode", e.target.value)}
+                                onChange={(e) => {
+                                    onUpdate("bundleCode", e.target.value);
+                                    if (bundle.bundleQty > 0 && e.target.value.trim() !== "") {
+                                        onUpdate("unitIds", generateBundleUnitIds({ ...bundle, bundleCode: e.target.value }, bundle.bundleQty));
+                                    } else {
+                                        onUpdate("unitIds", []);
+                                    }
+                                }}
                                 placeholder="Tự sinh / Nhập tay"
                                 className={inp + (isReady ? "" : " pr-16")}
                                 style={isReady ? { ...inpS, backgroundColor: "#F5F3FF", color: "#7C3AED", fontWeight: 600 } : inpS}
@@ -870,8 +895,10 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                                 <button type="button" onClick={() => {
                                     const newCode = generateBundleCode(bundle);
                                     onUpdate("bundleCode", newCode);
-                                    if (bundle.unitIds.length > 0) {
+                                    if (bundle.bundleQty > 0 && newCode.trim() !== "") {
                                         onUpdate("unitIds", generateBundleUnitIds({ ...bundle, bundleCode: newCode }, bundle.bundleQty));
+                                    } else {
+                                        onUpdate("unitIds", []);
                                     }
                                 }} className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2 text-[10px] font-bold rounded bg-purple-50 text-purple-600 hover:bg-purple-100 transition">Tự sinh</button>
                             )}
@@ -951,7 +978,7 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                         <input type="number" min="1" value={bundle.bundleQty} onChange={(e) => {
                             const q = e.target.value;
                             onUpdate("bundleQty", q);
-                            if (q > 0) {
+                            if (q > 0 && bundle.bundleCode?.trim()) {
                                 onUpdate("unitIds", generateBundleUnitIds(bundle, q));
                             } else {
                                 onUpdate("unitIds", []);
@@ -1023,7 +1050,7 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                                 <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-wider w-6" style={{ color: "#7C3AED" }}>#</th>
                                 <th className="px-4 py-2 text-left text-[10px] font-bold uppercase tracking-wider" style={{ color: "#7C3AED" }}>Tên món</th>
                                 <th className="px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider w-20" style={{ color: "#7C3AED" }}>SL/bộ</th>
-                                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider" style={{ color: "#7C3AED" }}>Ghi chú chi tiết</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider" style={{ color: "#7C3AED" }}>Kích thước (D×R×C)</th>
                                 <th className="w-10" />
                             </tr>
                         </thead>
@@ -1045,11 +1072,26 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                                             style={{ borderColor: "#DDD6FE", backgroundColor: "#FAFAFA" }} />
                                     </td>
                                     <td className="px-3 py-2">
-                                        <input type="text" value={item.productNote}
-                                            onChange={(e) => onUpdateItem(item._id, "productNote", e.target.value)}
-                                            placeholder="Ghi chú màu sắc, kích thước..."
-                                            className="w-full h-8 px-2 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-purple-200 transition"
-                                            style={{ borderColor: "#DDD6FE", backgroundColor: "#FAFAFA" }} />
+                                        <div className="flex items-center gap-2">
+                                            <input type="number" value={item.length || ""}
+                                                onChange={(e) => onUpdateItem(item._id, "length", e.target.value)}
+                                                placeholder="Dài"
+                                                className="w-full h-8 px-2 rounded-md text-[13px] border text-center focus:outline-none focus:ring-1 focus:ring-purple-200 transition"
+                                                style={{ borderColor: "#DDD6FE", backgroundColor: "#FAFAFA" }} />
+                                            <span className="text-[12px]" style={{ color: "var(--text-placeholder)" }}>×</span>
+                                            <input type="number" value={item.width || ""}
+                                                onChange={(e) => onUpdateItem(item._id, "width", e.target.value)}
+                                                placeholder="Rộng"
+                                                className="w-full h-8 px-2 rounded-md text-[13px] border text-center focus:outline-none focus:ring-1 focus:ring-purple-200 transition"
+                                                style={{ borderColor: "#DDD6FE", backgroundColor: "#FAFAFA" }} />
+                                            <span className="text-[12px]" style={{ color: "var(--text-placeholder)" }}>×</span>
+                                            <input type="number" value={item.height || ""}
+                                                onChange={(e) => onUpdateItem(item._id, "height", e.target.value)}
+                                                placeholder="Cao"
+                                                className="w-full h-8 px-2 rounded-md text-[13px] border text-center focus:outline-none focus:ring-1 focus:ring-purple-200 transition"
+                                                style={{ borderColor: "#DDD6FE", backgroundColor: "#FAFAFA" }} />
+                                            <span className="text-[12px]" style={{ color: "var(--text-placeholder)" }}>cm</span>
+                                        </div>
                                     </td>
                                     <td className="px-2 py-2 text-center">
                                         {bundle.items.length > 1 && (
