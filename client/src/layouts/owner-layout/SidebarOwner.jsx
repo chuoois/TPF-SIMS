@@ -36,8 +36,8 @@ const menuItems = [
     icon: Package,
     path: "/owner/products",
     subItems: [
-      { text: "Hàng hóa", path: "/owner/products", exactMatch: true },
-      { text: "Danh mục hàng hóa", path: "/owner/products/categories" },
+      { text: "Danh sách sản phẩm", path: "/owner/products", exactMatch: true },
+      { text: "Danh mục sản phẩm", path: "/owner/products/categories" },
     ],
     settingsGroup: {
       text: "Thiết lập",
