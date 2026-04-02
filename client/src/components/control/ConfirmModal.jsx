@@ -14,7 +14,7 @@ const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel }) => {
 
       {/* Modal */}
       <div
-        className="relative bg-white w-full max-w-[400px] rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200"
+        className="relative bg-white w-full max-w-[400px] rounded-lg shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6">
@@ -35,13 +35,13 @@ const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel }) => {
           <div className="flex items-center justify-end gap-3 mt-8">
             <button
               onClick={onCancel}
-              className="px-4 py-2 text-[13px] font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition cursor-pointer"
+              className="px-4 py-2 text-[13px] font-bold text-gray-500 hover:bg-gray-100 rounded-lg transition cursor-pointer"
             >
               Bỏ qua
             </button>
             <button
               onClick={onConfirm}
-              className="px-6 py-2 text-[13px] font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition active:scale-95 cursor-pointer"
+              className="px-6 py-2 text-[13px] font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition active:scale-95 cursor-pointer"
             >
               Xác nhận
             </button>

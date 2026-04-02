@@ -2,12 +2,13 @@ import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import {
-    Tag, Plus, Search, Pencil, Trash2,
-    ChevronLeft, ChevronRight, Loader2,
-    XCircle, Package, Users,
+    Tag, Plus, Pencil, Trash2,
+    Loader2, Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
+import DataTable from "@/components/control/DataTable";
+import ConfirmModal from "@/components/control/ConfirmModal";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 const fmtDate = (iso) => {
@@ -100,16 +101,17 @@ const INITIAL_COUPONS = [
     },
 ];
 
-const PAGE_SIZE = 10;
-
 // ─── Sub-components ────────────────────────────────────────────────────────
 
-/** Inline switch toggle used per-row */
+/** Inline switch toggle */
 function RowSwitch({ checked, loading, onChange, title }) {
     return (
         <button
             type="button"
-            onClick={onChange}
+            onClick={(e) => {
+                e.stopPropagation();
+                onChange();
+            }}
             title={title || (checked ? "Tắt coupon" : "Bật coupon")}
             disabled={loading}
             className={cn(
@@ -134,20 +136,20 @@ function RowSwitch({ checked, loading, onChange, title }) {
     );
 }
 
-/** Expiry badge */
+/** Expiry badge simplified */
 function ExpiryBadge({ toDate, isActive }) {
-    if (!toDate) return <span className="text-gray-400 text-[12px]">Không giới hạn</span>;
+    if (!toDate) return <span className="text-gray-400 text-[10px]">Vô thời hạn</span>;
     const expired = new Date(toDate) < new Date();
     return (
         <span className={cn(
-            "inline-flex px-2 py-0.5 rounded-md text-[11px] font-bold border",
+            "inline-flex w-fit px-2 py-0.5 rounded-lg text-[10px] font-bold border",
             expired
                 ? "bg-red-50 text-red-600 border-red-100"
                 : isActive
                     ? "bg-emerald-50 text-emerald-700 border-emerald-100"
                     : "bg-gray-100 text-gray-500 border-gray-200"
         )}>
-            {fmtDate(toDate)}
+            {expired ? "Hết hạn" : isActive ? "Còn hạn" : "Đã tắt"}
         </span>
     );
 }
@@ -156,100 +158,144 @@ function ExpiryBadge({ toDate, isActive }) {
 export default function CouponListPage() {
     const navigate = useNavigate();
     const [coupons, setCoupons] = useState(INITIAL_COUPONS);
-    const [search, setSearch] = useState("");
-    const [page, setPage] = useState(1);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(15);
+    const [selectedIds, setSelectedIds] = useState([]);
     const [toggleLoadingId, setToggleLoadingId] = useState(null);
-    const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
-    // ── Search ───────────────────────────────────────────────────
-    const filtered = useMemo(() => {
-        if (!search.trim()) return coupons;
-        const s = search.toLowerCase();
-        return coupons.filter(c =>
-            c.name.toLowerCase().includes(s) ||
-            c.code.toLowerCase().includes(s)
-        );
-    }, [coupons, search]);
+    // Filter Logic
+    const filteredResults = useMemo(() => {
+        let results = coupons;
+        if (searchTerm.trim()) {
+            const s = searchTerm.toLowerCase();
+            results = results.filter(c =>
+                c.name.toLowerCase().includes(s) ||
+                c.code.toLowerCase().includes(s)
+            );
+        }
+        return results;
+    }, [coupons, searchTerm]);
 
-    const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-    const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    // Paginated Data for DataTable (since it only renders current page)
+    const paginatedData = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        return filteredResults.slice(start, start + itemsPerPage);
+    }, [filteredResults, currentPage, itemsPerPage]);
 
-    const handleSearch = () => setPage(1);
-    const handleSearchKey = (e) => { if (e.key === "Enter") handleSearch(); };
-    const clearSearch = () => { setSearch(""); setPage(1); };
-
-    // ── Toggle status ────────────────────────────────────────────
+    // Toggle logic
     const handleToggle = useCallback(async (id, currentState) => {
         setToggleLoadingId(id);
         try {
-            // Simulate API: PATCH /coupons/{id}/status
             await new Promise(res => setTimeout(res, 600));
             setCoupons(prev => prev.map(c =>
                 c.id === id ? { ...c, isActive: !currentState } : c
             ));
             toast.success(!currentState ? "Đã bật mã coupon" : "Đã tắt mã coupon");
         } catch {
-            toast.error("Cập nhật thất bại. Thử lại.");
+            toast.error("Cập nhật thất bại.");
         } finally {
             setToggleLoadingId(null);
         }
     }, []);
 
-    // ── Delete ───────────────────────────────────────────────────
-    const handleDeleteConfirm = (id) => setDeleteConfirmId(id);
-    const handleDeleteCancel = () => setDeleteConfirmId(null);
-    const handleDeleteExecute = async () => {
-        const id = deleteConfirmId;
-        setDeleteConfirmId(null);
-        // Simulate API: DELETE /coupons/{id}
-        await new Promise(res => setTimeout(res, 300));
-        setCoupons(prev => prev.filter(c => c.id !== id));
-        toast.success("Đã xóa mã coupon");
+    // Delete logic
+    const handleDelete = (item) => {
+        setCoupons(prev => prev.filter(c => c.id !== item.id));
+        toast.success("Đã xóa mã coupon thành công!");
     };
+
+    const handleBulkDelete = () => {
+        setCoupons(prev => prev.filter(c => !selectedIds.includes(c.id)));
+        setSelectedIds([]);
+        toast.success(`Đã xóa ${selectedIds.length} mã coupon thành công!`);
+    };
+
+    const columns = [
+        {
+            header: "Trạng thái",
+            headerClassName: "w-[80px] text-center",
+            className: "text-center",
+            render: (c) => (
+                <div className="flex flex-col items-center gap-1">
+                    <RowSwitch
+                        checked={c.isActive}
+                        loading={toggleLoadingId === c.id}
+                        onChange={() => handleToggle(c.id, c.isActive)}
+                    />
+                    {c.toDate && new Date(c.toDate) < new Date() && (
+                        <span className="text-[9px] font-bold text-red-500 uppercase tracking-tighter">Hết hạn</span>
+                    )}
+                </div>
+            )
+        },
+        {
+            header: "Tên Coupon",
+            key: "name",
+        },
+        {
+            header: "Mã giảm giá",
+            key: "code",
+            type: "code",
+        },
+        {
+            header: "Mức giảm",
+            render: (c) => (
+                <span className={cn(
+                    "inline-flex px-2.5 py-1 rounded-lg text-[13px] font-bold border tracking-tight w-fit",
+                    c.discountType === "PERCENT"
+                        ? "bg-purple-50 text-purple-600 border-purple-100"
+                        : "bg-blue-50 text-blue-600 border-blue-100"
+                )}>
+                    {fmtDiscount(c.discountType, c.discountValue)}
+                </span>
+            )
+        },
+        {
+            header: "Áp dụng",
+            render: (c) => (
+                <div className="flex items-center gap-2">
+                    {c.applyAllProducts ? (
+                        <span className="text-[12px] font-medium text-slate-400 flex items-center gap-1.5 uppercase tracking-wider">
+                            <Package size={12} className="opacity-40" /> Tất cả SP
+                        </span>
+                    ) : (
+                        <span className="text-[12px] font-bold text-[var(--brand-primary)] flex items-center gap-1.5 uppercase tracking-wider">
+                            <Package size={12} /> {c.productIds.length} Sản phẩm
+                        </span>
+                    )}
+                </div>
+            )
+        },
+        {
+            header: "Hiệu lực",
+            className: "max-w-[160px]",
+            render: (c) => (
+                <div className="flex flex-col gap-0.5 whitespace-nowrap">
+                    <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{fmtDate(c.fromDate)} ~ {c.toDate ? fmtDate(c.toDate) : "∞"}</span>
+                    <ExpiryBadge toDate={c.toDate} isActive={c.isActive} />
+                </div>
+            )
+        }
+    ];
 
     return (
         <>
             <PageHelmet title="Mã giảm giá | TPF-SIMS" />
 
-            {/* Delete confirm overlay */}
-            {deleteConfirmId && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
-                        <div className="px-6 pt-6 pb-5 text-center space-y-3">
-                            <div className="w-14 h-14 rounded-2xl bg-red-50 border-2 border-red-100 flex items-center justify-center mx-auto">
-                                <Trash2 size={24} className="text-red-500" />
-                            </div>
-                            <div>
-                                <h3 className="text-[16px] font-bold text-gray-900">Xóa mã coupon?</h3>
-                                <p className="text-[13px] text-gray-400 mt-1">Thao tác này không thể hoàn tác.</p>
-                            </div>
-                        </div>
-                        <div className="px-6 pb-6 flex gap-3">
-                            <button onClick={handleDeleteCancel}
-                                className="flex-1 h-11 rounded-xl border font-bold text-[13px] text-gray-500 hover:bg-gray-50 transition cursor-pointer"
-                                style={{ borderColor: "var(--grid-border)" }}>
-                                Hủy
-                            </button>
-                            <button onClick={handleDeleteExecute}
-                                className="flex-1 h-11 rounded-xl font-bold text-[13px] text-white bg-red-500 hover:bg-red-600 transition cursor-pointer shadow-sm">
-                                Xóa
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             <div className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 space-y-4" style={{ backgroundColor: "var(--bg-main)" }}>
 
-                {/* ── Page header ──────────────────────────────────────── */}
+                {/* Header Section */}
                 <div className="flex items-center justify-between shrink-0">
                     <div>
-                        <h1 className="text-[22px] font-bold flex items-center gap-2.5" style={{ color: "var(--text-main)", letterSpacing: "-0.01em" }}>
+                        <h1 className="text-xl font-bold flex items-center gap-2"
+                            style={{ color: "var(--text-main)" }}>
                             <Tag size={22} style={{ color: "var(--brand-primary)" }} />
-                            Mã giảm giá
+                            Quản lý mã giảm giá
                         </h1>
-                        <p className="text-[13px] mt-1 font-medium italic" style={{ color: "var(--text-placeholder)" }}>
-                            {filtered.length} coupon{search ? " (đang lọc)" : ""}
+                        <p className="text-[13px] mt-0.5"
+                            style={{ color: "var(--text-placeholder)" }}>
+                            {filteredResults.length} coupons ({searchTerm ? "đang lọc" : "toàn bộ"})
                         </p>
                     </div>
                     <button
@@ -261,185 +307,50 @@ export default function CouponListPage() {
                     </button>
                 </div>
 
-                {/* ── Table card ───────────────────────────────────────── */}
-                <div className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-
-                    {/* Toolbar */}
-                    <div className="px-4 py-3 border-b flex items-center gap-3 shrink-0 flex-wrap" style={{ borderColor: "var(--grid-border)" }}>
-                        <div className="relative w-full max-w-xs">
-                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
-                            <input
-                                type="text"
-                                value={search}
-                                onChange={e => setSearch(e.target.value)}
-                                onKeyDown={handleSearchKey}
-                                placeholder="Tìm mã coupon, tên coupon..."
-                                className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] focus:outline-none transition focus:border-emerald-400"
-                                style={{ border: "1px solid var(--grid-border)", backgroundColor: "var(--bg-main)" }}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Table scroll area */}
-                    <div className="flex-1 overflow-auto">
-                        <table className="w-full text-left text-[13px] min-w-[900px]">
-                            <thead className="sticky top-0 z-10" style={{ backgroundColor: "var(--grid-header-bg)", borderBottom: "1px solid var(--grid-border)" }}>
-                                <tr>
-                                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400 w-[72px] text-center">Trạng thái</th>
-                                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">Tên coupon</th>
-                                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">Mã coupon</th>
-                                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400 w-28">Giảm giá</th>
-                                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400 w-32">Sản phẩm</th>
-                                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400 w-28">Từ ngày</th>
-                                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400 w-28">Đến ngày</th>
-                                    <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400 text-right w-28">Hành động</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {paged.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={8} className="py-20 text-center">
-                                            <Tag size={32} className="mx-auto mb-3 opacity-20 text-gray-400" />
-                                            <p className="text-gray-400 font-medium text-[14px]">
-                                                {search ? "Không tìm thấy mã nào phù hợp" : "Chưa có mã giảm giá nào"}
-                                            </p>
-                                            {!search && (
-                                                <button onClick={() => navigate("/owner/coupons/create")}
-                                                    className="mt-4 h-9 px-4 rounded-lg text-[13px] font-bold text-white inline-flex items-center gap-1.5 cursor-pointer transition hover:opacity-90"
-                                                    style={{ backgroundColor: "var(--brand-primary)" }}>
-                                                    <Plus size={14} /> Tạo coupon đầu tiên
-                                                </button>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ) : paged.map((c) => {
-                                    const isToggleLoading = toggleLoadingId === c.id;
-                                    const isExpired = c.toDate && new Date(c.toDate) < new Date();
-
-                                    return (
-                                        <tr
-                                            key={c.id}
-                                            className="group border-b hover:bg-emerald-50/20 transition-colors"
-                                            style={{ borderColor: "var(--grid-border)" }}
-                                        >
-                                            {/* Toggle */}
-                                            <td className="px-4 py-3 text-center">
-                                                <div className="flex flex-col items-center gap-1.5">
-                                                    <RowSwitch
-                                                        checked={c.isActive}
-                                                        loading={isToggleLoading}
-                                                        onChange={() => handleToggle(c.id, c.isActive)}
-                                                    />
-                                                    {isExpired && (
-                                                        <span className="text-[9px] font-bold text-red-400 uppercase tracking-wider">Hết hạn</span>
-                                                    )}
-                                                </div>
-                                            </td>
-
-                                            {/* Tên */}
-                                            <td className="px-4 py-3">
-                                                <p className="font-bold text-gray-800">{c.name}</p>
-                                            </td>
-
-                                            {/* Mã */}
-                                            <td className="px-4 py-3">
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-mono text-[12px] font-bold border"
-                                                    style={{ backgroundColor: "var(--status-focus)", color: "var(--brand-primary)", borderColor: "rgba(52,176,87,0.2)" }}>
-                                                    <Tag size={10} />{c.code}
-                                                </span>
-                                            </td>
-
-
-
-
-
-                                            {/* Giảm giá */}
-                                            <td className="px-4 py-3">
-                                                <span className={cn("inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[12px] font-bold border",
-                                                    c.discountType === "PERCENT"
-                                                        ? "bg-purple-50 text-purple-700 border-purple-100"
-                                                        : "bg-blue-50 text-blue-700 border-blue-100")}>
-                                                    {fmtDiscount(c.discountType, c.discountValue)}
-                                                </span>
-                                            </td>
-
-                                            {/* Sản phẩm */}
-                                            <td className="px-4 py-3">
-                                                {c.applyAllProducts ? (
-                                                    <span className="text-[12px] text-gray-400 flex items-center gap-1"><Package size={11} />Không giới hạn</span>
-                                                ) : (
-                                                    <span className="text-[12px] font-semibold text-gray-700 flex items-center gap-1">
-                                                        <Package size={11} style={{ color: "var(--brand-primary)" }} />{c.productIds.length} sản phẩm
-                                                    </span>
-                                                )}
-                                            </td>
-
-                                            {/* Từ ngày */}
-                                            <td className="px-4 py-3 text-[12px] text-gray-500">{fmtDate(c.fromDate)}</td>
-
-                                            {/* Đến ngày */}
-                                            <td className="px-4 py-3">
-                                                <ExpiryBadge toDate={c.toDate} isActive={c.isActive} />
-                                            </td>
-
-
-
-                                            {/* Hành động */}
-                                            <td className="px-4 py-3">
-                                                <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button
-                                                        onClick={() => navigate(`/owner/coupons/${c.id}/edit`)}
-                                                        title="Chỉnh sửa"
-                                                        className="h-8 px-3 rounded-lg text-[12px] font-bold text-gray-600 hover:text-blue-600 bg-white border border-gray-200 hover:border-blue-200 flex items-center gap-1.5 transition shadow-sm cursor-pointer"
-                                                    >
-                                                        <Pencil size={13} /> Sửa
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteConfirm(c.id)}
-                                                        title="Xóa coupon"
-                                                        className="h-8 px-3 rounded-lg text-[12px] font-bold text-gray-600 hover:text-red-600 bg-white border border-gray-200 hover:border-red-200 flex items-center gap-1.5 transition shadow-sm cursor-pointer"
-                                                    >
-                                                        <Trash2 size={13} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Pagination footer */}
-                    {filtered.length > 0 && (
-                        <div className="flex items-center justify-between px-4 py-3 border-t shrink-0 bg-gray-50/30"
-                            style={{ borderColor: "var(--grid-border)" }}>
-                            <span className="text-[13px] text-gray-500">
-                                Tổng: <strong className="text-gray-800">{filtered.length}</strong> mã coupon
-                            </span>
-                            {pageCount > 1 && (
-                                <div className="flex items-center gap-1.5">
-                                    <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                                        className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-30 cursor-pointer disabled:cursor-default transition">
-                                        <ChevronLeft size={15} />
-                                    </button>
-                                    {Array.from({ length: pageCount }, (_, i) => i + 1).map(pg => (
-                                        <button key={pg} onClick={() => setPage(pg)}
-                                            className={cn("w-8 h-8 rounded-lg text-[13px] font-bold transition cursor-pointer",
-                                                pg === page ? "text-white" : "hover:bg-gray-100 text-gray-600")}
-                                            style={pg === page ? { backgroundColor: "var(--brand-primary)" } : {}}>
-                                            {pg}
-                                        </button>
-                                    ))}
-                                    <button onClick={() => setPage(p => Math.min(pageCount, p + 1))} disabled={page === pageCount}
-                                        className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-30 cursor-pointer disabled:cursor-default transition">
-                                        <ChevronRight size={15} />
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
+                {/* DataTable Integration */}
+                <DataTable
+                    columns={columns}
+                    data={paginatedData}
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                    searchPlaceholder="Tìm mã coupon, tên khuyến mãi..."
+                    selectedIds={selectedIds}
+                    setSelectedIds={setSelectedIds}
+                    pagination={{
+                        total: filteredResults.length,
+                        currentPage,
+                        setCurrentPage,
+                        itemsPerPage,
+                        setItemsPerPage
+                    }}
+                    onRowClick={(item) => navigate(`/owner/coupons/${item.id}/edit`)}
+                    rowActions={[
+                        {
+                            icon: Pencil,
+                            label: "Chỉnh sửa",
+                            onClick: (item) => navigate(`/owner/coupons/${item.id}/edit`),
+                        },
+                        {
+                            icon: Trash2,
+                            label: "Xóa coupon",
+                            onClick: (item) => handleDelete(item),
+                            className: "bg-white border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200",
+                            requireConfirm: true,
+                            confirmTitle: "Xóa mã giảm giá?",
+                            confirmMessage: "Mã giảm giá này sẽ bị gỡ bỏ vĩnh viễn khỏi hệ thống. Bạn có chắc chắn?"
+                        },
+                    ]}
+                    bulkActions={[
+                        {
+                            label: "XÓA HÀNG LOẠT",
+                            icon: Trash2,
+                            onClick: handleBulkDelete,
+                            requireConfirm: true,
+                            confirmTitle: "Xóa hàng loạt coupon?",
+                            confirmMessage: `Bạn có chắc chắn muốn xóa ${selectedIds.length} mã giảm giá đã chọn?`
+                        }
+                    ]}
+                />
             </div>
         </>
     );

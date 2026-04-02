@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Activity,
   AlertCircle,
+  Eye,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import DataTable from "@/components/control/DataTable";
@@ -132,7 +133,6 @@ export default function OwnerOrders() {
   const [itemsPerPage, setItemsPerPage] = useState(15);
   const [detailId, setDetailId] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
-  const [showBulkConfirm, setShowBulkConfirm] = useState(false);
 
   const updateParams = (newParams) => {
     const current = Object.fromEntries(searchParams.entries());
@@ -148,7 +148,7 @@ export default function OwnerOrders() {
 
   const handleBulkCancel = () => {
     setOrders(prev => prev.map(o => selectedIds.includes(o.id) ? { ...o, status: "Đơn đã hủy" } : o));
-    
+
     // Sync with localStorage
     const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
     const updatedSaved = saved.map(o => selectedIds.includes(o.id) ? { ...o, status: "Đơn đã hủy" } : o);
@@ -156,7 +156,17 @@ export default function OwnerOrders() {
 
     toast.success(`Đã hủy ${selectedIds.length} đơn hàng thành công!`);
     setSelectedIds([]);
-    setShowBulkConfirm(false);
+  };
+
+  const handleSingleCancel = (o) => {
+    setOrders(prev => prev.map(item => item.id === o.id ? { ...item, status: "Đơn đã hủy" } : item));
+
+    // Sync with localStorage
+    const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
+    const updatedSaved = saved.map(item => item.id === o.id ? { ...item, status: "Đơn đã hủy" } : item);
+    localStorage.setItem("tpf_simulated_orders", JSON.stringify(updatedSaved));
+
+    toast.success(`Đã hủy đơn hàng ${o.code} thành công!`);
   };
 
   const filtered = useMemo(() => {
@@ -278,7 +288,7 @@ export default function OwnerOrders() {
             </h1>
             <p className="text-[13px] mt-0.5" style={{ color: "var(--text-placeholder)" }}>{filtered.length} đơn hàng ({activeTab.toLowerCase()})</p>
           </div>
-          <div className="flex p-1 rounded-xl" style={{ backgroundColor: "var(--grid-header-bg)", border: "1px solid var(--grid-border)" }}>
+          <div className="flex p-1 rounded-lg" style={{ backgroundColor: "var(--grid-header-bg)", border: "1px solid var(--grid-border)" }}>
             {ORDER_TYPES.map((tab) => (
               <button key={tab} onClick={() => updateParams({ tab, status: "Tất cả" })} className="px-4 py-1.5 rounded-lg text-[13px] font-semibold transition-all cursor-pointer" style={{ backgroundColor: activeTab === tab ? "#fff" : "transparent", color: activeTab === tab ? "var(--text-main)" : "var(--text-secondary)" }}>
                 {tab}
@@ -292,7 +302,7 @@ export default function OwnerOrders() {
             const isActive = statusFilter === s;
             const sc = s !== "Tất cả" ? getStatusColor(s) : null;
             return (
-              <button key={s} onClick={() => updateParams({ status: s })} className="px-4 py-1.5 rounded-xl text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border" style={{ backgroundColor: isActive ? (sc ? sc.bg : "#fff") : "transparent", color: isActive ? (sc ? sc.text : "var(--brand-primary)") : "var(--text-secondary)", borderColor: isActive ? (sc ? sc.border : "var(--grid-border)") : "transparent" }}>
+              <button key={s} onClick={() => updateParams({ status: s })} className="px-4 py-1.5 rounded-lg text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border" style={{ backgroundColor: isActive ? (sc ? sc.bg : "#fff") : "transparent", color: isActive ? (sc ? sc.text : "var(--brand-primary)") : "var(--text-secondary)", borderColor: isActive ? (sc ? sc.border : "var(--grid-border)") : "transparent" }}>
                 {s !== "Tất cả" && sc?.icon && <sc.icon size={14} />}
                 {s} <span className="text-[10px] opacity-60 bg-black/5 px-1.5 rounded-md ml-0.5">{statusCounts[s] || 0}</span>
               </button>
@@ -317,12 +327,30 @@ export default function OwnerOrders() {
           clearAllFilters={() => { updateParams({ status: "Tất cả" }); setDateFrom(""); setDateTo(""); setSearchTerm(""); }}
           selectedIds={selectedIds}
           setSelectedIds={setSelectedIds}
+          rowActions={[
+            {
+              icon: Eye,
+              label: "Xem chi tiết",
+              onClick: (o) => setDetailId(o.id),
+            },
+            {
+              icon: Trash2,
+              label: "Hủy đơn",
+              onClick: (o) => handleSingleCancel(o),
+              className: "bg-white border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200",
+              requireConfirm: true,
+              confirmTitle: "Xác nhận hủy đơn hàng?",
+              confirmMessage: "Mọi thông tin thanh toán và trạng thái của đơn sẽ được chuyển về 'Đơn đã hủy'. Bạn chắc chắn chứ?"
+            },
+          ]}
           bulkActions={[
             {
               label: "HỦY ĐƠN HÀNG LOẠT",
               icon: Trash2,
-              onClick: () => setShowBulkConfirm(true),
-              colorClass: "bg-rose-600",
+              onClick: handleBulkCancel,
+              requireConfirm: true,
+              confirmTitle: "Hủy hàng loạt đơn hàng?",
+              confirmMessage: `Hệ thống sẽ chuyển ${selectedIds.length} đơn hàng đã chọn sang trạng thái hủy. Hành động này không thể hoàn tác.`
             }
           ]}
           pagination={{
@@ -340,15 +368,6 @@ export default function OwnerOrders() {
         isOpen={!!detailId}
         onClose={() => setDetailId(null)}
         onStatusChanged={handleUpdateStatus}
-      />
-
-      {/* Confirm Bulk Cancel Modal */}
-      <ConfirmModal
-        isOpen={showBulkConfirm}
-        title="Xác nhận hủy hàng loạt"
-        message={`Bạn có chắc chắn muốn hủy ${selectedIds.length} đơn hàng đang được chọn không? Hành động này không thể hoàn tác.`}
-        onCancel={() => setShowBulkConfirm(false)}
-        onConfirm={handleBulkCancel}
       />
     </>
   );

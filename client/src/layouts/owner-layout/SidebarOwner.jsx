@@ -6,6 +6,7 @@
  */
 
 
+import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Home,
@@ -21,6 +22,7 @@ import {
   History,
   ShieldCheck,
   Tag,
+  ChevronDown,
 } from "lucide-react";
 
 const menuItems = [
@@ -28,9 +30,16 @@ const menuItems = [
   { text: "Yêu cầu khách hàng", icon: ClipboardList, path: "/owner/requirements" },
   { text: "Đơn hàng", icon: ClipboardList, path: "/owner/orders" },
   { text: "Mã giảm giá", icon: Tag, path: "/owner/coupons" },
-  { text: "Sản phẩm", icon: Package, path: "/owner/products" },
+  {
+    text: "Sản phẩm",
+    icon: Package,
+    path: "/owner/products",
+    subItems: [
+      { text: "Danh mục hàng hóa", path: "/owner/products?tab=products" },
+      { text: "Thiết lập thuộc tính", path: "/owner/products?tab=properties" },
+    ],
+  },
   { text: "Quản lý sản xuất", icon: Hammer, path: "/owner/production" },
-  // { text: "Khách hàng", icon: Users, path: "/owner/customers" },
   { text: "Nhà cung cấp", icon: Building2, path: "/owner/suppliers" },
   { text: "Quản lý tài khoản", icon: UserCog, path: "/owner/employees" },
   { text: "Bảo hành", icon: ShieldCheck, path: "/owner/warranty" },
@@ -41,9 +50,23 @@ const menuItems = [
 
 export const SidebarOwner = () => {
   const location = useLocation();
+  const [expandedItems, setExpandedItems] = useState({});
+
+  useEffect(() => {
+    // Tự động mở menu nếu đang ở trang con của nó
+    const activeItem = menuItems.find(
+      (item) => item.subItems && location.pathname.startsWith(item.path)
+    );
+    if (activeItem) {
+      setExpandedItems((prev) => ({ ...prev, [activeItem.text]: true }));
+    }
+  }, [location.pathname]);
+
+  const toggleExpand = (text) => {
+    setExpandedItems((prev) => ({ ...prev, [text]: !prev[text] }));
+  };
 
   return (
-
     <aside
       className="w-[220px] h-full relative overflow-hidden bg-[#1a1a1b] bg-bottom bg-no-repeat bg-contain"
       style={{
@@ -68,30 +91,74 @@ export const SidebarOwner = () => {
         <div className="flex flex-col gap-1.5 pt-4 flex-1">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = item.path === '/owner/dashboard' ? location.pathname === item.path : location.pathname.startsWith(item.path);
+            const hasSubItems = item.subItems && item.subItems.length > 0;
+            const isExpanded = expandedItems[item.text];
+            const isActive =
+              item.path === "/owner/dashboard"
+                ? location.pathname === item.path
+                : location.pathname.startsWith(item.path);
 
             return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg cursor-pointer transition-all no-underline
-                  ${isActive
-                    ? "bg-[var(--brand-primary)] text-white font-medium"
-                    : "text-gray-300 hover:bg-white/[0.08]"
-                  }`}
-              >
-                <Icon
-                  size={18}
-                  className={isActive ? "text-white" : "text-gray-400"}
-                />
-                <span className="flex-1">{item.text}</span>
-                {item.hasArrow && (
-                  <ChevronRight
-                    size={14}
-                    className={isActive ? "text-white/70" : "text-gray-500"}
-                  />
+              <div key={item.text} className="flex flex-col gap-1">
+                {hasSubItems ? (
+                  <div
+                    onClick={() => toggleExpand(item.text)}
+                    className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg cursor-pointer transition-all duration-200 no-underline
+                      ${isActive
+                        ? "bg-[var(--brand-primary)] text-white font-medium shadow-sm shadow-black/20"
+                        : "text-gray-300 hover:text-white hover:bg-white/[0.1]"
+                      }`}
+                  >
+                    <Icon
+                      size={18}
+                      className={isActive ? "text-white" : "text-gray-400"}
+                    />
+                    <span className="flex-1">{item.text}</span>
+                    <ChevronDown
+                      size={14}
+                      className={`transition-transform duration-200 ${isExpanded ? "rotate-180" : ""} ${isActive ? "text-white" : "text-gray-500"
+                        }`}
+                    />
+                  </div>
+                ) : (
+                  <NavLink
+                    to={item.path}
+                    className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg cursor-pointer transition-all duration-200 no-underline
+                      ${isActive
+                        ? "bg-[var(--brand-primary)] text-white font-medium"
+                        : "text-gray-300 hover:text-white hover:bg-white/[0.1]"
+                      }`}
+                  >
+                    <Icon
+                      size={18}
+                      className={isActive ? "text-white" : "text-gray-400"}
+                    />
+                    <span className="flex-1">{item.text}</span>
+                  </NavLink>
                 )}
-              </NavLink>
+
+                {/* Sub items */}
+                {hasSubItems && isExpanded && (
+                  <div className="flex flex-col gap-1 ml-6 pl-3 border-l border-white/10 animate-in slide-in-from-top-2 duration-200">
+                    {item.subItems.map((sub) => {
+                      const isSubActive = location.pathname + location.search === sub.path || (sub.path.includes("products") && location.pathname === "/owner/products" && !location.search && sub.text === "Danh mục hàng hóa");
+                      return (
+                        <NavLink
+                          key={sub.path}
+                          to={sub.path}
+                          className={`px-3 py-2 text-[13px] rounded-lg transition-all duration-200 no-underline
+                            ${isSubActive
+                              ? "text-[var(--brand-primary)] font-bold bg-white/[0.08]"
+                              : "text-gray-400 hover:text-white hover:bg-white/[0.08]"
+                            }`}
+                        >
+                          {sub.text}
+                        </NavLink>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
