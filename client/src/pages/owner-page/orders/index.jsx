@@ -133,7 +133,6 @@ export default function OwnerOrders() {
   const [itemsPerPage, setItemsPerPage] = useState(15);
   const [detailId, setDetailId] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
-  const [showBulkConfirm, setShowBulkConfirm] = useState(false);
 
   const updateParams = (newParams) => {
     const current = Object.fromEntries(searchParams.entries());
@@ -149,7 +148,7 @@ export default function OwnerOrders() {
 
   const handleBulkCancel = () => {
     setOrders(prev => prev.map(o => selectedIds.includes(o.id) ? { ...o, status: "Đơn đã hủy" } : o));
-    
+
     // Sync with localStorage
     const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
     const updatedSaved = saved.map(o => selectedIds.includes(o.id) ? { ...o, status: "Đơn đã hủy" } : o);
@@ -157,7 +156,17 @@ export default function OwnerOrders() {
 
     toast.success(`Đã hủy ${selectedIds.length} đơn hàng thành công!`);
     setSelectedIds([]);
-    setShowBulkConfirm(false);
+  };
+
+  const handleSingleCancel = (o) => {
+    setOrders(prev => prev.map(item => item.id === o.id ? { ...item, status: "Đơn đã hủy" } : item));
+
+    // Sync with localStorage
+    const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
+    const updatedSaved = saved.map(item => item.id === o.id ? { ...item, status: "Đơn đã hủy" } : item);
+    localStorage.setItem("tpf_simulated_orders", JSON.stringify(updatedSaved));
+
+    toast.success(`Đã hủy đơn hàng ${o.code} thành công!`);
   };
 
   const filtered = useMemo(() => {
@@ -327,19 +336,21 @@ export default function OwnerOrders() {
             {
               icon: Trash2,
               label: "Hủy đơn",
-              onClick: (o) => {
-                setSelectedIds([o.id]);
-                setShowBulkConfirm(true);
-              },
+              onClick: (o) => handleSingleCancel(o),
               className: "bg-white border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200",
+              requireConfirm: true,
+              confirmTitle: "Xác nhận hủy đơn hàng?",
+              confirmMessage: "Mọi thông tin thanh toán và trạng thái của đơn sẽ được chuyển về 'Đơn đã hủy'. Bạn chắc chắn chứ?"
             },
           ]}
           bulkActions={[
             {
               label: "HỦY ĐƠN HÀNG LOẠT",
               icon: Trash2,
-              onClick: () => setShowBulkConfirm(true),
-              colorClass: "bg-rose-600",
+              onClick: handleBulkCancel,
+              requireConfirm: true,
+              confirmTitle: "Hủy hàng loạt đơn hàng?",
+              confirmMessage: `Hệ thống sẽ chuyển ${selectedIds.length} đơn hàng đã chọn sang trạng thái hủy. Hành động này không thể hoàn tác.`
             }
           ]}
           pagination={{
@@ -357,15 +368,6 @@ export default function OwnerOrders() {
         isOpen={!!detailId}
         onClose={() => setDetailId(null)}
         onStatusChanged={handleUpdateStatus}
-      />
-
-      {/* Confirm Bulk Cancel Modal */}
-      <ConfirmModal
-        isOpen={showBulkConfirm}
-        title="Xác nhận hủy hàng loạt"
-        message={`Bạn có chắc chắn muốn hủy ${selectedIds.length} đơn hàng đang được chọn không? Hành động này không thể hoàn tác.`}
-        onCancel={() => setShowBulkConfirm(false)}
-        onConfirm={handleBulkCancel}
       />
     </>
   );

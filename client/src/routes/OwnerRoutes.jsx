@@ -12,7 +12,7 @@ import Reports from "../pages/owner-page/reports";
 import SystemLogs from "../pages/owner-page/system-logs";
 import Warranty from "../pages/owner-page/warranty";
 import Coupons from "../pages/owner-page/coupon/index";
-import CouponCreate from "../pages/owner-page/coupon/components/create";
+import CouponCreate from "../pages/owner-page/coupon/create-coupon";
 
 export const ownerRoutes = {
   path: "/owner",

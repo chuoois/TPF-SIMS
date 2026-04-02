@@ -1016,7 +1016,6 @@ export default function OwnerRequirements() {
   const [requirements, setRequirements] = useState(MOCK_REQUIREMENTS);
   const [selectedReqId, setSelectedReqId] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
-  const [showBulkConfirm, setShowBulkConfirm] = useState(false);
   const [enlargedImg, setEnlargedImg] = useState(null);
 
   const toggleSelectAll = () => {
@@ -1038,8 +1037,14 @@ export default function OwnerRequirements() {
       prev.map((r) => (selectedIds.includes(r.id) ? { ...r, status: "Đơn đã hủy" } : r)),
     );
     setSelectedIds([]);
-    setShowBulkConfirm(false);
-    toast.success("Đã hủy hàng loạt thành công!");
+    toast.success(`Đã hủy ${selectedIds.length} yêu cầu thành công!`);
+  };
+
+  const handleSingleCancel = (r) => {
+    setRequirements((prev) =>
+      prev.map((item) => (item.id === r.id ? { ...item, status: "Đơn đã hủy" } : item)),
+    );
+    toast.success(`Đã hủy yêu cầu ${r.code} thành công!`);
   };
 
   const statusFilter = searchParams.get("status") || "Tất cả";
@@ -1368,19 +1373,21 @@ export default function OwnerRequirements() {
             {
               icon: Trash2,
               label: "Hủy yêu cầu",
-              onClick: (r) => {
-                setSelectedIds([r.id]);
-                setShowBulkConfirm(true);
-              },
+              onClick: (r) => handleSingleCancel(r),
               className: "bg-white border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200",
+              requireConfirm: true,
+              confirmTitle: "Xác nhận hủy yêu cầu?",
+              confirmMessage: "Hệ thống sẽ chuyển trạng thái yêu cầu này sang 'Đơn đã hủy'. Bạn có chắc chắn muốn tiếp tục?"
             },
           ]}
           bulkActions={[
             {
               label: "HỦY HÀNG LOẠT",
               icon: Trash2,
-              onClick: () => setShowBulkConfirm(true),
-              colorClass: "bg-rose-600",
+              onClick: handleBulkCancel,
+              requireConfirm: true,
+              confirmTitle: "Hủy hàng loạt yêu cầu?",
+              confirmMessage: `Bạn có chắc chắn muốn hủy ${selectedIds.length} yêu cầu đã chọn không? Hành động này không thể hoàn tác.`
             }
           ]}
           pagination={{
@@ -1403,14 +1410,6 @@ export default function OwnerRequirements() {
 
       {/* Image Viewer */}
       <ImageViewer src={enlargedImg} onClose={() => setEnlargedImg(null)} />
-      {/* Confirm Bulk Cancel Modal */}
-      <ConfirmModal
-        isOpen={showBulkConfirm}
-        title="Xác nhận hủy hàng loạt"
-        message={`Bạn có chắc chắn muốn hủy ${selectedIds.length} yêu cầu đang được chọn không? Hành động này không thể hoàn tác.`}
-        onCancel={() => setShowBulkConfirm(false)}
-        onConfirm={handleBulkCancel}
-      />
     </>
   );
 }

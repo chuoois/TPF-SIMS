@@ -8,6 +8,7 @@ import {
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 import DataTable from "@/components/control/DataTable";
+import ConfirmModal from "@/components/control/ConfirmModal";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 const fmtDate = (iso) => {
@@ -162,7 +163,6 @@ export default function CouponListPage() {
     const [itemsPerPage, setItemsPerPage] = useState(15);
     const [selectedIds, setSelectedIds] = useState([]);
     const [toggleLoadingId, setToggleLoadingId] = useState(null);
-    const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
     // Filter Logic
     const filteredResults = useMemo(() => {
@@ -200,12 +200,15 @@ export default function CouponListPage() {
     }, []);
 
     // Delete logic
-    const handleDeleteExecute = async () => {
-        const id = deleteConfirmId;
-        setDeleteConfirmId(null);
-        await new Promise(res => setTimeout(res, 300));
-        setCoupons(prev => prev.filter(c => c.id !== id));
-        toast.success("Đã xóa mã coupon");
+    const handleDelete = (item) => {
+        setCoupons(prev => prev.filter(c => c.id !== item.id));
+        toast.success("Đã xóa mã coupon thành công!");
+    };
+
+    const handleBulkDelete = () => {
+        setCoupons(prev => prev.filter(c => !selectedIds.includes(c.id)));
+        setSelectedIds([]);
+        toast.success(`Đã xóa ${selectedIds.length} mã coupon thành công!`);
     };
 
     const columns = [
@@ -280,33 +283,6 @@ export default function CouponListPage() {
         <>
             <PageHelmet title="Mã giảm giá | TPF-SIMS" />
 
-            {/* Delete Modal */}
-            {deleteConfirmId && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-lg w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden border border-slate-100">
-                        <div className="px-6 pt-8 pb-6 text-center space-y-4">
-                            <div className="w-16 h-16 rounded-lg bg-red-50 border-2 border-red-100 flex items-center justify-center mx-auto text-red-500">
-                                <Trash2 size={28} />
-                            </div>
-                            <div>
-                                <h3 className="text-[18px] font-black text-slate-900">Xóa mã giảm giá?</h3>
-                                <p className="text-[13px] text-slate-400 font-medium px-4">Thông tin mã giảm giá sẽ bị gỡ bỏ vĩnh viễn khỏi hệ thống.</p>
-                            </div>
-                        </div>
-                        <div className="px-6 pb-8 flex gap-3">
-                            <button onClick={() => setDeleteConfirmId(null)}
-                                className="flex-1 h-12 rounded-lg border-2 border-slate-100 font-black text-[13px] text-slate-500 hover:bg-slate-50 transition active:scale-[0.98]">
-                                HỦY BỎ
-                            </button>
-                            <button onClick={handleDeleteExecute}
-                                className="flex-1 h-12 rounded-lg font-black text-[13px] text-white bg-red-500 hover:bg-red-600 transition shadow-lg shadow-red-500/20 active:scale-[0.98]">
-                                XÁC NHẬN XÓA
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             <div className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 space-y-4" style={{ backgroundColor: "var(--bg-main)" }}>
 
                 {/* Header Section */}
@@ -357,21 +333,21 @@ export default function CouponListPage() {
                         {
                             icon: Trash2,
                             label: "Xóa coupon",
-                            onClick: (item) => setDeleteConfirmId(item.id),
+                            onClick: (item) => handleDelete(item),
                             className: "bg-white border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200",
+                            requireConfirm: true,
+                            confirmTitle: "Xóa mã giảm giá?",
+                            confirmMessage: "Mã giảm giá này sẽ bị gỡ bỏ vĩnh viễn khỏi hệ thống. Bạn có chắc chắn?"
                         },
                     ]}
                     bulkActions={[
                         {
                             label: "XÓA HÀNG LOẠT",
                             icon: Trash2,
-                            onClick: () => {
-                                if (window.confirm(`Xóa ${selectedIds.length} mã đã chọn?`)) {
-                                    setCoupons(prev => prev.filter(c => !selectedIds.includes(c.id)));
-                                    setSelectedIds([]);
-                                    toast.success("Đã xóa các mã sản phẩm");
-                                }
-                            },
+                            onClick: handleBulkDelete,
+                            requireConfirm: true,
+                            confirmTitle: "Xóa hàng loạt coupon?",
+                            confirmMessage: `Bạn có chắc chắn muốn xóa ${selectedIds.length} mã giảm giá đã chọn?`
                         }
                     ]}
                 />

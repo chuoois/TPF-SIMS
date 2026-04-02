@@ -1,14 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Search,
   X,
   Calendar,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Eye,
   CheckCircle2
 } from "lucide-react";
 import CustomCheckbox from "./CustomCheckbox";
+import ConfirmModal from "./ConfirmModal";
 
 /**
  * DataTable Component
@@ -45,15 +47,18 @@ const DataTable = ({
   // Bulk Actions
   bulkActions = [], // [{ label, icon: Icon, onClick, colorClass }]
 
-  // Pagination
   pagination = {
     total: 0,
     currentPage: 1,
     setCurrentPage: () => { },
     itemsPerPage: 15,
     setItemsPerPage: () => { },
-  }
+  },
+
+  // Extra Toolbar Content (e.g. specialized filters)
+  extraFilters = null
 }) => {
+  const [activeConfirmAction, setActiveConfirmAction] = useState(null);
   const totalPages = Math.ceil(pagination.total / pagination.itemsPerPage);
 
   // Internal Selection Handlers
@@ -111,16 +116,23 @@ const DataTable = ({
             return (
               <button
                 key={idx}
-                onClick={(e) => { e.stopPropagation(); action.onClick(item); }}
-                title={action.label || ""}
-                className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all cursor-pointer hover:shadow-sm ${
-                  action.className || 'bg-white border-gray-200 text-gray-400 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                {Icon && <Icon size={14} />}
-              </button>
-            );
-          })}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (action.requireConfirm) {
+                      setActiveConfirmAction({ ...action, __targetItem: item });
+                    } else {
+                      action.onClick(item);
+                    }
+                  }}
+                  title={action.label || ""}
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all cursor-pointer hover:shadow-sm ${
+                    action.className || 'bg-white border-gray-200 text-gray-400 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {Icon && <Icon size={14} />}
+                </button>
+              );
+            })}
         </div>
       ),
     });
@@ -142,6 +154,26 @@ const DataTable = ({
           height: "64px",
         }}
       >
+        <ConfirmModal
+          isOpen={!!activeConfirmAction}
+          title={activeConfirmAction?.confirmTitle || "Xác nhận hành động?"}
+          message={
+            activeConfirmAction?.confirmMessage ||
+            (activeConfirmAction?.__targetItem
+              ? `Bạn có chắc chắn muốn thực hiện "${activeConfirmAction?.label}" cho mục này?`
+              : `Bạn có chắc chắn muốn thực hiện "${activeConfirmAction?.label}" cho ${selectedIds.length} mục đã chọn?`)
+          }
+          onConfirm={() => {
+            if (activeConfirmAction?.__targetItem) {
+              activeConfirmAction.onClick(activeConfirmAction.__targetItem);
+            } else {
+              activeConfirmAction?.onClick();
+            }
+            setActiveConfirmAction(null);
+          }}
+          onCancel={() => setActiveConfirmAction(null)}
+        />
+
         {selectedIds.length > 0 ? (
           <div className="flex items-center justify-start gap-4 w-full animate-in fade-in slide-in-from-left-2 duration-300">
             <span
@@ -158,7 +190,13 @@ const DataTable = ({
               {bulkActions.map((action, idx) => (
                 <button
                   key={idx}
-                  onClick={action.onClick}
+                  onClick={() => {
+                    if (action.requireConfirm) {
+                      setActiveConfirmAction(action);
+                    } else {
+                      action.onClick();
+                    }
+                  }}
                   className={`h-8 px-4 text-white text-[11px] font-bold hover:brightness-110 transition active:scale-95 flex items-center gap-2 cursor-pointer border-none rounded-lg ${action.colorClass || 'bg-rose-600'}`}
                 >
                   {action.icon && <action.icon size={14} />}
@@ -205,49 +243,59 @@ const DataTable = ({
               )}
             </div>
 
-            {/* Date Filters */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Calendar
-                    size={14}
-                    className="absolute left-2.5 top-1/2 -translate-y-1/2"
-                    style={{ color: "var(--text-placeholder)" }}
-                  />
+            {/* Filters Group (Extra + Date) */}
+            <div className="flex items-center gap-4 ml-auto">
+              {/* Extra Filters */}
+              {extraFilters && (
+                <div className="flex items-center gap-2">
+                  {extraFilters}
+                </div>
+              )}
+
+              {/* Date Filters */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Calendar
+                      size={14}
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2"
+                      style={{ color: "var(--text-placeholder)" }}
+                    />
+                    <input
+                      type="date"
+                      value={dateFrom}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                      className="h-10 pl-9 pr-3 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                      style={{
+                        borderColor: dateFrom ? "var(--brand-primary)" : "var(--grid-border)",
+                        backgroundColor: "#fff",
+                        color: "var(--text-main)",
+                      }}
+                    />
+                  </div>
+                  <span className="text-gray-400 text-xs font-bold">~</span>
                   <input
                     type="date"
-                    value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
-                    className="h-10 pl-9 pr-3 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="h-10 px-3 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
                     style={{
-                      borderColor: dateFrom ? "var(--brand-primary)" : "var(--grid-border)",
+                      borderColor: dateTo ? "var(--brand-primary)" : "var(--grid-border)",
                       backgroundColor: "#fff",
                       color: "var(--text-main)",
                     }}
                   />
                 </div>
-                <span className="text-gray-400 text-xs font-bold">~</span>
-                <input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  className="h-10 px-3 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                  style={{
-                    borderColor: dateTo ? "var(--brand-primary)" : "var(--grid-border)",
-                    backgroundColor: "#fff",
-                    color: "var(--text-main)",
-                  }}
-                />
-              </div>
 
-              {hasActiveFilters && (
-                <button
-                  onClick={clearAllFilters}
-                  className="h-10 px-4 rounded-lg text-[12px] font-bold text-red-600 hover:bg-red-50 transition border border-transparent hover:border-red-100 cursor-pointer"
-                >
-                  Xóa bộ lọc
-                </button>
-              )}
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="h-10 px-4 rounded-lg text-[12px] font-bold text-red-600 hover:bg-red-50 transition border border-transparent hover:border-red-100 cursor-pointer"
+                  >
+                    Xóa bộ lọc
+                  </button>
+                )}
+              </div>
             </div>
           </>
         )}
@@ -340,22 +388,28 @@ const DataTable = ({
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
               <span className="text-[13px] text-gray-500">Số bản ghi/trang</span>
-              <select
-                value={pagination.itemsPerPage}
-                onChange={(e) => {
-                  pagination.setItemsPerPage(Number(e.target.value));
-                  pagination.setCurrentPage(1);
-                }}
-                className="h-8 px-2 pr-6 rounded-lg text-[13px] border cursor-pointer focus:outline-none appearance-none bg-white font-bold"
-                style={{
-                  borderColor: "var(--grid-border)",
-                  // Simple hack for custom arrow if needed
-                }}
-              >
-                {[15, 30, 50, 100].map((size) => (
-                  <option key={size} value={size}>{size}</option>
-                ))}
-              </select>
+              <div className="relative flex items-center">
+                <select
+                  value={pagination.itemsPerPage}
+                  onChange={(e) => {
+                    pagination.setItemsPerPage(Number(e.target.value));
+                    pagination.setCurrentPage(1);
+                  }}
+                  className="h-8 px-2 pr-8 rounded-lg text-[13px] border cursor-pointer focus:outline-none appearance-none bg-white font-bold transition-all hover:border-gray-400"
+                  style={{
+                    borderColor: "var(--grid-border)",
+                  }}
+                >
+                  {[15, 30, 50, 100].map((size) => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={14}
+                  className="absolute right-2.5 pointer-events-none text-gray-400"
+                  strokeWidth={2.5}
+                />
+              </div>
             </div>
 
             <div className="text-[13px] text-gray-500">
