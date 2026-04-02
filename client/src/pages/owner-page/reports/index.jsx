@@ -83,9 +83,13 @@ export default function OwnerReports() {
 
    // Sync state if URL param changes
    useEffect(() => {
-      if (typeParam && typeParam !== activeReport) {
-         setActiveReport(typeParam);
-         setCurrentPage(1);
+      if (typeParam) {
+         // Normalize 'profit' to 'sales'
+         const normalizedType = typeParam === "profit" ? "sales" : typeParam;
+         if (normalizedType !== activeReport) {
+            setActiveReport(normalizedType);
+            setCurrentPage(1);
+         }
       }
    }, [typeParam]);
 

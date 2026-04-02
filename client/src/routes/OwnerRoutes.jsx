@@ -10,7 +10,8 @@ import Suppliers from "../pages/owner-page/suppliers";
 import Employees from "../pages/owner-page/employees";
 import Reports from "../pages/owner-page/reports";
 import SystemLogs from "../pages/owner-page/system-logs";
-import Warranty from "../pages/owner-page/warranty";
+import WarrantyLookup from "../pages/owner-page/warranty/WarrantyLookup";
+import WarrantyList from "../pages/owner-page/warranty/WarrantyList";
 import Coupons from "../pages/owner-page/coupon/index";
 import CouponCreate from "../pages/owner-page/coupon/create-coupon";
 import ProductCategories from "../pages/owner-page/products/management/CategoriesPage";
@@ -75,7 +76,11 @@ export const ownerRoutes = {
     },
     {
       path: "warranty",
-      element: <Warranty />,
+      children: [
+        { index: true, element: <WarrantyLookup /> },
+        { path: "lookup", element: <WarrantyLookup /> },
+        { path: "list", element: <WarrantyList /> },
+      ],
     },
     {
       path: "reports",

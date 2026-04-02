@@ -21,9 +21,12 @@ import {
   XCircle,
   Layers,
   Trash2,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
+import DataTable from "@/components/control/DataTable";
+import ConfirmModal from "@/components/control/ConfirmModal";
 
 const STATUS_MAP = {
   1: { label: "Hoạt động", bg: "#ECFDF5", text: "#047857", border: "#A7F3D0" },
@@ -83,12 +86,13 @@ const INITIAL_ACCOUNTS = [
 ];
 
 const ModalContainer = ({ title, onClose, children, maxWidth = "max-w-md" }) => (
-  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-    <div className={cn("bg-white rounded-2xl w-full shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200", maxWidth)}>
+  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px] animate-in fade-in duration-200" onClick={onClose} />
+    <div className={cn("relative bg-white rounded-lg w-full shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200", maxWidth)}>
       <div className="px-6 py-4 border-b flex items-center justify-between shrink-0" style={{ borderColor: "var(--grid-border)" }}>
-        <h3 className="text-base font-bold text-gray-900">{title}</h3>
-        <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition text-gray-400 hover:text-gray-600 cursor-pointer">
-          <X size={20} />
+        <h3 className="text-[16px] font-bold text-gray-900">{title}</h3>
+        <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition text-gray-400 hover:text-gray-600 cursor-pointer">
+          <X size={18} />
         </button>
       </div>
       <div className="flex-1 overflow-y-auto p-6 text-gray-900">
@@ -112,6 +116,9 @@ export default function OwnerEmployees() {
   const [editingAccount, setEditingAccount] = useState(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const fetchAccounts = () => {
     setLoading(true);
@@ -163,11 +170,17 @@ export default function OwnerEmployees() {
     setShowStatusModal(false);
   };
 
-  const handleDeleteAccount = (id) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản này? Thao tác này không thể hoàn tác.")) {
-      setAccounts(prev => prev.filter(a => a.pk_user_account_id !== id));
-      toast.success("Đã xóa tài khoản thành công");
-    }
+  const handleDeleteAccount = (acc) => {
+    setAccountToDelete(acc);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteAccount = () => {
+    if (!accountToDelete) return;
+    setAccounts(prev => prev.filter(a => a.pk_user_account_id !== accountToDelete.pk_user_account_id));
+    toast.success("Đã xóa tài khoản thành công");
+    setShowDeleteConfirm(false);
+    setAccountToDelete(null);
   };
 
   const processedAccounts = useMemo(() => {
@@ -200,7 +213,7 @@ export default function OwnerEmployees() {
       result = result.filter((a) => new Date(a.timestamp) <= to);
     }
 
-    return result;
+    return result.map(a => ({ ...a, id: a.pk_user_account_id }));
   }, [accounts, activeTab, dateFrom, dateTo, search]);
 
   const hasActiveFilters = activeTab !== "Tất cả" || dateFrom || dateTo || search;
@@ -237,147 +250,126 @@ export default function OwnerEmployees() {
           </button>
         </div>
 
-        <div className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-          <div className="px-4 py-3 border-b shrink-0 flex flex-wrap items-center justify-between gap-3" style={{ borderColor: "var(--grid-border)" }}>
-            <div className="relative w-full max-w-md shrink-0">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-placeholder)" }} />
-              <input
-                type="text"
-                placeholder="Tìm email, tên nhân viên..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] focus:outline-none transition"
-                style={{ border: "1px solid var(--grid-border)", backgroundColor: "var(--bg-main)" }}
-              />
-              {search && (
-                <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400">
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2.5 shrink-0 overflow-x-auto min-w-0">
-              <div className="flex items-center gap-1.5 shrink-0">
-                 <Layers size={14} style={{ color: "var(--text-placeholder)" }} />
-                 <select
-                    value={activeTab}
-                    onChange={(e) => setActiveTab(e.target.value)}
-                    className="h-9 px-3 pr-8 rounded-lg text-[13px] border cursor-pointer focus:outline-none appearance-none"
-                    style={{ backgroundColor: activeTab !== "Tất cả" ? "var(--status-focus)" : "var(--bg-main)", color: activeTab !== "Tất cả" ? "var(--brand-primary)" : "var(--text-main)" }}
-                 >
-                    {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                 </select>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <Calendar size={14} style={{ color: "var(--text-placeholder)" }} />
-                <input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  className="h-9 px-3 rounded-lg text-[13px] border focus:outline-none"
+        <DataTable
+          data={processedAccounts}
+          searchTerm={search}
+          setSearchTerm={setSearch}
+          searchPlaceholder="Tìm email, tên nhân viên..."
+          dateFrom={dateFrom}
+          setDateFrom={setDateFrom}
+          dateTo={dateTo}
+          setDateTo={setDateTo}
+          hasActiveFilters={hasActiveFilters}
+          clearAllFilters={clearAllFilters}
+          selectedIds={selectedIds}
+          setSelectedIds={setSelectedIds}
+          extraFilters={
+            <div className="flex items-center gap-1.5 shrink-0 relative">
+               <select
+                  value={activeTab}
+                  onChange={(e) => setActiveTab(e.target.value)}
+                  className="h-10 px-3 pr-8 rounded-lg text-[13px] border cursor-pointer focus:outline-none appearance-none font-medium transition-all hover:border-gray-400"
+                  style={{ backgroundColor: activeTab !== "Tất cả" ? "var(--status-focus)" : "#fff", color: activeTab !== "Tất cả" ? "var(--brand-primary)" : "var(--text-main)", borderColor: "var(--grid-border)" }}
+               >
+                  {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+               </select>
+               <ChevronDown
+                  size={14}
+                  className="absolute right-2.5 pointer-events-none text-gray-400"
+                  strokeWidth={2.5}
                 />
-                <span className="text-[12px] text-gray-400">đến</span>
-                <input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  className="h-9 px-3 rounded-lg text-[13px] border focus:outline-none"
-                />
-              </div>
-
-              {hasActiveFilters && (
-                <button
-                  onClick={clearAllFilters}
-                  className="h-9 px-3 rounded-lg text-[13px] font-medium text-red-500 bg-red-50 border border-red-100 flex items-center gap-1.5 cursor-pointer hover:bg-red-100 transition"
-                >
-                  <XCircle size={14} /> Xóa bộ lọc
-                </button>
-              )}
             </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto">
-            <table className="w-full text-left relative text-[13px]">
-              <thead className="sticky top-0 z-10" style={{ backgroundColor: "var(--grid-header-bg)", borderBottom: "1px solid var(--grid-border)" }}>
-                <tr>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-center w-[50px] text-gray-400">STT</th>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">Nhân viên</th>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">Liên hệ</th>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">Vai trò</th>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">Ngày tạo</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {loading ? (
-                  <tr><td colSpan={5} className="py-20 text-center text-gray-400"><Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" /> Đang tải dữ liệu...</td></tr>
-                ) : processedAccounts.length === 0 ? (
-                  <tr><td colSpan={5} className="py-20 text-center text-gray-400"><Users size={28} className="mx-auto mb-3 opacity-20" /> Không tìm thấy nhân viên nào</td></tr>
-                ) : (
-                  processedAccounts.slice((pagination.page - 1) * pagination.limit, pagination.page * pagination.limit).map((a, idx) => {
-                    const roleLabel = ROLES.find(r => r.value === (a.role?.role_code || a.role_id))?.label || a.role?.role_name || a.role_id;
-
-                    return (
-                      <tr key={a.pk_user_account_id} className="group hover:bg-emerald-50/30 transition-all border-b border-gray-100 relative">
-                        <td className="px-4 py-3 text-center text-gray-500">{(pagination.page - 1) * pagination.limit + idx + 1}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold border border-emerald-100 uppercase">
-                              {a.profile?.full_name?.charAt(0) || <User size={18} />}
-                            </div>
-                            <div>
-                              <p className="font-bold text-gray-900">{a.profile?.full_name || "Chưa cập nhật"}</p>
-                              <p className="text-[11px] text-gray-400 flex items-center gap-1"><Mail size={12} /> {a.email}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-gray-700 whitespace-nowrap"><div className="flex items-center gap-1.5"><Phone size={13} className="text-gray-400" /> {a.profile?.phone_number || "—"}</div></td>
-                        <td className="px-4 py-3">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 uppercase tracking-tighter">
-                            <Shield size={12} /> {roleLabel}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-gray-500 relative">
-                          {a.timestamp ? new Date(a.timestamp).toLocaleDateString("vi-VN") : "—"}
-                          
-                          <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5">
-                            <div className="flex gap-1.5 p-1 bg-white border border-gray-100 rounded-xl shadow-sm">
-                              <Button variant="ghost" size="sm" className="h-8 px-2.5 rounded-lg text-[12px] font-bold text-gray-600 hover:bg-gray-100" onClick={() => { setEditingAccount(a); setShowAddEditModal(true); }}>
-                                <Pencil size={14} className="mr-1.5" /> Sửa
-                              </Button>
-                              <Button variant="ghost" size="sm" className={cn("h-8 px-2.5 rounded-lg text-[12px] font-bold hover:bg-gray-100", String(a.status) === "-1" ? "text-emerald-600" : "text-amber-500")} onClick={() => { setSelectedAccount(a); setShowStatusModal(true); }}>
-                                {String(a.status) === "-1" ? <Unlock size={14} /> : <Lock size={14} />} {String(a.status) === "-1" ? "Mở khóa" : "Trạng thái"}
-                              </Button>
-                              <Button variant="ghost" size="sm" className="h-8 px-2.5 rounded-lg text-[12px] font-bold text-red-500 hover:bg-red-50" onClick={() => handleDeleteAccount(a.pk_user_account_id)}>
-                                <Trash2 size={14} className="mr-1.5" /> Xóa
-                              </Button>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {processedAccounts.length > 0 && (
-            <div className="flex items-center justify-between px-6 py-3 border-t bg-gray-50/30" style={{ borderColor: "var(--grid-border)" }}>
-              <div className="text-[13px] text-gray-500">Tổng số: <span className="font-bold text-gray-900">{processedAccounts.length}</span> nhân sự</div>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <button onClick={() => setPagination(p => ({ ...p, page: Math.max(1, p.page - 1) }))} disabled={pagination.page === 1} className="p-1 disabled:opacity-20 cursor-pointer hover:bg-gray-200 rounded"><ChevronLeft size={16} /></button>
-                  <span className="text-[13px] font-bold">{pagination.page}</span>
-                  <button onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))} disabled={pagination.page * pagination.limit >= processedAccounts.length} className="p-1 disabled:opacity-20 cursor-pointer hover:bg-gray-200 rounded"><ChevronRight size={16} /></button>
+          }
+          columns={[
+            {
+              header: "STT",
+              headerClassName: "text-center w-[60px]",
+              className: "text-center font-medium",
+              style: { color: "var(--text-secondary)" },
+              render: (_, idx) => (pagination.page - 1) * pagination.limit + idx + 1,
+            },
+            {
+              header: "Nhân viên",
+              render: (a) => (
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold border border-emerald-100 uppercase overflow-hidden shrink-0">
+                    {a.profile?.full_name?.charAt(0) || <User size={18} />}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-gray-900 truncate">{a.profile?.full_name || "Chưa cập nhật"}</p>
+                    <p className="text-[11px] text-gray-400 flex items-center gap-1 truncate"><Mail size={12} className="shrink-0" /> {a.email}</p>
+                  </div>
                 </div>
-              </div>
-            </div>
-          )}
-        </div>
+              ),
+            },
+            {
+              header: "Liên hệ",
+              className: "whitespace-nowrap",
+              render: (a) => (
+                <div className="flex items-center gap-1.5 text-gray-600 font-medium">
+                  <Phone size={13} className="text-gray-400 shrink-0" /> {a.profile?.phone_number || "—"}
+                </div>
+              ),
+            },
+            {
+              header: "Vai trò",
+              render: (a) => {
+                const roleLabel = ROLES.find(r => r.value === (a.role?.role_code || a.role_id))?.label || a.role?.role_name || a.role_id;
+                return (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 uppercase tracking-tight">
+                    <Shield size={12} /> {roleLabel}
+                  </span>
+                );
+              },
+            },
+            {
+              header: "Ngày tạo",
+              render: (a) => (
+                <div className="text-gray-500 font-medium">
+                  {a.timestamp ? new Date(a.timestamp).toLocaleDateString("vi-VN") : "—"}
+                </div>
+              ),
+            },
+          ]}
+          rowActions={[
+            {
+              icon: Pencil,
+              label: "Sửa",
+              onClick: (a) => { setEditingAccount(a); setShowAddEditModal(true); },
+            },
+            {
+              icon: Lock,
+              label: "Trạng thái",
+              className: "bg-white border-gray-200 text-amber-500 hover:text-amber-600",
+              onClick: (a) => { setSelectedAccount(a); setShowStatusModal(true); },
+            },
+            {
+              icon: Trash2,
+              label: "Xóa",
+              className: "bg-white border-gray-200 text-red-500 hover:text-red-600",
+              onClick: (a) => handleDeleteAccount(a),
+            }
+          ]}
+          pagination={{
+            total: processedAccounts.length,
+            currentPage: pagination.page,
+            setCurrentPage: (p) => setPagination(prev => ({ ...prev, page: p })),
+            itemsPerPage: pagination.limit,
+            setItemsPerPage: (l) => setPagination(prev => ({ ...prev, limit: l })),
+          }}
+        />
       </div>
 
       {showAddEditModal && <AccountFormModal account={editingAccount} onClose={() => setShowAddEditModal(false)} onSave={handleSaveAccount} />}
       {showStatusModal && <StatusModal account={selectedAccount} onClose={() => setShowStatusModal(false)} onUpdate={handleUpdateStatus} />}
+      
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title="Xác nhận xóa tài khoản"
+        message={`Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản của "${accountToDelete?.profile?.full_name}" không? Thao tác này không thể hoàn tác.`}
+        onConfirm={confirmDeleteAccount}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </>
   );
 }

@@ -61,130 +61,116 @@ const getDeadlineStyle = (dateString) => {
   return { color: "var(--text-main)", text: formatDate(dateString), urgent: false };
 };
 
-const getStatusColor = (status, subStage = null, isPendingApproval = false, needsRedo = false) => {
+const getStatusColor = (status, isPendingApproval = false, needsRedo = false) => {
   const displayStatus = isPendingApproval ? "Chờ duyệt" : status;
 
-  const primaryBadge = {
-    // "Đang đánh giấy ráp" -> Grey (Like "Đơn đã hủy")
-    "Đang đánh giấy ráp": { label: "Đang đánh giấy ráp", bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB", icon: Layers },
-    // "Đang sơn" -> Blue (Like "Khảo sát")
-    "Đang sơn": { label: "Đang sơn", bg: "#E0F2FE", text: "#0369A1", border: "#BAE6FD", icon: Settings },
-    // "Chờ duyệt" -> Amber (Like "Đang xử lý")
-    "Chờ duyệt": { label: "Chờ duyệt", bg: "#FEF3C7", text: "#D97706", border: "#FDE68A", icon: Clock },
-    // "Hoàn thành" -> Green (Like "Đã tạo đơn")
-    "Hoàn thành": { label: "Hoàn thành", bg: "#F0FDF4", text: "#166534", border: "#BBF7D0", icon: CheckCircle2 },
-  }[displayStatus] || { label: displayStatus, bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB", icon: Package };
+  const STATUS_CONFIG = {
+    "Đang đánh giấy ráp": { label: "Đánh giấy", bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB", icon: Layers },
+    "Đang sơn": { label: "Đang sơn", bg: "#E0F2FE", text: "#0369A1", border: "#BAE6FD", icon: Paintbrush },
+    "Chờ duyệt": { label: "Đợi duyệt", bg: "#FEF3C7", text: "#D97706", border: "#FDE68A", icon: Clock },
+    "Hoàn thành": { label: "Hoàn chỉnh", bg: "#F0FDF4", text: "#166534", border: "#BBF7D0", icon: CheckCircle2 },
+  };
+
+  const primaryBadge = STATUS_CONFIG[displayStatus] || { label: displayStatus, bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB", icon: Package };
 
   let detailBadge = null;
   if (needsRedo) {
-    detailBadge = { label: "Sửa lại", bg: "#FEE2E2", text: "#E5484D", border: "#FECACA", icon: AlertTriangle };
+    detailBadge = { label: "Cần sửa", bg: "#FEE2E2", text: "#E5484D", border: "#FECACA", icon: AlertTriangle };
   }
 
   return { primaryBadge, detailBadge };
 };
 
 const ProductionItemRow = ({ item, onInspect, onRedo, onDelay }) => {
-  const sc = getStatusColor(item.status, item.subStage, item.isPendingApproval, item.needsRedo);
+  const sc = getStatusColor(item.status, item.isPendingApproval, item.needsRedo);
   const ds = getDeadlineStyle(item.expectedEndDate);
 
-  const steps = ["Mộc", "Sơn", "Duyệt", "Xong"];
+  const stepsCount = 4;
   let currentStep = 0;
-  if (item.status === "Hoàn thành") currentStep = 3;
-  else if (item.isPendingApproval) currentStep = 2;
-  else if (item.status === "Đang sơn") currentStep = 1;
+  if (item.status === "Hoàn thành") currentStep = 4;
+  else if (item.isPendingApproval) currentStep = 3;
+  else if (item.status === "Đang sơn") currentStep = 2;
+  else if (item.status === "Đang đánh giấy ráp") currentStep = 1;
+
+  const progress = (currentStep / stepsCount) * 100;
 
   return (
-    <div className="flex flex-col gap-3 py-4 px-6 border-b border-border last:border-0 hover:bg-muted/50 transition-all rounded-xl group/item">
-      <div className="flex items-center gap-6">
-        <div className="h-14 w-14 rounded-xl overflow-hidden shrink-0 border border-border bg-muted relative">
+    <div className="flex flex-col gap-3 py-4 px-6 border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-all group/item">
+      <div className="flex items-start gap-5">
+        {/* Product Image with status overlay */}
+        <div className="h-14 w-14 rounded-lg overflow-hidden shrink-0 border border-gray-200 bg-gray-50 relative shadow-sm">
           <img
             src={item.productImage}
             alt={item.productName}
-            className="h-full w-full object-cover group-hover/item:scale-110 transition-transform duration-500"
+            className="h-full w-full object-cover group-hover/item:scale-105 transition-transform duration-500"
           />
           {item.needsRedo && (
-            <div className="absolute inset-0 bg-destructive/10 flex items-center justify-center border border-destructive/20 rounded-xl">
-              <RotateCcw size={16} className="text-destructive drop-shadow-sm animate-spin-slow" />
+            <div className="absolute inset-0 bg-red-500/10 flex items-center justify-center backdrop-blur-[1px]">
+              <RotateCcw size={18} className="text-red-600 drop-shadow-md animate-spin-slow" />
             </div>
           )}
         </div>
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-1">
-            <h4 className="text-[14px] font-bold text-foreground truncate uppercase tracking-tight">
+        {/* Info Column */}
+        <div className="flex-1 min-w-0 pt-0.5">
+          <div className="flex items-center gap-2 mb-2">
+            <h4 className="text-[14px] font-bold text-gray-900 truncate tracking-tight">
               {item.productName}
             </h4>
             {item.needsRedo && (
-              <span className="px-2 py-0.5 rounded text-[9px] font-black bg-destructive/10 text-destructive border border-destructive/20 uppercase tracking-tighter">Cần sửa lại</span>
+              <span className="px-2 py-0.5 rounded-md text-[9px] font-black bg-red-50 text-red-600 border border-red-100 uppercase">Cần sửa</span>
+            )}
+            {item.isDelayed && (
+              <span className="px-2 py-0.5 rounded-md text-[9px] font-black bg-amber-50 text-amber-600 border border-amber-100 uppercase tracking-tighter">Trễ hạn</span>
             )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-[11px]">
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground font-medium italic">Tiến độ:</span>
-              <div className="flex items-center gap-1">
-                {steps.map((s, idx) => (
-                  <React.Fragment key={s}>
-                    <span className={`font-bold ${idx <= currentStep ? (idx === 3 ? "text-primary" : "text-palette-blue") : "text-muted-foreground/30"}`}
-                      style={{ color: idx <= currentStep ? (idx === 3 ? "var(--status-success)" : "var(--palette-blue)") : undefined }}>
-                      {s}
-                    </span>
-                    {idx < steps.length - 1 && <span className="text-border">/</span>}
-                  </React.Fragment>
-                ))}
-              </div>
+          <div className="grid grid-cols-2 gap-6 max-w-sm">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Thợ đảm trách</span>
+              <span className="text-[12px] font-bold text-gray-700">{item.assignedWorker?.replace("Thợ cả: ", "") || "Chưa giao"}</span>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <span className="font-medium italic">Thợ:</span>
-              <span className="font-bold text-foreground/80">{item.assignedWorker?.replace("Thợ cả: ", "") || "Chưa giao"}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground font-medium italic">Hạn:</span>
-              <span className="font-bold px-2 py-0.5 rounded-full bg-muted text-[10px]" style={{ color: ds.color }}>{ds.text}</span>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Hạn bàn giao</span>
+              <span className="text-[12px] font-bold" style={{ color: ds.color }}>{ds.text}</span>
             </div>
           </div>
         </div>
 
-        <div className="shrink-0 flex items-center gap-6">
-          <div className="flex flex-col items-end gap-1.5">
-            <div className="flex items-center gap-1.5">
-              <span
-                className="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider"
-                style={{
-                  backgroundColor: sc.primaryBadge.bg,
-                  color: sc.primaryBadge.text,
-                  border: `1px solid ${sc.primaryBadge.border}`,
-                }}
-              >
-                {sc.primaryBadge.label}
-              </span>
+        {/* Actions/Status Column */}
+        <div className="shrink-0 flex items-center gap-3 pt-0.5">
+          <div className="flex flex-col items-end gap-1.5 min-w-[100px]">
+            <div
+              className="inline-flex items-center px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider shadow-xs border whitespace-nowrap"
+              style={{
+                backgroundColor: sc.primaryBadge.bg,
+                color: sc.primaryBadge.text,
+                borderColor: sc.primaryBadge.border,
+              }}
+            >
+              <sc.primaryBadge.icon size={11} className="mr-1.5 opacity-60" />
+              {sc.primaryBadge.label}
             </div>
-            {item.isDelayed && (
-              <span className="flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded-full uppercase bg-yellow-50 text-status-pending border border-yellow-200 italic"
-                style={{ color: "var(--status-pending)" }}>
-                <AlertTriangle size={10} /> Chậm trễ
-              </span>
-            )}
           </div>
 
-          <div className="flex items-center gap-2 transition-all">
-            <Link
-              to={`/owner/production/${item.id}`}
-              className="h-9 px-4 rounded-xl border border-border flex items-center justify-center gap-2 text-muted-foreground hover:text-primary hover:border-primary/30 transition bg-background text-[12px] font-bold"
-            >
-              <Eye size={16} />
-              Xem chi tiết
-            </Link>
-          </div>
+          <Link
+            to={`/owner/production/${item.id}`}
+            className="h-9 w-9 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition shadow-xs"
+            title="Xem chi tiết"
+          >
+            <Eye size={16} />
+          </Link>
         </div>
       </div>
 
-      <div className="relative w-full h-1 bg-muted rounded-full overflow-hidden mt-1">
+      {/* Modern Progress Bar */}
+      <div className="relative w-full h-1 bg-gray-100 rounded-full overflow-hidden">
         <div
-          className="absolute top-0 left-0 h-full transition-all duration-1000 ease-out rounded-full"
+          className="absolute top-0 left-0 h-full transition-all duration-700 ease-out rounded-full"
           style={{
-            width: `${((currentStep + 1) / steps.length) * 100}%`,
-            backgroundColor: currentStep === 3 ? "var(--status-success)" : "var(--palette-blue)"
+            width: `${progress}%`,
+            backgroundColor: currentStep === 4 ? "#16A34A" : "var(--brand-primary)",
+            boxShadow: progress > 0 ? "0 0 8px rgba(var(--brand-primary-rgb), 0.2)" : "none"
           }}
         />
       </div>
@@ -307,75 +293,65 @@ export default function OwnerProduction() {
     },
     {
       header: "Mã lệnh",
-      className: "font-bold font-mono",
+      className: "font-bold",
       style: { color: "var(--text-main)" },
-      render: (row) => row.orderCode
+      render: (row) => (
+        <div className="flex flex-col gap-0.5">
+          <span className="font-mono text-[13px] text-gray-900">{row.orderCode}</span>
+          <p className="text-[10px] font-black uppercase text-gray-400 tracking-tighter opacity-70">
+            {row.orderType}
+          </p>
+        </div>
+      )
     },
     {
       header: "Khách hàng",
       render: (row) => (
-        <div className="flex items-center gap-3">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[12px] border transition shrink-0 bg-muted text-muted-foreground border-border group-hover:bg-white"
-          >
-            {row.customerName?.charAt(0)}
-          </div>
-          <div className="min-w-0">
-            <p className="text-[13px] font-semibold truncate leading-tight" style={{ color: "var(--text-main)" }}>
-              {row.customerName}
-            </p>
-            <p className="text-[11px] truncate leading-tight mt-0.5" style={{ color: "var(--text-placeholder)" }}>
-              {row.customerPhone}
-            </p>
-          </div>
+        <div className="flex flex-col">
+          <p className="text-[13px] font-bold text-gray-900 leading-tight">
+            {row.customerName}
+          </p>
+          <p className="text-[11px] text-gray-500 mt-1">
+            {row.customerPhone}
+          </p>
         </div>
       ),
     },
     {
-      header: "Loại hàng",
-      headerClassName: "text-center",
-      className: "text-center",
-      render: (row) => (
-        <span className="text-[11px] font-bold text-muted-foreground bg-muted border border-border px-2.5 py-1 rounded-lg uppercase tracking-tighter whitespace-nowrap shadow-xs">
-          {row.orderType}
-        </span>
-      ),
-    },
-    {
       header: "Sản phẩm",
-      headerClassName: "text-center",
+      headerClassName: "text-center w-[120px]",
       className: "text-center",
       render: (row) => (
-        <span className="px-3 py-1 bg-muted text-muted-foreground rounded-lg text-[10px] font-black border border-border uppercase tracking-tighter flex items-center gap-1.5 w-fit mx-auto">
-          <Package size={12} className="opacity-50" /> {row.items.length} sp
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 text-gray-500 rounded-lg text-[11px] font-bold border border-gray-100 shadow-xs">
+          <Package size={14} className="opacity-40" /> {row.items.length} sp
         </span>
       ),
     },
     {
-      header: "Trạng thái",
-      headerClassName: "text-right pr-6",
+      header: "Trạng thái đơn",
+      headerClassName: "text-right pr-6 w-[200px]",
       className: "text-right",
       render: (row) => {
-        const sc = getStatusColor(row.status, row.subStage, row.isPendingApproval, row.needsRedo).primaryBadge;
+        const sc = getStatusColor(row.status, row.isPendingApproval, row.needsRedo).primaryBadge;
         const Icon = sc.icon || Package;
 
         return (
           <div className="flex justify-end pr-2">
             <div className="flex items-center gap-2">
               {row.totalCount > 1 && row.status !== "Hoàn thành" && (
-                <span className="text-[10px] font-black text-muted-foreground mr-1 uppercase tracking-tighter opacity-60 whitespace-nowrap">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter whitespace-nowrap opacity-60">
                   {row.completedCount}/{row.totalCount}
                 </span>
               )}
               <span
-                className="inline-flex items-center justify-center w-[165px] px-2 py-1 text-[9.5px] font-black uppercase tracking-tighter rounded-md border gap-1.5 whitespace-nowrap"
+                className="inline-flex items-center justify-center w-[140px] px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-md border gap-2 shadow-xs"
                 style={{
                   backgroundColor: sc.bg,
                   color: sc.text,
                   borderColor: sc.border,
                 }}
               >
-                <Icon size={12} className="shrink-0" />
+                <Icon size={12} className="shrink-0 opacity-70" />
                 {sc.label}
               </span>
             </div>
@@ -455,15 +431,17 @@ export default function OwnerProduction() {
                 key={s} onClick={() => setStatusFilter(s)}
                 className="px-4 py-1.5 rounded-lg text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border"
                 style={{
-                  backgroundColor: isActive ? (sc ? sc.bg : "white") : "transparent",
+                  backgroundColor: isActive ? (sc ? sc.bg : "#fff") : "transparent",
                   color: isActive ? (sc ? sc.text : "var(--brand-primary)") : "var(--text-secondary)",
                   borderColor: isActive ? (sc ? sc.border : "var(--grid-border)") : "transparent",
-                  boxShadow: isActive ? "0 2px 4px rgba(31, 23, 23, 0.05)" : "none",
+                  boxShadow: isActive ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
                 }}
               >
-                {Icon && <Icon size={14} />}
+                {Icon && <Icon size={14} className={isActive ? "opacity-100" : "opacity-40"} />}
                 {s}
-                <span className="text-[10px] opacity-60 bg-black/5 px-1.5 rounded-md ml-0.5">{statusCounts[s] || 0}</span>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-md ml-0.5 font-black ${isActive ? "bg-black/10 text-current" : "bg-black/5 text-gray-400"}`}>
+                  {statusCounts[s] || 0}
+                </span>
               </button>
             );
           })}
@@ -478,51 +456,31 @@ export default function OwnerProduction() {
           renderDetail={(group) => {
             const progress = Math.round((group.completedCount / group.totalCount) * 100);
             return (
-              <div className="px-12 py-8 bg-muted relative overflow-hidden">
-                <div className="absolute top-0 left-[2.5rem] bottom-0 w-px bg-border" />
-
-                <div className="relative bg-background border border-border rounded-2xl flex flex-col overflow-hidden">
-                  <div className="px-8 py-5 bg-muted/30 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/50">
+              <div className="px-6 py-4 bg-gray-50 relative overflow-hidden">
+                <div className="relative bg-white border border-gray-200 rounded-lg flex flex-col overflow-hidden shadow-sm">
+                  {/* Detailed Header - Simplified */}
+                  <div className="px-6 py-4 flex items-center justify-between gap-4 border-b border-gray-100 bg-gray-50/50">
                     <div className="flex items-center gap-4">
-                      <div className={`p-2.5 rounded-xl border ${progress === 100 ? "bg-accent text-primary border-primary/20" : "bg-muted text-palette-blue border-border"}`}>
+                      <div className="h-9 w-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-indigo-600 shadow-xs">
                         <ClipboardList size={20} />
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <h5 className="text-[14px] font-bold text-foreground uppercase tracking-tight">Chi tiết lệnh sản xuất</h5>
-                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${progress === 100 ? "bg-primary text-white" : "bg-palette-blue text-white"}`}
-                            style={{ backgroundColor: progress === 100 ? "var(--status-success)" : "var(--palette-blue)" }}>
-                            {progress}% Hoàn thành
-                          </span>
-                        </div>
-                        <p className="text-[12px] text-muted-foreground font-medium">Mã đơn: <span className="text-foreground font-bold">{group.orderCode}</span> • Tổng số {group.totalCount} sản phẩm</p>
+                        <h5 className="text-[13px] font-bold text-gray-900 uppercase tracking-tight">Chi tiết lệnh sản xuất</h5>
+                        <p className="text-[10px] text-gray-500 font-medium mt-0.5">Mã đơn: <span className="text-indigo-600 font-mono font-bold tracking-tighter">{group.orderCode}</span> • {group.totalCount} sản phẩm</p>
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-end gap-1.5 min-w-[200px]">
-                      <div className="flex justify-between w-full text-[10px] font-black text-muted-foreground uppercase">
-                        <span>Tiến độ tổng</span>
-                        <span>{progress}%</span>
-                      </div>
-                      <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full transition-all duration-1000"
-                          style={{
-                            width: `${progress}%`,
-                            backgroundColor: progress === 100 ? "var(--status-success)" : "var(--palette-blue)"
-                          }}
-                        />
-                      </div>
+                    <div className="flex flex-col items-end gap-1.5 pr-1">
+                       <span className="text-[9px] font-black px-2 py-0.5 rounded-md uppercase bg-indigo-50 text-indigo-700 border border-indigo-100 tracking-wider">
+                        {progress}% HOÀN TẤT
+                      </span>
                     </div>
                   </div>
 
-                  <div className="divide-y divide-border/20">
+                  <div className="divide-y divide-gray-100">
                     {group.items.map((item) => (
                       <ProductionItemRow
                         key={item.id} item={item}
-                        onInspect={(p) => { setSelectedItem(p); setShowInspectModal(true); }}
-                        onRedo={(p) => { setSelectedItem(p); setShowRedoModal(true); }}
-                        onDelay={(p) => { setSelectedItem(p); setNewDeadline(p.expectedEndDate || ""); setShowDelayModal(true); }}
                       />
                     ))}
                   </div>
