@@ -228,7 +228,7 @@ const CustomerInfoCard = ({ o }) => (
 
 const HistoryCard = ({ o }) => (
   <div
-    className="rounded-lg overflow-hidden bg-white/50 backdrop-blur-sm shadow-sm"
+    className="rounded-lg overflow-hidden bg-white/50 backdrop-blur-sm shadow-sm printer-hidden"
   >
     <div
       className="px-5 py-3 flex items-center gap-2 border-b border-gray-50/10 bg-gray-50/30"
@@ -273,7 +273,7 @@ const MediaGallery = ({ title, icon: Icon, images, onPreview, colorClass = "emer
   const c = colorMap[colorClass] || colorMap.emerald;
 
   return (
-    <div className="rounded-lg overflow-hidden bg-white/50 backdrop-blur-sm shadow-sm group">
+    <div className="rounded-lg overflow-hidden bg-white/50 backdrop-blur-sm shadow-sm group media-gallery-section printer-hidden">
       <div className={`px-5 py-3 flex items-center gap-2 border-b border-gray-50/10 ${c.bg}/30`}>
         <Icon size={14} className={c.text} />
         <span className={`text-[12px] font-bold uppercase tracking-wider ${c.text}`}>{title}</span>
@@ -405,6 +405,24 @@ const StandardOrderView = ({
                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Màu sắc</span>
                         <p className="text-[12px] font-bold text-slate-700">{p.finish || "—"}</p>
                       </div>
+
+                      {/* Technical/Internal Info with Print Suppression */}
+                      <div className="space-y-1 relative">
+                        <span className="text-[9px] font-black text-[var(--brand-primary)] uppercase tracking-widest block flex items-center gap-1">
+                           Bảo hành
+                        </span>
+                        <p className="text-[12px] font-bold text-slate-700">{p.warranty || "12"} tháng</p>
+                      </div>
+                      <div className="space-y-1 relative">
+                        <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest block">Hoàn thiện</span>
+                        <p className="text-[12px] font-bold text-slate-700">{p.finishingDays || "0"} ngày</p>
+                      </div>
+                      <div className="space-y-1 relative printer-hidden">
+                        <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest block flex items-center gap-1">
+                           Công sơn <XCircle size={8} className="opacity-40" />
+                        </span>
+                        <p className="text-[13px] font-black text-indigo-600">{fmtCurrency(p.paintLabor || 0)}</p>
+                      </div>
                     </div>
 
                     {/* 4. Technical Notes & Requirements */}
@@ -427,7 +445,7 @@ const StandardOrderView = ({
 
           {/* ── CARD: Lệnh sản xuất liên quan ── */}
           {o.productionOrders && o.productionOrders.length > 0 && (
-            <div className="rounded-lg overflow-hidden bg-white/50 backdrop-blur-sm shadow-sm">
+            <div className="rounded-lg overflow-hidden bg-white/50 backdrop-blur-sm shadow-sm production-section printer-hidden">
               <div className="px-5 py-3 flex items-center gap-2 border-b border-gray-50/10 bg-gray-50/30">
                 <Hammer size={14} className="text-gray-400" />
                 <span className="text-[12px] font-bold uppercase tracking-wider text-gray-500">Gia công & Sản xuất</span>
@@ -597,6 +615,11 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
   const [handoverChecks, setHandoverChecks] = useState({ dimension: false, material: false, techNotes: false });
 
   const popupRef = useRef(null);
+
+  const handlePrint = () => {
+    // Add print class to body temporarily or just call print
+    window.print();
+  };
 
 
   // Fetch & Normalize Data
@@ -855,10 +878,36 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
   if (!isOpen) return null;
 
-
-
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6 print-container">
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; background: white !important; }
+          .print-container, .print-container * { visibility: visible !important; }
+          .print-container { 
+            position: absolute !important; 
+            left: 0 !important; 
+            top: 0 !important; 
+            width: 100% !important; 
+            height: auto !important; 
+            overflow: visible !important; 
+            padding: 0 !important;
+            display: block !important;
+            box-shadow: none !important;
+            background: white !important;
+          }
+          .animate-in { animation: none !important; }
+          .fixed { position: static !important; }
+          .bg-white { background: white !important; }
+          .shadow-2xl, .shadow-sm, .shadow-md { box-shadow: none !important; border: 1px solid #eee !important; }
+          .printer-hidden, button, .popup-footer { display: none !important; }
+          .grid { display: block !important; }
+          .flex { display: flex !important; }
+          .h-[90vh], .h-[85vh] { height: auto !important; }
+          .overflow-y-auto { overflow: visible !important; }
+          .max-w-5xl { max-width: 100% !important; }
+        }
+      `}</style>
       <div
         className="absolute inset-0 bg-black/30 backdrop-blur-[2px] animate-in fade-in duration-200"
         onClick={handleSafeClose}
@@ -896,12 +945,14 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
               </div>
             </div>
           </div>
-          <button
-            onClick={handleSafeClose}
-            className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-          >
-            <X size={20} />
-          </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleSafeClose}
+                className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors printer-hidden"
+              >
+                <X size={20} />
+              </button>
+            </div>
         </div>
 
 
@@ -933,7 +984,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
         {/* Footer Actions Section */}
         {viewState === "ready" && order && (
-          <div className="p-4 border-t border-gray-50/10 bg-gray-50 flex items-center justify-end shrink-0">
+          <div className="p-4 border-t border-gray-50/10 bg-gray-50 flex items-center justify-end shrink-0 popup-footer printer-hidden">
             {/* Action Buttons Column */}
             <div className="flex items-center gap-3">
               {/* 1. Bàn giao xưởng */}
