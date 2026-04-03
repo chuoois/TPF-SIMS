@@ -5,12 +5,13 @@ import { vi } from "date-fns/locale";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import {
     Search, X, Users, Wallet, Calendar, Hammer, Paintbrush, Plus, Trash2,
-    CheckCircle2, Clock, BriefcaseBusiness, ChevronDown, CalendarPlus, XCircle
+    CheckCircle2, Clock, BriefcaseBusiness, ChevronDown, CalendarPlus, XCircle, FileDown
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import EmployeeModal from "./EmployeeModal";
 import AddProductModal from "./AddProductModal";
 import { cn } from "@/lib/utils"; // Assuming cn utility is available
+import * as XLSX from "xlsx";
 
 /**
  * Accountant Employee Salary
@@ -306,6 +307,63 @@ export default function AccountantEmployeeSalary() {
         setAddProductTarget(null);
     };
 
+    const handleExportExcel = () => {
+        if (filteredEmployees.length === 0) {
+            toast.error("Không có dữ liệu để xuất!", { style: { fontSize: "14px" } });
+            return;
+        }
+
+        const exportData = filteredEmployees.map(emp => {
+            const totalSalary = calculateTotalSalary(emp);
+            let calcFormula = "";
+            let specData = "";
+            if (["SALES", "ACCOUNTANT", "SANDER"].includes(emp.type)) {
+                calcFormula = `${formatCurrency(emp.base_rate)} / ngày`;
+                specData = `${emp.days_worked} ngày công`;
+            } else if (emp.type === "PAINTER") {
+                const logTotal = (emp.products_log || []).reduce((s, p) => s + (p.price * (p.qty || 1)), 0);
+                calcFormula = logTotal > 0 ? "Đơn giá theo sản phẩm" : `${formatCurrency(emp.base_rate)} / SP`;
+                specData = `${emp.products_finished} sản phẩm`;
+            }
+
+            return {
+                "Mã Nhân Viên": emp.id,
+                "Họ Tên": emp.name,
+                "Bộ Phận": emp.role,
+                "Kỳ Lương": emp.month,
+                "Cách Tính / Đơn Giá": calcFormula,
+                "Thông Số Công": specData,
+                "Phụ Cấp / Thưởng (VND)": emp.allowance,
+                "Tổng Lương (VND)": totalSalary,
+                "Trạng Thái": emp.status,
+                "Ngày Thanh Toán": emp.payment_date || "-"
+            };
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Bảng Lương");
+
+        // Set column widths
+        const wscols = [
+            { wch: 15 }, // Mã NV
+            { wch: 25 }, // Họ Tên
+            { wch: 20 }, // Bộ Phận
+            { wch: 12 }, // Kỳ Lương
+            { wch: 25 }, // Cách Tính
+            { wch: 18 }, // Thông Số
+            { wch: 20 }, // Phụ Cấp
+            { wch: 20 }, // Tổng Lương
+            { wch: 15 }, // Trạng Thái
+            { wch: 15 }  // Ngày TT
+        ];
+        worksheet["!cols"] = wscols;
+
+        const fileName = `Bang-Luong-Nhan-Vien-${monthFilter === "ALL" ? "Tong-Hop" : monthFilter.replace("/", "-")}-${format(new Date(), "dd-MM-yyyy")}.xlsx`;
+        XLSX.writeFile(workbook, fileName);
+        toast.success("Đã xuất file excel thành công!", { icon: "📊" });
+    };
+
     // Footer stats
     const totals = useMemo(() => {
         const all = filteredEmployees;
@@ -423,6 +481,11 @@ export default function AccountantEmployeeSalary() {
                             <option value="SANDER">Nhân viên giấy ráp</option>
                             <option value="PAINTER">Thợ sơn</option>
                         </select>
+
+                        <button onClick={handleExportExcel}
+                            className="h-9 px-3.5 rounded-lg flex items-center gap-1.5 text-[13px] font-bold cursor-pointer hover:bg-gray-50 transition shrink-0 border border-emerald-200 text-emerald-700 bg-emerald-50 ml-auto mr-1">
+                            <FileDown size={15} strokeWidth={2.5} /> Xuất File Excel
+                        </button>
                     </div>
 
                     {/* Table */}
