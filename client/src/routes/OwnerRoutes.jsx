@@ -74,14 +74,14 @@ export const ownerRoutes = {
       path: "employees",
       element: <Employees />,
     },
-    {
-      path: "warranty",
-      children: [
-        { index: true, element: <WarrantyLookup /> },
-        { path: "lookup", element: <WarrantyLookup /> },
-        { path: "list", element: <WarrantyList /> },
-      ],
-    },
+    // {
+    //   path: "warranty",
+    //   children: [
+    //     { index: true, element: <WarrantyLookup /> },
+    //     { path: "lookup", element: <WarrantyLookup /> },
+    //     { path: "list", element: <WarrantyList /> },
+    //   ],
+    // },
     {
       path: "reports",
       element: <Reports />,
