@@ -510,15 +510,18 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
           note: item.specs?.note || "",
           price: isNewProcessing ? 0 : item.quotedPrice || 0,
           designImages: item.designImages || [],
+          paintLabor: item.paintLabor || 0,
+          warranty: item.warranty || "12",
+          finishingDays: item.finishingDays || "",
         })),
       );
     }
   }, [req]);
 
-  // Auto-calculate total when item prices change
+  // Auto-calculate total
   useEffect(() => {
     const total = itemSpecs.reduce(
-      (sum, item) => sum + (Number(item.price) || 0),
+      (sum, item) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 1),
       0,
     );
     setEstimatedPrice(total);
@@ -663,6 +666,7 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
               </div>
             )}
           </div>
+          
 
           {/* Section 3: Chi tiết Sản phẩm & Thông số kỹ thuật */}
           <div className="border-t border-gray-100 pt-6">
@@ -690,23 +694,32 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                         </h4>
                       </div>
                       {/* Price Input (Inline for cleaner look) */}
-                      <div className="flex items-center gap-2">
-                        <label className="text-[12px] font-medium text-gray-500">
-                          Giá:
-                        </label>
-                        <div className="relative w-40">
-                          <PriceInput
-                            value={spec.price || ""}
-                            onChange={(val) =>
-                              handleUpdateItemSpec(spec.id, "price", val)
-                            }
-                            disabled={!isProcessing}
-                            placeholder="0"
-                            className="w-full h-9 pl-3 pr-10 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[14px] font-medium disabled:bg-gray-50 text-right"
-                          />
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-gray-400">
-                            đ
-                          </span>
+                      <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2">
+                          <label className="text-[12px] font-medium text-gray-500">
+                            Đơn giá:
+                          </label>
+                          <div className="relative w-36">
+                            <PriceInput
+                              value={spec.price || ""}
+                              onChange={(val) =>
+                                handleUpdateItemSpec(spec.id, "price", val)
+                              }
+                              disabled={!isProcessing}
+                              placeholder="0"
+                              className="w-full h-9 pl-3 pr-8 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-[14px] font-black text-gray-800 disabled:bg-gray-50 text-right"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-bold text-gray-400">
+                              đ
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-col items-end">
+                           <span className="text-[10px] font-black text-indigo-400 uppercase tracking-tighter">THÀNH TIỀN</span>
+                           <span className="text-[16px] font-black text-indigo-600">
+                              {formatVND((Number(spec.price) || 0) * (Number(spec.quantity) || 1))} <span className="text-[10px] font-bold">VNĐ</span>
+                           </span>
                         </div>
                       </div>
                     </div>
@@ -822,6 +835,53 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                       </div>
                     </div>
 
+                    {/* Per-item Technical Specs: Warranty, Finishing, Paint Labor */}
+                    <div className="flex flex-wrap items-center gap-4 mb-6">
+                      {/* Warranty Card */}
+                      <div className="flex-1 min-w-[140px] flex items-center justify-between px-4 py-2.5 bg-white border border-gray-200 rounded-2xl shadow-sm h-14">
+                        <label className="text-[11px] font-black text-gray-400 uppercase tracking-tight">BẢO HÀNH</label>
+                        <div className="flex items-center gap-1.5">
+                          <input 
+                            type="number" 
+                            value={spec.warranty}
+                            onChange={(e) => handleUpdateItemSpec(spec.id, "warranty", e.target.value)}
+                            disabled={!isProcessing}
+                            className="w-16 text-right text-[15px] font-black text-emerald-600 bg-transparent border-none p-0 outline-none focus:ring-0"
+                          />
+                          <span className="text-[11px] font-bold text-gray-400">tháng</span>
+                        </div>
+                      </div>
+
+                      {/* Finishing Card */}
+                      <div className="flex-1 min-w-[140px] flex items-center justify-between px-4 py-2.5 bg-orange-50/50 border border-orange-100 rounded-2xl shadow-sm h-14">
+                        <label className="text-[11px] font-black text-orange-600 uppercase tracking-tight">HOÀN THIỆN</label>
+                        <div className="flex items-center gap-1.5">
+                          <input 
+                            type="number" 
+                            value={spec.finishingDays}
+                            onChange={(e) => handleUpdateItemSpec(spec.id, "finishingDays", e.target.value)}
+                            disabled={!isProcessing}
+                            className="w-16 text-right text-[15px] font-black text-orange-500 bg-transparent border-none p-0 outline-none focus:ring-0"
+                          />
+                          <span className="text-[11px] font-bold text-orange-300">ngày</span>
+                        </div>
+                      </div>
+
+                      {/* Paint Labor Card */}
+                      <div className="flex-1 min-w-[180px] flex items-center justify-between px-4 py-2.5 bg-indigo-50/50 border border-indigo-100 rounded-2xl shadow-sm h-14">
+                        <label className="text-[11px] font-black text-indigo-600 uppercase tracking-tight">CÔNG SƠN</label>
+                        <div className="flex items-center gap-1.5">
+                          <PriceInput
+                            value={spec.paintLabor}
+                            onChange={(val) => handleUpdateItemSpec(spec.id, "paintLabor", val)}
+                            disabled={!isProcessing}
+                            className="w-24 text-right text-[18px] font-black text-indigo-600 bg-transparent border-none p-0 outline-none focus:ring-0"
+                          />
+                          <span className="text-[11px] font-bold text-indigo-400 font-serif">₫</span>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Item Images Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50/50 rounded-lg border border-gray-100">
                       {/* Customer Images */}
@@ -924,6 +984,13 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                 </div>
 
                 <div className="flex items-center justify-between">
+                  <span className="text-[12px] font-bold text-indigo-500 uppercase tracking-wider">Tổng tiền công sơn</span>
+                  <span className="text-[16px] font-black text-indigo-600">
+                    {formatVND(itemSpecs.reduce((sum, s) => sum + (Number(s.paintLabor) || 0) * (Number(s.quantity) || 1), 0))} <span className="text-[11px] font-bold text-indigo-400">₫</span>
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between pt-1 border-t border-gray-100">
                   <span className="text-[12px] font-bold text-orange-500 uppercase tracking-wider">Tiền khách cọc</span>
                   <div className="relative w-40">
                     <PriceInput
@@ -953,7 +1020,12 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
               {isProcessing && (
                 <>
                   <button
-                    onClick={() => onAction("create_order", req.id)}
+                    onClick={() => onAction("create_order", req.id, {
+                      itemSpecs,
+                      estimatedDeliveryDate,
+                      surveyNotes,
+                      deposit
+                    })}
                     className="px-5 py-2 bg-emerald-600 text-white rounded-lg text-[13px] font-bold hover:bg-emerald-700 transition-colors flex items-center gap-2"
                   >
                     <Package size={16} /> Tạo Đơn Hàng
@@ -1106,7 +1178,7 @@ export default function OwnerRequirements() {
         if (r.id !== reqId) return r;
         if (type === "fix_price")
           return { ...r, status: "Đã chốt giá", ...data };
-        if (type === "create_order") return { ...r, status: "Đã tạo đơn" };
+        if (type === "create_order") return { ...r, status: "Đã tạo đơn", ...data };
         if (type === "cancel_req") return { ...r, status: "Đơn đã hủy" };
         if (type === "restore") return { ...r, status: "Đang xử lý" };
         if (type === "view_production") {
@@ -1145,30 +1217,36 @@ export default function OwnerRequirements() {
         phone: finalizingReq.phone,
         type: "Hàng đặt",
         total: finalizingReq.estimatedPrice || 0,
-        deposit: 0,
+        deposit: data?.deposit || 0,
+        paintLabor: data?.paintLabor || 0,
+        warranty: data?.warranty || "12",
+        finishingDays: data?.finishingDays || "",
         paymentStatus: "pending",
         status: "Chờ sản xuất",
         date: new Date().toISOString(),
         salesPerson: finalizingReq.salesPerson,
         requirementId: finalizingReq.id,
-        deliveryDate: tenDaysFromNow.toISOString().split("T")[0],
-        notes: finalizingReq.notes || "",
+        deliveryDate: data?.estimatedDeliveryDate || tenDaysFromNow.toISOString().split("T")[0],
+        notes: data?.surveyNotes || finalizingReq.notes || "",
         // Map requirement items → products structure expected by detail.jsx
-        products: (finalizingReq.items || []).map((item) => ({
-          name: item.name,
+        products: (data?.itemSpecs || finalizingReq.items || []).map((item) => ({
+          name: item.name || (finalizingReq.items.find(i => i.id === item.id)?.name) || "Sản phẩm",
           material: item.material || "Chưa rõ",
-          size: item.specs?.dimensions || "",
-          finish: item.specs?.note || "",
-          pattern: "",
-          qty: item.qty || 1,
-          price: item.quotedPrice || 0,
+          size: item.dimensions || "",
+          finish: item.note || "",
+          pattern: item.color || "",
+          qty: item.quantity || 1,
+          price: item.price || 0,
+          paintLabor: item.paintLabor || 0,
+          warranty: item.warranty || "12",
+          finishingDays: item.finishingDays || "",
         })),
         // Initial timeline
         timeline: [
           {
             time: now,
             label: "Tạo đơn hàng",
-            desc: `Tạo từ yêu cầu ${finalizingReq.code}. Đang chờ phân công thợ.`,
+            desc: `Tạo từ yêu cầu ${finalizingReq.code}.${data?.finishingDays ? ` Cần ${data.finishingDays} ngày hoàn thiện.` : ""} Đang chờ phân công thợ.`,
             active: true,
           },
         ],
