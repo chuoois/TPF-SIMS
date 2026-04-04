@@ -28,7 +28,11 @@ import {
 // settingsGroup riêng để tránh nested 3 cấp khó dùng.
 const menuItems = [
   { text: "Tổng quan", icon: Home, path: "/owner/dashboard" },
-  { text: "Yêu cầu khách hàng", icon: ClipboardList, path: "/owner/requirements" },
+  {
+    text: "Yêu cầu khách hàng",
+    icon: ClipboardList,
+    path: "/owner/requirements",
+  },
   { text: "Đơn hàng", icon: ClipboardList, path: "/owner/orders" },
   { text: "Mã giảm giá", icon: Tag, path: "/owner/coupons" },
   {
@@ -53,7 +57,7 @@ const menuItems = [
   { text: "Quản lý sản xuất", icon: Hammer, path: "/owner/production" },
   
   { text: "Nhà cung cấp", icon: Building2, path: "/owner/suppliers" },
-  { text: "Quản lý tài khoản", icon: UserCog, path: "/owner/employees" },
+  { text: "Quản lý tài khoản", icon: UserCog, path: "/owner/employees"
   {
     text: "Bảo hành",
     icon: ShieldCheck,
@@ -63,6 +67,7 @@ const menuItems = [
       { text: "Yêu cầu sửa chữa", path: "/owner/warranty/repairs" }
     ],
   },
+
 
   { text: "Báo cáo", icon: BarChart3, path: "/owner/reports" },
   { text: "Nhật ký hệ thống", icon: History, path: "/owner/system-logs" },
@@ -75,10 +80,10 @@ function isCollapsibleSectionActive(item, pathname) {
 
   if (!item.subItems && !item.settingsGroup) return false;
   const subActive = item.subItems?.some((s) =>
-    s.exactMatch ? pathname === s.path : pathname.startsWith(s.path)
+    s.exactMatch ? pathname === s.path : pathname.startsWith(s.path),
   );
   const settingsActive = item.settingsGroup?.items.some((s) =>
-    pathname.startsWith(s.path)
+    pathname.startsWith(s.path),
   );
   return subActive || settingsActive;
 }
@@ -94,9 +99,10 @@ function SubLink({ text, path, exactMatch }) {
     <NavLink
       to={path}
       className={`flex items-center gap-2 px-3 py-1.5 text-[13px] rounded-md transition-colors no-underline
-        ${isActive
-          ? "text-[var(--brand-primary)] font-semibold bg-white/[0.08]"
-          : "text-gray-400 hover:text-white hover:bg-white/[0.06]"
+        ${
+          isActive
+            ? "text-[var(--brand-primary)] font-semibold bg-white/[0.08]"
+            : "text-gray-400 hover:text-white hover:bg-white/[0.06]"
         }`}
     >
       <span
@@ -112,7 +118,7 @@ function SubLink({ text, path, exactMatch }) {
 function SettingsGroup({ group }) {
   const location = useLocation();
   const isAnyActive = group.items.some((s) =>
-    location.pathname.startsWith(s.path)
+    location.pathname.startsWith(s.path),
   );
   const [open, setOpen] = useState(isAnyActive);
 
@@ -147,9 +153,10 @@ function SettingsGroup({ group }) {
                 key={item.path}
                 to={item.path}
                 className={`flex items-center gap-2 px-3 py-1.5 text-[12px] no-underline transition-colors
-                  ${isActive
-                    ? "text-[var(--brand-primary)] font-semibold"
-                    : "text-gray-500 hover:text-gray-300"
+                  ${
+                    isActive
+                      ? "text-[var(--brand-primary)] font-semibold"
+                      : "text-gray-500 hover:text-gray-300"
                   }`}
               >
                 <span
@@ -170,7 +177,7 @@ function SettingsGroup({ group }) {
 function CollapsibleMenuItem({ item }) {
   const location = useLocation();
   const [expanded, setExpanded] = useState(
-    isCollapsibleSectionActive(item, location.pathname)
+    isCollapsibleSectionActive(item, location.pathname),
   );
 
   useEffect(() => {
@@ -185,13 +192,17 @@ function CollapsibleMenuItem({ item }) {
       <div
         onClick={() => setExpanded((v) => !v)}
         className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg cursor-pointer transition-all duration-200
-          ${isActive
-            ? "bg-[var(--brand-primary)] text-white font-medium shadow-sm shadow-black/20"
-            : "text-gray-300 hover:text-white hover:bg-white/[0.1]"
+          ${
+            isActive
+              ? "bg-[var(--brand-primary)] text-white font-medium shadow-sm shadow-black/20"
+              : "text-gray-300 hover:text-white hover:bg-white/[0.1]"
           }`}
       >
         {Icon && (
-          <Icon size={18} className={isActive ? "text-white" : "text-gray-400"} />
+          <Icon
+            size={18}
+            className={isActive ? "text-white" : "text-gray-400"}
+          />
         )}
         <span className="flex-1">{item.text}</span>
         <ChevronDown
@@ -207,9 +218,7 @@ function CollapsibleMenuItem({ item }) {
           {item.subItems?.map((sub) => (
             <SubLink key={sub.path} {...sub} />
           ))}
-          {item.settingsGroup && (
-            <SettingsGroup group={item.settingsGroup} />
-          )}
+          {item.settingsGroup && <SettingsGroup group={item.settingsGroup} />}
         </div>
       )}
     </div>
@@ -233,9 +242,10 @@ function MenuItem({ item }) {
     <NavLink
       to={item.path}
       className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-all duration-200 no-underline
-        ${isActive
-          ? "bg-[var(--brand-primary)] text-white font-medium shadow-sm shadow-black/20"
-          : "text-gray-300 hover:text-white hover:bg-white/[0.1]"
+        ${
+          isActive
+            ? "bg-[var(--brand-primary)] text-white font-medium shadow-sm shadow-black/20"
+            : "text-gray-300 hover:text-white hover:bg-white/[0.1]"
         }`}
     >
       {Icon && (
