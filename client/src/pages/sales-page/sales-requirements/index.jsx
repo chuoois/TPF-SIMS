@@ -561,6 +561,7 @@ export default function SalesRequirements() {
 
   // Cancellation States
   const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancelSuccess, setCancelSuccess] = useState(false);
 
   const handleCancelSubmit = () => {
     if (!cancelTarget) return;

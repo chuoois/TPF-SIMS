@@ -59,7 +59,7 @@ export default function WarrantyPage() {
   // Printing
   const printRef = React.useRef(null);
   const handlePrint = useReactToPrint({
-    content: () => printRef.current,
+    contentRef: printRef,
     documentTitle: `Phieu_Bao_Hanh_${selectedWarranty?.id || ""}`,
   });
 

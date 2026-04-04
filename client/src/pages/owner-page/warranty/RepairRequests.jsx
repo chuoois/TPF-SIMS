@@ -61,7 +61,7 @@ export default function RepairRequests() {
   const [newService, setNewService] = useState({ name: "", type: "Dịch vụ", cost: "" });
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [newReq, setNewReq] = useState({
+  const [newReq, setNewReq] = useState(() => ({
      customerName: "",
      phone: "",
      productName: "",
@@ -72,7 +72,7 @@ export default function RepairRequests() {
      isWarrantyCovered: false,
      technician: "",
      promisedDate: new Date(Date.now() + 86400000 * 3).toISOString()
-  });
+  }));
 
   const printRef = React.useRef(null);
   const handlePrint = useReactToPrint({
