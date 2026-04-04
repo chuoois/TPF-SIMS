@@ -13,22 +13,25 @@ import LogisticsPortal from "@/pages/owner-page/warranty/LogisticsPortal";
 
 export const router = createBrowserRouter([
   authRoutes,
-  {
-    element: <ProtectedRoute allowedRoles={["OWNER"]} />,
-    children: [ownerRoutes],
-  },
-  {
-    element: <ProtectedRoute allowedRoles={["ACCOUNTANT", "OWNER"]} />,
-    children: [accountantRoutes],
-  },
-  {
-    element: <ProtectedRoute allowedRoles={["WORKER", "OWNER"]} />,
-    children: [workerRoutes],
-  },
-  {
-    element: <ProtectedRoute allowedRoles={["SALES", "OWNER"]} />,
-    children: [salesRoutes],
-  },
+  // Protected Routes
+  // {
+  //   element: <ProtectedRoute allowedRoles={["OWNER"]} />,
+  //   children: [ownerRoutes],
+  // },
+  // {
+  //   element: <ProtectedRoute allowedRoles={["ACCOUNTANT", "OWNER"]} />,
+  //   children: [accountantRoutes],
+  // },
+  // {
+  //   element: <ProtectedRoute allowedRoles={["WORKER", "OWNER"]} />,
+  //   children: [workerRoutes],
+  // },
+  // {
+  //   element: <ProtectedRoute allowedRoles={["SALES", "OWNER"]} />,
+  //   children: [salesRoutes],
+  // },
+  // test
+  ownerRoutes, accountantRoutes, workerRoutes, salesRoutes,
   { path: "/logistics/:id", element: <LogisticsPortal /> },
   { path: "/404", element: <NotFoundPage /> },
   { path: "/403", element: <NoPermissionPage /> },
