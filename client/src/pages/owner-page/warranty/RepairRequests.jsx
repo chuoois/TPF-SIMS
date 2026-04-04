@@ -278,9 +278,9 @@ export default function RepairRequests() {
        <div className="grid grid-cols-4 gap-4">
            {[
                { label: "Tổng tiếp nhận", count: requests.length, color: "text-slate-700", bg: "bg-white", icon: FileText },
-               { label: "Đợi xử lý", count: requests.filter(r => r.status === "Chờ xử lý").length, color: "text-blue-600", bg: "bg-blue-50/30", icon: Clock },
-               { label: "Đang sửa/vận chuyển", count: requests.filter(r => r.status === "Đang thực hiện").length, color: "text-amber-600", bg: "bg-amber-50/30", icon: Truck },
-               { label: "Đã hoàn thành", count: requests.filter(r => r.status === "Hoàn thành").length, color: "text-green-600", bg: "bg-green-50/30", icon: CheckCircle2 }
+               { label: "Chờ xử lý", count: requests.filter(r => r.status === "Chờ xử lý").length, color: "text-blue-600", bg: "bg-blue-50/30", icon: Clock },
+               { label: "Đang thực hiện", count: requests.filter(r => r.status === "Đang thực hiện").length, color: "text-amber-600", bg: "bg-amber-50/30", icon: Truck },
+               { label: "Hoàn thành", count: requests.filter(r => r.status === "Hoàn thành").length, color: "text-green-600", bg: "bg-green-50/30", icon: CheckCircle2 }
            ].map((stat, idx) => {
                 const Icon = stat.icon;
                 return (
