@@ -83,7 +83,6 @@ export const ownerRoutes = {
       path: "employees",
       element: <Employees />,
     },
-   
     {
       path: "reports",
       element: <Reports />,
