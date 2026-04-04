@@ -35,5 +35,3 @@ export default [
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/purity': 'off', // Misfires on event handlers in some versions
     },
-  },
-]
