@@ -1,30 +1,27 @@
 /**
  * Component SalesOrderManage
- * Quản lý Đơn hàng — Nhân viên bán hàng (Chỉ xem + Gửi yêu cầu hủy)
- *
- * Created Date: 05/03/2026
- * Updated Date: 07/03/2026
+ * Quản lý Đơn hàng — Nhân viên bán hàng (UI/UX đồng bộ Owner + Request Cancel)
  */
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
 import {
-  Search,
-  Users,
-  Eye,
   Package,
-  Calendar,
-  XCircle,
-  X,
-  ChevronLeft,
-  ChevronRight,
+  Clock,
+  Printer,
+  Eye,
+  Trash2,
+  AlertCircle,
   AlertTriangle,
   CheckCircle2,
-  Printer,
-  Clock,
+  X,
+  Settings,
+  Activity,
+  Truck,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
+import DataTable from "@/components/control/DataTable";
 import { MOCK_ORDERS_DETAIL, PrintableInvoice } from "./detail";
+import SalesInvoiceDetailsPopup from "./components/SalesInvoiceDetailsPopup";
 
 // ===================== STATIC DATA =====================
 export const INITIAL_ORDERS = [
@@ -93,8 +90,13 @@ export const INITIAL_ORDERS = [
     date: "2026-03-07T09:00:00", deliveryDate: "2026-03-09", fulfillmentType: "Giao tận nơi",
     deliveryImage: "https://images.unsplash.com/photo-1617806118233-ef203e91122b",
   },
+  {
+    id: "DH-T07", code: "DH-THO-007", type: "Hàng mộc", status: "Hoàn thành",
+    customerName: "Ngô Quốc Khánh", phone: "0966554433", total: 4200000,
+    date: "2026-03-11T08:00:00", deliveryDate: "2026-03-12", fulfillmentType: "Lấy tại cửa hàng",
+  },
 
-  // ========== NHÓM 3: Hàng khách đặt ==========
+  // ========== NHÓM 3: HÀNG KHÁCH ĐẶT ==========
   {
     id: "DH-D01", code: "DH-DAT-001", type: "Hàng khách đặt", status: "Chờ xử lý",
     customerName: "Nguyễn Thị Hồng", phone: "0912123123", total: 75000000,
@@ -115,50 +117,15 @@ export const INITIAL_ORDERS = [
     customerName: "Sơn", phone: "0988", total: 95000000,
     date: "2026-03-09T14:20:00", deliveryDate: "2026-03-22", fulfillmentType: "Giao tận nơi",
   },
+  {
+    id: "DH-D05", code: "DH-DAT-005", type: "Hàng khách đặt", status: "Chờ sản xuất",
+    customerName: "Mai Phương Thúy", phone: "0922889977", total: 110000000,
+    date: "2026-03-12T14:00:00", deliveryDate: "2026-04-15", fulfillmentType: "Lấy tại cửa hàng",
+  },
 ];
-
 
 const ORDER_TYPES = ["Hàng sẵn", "Hàng mộc", "Hàng khách đặt"];
 
-const HANG_SAN_STATUSES = [
-  "Chờ xử lý",
-  "Chờ giao hàng",
-  "Đang giao hàng",
-  "Hoàn thành",
-  "Chờ duyệt hủy",
-  "Đơn đã hủy",
-];
-
-const HANG_THO_STATUSES = [
-  "Chờ xử lý",
-  "Đang gia công",
-  "Chờ giao hàng",
-  "Đang giao hàng",
-  "Hoàn thành",
-  "Chờ duyệt hủy",
-  "Đơn đã hủy",
-];
-
-const HANG_DAT_STATUSES = [
-  "Chờ sản xuất",
-  "Đã nhập kho",
-  "Đang gia công",
-  "Chờ giao hàng",
-  "Đang giao hàng",
-  "Hoàn thành",
-  "Chờ duyệt hủy",
-  "Đơn đã hủy",
-];
-
-const ALL_STATUSES = [
-  ...new Set([
-    ...HANG_SAN_STATUSES,
-    ...HANG_THO_STATUSES,
-    ...HANG_DAT_STATUSES,
-  ]),
-];
-
-// Trạng thái cho phép gửi yêu cầu hủy (sale chỉ được gửi khi đơn chưa hoàn thành / chưa hủy / chưa gửi hủy rồi)
 const CANCELLABLE_STATUSES = [
   "Chờ xử lý",
   "Đang chuẩn bị",
@@ -167,66 +134,48 @@ const CANCELLABLE_STATUSES = [
   "Chờ xác nhận",
   "Đang gia công",
   "Chờ sản xuất",
+  "Chờ giao hàng"
 ];
 
-// ===================== HELPERS =====================
+const STATUS_CONFIG = {
+  "Chờ xử lý": { bg: "rgba(59, 130, 246, 0.08)", text: "#1d4ed8", border: "rgba(59, 130, 246, 0.2)", icon: Clock },
+  "Đang xử lý": { bg: "rgba(249, 115, 22, 0.08)", text: "#c2410c", border: "rgba(249, 115, 22, 0.2)", icon: Activity },
+  "Chờ sản xuất": { bg: "rgba(245, 158, 11, 0.08)", text: "#b45309", border: "rgba(245, 158, 11, 0.2)", icon: Settings },
+  "Đã nhập kho": { bg: "rgba(34, 197, 94, 0.08)", text: "#15803d", border: "rgba(34, 197, 94, 0.2)", icon: Package },
+  "Đang gia công": { bg: "rgba(245, 158, 11, 0.08)", text: "#b45309", border: "rgba(245, 158, 11, 0.2)", icon: Activity },
+  "Chờ giao hàng": { bg: "rgba(139, 92, 246, 0.08)", text: "#7c3aed", border: "rgba(139, 92, 246, 0.2)", icon: Clock },
+  "Đang giao hàng": { bg: "rgba(59, 130, 246, 0.08)", text: "#1d4ed8", border: "rgba(59, 130, 246, 0.2)", icon: Truck },
+  "Hoàn thành": { bg: "rgba(34, 197, 94, 0.08)", text: "#15803d", border: "rgba(34, 197, 94, 0.2)", icon: CheckCircle2 },
+  "Chờ duyệt hủy": { bg: "rgba(245, 158, 11, 0.08)", text: "#b45309", border: "rgba(245, 158, 11, 0.2)", icon: AlertCircle },
+  "Đơn đã hủy": { bg: "rgba(239, 68, 68, 0.08)", text: "#b91c1c", border: "rgba(239, 68, 68, 0.2)", icon: Trash2 },
+};
+
+const getStatusColor = (status) => STATUS_CONFIG[status] || { bg: "#F3F4F6", text: "#374151", border: "#D1D5DB", icon: Clock };
+
 const formatCurrency = (amount) => {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(amount);
+  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
 };
 
-const formatDateTime = (dateString) => {
-  const d = new Date(dateString);
-  return `${d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })} - ${d.toLocaleDateString("vi-VN")}`;
-};
-
-const getStatusColor = (status) => {
-  switch (status) {
-    case "Chờ xử lý":
-      return { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" }; // Blue
-    case "Đang xử lý":
-      return { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" }; // Orange
-    case "Đang sản xuất":
-      return { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" }; // Amber
-    case "Chờ sản xuất":
-      return { bg: "#FEF3C7", text: "#B45309", border: "#FDE68A" }; // Amber/Dark
-    case "Đã nhập kho":
-      return { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" }; // Green
-    case "Đang gia công":
-      return { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" }; // Amber
-    case "Chờ giao hàng":
-      return { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" }; // Purple
-    case "Đang giao hàng":
-      return { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" }; // Deep Blue
-    case "Hoàn thành":
-      return { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" }; // Green
-    case "Chờ duyệt hủy":
-      return { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" }; // Amber/Yellow
-    case "Đơn đã hủy":
-      return { bg: "#FEF2F2", text: "#B91C1C", border: "#FECACA" }; // Red
-
-    default:
-      return { bg: "var(--bg-main)", text: "var(--text-secondary)", border: "var(--grid-border)" };
-  }
-};
-
-// ===================== COMPONENT =====================
 export default function SalesOrderManage() {
   const [orders, setOrders] = useState(INITIAL_ORDERS);
-  const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("Hàng sẵn");
   const [statusFilter, setStatusFilter] = useState("Tất cả");
+  const [searchTerm, setSearchTerm] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
-  const [selectedOrders, setSelectedOrders] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
-  // Print
+  // Cancellation State
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelSuccess, setCancelSuccess] = useState(false);
+
+  // Print Handling
   const printRef = useRef(null);
-  const [printingOrders, setPrintingOrders] = useState([]); // Array instead of single order
+  const [printingOrders, setPrintingOrders] = useState([]);
 
   useEffect(() => {
     if (printingOrders.length > 0 && printRef.current) {
@@ -234,27 +183,17 @@ export default function SalesOrderManage() {
       const printWindow = window.open("", "_blank", "width=900,height=700");
       if (printWindow) {
         printWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>In hóa đơn</title>
-            <style>
-              @page { size: A4; margin: 15mm; }
-              body { margin: 0; padding: 0; }
-              .page-break { page-break-after: always; }
-              .page-break:last-child { page-break-after: auto; }
-            </style>
-          </head>
-          <body>${content.innerHTML}</body>
-          </html>
+          <html><head><title>In hóa đơn</title>
+          <style>@page { size: A4; margin: 15mm; } body { margin: 0; padding: 0; } .page-break { page-break-after: always; } .page-break:last-child { page-break-after: auto; }</style>
+          </head><body>${content.innerHTML}</body></html>
         `);
         printWindow.document.close();
         printWindow.focus();
         setTimeout(() => {
           printWindow.print();
           setPrintingOrders([]);
-          setSelectedOrders([]); // Clear selection after print
-        }, 500); // Increased timeout slightly for multiple images/pages
+          setSelectedIds([]);
+        }, 500);
       } else {
         setPrintingOrders([]);
       }
@@ -263,161 +202,22 @@ export default function SalesOrderManage() {
 
   const prepOrderForPrint = (o) => {
     const fullOrder = MOCK_ORDERS_DETAIL[o.id] || {
-      ...MOCK_ORDERS_DETAIL["DH-S01"],
-      code: o.code,
-      customer: {
-        name: o.customerName,
-        phone: o.phone,
-        address: "Đang cập nhật...",
-      },
-      total: o.total,
-      deposit: 0,
-      status: o.status,
-      type: o.type,
-      date: o.date,
-      products: [],
+      ...o,
+      customer: { name: o.customerName, phone: o.phone, address: "Đang cập nhật..." },
+      products: []
     };
-    fullOrder.displayTotal =
-      fullOrder.total != null
-        ? fullOrder.total
-        : fullOrder.products?.reduce(
-            (acc, p) => acc + (p.price || 0) * p.qty,
-            0,
-          ) || 0;
+    fullOrder.displayTotal = o.total;
     return fullOrder;
   };
 
-  const handlePrintClick = (e, o) => {
-    e.stopPropagation();
-    setPrintingOrders([prepOrderForPrint(o)]);
-  };
-
   const handleBatchPrint = () => {
-    if (selectedOrders.length === 0) return;
-    const ordersToPrint = orders
-      .filter((o) => selectedOrders.includes(o.id))
-      .map(prepOrderForPrint);
-    setPrintingOrders(ordersToPrint);
+    const toPrint = orders.filter(o => selectedIds.includes(o.id)).map(prepOrderForPrint);
+    setPrintingOrders(toPrint);
   };
 
-  const handleSelectAll = () => {
-    if (selectedOrders.length === paginatedOrders.length && paginatedOrders.length > 0) {
-      setSelectedOrders([]);
-    } else {
-      setSelectedOrders(paginatedOrders.map((o) => o.id));
-    }
-  };
-
-  const handleSelectOrder = (e, id) => {
-    e.stopPropagation();
-    if (e.target.checked) {
-      setSelectedOrders((prev) => [...prev, id]);
-    } else {
-      setSelectedOrders((prev) => prev.filter((orderId) => orderId !== id));
-    }
-  };
-
-  // Cancel request modal
-  const [cancelTarget, setCancelTarget] = useState(null);
-  const [cancelReason, setCancelReason] = useState("");
-  const [cancelSuccess, setCancelSuccess] = useState(false);
-
-  // Filter & Search
-  const filtered = useMemo(() => {
-    let result = orders;
-
-    // Filter by type
-    result = result.filter((o) => o.type === activeTab);
-
-    // Filter by status
-    if (statusFilter !== "Tất cả") {
-      result = result.filter((o) => o.status === statusFilter);
-    }
-
-    // Filter by date range
-    if (dateFrom) {
-      const from = new Date(dateFrom);
-      from.setHours(0, 0, 0, 0);
-      result = result.filter((o) => new Date(o.date) >= from);
-    }
-    if (dateTo) {
-      const to = new Date(dateTo);
-      to.setHours(23, 59, 59, 999);
-      result = result.filter((o) => new Date(o.date) <= to);
-    }
-
-    // Search
-    if (searchTerm.trim()) {
-      const q = searchTerm.toLowerCase();
-      result = result.filter(
-        (o) =>
-          o.customerName.toLowerCase().includes(q) ||
-          o.phone.includes(q) ||
-          o.code.toLowerCase().includes(q),
-      );
-    }
-
-    return result.sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, [orders, activeTab, searchTerm, statusFilter, dateFrom, dateTo]);
-
-  const hasActiveFilters =
-    statusFilter !== "Tất cả" || dateFrom || dateTo || searchTerm;
-
-  const clearAllFilters = () => {
-    setStatusFilter("Tất cả");
-    setDateFrom("");
-    setDateTo("");
-    setSearchTerm("");
-  };
-
-  // Reset status filter when switching tabs
-  useEffect(() => {
-    setStatusFilter("Tất cả");
-    setDateFrom("");
-    setDateTo("");
-    setSearchTerm("");
-  }, [activeTab]);
-
-  // Reset page on filter change
-  useEffect(() => {
-    setCurrentPage(1);
-    setSelectedOrders([]);
-  }, [searchTerm, activeTab, statusFilter, dateFrom, dateTo]);
-
-  useEffect(() => {
-    setSelectedOrders([]);
-  }, [currentPage]);
-
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const paginatedOrders = filtered.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
-
-  const statusCounts = useMemo(() => {
-    const tabOrders = orders.filter((o) => o.type === activeTab);
-    const counts = { "Tất cả": tabOrders.length };
-
-    let tabStatuses = [];
-    if (activeTab === "Hàng sẵn") tabStatuses = HANG_SAN_STATUSES;
-    else if (activeTab === "Hàng mộc") tabStatuses = HANG_THO_STATUSES;
-    else if (activeTab === "Hàng khách đặt") tabStatuses = HANG_DAT_STATUSES;
-
-    tabStatuses.forEach((s) => {
-      counts[s] = tabOrders.filter((o) => o.status === s).length;
-    });
-
-    return counts;
-  }, [orders, activeTab]);
-
-  // Handle cancel request submit
   const handleCancelSubmit = () => {
     if (!cancelTarget || !cancelReason.trim()) return;
-    setOrders((prev) =>
-      prev.map((o) =>
-        o.id === cancelTarget.id ? { ...o, status: "Chờ duyệt hủy" } : o,
-      ),
-    );
+    setOrders(prev => prev.map(o => o.id === cancelTarget.id ? { ...o, status: "Chờ duyệt hủy" } : o));
     setCancelSuccess(true);
     setTimeout(() => {
       setCancelTarget(null);
@@ -426,788 +226,288 @@ export default function SalesOrderManage() {
     }, 1500);
   };
 
-  // ===================== RENDER =====================
+  // Filter Logic
+  const filtered = useMemo(() => {
+    let res = orders.filter(o => o.type === activeTab);
+    if (statusFilter !== "Tất cả") res = res.filter(o => o.status === statusFilter);
+    if (dateFrom) {
+       const from = new Date(dateFrom); from.setHours(0,0,0,0);
+       res = res.filter(o => new Date(o.date) >= from);
+    }
+    if (dateTo) {
+       const to = new Date(dateTo); to.setHours(23,59,59,999);
+       res = res.filter(o => new Date(o.date) <= to);
+    }
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase();
+      res = res.filter(o => 
+        o.customerName.toLowerCase().includes(q) || 
+        o.phone.includes(q) || 
+        o.code.toLowerCase().includes(q)
+      );
+    }
+    return res.sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [orders, activeTab, statusFilter, dateFrom, dateTo, searchTerm]);
+
+  const paginatedOrders = useMemo(() => {
+    return filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  }, [filtered, currentPage, itemsPerPage]);
+
+  const { possibleStatuses, statusCounts } = useMemo(() => {
+    const tabOrders = orders.filter(o => o.type === activeTab);
+    const statuses = activeTab === "Hàng sẵn" ? ["Chờ xử lý", "Chờ giao hàng", "Đang giao hàng", "Hoàn thành", "Chờ duyệt hủy", "Đơn đã hủy"] :
+                     activeTab === "Hàng mộc" ? ["Chờ xử lý", "Đang gia công", "Chờ giao hàng", "Đang giao hàng", "Hoàn thành", "Chờ duyệt hủy", "Đơn đã hủy"] :
+                     ["Chờ sản xuất", "Đã nhập kho", "Đang gia công", "Chờ giao hàng", "Đang giao hàng", "Hoàn thành", "Chờ duyệt hủy", "Đơn đã hủy"];
+    
+    const counts = { "Tất cả": tabOrders.length };
+    statuses.forEach(s => counts[s] = tabOrders.filter(o => o.status === s).length);
+    return { possibleStatuses: ["Tất cả", ...statuses], statusCounts: counts };
+  }, [orders, activeTab]);
+
+  const columns = [
+    {
+      header: "STT",
+      headerClassName: "text-center w-[60px]",
+      render: (_, idx) => (currentPage - 1) * itemsPerPage + idx + 1,
+      className: "text-center text-[13px] font-medium text-gray-400 font-bold",
+    },
+    {
+      header: "Mã đơn hàng",
+      render: (o) => <p className="text-[13px] font-bold font-mono text-gray-900">{o.code}</p>,
+    },
+    {
+      header: "Khách hàng",
+      render: (o) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[12px] bg-indigo-50 text-indigo-500 border border-indigo-100 transition group-hover:bg-white group-hover:text-indigo-600">
+            {o.customerName.charAt(0)}
+          </div>
+          <div>
+            <p className="text-[13px] font-black text-slate-800">{o.customerName}</p>
+            <p className="text-[11px] text-slate-400 font-bold">{o.phone}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Tổng thanh toán",
+      headerClassName: "text-right pr-10",
+      render: (o) => <p className="text-[14px] font-black text-slate-900">{formatCurrency(o.total)}</p>,
+      className: "text-right pr-10",
+    },
+    {
+      header: "Ngày giao dự kiến",
+      headerClassName: "text-center",
+      render: (o) => (
+        <div className="flex items-center justify-center gap-1.5 text-slate-600 font-bold text-[13px]">
+          <Clock size={12} className="text-slate-300" />
+          {o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString("vi-VN") : "---"}
+        </div>
+      ),
+      className: "text-center",
+    },
+    {
+      header: "Trạng thái",
+      headerClassName: "text-right pr-12",
+      render: (o) => {
+        const sc = getStatusColor(o.status);
+        return (
+          <div className="flex flex-col items-end gap-1.5">
+            <span className="inline-flex items-center justify-center w-[140px] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-md border gap-1.5 shrink-0" style={{ backgroundColor: sc.bg, color: sc.text, borderColor: sc.border }}>
+              {sc.icon && <sc.icon size={12} />}
+              {o.status}
+            </span>
+          </div>
+        );
+      },
+      className: "text-right pr-12",
+    }
+  ];
+
+  const hasActiveFilters = statusFilter !== "Tất cả" || dateFrom || dateTo || searchTerm;
+
   return (
     <>
-      <PageHelmet title="Quản lý đơn hàng - Nhân viên | TPF-SIMS" />
-
-      <div
-        className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 space-y-4"
-        style={{ backgroundColor: "var(--bg-main)" }}
-      >
-        {/* Header */}
+      <PageHelmet title="Quản lý đơn hàng | TPF-SIMS" />
+      <div className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 space-y-4 bg-gray-50/50">
+        
+        {/* Header Section */}
         <div className="flex items-center justify-between shrink-0">
           <div>
-            <h1
-              className="text-xl font-bold flex items-center gap-2"
-              style={{ color: "var(--text-main)" }}
-            >
-              <Package size={22} style={{ color: "var(--brand-primary)" }} />
+            <h1 className="text-xl font-bold flex items-center gap-2 text-slate-900">
+              <Package size={22} className="text-indigo-600" />
               Quản lý đơn hàng
             </h1>
-            <p
-              className="text-[13px] mt-0.5"
-              style={{ color: "var(--text-placeholder)" }}
-            >
+            <p className="text-[13px] mt-0.5 text-slate-400 font-bold uppercase tracking-tight">
               {filtered.length} đơn hàng ({activeTab.toLowerCase()})
             </p>
           </div>
-
-          {/* Tabs */}
-          <div
-            className="flex p-1 rounded-xl"
-            style={{
-              backgroundColor: "var(--grid-header-bg)",
-              border: "1px solid var(--grid-border)",
-            }}
-          >
+          <div className="flex p-1 rounded-xl bg-slate-100/80 border border-slate-200">
             {ORDER_TYPES.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className="px-4 py-1.5 rounded-lg text-[13px] font-semibold transition-all cursor-pointer"
-                style={{
-                  backgroundColor: activeTab === tab ? "#fff" : "transparent",
-                  color:
-                    activeTab === tab
-                      ? "var(--text-main)"
-                      : "var(--text-secondary)",
-                  boxShadow:
-                    activeTab === tab ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
-                }}
-              >
+              <button key={tab} onClick={() => { setActiveTab(tab); setStatusFilter("Tất cả"); }} 
+                      className={`px-5 py-1.5 rounded-lg text-[13px] font-black transition-all cursor-pointer ${activeTab === tab ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
                 {tab}
               </button>
             ))}
           </div>
         </div>
-        {/* Status Toolbar */}
-        <div className="flex items-center gap-2 shrink-0 px-1 flex-wrap">
-          {useMemo(() => {
-            let statuses = [];
-            if (activeTab === "Hàng sẵn") statuses = HANG_SAN_STATUSES;
-            else if (activeTab === "Hàng mộc") statuses = HANG_THO_STATUSES;
-            else if (activeTab === "Hàng khách đặt") statuses = HANG_DAT_STATUSES;
-            else statuses = ALL_STATUSES;
-            return ["Tất cả", ...statuses];
-          }, [activeTab]).map((s) => {
+
+        {/* Status Quick Filters */}
+        <div className="flex items-center gap-2 shrink-0 px-1 overflow-x-auto custom-scrollbar pb-1">
+          {possibleStatuses.map((s) => {
             const isActive = statusFilter === s;
             const sc = s !== "Tất cả" ? getStatusColor(s) : null;
             return (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                className="px-4 py-1.5 rounded-xl text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border"
-                style={{
-                  backgroundColor: isActive
-                    ? (sc ? sc.bg : "#fff")
-                    : "transparent",
-                  color: isActive
-                    ? (sc ? sc.text : "var(--brand-primary)")
-                    : "var(--text-secondary)",
-                  borderColor: isActive
-                    ? (sc ? sc.border : "var(--grid-border)")
-                    : "transparent",
-                  boxShadow: isActive ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
-                }}
-              >
-                {s !== "Tất cả" && (
-                  <span
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{
-                      backgroundColor: sc ? sc.text : "var(--brand-primary)",
-                    }}
-                  />
-                )}
-                {s}
-                <span className="text-[10px] opacity-60 bg-black/5 px-1.5 rounded-md ml-0.5 font-black">
-                  {statusCounts[s] || 0}
-                </span>
+              <button key={s} onClick={() => setStatusFilter(s)} 
+                      className={`px-4 py-1.5 rounded-lg text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border whitespace-nowrap ${
+                        isActive ? "shadow-md" : "bg-transparent border-transparent text-slate-500 hover:bg-slate-100"
+                      }`}
+                      style={isActive ? { backgroundColor: sc ? sc.bg : "#fff", color: sc ? sc.text : "var(--brand-primary)", borderColor: sc ? sc.border : "#e2e8f0" } : {}}>
+                {s !== "Tất cả" && sc?.icon && <sc.icon size={14} />}
+                {s} <span className="text-[10px] font-black opacity-60 bg-black/5 px-1.5 rounded-md ml-0.5">{statusCounts[s] || 0}</span>
               </button>
             );
           })}
         </div>
-        {/* Batch Print Action Bar - ALWAYS VISIBLE ALONGSIDE FILTERS */}
-        <div className="flex items-center justify-between bg-[#F0FDF4] border border-[#BBF7D0] px-4 py-2.5 rounded-xl mb-4 mt-2 shadow-sm">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#166534] text-white text-[11px] font-bold">
-              {selectedOrders.length}
-            </span>
-            <span
-              className="text-[13px] font-bold"
-              style={{ color: "#14532D" }}
-            >
-              đơn hàng được chọn
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            {selectedOrders.length > 0 && (
-              <button
-                onClick={() => setSelectedOrders([])}
-                className="px-3 py-1.5 rounded-lg text-[12px] font-bold cursor-pointer transition hover:bg-[#DCFCE7]"
-                style={{ color: "#166534" }}
-              >
-                Hủy chọn
-              </button>
-            )}
-            <button
-              onClick={handleBatchPrint}
-              disabled={selectedOrders.length === 0}
-              className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[12px] font-bold transition shadow-sm ${
-                selectedOrders.length > 0
-                  ? "text-white hover:opacity-90 cursor-pointer"
-                  : "text-gray-400 bg-gray-100 cursor-not-allowed border outline-none"
-              }`}
-              style={
-                selectedOrders.length > 0
-                  ? { backgroundColor: "var(--brand-primary)" }
-                  : {}
+
+        <DataTable
+          columns={columns}
+          data={paginatedOrders}
+          onRowClick={(o) => setSelectedOrder(o)}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          searchPlaceholder="Tìm đơn theo mã, tên khách hoặc SĐT..."
+          dateFrom={dateFrom}
+          setDateFrom={setDateFrom}
+          dateTo={dateTo}
+          setDateTo={setDateTo}
+          hasActiveFilters={hasActiveFilters}
+          clearAllFilters={() => { setStatusFilter("Tất cả"); setDateFrom(""); setDateTo(""); setSearchTerm(""); }}
+          selectedIds={selectedIds}
+          setSelectedIds={setSelectedIds}
+          rowActions={[
+            {
+              icon: Eye,
+              label: "Xem chi tiết",
+              onClick: (o) => setSelectedOrder(o),
+              className: "bg-white border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-100"
+            },
+            {
+              icon: Printer,
+              label: "In hóa đơn",
+              onClick: (o) => setPrintingOrders([prepOrderForPrint(o)]),
+              className: "bg-white border-slate-200 text-slate-400 hover:text-emerald-600 hover:border-emerald-100"
+            },
+            {
+              icon: Trash2,
+              label: "Yêu cầu hủy",
+              onClick: (o) => { setCancelTarget(o); setCancelReason(""); setCancelSuccess(false); },
+              className: "bg-white border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-100",
+              requireConfirm: true,
+              confirmTitle: "Gửi yêu cầu hủy đơn?",
+              confirmMessage: (o) => `Xác nhận gửi yêu cầu hủy đơn hàng ${o.code}? Hệ thống sẽ thông báo tới Chủ cửa hàng duyệt.`,
+              hidden: (o) => {
+                const isPickupCompleted = o.fulfillmentType === "Lấy tại cửa hàng" && o.status === "Hoàn thành";
+                return !(CANCELLABLE_STATUSES.includes(o.status) || isPickupCompleted);
               }
-            >
-              <Printer size={14} />
-              In hóa đơn
-            </button>
-          </div>
-        </div>{" "}
-        {/* Search + Table Card */}
-        <div
-          className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden"
-          style={{
-            boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+            },
+          ]}
+          bulkActions={[
+            {
+              label: "IN HÓA ĐƠN HÀNG LOẠT",
+              icon: Printer,
+              onClick: handleBatchPrint,
+              colorClass: "bg-indigo-600 focus:ring-indigo-500"
+            }
+          ]}
+          pagination={{
+            total: filtered.length,
+            currentPage: currentPage,
+            setCurrentPage: setCurrentPage,
+            itemsPerPage: itemsPerPage,
+            setItemsPerPage: setItemsPerPage,
           }}
-        >
-          {/* Search */}
-          <div
-            className="px-4 py-3 border-b shrink-0 flex flex-wrap items-center justify-between gap-3"
-            style={{ borderColor: "var(--grid-border)" }}
-          >
-            {/* LEFT — Search */}
-            <div className="relative w-full max-w-md shrink-0">
-              <Search
-                size={15}
-                className="absolute left-3 top-1/2 -translate-y-1/2"
-                style={{ color: "var(--text-placeholder)" }}
-              />
-              <input
-                type="text"
-                placeholder="Tìm mã đơn, tên khách hàng, SĐT..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
-                style={{
-                  border: "1px solid var(--grid-border)",
-                  backgroundColor: "var(--bg-main)",
-                  color: "var(--text-main)",
-                }}
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer"
-                  style={{ color: "var(--text-placeholder)" }}
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-
-            {/* RIGHT — Filters */}
-            <div className="flex items-center gap-2.5 shrink-0 overflow-x-auto">
-              {/* Date From */}
-              <div className="flex items-center gap-1.5 shrink-0">
-                <Calendar
-                  size={14}
-                  style={{ color: "var(--text-placeholder)" }}
-                />
-                <input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  className="h-9 px-3 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
-                  style={{
-                    border: `1px solid ${dateFrom ? "var(--brand-primary)" : "var(--grid-border)"}`,
-                    backgroundColor: dateFrom
-                      ? "var(--status-focus)"
-                      : "var(--bg-main)",
-                    color: dateFrom
-                      ? "var(--brand-primary)"
-                      : "var(--text-main)",
-                    fontWeight: dateFrom ? 600 : 400,
-                  }}
-                  title="Từ ngày"
-                />
-              </div>
-
-              <span
-                className="text-[12px] shrink-0"
-                style={{ color: "var(--text-placeholder)" }}
-              >
-                đến
-              </span>
-
-              {/* Date To */}
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="h-9 px-3 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition shrink-0"
-                style={{
-                  border: `1px solid ${dateTo ? "var(--brand-primary)" : "var(--grid-border)"}`,
-                  backgroundColor: dateTo
-                    ? "var(--status-focus)"
-                    : "var(--bg-main)",
-                  color: dateTo ? "var(--brand-primary)" : "var(--text-main)",
-                  fontWeight: dateTo ? 600 : 400,
-                }}
-                title="Đến ngày"
-              />
-
-              {/* Clear filters */}
-              {hasActiveFilters && (
-                <button
-                  onClick={clearAllFilters}
-                  className="h-9 px-3 rounded-lg text-[13px] font-medium flex-shrink-0 flex items-center gap-1.5 cursor-pointer transition hover:opacity-80"
-                  style={{
-                    color: "var(--status-error)",
-                    backgroundColor: "#FEF2F2",
-                    border: "1px solid #FECACA",
-                  }}
-                >
-                  <X size={14} />
-                  Xóa bộ lọc
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Table Container - Fixed Height Scroll */}
-          <div className="flex-1 overflow-y-auto">
-            <table className="w-full text-left relative">
-              <thead
-                className="sticky top-0 z-10"
-                style={{
-                  backgroundColor: "var(--grid-header-bg)",
-                  borderBottom: "1px solid var(--grid-border)",
-                }}
-              >
-                <tr>
-                  <th className="px-4 py-3 w-10">
-                    <div 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSelectAll();
-                      }}
-                      className={`w-4 h-4 rounded border flex items-center justify-center transition-colors cursor-pointer ${
-                        paginatedOrders.length > 0 && selectedOrders.length === paginatedOrders.length
-                          ? "bg-green-500 border-green-500 text-white"
-                          : "border-gray-300 bg-white"
-                      }`}
-                    >
-                      {paginatedOrders.length > 0 && selectedOrders.length === paginatedOrders.length && (
-                        <CheckCircle2 size={12} strokeWidth={3} />
-                      )}
-                    </div>
-                  </th>
-                  {[
-                    "STT",
-                    "Mã đơn",
-                    "Khách hàng",
-                    "Loại đơn",
-                    "Tổng tiền",
-                    "Trạng thái",
-                    "Hình thức giao",
-                    "Ngày giao dự kiến",
-                    "Ảnh giao hàng"
-                  ].map((h, i) => (
-                    <th
-                      key={i}
-                      className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 4 ? "text-right pr-6" : ""} ${i === 0 ? "text-center w-[50px]" : ""} ${i >= 7 && i < 9 ? "text-center whitespace-nowrap" : ""}`}
-                      style={{ color: "var(--text-placeholder)" }}
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedOrders.map((o) => {
-                  const statusConfig = getStatusColor(o.status);
-                  const canCancel =
-                    CANCELLABLE_STATUSES.includes(o.status) ||
-                    (o.status === "Hoàn thành" &&
-                      (o.type === "Hàng sẵn" || o.type === "Hàng mộc") &&
-                      o.fulfillmentType === "Lấy tại cửa hàng");
-                  return (
-                    <tr
-                      key={o.id}
-                      className={`group relative transition-colors cursor-pointer ${
-                        selectedOrders.includes(o.id)
-                          ? "bg-[#F0FDF4]"
-                          : "hover:bg-gray-50/50"
-                      }`}
-                      style={{ borderBottom: "1px solid var(--grid-border)" }}
-                      onClick={() => {
-                        if (selectedOrders.includes(o.id)) {
-                          setSelectedOrders((prev) =>
-                            prev.filter((id) => id !== o.id),
-                          );
-                        } else {
-                          setSelectedOrders((prev) => [...prev, o.id]);
-                        }
-                      }}
-                    >
-                      <td
-                        className="px-4 py-3"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (selectedOrders.includes(o.id)) {
-                              setSelectedOrders(prev => prev.filter(id => id !== o.id));
-                            } else {
-                              setSelectedOrders(prev => [...prev, o.id]);
-                            }
-                          }}
-                          className={`w-4 h-4 rounded border flex items-center justify-center transition-colors cursor-pointer ${
-                            selectedOrders.includes(o.id)
-                              ? "bg-green-500 border-green-500 text-white"
-                              : "border-gray-300 bg-white"
-                          }`}
-                        >
-                          {selectedOrders.includes(o.id) && (
-                            <CheckCircle2 size={12} strokeWidth={3} />
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-center text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>
-                        {(currentPage - 1) * itemsPerPage + paginatedOrders.indexOf(o) + 1}
-                      </td>
-                      <td className="px-4 py-3">
-                        <p
-                          className="text-[13px] font-bold font-mono"
-                          style={{ color: "var(--text-main)" }}
-                        >
-                          {o.code}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p
-                          className="text-[13px] font-semibold"
-                          style={{ color: "var(--text-main)" }}
-                        >
-                          {o.customerName}
-                        </p>
-                        <p
-                          className="text-[11px]"
-                          style={{ color: "var(--text-placeholder)" }}
-                        >
-                          {o.phone}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className="inline-block px-2.5 py-1 text-[11px] font-bold rounded-md"
-                          style={{
-                            backgroundColor: "var(--bg-main)",
-                            color: "var(--text-secondary)",
-                            border: "1px solid var(--grid-border)",
-                          }}
-                        >
-                          {o.type}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right pr-6">
-                        <p
-                          className="text-[13px] font-bold"
-                          style={{ color: "var(--text-main)" }}
-                        >
-                          {formatCurrency(o.total)}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className="inline-flex items-center px-2.5 py-1 text-[11px] font-bold rounded-md"
-                          style={{
-                            backgroundColor: statusConfig.bg,
-                            color: statusConfig.text,
-                            border: `1px solid ${statusConfig.border}`,
-                          }}
-                        >
-                          <span
-                            className="w-1.5 h-1.5 rounded-full mr-1.5"
-                            style={{ backgroundColor: statusConfig.text }}
-                          ></span>
-                          {o.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-[12px] font-medium text-gray-500">
-                          {o.fulfillmentType || "Chưa xác định"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <div className="flex items-center justify-center gap-1.5 text-gray-600">
-                          <Clock size={12} className="text-gray-400" />
-                          <span className="text-[13px] font-bold">
-                            {o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString("vi-VN") : "---"}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {o.deliveryImage ? (
-                          <div className="w-10 h-10 rounded-lg overflow-hidden border border-green-200 mx-auto">
-                            <img src={o.deliveryImage} alt="delivery" className="w-full h-full object-cover" />
-                          </div>
-                        ) : (
-                          <p className="text-[11px] text-gray-300 italic">Chưa có ảnh</p>
-                        )}
-
-                        {/* ===================== HOVER ACTIONS AREA ===================== */}
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-300 translate-x-4 group-hover:translate-x-0 z-20">
-                          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200 shadow-2xl">
-                            <Link
-                              to={`/sales/dashboard/orders/${o.id}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="h-9 px-4 rounded-xl bg-white border border-slate-200 text-slate-600 text-[12px] font-black hover:bg-slate-50 transition-all flex items-center gap-2 active:scale-95"
-                            >
-                              <Eye size={16} /> XEM CHI TIẾT
-                            </Link>
-
-                            <button
-                              onClick={(e) => handlePrintClick(e, o)}
-                              className="h-9 px-4 rounded-xl bg-emerald-600 text-white text-[12px] font-black hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 flex items-center gap-2 active:scale-95"
-                            >
-                              <Printer size={16} /> IN HÓA ĐƠN
-                            </button>
-
-                            {canCancel && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setCancelTarget(o);
-                                  setCancelReason("");
-                                  setCancelSuccess(false);
-                                }}
-                                className="h-9 px-4 rounded-xl bg-red-50 text-red-600 text-[12px] font-black hover:bg-red-100 transition-all flex items-center gap-2 active:scale-95 border border-red-100"
-                              >
-                                <XCircle size={16} /> YÊU CẦU HỦY
-                              </button>
-                            )}
-
-                            {o.status === "Chờ duyệt hủy" && (
-                              <div className="h-9 px-4 rounded-xl bg-amber-50 text-amber-600 text-[11px] font-black flex items-center gap-2 border border-amber-100 uppercase tracking-tight">
-                                <AlertTriangle size={14} /> Chờ duyệt hủy
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-                {paginatedOrders.length === 0 && (
-                  <tr>
-                    <td colSpan="6" className="py-24 text-center">
-                      <div
-                        className="flex flex-col items-center gap-2"
-                        style={{ color: "var(--text-placeholder)" }}
-                      >
-                        <div
-                          className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                          style={{ backgroundColor: "var(--bg-main)" }}
-                        >
-                          <Users size={28} strokeWidth={1.5} />
-                        </div>
-                        <p className="text-sm font-medium mt-1">
-                          {searchTerm
-                            ? `Không tìm thấy đơn hàng "${searchTerm}"`
-                            : "Chưa có đơn hàng nào"}
-                        </p>
-                        {searchTerm && (
-                          <button
-                            onClick={() => setSearchTerm("")}
-                            className="text-[13px] font-medium cursor-pointer"
-                            style={{ color: "var(--brand-primary)" }}
-                          >
-                            Xóa bộ lọc
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination Footer */}
-          {filtered.length > 0 && (
-            <div
-              className="flex items-center justify-between px-6 py-3 border-t shrink-0"
-              style={{
-                borderColor: "var(--grid-border)",
-                backgroundColor: "var(--bg-main)",
-              }}
-            >
-              <div
-                className="text-[13px]"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                Tổng số bản ghi:{" "}
-                <span
-                  className="font-bold"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  {filtered.length}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-6">
-                {/* Items per page indicator */}
-                <div className="flex items-center gap-2">
-                  <span
-                    className="text-[13px]"
-                    style={{ color: "var(--text-secondary)" }}
-                  >
-                    Số bản ghi/trang
-                  </span>
-                  <select
-                    value={itemsPerPage}
-                    onChange={(e) => {
-                      setItemsPerPage(Number(e.target.value));
-                      setCurrentPage(1);
-                    }}
-                    className="h-8 px-2 pr-6 rounded-md text-[13px] border cursor-pointer focus:outline-none focus:ring-1 transition appearance-none"
-                    style={{
-                      borderColor: "var(--grid-border)",
-                      backgroundColor: "#fff",
-                      color: "var(--text-main)",
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-                      backgroundRepeat: "no-repeat",
-                      backgroundPosition: "right 8px center",
-                    }}
-                  >
-                    {[15, 30, 50, 100].map((size) => (
-                      <option key={size} value={size}>
-                        {size}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Range Info */}
-                <div
-                  className="text-[13px]"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  <span
-                    className="font-bold"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    {(currentPage - 1) * itemsPerPage + 1} -{" "}
-                    {Math.min(currentPage * itemsPerPage, filtered.length)}
-                  </span>{" "}
-                  bản ghi
-                </div>
-
-                {/* Arrows */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    <ChevronLeft size={16} strokeWidth={2.5} />
-                  </button>
-                  <button
-                    onClick={() =>
-                      setCurrentPage((p) => Math.min(totalPages, p + 1))
-                    }
-                    disabled={currentPage === totalPages || totalPages === 0}
-                    className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    <ChevronRight size={16} strokeWidth={2.5} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        />
       </div>
 
-      {/* ════════════ MODAL: GỬI YÊU CẦU HỦY ════════════ */}
+      {/* Details Popup */}
+      <SalesInvoiceDetailsPopup
+        orderData={selectedOrder}
+        isOpen={!!selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+        onCancelRequest={(o) => { setSelectedOrder(null); setCancelTarget(o); setCancelReason(""); setCancelSuccess(false); }}
+      />
+
+      {/* Cancellation Modal */}
       {cancelTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
-          <div
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col"
-            style={{ border: "1px solid var(--grid-border)" }}
-          >
-            {cancelSuccess ? (
-              /* ── Success State ── */
-              <div className="p-8 flex flex-col items-center text-center gap-3">
-                <div
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                  style={{
-                    background: "var(--status-focus)",
-                  }}
-                >
-                  <CheckCircle2
-                    size={28}
-                    style={{ color: "var(--status-success)" }}
-                  />
-                </div>
-                <h3
-                  className="text-[16px] font-bold"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  Đã gửi yêu cầu hủy
-                </h3>
-                <p
-                  className="text-[13px]"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  Đơn hàng <strong>{cancelTarget.code}</strong> đã chuyển sang
-                  trạng thái "Chờ duyệt hủy". Chủ cửa hàng sẽ xem xét yêu cầu
-                  của bạn.
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* Header */}
-                <div
-                  className="px-6 py-4 flex items-center justify-between"
-                  style={{ borderBottom: "1px solid var(--grid-border)" }}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div
-                      className="w-9 h-9 rounded-xl flex items-center justify-center"
-                      style={{
-                        background: "#FEF2F2",
-                      }}
-                    >
-                      <XCircle size={18} style={{ color: "#DC2626" }} />
-                    </div>
-                    <div>
-                      <h3
-                        className="text-[15px] font-bold"
-                        style={{ color: "var(--text-main)" }}
-                      >
-                        Gửi yêu cầu hủy đơn
-                      </h3>
-                      <p
-                        className="text-[12px] font-medium"
-                        style={{ color: "var(--text-placeholder)" }}
-                      >
-                        {cancelTarget.code} · {cancelTarget.customerName}
-                      </p>
-                    </div>
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-[4px]">
+           <div className="relative bg-white rounded-[32px] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-white">
+              {cancelSuccess ? (
+                <div className="p-10 flex flex-col items-center text-center gap-4">
+                  <div className="w-20 h-20 rounded-3xl bg-emerald-50 flex items-center justify-center text-emerald-500 shadow-inner">
+                    <CheckCircle2 size={40} />
                   </div>
-                  <button
-                    onClick={() => setCancelTarget(null)}
-                    className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                  >
-                    <X size={18} style={{ color: "var(--text-secondary)" }} />
-                  </button>
-                </div>
-
-                {/* Body */}
-                <div className="p-6 flex flex-col gap-4">
-                  <div
-                    className="p-3.5 rounded-xl flex gap-2.5 text-[13px]"
-                    style={{
-                      background: "#FFFBEB",
-                      border: "1px solid #FDE68A",
-                      color: "#92400E",
-                    }}
-                  >
-                    <AlertTriangle className="shrink-0 mt-0.5" size={15} />
-                    <span>
-                      Yêu cầu hủy sẽ được gửi đến Chủ cửa hàng để duyệt. Đơn
-                      hàng sẽ chuyển sang trạng thái "Chờ duyệt hủy" cho đến khi
-                      được xử lý.
-                    </span>
-                  </div>
-
                   <div>
-                    <label
-                      className="block text-[13px] font-semibold mb-1.5"
-                      style={{ color: "var(--text-main)" }}
-                    >
-                      Lý do hủy đơn{" "}
-                      <span style={{ color: "var(--status-error)" }}>*</span>
-                    </label>
-                    <textarea
-                      value={cancelReason}
-                      onChange={(e) => setCancelReason(e.target.value)}
-                      placeholder="Nhập lý do hủy đơn hàng..."
-                      rows={3}
-                      className="w-full rounded-xl px-4 py-3 text-[13px] focus:outline-none focus:ring-2 transition resize-none"
-                      style={{
-                        border: "1px solid var(--grid-border)",
-                        backgroundColor: "var(--bg-main)",
-                        color: "var(--text-main)",
-                      }}
-                    />
+                    <h3 className="text-[20px] font-black text-slate-900">Đã gửi yêu cầu hủy</h3>
+                    <p className="text-[14px] text-slate-400 mt-2 font-medium">
+                        Đơn hàng <span className="text-slate-900 font-bold">{cancelTarget.code}</span> đã được chuyển trạng thái <span className="text-amber-600 font-bold">Chờ duyệt hủy</span>.
+                    </p>
                   </div>
                 </div>
+              ) : (
+                <>
+                  <div className="px-8 py-5 border-b border-slate-50 flex items-center justify-between">
+                     <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-2xl bg-rose-50 text-rose-600"><Trash2 size={22} /></div>
+                        <div>
+                            <h3 className="text-[16px] font-black text-slate-900">Yêu cầu hủy đơn hàng</h3>
+                            <p className="text-[11px] font-bold text-slate-400 tracking-wider">MÃ ĐƠN: {cancelTarget.code}</p>
+                        </div>
+                     </div>
+                     <button onClick={() => setCancelTarget(null)} className="w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-slate-50 text-slate-400 transition-colors cursor-pointer"><X size={20} /></button>
+                  </div>
+                  <div className="p-8 space-y-6">
+                     <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100/50 flex gap-4">
+                        <AlertTriangle className="shrink-0 text-amber-500" size={20} />
+                        <p className="text-[12px] text-amber-800 font-bold leading-relaxed">
+                            Nhân viên bán hàng chỉ có thể gửi yêu cầu hủy. Đơn hàng sẽ cần <span className="border-b-2 border-amber-300">Chủ cửa hàng xét duyệt</span> để hoàn tất quy trình hủy.
+                        </p>
+                     </div>
+                     <div>
+                        <label className="block text-[13px] font-black text-slate-700 mb-3 ml-1 uppercase tracking-widest">Lý do khách hủy đơn <span className="text-rose-500">*</span></label>
+                        <textarea 
+                          value={cancelReason} 
+                          onChange={(e) => setCancelReason(e.target.value)}
+                          placeholder="Mô tả chi tiết lý do..."
+                          rows={4}
+                          className="w-full rounded-2xl px-5 py-4 text-[14px] border border-slate-100 bg-slate-50 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:bg-white focus:border-indigo-100 transition-all resize-none shadow-inner"
+                        />
+                     </div>
+                  </div>
+                  <div className="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                     <button onClick={() => setCancelTarget(null)} className="px-6 py-2.5 rounded-2xl text-[13px] font-black text-slate-400 hover:text-slate-600 transition uppercase tracking-widest">Đóng</button>
+                     <button 
+                        onClick={handleCancelSubmit}
+                        disabled={!cancelReason.trim()}
+                        className="px-8 py-2.5 rounded-2xl text-[13px] font-black text-white bg-rose-600 hover:bg-rose-700 shadow-lg shadow-rose-100 transition active:scale-95 disabled:opacity-30 disabled:shadow-none uppercase tracking-widest"
+                     >
+                        XÁC NHẬN GỬI
+                     </button>
+                  </div>
+                </>
+              )}
+           </div>
+        </div>
+      )}
 
-                {/* Footer */}
-                <div
-                  className="px-6 py-4 flex justify-end gap-3"
-                  style={{
-                    borderTop: "1px solid var(--grid-border)",
-                    background: "var(--grid-header-bg)",
-                  }}
-                >
-                  <button
-                    onClick={() => setCancelTarget(null)}
-                    className="px-4 py-2 rounded-lg text-[13px] font-semibold transition hover:bg-gray-100 cursor-pointer"
-                    style={{
-                      border: "1px solid var(--grid-border)",
-                      color: "var(--text-main)",
-                      backgroundColor: "#fff",
-                    }}
-                  >
-                    Hủy bỏ
-                  </button>
-                  <button
-                    onClick={handleCancelSubmit}
-                    disabled={!cancelReason.trim()}
-                    className="px-4 py-2 rounded-lg text-[13px] font-semibold text-white flex items-center gap-2 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                    style={{
-                      backgroundColor: "#DC2626",
-                    }}
-                  >
-                    <XCircle size={15} /> Gửi yêu cầu hủy
-                  </button>
-                </div>
-              </>
-            )}
+      {/* Printable Invoice Container */}
+      <div ref={printRef} style={{ position: "absolute", left: "-9999px", top: 0, width: "800px" }}>
+        {printingOrders.map((o, idx) => (
+          <div key={idx} className="page-break">
+            <PrintableInvoice o={o} displayTotal={o.displayTotal} />
           </div>
-        </div>
-      )}
-
-      {/* Hidden printable invoice */}
-      {printingOrders.length > 0 && (
-        <div
-          ref={printRef}
-          style={{
-            position: "absolute",
-            left: "-9999px",
-            top: 0,
-            width: "800px",
-          }}
-        >
-          {printingOrders.map((o, idx) => (
-            <div key={idx} className="page-break">
-              <PrintableInvoice o={o} displayTotal={o.displayTotal} />
-            </div>
-          ))}
-        </div>
-      )}
+        ))}
+      </div>
     </>
   );
 }
