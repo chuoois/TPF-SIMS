@@ -10,14 +10,16 @@ import Suppliers from "../pages/owner-page/suppliers";
 import Employees from "../pages/owner-page/employees";
 import Reports from "../pages/owner-page/reports";
 import SystemLogs from "../pages/owner-page/system-logs";
-import WarrantyLookup from "../pages/owner-page/warranty/WarrantyLookup";
-import WarrantyList from "../pages/owner-page/warranty/WarrantyList";
+
+
 import Coupons from "../pages/owner-page/coupon/index";
 import CouponCreate from "../pages/owner-page/coupon/create-coupon";
 import ProductCategories from "../pages/owner-page/products/management/CategoriesPage";
 import ProductColors from "../pages/owner-page/products/management/ColorsPage";
 import ProductUnits from "../pages/owner-page/products/management/UnitsPage";
 import ProductMaterials from "../pages/owner-page/products/management/MaterialsPage";
+import Warranty from "../pages/owner-page/warranty";
+import RepairRequests from "../pages/owner-page/warranty/RepairRequests";
 
 export const ownerRoutes = {
   path: "/owner",
@@ -67,6 +69,13 @@ export const ownerRoutes = {
       ],
     },
     {
+      path: "warranty",
+      children: [
+        { index: true, element: <Warranty /> },
+        { path: "repairs", element: <RepairRequests /> },
+      ],
+    },
+    {
       path: "suppliers",
       element: <Suppliers />,
     },
@@ -74,14 +83,7 @@ export const ownerRoutes = {
       path: "employees",
       element: <Employees />,
     },
-    {
-      path: "warranty",
-      children: [
-        { index: true, element: <WarrantyLookup /> },
-        { path: "lookup", element: <WarrantyLookup /> },
-        { path: "list", element: <WarrantyList /> },
-      ],
-    },
+   
     {
       path: "reports",
       element: <Reports />,

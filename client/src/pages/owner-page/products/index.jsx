@@ -429,6 +429,7 @@ export default function OwnerProducts() {
   const [productType, setProductType] = useState("Hàng sẵn");
   const [productCategory, setProductCategory] = useState("");
   const [warrantyMonths, setWarrantyMonths] = useState(12);
+  const [warrantyContent, setWarrantyContent] = useState("Bảo hành các lỗi kỹ thuật.");
   const [targetMargin, setTargetMargin] = useState(20);
   const [taxPercent, setTaxPercent] = useState(0);
   const [woodType, setWoodType] = useState("");
@@ -484,6 +485,7 @@ export default function OwnerProducts() {
         setProductType(product.productType || "Hàng sẵn");
         setProductCategory(product.category || "");
         setWarrantyMonths(product.warrantyMonths || 12);
+        setWarrantyContent(product.warrantyContent || "Bảo hành các lỗi kỹ thuật.");
         setTargetMargin(product.targetMargin || 20);
         setTaxPercent(product.taxPercent || 0);
         setWoodType(product.material || ""); // Fix: material mapping
@@ -593,6 +595,7 @@ export default function OwnerProducts() {
               productType,
               category: productCategory,
               warrantyMonths: Number(warrantyMonths),
+              warrantyContent,
               targetMargin: Number(targetMargin),
               taxPercent: Number(taxPercent),
               woodType,
@@ -1368,25 +1371,7 @@ export default function OwnerProducts() {
                         </div>
                       )}
 
-                      <div className="grid grid-cols-3 gap-4 pt-2">
-                        <div className="flex items-center justify-between p-3 border rounded-xl bg-white shadow-sm">
-                          <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase">
-                            Bảo hành
-                          </span>
-                          <div className="flex items-center gap-1">
-                            <input
-                              type="number"
-                              className="w-10 border-none p-0 text-center font-bold text-[var(--brand-primary)] outline-none"
-                              value={warrantyMonths}
-                              onChange={(e) =>
-                                setWarrantyMonths(e.target.value)
-                              }
-                            />
-                            <span className="text-[10px] font-bold text-[var(--text-placeholder)]">
-                              tháng
-                            </span>
-                          </div>
-                        </div>
+                      <div className="grid grid-cols-2 gap-4 pt-2">
                         {/* THỜI GIAN HOÀN THIỆN (LEAD TIME) */}
                         <div className="flex items-center justify-between p-3 border rounded-xl bg-[var(--status-pending)]/10 border-[var(--status-pending)]/20 shadow-sm shadow-sm">
                           <span className="text-[10px] font-bold text-[var(--status-pending)] uppercase">
@@ -1421,6 +1406,38 @@ export default function OwnerProducts() {
                               sp
                             </span>
                           </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 5: Bảo hành & Chính sách */}
+                    <div className="space-y-4 pt-4 border-t border-gray-100">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-placeholder)] flex items-center gap-2">
+                        <ShieldCheck size={14} /> Bảo hành & Chính sách
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="col-span-1">
+                          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+                            Khung thời gian bảo hành (Tháng)
+                          </label>
+                          <input
+                            type="number"
+                            className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--brand-primary)] outline-none"
+                            placeholder="Số tháng"
+                            value={warrantyMonths}
+                            onChange={(e) => setWarrantyMonths(e.target.value)}
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+                            Nội dung bảo hành
+                          </label>
+                          <textarea
+                            className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--brand-primary)] outline-none min-h-[60px]"
+                            placeholder="Mô tả các điều kiện bảo hành, bảo trì..."
+                            value={warrantyContent}
+                            onChange={(e) => setWarrantyContent(e.target.value)}
+                          />
                         </div>
                       </div>
                     </div>

@@ -49,7 +49,9 @@ const menuItems = [
       ],
     },
   },
+
   { text: "Quản lý sản xuất", icon: Hammer, path: "/owner/production" },
+  
   { text: "Nhà cung cấp", icon: Building2, path: "/owner/suppliers" },
   { text: "Quản lý tài khoản", icon: UserCog, path: "/owner/employees" },
   {
@@ -57,10 +59,11 @@ const menuItems = [
     icon: ShieldCheck,
     path: "/owner/warranty",
     subItems: [
-      { text: "Danh sách", path: "/owner/warranty/list" },
-      { text: "Tra cứu", path: "/owner/warranty/lookup" },
+      { text: "Phiếu bảo hành", path: "/owner/warranty", exactMatch: true },
+      { text: "Yêu cầu sửa chữa", path: "/owner/warranty/repairs" }
     ],
   },
+
   { text: "Báo cáo", icon: BarChart3, path: "/owner/reports" },
   { text: "Nhật ký hệ thống", icon: History, path: "/owner/system-logs" },
 ];
