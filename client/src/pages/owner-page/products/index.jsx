@@ -429,6 +429,7 @@ export default function OwnerProducts() {
   const [productType, setProductType] = useState("Hàng sẵn");
   const [productCategory, setProductCategory] = useState("");
   const [warrantyMonths, setWarrantyMonths] = useState(12);
+  const [warrantyContent, setWarrantyContent] = useState("Bảo hành các lỗi kỹ thuật.");
   const [targetMargin, setTargetMargin] = useState(20);
   const [taxPercent, setTaxPercent] = useState(0);
   const [woodType, setWoodType] = useState("");
@@ -484,6 +485,7 @@ export default function OwnerProducts() {
         setProductType(product.productType || "Hàng sẵn");
         setProductCategory(product.category || "");
         setWarrantyMonths(product.warrantyMonths || 12);
+        setWarrantyContent(product.warrantyContent || "Bảo hành các lỗi kỹ thuật.");
         setTargetMargin(product.targetMargin || 20);
         setTaxPercent(product.taxPercent || 0);
         setWoodType(product.material || ""); // Fix: material mapping
@@ -593,6 +595,7 @@ export default function OwnerProducts() {
               productType,
               category: productCategory,
               warrantyMonths: Number(warrantyMonths),
+              warrantyContent,
               targetMargin: Number(targetMargin),
               taxPercent: Number(taxPercent),
               woodType,
@@ -1368,25 +1371,7 @@ export default function OwnerProducts() {
                         </div>
                       )}
 
-                      <div className="grid grid-cols-3 gap-4 pt-2">
-                        <div className="flex items-center justify-between p-3 border rounded-xl bg-white shadow-sm">
-                          <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase">
-                            Bảo hành
-                          </span>
-                          <div className="flex items-center gap-1">
-                            <input
-                              type="number"
-                              className="w-10 border-none p-0 text-center font-bold text-[var(--brand-primary)] outline-none"
-                              value={warrantyMonths}
-                              onChange={(e) =>
-                                setWarrantyMonths(e.target.value)
-                              }
-                            />
-                            <span className="text-[10px] font-bold text-[var(--text-placeholder)]">
-                              tháng
-                            </span>
-                          </div>
-                        </div>
+                      <div className="grid grid-cols-2 gap-4 pt-2">
                         {/* THỜI GIAN HOÀN THIỆN (LEAD TIME) */}
                         <div className="flex items-center justify-between p-3 border rounded-xl bg-[var(--status-pending)]/10 border-[var(--status-pending)]/20 shadow-sm shadow-sm">
                           <span className="text-[10px] font-bold text-[var(--status-pending)] uppercase">
@@ -1421,6 +1406,38 @@ export default function OwnerProducts() {
                               sp
                             </span>
                           </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 5: Bảo hành & Chính sách */}
+                    <div className="space-y-4 pt-4 border-t border-gray-100">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-placeholder)] flex items-center gap-2">
+                        <ShieldCheck size={14} /> Bảo hành & Chính sách
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="col-span-1">
+                          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+                            Bảo hành(tháng)
+                          </label>
+                          <input
+                            type="number"
+                            className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--brand-primary)] outline-none"
+                            placeholder="Số tháng"
+                            value={warrantyMonths}
+                            onChange={(e) => setWarrantyMonths(e.target.value)}
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
+                            Nội dung bảo hành
+                          </label>
+                          <textarea
+                            className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--brand-primary)] outline-none min-h-[60px]"
+                            placeholder="Mô tả các điều kiện bảo hành, bảo trì..."
+                            value={warrantyContent}
+                            onChange={(e) => setWarrantyContent(e.target.value)}
+                          />
                         </div>
                       </div>
                     </div>
@@ -1654,26 +1671,27 @@ export default function OwnerProducts() {
         style={{ backgroundColor: "var(--bg-main)" }}
       >
         {/* HEADER & TABS (Top Right Style) */}
-        <div className="flex items-start justify-between shrink-0 relative pr-[320px]">
+        <div className="flex items-center justify-between shrink-0">
           <div>
-            <h1 className="text-[17px] font-bold text-slate-800 flex items-center gap-2">
-              <Package size={20} className="text-green-600" />
+            <h1 className="text-xl font-bold flex items-center gap-2" style={{ color: "var(--text-main)" }}>
+              <Package size={22} style={{ color: "var(--brand-primary)" }} />
               Quản lý sản phẩm
             </h1>
-            <p className="text-[12px] text-slate-400 mt-0.5">
+            <p className="text-[13px] mt-0.5" style={{ color: "var(--text-placeholder)" }}>
               {filteredProducts.length} sản phẩm ({productTypeFilter === "Tất cả" ? "tất cả loại" : productTypeFilter.toLowerCase()})
             </p>
           </div>
 
-          <div className="absolute top-0 right-0 flex items-center gap-1 bg-gray-100/80 p-1 rounded-xl border border-gray-100 shadow-sm">
+          <div className="flex p-1 rounded-lg" style={{ backgroundColor: "var(--grid-header-bg)", border: "1px solid var(--grid-border)" }}>
             {["Tất cả", "Hàng sẵn", "Hàng mộc", "Hàng khách đặt"].map((type) => (
               <button
                 key={type}
-                onClick={() => setProductTypeFilter(productTypeFilter === type ? "Tất cả" : type)}
-                className={`px-4 py-1.5 rounded-lg text-[12px] font-medium transition-all ${productTypeFilter === type
-                    ? "bg-white text-slate-900 shadow-md shadow-gray-200/40"
-                    : "text-slate-500 hover:text-slate-700 hover:bg-gray-200/50"
-                  }`}
+                onClick={() => setProductTypeFilter(type)}
+                className="px-4 py-1.5 rounded-lg text-[13px] font-semibold transition-all cursor-pointer"
+                style={{
+                  backgroundColor: productTypeFilter === type ? "#fff" : "transparent",
+                  color: productTypeFilter === type ? "var(--text-main)" : "var(--text-secondary)"
+                }}
               >
                 {type}
               </button>
@@ -1682,7 +1700,7 @@ export default function OwnerProducts() {
         </div>
 
         {/* STATUS BAR (Admin Alerts Style) */}
-        <div className="flex items-center gap-3 shrink-0 flex-wrap py-1">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap py-1">
           {[
             { id: "Tất cả", label: "Tất cả" },
             { id: "Chưa định giá", label: "Chưa định giá", color: "red", icon: AlertCircle },
@@ -1691,26 +1709,22 @@ export default function OwnerProducts() {
           ].map((s) => {
             const isActive = statusFilter === s.id;
             const isRedForce = s.color === "red";
+            const sc = s.id !== "Tất cả" ? (isRedForce ? { bg: "#FEF2F2", text: "#B91C1C", border: "#FECACA" } : (s.color === "purple" ? { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" } : { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" })) : null;
 
             return (
               <button
                 key={s.id}
                 onClick={() => setStatusFilter(s.id)}
-                className={`px-4 py-2 rounded-xl text-[12px] font-medium transition-all border flex items-center gap-2 ${isActive
-                    ? isRedForce
-                      ? "bg-red-50 border-red-200 text-red-600 shadow-sm"
-                      : "bg-white border-green-500 text-green-600 shadow-sm"
-                    : "bg-white border-gray-100 text-slate-500 hover:border-gray-200"
-                  }`}
+                className="px-4 py-1.5 rounded-lg text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border"
+                style={{
+                  backgroundColor: isActive ? (sc ? sc.bg : "#fff") : "transparent",
+                  color: isActive ? (sc ? sc.text : "var(--brand-primary)") : "var(--text-secondary)",
+                  borderColor: isActive ? (sc ? sc.border : "var(--grid-border)") : "transparent"
+                }}
               >
-                {s.icon && <s.icon size={14} className={isActive ? "text-red-500" : "text-slate-400"} />}
-                <span className={isActive ? (isRedForce ? "text-red-700" : "text-green-600") : "text-slate-400"}>
-                  {s.label}
-                </span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isActive
-                    ? isRedForce ? "bg-red-100 text-red-600" : "bg-green-50 text-green-600"
-                    : "bg-gray-100 text-slate-400"
-                  }`}>
+                {s.icon && <s.icon size={14} className={isActive ? (isRedForce ? "text-red-500" : "text-[var(--brand-primary)]") : "text-slate-300"} />}
+                {s.label}
+                <span className="text-[10px] opacity-60 bg-black/5 px-1.5 rounded-md ml-0.5">
                   {statusCounts[s.id] || 0}
                 </span>
               </button>

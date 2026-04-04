@@ -520,7 +520,7 @@ export default function CouponCreatePage() {
                         <button type="button" onClick={handleSubmit} disabled={!isValid || loading}
                             className={cn("h-10 px-6 rounded-xl text-white font-bold text-[13px] flex items-center gap-2 transition cursor-pointer",
                                 isValid && !loading ? "hover:-translate-y-0.5" : "opacity-50 cursor-not-allowed")}
-                            style={{ backgroundColor: "var(--brand-primary)", boxShadow: isValid ? "0 4px 12px rgba(52,176,87,0.25)" : "none" }}>
+                            style={{ backgroundColor: "var(--brand-primary)" }}>
                             {loading && <Loader2 size={14} className="animate-spin" />}
                             {loading ? "Đang lưu..." : "Lưu mã giảm giá"}
                         </button>
@@ -758,7 +758,7 @@ export default function CouponCreatePage() {
                             <button type="button" onClick={handleSubmit} disabled={!isValid || loading}
                                 className={cn("h-11 px-10 rounded-xl text-white font-bold text-[14px] flex items-center gap-2 transition cursor-pointer",
                                     isValid && !loading ? "hover:opacity-90 hover:-translate-y-0.5" : "opacity-50 cursor-not-allowed")}
-                                style={{ backgroundColor: "var(--brand-primary)", boxShadow: isValid ? "0 6px 16px rgba(52,176,87,0.3)" : "none" }}>
+                                style={{ backgroundColor: "var(--brand-primary)" }}>
                                 {loading && <Loader2 size={16} className="animate-spin" />}
                                 {loading ? "Đang lưu..." : "Lưu mã coupon"}
                             </button>

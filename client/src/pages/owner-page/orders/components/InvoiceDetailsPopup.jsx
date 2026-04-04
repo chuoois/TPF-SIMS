@@ -3,7 +3,7 @@ import {
   X, Package, Calendar, User, Phone, MapPin,
   Clock, CheckCircle, AlertTriangle, Hammer,
   Camera, FileText, Ban, RefreshCw, XCircle,
-  Truck
+  Truck, Trash2, Lock, ShieldAlert
 } from "lucide-react";
 import CustomCheckbox from "@/components/control/CustomCheckbox";
 import toast from "react-hot-toast";
@@ -67,9 +67,12 @@ const MOCK_ORDERS_DETAILED = {
       name: "Sập thờ Tứ Linh",
       image: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg",
       customerSampleImage: "https://th.bing.com/th/id/OIP.vr9BRteYrPsEUU_wlBWOpwHaFj?o=7rm=3&rs=1&pid=ImgDetMain&o=7&rm=3",
-      material: "Gỗ mít", size: "Chân 18, Dạ 5 phân", finish: "Mộc", qty: 1, price: 56000000, note: "Đục tay kỹ"
+      material: "Gỗ mít", size: "Chân 18, Dạ 5 phân", finish: "Mộc", qty: 1, price: 56000000, note: "Đục tay kỹ",
+      painterLabor: 1200000, finishingDays: 7
     }],
-    timeline: [{ time: "30/03/2026 10:00", label: "Tạo đơn", desc: "Nhận hàng mộc chuyển xưởng hoàn thiện", active: true }],
+    timeline: [
+      { time: "30/03/2026 10:00", label: "Tạo đơn", desc: "Nhận đơn hàng mộc từ kho", active: true }
+    ],
   },
   "DH-T02": {
     code: "DH-MOC-002", type: "Hàng mộc", status: "Đang gia công",
@@ -101,8 +104,11 @@ const MOCK_ORDERS_DETAILED = {
     code: "DH-DAT-002", type: "Hàng khách đặt", status: "Đã nhập kho",
     date: "2026-03-25T09:00:00", deliveryDate: "2026-04-05", fulfillmentType: "Giao tận nơi",
     customer: { name: "Lê Văn Tám", phone: "0321654987", address: "Quận 1, TP.HCM" },
-    salesPerson: "Bình Nguyễn", total: 75000000, deposit: 30000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
-    products: [{ name: "Tủ chè khảm trai", image: "https://images.unsplash.com/photo-1616486341351-70252447aece?q=80&w=800", material: "Gỗ Gụ", size: "Cánh cong", finish: "Khảm trai kỹ", qty: 1, price: 75000000, note: "Khảm tích cổ" }],
+    total: 105000000, deposit: 30000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
+    products: [
+      { name: "Tủ chè khảm trai", image: "https://images.unsplash.com/photo-1616486341351-70252447aece?q=80&w=800", material: "Gỗ Gụ", size: "Cánh cong", finish: "Khảm trai kỹ", qty: 1, price: 75000000, note: "Khảm tích cổ" },
+      { name: "Sập gụ mai cài thọ", image: "https://th.bing.com/th/id/OIP.UePrfAtU4_o8f6tGZ0qfHAHaFj?pid=ImgDet&rs=1", material: "Gỗ Gụ Lào", size: "1m8 x 2m2", finish: "Đục tay", qty: 1, price: 30000000, note: "Quây dày 10 phân" }
+    ],
     timeline: [
       { time: "25/03/2026 09:00", label: "Tạo đơn đặt hàng", active: true },
       { time: "28/03/2026 15:30", label: "Đã nhập mộc", desc: "Mộc về kho chờ khách duyệt mộc", active: true }
@@ -115,11 +121,65 @@ const MOCK_ORDERS_DETAILED = {
     salesPerson: "Bình Nguyễn", total: 210000000, deposit: 210000000, depositMethod: "Chuyển khoản", paymentStatus: "full",
     products: [{ name: "Combo phòng thờ VIP", image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=800", material: "Gỗ Gụ", size: "Phòng 25m2", finish: "Sơn Lau vàng óng", qty: 1, price: 210000000, note: "Bao gồm sập thờ, cuốn thư" }],
     timeline: [{ time: "20/03/2026 10:00", label: "Hoàn tất", desc: "Đã bàn giao và lắp đặt hoàn thiện", active: true }],
+  },
+  "DH-D07": {
+    code: "DH-DAT-007", type: "Hàng khách đặt", status: "Đang giao hàng",
+    date: "2026-03-12T15:30:00", deliveryDate: "2026-03-26", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Kiều Minh Tâm", phone: "0922333444", address: "KĐT Times City, Hai Bà Trưng, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 120000000, deposit: 50000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
+    products: [{ name: "Bộ bàn ghế Minh Quốc", image: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=800", material: "Gỗ Mun Lào", size: "10 món", finish: "Sơn bóng gương", qty: 1, price: 120000000, note: "Khảm trai kỹ" }],
+    timeline: [
+      { time: "12/03/2026 15:30", label: "Nhận đơn", desc: "Đơn đặt hàng sản xuất riêng", active: true },
+      { time: "24/03/2026 09:00", label: "Đang giao hàng", desc: "Tài xế đang vận chuyển tới KĐT Times City", active: true }
+    ],
+  },
+  "DH-S05": {
+    code: "DH-SAN-005", type: "Hàng sẵn", status: "Chờ duyệt hủy",
+    date: "2026-03-20T10:15:00", deliveryDate: "2026-03-22", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Ngô Quốc Bảo", phone: "0901222333", address: "Số 12 Quang Trung, Hà Đông, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 12800000, deposit: 5000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
+    products: [{ name: "Bàn làm việc Giám đốc", material: "Gỗ Gụ", size: "1m6x80cm", finish: "Sơn bóng", qty: 1, price: 12800000, note: "" }],
+    timeline: [
+      { time: "20/03/2026 10:15", label: "Tiếp nhận đơn", active: true },
+      { time: "22/03/2026 09:00", label: "Yêu cầu hủy", desc: "Khách hàng đổi ý sang mẫu khác", active: true }
+    ],
+  },
+  "DH-T06": {
+    code: "DH-MOC-006", type: "Hàng mộc", status: "Chờ duyệt hủy",
+    date: "2026-03-22T11:00:00", deliveryDate: "2026-03-24", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Phạm Hữu Tài", phone: "0355111222", address: "KĐT Gamuda, Hoàng Mai" },
+    salesPerson: "Bình Nguyễn", total: 22000000, deposit: 5000000, depositMethod: "Tiền mặt", paymentStatus: "partial",
+    products: [{ name: "Bàn phấn trang điểm", material: "Gỗ Gõ", size: "Gương tròn", finish: "Sơn Lau", qty: 1, price: 22000000, note: "" }],
+    timeline: [
+      { time: "22/03/2026 11:00", label: "Tạo đơn", active: true },
+      { time: "23/03/2026 14:00", label: "Đã nhập mộc", desc: "Mộc về xưởng sơn", active: true },
+      { time: "23/03/2026 16:30", label: "Yêu cầu hủy", desc: "Khách hủy do vấn đề tài chính cá nhân", active: true }
+    ],
   }
 };
 
 const INITIAL_ORDERS_LIST = [
-  { id: "DH-D03", code: "DH-DAT-003", customerName: "Bùi Tiến Dũng", phone: "0911223344", type: "Hàng khách đặt", total: 210000000, status: "Hoàn thành", date: "2026-03-10T08:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-20", deposit: 210000000, fulfillmentType: "Giao hàng" },
+  { id: "DH-S01", code: "DH-SAN-001", customerName: "Nguyễn Văn Hùng", phone: "0912345678", type: "Hàng sẵn", total: 18500000, status: "Chờ xử lý", deposit: 2000000 },
+  { id: "DH-S02", code: "DH-SAN-002", customerName: "Lê Thị Lan", phone: "0345678901", type: "Hàng sẵn", total: 8500000, status: "Chờ giao hàng", deposit: 8500000 },
+  { id: "DH-S03", code: "DH-SAN-003", customerName: "Trần Minh Quang", phone: "0909123456", type: "Hàng sẵn", total: 42000000, status: "Đang giao hàng", deposit: 20000000 },
+  { id: "DH-S04", code: "DH-SAN-004", customerName: "Phạm Thành Nam", phone: "0987654321", type: "Hàng sẵn", total: 15600000, status: "Hoàn thành", deposit: 15600000 },
+  { id: "DH-S05", code: "DH-SAN-005", customerName: "Ngô Quốc Bảo", phone: "0901222333", type: "Hàng sẵn", total: 12800000, status: "Chờ duyệt hủy", deposit: 5000000 },
+  { id: "DH-S06", code: "DH-SAN-006", customerName: "Nguyễn Trung Kiên", phone: "0344111222", type: "Hàng sẵn", total: 5500000, status: "Đơn đã hủy", deposit: 1000000 },
+  { id: "DH-T01", code: "DH-MOC-001", customerName: "Hoàng Nguyệt Ánh", phone: "0978901234", type: "Hàng mộc", total: 56000000, status: "Chờ xử lý", deposit: 10000000 },
+  { id: "DH-T02", code: "DH-MOC-002", customerName: "Đặng Tuấn Kiệt", phone: "0931234567", type: "Hàng mộc", total: 32000000, status: "Đang gia công", deposit: 15000000 },
+  { id: "DH-T03", code: "DH-MOC-003", customerName: "Vũ Tuấn Anh", phone: "0344555666", type: "Hàng mộc", total: 24500000, status: "Chờ giao hàng", deposit: 24500000 },
+  { id: "DH-T04", code: "DH-MOC-004", customerName: "Lê Văn Lộc", phone: "0966777888", type: "Hàng mộc", total: 48000000, status: "Đang giao hàng", deposit: 10000000 },
+  { id: "DH-T05", code: "DH-MOC-005", customerName: "Trần Thế Vinh", phone: "0333999000", type: "Hàng mộc", total: 15000000, status: "Hoàn thành", deposit: 15000000 },
+  { id: "DH-T06", code: "DH-MOC-006", customerName: "Phạm Hữu Tài", phone: "0355111222", type: "Hàng mộc", total: 22000000, status: "Chờ duyệt hủy", deposit: 5000000 },
+  { id: "DH-T07", code: "DH-MOC-007", customerName: "Trịnh Gia Bảo", phone: "0944000333", type: "Hàng mộc", total: 12000000, status: "Đơn đã hủy", deposit: 2000000 },
+  { id: "DH-D01", code: "DH-DAT-001", customerName: "Nguyễn Thị Hồng", phone: "0912123123", type: "Hàng khách đặt", total: 125000000, status: "Chờ sản xuất", deposit: 40000000 },
+  { id: "DH-D02", code: "DH-DAT-002", customerName: "Lê Văn Tám", phone: "0321654987", type: "Hàng khách đặt", total: 105000000, status: "Đã nhập kho", deposit: 30000000 },
+  { id: "DH-D03", code: "DH-DAT-003", customerName: "Bùi Tiến Dũng", phone: "0911223344", type: "Hàng khách đặt", total: 210000000, status: "Hoàn thành", deposit: 210000000 },
+  { id: "DH-D04", code: "DH-DAT-004", customerName: "Đỗ Mạnh Hùng", phone: "0988000111", type: "Hàng khách đặt", total: 45000000, status: "Đang gia công", deposit: 20000000 },
+  { id: "DH-D05", code: "DH-DAT-005", customerName: "Lý Thành Nam", phone: "0311222333", type: "Hàng khách đặt", total: 18000000, status: "Đơn đã hủy", deposit: 5000000 },
+  { id: "DH-D06", code: "DH-DAT-006", customerName: "Trương Mỹ Linh", phone: "0900111222", type: "Hàng khách đặt", total: 85000000, status: "Chờ giao hàng", deposit: 30000000 },
+  { id: "DH-D07", code: "DH-DAT-007", customerName: "Kiều Minh Tâm", phone: "0922333444", type: "Hàng khách đặt", total: 120000000, status: "Đang giao hàng", deposit: 50000000 },
+  { id: "DH-D08", code: "DH-DAT-008", customerName: "Tạ Thu Thủy", phone: "0377444555", type: "Hàng khách đặt", total: 65000000, status: "Chờ duyệt hủy", deposit: 15000000 },
 ];
 
 const fmtCurrency = (n) =>
@@ -305,9 +365,21 @@ const StandardOrderView = ({
   remaining,
   deliveryImage,
   onDeliveryImageChange,
-  onPreview
+  onPreview,
+  onUpdateStatus,
+  // New props from parent
+  lastActiveStatus,
+  isStarted,
+  isRefundBlocked,
+  hasProduction
 }) => {
-  const paidAmount = (o.deposit || 0) + (o.receivedAmount || 0);
+  const isCancellable = o.status === "Chờ duyệt hủy";
+
+  // Recommendation logic
+  const recommendation = isStarted ? "THU CỌC" : "HOÀN CỌC";
+  const recReason = isStarted
+    ? `Hàng này đã ${lastActiveStatus} ${hasProduction ? `và có ${o.productionOrders.length} lệnh sản xuất` : ""}. Xưởng đã tốn chi phí nguyên liệu/nhân công.`
+    : `Đơn chưa được triển khai sản xuất (đang ${lastActiveStatus}). Bạn có thể hoàn cọc 100%.`;
 
   return (
     <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
@@ -409,19 +481,9 @@ const StandardOrderView = ({
                       {/* Technical/Internal Info with Print Suppression */}
                       <div className="space-y-1 relative">
                         <span className="text-[9px] font-black text-[var(--brand-primary)] uppercase tracking-widest block flex items-center gap-1">
-                           Bảo hành
+                          Bảo hành
                         </span>
                         <p className="text-[12px] font-bold text-slate-700">{p.warranty || "12"} tháng</p>
-                      </div>
-                      <div className="space-y-1 relative">
-                        <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest block">Hoàn thiện</span>
-                        <p className="text-[12px] font-bold text-slate-700">{p.finishingDays || "0"} ngày</p>
-                      </div>
-                      <div className="space-y-1 relative printer-hidden">
-                        <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest block flex items-center gap-1">
-                           Công sơn <XCircle size={8} className="opacity-40" />
-                        </span>
-                        <p className="text-[13px] font-black text-indigo-600">{fmtCurrency(p.paintLabor || 0)}</p>
                       </div>
                     </div>
 
@@ -611,6 +673,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
   // Handover Modal State
   const [handoverDeadline, setHandoverDeadline] = useState("");
+  const [handoverItemsData, setHandoverItemsData] = useState([]); // [{ labor: 0, days: "" }]
   const [handoverNotes, setHandoverNotes] = useState("");
   const [handoverChecks, setHandoverChecks] = useState({ dimension: false, material: false, techNotes: false });
 
@@ -680,16 +743,44 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
     }
   }, [showCompleteModal, order]);
 
-  // Sync Handover Deadline when modal opens
+  // Sync Handover States when modal opens
   useEffect(() => {
-    if (showHandoverModal && order?.deliveryDate) {
-      const delivery = new Date(order.deliveryDate);
-      delivery.setDate(delivery.getDate() - 2);
-      const isoDate = delivery.toISOString().split('T')[0];
-      setHandoverDeadline(isoDate);
+    if (showHandoverModal && order) {
+      if (order.deliveryDate) {
+        const delivery = new Date(order.deliveryDate);
+        delivery.setDate(delivery.getDate() - 2);
+        setHandoverDeadline(delivery.toISOString().split('T')[0]);
+      }
       setHandoverNotes("");
+
+      // 🔍 Auto-fill from Inventory (Valuation data)
+      const savedProducts = JSON.parse(localStorage.getItem("tpf_simulated_products") || "[]");
+
+      const initializedData = order.products.map(p => {
+        // Try to find matching product in inventory to get pre-defined costs
+        const invItem = savedProducts.find(inv => inv.code === p.code || inv.name === p.name);
+
+        return {
+          unitLabor: p.painterLabor || invItem?.paintCost || 0,
+          days: p.finishingDays || invItem?.leadTime || ""
+        };
+      });
+
+      setHandoverItemsData(initializedData);
     }
-  }, [showHandoverModal, order?.deliveryDate]);
+  }, [showHandoverModal, order]);
+
+  // Auto-calculate deadline based on max finishing days
+  useEffect(() => {
+    if (showHandoverModal && handoverItemsData.length > 0) {
+      const maxDays = Math.max(0, ...handoverItemsData.map(item => parseInt(item.days) || 0));
+      if (maxDays > 0) {
+        const today = new Date();
+        today.setDate(today.getDate() + maxDays);
+        setHandoverDeadline(today.toISOString().split('T')[0]);
+      }
+    }
+  }, [handoverItemsData, showHandoverModal]);
 
   const convertCancelledToStock = (o) => {
     const possibleStatuses = ["Đã nhập kho", "Chờ giao hàng", "Chờ duyệt hủy", "Đang gia công", "Đang sản xuất"];
@@ -759,6 +850,18 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
   const productTotal = order?.products?.reduce((acc, p) => acc + (p.price || 0) * (p.qty || 1), 0) || 0;
   const remainingValue = productTotal - (order?.deposit || 0) - (order?.receivedAmount || 0);
+
+  // Cancellation & Strict Policy Logic (Elevated to Parent)
+  const lastActiveStatus = useMemo(() => {
+    if (!order?.timeline) return "Chờ xử lý";
+    const cancelIdx = order.timeline.findIndex(t => t.label.includes("Yêu cầu hủy") || t.label.includes("Chờ duyệt hủy"));
+    if (cancelIdx > 0) return order.timeline[cancelIdx - 1]?.label || "Đang xử lý";
+    return order.status;
+  }, [order?.timeline, order?.status]);
+
+  const hasProduction = order?.productionOrders && order.productionOrders.length > 0;
+  const isStarted = ["Đang sản xuất", "Đã nhập kho", "Đang gia công", "Chờ giao hàng"].includes(lastActiveStatus) || hasProduction;
+  const isRefundBlocked = isStarted;
 
   // Actions logic
   const handleUpdate = (newStatus, extraData = {}) => {
@@ -847,18 +950,27 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
     const newStatus = isMoc ? "Đang sản xuất" : "Đang gia công";
     const deadlineStr = new Date(handoverDeadline).toLocaleDateString("vi-VN");
 
+    // Update products with their specific labor/days
+    const updatedProducts = order.products.map((p, idx) => ({
+      ...p,
+      painterLabor: handoverItemsData[idx]?.unitLabor || 0, // Storing unit labor
+      finishingDays: handoverItemsData[idx]?.days || ""
+    }));
+
+    const totalLabor = updatedProducts.reduce((sum, p) => sum + (p.painterLabor * (p.qty || 1)), 0);
+
     handleUpdate(newStatus, {
+      products: updatedProducts,
       worker_deadline: handoverDeadline,
       handover_notes: handoverNotes,
       handover_checklist: {
         approved_at: new Date().toISOString(),
         notes: handoverNotes,
-        deadline: handoverDeadline
+        deadline: handoverDeadline,
+        total_painter_labor: totalLabor
       },
       timelineLabel: "Bàn giao gia công",
-      timelineDesc: isMoc
-        ? `Owner bàn giao xưởng. Deadline: ${deadlineStr}. Ghi chú: ${handoverNotes || "Không"}`
-        : `Đã duyệt mộc & chuyển gia công. Deadline: ${deadlineStr}.`
+      timelineDesc: `Bàn giao ${updatedProducts.length} món. Hạn: ${deadlineStr}. Tổng công sơn: ${fmtCurrency(totalLabor)}.`
     });
     setShowHandoverModal(false);
   };
@@ -945,14 +1057,14 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
               </div>
             </div>
           </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleSafeClose}
-                className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors printer-hidden"
-              >
-                <X size={20} />
-              </button>
-            </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleSafeClose}
+              className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors printer-hidden"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
 
@@ -978,6 +1090,10 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                 }
               }}
               onPreview={setPreviewImage}
+              lastActiveStatus={lastActiveStatus}
+              isStarted={isStarted}
+              isRefundBlocked={isRefundBlocked}
+              hasProduction={hasProduction}
             />
           )}
         </div>
@@ -988,7 +1104,8 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
             {/* Action Buttons Column */}
             <div className="flex items-center gap-3">
               {/* 1. Bàn giao xưởng */}
-              {((order.status === "Chờ xử lý" && order.type === "Hàng mộc") || (order.status === "Đã nhập kho" && order.type === "Hàng khách đặt")) && (
+              {(((order.status === "Chờ xử lý" || order.status === "Đã nhập kho") && order.type === "Hàng mộc") || 
+                (order.status === "Đã nhập kho" && order.type === "Hàng khách đặt")) && (
                 <button
                   className="px-5 py-2 bg-[var(--brand-primary)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center gap-2"
                   onClick={() => setShowHandoverModal(true)}
@@ -1047,37 +1164,40 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
               {/* 6. Duyệt hủy (Nếu là Chờ duyệt hủy) */}
               {order.status === "Chờ duyệt hủy" && (
-                <div className="flex gap-2">
+                <div className="flex gap-2 p-1 bg-white border border-gray-100 rounded-xl shadow-sm">
                   <button
-                    className="px-4 py-2 bg-[var(--status-error)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center gap-2"
+                    disabled={["Đang sản xuất", "Đã nhập kho", "Đang gia công", "Chờ giao hàng"].includes(lastActiveStatus) || (order.productionOrders?.length > 0)}
+                    className="px-6 py-2.5 bg-slate-100 text-slate-600 rounded-lg text-[13px] font-bold hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex items-center gap-2"
                     onClick={() => {
                       if (window.confirm("Duyệt hủy đơn và HOÀN TRẢ TIỀN CỌC cho khách hàng?")) {
                         handleUpdate("Đơn đã hủy", {
                           depositResolution: "refunded",
-                          timelineLabel: "Duyệt hủy & Hoàn cọc",
-                          timelineDesc: "Chủ cửa hàng đã duyệt. Đã hoàn trả tiền cọc 100%."
+                          timelineLabel: "Duyệt đơn hủy (Hoàn cọc)",
+                          timelineDesc: "Đơn bị hủy khi chưa triển khai. Chủ cửa hàng đã đồng ý hoàn trả 100% tiền cọc."
                         });
                       }
                     }}
                   >
-                    <XCircle size={16} /> HOÀN CỌC
+                    {["Đang sản xuất", "Đã nhập kho", "Đang gia công", "Chờ giao hàng"].includes(lastActiveStatus) ? <Lock size={16} /> : <RefreshCw size={16} />}
+                    DUYỆT & HOÀN CỌC
                   </button>
                   <button
-                    className="px-4 py-2 bg-[var(--palette-orange)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center gap-2"
+                    className="px-6 py-2.5 bg-orange-600 text-white rounded-lg text-[13px] font-bold hover:bg-orange-700 shadow-md shadow-orange-200 transition-all active:scale-95 flex items-center gap-2"
                     onClick={() => {
-                      const msg = order.type === "Hàng sẵn"
-                        ? "Duyệt hủy đơn và THU HỒI TIỀN CỌC (Bồi thường)?"
-                        : "Xác nhận hủy đơn: Khách MẤT CỌC do xưởng đã triển khai sản xuất?";
+                      const recoveryAmt = order.deposit || 0;
+                      const msg = recoveryAmt > 0
+                        ? `Thu hồi ${fmtCurrency(recoveryAmt)} cọc & Nhập lại kho?`
+                        : `Hủy đơn & Nhập lại kho?`;
                       if (window.confirm(msg)) {
                         handleUpdate("Đơn đã hủy", {
                           depositResolution: "forfeited",
-                          timelineLabel: "Duyệt hủy & Thu cọc",
-                          timelineDesc: "Chủ cửa hàng đã duyệt. Thu hồi tiền cọc bồi thường."
+                          timelineLabel: "Duyệt đơn hủy (Thu cọc)",
+                          timelineDesc: `Quyết định của Chủ: Thu hồi ${recoveryAmt} cọc bồi thường chi phí. Tự động nhập kho ${itemCount} món hàng sẵn/mộc.`
                         });
                       }
                     }}
                   >
-                    <Ban size={16} /> THU CỌC
+                    <Trash2 size={16} /> DUYỆT & THU CỌC
                   </button>
                 </div>
               )}
@@ -1265,41 +1385,90 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                     </div>
                   </div>
 
+                  {/* 1. Item-by-item Production Params */}
+                  <div className="space-y-4">
+                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Kế hoạch gia công từng món</label>
+                    <div className="border border-slate-100 rounded-xl overflow-hidden shadow-sm">
+                      <table className="w-full text-left border-collapse">
+                        <thead className="bg-slate-50 border-b border-slate-100">
+                          <tr>
+                            <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-wider">Sản phẩm</th>
+                            <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-wider w-[140px]">Công/Sản phẩm (₫)</th>
+                            <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-wider w-[120px] text-right">Thành tiền</th>
+                            <th className="px-3 py-3 text-[10px] font-black text-slate-500 uppercase tracking-wider w-[80px]">Hoàn Thiện Dự kiến</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                          {order?.products?.map((p, idx) => (
+                            <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="px-4 py-3">
+                                <p className="text-[13px] font-bold text-slate-800 line-clamp-1">{p.name}</p>
+                                <p className="text-[11px] font-bold text-[var(--brand-primary)] mt-0.5">SL: {p.qty} {p.unit}</p>
+                              </td>
+                                <td className="px-4 py-3">
+                                  <div className="relative">
+                                    <input
+                                      type="text"
+                                      className="w-full pl-3 pr-7 py-2 bg-white border border-slate-200 rounded-lg font-bold text-[13px] text-slate-600 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                                      value={formatNumberInput(handoverItemsData[idx]?.unitLabor)}
+                                      onChange={(e) => {
+                                        const newData = [...handoverItemsData];
+                                        newData[idx] = { ...newData[idx], unitLabor: Number(parseNumberInput(e.target.value)) || 0 };
+                                        setHandoverItemsData(newData);
+                                      }}
+                                    />
+                                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300">₫</span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-right">
+                                  <p className="text-[13px] font-black text-indigo-600">
+                                    {fmtCurrency((handoverItemsData[idx]?.unitLabor || 0) * (p.qty || 1))}
+                                  </p>
+                                </td>
+                                <td className="px-3 py-3">
+                                  <div className="relative">
+                                    <input
+                                      type="number"
+                                      className="w-full pl-2 pr-6 py-2 bg-white border border-slate-200 rounded-lg font-bold text-[13px] text-orange-600 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all text-center"
+                                      placeholder="0"
+                                      value={handoverItemsData[idx]?.days}
+                                      onChange={(e) => {
+                                        const newData = [...handoverItemsData];
+                                        newData[idx] = { ...newData[idx], days: e.target.value };
+                                        setHandoverItemsData(newData);
+                                      }}
+                                    />
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300 italic">n</span>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                        </tbody>
+                        <tfoot className="bg-indigo-50/30 border-t border-indigo-100/50 font-bold">
+                          <tr>
+                            <td className="px-4 py-3 text-[11px] text-indigo-600 uppercase tracking-wider" colSpan={2}>Tổng cộng tiền thợ sơn đơn này</td>
+                            <td className="px-4 py-3 text-[16px] text-indigo-700 text-right" colSpan={2}>
+                              {fmtCurrency(order?.products?.reduce((sum, p, idx) => sum + (handoverItemsData[idx]?.unitLabor || 0) * (p.qty || 1), 0))}
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+
                   <div className="bg-slate-50 rounded-lg p-5 space-y-4">
                     <div className="flex items-center justify-between">
                       <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <Calendar size={12} className="text-indigo-500" /> Hạn hoàn thành xong cho xưởng
+                        <Calendar size={12} className="text-slate-400" /> Hạn hoàn thành xong toàn đơn
                       </label>
                     </div>
 
                     <input
                       type="date"
-                      className="w-full px-5 py-3 bg-white border border-slate-100 rounded-lg font-bold text-[15px] text-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all shadow-sm"
+                      className="w-full px-5 py-2.5 bg-white border border-slate-100 rounded-lg font-bold text-[15px] text-slate-800 focus:ring-4 focus:ring-slate-500/10 focus:border-slate-500 outline-none transition-all shadow-sm"
                       value={handoverDeadline}
                       onChange={(e) => setHandoverDeadline(e.target.value)}
                     />
-
-                    <div className="flex flex-wrap gap-2">
-                      {[1, 2, 3, 5].map(days => {
-                        const targetDate = new Date(order?.deliveryDate);
-                        targetDate.setDate(targetDate.getDate() - days);
-                        const dateStr = targetDate.toISOString().split('T')[0];
-                        const isActive = handoverDeadline === dateStr;
-
-                        return (
-                          <button
-                            key={days}
-                            onClick={() => setHandoverDeadline(dateStr)}
-                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all border ${isActive
-                              ? 'bg-[var(--brand-primary)] border-[var(--brand-primary)] text-white shadow-sm'
-                              : 'bg-white border-slate-100 text-slate-500 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]'
-                              }`}
-                          >
-                            Trước {days} ngày ({fmtDate(dateStr)})
-                          </button>
-                        );
-                      })}
-                    </div>
                   </div>
 
                   <div>

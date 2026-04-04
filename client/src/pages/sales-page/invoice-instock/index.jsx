@@ -911,6 +911,8 @@ export default function InStockInvoicePage() {
             oldPrice: isWoodFinished ? itemPrice : null,
             discountPrice: isWoodFinished ? (product.discount ? Math.round(itemPrice * (1 - product.discount / 100)) : itemPrice) : null,
             leadTime: product.leadTime || 0,
+            warrantyMonths: product.warrantyMonths || 12,
+            warrantyContent: product.warrantyContent || "Bảo hành các lỗi kỹ thuật.",
           },
         ],
       });
@@ -1080,7 +1082,7 @@ export default function InStockInvoicePage() {
         size: "",
         qty: item.quantity,
         price: item.price,
-        warranty: item.isGift ? "Không bảo hành" : SYSTEM_WARRANTY,
+        warranty: item.isGift ? "Không bảo hành" : `${item.warrantyMonths || 12} tháng`,
         note: item.note || "",
         images: item.images || [],
         leadTime: item.leadTime || 0,
@@ -1103,6 +1105,41 @@ export default function InStockInvoicePage() {
           : null,
       date: new Date().toISOString(),
     };
+
+    const warranties = JSON.parse(
+      localStorage.getItem("tpf_simulated_warranties") || "[]"
+    );
+
+    const newWarranties = activeTab.cartItems
+      .filter((item) => !item.isGift && item.warrantyMonths)
+      .map((item, idx) => {
+        const startDate = new Date();
+        const endDate = new Date(startDate);
+        endDate.setMonth(endDate.getMonth() + (item.warrantyMonths || 12));
+        
+        return {
+          id: `BH-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000000)}`,
+          orderId: newOrder.code,
+          customerName: newOrder.customer.name,
+          phone: newOrder.customer.phone,
+          productCode: item.sku,
+          productName: item.name,
+          serial: `${item.sku}-${Date.now().toString().slice(-4)}${idx}`,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          warrantyMonths: item.warrantyMonths || 12,
+          status: "Còn hạn",
+          maintenanceHistory: [],
+          notes: item.warrantyContent || "Bảo hành các lỗi kỹ thuật.",
+        };
+      });
+
+    if (newWarranties.length > 0) {
+      localStorage.setItem(
+        "tpf_simulated_warranties",
+        JSON.stringify([...warranties, ...newWarranties])
+      );
+    }
 
     toast.success(`Tạo yêu cầu ${newOrder.code} thành công!`);
     setPrintingOrder(newOrder);
@@ -1344,7 +1381,7 @@ export default function InStockInvoicePage() {
                             className="text-emerald-500 shrink-0"
                           />
                           <span className="text-[11px] font-semibold text-emerald-700">
-                            Bảo hành: {SYSTEM_WARRANTY}
+                            Bảo hành: {item.warrantyMonths || 12} tháng
                           </span>
                         </div>
                       )}

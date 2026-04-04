@@ -27,6 +27,7 @@ import {
   Bell,
   BarChart2,
   ChevronRight,
+  Truck,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import {
@@ -82,7 +83,7 @@ const TOP_PRODUCTS = [
   { name: "Tủ Quần Áo 4C", qty: 6, revenue: 48000000 },
 ];
 
-const BAR_COLORS = ["#2563eb", "#7c3aed", "#059669", "#d97706", "#dc2626"];
+const BAR_COLORS = ["#4f46e5", "#6366f1", "#818cf8", "#94a3b8", "#cbd5e1"];
 
 const LOW_STOCK_PRODUCTS = [
   { name: "Ghế đôn sofa L", currentStock: 2, id: "SP015", unit: "cái" },
@@ -113,28 +114,20 @@ const fmtShort = (val) => {
 function KpiCard({ label, value, sub, icon: Icon, color, linkTo }) {
   const inner = (
     <div className={cn(
-      "group relative bg-white rounded-2xl border border-slate-100 p-5 flex flex-col gap-3 h-full",
-      "shadow-sm hover:shadow-md transition-all duration-200",
-      linkTo && "cursor-pointer hover:-translate-y-0.5"
+      "group bg-white rounded-2xl border border-slate-100 p-5 flex flex-col gap-4 h-full transition-all duration-200",
+      "hover:shadow-md hover:border-indigo-100",
+      linkTo && "cursor-pointer"
     )}>
-      {/* Top row */}
-      <div className="flex items-start justify-between gap-2">
-        <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-          style={{ background: color + "18" }}
-        >
-          <Icon size={20} style={{ color }} />
+      <div className="flex items-center justify-between">
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-50 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
+          <Icon size={18} />
         </div>
-        {linkTo && (
-          <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-500 mt-1 transition-colors" />
-        )}
+        {linkTo && <ChevronRight size={14} className="text-slate-300" />}
       </div>
-
-      {/* Value */}
       <div>
-        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{label}</p>
-        <p className="text-[22px] font-black text-slate-900 leading-none tracking-tight">{value}</p>
-        {sub && <p className="text-[11px] text-slate-400 mt-1.5 leading-tight">{sub}</p>}
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">{label}</p>
+        <p className="text-[20px] font-black text-slate-900 tracking-tight leading-none">{value}</p>
+        {sub && <p className="text-[11px] text-slate-400 mt-2 font-medium">{sub}</p>}
       </div>
     </div>
   );
@@ -145,27 +138,30 @@ function KpiCard({ label, value, sub, icon: Icon, color, linkTo }) {
 }
 
 /** Alert badge for hotspot cards */
-function AlertCard({ label, count, countColor, icon: Icon, iconBg, border, to, pulse = false }) {
+function AlertCard({ label, count, icon: Icon, to, urgent = false }) {
   return (
     <Link
       to={to}
       className={cn(
-        "group bg-white rounded-2xl border p-4 flex items-center gap-4 shadow-sm",
-        "hover:shadow-md transition-all duration-200 hover:-translate-y-0.5",
-        border
+        "group bg-white rounded-2xl border border-slate-100 p-4 shrink-0 flex items-center gap-4 transition-all duration-200",
+        "hover:shadow-md hover:border-indigo-100",
+        urgent && "border-orange-100 bg-orange-50/10"
       )}
     >
-      <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shrink-0", iconBg, pulse && "animate-pulse")}>
-        <Icon size={20} />
+      <div className={cn(
+        "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+        urgent ? "bg-orange-50 text-orange-500" : "bg-indigo-50 text-indigo-500"
+      )}>
+        <Icon size={18} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 leading-none mb-1">{label}</p>
-        <p className="text-[15px] font-black text-slate-800 leading-tight">
-          <span style={{ color: countColor }} className="mr-1 text-[18px]">{count}</span>
-          mục cần xử lý
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5">{label}</p>
+        <p className="text-[15px] font-black text-slate-800 leading-none">
+          <span className={cn("mr-1 text-[17px]", urgent ? "text-orange-600" : "text-indigo-600")}>{count}</span>
+          đang chờ xử lý
         </p>
       </div>
-      <ArrowRight size={14} className="text-slate-300 group-hover:translate-x-0.5 transition-transform shrink-0" />
+      <ChevronRight size={14} className="text-slate-300 group-hover:translate-x-0.5 transition-transform" />
     </Link>
   );
 }
@@ -177,25 +173,22 @@ function PipelineRow({ stage, total }) {
   return (
     <Link
       to={stage.link}
-      className="group/row flex items-center gap-4 py-3 px-3 -mx-3 rounded-xl hover:bg-slate-50 transition-colors"
+      className="group/row flex items-center gap-4 py-2.5 px-3 -mx-3 rounded-xl hover:bg-indigo-50/30 transition-colors"
     >
-      <div
-        className="w-9 h-9 rounded-lg flex items-center justify-center text-white shrink-0"
-        style={{ backgroundColor: stage.color }}
-      >
-        <Icon size={16} />
+      <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 text-slate-500 group-hover/row:bg-indigo-600 group-hover/row:text-white transition-all shrink-0">
+        <Icon size={14} />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[12px] font-bold text-slate-600 group-hover/row:text-slate-900 transition-colors truncate pr-2">
+          <span className="text-[12px] font-bold text-slate-600 group-hover/row:text-slate-900 truncate">
             {stage.name}
           </span>
-          <span className="text-[13px] font-black text-slate-800 shrink-0">{stage.value} bộ</span>
+          <span className="text-[13px] font-black text-slate-800">{stage.value} đơn</span>
         </div>
         <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
           <div
-            className="h-full rounded-full transition-all duration-700"
-            style={{ width: `${pct}%`, backgroundColor: stage.color }}
+            className="h-full rounded-full bg-indigo-500 transition-all duration-700"
+            style={{ width: `${pct}%` }}
           />
         </div>
       </div>
@@ -263,9 +256,9 @@ export default function OwnerDashboard() {
   const currentRevenueData = revenueFilter === "7_days" ? REVENUE_DATA_7_DAYS : REVENUE_DATA_30_DAYS;
 
   const PIPELINE_DATA = [
-    { name: "Đánh giấy ráp", value: dynamicStats.stageSummary.moc, color: "#7c3aed", icon: Hammer, link: "/owner/production?status=Đang đánh giấy ráp" },
-    { name: "Công đoạn sơn", value: dynamicStats.stageSummary.son, color: "#db2777", icon: Paintbrush, link: "/owner/production?status=Đang sơn" },
-    { name: "Nghiệm thu hoàn thiện", value: dynamicStats.itemsToApprove, color: "#2563eb", icon: CheckCircle2, link: "/owner/production?status=Chờ duyệt" },
+    { name: "Đánh giấy ráp", value: dynamicStats.stageSummary.moc, icon: Hammer, link: "/owner/production?status=Đang đánh giấy ráp" },
+    { name: "Công đoạn sơn", value: dynamicStats.stageSummary.son, icon: Paintbrush, link: "/owner/production?status=Đang sơn" },
+    { name: "Nghiệm thu hoàn thiện", value: dynamicStats.itemsToApprove, icon: CheckCircle2, link: "/owner/production?status=Chờ duyệt" },
   ];
 
   const sortedActivities = [...RECENT_ACTIVITIES].sort((a, b) => b.id - a.id);
@@ -274,14 +267,12 @@ export default function OwnerDashboard() {
     <>
       <PageHelmet title="Tổng quan Điều hành | TPF-SIMS" />
 
-      <div className="min-h-screen bg-[#f4f6fa] p-6 md:p-8 space-y-6">
+      <div className="min-h-screen bg-slate-50/50 p-6 md:p-8 space-y-8">
 
         {/* ── Header ── */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-              Xin chào, {currentOwnerName}
-            </p>
+           
             <h1 className="text-[22px] font-black text-slate-900 tracking-tight">
               Tổng quan Điều hành
             </h1>
@@ -304,67 +295,40 @@ export default function OwnerDashboard() {
         {/* ── SECTION 1: Cảnh báo / Việc cần làm ── */}
         <section>
           <SectionLabel icon={Bell} text="Cần xử lý ngay" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mt-3">
-            <AlertCard
-              label="Sự cố bảo hành"
-              count={dynamicStats.pendingWarranty || "—"}
-              countColor="#f97316"
-              icon={AlertTriangle}
-              iconBg="bg-orange-50 text-orange-500"
-              border="border-orange-200 hover:border-orange-400"
-              to="/owner/warranty"
-              pulse
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">
             <AlertCard
               label="Nghiệm thu xưởng"
               count={dynamicStats.itemsToApprove || "—"}
-              countColor="#2563eb"
               icon={CheckCircle2}
-              iconBg="bg-blue-50 text-blue-500"
-              border="border-slate-100 hover:border-blue-300"
               to="/owner/production"
+              urgent={dynamicStats.itemsToApprove > 5}
             />
             <AlertCard
               label="Hàng sắp hết kho"
               count={LOW_STOCK_PRODUCTS.length}
-              countColor="#059669"
               icon={Package}
-              iconBg="bg-emerald-50 text-emerald-500"
-              border="border-slate-100 hover:border-emerald-300"
               to="/owner/products?tab=low_stock"
             />
             <AlertCard
               label="Yêu cầu từ khách"
               count={STATS.newRequirements}
-              countColor="#7c3aed"
               icon={FileEdit}
-              iconBg="bg-purple-50 text-purple-500"
-              border="border-slate-100 hover:border-purple-300"
               to="/owner/customer-requirements"
             />
           </div>
         </section>
 
-        {/* ── SECTION 2: Chỉ số tài chính ── */}
         <section>
-          <SectionLabel icon={Wallet} text="Tài chính hôm nay" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mt-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">
             <KpiCard
-              label="Giá trị hợp đồng mới"
+              label="Doanh thu hôm nay"
               value={fmtShort(dynamicStats.totalContractValue)}
               sub={fmt(dynamicStats.totalContractValue)}
               icon={TrendingUp}
               color="#2563eb"
               linkTo="/owner/reports?type=sales"
             />
-            <KpiCard
-              label="Lợi nhuận gộp (tạm tính)"
-              value={fmtShort(dynamicStats.estimatedProfit)}
-              sub="Biên ~42% đồ gỗ thủ công"
-              icon={Wallet}
-              color="#059669"
-              linkTo="/owner/reports?type=sales"
-            />
+           
             <KpiCard
               label="Phải thu (Khách hàng)"
               value={fmtShort(STATS.debtCustomer)}
@@ -421,18 +385,18 @@ export default function OwnerDashboard() {
                   <AreaChart data={currentRevenueData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#2563eb" stopOpacity={0.2} />
-                        <stop offset="100%" stopColor="#2563eb" stopOpacity={0} />
+                        <stop offset="0%" stopColor="#4f46e5" stopOpacity={0.1} />
+                        <stop offset="100%" stopColor="#4f46e5" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8", fontWeight: 600 }} dy={8} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8", fontWeight: 600 }} tickFormatter={(v) => `${v / 1e6}M`} width={36} />
+                    <CartesianGrid strokeDasharray="6 6" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8", fontWeight: 700 }} dy={8} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8", fontWeight: 700 }} tickFormatter={(v) => `${v / 1e6}M`} width={36} />
                     <RechartsTooltip
                       formatter={(v) => [fmt(v), "Doanh thu"]}
-                      contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.10)", fontSize: 12, fontWeight: 700, padding: "10px 16px" }}
+                      contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.10)", fontSize: 12, fontWeight: 800, padding: "10px 16px" }}
                     />
-                    <Area type="monotone" dataKey="total" stroke="#2563eb" strokeWidth={2.5} fill="url(#revGrad)" activeDot={{ r: 5, fill: "#2563eb", stroke: "#fff", strokeWidth: 2 }} />
+                    <Area type="monotone" dataKey="total" stroke="#4f46e5" strokeWidth={2} fill="url(#revGrad)" activeDot={{ r: 4, fill: "#4f46e5", stroke: "#fff", strokeWidth: 2 }} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>

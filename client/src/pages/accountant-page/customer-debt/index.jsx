@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
-import { Users, Search, CheckCircle, Package, X, ChevronLeft, ChevronRight, Eye, Camera, DollarSign, Calendar, FileText, Plus, Image as ImageIcon } from "lucide-react";
+import { Users, Search, CheckCircle, Package, X, ChevronLeft, ChevronRight, Eye, Camera, DollarSign, Calendar, FileText, Plus, Image as ImageIcon, Download } from "lucide-react";
 import { toast } from "react-hot-toast";
+import * as XLSX from "xlsx";
 
 /**
  * Accountant Customer Debt
@@ -94,6 +95,40 @@ export default function AccountantCustomerDebt() {
     const [itemsPerPage, setItemsPerPage] = useState(15);
 
     const getRemainingAmount = (total, deposit) => Math.max(0, total - deposit);
+
+    const handleExportExcel = () => {
+        try {
+            const dataToExport = filteredDebts.map(debt => {
+                const remaining = getRemainingAmount(debt.total_amount, debt.deposit_amount);
+                const isSettled = remaining <= 0;
+                return {
+                    "Mã Đơn": debt.order_code,
+                    "Khách Hàng": debt.customer_name,
+                    "Số Điện Thoại": debt.phone_number,
+                    "Tổng Tiền": debt.total_amount,
+                    "Đã Thanh Toán": debt.deposit_amount,
+                    "Còn Nợ": remaining,
+                    "Ngày Đặt": debt.order_date,
+                    "Trạng Thái": isSettled ? "Đã thanh toán" : "Còn nợ"
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(dataToExport);
+            const wscols = [
+                { wch: 15 }, { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }
+            ];
+            ws['!cols'] = wscols;
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "CongNoKhachHang");
+
+            XLSX.writeFile(wb, `CongNoKhachHang_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            toast.success("Xuất file Excel thành công!", { style: { fontSize: "14px", fontWeight: "bold" } });
+        } catch (error) {
+            console.error("Lỗi xuất excel:", error);
+            toast.error("Không thể xuất file Excel");
+        }
+    };
 
     const filteredDebts = useMemo(() => {
         let r = debts;
@@ -242,6 +277,11 @@ export default function AccountantCustomerDebt() {
                                 <option value="SETTLED">Đã thanh toán</option>
                             </select>
                         </div>
+                        <button onClick={handleExportExcel}
+                            className="h-9 px-4 rounded-lg flex items-center gap-2 text-[13px] font-bold cursor-pointer transition focus:ring-2"
+                            style={{ backgroundColor: "var(--brand-primary)", color: "#fff" }}>
+                            <Download size={14} strokeWidth={2.5} /> Xuất Excel
+                        </button>
                     </div>
 
                     {/* Table */}

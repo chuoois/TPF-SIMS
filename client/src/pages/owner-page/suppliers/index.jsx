@@ -437,7 +437,7 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
 };
 
 const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
-  const [formData, setFormData] = useState(
+  const [formData, setFormData] = useState(() => (
     supplier || {
       id: `NCC${Date.now()}`,
       code: "NCC-NEW",
@@ -451,7 +451,7 @@ const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
       debt: 0,
       notes: [],
     }
-  );
+  ));
 
   const [newNote, setNewNote] = useState("");
   const [editingNoteIndex, setEditingNoteIndex] = useState(null);
