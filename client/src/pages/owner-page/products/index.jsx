@@ -1654,26 +1654,27 @@ export default function OwnerProducts() {
         style={{ backgroundColor: "var(--bg-main)" }}
       >
         {/* HEADER & TABS (Top Right Style) */}
-        <div className="flex items-start justify-between shrink-0 relative pr-[320px]">
+        <div className="flex items-center justify-between shrink-0">
           <div>
-            <h1 className="text-[17px] font-bold text-slate-800 flex items-center gap-2">
-              <Package size={20} className="text-green-600" />
+            <h1 className="text-xl font-bold flex items-center gap-2" style={{ color: "var(--text-main)" }}>
+              <Package size={22} style={{ color: "var(--brand-primary)" }} />
               Quản lý sản phẩm
             </h1>
-            <p className="text-[12px] text-slate-400 mt-0.5">
+            <p className="text-[13px] mt-0.5" style={{ color: "var(--text-placeholder)" }}>
               {filteredProducts.length} sản phẩm ({productTypeFilter === "Tất cả" ? "tất cả loại" : productTypeFilter.toLowerCase()})
             </p>
           </div>
 
-          <div className="absolute top-0 right-0 flex items-center gap-1 bg-gray-100/80 p-1 rounded-xl border border-gray-100 shadow-sm">
+          <div className="flex p-1 rounded-lg" style={{ backgroundColor: "var(--grid-header-bg)", border: "1px solid var(--grid-border)" }}>
             {["Tất cả", "Hàng sẵn", "Hàng mộc", "Hàng khách đặt"].map((type) => (
               <button
                 key={type}
-                onClick={() => setProductTypeFilter(productTypeFilter === type ? "Tất cả" : type)}
-                className={`px-4 py-1.5 rounded-lg text-[12px] font-medium transition-all ${productTypeFilter === type
-                    ? "bg-white text-slate-900 shadow-md shadow-gray-200/40"
-                    : "text-slate-500 hover:text-slate-700 hover:bg-gray-200/50"
-                  }`}
+                onClick={() => setProductTypeFilter(type)}
+                className="px-4 py-1.5 rounded-lg text-[13px] font-semibold transition-all cursor-pointer"
+                style={{
+                  backgroundColor: productTypeFilter === type ? "#fff" : "transparent",
+                  color: productTypeFilter === type ? "var(--text-main)" : "var(--text-secondary)"
+                }}
               >
                 {type}
               </button>
@@ -1682,7 +1683,7 @@ export default function OwnerProducts() {
         </div>
 
         {/* STATUS BAR (Admin Alerts Style) */}
-        <div className="flex items-center gap-3 shrink-0 flex-wrap py-1">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap py-1">
           {[
             { id: "Tất cả", label: "Tất cả" },
             { id: "Chưa định giá", label: "Chưa định giá", color: "red", icon: AlertCircle },
@@ -1691,26 +1692,22 @@ export default function OwnerProducts() {
           ].map((s) => {
             const isActive = statusFilter === s.id;
             const isRedForce = s.color === "red";
+            const sc = s.id !== "Tất cả" ? (isRedForce ? { bg: "#FEF2F2", text: "#B91C1C", border: "#FECACA" } : (s.color === "purple" ? { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" } : { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" })) : null;
 
             return (
               <button
                 key={s.id}
                 onClick={() => setStatusFilter(s.id)}
-                className={`px-4 py-2 rounded-xl text-[12px] font-medium transition-all border flex items-center gap-2 ${isActive
-                    ? isRedForce
-                      ? "bg-red-50 border-red-200 text-red-600 shadow-sm"
-                      : "bg-white border-green-500 text-green-600 shadow-sm"
-                    : "bg-white border-gray-100 text-slate-500 hover:border-gray-200"
-                  }`}
+                className="px-4 py-1.5 rounded-lg text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border"
+                style={{
+                  backgroundColor: isActive ? (sc ? sc.bg : "#fff") : "transparent",
+                  color: isActive ? (sc ? sc.text : "var(--brand-primary)") : "var(--text-secondary)",
+                  borderColor: isActive ? (sc ? sc.border : "var(--grid-border)") : "transparent"
+                }}
               >
-                {s.icon && <s.icon size={14} className={isActive ? "text-red-500" : "text-slate-400"} />}
-                <span className={isActive ? (isRedForce ? "text-red-700" : "text-green-600") : "text-slate-400"}>
-                  {s.label}
-                </span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isActive
-                    ? isRedForce ? "bg-red-100 text-red-600" : "bg-green-50 text-green-600"
-                    : "bg-gray-100 text-slate-400"
-                  }`}>
+                {s.icon && <s.icon size={14} className={isActive ? (isRedForce ? "text-red-500" : "text-[var(--brand-primary)]") : "text-slate-300"} />}
+                {s.label}
+                <span className="text-[10px] opacity-60 bg-black/5 px-1.5 rounded-md ml-0.5">
                   {statusCounts[s.id] || 0}
                 </span>
               </button>
