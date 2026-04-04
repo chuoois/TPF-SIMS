@@ -835,7 +835,7 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                       </div>
                     </div>
 
-                    {/* Per-item Technical Specs: Warranty, Finishing, Paint Labor */}
+                    {/* Per-item Technical Specs: Warranty */}
                     <div className="flex flex-wrap items-center gap-4 mb-6">
                       {/* Warranty Card */}
                       <div className="flex-1 min-w-[140px] flex items-center justify-between px-4 py-2.5 bg-white border border-gray-200 rounded-2xl shadow-sm h-14">
@@ -849,35 +849,6 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                             className="w-16 text-right text-[15px] font-black text-emerald-600 bg-transparent border-none p-0 outline-none focus:ring-0"
                           />
                           <span className="text-[11px] font-bold text-gray-400">tháng</span>
-                        </div>
-                      </div>
-
-                      {/* Finishing Card */}
-                      <div className="flex-1 min-w-[140px] flex items-center justify-between px-4 py-2.5 bg-orange-50/50 border border-orange-100 rounded-2xl shadow-sm h-14">
-                        <label className="text-[11px] font-black text-orange-600 uppercase tracking-tight">HOÀN THIỆN</label>
-                        <div className="flex items-center gap-1.5">
-                          <input 
-                            type="number" 
-                            value={spec.finishingDays}
-                            onChange={(e) => handleUpdateItemSpec(spec.id, "finishingDays", e.target.value)}
-                            disabled={!isProcessing}
-                            className="w-16 text-right text-[15px] font-black text-orange-500 bg-transparent border-none p-0 outline-none focus:ring-0"
-                          />
-                          <span className="text-[11px] font-bold text-orange-300">ngày</span>
-                        </div>
-                      </div>
-
-                      {/* Paint Labor Card */}
-                      <div className="flex-1 min-w-[180px] flex items-center justify-between px-4 py-2.5 bg-indigo-50/50 border border-indigo-100 rounded-2xl shadow-sm h-14">
-                        <label className="text-[11px] font-black text-indigo-600 uppercase tracking-tight">CÔNG SƠN</label>
-                        <div className="flex items-center gap-1.5">
-                          <PriceInput
-                            value={spec.paintLabor}
-                            onChange={(val) => handleUpdateItemSpec(spec.id, "paintLabor", val)}
-                            disabled={!isProcessing}
-                            className="w-24 text-right text-[18px] font-black text-indigo-600 bg-transparent border-none p-0 outline-none focus:ring-0"
-                          />
-                          <span className="text-[11px] font-bold text-indigo-400 font-serif">₫</span>
                         </div>
                       </div>
                     </div>
@@ -980,13 +951,6 @@ const RequirementDetailModal = ({ req, onClose, onAction, onEnlarge }) => {
                   <span className="text-[12px] font-bold text-gray-400 uppercase tracking-wider">Tổng tiền hàng</span>
                   <span className="text-[16px] font-black text-gray-900">
                     {formatVND(estimatedPrice)} <span className="text-[12px] font-bold text-gray-400">₫</span>
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-bold text-indigo-500 uppercase tracking-wider">Tổng tiền công sơn</span>
-                  <span className="text-[16px] font-black text-indigo-600">
-                    {formatVND(itemSpecs.reduce((sum, s) => sum + (Number(s.paintLabor) || 0) * (Number(s.quantity) || 1), 0))} <span className="text-[11px] font-bold text-indigo-400">₫</span>
                   </span>
                 </div>
 

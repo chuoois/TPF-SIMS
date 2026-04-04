@@ -1418,7 +1418,7 @@ export default function OwnerProducts() {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-1">
                           <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-                            Khung thời gian bảo hành (Tháng)
+                            Bảo hành(tháng)
                           </label>
                           <input
                             type="number"

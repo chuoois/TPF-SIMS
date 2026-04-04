@@ -18,74 +18,32 @@ import toast from "react-hot-toast";
 import InvoiceDetailsPopup from "./components/InvoiceDetailsPopup";
 
 const INITIAL_ORDERS = [
-  // ========== NHÓM 1: HÀNG SẴN (Sản phẩm có sẵn tại showroom) ==========
-  {
-    id: "DH-S01", code: "DH-SAN-001", customerName: "Nguyễn Văn Hùng", phone: "0912345678",
-    type: "Hàng sẵn", total: 18500000, status: "Chờ xử lý",
-    date: "2026-03-29T08:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-04-01",
-    deposit: 2000000, fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Bàn ăn gỗ Sồi Nga 6 ghế", specs: "160x80 cm, Sơn màu hạt dẻ" }]
-  },
-  {
-    id: "DH-S02", code: "DH-SAN-002", customerName: "Lê Thị Lan", phone: "0345678901",
-    type: "Hàng sẵn", total: 8500000, status: "Chờ giao hàng",
-    date: "2026-03-28T14:20:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-30",
-    deposit: 8500000, fulfillmentType: "Lấy tại cửa hàng",
-    products: [{ name: "Kệ Tivi gỗ Sồi", specs: "2m2, Cánh mây tự nhiên" }]
-  },
-  {
-    id: "DH-S03", code: "DH-SAN-003", customerName: "Trần Minh Quang", phone: "0909123456",
-    type: "Hàng sẵn", total: 42000000, status: "Đang giao hàng",
-    date: "2026-03-27T09:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-31",
-    deposit: 20000000, fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Bộ Sofa gỗ Sồi chữ U", specs: "Nệm da Hàn Quốc, màu nâu" }]
-  },
-  {
-    id: "DH-S04", code: "DH-SAN-004", customerName: "Phạm Thành Nam", phone: "0987654321",
-    type: "Hàng sẵn", total: 15600000, status: "Hoàn thành",
-    date: "2026-03-25T16:45:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-26",
-    deposit: 15600000, fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Tủ giày thông minh", specs: "Gỗ sồi, 3 tầng cánh lật" }]
-  },
+  // ========== NHÓM 1: HÀNG SẴN (6 Trạng thái) ==========
+  { id: "DH-S01", code: "DH-SAN-001", customerName: "Nguyễn Văn Hùng", phone: "0912345678", type: "Hàng sẵn", total: 18500000, status: "Chờ xử lý", date: "2026-03-29T08:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-04-01", deposit: 2000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Bàn ăn gỗ Sồi Nga 6 ghế", specs: "160x80 cm, Sơn màu hạt dẻ" }] },
+  { id: "DH-S02", code: "DH-SAN-002", customerName: "Lê Thị Lan", phone: "0345678901", type: "Hàng sẵn", total: 8500000, status: "Chờ giao hàng", date: "2026-03-28T14:20:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-30", deposit: 8500000, fulfillmentType: "Lấy tại cửa hàng", products: [{ name: "Kệ Tivi gỗ Sồi", specs: "2m2, Cánh mây tự nhiên" }] },
+  { id: "DH-S03", code: "DH-SAN-003", customerName: "Trần Minh Quang", phone: "0909123456", type: "Hàng sẵn", total: 42000000, status: "Đang giao hàng", date: "2026-03-27T09:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-31", deposit: 20000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Bộ Sofa gỗ Sồi chữ U", specs: "Nệm da Hàn Quốc, màu nâu" }] },
+  { id: "DH-S04", code: "DH-SAN-004", customerName: "Phạm Thành Nam", phone: "0987654321", type: "Hàng sẵn", total: 15600000, status: "Hoàn thành", date: "2026-03-25T16:45:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-26", deposit: 15600000, fulfillmentType: "Giao tận nơi", products: [{ name: "Tủ giày thông minh", specs: "Gỗ sồi, 3 tầng cánh lật" }] },
+  { id: "DH-S05", code: "DH-SAN-005", customerName: "Ngô Quốc Bảo", phone: "0901222333", type: "Hàng sẵn", total: 12800000, status: "Chờ duyệt hủy", date: "2026-03-20T10:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-22", deposit: 5000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Bàn làm việc Giám đốc", specs: "Gỗ Gụ, 1m6x80cm" }] },
+  { id: "DH-S06", code: "DH-SAN-006", customerName: "Nguyễn Trung Kiên", phone: "0344111222", type: "Hàng sẵn", total: 5500000, status: "Đơn đã hủy", date: "2026-03-10T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-12", deposit: 1000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Ghế xoay văn phòng ĐK", specs: "Lưới đen, ben hơi" }] },
 
-  // ========== NHÓM 2: HÀNG MỘC (Cần hoàn thiện sơn/đánh bóng) ==========
-  {
-    id: "DH-T01", code: "DH-MOC-001", customerName: "Hoàng Nguyệt Ánh", phone: "0978901234",
-    type: "Hàng mộc", total: 56000000, status: "Chờ xử lý",
-    date: "2026-03-30T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-04-10",
-    deposit: 10000000, fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Sập thờ Tứ Linh", specs: "Gỗ mít, Chân 18, Dạ 5 phân" }]
-  },
-  {
-    id: "DH-T02", code: "DH-MOC-002", customerName: "Đặng Tuấn Kiệt", phone: "0931234567",
-    type: "Hàng mộc", total: 32000000, status: "Đang gia công",
-    date: "2026-03-28T15:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-04-05",
-    deposit: 15000000, fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Bộ bàn ghế Âu Á", specs: "Gỗ Hương Đá, Chương voi" }]
-  },
+  // ========== NHÓM 2: HÀNG MỘC (7 Trạng thái) ==========
+  { id: "DH-T01", code: "DH-MOC-001", customerName: "Hoàng Nguyệt Ánh", phone: "0978901234", type: "Hàng mộc", total: 56000000, status: "Chờ xử lý", date: "2026-03-30T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-04-10", deposit: 10000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Sập thờ Tứ Linh", specs: "Gỗ mít, Chân 18, Dạ 5 phân" }] },
+  { id: "DH-T02", code: "DH-MOC-002", customerName: "Đặng Tuấn Kiệt", phone: "0931234567", type: "Hàng mộc", total: 32000000, status: "Đang gia công", date: "2026-03-28T15:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-04-05", deposit: 15000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Bộ bàn ghế Âu Á", specs: "Gỗ Hương Đá, Chương voi" }] },
+  { id: "DH-T03", code: "DH-MOC-003", customerName: "Vũ Tuấn Anh", phone: "0344555666", type: "Hàng mộc", total: 24500000, status: "Chờ giao hàng", date: "2026-03-15T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-25", deposit: 24500000, fulfillmentType: "Giao tận nơi", products: [{ name: "Kệ tivi gỗ Hương Đá", specs: "Dài 2m4, mẫu hoa hồng" }] },
+  { id: "DH-T04", code: "DH-MOC-004", customerName: "Lê Văn Lộc", phone: "0966777888", type: "Hàng mộc", total: 48000000, status: "Đang giao hàng", date: "2026-03-26T14:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-28", deposit: 10000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Giường ngủ chữ X", specs: "Gỗ Gõ đỏ, 1m8x2m" }] },
+  { id: "DH-T05", code: "DH-MOC-005", customerName: "Trần Thế Vinh", phone: "0333999000", type: "Hàng mộc", total: 15000000, status: "Hoàn thành", date: "2026-03-20T08:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-22", deposit: 15000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Tab đầu giường", specs: "Gỗ sồi, 2 ngăn kéo" }] },
+  { id: "DH-T06", code: "DH-MOC-006", customerName: "Phạm Hữu Tài", phone: "0355111222", type: "Hàng mộc", total: 22000000, status: "Chờ duyệt hủy", date: "2026-03-22T11:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-24", deposit: 5000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Bàn phấn trang điểm", specs: "Gỗ Gõ, gương tròn" }] },
+  { id: "DH-T07", code: "DH-MOC-007", customerName: "Trịnh Gia Bảo", phone: "0944000333", type: "Hàng mộc", total: 12000000, status: "Đơn đã hủy", date: "2026-03-05T14:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-07", deposit: 2000000, fulfillmentType: "Lấy tại xưởng", products: [{ name: "Ghế đôn gỗ Trắc", specs: "Đường kính 30cm" }] },
 
-  // ========== NHÓM 3: HÀNG KHÁCH ĐẶT (Sản xuất mới theo yêu cầu) ==========
-  {
-    id: "DH-D01", code: "DH-DAT-001", customerName: "Nguyễn Thị Hồng", phone: "0912123123",
-    type: "Hàng khách đặt", total: 125000000, status: "Chờ sản xuất",
-    date: "2026-03-30T11:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-04-30",
-    deposit: 40000000, fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Trường kỷ Sen Vịt", specs: "Gỗ Gụ Lào, 2m17, Đục tay kỹ" }]
-  },
-  {
-    id: "DH-D02", code: "DH-DAT-002", customerName: "Lê Văn Tám", phone: "0321654987",
-    type: "Hàng khách đặt", total: 75000000, status: "Đã nhập kho",
-    date: "2026-03-25T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-04-05",
-    deposit: 30000000, fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Tủ chè khảm trai", specs: "Gỗ Gụ, Cánh cong đục tích" }]
-  },
-  {
-    id: "DH-D03", code: "DH-DAT-003", customerName: "Bùi Tiến Dũng", phone: "0911223344",
-    type: "Hàng khách đặt", total: 210000000, status: "Hoàn thành",
-    date: "2026-03-05T08:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-15",
-    deposit: 210000000, fulfillmentType: "Giao tận nơi",
-    deliveryImage: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=400"
-  },
+  // ========== NHÓM 3: HÀNG KHÁCH ĐẶT (8 Trạng thái) ==========
+  { id: "DH-D01", code: "DH-DAT-001", customerName: "Nguyễn Thị Hồng", phone: "0912123123", type: "Hàng khách đặt", total: 125000000, status: "Chờ sản xuất", date: "2026-03-30T11:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-04-30", deposit: 40000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Trường kỷ Sen Vịt", specs: "Gỗ Gụ Lào, 2m17, Đục tay kỹ" }] },
+  { id: "DH-D02", code: "DH-DAT-002", customerName: "Lê Văn Tám", phone: "0321654987", type: "Hàng khách đặt", total: 75000000, status: "Đã nhập kho", date: "2026-03-25T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-04-05", deposit: 30000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Tủ chè khảm trai", specs: "Gỗ Gụ, Cánh cong đục tích" }] },
+  { id: "DH-D03", code: "DH-DAT-003", customerName: "Bùi Tiến Dũng", phone: "0911223344", type: "Hàng khách đặt", total: 210000000, status: "Hoàn thành", date: "2026-03-05T08:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-15", deposit: 210000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Bộ bàn ghế Âu Á siêu phẩm", specs: "Gỗ Cẩm Lai, nạm ngọc" }] },
+  { id: "DH-D04", code: "DH-DAT-004", customerName: "Đỗ Mạnh Hùng", phone: "0988000111", type: "Hàng khách đặt", total: 45000000, status: "Đang gia công", date: "2026-03-20T14:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-04-02", deposit: 20000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Bàn ăn tròn 8 ghế", specs: "Gỗ Cẩm Lai, nạm ngọc" }] },
+  { id: "DH-D05", code: "DH-DAT-005", customerName: "Lý Thành Nam", phone: "0311222333", type: "Hàng khách đặt", total: 18000000, status: "Đơn đã hủy", date: "2026-03-10T11:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-12", deposit: 5000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Đôn gỗ trang trí", specs: "Gỗ sồi, mạ bạc" }] },
+  { id: "DH-D06", code: "DH-DAT-006", customerName: "Trương Mỹ Linh", phone: "0900111222", type: "Hàng khách đặt", total: 85000000, status: "Chờ giao hàng", date: "2026-03-18T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-28", deposit: 30000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Tủ rượu âm tường", specs: "Gỗ Gõ đỏ, kính cường lực" }] },
+  { id: "DH-D07", code: "DH-DAT-007", customerName: "Kiều Minh Tâm", phone: "0922333444", type: "Hàng khách đặt", total: 120000000, status: "Đang giao hàng", date: "2026-03-12T15:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-26", deposit: 50000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Bộ bàn ghế Minh Quốc", specs: "Gỗ Mun Lào, 10 món" }] },
+  { id: "DH-D08", code: "DH-DAT-008", customerName: "Tạ Thu Thủy", phone: "0377444555", type: "Hàng khách đặt", total: 65000000, status: "Chờ duyệt hủy", date: "2026-03-27T08:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-04-15", deposit: 15000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Án gian thờ khảm trai", specs: "Gỗ Gụ, 1m97x97cm" }] },
 ];
 
 const ORDER_TYPES = ["Hàng sẵn", "Hàng mộc", "Hàng khách đặt"];
