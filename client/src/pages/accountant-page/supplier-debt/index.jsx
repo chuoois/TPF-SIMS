@@ -19,9 +19,12 @@ import {
   Camera,
   Plus,
   Image as ImageIcon,
+  Download,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { cn } from "@/lib/utils";
+import * as XLSX from "xlsx";
+import { toast } from "react-hot-toast";
 
 // ===================== STATIC DATA =====================
 const INITIAL_SUPPLIERS = [
@@ -641,6 +644,38 @@ export default function AccountantSupplierDebt() {
   const hasActiveFilters = !!(searchTerm || dateFrom || dateTo);
   const clearAllFilters = () => { setSearchTerm(""); setDateFrom(""); setDateTo(""); setCurrentPage(1); };
 
+  const handleExportExcel = () => {
+    try {
+      const dataToExport = filtered.map(s => ({
+        "Mã NCC": s.code,
+        "Nhà cung cấp": s.name,
+        "Người liên hệ": s.contactPerson,
+        "Số điện thoại": s.phone,
+        "Địa chỉ": s.address,
+        "Nhóm": s.group,
+        "Tổng giá trị nhập": s.totalImport,
+        "Đã thanh toán": s.totalImport - s.debt,
+        "Dư nợ": s.debt,
+        "Trạng thái": s.debt > 0 ? "Còn nợ" : "Đã tất toán"
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(dataToExport);
+      const wscols = [
+        { wch: 15 }, { wch: 30 }, { wch: 20 }, { wch: 15 }, { wch: 40 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 15 }
+      ];
+      ws['!cols'] = wscols;
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "CongNoThuMua");
+
+      XLSX.writeFile(wb, `CongNoThuMua_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      toast.success("Xuất file Excel thành công!", { style: { fontSize: "14px", fontWeight: "bold" } });
+    } catch (error) {
+      console.error("Lỗi xuất excel:", error);
+      toast.error("Không thể xuất file Excel");
+    }
+  };
+
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
@@ -748,11 +783,18 @@ export default function AccountantSupplierDebt() {
               </div>
             </div>
 
-            {hasActiveFilters && (
-              <button onClick={clearAllFilters} className="h-9 px-3 rounded-lg text-[12px] font-bold text-red-600 hover:bg-red-50 transition border border-transparent hover:border-red-100 cursor-pointer">
-                Xóa bộ lọc
+            <div className="flex items-center gap-2">
+              {hasActiveFilters && (
+                <button onClick={clearAllFilters} className="h-9 px-3 rounded-lg text-[12px] font-bold text-red-600 hover:bg-red-50 transition border border-transparent hover:border-red-100 cursor-pointer">
+                  Xóa bộ lọc
+                </button>
+              )}
+              <button onClick={handleExportExcel}
+                className="h-9 px-4 rounded-lg flex items-center gap-2 text-[13px] font-bold cursor-pointer transition focus:ring-2"
+                style={{ backgroundColor: "var(--brand-primary)", color: "#fff" }}>
+                <Download size={14} strokeWidth={2.5} /> Xuất Excel
               </button>
-            )}
+            </div>
           </div>
 
           {/* Table */}
