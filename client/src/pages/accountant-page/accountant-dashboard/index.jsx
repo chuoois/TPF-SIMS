@@ -17,13 +17,18 @@ import {
     XCircle,
     Clock,
 } from "lucide-react";
+import {
+    ALL_PRODUCTS,
+    INIT_IMPORTS,
+    CATEGORIES,
+} from "../mockData";
 
 /**
  * AccountantDashboard – Tổng quan kho hàng
- * Static mock data – phù hợp với trang Kho Hàng và Nhập Hàng
+ * Dữ liệu động được tính toán trực tiếp từ ALL_PRODUCTS và INIT_IMPORTS
  *
  * Created By: HieuNM
- * Updated: 17/03/2026 – thêm bảng cảnh báo hàng sắp hết
+ * Updated: Tích hợp logic tính toán thực tế từ trang Kho Hàng và trang Nhập Hàng.
  */
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -62,88 +67,35 @@ const StatCard = ({ icon: Icon, label, value, sub, color, to }) => {
     return to ? <Link to={to} className="block">{content}</Link> : content;
 };
 
-// ── Mock data khớp với accountant-product ────────────────────────────────────
-// Sản phẩm dưới định mức tồn kho (stock <= minStock), chỉ lấy FINISHED vì RAW/CUSTOM không có minStock
-const LOW_STOCK_PRODUCTS = [
-    {
-        id: "P007", sku: "KTV-HS-180x45x55-Tran",
-        name: "Kệ tivi nguyên khối mặt liền",
-        type: "FINISHED", category: "Phòng khách",
-        stock: 0, minStock: 1,
-    },
-    {
-        id: "P010", sku: "TRU-HS-120x40x180-OcCho",
-        name: "Tủ rượu nguyên khối cánh kính",
-        type: "FINISHED", category: "Phòng khách",
-        stock: 1, minStock: 1,
-    },
-    {
-        id: "P003", sku: "STM-HS-200x100x60-Chay",
-        name: "Sập thờ Mai Điểu chân 20",
-        type: "FINISHED", category: "Phòng thờ",
-        stock: 1, minStock: 2,
-    },
-];
-
-const STATS = {
-    totalProducts: 16,
-    finishedCount: 8,
-    rawCount: 4,
-    customCount: 4,
-    totalCategories: 4,
-    lowStockCount: LOW_STOCK_PRODUCTS.length,
-    totalInventoryQty: 98,
-};
-
-// Top 5 phiếu nhập gần nhất (khớp với INIT_IMPORTS trong accountant-import)
-const RECENT_IMPORTS = [
-    {
-        id: "NK001", code: "NK-0703-001", date: "2026-03-07T08:30:00",
-        product: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món", supplier: "Xưởng Minh Đức",
-        qty: 5, totalPrice: 190000000,
-    },
-    {
-        id: "NK002", code: "NK-0703-002", date: "2026-03-07T09:00:00",
-        product: "Sofa nguyên khối chữ L", supplier: "Xưởng Tiến Phát",
-        qty: 3, totalPrice: 75000000,
-    },
-    {
-        id: "NK003", code: "NK-0603-001", date: "2026-03-06T14:00:00",
-        product: "Sập thờ Mai Điểu chân 20", supplier: "Xưởng Minh Đức",
-        qty: 2, totalPrice: 36000000,
-    },
-    {
-        id: "NK004", code: "NK-0503-001", date: "2026-03-05T10:30:00",
-        product: "Bộ bàn ăn 8 ghế nguyên khối", supplier: "Xưởng An Bình",
-        qty: 4, totalPrice: 128000000,
-    },
-    {
-        id: "NK005", code: "NK-0403-001", date: "2026-03-04T08:00:00",
-        product: "Tủ quần áo 4 cánh chạm hoa lá tây", supplier: "Xưởng Tiến Phát",
-        qty: 6, totalPrice: 132000000,
-    },
-];
-
-// Phân bổ loại hàng
-const TYPE_STATS = [
-    { label: "Hàng có sẵn", value: STATS.finishedCount, icon: CheckCircle, badge: TYPE_BADGE.FINISHED },
-    { label: "Hàng mộc", value: STATS.rawCount, icon: Hammer, badge: TYPE_BADGE.RAW },
-    { label: "Khách đặt", value: STATS.customCount, icon: Users, badge: TYPE_BADGE.CUSTOM },
-];
-
-// ── Urgency helper ────────────────────────────────────────────────────────────
-const getUrgency = (stock, minStock) => {
-    if (stock === 0) return { label: "Đã hết", bg: "#FEF2F2", text: "#DC2626", border: "#FECACA", Icon: XCircle };
-    if (stock <= minStock) return { label: "Sắp hết", bg: "#FFFBEB", text: "#D97706", border: "#FDE68A", Icon: AlertTriangle };
-    return null;
-};
-
-// ── Hỗ trợ tính ngày tồn kho ──────────────────────────────────────────────────
+// ── Hỗ trợ tính ngày tồn kho theo logic mới (giống trang Kho hàng) ───────────
 const TODAY_DB = new Date("2026-03-17");
-const getDaysInStockDB = (importedAt) => {
-    if (!importedAt) return null;
-    return Math.floor((TODAY_DB - new Date(importedAt)) / (1000 * 60 * 60 * 24));
+
+const getImportDateRange = (p) => {
+    let dates = [];
+    if (p.lots && p.lots.length > 0) {
+        p.lots.forEach((lot) => {
+            if (lot.importDate) dates.push(new Date(lot.importDate));
+            if (lot.units) {
+                lot.units.forEach((u) => {
+                    if (u.importDate) dates.push(new Date(u.importDate));
+                });
+            }
+        });
+    } else if (p.importedAt) {
+        dates.push(new Date(p.importedAt));
+    }
+    if (dates.length === 0) return null;
+
+    dates.sort((a, b) => a.getTime() - b.getTime());
+    return { first: dates[0], last: dates[dates.length - 1] };
 };
+
+const getDaysInStockDB = (p) => {
+    const range = getImportDateRange(p);
+    if (!range) return null;
+    return Math.floor((TODAY_DB - range.first) / (1000 * 60 * 60 * 24));
+};
+
 const getDaysStyleDB = (days) => {
     if (days === null) return null;
     if (days > 60) return { bg: "#FEF2F2", text: "#DC2626", border: "#FECACA", label: `${days} ngày` };
@@ -151,17 +103,43 @@ const getDaysStyleDB = (days) => {
     return { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0", label: `${days} ngày` };
 };
 
-// ── Mock data: Hàng tồn lâu (importedAt > 60 ngày) ────────────────────────────
-const LONG_STAY_PRODUCTS = [
-    { id: "P010", name: "Tủ rượu nguyên khối cánh kính", sku: "TRU-HS-120x40x180-OcCho", category: "Phòng khách", type: "FINISHED", stock: 1, importedAt: "2025-11-15", importPrice: 19000000 },
-    { id: "P007", name: "Kệ tivi nguyên khối mặt liền", sku: "KTV-HS-180x45x55-Tran", category: "Phòng khách", type: "FINISHED", stock: 0, importedAt: "2025-12-01", importPrice: 22000000 },
-    { id: "P001", name: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món", sku: "BBG-HS-180x90x75-Huong", category: "Phòng khách", type: "FINISHED", stock: 5, importedAt: "2025-12-20", importPrice: 38000000 },
-    { id: "P004", name: "Giường ngủ hoa hồng Tân cổ điển (mộc)", sku: "GNG-HM-200x160x50-raw", category: "Phòng ngủ", type: "RAW", stock: 8, importedAt: "2025-12-10", importPrice: 12000000 },
-    { id: "P012", name: "Ghế chạm hoa văn (mộc)", sku: "GHV-HM-45x45x95-raw", category: "Phòng ăn", type: "RAW", stock: 20, importedAt: "2025-10-01", importPrice: 3500000 },
-];
+// ── Urgency helper dựa trên số lượng available ──────────────────────────────
+const getUrgency = (p) => {
+    const available = p.stockBreakdown?.available ?? p.stock;
+    if (available === 0) return { label: "Đã hết", bg: "#FEF2F2", text: "#DC2626", border: "#FECACA", Icon: XCircle };
+    if (available <= p.minStock) return { label: "Sắp hết", bg: "#FFFBEB", text: "#D97706", border: "#FDE68A", Icon: AlertTriangle };
+    return null;
+};
+
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 export default function AccountantDashboard() {
+    // ── Tính toán động từ mockData ──────────────────────────────────────────
+    const LOW_STOCK_PRODUCTS = ALL_PRODUCTS.filter(
+        (p) => p.type === "FINISHED" && p.minStock != null && (p.stockBreakdown?.available ?? p.stock) <= p.minStock
+    );
+
+    const LONG_STAY_PRODUCTS = ALL_PRODUCTS.filter((p) => getDaysInStockDB(p) > 60);
+
+    const STATS = {
+        totalProducts: ALL_PRODUCTS.length,
+        totalInventoryQty: ALL_PRODUCTS.reduce((acc, p) => acc + p.stock, 0),
+        lowStockCount: LOW_STOCK_PRODUCTS.length,
+        totalCategories: CATEGORIES.length,
+        finishedCount: ALL_PRODUCTS.filter((p) => p.type === "FINISHED").length,
+        rawCount: ALL_PRODUCTS.filter((p) => p.type === "RAW").length,
+        customCount: ALL_PRODUCTS.filter((p) => p.type === "CUSTOM").length,
+    };
+
+    const TYPE_STATS = [
+        { label: "Hàng có sẵn", value: STATS.finishedCount, icon: CheckCircle, badge: TYPE_BADGE.FINISHED },
+        { label: "Hàng mộc", value: STATS.rawCount, icon: Hammer, badge: TYPE_BADGE.RAW },
+        { label: "Khách đặt", value: STATS.customCount, icon: Users, badge: TYPE_BADGE.CUSTOM },
+    ];
+
+    // Chỉ lấy 5 phiếu nhập gần nhất
+    const RECENT_IMPORTS = INIT_IMPORTS.slice(0, 5);
+
     const kpiCards = [
         {
             icon: Package,
@@ -244,7 +222,7 @@ export default function AccountantDashboard() {
                                 <thead>
                                     <tr className="border-y bg-red-50/60">
                                         <th className="text-left py-2 px-5 font-medium text-red-700 text-[11px] uppercase tracking-wider">Sản phẩm</th>
-                                        <th className="text-left py-2 px-3 font-medium text-red-700 text-[11px] uppercase tracking-wider">Mã SKU</th>
+                                        <th className="text-left py-2 px-3 font-medium text-red-700 text-[11px] uppercase tracking-wider">Mã sản phẩm</th>
                                         <th className="text-left py-2 px-3 font-medium text-red-700 text-[11px] uppercase tracking-wider">Danh mục</th>
                                         <th className="text-center py-2 px-3 font-medium text-red-700 text-[11px] uppercase tracking-wider">Tồn kho</th>
                                         <th className="text-center py-2 px-3 font-medium text-red-700 text-[11px] uppercase tracking-wider">Tối thiểu</th>
@@ -254,7 +232,7 @@ export default function AccountantDashboard() {
                                 </thead>
                                 <tbody>
                                     {LOW_STOCK_PRODUCTS.map((p, idx) => {
-                                        const urgency = getUrgency(p.stock, p.minStock);
+                                        const urgency = getUrgency(p);
                                         return (
                                             <tr
                                                 key={p.id}
@@ -277,8 +255,8 @@ export default function AccountantDashboard() {
                                                 </td>
                                                 {/* Tồn kho */}
                                                 <td className="py-3 px-3 text-center">
-                                                    <span className="text-[15px] font-bold" style={{ color: p.stock === 0 ? "#DC2626" : "#D97706" }}>
-                                                        {p.stock}
+                                                    <span className="text-[15px] font-bold" style={{ color: (p.stockBreakdown?.available ?? p.stock) === 0 ? "#DC2626" : "#D97706" }}>
+                                                        {p.stockBreakdown?.available ?? p.stock}
                                                     </span>
                                                 </td>
                                                 {/* Tối thiểu */}
@@ -337,7 +315,7 @@ export default function AccountantDashboard() {
                                 <thead>
                                     <tr className="border-y bg-orange-50/60">
                                         <th className="text-left py-2 px-5 font-medium text-orange-700 text-[11px] uppercase tracking-wider">Sản phẩm</th>
-                                        <th className="text-left py-2 px-3 font-medium text-orange-700 text-[11px] uppercase tracking-wider">Mã SKU</th>
+                                        <th className="text-left py-2 px-3 font-medium text-orange-700 text-[11px] uppercase tracking-wider">Mã sản phẩm</th>
                                         <th className="text-left py-2 px-3 font-medium text-orange-700 text-[11px] uppercase tracking-wider">Danh mục</th>
                                         <th className="text-left py-2 px-3 font-medium text-orange-700 text-[11px] uppercase tracking-wider">Loại hàng</th>
                                         <th className="text-center py-2 px-3 font-medium text-orange-700 text-[11px] uppercase tracking-wider">Tồn kho</th>
@@ -348,7 +326,7 @@ export default function AccountantDashboard() {
                                 </thead>
                                 <tbody>
                                     {LONG_STAY_PRODUCTS.map((p, idx) => {
-                                        const days = getDaysInStockDB(p.importedAt);
+                                        const days = getDaysInStockDB(p);
                                         const ds = getDaysStyleDB(days);
                                         const badge = TYPE_BADGE[p.type];
                                         const capitalTied = p.stock * p.importPrice;
