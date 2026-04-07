@@ -19,46 +19,7 @@ import {
 } from "lucide-react";
 
 // ===================== STATIC DATA =====================
-const MOCK_DATA = {
-    customerDebt: {
-        totalOrders: 5,
-        remainingDebtOrders: 4,
-        totalRemainingDebt: 53700000,
-        settledOrders: 1,
-        recentDebts: [
-            { code: "HD260314A1B2C3", customer: "Nguyễn Văn A", total: 15500000, paid: 5000000, date: "10/03/2026" },
-            { code: "HD260312X7Y8Z9", customer: "Lê Minh C",    total: 25000000, paid: 10000000, date: "05/03/2026" },
-            { code: "HD260313D4E5F6", customer: "Trần Thị B",   total: 8200000,  paid: 3000000, date: "12/03/2026" },
-        ]
-    },
-    supplierDebt: {
-        totalSuppliers: 4,
-        debtSuppliers: 3,
-        totalRemainingDebt: 550000000,
-        settledSuppliers: 1,
-        recentSuppliers: [
-            { code: "NCC-TAM",  name: "Xưởng gỗ mỹ nghệ Thành Tâm",    totalImport: 1250000000, debt: 350000000 },
-            { code: "NCC-PHAT", name: "Xưởng mộc nội thất Gia Phát",    totalImport: 890000000,  debt: 120000000 },
-            { code: "NCC-MINH", name: "Cơ sở sản xuất gỗ Minh Long",    totalImport: 620000000,  debt: 80000000 },
-            { code: "NCC-HAI",  name: "Tổng kho gỗ nguyên liệu Nam Hải", totalImport: 4500000000, debt: 0 },
-        ]
-    },
-    employeeSalary: {
-        month: "03/2026",
-        totalEmployees: 6,
-        unpaidCount: 4,
-        paidCount: 2,
-        totalFund: 74000000,
-        recentSalaries: [
-            { id: "NV001", name: "Nguyễn Thị Mai", role: "Nhân viên bán hàng", type: "SALES",   calc: "Lương tháng cố định",    total: 11000000, status: "Chưa thanh toán" },
-            { id: "NV002", name: "Trần Văn Khoa",  role: "Nhân viên bán hàng", type: "SALES",   calc: "Lương tháng cố định",    total: 8500000,  status: "Đã thanh toán" },
-            { id: "NV003", name: "Lê Đình Chinh",  role: "Nhân viên giấy ráp", type: "SANDER",  calc: "400.000₫ × 22 ngày",     total: 8800000,  status: "Chưa thanh toán" },
-            { id: "NV004", name: "Phạm Xuân Đạt",  role: "Nhân viên giấy ráp", type: "SANDER",  calc: "400.000₫ × 25 ngày",     total: 10200000, status: "Chưa thanh toán" },
-            { id: "NV005", name: "Đỗ Hữu Hùng",   role: "Thợ sơn",            type: "PAINTER", calc: "150.000₫ × 120 SP",      total: 18000000, status: "Chưa thanh toán" },
-            { id: "NV006", name: "Vũ Tấn Tài",    role: "Thợ sơn",            type: "PAINTER", calc: "200.000₫ × 85 SP",       total: 17500000, status: "Đã thanh toán" },
-        ]
-    }
-};
+import { HOME_MOCK_DATA as MOCK_DATA } from "../mockData";
 
 // ===================== HELPERS =====================
 const formatCurrency = (value) => {

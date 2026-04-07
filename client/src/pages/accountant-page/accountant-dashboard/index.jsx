@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,12 @@ import {
     XCircle,
     Clock,
 } from "lucide-react";
+import {
+    DASHBOARD_LOW_STOCK,
+    DASHBOARD_STATS,
+    DASHBOARD_RECENT_IMPORTS,
+    DASHBOARD_LONG_STAY,
+} from "../mockData";
 
 /**
  * AccountantDashboard – Tổng quan kho hàng
@@ -62,67 +68,11 @@ const StatCard = ({ icon: Icon, label, value, sub, color, to }) => {
     return to ? <Link to={to} className="block">{content}</Link> : content;
 };
 
-// ── Mock data khớp với accountant-product ────────────────────────────────────
-// Sản phẩm dưới định mức tồn kho (stock <= minStock), chỉ lấy FINISHED vì RAW/CUSTOM không có minStock
-const LOW_STOCK_PRODUCTS = [
-    {
-        id: "P007", sku: "KTV-HS-180x45x55-Tran",
-        name: "Kệ tivi nguyên khối mặt liền",
-        type: "FINISHED", category: "Phòng khách",
-        stock: 0, minStock: 1,
-    },
-    {
-        id: "P010", sku: "TRU-HS-120x40x180-OcCho",
-        name: "Tủ rượu nguyên khối cánh kính",
-        type: "FINISHED", category: "Phòng khách",
-        stock: 1, minStock: 1,
-    },
-    {
-        id: "P003", sku: "STM-HS-200x100x60-Chay",
-        name: "Sập thờ Mai Điểu chân 20",
-        type: "FINISHED", category: "Phòng thờ",
-        stock: 1, minStock: 2,
-    },
-];
-
-const STATS = {
-    totalProducts: 16,
-    finishedCount: 8,
-    rawCount: 4,
-    customCount: 4,
-    totalCategories: 4,
-    lowStockCount: LOW_STOCK_PRODUCTS.length,
-    totalInventoryQty: 98,
-};
-
-// Top 5 phiếu nhập gần nhất (khớp với INIT_IMPORTS trong accountant-import)
-const RECENT_IMPORTS = [
-    {
-        id: "NK001", code: "NK-0703-001", date: "2026-03-07T08:30:00",
-        product: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món", supplier: "Xưởng Minh Đức",
-        qty: 5, totalPrice: 190000000,
-    },
-    {
-        id: "NK002", code: "NK-0703-002", date: "2026-03-07T09:00:00",
-        product: "Sofa nguyên khối chữ L", supplier: "Xưởng Tiến Phát",
-        qty: 3, totalPrice: 75000000,
-    },
-    {
-        id: "NK003", code: "NK-0603-001", date: "2026-03-06T14:00:00",
-        product: "Sập thờ Mai Điểu chân 20", supplier: "Xưởng Minh Đức",
-        qty: 2, totalPrice: 36000000,
-    },
-    {
-        id: "NK004", code: "NK-0503-001", date: "2026-03-05T10:30:00",
-        product: "Bộ bàn ăn 8 ghế nguyên khối", supplier: "Xưởng An Bình",
-        qty: 4, totalPrice: 128000000,
-    },
-    {
-        id: "NK005", code: "NK-0403-001", date: "2026-03-04T08:00:00",
-        product: "Tủ quần áo 4 cánh chạm hoa lá tây", supplier: "Xưởng Tiến Phát",
-        qty: 6, totalPrice: 132000000,
-    },
-];
+// ── Aliases (giữ tương thích với JSX bên dưới) ─────────────────────────────────
+const LOW_STOCK_PRODUCTS = DASHBOARD_LOW_STOCK;
+const STATS = DASHBOARD_STATS;
+const RECENT_IMPORTS = DASHBOARD_RECENT_IMPORTS;
+const LONG_STAY_PRODUCTS = DASHBOARD_LONG_STAY;
 
 // Phân bổ loại hàng
 const TYPE_STATS = [
@@ -151,14 +101,6 @@ const getDaysStyleDB = (days) => {
     return { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0", label: `${days} ngày` };
 };
 
-// ── Mock data: Hàng tồn lâu (importedAt > 60 ngày) ────────────────────────────
-const LONG_STAY_PRODUCTS = [
-    { id: "P010", name: "Tủ rượu nguyên khối cánh kính", sku: "TRU-HS-120x40x180-OcCho", category: "Phòng khách", type: "FINISHED", stock: 1, importedAt: "2025-11-15", importPrice: 19000000 },
-    { id: "P007", name: "Kệ tivi nguyên khối mặt liền", sku: "KTV-HS-180x45x55-Tran", category: "Phòng khách", type: "FINISHED", stock: 0, importedAt: "2025-12-01", importPrice: 22000000 },
-    { id: "P001", name: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món", sku: "BBG-HS-180x90x75-Huong", category: "Phòng khách", type: "FINISHED", stock: 5, importedAt: "2025-12-20", importPrice: 38000000 },
-    { id: "P004", name: "Giường ngủ hoa hồng Tân cổ điển (mộc)", sku: "GNG-HM-200x160x50-raw", category: "Phòng ngủ", type: "RAW", stock: 8, importedAt: "2025-12-10", importPrice: 12000000 },
-    { id: "P012", name: "Ghế chạm hoa văn (mộc)", sku: "GHV-HM-45x45x95-raw", category: "Phòng ăn", type: "RAW", stock: 20, importedAt: "2025-10-01", importPrice: 3500000 },
-];
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 export default function AccountantDashboard() {
