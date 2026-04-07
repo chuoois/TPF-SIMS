@@ -194,17 +194,17 @@ export const MOCK_ORDERS_DETAIL = {
     ],
   },
 
-  // ========== NHÓM 2: HÀNG THÔ ==========
+  // ========== NHÓM 2: HÀNG MỘC ==========
   "DH-T01": {
     code: "DH-THO-001",
-    type: "Hàng thô",
+    type: "Hàng mộc",
     status: "Chờ xử lý",
     date: "2026-03-12T10:00:00",
     deliveryDate: "2026-03-20",
     customer: {
       name: "Hoàng Nguyệt Ánh",
       phone: "0978901234",
-      address: "TP.HCM",
+      address: "45 Đường Nguyễn Trãi, Thanh Xuân, Hà Nội",
     },
     salesPerson: "Bình Nguyễn",
     total: 56000000,
@@ -212,14 +212,14 @@ export const MOCK_ORDERS_DETAIL = {
     paymentStatus: "partial",
     products: [
       {
-        name: "Sập thờ",
-        material: "Gỗ mít",
-        size: "220",
-        finish: "Mộc",
-        pattern: "Tứ linh",
+        name: "Sập thờ gỗ mít",
+        material: "Gỗ mít ta",
+        size: "217×107×127 cm",
+        finish: "Để mộc bản",
+        pattern: "Tứ linh hội tụ",
         qty: 1,
         price: 56000000,
-        note: "Khách yêu cầu làm mộc kỹ như ảnh mẫu",
+        note: "Khách yêu cầu chọn gỗ lõi, không rác, làm mộc kỹ.",
       },
     ],
     sampleImages: [
@@ -229,10 +229,174 @@ export const MOCK_ORDERS_DETAIL = {
     timeline: [
       {
         time: "12/03/2026 10:00",
-        label: "Tạo đơn",
-        desc: "Nhận mộc",
+        label: "Tiếp nhận đơn",
+        desc: "Đơn hàng mộc",
         active: true,
       },
+    ],
+  },
+  "DH-T02": {
+    code: "DH-THO-002",
+    type: "Hàng mộc",
+    status: "Đang gia công",
+    date: "2026-03-11T15:30:00",
+    deliveryDate: "2026-03-15",
+    customer: {
+      name: "Đặng Tuấn Kiệt",
+      phone: "0931234567",
+      address: "KĐT Ecopark, Hưng Yên",
+    },
+    salesPerson: "Bình Nguyễn",
+    total: 8200000,
+    deposit: 3000000,
+    products: [
+      {
+        name: "Đôn gỗ trang trí",
+        material: "Gỗ hương đá",
+        size: "40×40×80 cm",
+        finish: "Mộc",
+        qty: 2,
+        price: 4100000,
+      },
+    ],
+    timeline: [
+      {
+        time: "11/03/2026 15:30",
+        label: "Tạo đơn",
+        desc: "Đã cọc 3tr",
+        active: false,
+      },
+      {
+        time: "12/03/2026 08:00",
+        label: "Đang gia công",
+        desc: "Đang xẻ gỗ",
+        active: true,
+      },
+    ],
+  },
+  "DH-T03": {
+    code: "DH-THO-003",
+    type: "Hàng mộc",
+    status: "Đang gia công",
+    date: "2026-03-10T08:00:00",
+    deliveryDate: "2026-03-14",
+    customer: {
+      name: "Vũ Hải Đăng",
+      phone: "0922334455",
+      address: "Quận 7, TP.HCM",
+    },
+    salesPerson: "Thảo Vy",
+    total: 12500000,
+    deposit: 5000000,
+    products: [
+      {
+        name: "Bàn ăn tròn mộc",
+        material: "Gỗ gõ đỏ",
+        size: "D120 cm",
+        finish: "Chưa sơn",
+        qty: 1,
+        price: 12500000,
+      },
+    ],
+    timeline: [
+      {
+        time: "10/03/2026 08:00",
+        label: "Tạo đơn",
+        desc: "Hàng mộc đặt",
+        active: true,
+      },
+    ],
+  },
+  "DH-T04": {
+    code: "DH-THO-004",
+    type: "Hàng mộc",
+    status: "Chờ giao hàng",
+    date: "2026-03-09T11:20:00",
+    deliveryDate: "2026-03-12",
+    customer: {
+      name: "Bùi Tiến Dũng",
+      phone: "0911223344",
+      address: "Thanh Trì, Hà Nội",
+    },
+    salesPerson: "Bình Nguyễn",
+    total: 28000000,
+    deposit: 28000000,
+    products: [
+      {
+        name: "Tủ giày gỗ sồi",
+        material: "Gỗ sồi Nga",
+        size: "120×100 cm",
+        finish: "Mộc sạch",
+        qty: 2,
+        price: 14000000,
+      },
+    ],
+    timeline: [
+      {
+        time: "10/03/2026 10:00",
+        label: "Xong mộc",
+        active: true,
+      },
+    ],
+  },
+  "DH-T05": {
+    code: "DH-THO-005",
+    type: "Hàng mộc",
+    status: "Đang giao hàng",
+    date: "2026-03-08T14:45:00",
+    deliveryDate: "2026-03-10",
+    customer: {
+      name: "Đinh Công Thành",
+      phone: "0988776655",
+      address: "Cầu Giấy, Hà Nội",
+    },
+    total: 15400000,
+    deposit: 15400000,
+    products: [
+      { name: "Kệ sách đứng", material: "Gỗ cao su", qty: 2, price: 7700000 },
+    ],
+    timeline: [
+      { time: "09/03/2026 15:00", label: "Đang giao", active: true },
+    ],
+  },
+  "DH-T06": {
+    code: "DH-THO-006",
+    type: "Hàng mộc",
+    status: "Hoàn thành",
+    date: "2026-03-07T09:00:00",
+    deliveryDate: "2026-03-09",
+    customerName: "Trần Anh Tú",
+    customer: { name: "Trần Anh Tú", phone: "0900112233", address: "Hải Phòng" },
+    total: 32000000,
+    deposit: 32000000,
+    products: [
+      { name: "Giường ngủ mộc", material: "Gỗ xoan đào", qty: 1, price: 32000000 },
+    ],
+    timeline: [
+      { time: "09/03/2026 09:00", label: "Hoàn thành", active: true },
+    ],
+    deliveryImage: "https://images.unsplash.com/photo-1617806118233-ef203e91122b",
+  },
+  "DH-T07": {
+    code: "DH-THO-007",
+    type: "Hàng mộc",
+    status: "Hoàn thành",
+    date: "2026-03-11T08:00:00",
+    deliveryDate: "2026-03-12",
+    fulfillmentType: "Lấy tại cửa hàng",
+    customer: {
+      name: "Ngô Quốc Khánh",
+      phone: "0966554433",
+      address: "Showroom TRỌNG PHÓNG",
+    },
+    total: 4200000,
+    deposit: 4200000,
+    products: [
+      { name: "Kệ trang trí mộc", material: "Gỗ xoan", qty: 1, price: 4200000 },
+    ],
+    timeline: [
+      { time: "11/03/2026 08:00", label: "Tạo đơn", desc: "Thanh toán đủ", active: false },
+      { time: "11/03/2026 15:00", label: "Chuẩn bị xong", desc: "Chờ khách tới lấy", active: true },
     ],
   },
 
@@ -281,6 +445,27 @@ export const MOCK_ORDERS_DETAIL = {
         desc: "Đã bàn giao xưởng",
         active: true,
       },
+    ],
+  },
+  "DH-D05": {
+    code: "DH-DAT-005",
+    type: "Hàng khách đặt",
+    status: "Chờ sản xuất",
+    date: "2026-03-12T14:00:00",
+    deliveryDate: "2026-04-15",
+    fulfillmentType: "Lấy tại cửa hàng",
+    customer: {
+      name: "Mai Phương Thúy",
+      phone: "0922889977",
+      address: "Hà Nội",
+    },
+    total: 110000000,
+    deposit: 30000000,
+    products: [
+      { name: "Bộ bàn ghế hoàng gia", material: "Gỗ hương lào", qty: 1, price: 110000000 },
+    ],
+    timeline: [
+      { time: "12/03/2026 14:00", label: "Tiếp nhận đơn", desc: "Khách cọc 30tr", active: true },
     ],
   },
 };

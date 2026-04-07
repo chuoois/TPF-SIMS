@@ -43,6 +43,8 @@ import {
   Eye,
   Info,
   Type,
+  Star,
+  Camera,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
@@ -313,103 +315,105 @@ export default function CustomOrderRequirementsPage() {
       >
         {/* ═══════════════ LEFT — ORDER ITEMS ═══════════════ */}
         <div
-          className="flex flex-col w-[56%] bg-white rounded-2xl overflow-hidden"
-          style={{
-            boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
-          }}
+          className="flex flex-col w-[56%] bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100"
         >
-          {/* Tab Bar */}
+          {/* Enhanced Tab Bar Header */}
           <div
-            className="flex items-center gap-1.5 px-4 py-2.5 border-b"
-            style={{ borderColor: "var(--grid-border)" }}
+            className="flex items-center justify-between px-5 py-3.5 border-b"
+            style={{ borderColor: "var(--grid-border)", backgroundColor: "var(--grid-header-bg)" }}
           >
-            {tabs.map((tab, idx) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTabId(tab.id)}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] whitespace-nowrap transition-all shrink-0 cursor-pointer ${
-                  tab.id === activeTabId ? "font-semibold" : "hover:bg-gray-50"
-                }`}
-                style={{
-                  backgroundColor:
-                    tab.id === activeTabId
-                      ? "var(--status-focus)"
-                      : "transparent",
-                  color:
-                    tab.id === activeTabId
-                      ? "var(--brand-primary)"
-                      : "var(--text-secondary)",
-                }}
-              >
-                <Receipt size={13} />
-                <span>YC {idx + 1}</span>
-                {tab.cartItems.length > 0 && (
-                  <span
-                    className="text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none"
-                    style={{
-                      backgroundColor:
-                        tab.id === activeTabId
-                          ? "var(--brand-primary)"
-                          : "var(--grid-border)",
-                      color:
-                        tab.id === activeTabId
-                          ? "#fff"
-                          : "var(--text-secondary)",
-                    }}
-                  >
-                    {tab.cartItems.length}
-                  </span>
-                )}
-                {tabs.length > 1 && (
-                  <X
-                    size={12}
-                    className="ml-0.5 cursor-pointer opacity-40 hover:opacity-100"
-                    onClick={(e) => closeTab(tab.id, e)}
-                  />
-                )}
-              </button>
-            ))}
-            <button
-              onClick={addTab}
-              className="w-7 h-7 rounded-lg flex items-center justify-center transition shrink-0 cursor-pointer hover:bg-gray-50"
-              style={{ color: "var(--text-placeholder)" }}
-              title="Thêm yêu cầu mới"
-            >
-              <Plus size={14} />
-            </button>
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-xl bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]">
+                <Receipt size={18} />
+              </div>
+              <div>
+                <h1 className="text-[15px] font-black text-slate-800 uppercase tracking-tight">Yêu cầu đặt mới</h1>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{tabs.length} Phiếu đang mở</p>
+              </div>
+            </div>
 
-            {/* Add product pushed to right */}
             <button
               onClick={() => setShowAddForm(true)}
-              className="flex items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-bold transition-all shrink-0 ml-auto cursor-pointer shadow-sm hover:translate-y-[-1px] active:translate-y-[0px]"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-black tracking-wider transition-all cursor-pointer shadow-sm hover:shadow-md hover:translate-y-[-1px] active:translate-y-[0px] uppercase"
               style={{
                 backgroundColor: "var(--brand-primary)",
                 color: "white",
               }}
             >
-              <Plus size={14} /> Yêu cầu mới
+              <Plus size={14} strokeWidth={3} /> Thêm sản phẩm
+            </button>
+          </div>
+
+          {/* Sub-Tabs Navigation */}
+          <div
+            className="flex items-center gap-1.5 px-4 py-2 border-b bg-white"
+            style={{ borderColor: "var(--grid-border)" }}
+          >
+            {tabs.map((tab, idx) => {
+               const isActive = tab.id === activeTabId;
+               return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTabId(tab.id)}
+                  className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-[13px] whitespace-nowrap transition-all shrink-0 cursor-pointer border ${
+                    isActive ? "font-bold shadow-sm" : "border-transparent text-slate-400 hover:bg-slate-50"
+                  }`}
+                  style={isActive ? {
+                    backgroundColor: "var(--status-focus)",
+                    color: "var(--brand-primary)",
+                    borderColor: "var(--brand-primary)/20"
+                  } : {}}
+                >
+                  <Receipt size={14} className={isActive ? "text-[var(--brand-primary)]" : "text-slate-300"} />
+                  <span>Phiếu {idx + 1}</span>
+                  {tab.cartItems.length > 0 && (
+                    <span
+                      className={`text-[10px] font-black px-1.5 py-0.5 rounded-md leading-none transition-colors ${
+                        isActive ? "bg-[var(--brand-primary)] text-white" : "bg-slate-200 text-slate-500"
+                      }`}
+                    >
+                      {tab.cartItems.length}
+                    </span>
+                  )}
+                  {tabs.length > 1 && (
+                    <X
+                      size={14}
+                      className={`ml-1 cursor-pointer transition-colors ${isActive ? "text-[var(--brand-primary)]/50 hover:text-[var(--brand-primary)]" : "text-slate-300 hover:text-slate-500"}`}
+                      onClick={(e) => closeTab(tab.id, e)}
+                    />
+                  )}
+                </button>
+               );
+            })}
+            
+            <button
+              onClick={addTab}
+              className="w-8 h-8 rounded-xl flex items-center justify-center transition shrink-0 cursor-pointer hover:bg-slate-50 text-slate-400 border border-transparent hover:border-slate-100"
+              title="Thêm yêu cầu mới"
+            >
+              <Plus size={16} />
             </button>
           </div>
 
           {/* Add Item Form */}
           {showAddForm && (
             <div
-              className="border-b p-4 space-y-3 animate-in slide-in-from-top"
+              className="border-b p-5 space-y-4 animate-in slide-in-from-top duration-300"
               style={{
                 borderColor: "var(--grid-border)",
                 backgroundColor: "var(--grid-header-bg)",
               }}
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center">
-                    <Package size={16} className="text-green-600" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] flex items-center justify-center shadow-sm">
+                    <Package size={20} />
                   </div>
                   <div>
-                    <h4 className="text-[14px] font-bold text-gray-900">
-                      {editingItemId ? "Cập nhật sản phẩm" : "Thông tin sản phẩm"}
+                    <h4 className="text-[15px] font-black text-slate-800">
+                      {editingItemId ? "Cập nhật sản phẩm" : "Thêm yêu cầu mới"}
                     </h4>
-                    <p className="text-[11px] text-gray-500">Mô tả chi tiết sản phẩm khách muốn đặt riêng</p>
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Mô tả sản phẩm khách đặt riêng</p>
                   </div>
                 </div>
                 <button
@@ -428,503 +432,376 @@ export default function CustomOrderRequirementsPage() {
                       images: [],
                     });
                   }}
-                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition cursor-pointer text-gray-400"
+                  className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white hover:shadow-sm transition-all cursor-pointer text-slate-300 hover:text-slate-600"
                 >
-                  <X size={18} />
+                  <X size={20} />
                 </button>
               </div>
 
-              {/* Product Name */}
-              <div className="space-y-1.5">
-                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
-                  Tên sản phẩm *
-                </label>
-                <div className="relative">
-                  <Type
-                    size={13}
-                    className="absolute left-3 top-1/2 -translate-y-1/2"
-                    style={{ color: "var(--text-placeholder)" }}
-                  />
+              <div className="space-y-4">
+                {/* Row 1: Product Name */}
+                <div className="space-y-1.5">
+                  <label className="flex items-center gap-2 text-[11px] font-black text-slate-500 uppercase tracking-wider ml-1">
+                    <Type size={12} className="text-slate-400" /> Tên sản phẩm <span className="text-rose-500">*</span>
+                  </label>
                   <input
                     type="text"
-                    placeholder="Nhập tên sản phẩm..."
+                    placeholder="VD: Bàn ăn gỗ Sồi chân tròn..."
                     value={newItem.productName}
                     onChange={(e) => updateNewItem("productName", e.target.value)}
-                    className={`${inputBase} pl-9`}
-                    style={inputStyle}
+                    className={inputBase}
+                    style={{ ...inputStyle, backgroundColor: "white" }}
                   />
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
-                    Loại 
-                  </label>
-                  <div className="relative">
-                    <TreePine
-                      size={13}
-                      className="absolute left-3 top-1/2 -translate-y-1/2"
-                      style={{ color: "var(--text-placeholder)" }}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Chọn hoặc nhập loại ..."
-                      value={newItem.woodType}
-                      onChange={(e) => {
-                        updateNewItem("woodType", e.target.value);
-                        setShowWoodDropdown(true);
-                      }}
-                      onFocus={() => setShowWoodDropdown(true)}
-                      onBlur={() =>
-                        setTimeout(() => setShowWoodDropdown(false), 200)
-                      }
-                      className={`${inputBase} pl-9`}
-                      style={inputStyle}
-                    />
-                    {showWoodDropdown && (
-                      <div
-                        className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-xl shadow-lg z-50 overflow-hidden"
-                        style={{ borderColor: "var(--grid-border)" }}
-                      >
-                        <div className="max-h-48 overflow-y-auto">
-                          {WOOD_TYPES.filter((w) =>
-                            w
-                              .toLowerCase()
-                              .includes(newItem.woodType.toLowerCase()),
-                          ).map((w) => (
-                            <div
-                              key={w}
-                              className="px-3 py-2 text-[13px] cursor-pointer transition hover:bg-gray-50 font-medium"
-                              style={{ color: "var(--text-main)" }}
-                              onMouseDown={(e) => {
-                                e.preventDefault(); // Ngăn focus bị mất khi chọn
-                                updateNewItem("woodType", w);
-                                setShowWoodDropdown(false);
-                              }}
-                            >
-                              {w}
-                            </div>
-                          ))}
+                {/* Row 2: Wood & Color */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 text-[11px] font-black text-slate-500 uppercase tracking-wider ml-1">
+                      <TreePine size={12} className="text-slate-400" /> Loại hàng/Chất liệu
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Chọn hoặc nhập..."
+                        value={newItem.woodType}
+                        onChange={(e) => {
+                          updateNewItem("woodType", e.target.value);
+                          setShowWoodDropdown(true);
+                        }}
+                        onFocus={() => setShowWoodDropdown(true)}
+                        onBlur={() => setTimeout(() => setShowWoodDropdown(false), 200)}
+                        className={inputBase}
+                        style={{ ...inputStyle, backgroundColor: "white" }}
+                      />
+                      {showWoodDropdown && (
+                        <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-2xl shadow-xl z-50 overflow-hidden border-slate-100 ring-1 ring-black/5">
+                          <div className="max-h-48 overflow-y-auto p-1">
+                            {WOOD_TYPES.filter((w) => w.toLowerCase().includes(newItem.woodType.toLowerCase())).map((w) => (
+                              <div
+                                key={w}
+                                className="px-3 py-2.5 text-[13px] cursor-pointer transition rounded-xl hover:bg-slate-50 font-bold text-slate-700"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  updateNewItem("woodType", w);
+                                  setShowWoodDropdown(false);
+                                }}
+                              >
+                                {w}
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 text-[11px] font-black text-slate-500 uppercase tracking-wider ml-1">
+                      <Palette size={12} className="text-slate-400" /> Màu sắc hoàn thiện
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Chọn hoặc nhập..."
+                        value={newItem.color}
+                        onChange={(e) => {
+                          updateNewItem("color", e.target.value);
+                          setShowColorDropdown(true);
+                        }}
+                        onFocus={() => setShowColorDropdown(true)}
+                        onBlur={() => setTimeout(() => setShowColorDropdown(false), 200)}
+                        className={inputBase}
+                        style={{ ...inputStyle, backgroundColor: "white" }}
+                      />
+                      {showColorDropdown && (
+                        <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-2xl shadow-xl z-50 overflow-hidden border-slate-100 ring-1 ring-black/5">
+                          <div className="max-h-48 overflow-y-auto p-1">
+                            {COLORS.filter((c) => c.toLowerCase().includes(newItem.color.toLowerCase())).map((c) => (
+                              <div
+                                key={c}
+                                className="px-3 py-2.5 text-[13px] cursor-pointer transition rounded-xl hover:bg-slate-50 font-bold text-slate-700"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  updateNewItem("color", c);
+                                  setShowColorDropdown(false);
+                                }}
+                              >
+                                {c}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
-                    Màu sắc
-                  </label>
-                  <div className="relative">
-                    <Palette
-                      size={13}
-                      className="absolute left-3 top-1/2 -translate-y-1/2"
-                      style={{ color: "var(--text-placeholder)" }}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Chọn màu sắc..."
-                      value={newItem.color}
-                      onChange={(e) => {
-                        updateNewItem("color", e.target.value);
-                        setShowColorDropdown(true);
-                      }}
-                      onFocus={() => setShowColorDropdown(true)}
-                      onBlur={() =>
-                        setTimeout(() => setShowColorDropdown(false), 200)
-                      }
-                      className={`${inputBase} pl-9`}
-                      style={inputStyle}
-                    />
-                    {showColorDropdown && (
-                      <div
-                        className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-xl shadow-lg z-50 overflow-hidden"
-                        style={{ borderColor: "var(--grid-border)" }}
-                      >
-                        <div className="max-h-48 overflow-y-auto">
-                          {COLORS.filter((c) =>
-                            c.toLowerCase().includes(newItem.color.toLowerCase()),
-                          ).map((c) => (
-                            <div
-                              key={c}
-                              className="px-3 py-2 text-[13px] cursor-pointer transition hover:bg-gray-50 font-medium"
-                              style={{ color: "var(--text-main)" }}
-                              onMouseDown={(e) => {
-                                e.preventDefault();
-                                updateNewItem("color", c);
-                                setShowColorDropdown(false);
-                              }}
-                            >
-                              {c}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                {/* Row 3: Dimensions & Quantity */}
+                <div className="grid grid-cols-4 gap-4">
+                  {[
+                    { label: "Dài (cm)", field: "length", icon: Ruler },
+                    { label: "Rộng (cm)", field: "width", icon: Ruler },
+                    { label: "Cao (cm)", field: "height", icon: Ruler },
+                    { label: "Số lượng", field: "quantity", icon: PackageCheck },
+                  ].map((dim) => (
+                    <div key={dim.field} className="space-y-1.5">
+                      <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                        <dim.icon size={11} /> {dim.label}
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="0"
+                        value={newItem[dim.field]}
+                        onChange={(e) =>
+                          updateNewItem(
+                            dim.field,
+                            e.target.value === "" ? "" : parseInt(e.target.value)
+                          )
+                        }
+                        className={`${inputBase} text-center font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                        style={{ ...inputStyle, backgroundColor: "white", paddingLeft: 12 }}
+                      />
+                    </div>
+                  ))}
                 </div>
-              </div>
 
-              <div className="grid grid-cols-3 gap-4">
+                {/* Row 4: Note */}
                 <div className="space-y-1.5">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
-                    Dài (cm)
+                  <label className="flex items-center gap-2 text-[11px] font-black text-slate-500 uppercase tracking-wider ml-1">
+                    <ClipboardEdit size={12} className="text-slate-400" /> Chi tiết về sản phẩm (Kỹ thuật/Ghi chú)
                   </label>
-                  <input
-                    type="number"
-                    placeholder="0"
-                    value={newItem.length}
-                    onChange={(e) => updateNewItem("length", e.target.value)}
-                    className={`${inputBase} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
-                    style={{ ...inputStyle, paddingLeft: 12 }}
+                  <textarea
+                    placeholder="Mô tả kỹ hơn về mẫu mã, bản lề, bo góc, đục chạm..."
+                    value={newItem.note}
+                    onChange={(e) => updateNewItem("note", e.target.value)}
+                    className={`${inputBase} resize-none min-h-[80px] leading-relaxed py-3`}
+                    style={{ ...inputStyle, backgroundColor: "white" }}
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
-                    Rộng (cm)
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="0"
-                    value={newItem.width}
-                    onChange={(e) => updateNewItem("width", e.target.value)}
-                    className={`${inputBase} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
-                    style={{ ...inputStyle, paddingLeft: 12 }}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
-                    Cao (cm)
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="0"
-                    value={newItem.height}
-                    onChange={(e) => updateNewItem("height", e.target.value)}
-                    className={`${inputBase} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
-                    style={{ ...inputStyle, paddingLeft: 12 }}
-                  />
-                </div>
-              </div>
 
-              <div className="w-1/2 pr-1.5 space-y-1.5">
-                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">
-                  Số lượng
-                </label>
-                <div className="relative">
-                  <Package
-                    size={13}
-                    className="absolute left-3 top-1/2 -translate-y-1/2"
-                    style={{ color: "var(--text-placeholder)" }}
-                  />
-                  <input
-                    type="number"
-                    placeholder="0"
-                    value={newItem.quantity}
-                    onChange={(e) =>
-                      updateNewItem(
-                        "quantity",
-                        e.target.value === "" ? "" : parseInt(e.target.value)
-                      )
-                    }
-                    className={`${inputBase} pl-9 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
-                    style={inputStyle}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1">
-                  <ClipboardEdit size={11} /> 
-                  Yêu cầu kỹ thuật chi tiết
-                </label>
-                <textarea
-                  placeholder="Mô tả chi tiết các yêu cầu kỹ thuật (Ví dụ: Chạm khắc hoa văn nổi, bo tròn viền cạnh bàn 2cm, sơn phủ viền màu hạt dẻ, thiết kế bản lề giấu kín...)"
-                  value={newItem.note}
-                  onChange={(e) => updateNewItem("note", e.target.value)}
-                  className={`${inputBase} resize-none min-h-[100px] leading-relaxed`}
-                  style={inputStyle}
-                />
-              </div>
-
-              {/* Image upload */}
-              <div>
-                <div className="flex items-center gap-3">
-                  <label
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-medium cursor-pointer transition hover:bg-gray-100"
-                    style={{
-                      border: "1px dashed var(--grid-border)",
-                      color: "var(--text-secondary)",
-                    }}
-                  >
-                    <ImagePlus
-                      size={14}
-                      style={{ color: "var(--brand-primary)" }}
-                    />
-                    Thêm ảnh mẫu
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      onChange={(e) => {
-                        const files = Array.from(e.target.files || []);
-                        files.forEach((file) => {
-                          const reader = new FileReader();
-                          reader.onload = (ev) => {
-                            setNewItem((prev) => ({
-                              ...prev,
-                              images: [...prev.images, ev.target.result],
-                            }));
-                          };
-                          reader.readAsDataURL(file);
-                        });
-                        e.target.value = "";
-                      }}
-                    />
-                  </label>
-                  {newItem.images.length > 0 && (
-                    <span
-                      className="text-[11px]"
-                      style={{ color: "var(--text-placeholder)" }}
-                    >
-                      {newItem.images.length} ảnh
-                    </span>
-                  )}
-                </div>
-                {newItem.images.length > 0 && (
-                  <div className="flex gap-2 mt-2 flex-wrap">
-                    {newItem.images.map((img, i) => (
-                      <div key={i} className="relative group/img">
-                        <img
-                          src={img}
-                          alt=""
-                          className="w-16 h-16 object-cover rounded-lg"
-                          style={{ border: "1px solid var(--grid-border)" }}
+                {/* Images & Buttons Container */}
+                <div className="flex items-end justify-between pt-2">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-black uppercase tracking-wider cursor-pointer transition-all bg-white border border-dashed border-slate-200 text-slate-500 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] hover:bg-white shadow-sm">
+                        <ImagePlus size={16} /> Thêm ảnh mẫu
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => {
+                            const files = Array.from(e.target.files || []);
+                            files.forEach((file) => {
+                              const reader = new FileReader();
+                              reader.onload = (ev) => {
+                                setNewItem((prev) => ({
+                                  ...prev,
+                                  images: [...prev.images, ev.target.result],
+                                }));
+                              };
+                              reader.readAsDataURL(file);
+                            });
+                            e.target.value = "";
+                          }}
                         />
-                        <button
-                          onClick={() =>
-                            setNewItem((prev) => ({
-                              ...prev,
-                              images: prev.images.filter((_, idx) => idx !== i),
-                            }))
-                          }
-                          className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition cursor-pointer"
-                          style={{ fontSize: 10 }}
-                        >
-                          <X size={10} />
-                        </button>
-                      </div>
-                    ))}
+                      </label>
+                      {newItem.images.length > 0 && (
+                        <div className="flex -space-x-2">
+                          {newItem.images.slice(0, 5).map((img, i) => (
+                            <div key={i} className="relative group/img w-10 h-10 rounded-lg border-2 border-white shadow-sm overflow-hidden bg-slate-50">
+                              <img src={img} alt="" className="w-full h-full object-cover" />
+                              <button
+                                onClick={() => setNewItem((prev) => ({ ...prev, images: prev.images.filter((_, idx) => idx !== i) }))}
+                                className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition shadow-inner"
+                              >
+                                <X size={14} className="text-white" />
+                              </button>
+                            </div>
+                          ))}
+                          {newItem.images.length > 5 && (
+                            <div className="w-10 h-10 rounded-lg border-2 border-white shadow-sm bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-500">
+                              +{newItem.images.length - 5}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
 
-              <div className="flex justify-end gap-2 pt-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setShowAddForm(false);
-                    setEditingItemId(null);
-                    setNewItem({
-                      productName: "",
-                      woodType: "",
-                      length: "",
-                      width: "",
-                      height: "",
-                      color: "",
-                      quantity: 1,
-                      note: "",
-                      images: [],
-                    });
-                  }}
-                  className="text-xs cursor-pointer rounded-lg"
-                >
-                  Hủy
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={addCustomItem}
-                  disabled={!newItem.productName.trim()}
-                  className="text-xs font-bold text-white rounded-lg cursor-pointer"
-                  style={{ backgroundColor: "var(--brand-primary)" }}
-                >
-                  {editingItemId ? (
-                    <>
-                      <Pencil size={13} className="mr-1" /> Lưu thay đổi
-                    </>
-                  ) : (
-                    <>
-                      <Plus size={13} className="mr-1" /> Tạo yêu cầu
-                    </>
-                  )}
-                </Button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setShowAddForm(false);
+                        setEditingItemId(null);
+                        setNewItem({
+                          productName: "",
+                          woodType: "",
+                          length: "",
+                          width: "",
+                          height: "",
+                          color: "",
+                          quantity: 1,
+                          note: "",
+                          images: [],
+                        });
+                      }}
+                      className="px-6 py-2.5 rounded-xl text-[12px] font-black uppercase tracking-wider text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      Hủy
+                    </button>
+                    <Button
+                      onClick={addCustomItem}
+                      disabled={!newItem.productName.trim()}
+                      className="px-8 h-10 rounded-xl text-[13px] font-black uppercase tracking-wider shadow-lg shadow-[var(--brand-primary)]/20 hover:translate-y-[-1px] transition-all"
+                      style={{ backgroundColor: "var(--brand-primary)", color: "white" }}
+                    >
+                      {editingItemId ? "Lưu thay đổi" : "Thêm vào danh sách"}
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
           {/* Cart Content */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
             {activeTab.cartItems.length === 0 ? (
               <div
-                className="flex flex-col items-center justify-center h-full gap-2"
-                style={{ color: "var(--text-placeholder)" }}
+                className="flex flex-col items-center justify-center h-full gap-2 p-10 text-center"
               >
                 <div
-                  className="w-20 h-20 rounded-2xl flex items-center justify-center bg-gray-50 text-gray-300"
+                  className="w-24 h-24 rounded-[2rem] flex items-center justify-center bg-slate-50 text-slate-300 shadow-inner"
                 >
-                  <Package size={32} strokeWidth={1.5} />
+                  <Package size={42} strokeWidth={1} />
                 </div>
-                <p className="text-sm font-bold text-gray-900 mt-2">
-                  Chưa có sản phẩm
-                </p>
-                <p className="text-xs text-gray-400">
-                  Nhấn "Yêu cầu mới" để thêm thông tin hàng đặt riêng
-                </p>
+                <div className="mt-4">
+                    <p className="text-[16px] font-black text-slate-800">Danh sách trống</p>
+                    <p className="text-[12px] font-bold text-slate-400 uppercase tracking-widest mt-1">Chưa có yêu cầu đặt hàng riêng nào</p>
+                </div>
                 <button
                   onClick={() => setShowAddForm(true)}
-                  className="mt-3 flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-[13px] font-bold transition-all cursor-pointer bg-green-50 text-green-600 hover:bg-green-100 shadow-sm"
+                  className="mt-6 flex items-center gap-2 px-8 py-3 rounded-2xl text-[13px] font-black transition-all cursor-pointer bg-[var(--brand-primary)] text-white shadow-lg shadow-[var(--brand-primary)]/20 hover:scale-105 active:scale-95 uppercase tracking-wider"
                 >
-                  <Plus size={16} /> Thêm ngay
+                  <Plus size={18} strokeWidth={3} /> Thêm ngay
                 </button>
               </div>
             ) : (
               <div
-                className="divide-y"
-                style={{ borderColor: "var(--grid-border)" }}
+                className="divide-y divide-slate-50"
               >
                 {activeTab.cartItems.map((item, idx) => (
                   <div
                     key={item.id}
-                    className="px-4 py-3 group hover:bg-gray-50/50 transition-colors"
+                    className="px-6 py-4 group hover:bg-slate-50/50 transition-all duration-300 relative border-l-4 border-transparent hover:border-[var(--brand-primary)]"
                   >
-                    <div className="flex items-start gap-3">
-                      <span
-                        className="text-xs font-medium w-5 text-center shrink-0 mt-0.5"
-                        style={{ color: "var(--text-placeholder)" }}
+                    <div className="flex items-start gap-4">
+                      <div
+                        className="text-[11px] font-black w-6 h-6 rounded-lg bg-slate-100 text-slate-400 flex items-center justify-center shrink-0 mt-1"
                       >
                         {idx + 1}
-                      </span>
+                      </div>
 
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <p
-                            className="text-[14px] font-bold truncate"
-                            style={{ color: "var(--text-main)" }}
-                          >
+                        <div className="flex items-center justify-between gap-4">
+                          <p className="text-[15px] font-black text-slate-800 truncate group-hover:text-[var(--brand-primary)] transition-colors">
                             {item.productName}
                           </p>
-                          <button
-                            onClick={() => setViewingItem(item)}
-                            className="p-1 rounded-md hover:bg-gray-100 text-gray-400 hover:text-brand-primary transition cursor-pointer shrink-0"
-                            title="Xem chi tiết"
-                          >
-                            <Eye size={14} />
-                          </button>
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
+                        <div className="flex flex-wrap gap-x-4 gap-y-2 mt-2">
                           {item.woodType && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-[11px] text-gray-400 w-14">Chất liệu:</span>
-                              <span className="text-[11px] font-medium text-gray-700">{item.woodType}</span>
+                            <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
+                              <TreePine size={10} className="text-amber-600" />
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-tight">Chất liệu:</span>
+                              <span className="text-[11px] font-bold text-slate-700">{item.woodType}</span>
                             </div>
                           )}
                           {item.color && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-[11px] text-gray-400 w-14">Màu sắc:</span>
-                              <span className="text-[11px] font-medium text-gray-700">{item.color}</span>
+                            <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
+                              <Palette size={10} className="text-purple-500" />
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-tight">Màu sắc:</span>
+                              <span className="text-[11px] font-bold text-slate-700">{item.color}</span>
                             </div>
                           )}
                           {item.size && (
-                            <div className="flex items-center gap-2 col-span-2">
-                              <span className="text-[11px] text-gray-400 w-14">Kích thước:</span>
-                              <span className="text-[11px] font-medium text-gray-700">{item.size}</span>
+                            <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
+                              <Ruler size={10} className="text-blue-500" />
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-tight">Kích thước:</span>
+                              <span className="text-[11px] font-bold text-slate-700">{item.size}</span>
                             </div>
                           )}
-                          </div>
-                        
+                        </div>
 
-                        {item.note && (
-                          <div
-                            className="text-[11px] mt-2 flex items-start gap-1.5 p-2 rounded-lg bg-gray-50 border border-gray-100"
-                            style={{ color: "var(--text-secondary)" }}
-                          >
-                            <FileText size={12} className="shrink-0 mt-0.5 opacity-60" />
-                            <span className="italic">{item.note}</span>
-                          </div>
-                        )}
                         {item.images && item.images.length > 0 && (
-                          <div className="flex gap-1.5 mt-2">
-                            {item.images.map((img, i) => (
+                          <div className="flex gap-2 mt-3 overflow-hidden">
+                            {item.images.slice(0, 4).map((img, i) => (
                               <img
                                 key={i}
                                 src={img}
                                 alt=""
-                                className="w-10 h-10 object-cover rounded-md"
-                                style={{
-                                  border: "1px solid var(--grid-border)",
-                                }}
+                                className="w-12 h-12 object-cover rounded-xl border border-slate-100 shadow-sm"
                               />
                             ))}
+                            {item.images.length > 4 && (
+                                <div className="w-12 h-12 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-center text-[10px] font-black text-slate-400">
+                                    +{item.images.length - 4}
+                                </div>
+                            )}
                           </div>
                         )}
                       </div>
 
-                      {/* Quantity */}
-                      <div className="flex items-center gap-0.5 shrink-0">
-                        <button
-                          onClick={() => updateQuantity(item.id, -1)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100"
-                          style={{
-                            border: "1px solid var(--grid-border)",
-                            color: "var(--text-secondary)",
-                          }}
-                        >
-                          <Minus size={11} />
-                        </button>
-                        <input
-                          type="number"
-                          value={item.quantity}
-                          onChange={(e) => setQuantity(item.id, e.target.value)}
-                          className="w-10 h-7 text-center text-[13px] font-semibold rounded-lg focus:outline-none focus:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          style={{
-                            border: "1px solid var(--grid-border)",
-                            color: "var(--text-main)",
-                          }}
-                        />
-                        <button
-                          onClick={() => updateQuantity(item.id, 1)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100"
-                          style={{
-                            border: "1px solid var(--grid-border)",
-                            color: "var(--text-secondary)",
-                          }}
-                        >
-                          <Plus size={11} />
-                        </button>
-                      </div>
+                      {/* Right Group: Quantity + Actions */}
+                      <div className="flex flex-col items-end gap-3 shrink-0">
+                        {/* Quantity controls */}
+                        <div className="flex items-center gap-1 bg-white p-1 rounded-xl shadow-sm border border-slate-100">
+                          <button
+                            onClick={() => updateQuantity(item.id, -1)}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer hover:bg-slate-50 text-slate-400 hover:text-rose-500"
+                          >
+                            <Minus size={12} strokeWidth={3} />
+                          </button>
+                          <input
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) => setQuantity(item.id, e.target.value)}
+                            className="w-10 text-center text-[14px] font-black focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            style={{ color: "var(--text-main)" }}
+                          />
+                          <button
+                            onClick={() => updateQuantity(item.id, 1)}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer hover:bg-slate-50 text-slate-400 hover:text-[var(--brand-primary)]"
+                          >
+                            <Plus size={12} strokeWidth={3} />
+                          </button>
+                        </div>
 
-                      {/* Actions */}
-                      <div className="flex items-center gap-1 shrink-0 mt-0.5 group-hover:flex hidden">
-                        <button
-                          onClick={() => handleEditItem(item)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-indigo-50 hover:text-indigo-500"
-                          style={{ color: "var(--text-placeholder)" }}
-                          title="Sửa"
-                        >
-                          <Pencil size={13} />
-                        </button>
-                        <button
-                          onClick={() => removeFromCart(item.id)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-red-50 hover:text-red-500"
-                          style={{ color: "var(--text-placeholder)" }}
-                          title="Xóa"
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                        {/* Action Buttons: View, Edit, Delete grouped on Far Right as requested */}
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => setViewingItem(item)}
+                            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer bg-blue-50 text-blue-600 hover:bg-blue-100"
+                            title="Xem chi tiết"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleEditItem(item)}
+                            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer bg-slate-50 text-slate-600 hover:bg-slate-200"
+                            title="Sửa"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            onClick={() => removeFromCart(item.id)}
+                            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer bg-rose-50 text-rose-600 hover:bg-rose-100"
+                            title="Xóa khỏi danh sách"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -932,56 +809,52 @@ export default function CustomOrderRequirementsPage() {
 
                 <button
                   onClick={() => setShowAddForm(true)}
-                  className="w-full py-3 flex items-center justify-center gap-2 text-[13px] font-medium transition cursor-pointer hover:bg-gray-50"
-                  style={{ color: "var(--brand-primary)" }}
+                  className="w-full py-5 flex items-center justify-center gap-2 text-[12px] font-black uppercase tracking-widest transition-all cursor-pointer bg-slate-50/30 hover:bg-slate-50 text-slate-400 hover:text-[var(--brand-primary)]"
                 >
-                  <Plus size={14} /> Thêm sản phẩm đặt khác
+                  <Plus size={16} strokeWidth={3} /> Thêm sản phẩm khác
                 </button>
               </div>
             )}
           </div>
 
-          {/* Footer */}
+          {/* Footer Area */}
           <div
-            className="border-t"
+            className="border-t bg-slate-50/50"
             style={{ borderColor: "var(--grid-border)" }}
           >
             {/* Note row */}
             <div
-              className="flex items-center gap-2 px-4 py-2.5 border-b"
+              className="flex items-center gap-3 px-5 py-3 border-b"
               style={{ borderColor: "var(--grid-border)" }}
             >
-              <Pencil
-                size={12}
-                style={{ color: "var(--text-placeholder)" }}
-                className="shrink-0"
-              />
+              <div className="w-8 h-8 rounded-xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-300">
+                <Pencil size={14} />
+              </div>
               <input
                 type="text"
-                placeholder="Ghi chú ..."
+                placeholder="Ghi chú chung cho toàn bộ yêu cầu này..."
                 value={activeTab.orderNote}
                 onChange={(e) => updateActiveTab({ orderNote: e.target.value })}
-                className="flex-1 text-[13px] focus:outline-none bg-transparent"
-                style={{ color: "var(--text-secondary)" }}
+                className="flex-1 text-[13px] font-bold focus:outline-none bg-transparent"
+                style={{ color: "var(--text-main)" }}
               />
             </div>
 
             {/* Checkout bar */}
             <div
-              className="flex items-center justify-between px-4 py-3 border-t"
-              style={{ borderColor: "var(--grid-border)" }}
+              className="flex items-center justify-between px-6 py-5"
             >
               <div className="flex flex-col">
-                <p className="text-[10px] uppercase tracking-[0.1em] font-bold text-gray-400">
-                  Tổng sản phẩm
+                <p className="text-[10px] uppercase tracking-[0.2em] font-black text-slate-400">
+                  Tổng số lượng sản phẩm
                 </p>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-black text-green-600 leading-none">{itemCount}</span>
-                  <span className="text-[12px] font-bold text-gray-400 uppercase">Món</span>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-3xl font-black text-slate-800 leading-none">{itemCount}</span>
+                  <span className="text-[13px] font-black text-slate-400 uppercase tracking-widest">Sản phẩm</span>
                 </div>
               </div>
               <Button
-                className="h-12 px-10 text-[14px] font-black uppercase tracking-wider text-white rounded-xl transition-all duration-300 active:scale-[0.95] cursor-pointer disabled:opacity-30 flex items-center gap-2 group shadow-[0_8px_20px_-6px_rgba(34,197,94,0.4)] hover:shadow-[0_12px_25px_-4px_rgba(34,197,94,0.5)]"
+                className="h-14 px-12 text-[15px] font-black uppercase tracking-wider text-white rounded-2xl transition-all duration-300 active:scale-95 cursor-pointer disabled:opacity-30 flex items-center gap-3 group shadow-xl shadow-[var(--brand-primary)]/20 hover:shadow-2xl hover:translate-y-[-2px]"
                 style={{
                   backgroundColor: "var(--brand-primary)",
                 }}
@@ -989,7 +862,9 @@ export default function CustomOrderRequirementsPage() {
                 onClick={handleCreateOrder}
               >
                 Gửi yêu cầu ngay
-                <CheckCircle2 size={18} className="transition-transform group-hover:scale-110" />
+                <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center group-hover:rotate-12 transition-transform">
+                    <CheckCircle2 size={16} className="text-white" />
+                </div>
               </Button>
             </div>
           </div>
@@ -997,109 +872,82 @@ export default function CustomOrderRequirementsPage() {
 
         {/* ═══════════════ RIGHT — CUSTOMER & DELIVERY ═══════════════ */}
         <div
-          className="flex flex-col w-[44%] bg-white rounded-2xl overflow-hidden"
-          style={{
-            boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
-          }}
+          className="flex flex-col w-[44%] bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100"
         >
-          {/* Order Header */}
+          {/* Order Info Header */}
           <div
-            className="flex items-center justify-between px-4 py-3 border-b"
+            className="flex items-center justify-between px-5 py-4 border-b bg-slate-50/50"
             style={{ borderColor: "var(--grid-border)" }}
           >
             <div className="flex items-center gap-3">
-              <FileText
-                size={14}
-                style={{ color: "var(--text-placeholder)" }}
-              />
-              <span
-                className="text-[13px] font-bold"
-                style={{ color: "var(--text-main)" }}
-              >
-                {generateOrderCode()}
-              </span>
-              <span
-                className="w-px h-4"
-                style={{ backgroundColor: "var(--grid-border)" }}
-              />
-              <span
-                className="text-[12px]"
-                style={{ color: "var(--text-placeholder)" }}
-              >
-                {formatDateTime()}
-              </span>
+              <div className="p-2 rounded-xl bg-white shadow-sm border border-slate-100 text-slate-400">
+                <FileText size={16} />
+              </div>
+              <div>
+                <span className="text-[14px] font-black text-slate-800 tracking-tight">
+                  {generateOrderCode()}
+                </span>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-0.5">
+                  {formatDateTime()}
+                </p>
+              </div>
             </div>
-            <span
-              className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md flex items-center gap-1.5"
+            <div
+              className="px-3 py-1.5 rounded-xl flex items-center gap-2 border shadow-sm"
               style={{
-                backgroundColor: "#FFF7ED",
-                color: "var(--status-pending)",
+                backgroundColor: "var(--status-focus)",
+                color: "var(--brand-primary)",
+                borderColor: "var(--brand-primary)/20"
               }}
             >
-              <Clock size={11} strokeWidth={3} />
-              Yêu cầu
-            </span>
+              <Clock size={12} strokeWidth={3} className="animate-pulse" />
+              <span className="text-[11px] font-black uppercase tracking-wider">Mới tạo</span>
+            </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto">
-            {/* Customer Info */}
-            <div
-              className="p-4 space-y-3 border-b relative"
-              style={{ borderColor: "var(--grid-border)" }}
-            >
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            {/* Customer Info Card */}
+            <div className="p-5 border-b border-slate-50 space-y-4">
               <div className="flex items-center justify-between">
-                <p
-                  className="text-[11px] font-bold uppercase tracking-wider"
-                  style={{ color: "var(--text-placeholder)" }}
-                >
-                  Thông tin khách hàng{" "}
-                  <span style={{ color: "var(--status-error)" }}>*</span>
-                </p>
+                <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500">
+                        <User size={12} strokeWidth={3} />
+                    </div>
+                    <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">
+                      Khách hàng <span className="text-rose-500">*</span>
+                    </p>
+                </div>
 
-                {/* Customer Search Bar Identical to Instock */}
-                <div
-                  className="relative flex items-center gap-1.5 w-[50%]"
-                  ref={customerSearchRef}
-                >
+                {/* Customer Search Bar */}
+                <div className="relative flex items-center gap-1.5 w-[65%]" ref={customerSearchRef}>
                   {activeTab.selectedCustomer ? (
-                    <div
-                      className="flex items-center gap-2.5 px-3 py-2 flex-1 min-w-0 rounded-xl bg-green-50/50 border border-green-100"
-                    >
-                      <div className="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                        <User size={14} className="text-green-600" />
+                    <div className="flex items-center gap-2.5 px-3 py-2 flex-1 min-w-0 rounded-2xl bg-indigo-50/50 border border-indigo-100 shadow-sm animate-in zoom-in-95">
+                      <div className="w-8 h-8 rounded-xl bg-indigo-500 flex items-center justify-center shrink-0 shadow-sm">
+                        <User size={14} className="text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-bold text-green-700 truncate leading-tight">
+                        <p className="text-[13px] font-black text-indigo-900 truncate leading-tight">
                           {activeTab.selectedCustomer.name}
                         </p>
-                        <p className="text-[10px] text-green-600/70 font-medium">
+                        <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-tighter">
                           {activeTab.selectedCustomer.phone}
                         </p>
                       </div>
                       <button
                         onClick={() => {
-                          updateActiveTab({
-                            selectedCustomer: null,
-                            customerName: "",
-                            customerPhone: "",
-                          });
+                          updateActiveTab({ selectedCustomer: null, customerName: "", customerPhone: "" });
                           setCustomerSearch("");
                         }}
-                        className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-green-100 transition cursor-pointer text-green-600"
+                        className="w-7 h-7 flex items-center justify-center rounded-xl hover:bg-white transition-all cursor-pointer text-indigo-400 hover:text-rose-500 shadow-sm border border-transparent hover:border-rose-100"
                       >
-                        <X size={14} />
+                        <X size={16} />
                       </button>
                     </div>
                   ) : (
-                    <div
-                      className={`flex items-center gap-1.5 px-3 flex-1 min-w-0 rounded-xl bg-white border transition-all ${
-                        showCustomerDropdown ? "ring-4 ring-green-500/10 border-green-500/30" : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <Search
-                        size={14}
-                        className="text-gray-400 shrink-0"
-                      />
+                    <div className={`flex items-center gap-1.5 px-3.5 flex-1 min-w-0 rounded-2xl bg-white border transition-all ${
+                        showCustomerDropdown ? "ring-4 ring-indigo-500/10 border-indigo-500/30" : "border-slate-200 hover:border-slate-300 shadow-sm"
+                      }`}>
+                      <Search size={14} className="text-slate-400 shrink-0" />
                       <input
                         type="text"
                         placeholder="Tìm khách hàng..."
@@ -1108,93 +956,55 @@ export default function CustomOrderRequirementsPage() {
                           setCustomerSearch(e.target.value);
                           setShowCustomerDropdown(true);
                         }}
-                        onFocus={() => {
-                          if (customerSearch.trim())
-                            setShowCustomerDropdown(true);
-                        }}
-                        onBlur={() => {
-                          setTimeout(() => setShowCustomerDropdown(false), 200);
-                        }}
-                        className="flex-1 text-[13px] py-2.5 focus:outline-none bg-transparent min-w-0"
+                        onFocus={() => { if (customerSearch.trim()) setShowCustomerDropdown(true); }}
+                        onBlur={() => { setTimeout(() => setShowCustomerDropdown(false), 200); }}
+                        className="flex-1 text-[13px] py-2.5 focus:outline-none bg-transparent min-w-0 font-bold"
                         style={{ color: "var(--text-main)" }}
                       />
                       <button
                         onClick={() => setShowAddCustomer(true)}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer transition bg-green-50 text-green-600 hover:bg-green-100 shrink-0"
+                        className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all bg-indigo-50 text-indigo-600 hover:bg-indigo-100 shadow-sm shrink-0"
                         title="Thêm mới"
                       >
-                        <UserPlus size={14} />
+                        <UserPlus size={16} />
                       </button>
                     </div>
                   )}
 
                   {/* Customer search dropdown */}
                   {showCustomerDropdown && customerSearch.trim() && (
-                    <div
-                      className="absolute right-0 top-full mt-1 w-full bg-white rounded-xl shadow-lg border overflow-hidden z-30"
-                      style={{ borderColor: "var(--grid-border)" }}
-                    >
+                    <div className="absolute right-0 top-full mt-2 w-full bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[60] ring-1 ring-black/5 animate-in slide-in-from-top-2">
                       {customerResults.length > 0 ? (
-                        <div className="max-h-[200px] overflow-y-auto">
+                        <div className="max-h-[250px] overflow-y-auto p-1.5 custom-scrollbar">
                           {customerResults.map((c) => (
                             <button
                               key={c.id}
                               onMouseDown={(e) => {
                                 e.preventDefault();
-                                updateActiveTab({
-                                  selectedCustomer: c,
-                                  customerName: c.name,
-                                  customerPhone: c.phone,
-                                });
+                                updateActiveTab({ selectedCustomer: c, customerName: c.name, customerPhone: c.phone });
                                 setCustomerSearch("");
                                 setShowCustomerDropdown(false);
                               }}
-                              className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors cursor-pointer"
+                              className="w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl hover:bg-slate-50 transition-colors cursor-pointer group"
                             >
-                              <div
-                                className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold"
-                                style={{
-                                  backgroundColor: "var(--status-focus)",
-                                  color: "var(--brand-primary)",
-                                }}
-                              >
+                              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-[12px] font-black bg-slate-100 text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
                                 {c.name.charAt(0)}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p
-                                  className="text-[13px] font-semibold truncate"
-                                  style={{ color: "var(--text-main)" }}
-                                >
-                                  {c.name}
-                                </p>
-                                <p
-                                  className="text-[11px]"
-                                  style={{ color: "var(--text-placeholder)" }}
-                                >
-                                  {c.phone}
-                                </p>
+                                <p className="text-[13px] font-black text-slate-700 truncate">{c.name}</p>
+                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{c.phone}</p>
                               </div>
                             </button>
                           ))}
                         </div>
                       ) : (
-                        <div className="px-4 py-3 text-center">
-                          <p
-                            className="text-[13px]"
-                            style={{ color: "var(--text-placeholder)" }}
-                          >
-                            Không tìm thấy khách hàng
-                          </p>
+                        <div className="px-5 py-6 text-center">
+                          <p className="text-[13px] font-bold text-slate-400">Không tìm thấy kết quả</p>
                           <button
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              setShowAddCustomer(true);
-                              setShowCustomerDropdown(false);
-                            }}
-                            className="text-[12px] font-semibold mt-1 cursor-pointer"
-                            style={{ color: "var(--brand-primary)" }}
+                            onMouseDown={(e) => { e.preventDefault(); setShowAddCustomer(true); setShowCustomerDropdown(false); }}
+                            className="text-[12px] font-black mt-2 cursor-pointer text-indigo-600 hover:underline"
                           >
-                            + Thêm khách hàng mới
+                            + Thêm khách mới
                           </button>
                         </div>
                       )}
@@ -1203,115 +1013,102 @@ export default function CustomOrderRequirementsPage() {
                 </div>
               </div>
 
-              <div className="space-y-2.5">
-                <div className="relative">
-                  <User
-                    size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2"
-                    style={{ color: "var(--text-placeholder)" }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Tên khách hàng"
-                    value={activeTab.customerName}
-                    onChange={(e) =>
-                      updateActiveTab({ customerName: e.target.value })
-                    }
-                    className={`${inputBase} pl-10`}
-                    style={inputStyle}
-                  />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tên hiển thị</label>
+                  <div className="relative">
+                    <User size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300" />
+                    <input
+                      type="text"
+                      placeholder="Tên khách hàng"
+                      value={activeTab.customerName}
+                      onChange={(e) => updateActiveTab({ customerName: e.target.value })}
+                      className={`${inputBase} pl-10`}
+                      style={{ ...inputStyle, backgroundColor: "white", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.02)" }}
+                    />
+                  </div>
                 </div>
-                <div className="relative">
-                  <Phone
-                    size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2"
-                    style={{ color: "var(--text-placeholder)" }}
-                  />
-                  <input
-                    type="tel"
-                    placeholder="Số điện thoại"
-                    value={activeTab.customerPhone}
-                    onChange={(e) =>
-                      updateActiveTab({ customerPhone: e.target.value })
-                    }
-                    className={`${inputBase} pl-10`}
-                    style={inputStyle}
-                  />
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Liên hệ</label>
+                  <div className="relative">
+                    <Phone size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300" />
+                    <input
+                      type="tel"
+                      placeholder="Số điện thoại"
+                      value={activeTab.customerPhone}
+                      onChange={(e) => updateActiveTab({ customerPhone: e.target.value })}
+                      className={`${inputBase} pl-10`}
+                      style={{ ...inputStyle, backgroundColor: "white", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.02)" }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Delivery Info */}
-            <div className="p-4 space-y-4 border-b">
+            {/* Delivery Info Card */}
+            <div className="p-5 border-b border-slate-50 space-y-4">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg bg-blue-50 flex items-center justify-center">
-                  <Truck size={12} className="text-blue-600" />
+                <div className="w-6 h-6 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                  <Truck size={12} strokeWidth={3} />
                 </div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                  Thông tin giao hàng
+                <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">
+                  Giao hàng
                 </p>
               </div>
-              <div className="space-y-2.5">
+              <div className="space-y-4">
                 <div className="relative">
-                  <MapPin
-                    size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2"
-                    style={{ color: "var(--text-placeholder)" }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Địa chỉ giao hàng"
+                  <MapPin size={14} className="absolute left-3.5 top-4 text-slate-300" />
+                  <textarea
+                    placeholder="Địa chỉ giao hàng chi tiết..."
                     value={activeTab.deliveryInfo.address}
                     onChange={(e) => updateDelivery("address", e.target.value)}
-                    className={`${inputBase} pl-10`}
-                    style={inputStyle}
+                    className={`${inputBase} pl-10 py-3 resize-none min-h-[60px]`}
+                    style={{ ...inputStyle, backgroundColor: "white", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.02)" }}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <input
-                    type="text"
-                    placeholder="Quận/Huyện"
-                    value={activeTab.deliveryInfo.district}
-                    onChange={(e) => updateDelivery("district", e.target.value)}
-                    className={inputBase}
-                    style={inputStyle}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Phường/Xã"
-                    value={activeTab.deliveryInfo.ward}
-                    onChange={(e) => updateDelivery("ward", e.target.value)}
-                    className={inputBase}
-                    style={inputStyle}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Quận/Huyện"
+                      value={activeTab.deliveryInfo.district}
+                      onChange={(e) => updateDelivery("district", e.target.value)}
+                      className={inputBase}
+                      style={{ ...inputStyle, backgroundColor: "white" }}
+                    />
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Phường/Xã"
+                      value={activeTab.deliveryInfo.ward}
+                      onChange={(e) => updateDelivery("ward", e.target.value)}
+                      className={inputBase}
+                      style={{ ...inputStyle, backgroundColor: "white" }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Tip box */}
-            <div className="p-4">
-              <div
-                className="rounded-xl p-3.5"
-                style={{
-                  backgroundColor: "#FFF7ED",
-                  border: "1px solid #FED7AA",
-                }}
-              >
-                <p
-                  className="text-[12px] leading-relaxed flex items-start gap-2"
-                  style={{ color: "var(--status-pending)" }}
-                >
-                  <Lightbulb size={14} className="mt-0.5 shrink-0" />
-                  <span>
-                    <strong>Yêu cầu đặt hàng:</strong> Sales chỉ ghi nhận thông
-                    tin và chuyển yêu cầu.
-                  </span>
-                </p>
+            {/* Note Section */}
+            <div className="p-5">
+              <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-100/50 shadow-inner">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600 shadow-sm shrink-0">
+                    <Lightbulb size={16} />
+                  </div>
+                  <div>
+                    <h5 className="text-[12px] font-black text-amber-800 uppercase tracking-tight">Lưu ý nghiệp vụ</h5>
+                    <p className="text-[11px] font-bold text-amber-700/70 leading-relaxed mt-1 italic font-sans">
+                      Dữ liệu chỉ lưu thông tin yêu cầu. Trạng thái "Mới tạo" dành cho Sales chuẩn bị thông tin trước khi đẩy xuống xưởng.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-
       </div>
 
       <AddCustomerModal
@@ -1331,105 +1128,119 @@ export default function CustomOrderRequirementsPage() {
 
       {/* ── Custom Item Quick View Modal ── */}
       {viewingItem && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
           <div
-            className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300"
-            style={{ border: "1px solid var(--grid-border)" }}
+            className="bg-white rounded-[2.5rem] w-full max-w-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-500 border border-white"
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <Hammer size={18} className="text-brand-primary" />
-                <h3 className="text-[16px] font-bold text-gray-900">Chi tiết yêu cầu đặt riêng</h3>
+            <div className="flex items-center justify-between px-8 py-6 border-b border-slate-50 bg-slate-50/50">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] flex items-center justify-center shadow-sm">
+                    <Hammer size={24} />
+                </div>
+                <div>
+                    <h3 className="text-[18px] font-black text-slate-800 leading-none">Chi tiết sản phẩm đặt riêng</h3>
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">Thông số kỹ thuật & yêu cầu của khách</p>
+                </div>
               </div>
               <button
                 onClick={() => setViewingItem(null)}
-                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 text-gray-400 hover:text-gray-900 transition cursor-pointer"
+                className="w-10 h-10 rounded-2xl flex items-center justify-center hover:bg-white hover:shadow-md text-slate-300 hover:text-slate-900 transition-all cursor-pointer"
               >
-                <X size={18} />
+                <X size={24} />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 max-h-[80vh] overflow-y-auto space-y-6 font-sans">
-              <div className="flex flex-col md:flex-row gap-6">
+            <div className="p-8 max-h-[80vh] overflow-y-auto custom-scrollbar space-y-8 font-sans">
+              <div className="flex flex-col md:flex-row gap-8">
                 {/* Image Section */}
-                <div className="w-full md:w-1/2 space-y-3">
-                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Ảnh mẫu yêu cầu</p>
+                <div className="w-full md:w-[45%] space-y-4">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Hình ảnh mẫu</p>
                   {viewingItem.images && viewingItem.images.length > 0 ? (
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-3">
                       {viewingItem.images.map((img, i) => (
-                        <div key={i} className="aspect-square rounded-xl overflow-hidden border border-gray-100">
-                          <img src={img} alt="" className="w-full h-full object-cover" />
+                        <div key={i} className="aspect-square rounded-3xl overflow-hidden border border-slate-100 shadow-sm relative group">
+                          <img src={img} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="aspect-square rounded-2xl bg-gray-50 border border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 text-gray-300">
-                      <Camera size={24} />
-                      <span className="text-[11px]">Không có ảnh mẫu</span>
+                    <div className="aspect-square rounded-[2rem] bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3 text-slate-300">
+                      <Camera size={32} strokeWidth={1} />
+                      <span className="text-[11px] font-black uppercase tracking-widest">Không có ảnh mẫu</span>
                     </div>
                   )}
                 </div>
 
                 {/* Specs Section */}
-                <div className="w-full md:w-1/2 space-y-4 text-left">
-                  <div>
-                    <h2 className="text-[20px] font-bold text-gray-900">{viewingItem.productName}</h2>
-                    <div className="flex items-center gap-2 mt-1">
-                       <span className="px-2 py-0.5 rounded-md bg-orange-50 text-orange-600 text-[10px] font-bold uppercase tracking-tight border border-orange-100">
-                         Hàng đặt riêng
-                       </span>
+                <div className="w-full md:w-[55%] space-y-6 text-left">
+                  <div className="space-y-2">
+                    <h2 className="text-[26px] font-black text-slate-800 leading-tight">{viewingItem.productName}</h2>
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-orange-50 text-orange-600 border border-orange-100">
+                        <Star size={12} fill="currentColor" />
+                        <span className="text-[11px] font-black uppercase tracking-wider">Hàng thiết kế riêng</span>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-3">
-                    <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <TreePine size={14} className="text-amber-700" />
-                        <span className="text-[12px] font-medium text-gray-500">Chất liệu</span>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-between group hover:border-[var(--brand-primary)] transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
+                            <TreePine size={18} />
+                        </div>
+                        <span className="text-[13px] font-black text-slate-400 uppercase tracking-widest">Chất liệu</span>
                       </div>
-                      <span className="text-[13px] font-bold text-gray-800">{viewingItem.woodType || "—"}</span>
+                      <span className="text-[15px] font-black text-slate-700">{viewingItem.woodType || "—"}</span>
                     </div>
                     
-                    <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Palette size={14} className="text-purple-600" />
-                        <span className="text-[12px] font-medium text-gray-500">Màu sắc</span>
+                    <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-between group hover:border-[var(--brand-primary)] transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
+                            <Palette size={18} />
+                        </div>
+                        <span className="text-[13px] font-black text-slate-400 uppercase tracking-widest">Màu sắc</span>
                       </div>
-                      <span className="text-[13px] font-bold text-gray-800">{viewingItem.color || "—"}</span>
+                      <span className="text-[15px] font-black text-slate-700">{viewingItem.color || "—"}</span>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Ruler size={14} className="text-blue-600" />
-                        <span className="text-[12px] font-medium text-gray-500">Kích thước</span>
+                    <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-between group hover:border-[var(--brand-primary)] transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                            <Ruler size={18} />
+                        </div>
+                        <span className="text-[13px] font-black text-slate-400 uppercase tracking-widest">Kích thước</span>
                       </div>
-                      <span className="text-[13px] font-bold text-gray-800">{viewingItem.size || "—"}</span>
+                      <span className="text-[15px] font-black text-slate-700">{viewingItem.size || "—"}</span>
                     </div>
-
                   </div>
                 </div>
               </div>
 
               {/* Note Section */}
               {viewingItem.note && (
-                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100 text-left">
-                  <div className="flex items-center gap-2 mb-2">
-                    <ClipboardEdit size={14} className="text-amber-600" />
-                    <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider">Yêu cầu bổ sung (Ghi chú)</span>
+                <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                      <ClipboardEdit size={80} strokeWidth={1} />
                   </div>
-                  <p className="text-[13px] text-amber-800 leading-relaxed italic">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                        <ClipboardEdit size={18} />
+                    </div>
+                    <span className="text-[12px] font-black text-indigo-900 uppercase tracking-[0.2em]">Yêu cầu bổ sung kỹ thuật</span>
+                  </div>
+                  <p className="text-[14px] font-bold text-slate-600 leading-relaxed italic relative z-10 bg-white/50 p-4 rounded-xl shadow-inner">
                     "{viewingItem.note}"
                   </p>
                 </div>
               )}
             </div>
             
-            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-end">
+            <div className="px-8 py-6 border-t border-slate-50 bg-slate-50/50 flex justify-end">
               <Button
                 onClick={() => setViewingItem(null)}
-                className="rounded-xl px-8 font-bold"
+                className="h-12 rounded-2xl px-12 font-black uppercase tracking-wider text-white shadow-lg shadow-[var(--brand-primary)]/20 hover:scale-105 active:scale-95 transition-all"
+                style={{ backgroundColor: "var(--brand-primary)" }}
               >
                 Đã hiểu
               </Button>

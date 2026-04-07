@@ -829,14 +829,17 @@ export default function SalesRequirements() {
                     "Khách hàng",
                     "Ngày nhận",
                     "Trạng thái",
+                    "",
                   ].map((h, i) => (
                     <th
                       key={i}
                       className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${
                         i === 0
                           ? "text-center w-[50px]"
+                          : i === 4 || i === 5
+                          ? "text-right"
                           : ""
-                      }`}
+                      } ${i === 5 ? "w-[150px]" : ""}`}
                       style={{ color: "var(--text-placeholder)" }}
                     >
                       {h}
@@ -903,46 +906,45 @@ export default function SalesRequirements() {
                       >
                         {r.createdDate?.split("-").reverse().join("/")}
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="inline-flex items-center relative">
-                          <div className="absolute right-full top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 flex items-center gap-2 transition-all transform translate-x-3 group-hover:translate-x-0 z-20 mr-4">
-                            {r.status === "Đang xử lý" && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setCancelTarget(r);
-                                }}
-                                className="flex items-center gap-2 bg-white border border-red-200 text-red-600 px-3 py-1.5 rounded-xl shadow-lg hover:bg-red-50 active:scale-95 transition-all text-[10px] font-black uppercase tracking-wider outline-none whitespace-nowrap"
-                              >
-                                Hủy
-                              </button>
-                            )}
+                      <td className="px-4 py-3 text-right">
+                        <span
+                          className="inline-flex items-center px-2.5 py-1 text-[11px] font-bold rounded-md whitespace-nowrap"
+                          style={{
+                            backgroundColor: statusConfig.bg,
+                            color: statusConfig.text,
+                            border: `1px solid ${statusConfig.border}`,
+                          }}
+                        >
+                          <span
+                            className="w-1.5 h-1.5 rounded-full mr-1.5"
+                            style={{ backgroundColor: statusConfig.text }}
+                          ></span>
+                          {r.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right w-[120px]">
+                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                          {r.status === "Đang xử lý" && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setSelectedReqId(r.id);
+                                setCancelTarget(r);
                               }}
-                              className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-xl shadow-lg hover:bg-slate-50 active:scale-95 transition-all text-[10px] font-black uppercase tracking-wider outline-none whitespace-nowrap"
+                              className="flex items-center gap-2 bg-white border border-red-200 text-red-600 px-3 py-1.5 rounded-xl shadow-lg hover:bg-red-50 active:scale-95 transition-all text-[10px] font-black uppercase tracking-wider outline-none whitespace-nowrap"
                             >
-                              Chi tiết
-                              <Eye size={14} />
+                              Hủy
                             </button>
-                          </div>
-
-                          <span
-                            className="inline-flex items-center px-2.5 py-1 text-[11px] font-bold rounded-md whitespace-nowrap"
-                            style={{
-                              backgroundColor: statusConfig.bg,
-                              color: statusConfig.text,
-                              border: `1px solid ${statusConfig.border}`,
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedReqId(r.id);
                             }}
+                            className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-xl shadow-lg hover:bg-slate-50 active:scale-95 transition-all text-[10px] font-black uppercase tracking-wider outline-none whitespace-nowrap"
                           >
-                            <span
-                              className="w-1.5 h-1.5 rounded-full mr-1.5"
-                              style={{ backgroundColor: statusConfig.text }}
-                            ></span>
-                            {r.status}
-                          </span>
+                            Chi tiết
+                            <Eye size={14} />
+                          </button>
                         </div>
                       </td>
                     </tr>
