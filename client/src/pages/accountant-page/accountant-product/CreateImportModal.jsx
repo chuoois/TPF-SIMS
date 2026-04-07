@@ -13,100 +13,16 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
-const MATERIAL_TYPES = [
-    "Gỗ Mít", "Gỗ Hương", "Gỗ Gụ", "Gỗ Gõ Đỏ",
-    "Gỗ Sồi Nga", "Gỗ Óc Chó", "Gỗ Xà Cừ", "Gỗ Dổi",
-    "Gỗ Lim", "Gỗ Trắc", "Gỗ Căm Xe",
-];
-
-const CATEGORIES = [
-    "Phòng Khách", "Phòng Ngủ", "Phòng Thờ", "Phòng Ăn",
-    "Phòng Làm Việc", "Khác"
-];
-
-const COLORS = [
-    "Trần", "Chay", "Hương", "Óc chó", "Gõ đỏ", "Nguyên mộc"
-];
-
-const SUPPLIERS = [
-    "Xưởng Minh Đức", "Xưởng An Bình", "Xưởng Tiến Phát", "Xưởng Hà Linh", "Xưởng Đồng Kỵ"
-];
-
-const FORM_TYPES = [
-    { value: "NEW", label: "Hàng mới", code: "HM" },
-    { value: "READY", label: "Hàng nhập thêm", code: "HS" },
-];
-
-const PRODUCT_TYPES = [
-    { value: "RAW", label: "Hàng mộc", code: "HM" },
-    { value: "CUSTOM", label: "Hàng khách đặt", code: "KD" },
-    { value: "FINISHED", label: "Hàng có sẵn", code: "HS" },
-    { value: "PROCESSING", label: "Đang gia công", code: "GC" },
-];
-
-const MOCK_PRODUCTS = [
-    { code: "SP-PK-001", name: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món", category: "Phòng Khách", materialType: "Gỗ Hương", importPrice: 25000000 },
-    { code: "HS-PK-001", name: "Sofa nguyên khối chữ L", category: "Phòng Khách", materialType: "Gỗ Gõ Đỏ", importPrice: 45000000 },
-    { code: "SP-PT-001", name: "Sập thờ Mai Điểu chân 20", category: "Phòng Thờ", materialType: "Gỗ Gụ", importPrice: 18000000 },
-    { code: "HS-PA-001", name: "Bộ bàn ăn 8 ghế nguyên khối", category: "Phòng Ăn", materialType: "Gỗ Hương", importPrice: 32000000 },
-    { code: "HS-PN-001", name: "Giường ngủ hoa hồng Tân cổ điển", category: "Phòng Ngủ", materialType: "Gỗ Sồi Nga", importPrice: 12000000 },
-];
-
-// ── Bộ sản phẩm đã có trong kho (dùng cho chế độ "Hàng nhập thêm") ─────────
-const MOCK_BUNDLES = [
-    {
-        code: "BO-PK-001",
-        bundleName: "Bộ bàn ghế Nghê Bảo Đỉnh 6 món",
-        category: "Phòng Khách",
-        materialType: "Gỗ Hương",
-        color: "Hương",
-        productType: "FINISHED",
-        items: [
-            { _id: 1, name: "Bàn lớn", qty: 1, unitPrice: 12000000 },
-            { _id: 2, name: "Ghế tựa", qty: 4, unitPrice: 2500000 },
-            { _id: 3, name: "Ghế chủ", qty: 1, unitPrice: 3000000 },
-        ],
-    },
-    {
-        code: "BO-PA-001",
-        bundleName: "Bộ bàn ăn 8 ghế nguyên khối",
-        category: "Phòng Ăn",
-        materialType: "Gỗ Hương",
-        color: "Hương",
-        productType: "FINISHED",
-        items: [
-            { _id: 1, name: "Bàn ăn", qty: 1, unitPrice: 20000000 },
-            { _id: 2, name: "Ghế ăn", qty: 8, unitPrice: 1500000 },
-        ],
-    },
-    {
-        code: "BO-PN-001",
-        bundleName: "Bộ phòng ngủ tân cổ điển",
-        category: "Phòng Ngủ",
-        materialType: "Gỗ Sồi Nga",
-        color: "Óc chó",
-        productType: "FINISHED",
-        items: [
-            { _id: 1, name: "Giường đôi", qty: 1, unitPrice: 15000000 },
-            { _id: 2, name: "Tủ đầu giường", qty: 2, unitPrice: 3500000 },
-            { _id: 3, name: "Tủ quần áo 4 cánh", qty: 1, unitPrice: 22000000 },
-        ],
-    },
-    {
-        code: "BO-PT-001",
-        bundleName: "Bộ đồ thờ 5 món",
-        category: "Phòng Thờ",
-        materialType: "Gỗ Gụ",
-        color: "Chay",
-        productType: "FINISHED",
-        items: [
-            { _id: 1, name: "Bàn thờ", qty: 1, unitPrice: 18000000 },
-            { _id: 2, name: "Sập thờ", qty: 1, unitPrice: 12000000 },
-            { _id: 3, name: "Hoành phi", qty: 1, unitPrice: 5000000 },
-            { _id: 4, name: "Câu đối", qty: 2, unitPrice: 3000000 },
-        ],
-    },
-];
+import { 
+    MATERIAL_TYPES, 
+    IMPORT_CATEGORIES as CATEGORIES, 
+    COLORS, 
+    SUPPLIERS, 
+    FORM_TYPES, 
+    PRODUCT_TYPES, 
+    MOCK_PRODUCTS, 
+    MOCK_BUNDLES 
+} from "../mockData";
 
 // ── Helpers ────────────────────────────────────────────
 const fmtCurrency = (n) =>

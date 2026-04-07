@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
-import { Users, Search, CheckCircle, Package, X, ChevronLeft, ChevronRight, Eye, Camera, DollarSign, Calendar, FileText, Plus, Image as ImageIcon } from "lucide-react";
+import { Users, Search, CheckCircle, Package, X, ChevronLeft, ChevronRight, Eye, Camera, DollarSign, Calendar, FileText, Plus, Image as ImageIcon, Download } from "lucide-react";
 import { toast } from "react-hot-toast";
+import * as XLSX from "xlsx";
 
 /**
  * Accountant Customer Debt
@@ -14,68 +15,7 @@ import { toast } from "react-hot-toast";
 // --- Mock Data ---
 const formatCurrency = (n) => n != null ? new Intl.NumberFormat("vi-VN").format(n) + "₫" : "—";
 
-const MOCK_DEBTS = [
-    {
-        id: "1",
-        order_code: "HD260314A1B2C3",
-        customer_name: "Nguyễn Văn A",
-        phone_number: "0901234567",
-        total_amount: 15500000,
-        deposit_amount: 5000000,
-        order_date: "10/03/2026",
-        payment_history: [
-            { date: "10/03/2026", amount: 5000000, bill_img: "https://placehold.co/400x600?text=Deposit+Bill", note: "Đặt cọc tiền bàn ghế" }
-        ]
-    },
-    {
-        id: "2",
-        order_code: "HD260313D4E5F6",
-        customer_name: "Trần Thị B",
-        phone_number: "0987654321",
-        total_amount: 8200000,
-        deposit_amount: 3000000,
-        order_date: "12/03/2026",
-        payment_history: [
-            { date: "12/03/2026", amount: 3000000, bill_img: "https://placehold.co/400x600?text=Payment+Bill+1", note: "Thanh toán đợt 1" }
-        ]
-    },
-    {
-        id: "3",
-        order_code: "HD260312X7Y8Z9",
-        customer_name: "Lê Minh C",
-        phone_number: "0912223334",
-        total_amount: 25000000,
-        deposit_amount: 10000000,
-        order_date: "05/03/2026",
-        payment_history: [
-            { date: "05/03/2026", amount: 10000000, bill_img: "https://placehold.co/400x600?text=Deposit+Bill", note: "Đặt cọc thi công" }
-        ]
-    },
-    {
-        id: "4",
-        order_code: "HD260310P1Q2R3",
-        customer_name: "Phạm Xuân D",
-        phone_number: "0934445556",
-        total_amount: 4500000,
-        deposit_amount: 1500000,
-        order_date: "01/03/2026",
-        payment_history: [
-            { date: "01/03/2026", amount: 1500000, bill_img: "https://placehold.co/400x600?text=Deposit+Bill", note: "Đặt cọc hàng mộc" }
-        ]
-    },
-    {
-        id: "5",
-        order_code: "HD260305W1X2Y3",
-        customer_name: "Hoàng Văn E",
-        phone_number: "0966778899",
-        total_amount: 10000000,
-        deposit_amount: 10000000,
-        order_date: "05/03/2026",
-        payment_history: [
-            { date: "05/03/2026", amount: 10000000, bill_img: "https://placehold.co/400x600?text=Full+Payment+Bill", note: "Đã thanh toán hết" }
-        ]
-    },
-];
+import { MOCK_DEBTS } from "../mockData";
 
 export default function AccountantCustomerDebt() {
     const [debts, setDebts] = useState(MOCK_DEBTS);
@@ -94,6 +34,40 @@ export default function AccountantCustomerDebt() {
     const [itemsPerPage, setItemsPerPage] = useState(15);
 
     const getRemainingAmount = (total, deposit) => Math.max(0, total - deposit);
+
+    const handleExportExcel = () => {
+        try {
+            const dataToExport = filteredDebts.map(debt => {
+                const remaining = getRemainingAmount(debt.total_amount, debt.deposit_amount);
+                const isSettled = remaining <= 0;
+                return {
+                    "Mã Đơn": debt.order_code,
+                    "Khách Hàng": debt.customer_name,
+                    "Số Điện Thoại": debt.phone_number,
+                    "Tổng Tiền": debt.total_amount,
+                    "Đã Thanh Toán": debt.deposit_amount,
+                    "Còn Nợ": remaining,
+                    "Ngày Đặt": debt.order_date,
+                    "Trạng Thái": isSettled ? "Đã thanh toán" : "Còn nợ"
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(dataToExport);
+            const wscols = [
+                { wch: 15 }, { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }
+            ];
+            ws['!cols'] = wscols;
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "CongNoKhachHang");
+
+            XLSX.writeFile(wb, `CongNoKhachHang_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            toast.success("Xuất file Excel thành công!", { style: { fontSize: "14px", fontWeight: "bold" } });
+        } catch (error) {
+            console.error("Lỗi xuất excel:", error);
+            toast.error("Không thể xuất file Excel");
+        }
+    };
 
     const filteredDebts = useMemo(() => {
         let r = debts;
@@ -242,6 +216,11 @@ export default function AccountantCustomerDebt() {
                                 <option value="SETTLED">Đã thanh toán</option>
                             </select>
                         </div>
+                        <button onClick={handleExportExcel}
+                            className="h-9 px-4 rounded-lg flex items-center gap-2 text-[13px] font-bold cursor-pointer transition focus:ring-2"
+                            style={{ backgroundColor: "var(--brand-primary)", color: "#fff" }}>
+                            <Download size={14} strokeWidth={2.5} /> Xuất Excel
+                        </button>
                     </div>
 
                     {/* Table */}

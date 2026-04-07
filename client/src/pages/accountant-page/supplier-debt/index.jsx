@@ -19,95 +19,15 @@ import {
   Camera,
   Plus,
   Image as ImageIcon,
+  Download,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { cn } from "@/lib/utils";
+import * as XLSX from "xlsx";
+import { toast } from "react-hot-toast";
 
 // ===================== STATIC DATA =====================
-const INITIAL_SUPPLIERS = [
-  {
-    id: "NCC001",
-    code: "NCC-TAM",
-    name: "Xưởng gỗ mỹ nghệ Thành Tâm",
-    contactPerson: "Nguyễn Văn Tâm",
-    phone: "0901234567",
-    email: "thanhtam@wood.com",
-    address: "Làng nghề Đồng Kỵ, Từ Sơn, Bắc Ninh",
-    totalImport: 1250000000,
-    debt: 350000000,
-    group: "Xưởng nội thất mỹ nghệ",
-    notes: ["Đối tác chiến lược khu vực phía Bắc", "Cung cấp gỗ sồi chất lượng loại 1"],
-    ledger: [
-      { id: "TXP001", date: "2024-02-15 09:00", note: "Nhập lô gỗ sồi PN-2580", change: 200000000, balance: 200000000 },
-      { id: "TXP002", date: "2024-02-20 15:30", note: "Chuyển khoản thanh toán đợt 1", change: -100000000, balance: 100000000, bill_img: "https://placehold.co/400x600?text=Bill+1" },
-      { id: "TXP003", date: "2024-03-01 11:00", note: "Nhập lô gỗ hương PN-2601", change: 150000000, balance: 250000000 },
-      { id: "TXP004", date: "2024-03-05 16:00", note: "Tiền mặt thanh toán đợt 2", change: -100000000, balance: 150000000, bill_img: "https://placehold.co/400x600?text=Bill+2" },
-    ],
-  },
-  {
-    id: "NCC002",
-    code: "NCC-HAI",
-    name: "Tổng kho gỗ nguyên liệu Nam Hải",
-    contactPerson: "Trần Thế Hải",
-    phone: "0912345678",
-    email: "namhai@timber.vn",
-    address: "Khu CN Thạch Thất, Hà Nội",
-    totalImport: 4500000000,
-    debt: 0,
-    group: "Tổng kho gỗ nguyên liệu",
-    notes: ["Chuyên gỗ lim và gỗ hương Nam Phi"],
-    ledger: [],
-  },
-  {
-    id: "NCC003",
-    code: "NCC-PHAT",
-    name: "Xưởng mộc nội thất Gia Phát",
-    contactPerson: "Lê Văn Phát",
-    phone: "0987654321",
-    email: "giaphat@furniture.com",
-    address: "Làng mộc Hữu Bằng, Thạch Thất, Hà Nội",
-    totalImport: 890000000,
-    debt: 120000000,
-    group: "Xưởng mộc gia công",
-    notes: [],
-    ledger: [],
-  },
-  {
-    id: "NCC004",
-    code: "NCC-MINH",
-    name: "Cơ sở sản xuất gỗ Minh Long",
-    contactPerson: "Hoàng Minh Long",
-    phone: "0923456789",
-    email: "minhlong@gom.vn",
-    address: "KCN Phú Nghĩa, Chương Mỹ, Hà Nội",
-    totalImport: 620000000,
-    debt: 80000000,
-    group: "Xưởng mộc gia công",
-    notes: ["Chuyên gỗ óc chó nhập khẩu"],
-    ledger: [],
-  },
-];
-
-const MOCK_IMPORT_HISTORY = [
-  { id: "PN001", code: "PN-2601", date: "2024-03-01 10:00", total: 150000000, status: "Đã nhập kho" },
-  { id: "PN002", code: "PN-2605", date: "2024-03-05 14:30", total: 245000000, status: "Đang về" },
-  { id: "PN003", code: "PN-2612", date: "2024-03-12 09:15", total: 89000000, status: "Đã nhập kho" },
-];
-
-const MOCK_SHIPMENT_ITEMS = {
-  "PN-2601": [
-    { id: "I001", name: "Bộ bàn ghế Tần Thủy Hoàng (Gỗ Sồi)", quantity: 5, unitPrice: 15000000, total: 75000000 },
-    { id: "I002", name: "Kệ tivi hoa hồng (Gỗ Hương)", quantity: 3, unitPrice: 25000000, total: 75000000 },
-  ],
-  "PN-2605": [
-    { id: "I003", name: "Bộ Minh Quốc Đào (Gỗ Gụ)", quantity: 10, unitPrice: 20000000, total: 200000000 },
-    { id: "I004", name: "Tranh mã đáo thành công", quantity: 5, unitPrice: 9000000, total: 45000000 },
-  ],
-  "PN-2612": [
-    { id: "I005", name: "Tủ quần áo 4 cánh", quantity: 2, unitPrice: 30000000, total: 60000000 },
-    { id: "I006", name: "Giường ngủ tân cổ điển", quantity: 1, unitPrice: 29000000, total: 29000000 },
-  ],
-};
+import { INITIAL_SUPPLIERS, MOCK_IMPORT_HISTORY, MOCK_SHIPMENT_ITEMS } from "../mockData";
 
 
 // ===================== HELPERS =====================
@@ -641,6 +561,38 @@ export default function AccountantSupplierDebt() {
   const hasActiveFilters = !!(searchTerm || dateFrom || dateTo);
   const clearAllFilters = () => { setSearchTerm(""); setDateFrom(""); setDateTo(""); setCurrentPage(1); };
 
+  const handleExportExcel = () => {
+    try {
+      const dataToExport = filtered.map(s => ({
+        "Mã NCC": s.code,
+        "Nhà cung cấp": s.name,
+        "Người liên hệ": s.contactPerson,
+        "Số điện thoại": s.phone,
+        "Địa chỉ": s.address,
+        "Nhóm": s.group,
+        "Tổng giá trị nhập": s.totalImport,
+        "Đã thanh toán": s.totalImport - s.debt,
+        "Dư nợ": s.debt,
+        "Trạng thái": s.debt > 0 ? "Còn nợ" : "Đã tất toán"
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(dataToExport);
+      const wscols = [
+        { wch: 15 }, { wch: 30 }, { wch: 20 }, { wch: 15 }, { wch: 40 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 15 }
+      ];
+      ws['!cols'] = wscols;
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "CongNoThuMua");
+
+      XLSX.writeFile(wb, `CongNoThuMua_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      toast.success("Xuất file Excel thành công!", { style: { fontSize: "14px", fontWeight: "bold" } });
+    } catch (error) {
+      console.error("Lỗi xuất excel:", error);
+      toast.error("Không thể xuất file Excel");
+    }
+  };
+
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
@@ -748,11 +700,18 @@ export default function AccountantSupplierDebt() {
               </div>
             </div>
 
-            {hasActiveFilters && (
-              <button onClick={clearAllFilters} className="h-9 px-3 rounded-lg text-[12px] font-bold text-red-600 hover:bg-red-50 transition border border-transparent hover:border-red-100 cursor-pointer">
-                Xóa bộ lọc
+            <div className="flex items-center gap-2">
+              {hasActiveFilters && (
+                <button onClick={clearAllFilters} className="h-9 px-3 rounded-lg text-[12px] font-bold text-red-600 hover:bg-red-50 transition border border-transparent hover:border-red-100 cursor-pointer">
+                  Xóa bộ lọc
+                </button>
+              )}
+              <button onClick={handleExportExcel}
+                className="h-9 px-4 rounded-lg flex items-center gap-2 text-[13px] font-bold cursor-pointer transition focus:ring-2"
+                style={{ backgroundColor: "var(--brand-primary)", color: "#fff" }}>
+                <Download size={14} strokeWidth={2.5} /> Xuất Excel
               </button>
-            )}
+            </div>
           </div>
 
           {/* Table */}
