@@ -34,7 +34,7 @@ const menuItems = [
     path: "/owner/requirements",
   },
   { text: "Đơn hàng", icon: ClipboardList, path: "/owner/orders" },
-  { text: "Mã giảm giá", icon: Tag, path: "/owner/coupons" },
+  
   {
     text: "Sản phẩm",
     icon: Package,
@@ -53,6 +53,7 @@ const menuItems = [
       ],
     },
   },
+  { text: "Mã giảm giá", icon: Tag, path: "/owner/coupons" },
 
   { text: "Quản lý sản xuất", icon: Hammer, path: "/owner/production" },
   

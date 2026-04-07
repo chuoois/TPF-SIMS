@@ -159,7 +159,10 @@ const DataTable = ({
       render: (item) => (
         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           {rowActions.map((action, idx) => {
+
+            if (action.showIf && !action.showIf(item)) return null;
             if (action.hidden && action.hidden(item)) return null;
+
             const Icon = action.icon;
             return (
               <button

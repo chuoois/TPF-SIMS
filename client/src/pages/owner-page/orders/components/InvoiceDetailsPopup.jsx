@@ -1456,6 +1456,8 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                     </div>
                   </div>
 
+
+
                   <div className="bg-slate-50 rounded-lg p-5 space-y-4">
                     <div className="flex items-center justify-between">
                       <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">

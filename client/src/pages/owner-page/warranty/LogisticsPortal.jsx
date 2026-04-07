@@ -7,6 +7,7 @@ export default function LogisticsPortal() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [request, setRequest] = useState(null);
+  const [completionNote, setCompletionNote] = useState("");
 
   useEffect(() => {
     const rawData = localStorage.getItem("tpf_simulated_repair_requests");
@@ -27,15 +28,40 @@ export default function LogisticsPortal() {
       const allReqs = JSON.parse(rawData);
       const updated = allReqs.map(r => {
         if (r.id === id) {
-          return { ...r, status: newStatus };
+          const finalNote = completionNote ? `[Thợ/Lái xe]: ${completionNote}` : r.notes;
+          return { ...r, status: newStatus, notes: finalNote };
         }
         return r;
       });
       localStorage.setItem("tpf_simulated_repair_requests", JSON.stringify(updated));
-      setRequest({ ...request, status: newStatus });
+      
+      // Also update warranty history if it's completed
+      const currentReq = allReqs.find(r => r.id === id);
+      if (newStatus === "Hoàn thành" && currentReq?.warrantyId) {
+          const rawWarranties = localStorage.getItem("tpf_simulated_warranties");
+          if (rawWarranties) {
+              const warranties = JSON.parse(rawWarranties);
+              const updatedWarranties = warranties.map(w => {
+                  if (w.id === currentReq.warrantyId) {
+                      const newHistory = [
+                          {
+                              date: new Date().toISOString(),
+                              notes: `[Logistics Hoàn thành] ${completionNote || 'Đã sửa chữa xong'}`,
+                              technician: currentReq.technician || "Lái xe/Thợ"
+                          },
+                          ...(w.maintenanceHistory || [])
+                      ];
+                      return { ...w, maintenanceHistory: newHistory };
+                  }
+                  return w;
+              });
+              localStorage.setItem("tpf_simulated_warranties", JSON.stringify(updatedWarranties));
+          }
+      }
+
+      setRequest({ ...request, status: newStatus, notes: completionNote ? `[Thợ/Lái xe]: ${completionNote}` : request.notes });
       toast.success(`Đã cập nhật trạng thái: ${newStatus}`);
       
-      // Dispatch storage event to update other tabs immediately
       window.dispatchEvent(new Event("storage"));
     }
   };
@@ -120,12 +146,24 @@ export default function LogisticsPortal() {
           )}
 
           {request.status === "Đang thực hiện" && (
-            <button 
-              onClick={() => handleUpdateStatus("Hoàn thành")}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-2xl shadow-lg shadow-green-200 flex items-center justify-center gap-2 transition-transform active:scale-95"
-            >
-              <CheckCircle2 size={24} /> ĐÃ XONG & TRẢ KHÁCH
-            </button>
+            <div className="space-y-4">
+              <div className="bg-white p-4 rounded-2xl border border-slate-200">
+                <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block tracking-widest">Ghi chú kết quả (Lái xe/Thợ)</label>
+                <textarea 
+                  rows={3}
+                  value={completionNote}
+                  onChange={e => setCompletionNote(e.target.value)}
+                  className="w-full text-sm p-3 border border-slate-100 rounded-xl focus:ring-2 focus:ring-green-500/20 outline-none italic"
+                  placeholder="Ví dụ: Đã thay bản lề, kiểm tra êm..."
+                />
+              </div>
+              <button 
+                onClick={() => handleUpdateStatus("Hoàn thành")}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-2xl shadow-lg shadow-green-200 flex items-center justify-center gap-2 transition-transform active:scale-95"
+              >
+                <CheckCircle2 size={24} /> XÁC NHẬN HOÀN THÀNH
+              </button>
+            </div>
           )}
 
           <div className="text-center pt-4">
