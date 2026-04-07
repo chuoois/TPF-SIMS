@@ -19,7 +19,20 @@ import {
 } from "lucide-react";
 
 // ===================== STATIC DATA =====================
-import { HOME_MOCK_DATA as MOCK_DATA } from "../mockData";
+import { MOCK_DEBTS, INITIAL_SUPPLIERS, MOCK_EMPLOYEES } from "../mockData";
+
+// Tái sử dụng logic tính lương
+const calculateTotalSalary = (emp) => {
+    let total = 0;
+    if (["SALES", "ACCOUNTANT", "SANDER"].includes(emp.type)) {
+        total = (emp.base_rate * emp.days_worked) + emp.allowance;
+    } else if (emp.type === "PAINTER") {
+        const logTotal = (emp.products_log || []).reduce((s, p) => s + (p.price * (p.qty || 1)), 0);
+        const fallback = logTotal > 0 ? logTotal : (emp.base_rate * emp.products_finished);
+        total = fallback + emp.allowance;
+    }
+    return total;
+};
 
 // ===================== HELPERS =====================
 const formatCurrency = (value) => {
@@ -47,7 +60,61 @@ const getStatusColor = (status) => {
 
 // ===================== COMPONENT =====================
 export default function AccountantHome() {
-    const { customerDebt, supplierDebt, employeeSalary } = MOCK_DATA;
+    // 1. Tính toán Công nợ khách hàng
+    const customerDebtList = MOCK_DEBTS.map(d => {
+        const paid = d.payment_history?.reduce((sum, p) => sum + p.amount, 0) || d.deposit_amount || 0;
+        return {
+            ...d,
+            paid,
+            remaining: Math.max(0, d.total_amount - paid),
+        };
+    });
+    const remainingDebtOrders = customerDebtList.filter(d => d.remaining > 0);
+    
+    const customerDebt = {
+        totalOrders: customerDebtList.length,
+        remainingDebtOrders: remainingDebtOrders.length,
+        totalRemainingDebt: remainingDebtOrders.reduce((sum, d) => sum + d.remaining, 0),
+        settledOrders: customerDebtList.length - remainingDebtOrders.length,
+        recentDebts: customerDebtList.slice(0, 3).map(d => ({
+            code: d.order_code,
+            customer: d.customer_name,
+            total: d.total_amount,
+            paid: d.paid,
+            date: d.order_date
+        }))
+    };
+
+    // 2. Tính toán Công nợ nhà cung cấp
+    const debtSuppliers = INITIAL_SUPPLIERS.filter(s => s.debt > 0);
+    const supplierDebt = {
+        totalSuppliers: INITIAL_SUPPLIERS.length,
+        debtSuppliers: debtSuppliers.length,
+        totalRemainingDebt: debtSuppliers.reduce((sum, s) => sum + s.debt, 0),
+        settledSuppliers: INITIAL_SUPPLIERS.length - debtSuppliers.length,
+        recentSuppliers: INITIAL_SUPPLIERS.slice(0, 4)
+    };
+
+    // 3. Tính toán Lương nhân viên
+    const employeeSalary = {
+        totalEmployees: MOCK_EMPLOYEES.length,
+        unpaidCount: MOCK_EMPLOYEES.filter(e => e.status === "Chưa thanh toán").length,
+        paidCount: MOCK_EMPLOYEES.filter(e => e.status === "Đã thanh toán").length,
+        totalFund: MOCK_EMPLOYEES.reduce((sum, e) => sum + calculateTotalSalary(e), 0),
+        recentSalaries: MOCK_EMPLOYEES.slice(0, 6).map(emp => {
+            let calc = "";
+            if (["SALES", "ACCOUNTANT", "SANDER"].includes(emp.type)) {
+                calc = `${new Intl.NumberFormat("vi-VN").format(emp.base_rate)}₫ × ${emp.days_worked} ngày`;
+            } else if (emp.type === "PAINTER") {
+                calc = emp.products_log?.length ? "Theo đơn giá SP" : `${new Intl.NumberFormat("vi-VN").format(emp.base_rate)}₫ × ${emp.products_finished} SP`;
+            }
+            return {
+                ...emp,
+                calc,
+                total: calculateTotalSalary(emp)
+            };
+        })
+    };
 
     return (
         <>
@@ -166,9 +233,9 @@ export default function AccountantHome() {
           {/* KPI row */}
           <div className="grid grid-cols-3 gap-4 p-5 border-b" style={{ borderColor: "var(--grid-border)" }}>
             {[
-              { label: "Tổng đơn hàng", value: "5", color: "text-gray-800", sub: "nợ + đã tất toán" },
-              { label: "Còn nợ", value: "4 đơn", color: "text-amber-600", sub: new Intl.NumberFormat("vi-VN").format(53700000) + "₫" },
-              { label: "Đã tất toán", value: "1 đơn", color: "text-green-600", sub: "Toàn bộ số tiền đã thu" },
+              { label: "Tổng đơn hàng", value: customerDebt.totalOrders.toString(), color: "text-gray-800", sub: "nợ + đã tất toán" },
+              { label: "Còn nợ", value: `${customerDebt.remainingDebtOrders} đơn`, color: "text-amber-600", sub: new Intl.NumberFormat("vi-VN").format(customerDebt.totalRemainingDebt) + "₫" },
+              { label: "Đã tất toán", value: `${customerDebt.settledOrders} đơn`, color: "text-green-600", sub: "Toàn bộ số tiền đã thu" },
             ].map(kpi => (
               <div key={kpi.label} className="flex flex-col gap-0.5">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">{kpi.label}</p>
@@ -189,11 +256,7 @@ export default function AccountantHome() {
                 </tr>
               </thead>
               <tbody>
-                {[
-                  { code: "HD260314A1B2C3", customer: "Nguyễn Văn A", total: 15500000, paid: 5000000, date: "10/03/2026" },
-                  { code: "HD260312X7Y8Z9", customer: "Lê Minh C",    total: 25000000, paid: 10000000, date: "05/03/2026" },
-                  { code: "HD260313D4E5F6", customer: "Trần Thị B",   total: 8200000,  paid: 3000000, date: "12/03/2026" },
-                ].map((row, idx) => {
+                {customerDebt.recentDebts.map((row, idx) => {
                   const remaining = row.total - row.paid;
                   return (
                     <tr key={idx} className="hover:bg-gray-50/60 transition-colors" style={{ borderBottom: "1px solid var(--grid-border)" }}>
@@ -231,9 +294,9 @@ export default function AccountantHome() {
           {/* KPI row */}
           <div className="grid grid-cols-3 gap-4 p-5 border-b" style={{ borderColor: "var(--grid-border)" }}>
             {[
-              { label: "Nhà cung cấp", value: "4", color: "text-gray-800", sub: "đang theo dõi" },
-              { label: "Đang có nợ", value: "3 NCC", color: "text-red-600", sub: new Intl.NumberFormat("vi-VN").format(550000000) + "₫" },
-              { label: "Đã tất toán", value: "1 NCC", color: "text-green-600", sub: "Tổng kho gỗ Nam Hải" },
+              { label: "Nhà cung cấp", value: supplierDebt.totalSuppliers.toString(), color: "text-gray-800", sub: "đang theo dõi" },
+              { label: "Đang có nợ", value: `${supplierDebt.debtSuppliers} NCC`, color: "text-red-600", sub: new Intl.NumberFormat("vi-VN").format(supplierDebt.totalRemainingDebt) + "₫" },
+              { label: "Đã tất toán", value: `${supplierDebt.settledSuppliers} NCC`, color: "text-green-600", sub: "Không còn dư nợ" },
             ].map(kpi => (
               <div key={kpi.label} className="flex flex-col gap-0.5">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">{kpi.label}</p>
@@ -253,12 +316,7 @@ export default function AccountantHome() {
                 </tr>
               </thead>
               <tbody>
-                {[
-                  { code: "NCC-TAM",  name: "Xưởng gỗ mỹ nghệ Thành Tâm",    totalImport: 1250000000, debt: 350000000 },
-                  { code: "NCC-PHAT", name: "Xưởng mộc nội thất Gia Phát",    totalImport: 890000000,  debt: 120000000 },
-                  { code: "NCC-MINH", name: "Cơ sở sản xuất gỗ Minh Long",    totalImport: 620000000,  debt: 80000000 },
-                  { code: "NCC-HAI",  name: "Tổng kho gỗ nguyên liệu Nam Hải", totalImport: 4500000000, debt: 0 },
-                ].map((row, idx) => (
+                {supplierDebt.recentSuppliers.map((row, idx) => (
                   <tr key={idx} className="hover:bg-gray-50/60 transition-colors" style={{ borderBottom: "1px solid var(--grid-border)" }}>
                     <td className="px-4 py-2.5"><span className="font-mono text-[11px] font-bold bg-gray-100 text-gray-600 border border-gray-200 px-1.5 py-0.5 rounded">{row.code}</span></td>
                     <td className="px-4 py-2.5 font-semibold text-gray-800">{row.name}</td>
@@ -287,7 +345,7 @@ export default function AccountantHome() {
           <div className="p-5 border-b flex items-center justify-between" style={{ borderColor: "var(--grid-border)" }}>
             <h3 className="text-[15px] font-bold flex items-center gap-2" style={{ color: "var(--text-main)" }}>
               <Wallet size={18} className="text-amber-500" />
-              Lương nhân viên – Tháng 03/2026
+              Lương nhân viên – Tháng {employeeSalary.recentSalaries[0]?.month || "hiện tại"}
             </h3>
             <Link to="/accountant/employee-salary" className="flex items-center gap-1 text-[13px] font-semibold" style={{ color: "var(--brand-primary)" }}>
               Xem tất cả <ChevronRight size={14} />
@@ -297,10 +355,10 @@ export default function AccountantHome() {
           {/* KPI row */}
           <div className="grid grid-cols-4 gap-4 p-5 border-b" style={{ borderColor: "var(--grid-border)" }}>
             {[
-              { label: "Tổng nhân viên", value: "6",  color: "text-gray-800", sub: "3 loại bộ phận" },
-              { label: "Chưa thanh toán", value: "4 NV", color: "text-red-600", sub: "Cần chi trả kỳ này" },
-              { label: "Đã thanh toán", value: "2 NV", color: "text-green-600", sub: "NV002, NV006" },
-              { label: "Tổng quỹ lương", value: new Intl.NumberFormat("vi-VN").format(11000000 + 8500000 + 8800000 + 10200000 + 18000000 + 17500000) + "₫", color: "text-amber-600", sub: "Tháng 03/2026" },
+              { label: "Tổng nhân viên", value: employeeSalary.totalEmployees.toString(),  color: "text-gray-800", sub: "nhân sự" },
+              { label: "Chưa thanh toán", value: `${employeeSalary.unpaidCount} NV`, color: "text-red-600", sub: "Cần chi trả kỳ này" },
+              { label: "Đã thanh toán", value: `${employeeSalary.paidCount} NV`, color: "text-green-600", sub: "Đã tất toán" },
+              { label: "Tổng quỹ lương", value: new Intl.NumberFormat("vi-VN").format(employeeSalary.totalFund) + "₫", color: "text-amber-600", sub: `Tháng ${employeeSalary.recentSalaries[0]?.month || ""}` },
             ].map(kpi => (
               <div key={kpi.label} className="flex flex-col gap-0.5">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">{kpi.label}</p>
@@ -320,14 +378,7 @@ export default function AccountantHome() {
                 </tr>
               </thead>
               <tbody>
-                {[
-                  { id: "NV001", name: "Nguyễn Thị Mai", role: "Nhân viên bán hàng", type: "SALES",   calc: "Lương tháng cố định",    total: 11000000, status: "Chưa thanh toán" },
-                  { id: "NV002", name: "Trần Văn Khoa",  role: "Nhân viên bán hàng", type: "SALES",   calc: "Lương tháng cố định",    total: 8500000,  status: "Đã thanh toán" },
-                  { id: "NV003", name: "Lê Đình Chinh",  role: "Nhân viên giấy ráp", type: "SANDER",  calc: "400.000₫ × 22 ngày",     total: 8800000,  status: "Chưa thanh toán" },
-                  { id: "NV004", name: "Phạm Xuân Đạt",  role: "Nhân viên giấy ráp", type: "SANDER",  calc: "400.000₫ × 25 ngày",     total: 10200000, status: "Chưa thanh toán" },
-                  { id: "NV005", name: "Đỗ Hữu Hùng",   role: "Thợ sơn",            type: "PAINTER", calc: "150.000₫ × 120 SP",      total: 18000000, status: "Chưa thanh toán" },
-                  { id: "NV006", name: "Vũ Tấn Tài",    role: "Thợ sơn",            type: "PAINTER", calc: "200.000₫ × 85 SP",       total: 17500000, status: "Đã thanh toán" },
-                ].map((emp, idx) => {
+                {employeeSalary.recentSalaries.map((emp, idx) => {
                   const isPaid = emp.status === "Đã thanh toán";
                   const RoleIcon = emp.type === "SALES" ? Users : emp.type === "SANDER" ? Hammer : Paintbrush;
                   const roleColor = emp.type === "SALES" ? "text-blue-600" : emp.type === "SANDER" ? "text-amber-600" : "text-green-600";
@@ -355,7 +406,7 @@ export default function AccountantHome() {
               <tfoot style={{ backgroundColor: "var(--grid-header-bg)", borderTop: "1px solid var(--grid-border)" }}>
                 <tr>
                   <td colSpan={4} className="px-4 py-3 text-right text-[12px] font-black uppercase tracking-wider text-gray-500">Tổng quỹ lương</td>
-                  <td className="px-4 py-3 text-right text-[15px] font-black text-amber-600">{new Intl.NumberFormat("vi-VN").format(11000000 + 8500000 + 8800000 + 10200000 + 18000000 + 17500000)}₫</td>
+                  <td className="px-4 py-3 text-right text-[15px] font-black text-amber-600">{new Intl.NumberFormat("vi-VN").format(employeeSalary.totalFund)}₫</td>
                   <td />
                 </tr>
               </tfoot>
