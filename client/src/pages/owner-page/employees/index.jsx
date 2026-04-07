@@ -22,6 +22,7 @@ import {
   Layers,
   Trash2,
   ChevronDown,
+  Key,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
@@ -81,7 +82,13 @@ const INITIAL_ACCOUNTS = [
     status: 1,
     timestamp: "2026-03-06T11:20:00",
     role: { role_code: "SALES", role_name: "Sales" },
-    profile: { full_name: "Phạm Thị Lan", phone_number: "0934567890" }
+    profile: { 
+      full_name: "Phạm Thị Lan", 
+      phone_number: "0934567890",
+      address: "123 Đường ABC, Hà Nội",
+      gender: "Nữ",
+      dob: "1995-05-20"
+    }
   }
 ];
 
@@ -119,6 +126,8 @@ export default function OwnerEmployees() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [accountToReset, setAccountToReset] = useState(null);
 
   const fetchAccounts = () => {
     setLoading(true);
@@ -181,6 +190,19 @@ export default function OwnerEmployees() {
     toast.success("Đã xóa tài khoản thành công");
     setShowDeleteConfirm(false);
     setAccountToDelete(null);
+  };
+  
+  const handleBulkDelete = () => {
+    setAccounts(prev => prev.filter(a => !selectedIds.includes(a.pk_user_account_id)));
+    toast.success(`Đã xóa ${selectedIds.length} tài khoản`);
+    setSelectedIds([]);
+  };
+
+  const handleResetPassword = (newPwd) => {
+    // In mock, just show toast for demonstration
+    toast.success(`Đã đặt lại mật khẩu cho "${accountToReset?.profile?.full_name}"`);
+    setShowResetModal(false);
+    setAccountToReset(null);
   };
 
   const processedAccounts = useMemo(() => {
@@ -263,6 +285,16 @@ export default function OwnerEmployees() {
           clearAllFilters={clearAllFilters}
           selectedIds={selectedIds}
           setSelectedIds={setSelectedIds}
+          bulkActions={[
+            {
+              label: "Xóa đã chọn",
+              icon: Trash2,
+              onClick: handleBulkDelete,
+              requireConfirm: true,
+              confirmTitle: "Xác nhận xóa hàng loạt",
+              confirmMessage: (ids) => `Bạn có chắc chắn muốn xóa vĩnh viễn ${selectedIds.length} tài khoản đã chọn không?`
+            }
+          ]}
           extraFilters={
             <div className="flex items-center gap-1.5 shrink-0 relative">
                <select
@@ -338,6 +370,12 @@ export default function OwnerEmployees() {
               onClick: (a) => { setEditingAccount(a); setShowAddEditModal(true); },
             },
             {
+              icon: Key,
+              label: "Mật khẩu",
+              className: "bg-white border-gray-200 text-blue-500 hover:text-blue-600",
+              onClick: (a) => { setAccountToReset(a); setShowResetModal(true); },
+            },
+            {
               icon: Lock,
               label: "Trạng thái",
               className: "bg-white border-gray-200 text-amber-500 hover:text-amber-600",
@@ -362,6 +400,7 @@ export default function OwnerEmployees() {
 
       {showAddEditModal && <AccountFormModal account={editingAccount} onClose={() => setShowAddEditModal(false)} onSave={handleSaveAccount} />}
       {showStatusModal && <StatusModal account={selectedAccount} onClose={() => setShowStatusModal(false)} onUpdate={handleUpdateStatus} />}
+      {showResetModal && <ResetPasswordModal account={accountToReset} onClose={() => setShowResetModal(false)} onConfirm={handleResetPassword} />}
       
       <ConfirmModal
         isOpen={showDeleteConfirm}
@@ -374,12 +413,78 @@ export default function OwnerEmployees() {
   );
 }
 
+function ResetPasswordModal({ account, onClose, onConfirm }) {
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      toast.error("Mật khẩu xác nhận không khớp");
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error("Mật khẩu phải có ít nhất 6 ký tự");
+      return;
+    }
+    onConfirm(newPassword);
+  };
+
+  return (
+    <ModalContainer title="Đặt lại mật khẩu" onClose={onClose} maxWidth="max-w-sm">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="flex flex-col items-center gap-3 mb-4">
+          <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+            <Key size={24} />
+          </div>
+          <div className="text-center">
+            <p className="text-[13px] text-gray-500">Đang đặt lại mật khẩu cho</p>
+            <p className="font-bold text-gray-900">{account?.profile?.full_name}</p>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Mật khẩu mới</label>
+          <Input 
+            required 
+            type="password" 
+            placeholder="••••••••" 
+            className="rounded-xl h-11" 
+            value={newPassword} 
+            onChange={e => setNewPassword(e.target.value)} 
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Xác nhận mật khẩu</label>
+          <Input 
+            required 
+            type="password" 
+            placeholder="••••••••" 
+            className="rounded-xl h-11" 
+            value={confirmPassword} 
+            onChange={e => setConfirmPassword(e.target.value)} 
+          />
+        </div>
+
+        <div className="pt-2 flex gap-3">
+          <Button type="button" variant="ghost" onClick={onClose} className="flex-1 h-11 rounded-xl text-gray-500">Hủy</Button>
+          <Button type="submit" className="flex-1 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold">Xác nhận</Button>
+        </div>
+      </form>
+    </ModalContainer>
+  );
+}
+
 function AccountFormModal({ account, onClose, onSave }) {
   const [formData, setFormData] = useState({
     email: account?.email || "",
     password: "",
     full_name: account?.profile?.full_name || "",
     phone_number: account?.profile?.phone_number || "",
+    address: account?.profile?.address || "",
+    gender: account?.profile?.gender || "Nam",
+    dob: account?.profile?.dob || "",
     role_id: account?.role?.role_code || account?.role_id || "SALES",
   });
 
@@ -413,6 +518,26 @@ function AccountFormModal({ account, onClose, onSave }) {
               <option value="WORKER">Thợ</option>
             </select>
           </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Ngày sinh</label>
+            <Input type="date" className="rounded-xl h-11" value={formData.dob} onChange={e => setFormData({ ...formData, dob: e.target.value })} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Giới tính</label>
+            <select value={formData.gender} onChange={e => setFormData({ ...formData, gender: e.target.value })} className="flex h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm focus:outline-none">
+              <option value="Nam">Nam</option>
+              <option value="Nữ">Nữ</option>
+              <option value="Khác">Khác</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Địa chỉ</label>
+          <Input className="rounded-xl h-11" placeholder="Nhập địa chỉ cư trú..." value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
         </div>
         <div className="pt-4 flex gap-3">
           <Button type="button" variant="ghost" onClick={onClose} className="flex-1 h-12 rounded-xl font-bold">Hủy</Button>

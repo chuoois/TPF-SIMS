@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 
 const REPORT_CATEGORIES = [
    { id: "sales", label: "Báo cáo Bán Hàng (Doanh thu & Lãi gộp)" },
+   { id: "profit_by_lot", label: "Báo cáo Lợi nhuận theo Lô nhập" },
    { id: "inventory", label: "Báo cáo Xuất Nhập Tồn (Kho)" },
    { id: "debt_customer", label: "Tổng Hợp Công Nợ Khách Hàng" },
    { id: "debt_supplier", label: "Tổng Hợp Công Nợ Nhà Cung Cấp" },
@@ -44,6 +45,15 @@ const MOCK_INVENTORY_DATA = [
    { id: "SP003", name: "Kệ Tivi Sồi Mỹ", category: "Kệ Tivi", unit: "Cái", openingStock: 15, importQty: 10, exportQty: 8, closingStock: 17, stockValue: 34000000 },
    { id: "SP004", name: "Bàn Trà Oval", category: "Bàn Trà", unit: "Cái", openingStock: 8, importQty: 0, exportQty: 6, closingStock: 2, stockValue: 3000000 },
    { id: "SP005", name: "Tủ Quần Áo 4C", category: "Tủ Quần Áo", unit: "Cái", openingStock: 6, importQty: 5, exportQty: 7, closingStock: 4, stockValue: 24000000 },
+];
+
+const MOCK_PROFIT_BY_LOT_DATA = [
+    { id: "LOT-SP001-1", receiptCode: "NK-101025-01", productName: "Sập thờ Mai Điểu chân 20", importDate: "2025-10-10", totalImportCost: 150000000, importQty: 5, soldQty: 5, revenue: 225000000, status: "Hết hàng" },
+    { id: "LOT-SP001-2", receiptCode: "NK-200126-02", productName: "Sập thờ Mai Điểu chân 20", importDate: "2026-01-20", totalImportCost: 160000000, importQty: 5, soldQty: 2, revenue: 90000000, status: "Đang bán" },
+    { id: "LOT-SP002-1", receiptCode: "NK-200126-02", productName: "Bộ bàn ghế Quốc Voi 6 món", importDate: "2026-01-20", totalImportCost: 285000000, importQty: 3, soldQty: 1, revenue: 120000000, status: "Đang bán" },
+    { id: "LOT-THO-1", receiptCode: "NK-100226-01", productName: "Tủ áo gỗ xoan đào (Hàng mộc)", importDate: "2026-02-10", totalImportCost: 85000000, importQty: 10, soldQty: 8, revenue: 108000000, status: "Đang bán" },
+    { id: "LOT-003", receiptCode: "NK-010426-03", productName: "Sập thờ Nhị Cấp (Mới nhập)", importDate: "2026-04-01", totalImportCost: 120000000, importQty: 5, soldQty: 0, revenue: 0, status: "Chưa định giá" },
+    { id: "LOT-OLD-01", receiptCode: "NK-150625-01", productName: "Bàn ăn tròn xoay", importDate: "2025-06-15", totalImportCost: 60000000, importQty: 4, soldQty: 1, revenue: 22000000, status: "Đang bán" },
 ];
 
 const MOCK_DEBT_CUSTOMER_DATA = [
@@ -80,12 +90,53 @@ export default function OwnerReports() {
    const [searchTerm, setSearchTerm] = useState("");
    const [currentPage, setCurrentPage] = useState(1);
    const [itemsPerPage, setItemsPerPage] = useState(15);
+   const [subTab, setSubTab] = useState("profit"); // 'profit' or 'inventory' 
+
+   const REFERENCE_DATE = new Date("2026-04-07");
+
+   // ========================= LOCAL STORAGE STATE =========================
+   const [salesData, setSalesData] = useState(() => {
+      const saved = localStorage.getItem("tpf_simulated_sales_report");
+      return saved ? JSON.parse(saved) : MOCK_SALES_DATA;
+   });
+
+   const [inventoryData, setInventoryData] = useState(() => {
+      const saved = localStorage.getItem("tpf_simulated_inventory_report");
+      return saved ? JSON.parse(saved) : MOCK_INVENTORY_DATA;
+   });
+
+   const [debtCustomerData, setDebtCustomerData] = useState(() => {
+      const saved = localStorage.getItem("tpf_simulated_debt_customer_report");
+      return saved ? JSON.parse(saved) : MOCK_DEBT_CUSTOMER_DATA;
+   });
+
+   const [debtSupplierData, setDebtSupplierData] = useState(() => {
+      const saved = localStorage.getItem("tpf_simulated_debt_supplier_report");
+      return saved ? JSON.parse(saved) : MOCK_DEBT_SUPPLIER_DATA;
+   });
+
+   const [cashflowData, setCashflowData] = useState(() => {
+      const saved = localStorage.getItem("tpf_simulated_cashflow");
+      return saved ? JSON.parse(saved) : MOCK_CASHFLOW_DATA;
+   });
+
+   const [profitByLotData, setProfitByLotData] = useState(() => {
+      const saved = localStorage.getItem("tpf_simulated_profit_by_lot");
+      return saved ? JSON.parse(saved) : MOCK_PROFIT_BY_LOT_DATA;
+   });
 
    // Sync state if URL param changes
    useEffect(() => {
       if (typeParam) {
-         // Normalize 'profit' to 'sales'
-         const normalizedType = typeParam === "profit" ? "sales" : typeParam;
+         // Normalized report aliases
+         const reportMap = {
+            "profit": "profit_by_lot",
+            "sales": "sales",
+            "inventory": "inventory",
+            "debt_customer": "debt_customer",
+            "debt_supplier": "debt_supplier"
+         };
+         const normalizedType = reportMap[typeParam] || typeParam;
          if (normalizedType !== activeReport) {
             setActiveReport(normalizedType);
             setCurrentPage(1);
@@ -96,14 +147,97 @@ export default function OwnerReports() {
    // Lấy danh sách dữ liệu tương ứng với báo cáo hiện tại
    const getCurrentDataList = () => {
       switch (activeReport) {
-         case "sales": return MOCK_SALES_DATA;
-         case "inventory": return MOCK_INVENTORY_DATA;
-         case "debt_customer": return MOCK_DEBT_CUSTOMER_DATA;
-         case "debt_supplier": return MOCK_DEBT_SUPPLIER_DATA;
-         case "cashflow": return MOCK_CASHFLOW_DATA;
+         case "sales": return salesData;
+         case "profit_by_lot": return processedLotData;
+         case "inventory": return inventoryData;
+         case "debt_customer": return debtCustomerData;
+         case "debt_supplier": return debtSupplierData;
+         case "cashflow": return cashflowData;
          default: return [];
       }
    };
+
+   // Process Lot Data with advanced formulas
+   const processedLotData = useMemo(() => {
+      return profitByLotData.map(lot => {
+         // Logic: COGS for product now includes specific Painting Labor if available
+         // For the report, we assume totalImportCost already includes Supplier price
+         // Worker labor for painting will be subtracted separately in deep audit, 
+         // but here we show Gross Profit based on (Sell Price - Unit Cost).
+         
+         const unitCost = lot.totalImportCost / lot.importQty;
+         const remainingQty = lot.importQty - lot.soldQty;
+         const cogs = unitCost * lot.soldQty;
+         const grossProfit = lot.revenue - cogs;
+         const profitMargin = lot.revenue > 0 ? (grossProfit / lot.revenue) * 100 : 0;
+         
+         const importDateObj = new Date(lot.importDate);
+         const agingDays = Math.floor((REFERENCE_DATE - importDateObj) / (1000 * 60 * 60 * 24));
+         const isSlowMoving = agingDays > 90 && (lot.soldQty / lot.importQty) < 0.5;
+
+         return {
+            ...lot,
+            unitCost,
+            remainingQty,
+            cogs,
+            grossProfit,
+            profitMargin,
+            agingDays,
+            isSlowMoving,
+            formattedImportDate: importDateObj.toLocaleDateString("vi-VN")
+         };
+      });
+   }, [profitByLotData]);
+
+   // Derived Sales Data with Labor, Material, and Operating subtraction
+   const processedSalesData = useMemo(() => {
+      if (activeReport !== "sales") return salesData;
+      
+      // Get orders to find real cost logs
+      const savedOrders = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
+      
+      return salesData.map(sale => {
+         const matchedOrder = savedOrders.find(o => o.code === sale.id);
+         
+         // Defaults if no specific logs exist
+         let materialCost = 0;
+         let laborCost = 0;
+         let operatingCost = 0;
+
+         if (matchedOrder?.expenseLog) {
+            // Calculate from real expense log if available
+            materialCost = matchedOrder.expenseLog.filter(e => e.category === "Vật tư").reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+            laborCost = matchedOrder.expenseLog.filter(e => e.category === "Công thợ").reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+            operatingCost = matchedOrder.expenseLog.filter(e => e.category === "Vận hành").reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+         } else if (matchedOrder?.products) {
+            // Automaticaly aggregate costs from product metadata (Zero-Memory Logic)
+            materialCost = matchedOrder.products.reduce((sum, p) => sum + ((p.materialCost || 0) * (p.qty || 1)), 0);
+            
+            // Labor cost includes base labor + painting labor
+            laborCost = matchedOrder.products.reduce((sum, p) => {
+               const baseLabor = Number(p.laborCost || 0) + Number(p.paintCost || 0);
+               const assignedLabor = Number(p.painterLabor || 0); // Labor assigned during handover
+               return sum + ((baseLabor + assignedLabor) * (p.qty || 1));
+            }, 0);
+
+            // Operating cost fallback (e.g. from shipping fee if available)
+            operatingCost = matchedOrder.shippingFee || 0;
+         }
+         
+         // New Net Profit calculation: Revenue - COGS - (Material + Labor + Operating)
+         const totalExpenses = Number(materialCost) + Number(laborCost) + Number(operatingCost);
+         const realNetProfit = Number(sale.salesRevenue) - Number(sale.cogs) - totalExpenses;
+         
+         return {
+            ...sale,
+            materialCost,
+            laborCost,
+            operatingCost,
+            realNetProfit: isNaN(realNetProfit) ? 0 : realNetProfit,
+            hasCashflow: cashflowData.some(cf => cf.ref === sale.id)
+         };
+      });
+   }, [salesData, cashflowData, activeReport]);
 
    const currentList = getCurrentDataList();
 
@@ -116,6 +250,8 @@ export default function OwnerReports() {
       return currentList.slice(start, start + itemsPerPage);
    }, [currentList, currentPage]);
 
+   const currentDisplayList = activeReport === "sales" ? processedSalesData : paginatedData;
+
    // Handle thay đổi Tab
    const handleTabChange = (e) => {
       const newType = e.target.value;
@@ -124,18 +260,38 @@ export default function OwnerReports() {
       setSearchParams({ type: newType });
    };
 
-   // Tính tổng cho báo cáo bán hàng (có thể tính trên toàn bộ hoặc chỉ trang hiện tại, ở đây tính trên toàn bộ)
-   const salesTotals = useMemo(() => {
-      return MOCK_SALES_DATA.reduce((acc, curr) => {
-         acc.salesRevenue += curr.salesRevenue;
-         acc.forfeitIncome += (curr.forfeitIncome || 0);
-         acc.refundAmount += (curr.refundAmount || 0);
-         acc.totalRevenue += (curr.salesRevenue + (curr.forfeitIncome || 0));
-         acc.cogs += curr.cogs;
-         acc.grossProfit += curr.grossProfit;
-         return acc;
-      }, { salesRevenue: 0, forfeitIncome: 0, refundAmount: 0, totalRevenue: 0, cogs: 0, grossProfit: 0 });
-   }, []);
+    // Tính tổng cho báo cáo bán hàng (Cập nhật các thẻ tóm tắt)
+    const salesTotals = useMemo(() => {
+       return (processedSalesData || []).reduce((acc, curr) => {
+          acc.salesRevenue += (Number(curr.salesRevenue) || 0);
+          acc.cogs += (Number(curr.cogs) || 0);
+          acc.materialCost += (Number(curr.materialCost) || 0);
+          acc.laborCost += (Number(curr.laborCost) || 0);
+          acc.operatingCost += (Number(curr.operatingCost) || 0);
+          acc.realNetProfit += (Number(curr.realNetProfit) || 0);
+          return acc;
+       }, { 
+          salesRevenue: 0, 
+          cogs: 0, 
+          materialCost: 0, 
+          laborCost: 0, 
+          operatingCost: 0, 
+          realNetProfit: 0 
+       });
+    }, [processedSalesData]);
+   
+   const lotProfitTotals = useMemo(() => {
+    return processedLotData.reduce((acc, curr) => {
+       acc.totalImportCost += curr.totalImportCost;
+       acc.cogs += curr.cogs;
+       acc.revenue += curr.revenue;
+       acc.grossProfit += curr.grossProfit;
+       acc.soldQty += curr.soldQty;
+       acc.importQty += curr.importQty;
+       acc.remainingQty += curr.remainingQty;
+       return acc;
+    }, { totalImportCost: 0, cogs: 0, revenue: 0, grossProfit: 0, soldQty: 0, importQty: 0, remainingQty: 0 });
+ }, [processedLotData]);
 
    const inventoryTotals = useMemo(() => {
       return MOCK_INVENTORY_DATA.reduce((acc, curr) => {
@@ -169,18 +325,19 @@ export default function OwnerReports() {
    }, []);
 
    const cashflowTotals = useMemo(() => {
-      return MOCK_CASHFLOW_DATA.reduce((acc, curr) => {
+      return cashflowData.reduce((acc, curr) => {
          acc.inAmount += curr.inAmount;
          acc.outAmount += curr.outAmount;
          return acc;
       }, { inAmount: 0, outAmount: 0 });
-   }, []);
+   }, [cashflowData]);
 
    return (
       <>
          <PageHelmet title="Báo Cáo Thống Kê | TPF-SIMS" />
          <div className="flex flex-col h-[calc(100vh-64px)] bg-[#f8fafc] -m-6 p-4 md:p-6 overflow-hidden">
 
+            {/* Header & Filter Bar (Excel Style) */}
             {/* Header & Filter Bar (Excel Style) */}
             <div className="bg-white border text-sm border-slate-200 rounded-t-xl shadow-sm flex flex-col shrink-0">
 
@@ -196,7 +353,6 @@ export default function OwnerReports() {
                      </div>
                   </div>
                   <div className="flex items-center gap-2">
-
                      <Button className="h-9 px-3 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm">
                         <Download size={16} /> Xuất Excel
                      </Button>
@@ -205,7 +361,6 @@ export default function OwnerReports() {
 
                {/* Report Selection & Filters */}
                <div className="p-4 flex flex-col xl:flex-row gap-4 xl:items-center justify-between bg-slate-50/50">
-
                   <div className="flex-1 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
                      {/* Chọn loại báo cáo */}
                      <div className="relative min-w-[280px]">
@@ -250,8 +405,33 @@ export default function OwnerReports() {
                      </div>
                      <Button variant="outline" className="h-10 px-3 rounded-lg border-slate-300 bg-white"><Filter size={16} className="text-slate-600" /></Button>
                   </div>
-
                </div>
+
+               {/* ── FINANCIAL SUMMARY CARDS (DYNAMIC) ── */}
+               {activeReport === "sales" && (
+                  <div className="px-4 pb-4 grid grid-cols-2 lg:grid-cols-5 gap-3">
+                     <div className="p-3 bg-white border border-slate-100 rounded-xl shadow-sm">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tổng doanh thu</p>
+                        <p className="text-[16px] font-black text-slate-800">{formatCurrency(salesTotals.salesRevenue)}</p>
+                     </div>
+                     <div className="p-3 bg-white border border-slate-100 rounded-xl shadow-sm">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tổng Giá vốn (Phôi)</p>
+                        <p className="text-[16px] font-black text-slate-600">{formatCurrency(salesTotals.cogs)}</p>
+                     </div>
+                     <div className="p-3 bg-white border border-slate-100 rounded-xl shadow-sm">
+                        <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Tổng Vật tư</p>
+                        <p className="text-[16px] font-black text-amber-600">{formatCurrency(salesTotals.materialCost)}</p>
+                     </div>
+                     <div className="p-3 bg-white border border-slate-100 rounded-xl shadow-sm">
+                        <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">Chi phí vận hành</p>
+                        <p className="text-[16px] font-black text-indigo-600">{formatCurrency(salesTotals.operatingCost)}</p>
+                     </div>
+                     <div className="p-3 bg-emerald-600 border border-emerald-500 rounded-xl shadow-md shadow-emerald-200 col-span-2 lg:col-span-1">
+                        <p className="text-[10px] font-black text-emerald-100 uppercase tracking-widest mb-1">Lợi nhuận ròng</p>
+                        <p className="text-[18px] font-black text-white">{formatCurrency(salesTotals.realNetProfit)}</p>
+                     </div>
+                  </div>
+               )}
             </div>
 
             {/* Data Grid Area */}
@@ -264,62 +444,41 @@ export default function OwnerReports() {
                            <thead className="sticky top-0 z-10">
                               <tr className="bg-slate-100 border-b border-slate-200 shadow-[0_1px_0_0_#e2e8f0]">
                                  <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 w-[50px] text-center">STT</th>
-                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 w-[120px]">Chứng từ</th>
+                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 w-[110px]">Chứng từ</th>
                                  <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 w-[100px] text-center">Ngày ghi</th>
                                  <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200">Khách Hàng</th>
-                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-right w-[140px]">Doanh thu bán hàng</th>
-                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-right w-[140px] bg-amber-50/50">Thu cọc</th>
-                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-right w-[140px] bg-rose-50/50 text-rose-700">Hoàn trả cọc</th>
-                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-right w-[150px] bg-slate-100">Tổng doanh thu</th>
-                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-right w-[140px]">Giá Vốn</th>
-                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-right w-[140px] bg-emerald-50/50">Lợi Nhuận Gộp</th>
+                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-right w-[120px]">Doanh thu</th>
+                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-right w-[110px]">Giá vốn</th>
+                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-right w-[100px]">Vật tư</th>
+                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-right w-[100px]">Công thợ</th>
+                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-right w-[100px]">Vận hành</th>
+                                 <th className="py-3 px-4 text-[12px] font-bold text-white uppercase whitespace-nowrap border-r border-slate-200 text-right w-[130px] bg-emerald-600">Lãi Ròng</th>
+                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-center w-[100px]">Số quỹ</th>
                               </tr>
                            </thead>
                            <tbody className="divide-y divide-slate-200">
-                              {paginatedData.map((row, idx) => (
-                                 <tr key={row.id} className="hover:bg-blue-50/50 transition-colors group">
+                              {processedSalesData.map((row, idx) => (
+                                 <tr key={row.id} className="hover:bg-slate-50 transition-colors group">
                                     <td className="py-3 px-4 text-[13px] text-slate-500 font-medium text-center border-r border-slate-100">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
-                                    <td className="py-3 px-4 text-[13px] font-bold text-blue-600 border-r border-slate-100 cursor-pointer group-hover:underline text-center">{row.id}</td>
-                                    <td className="py-3 px-4 text-[13px] text-slate-600 font-medium border-r border-slate-100 text-center">{row.date}</td>
+                                    <td className="py-3 px-4 text-[13px] font-bold text-blue-600 border-r border-slate-100 cursor-pointer group-hover:underline">{row.id}</td>
+                                    <td className="py-3 px-4 text-[13px] text-slate-500 font-medium text-center border-r border-slate-100">{row.date}</td>
                                     <td className="py-3 px-4 text-[13px] text-slate-800 font-semibold border-r border-slate-100">{row.customer}</td>
-                                    <td className="py-3 px-4 text-[13px] text-slate-900 font-bold text-right border-r border-slate-100">{formatCurrency(row.salesRevenue)}</td>
-                                    <td className="py-3 px-4 text-[13px] text-amber-600 font-bold text-right border-r border-slate-100 bg-amber-50/30">{row.forfeitIncome > 0 ? formatCurrency(row.forfeitIncome) : "-"}</td>
-                                    <td className="py-3 px-4 text-[13px] text-rose-600 font-semibold text-right border-r border-slate-100 bg-rose-50/20">{row.refundAmount > 0 ? formatCurrency(row.refundAmount) : "-"}</td>
-                                    <td className="py-3 px-4 text-[13px] text-slate-900 font-black text-right border-r border-slate-100 bg-slate-50/50">{formatCurrency(row.salesRevenue + (row.forfeitIncome || 0))}</td>
-                                    <td className="py-3 px-4 text-[13px] text-slate-600 font-semibold text-right border-r border-slate-100">{formatCurrency(row.cogs)}</td>
-                                    <td className="py-3 px-4 text-[13px] text-emerald-600 font-black text-right border-r border-slate-100 bg-emerald-50/30">{formatCurrency(row.grossProfit)}</td>
+                                    <td className="py-3 px-4 text-[13px] text-slate-700 font-bold text-right border-r border-slate-100">{formatCurrency(row.salesRevenue)}</td>
+                                    <td className="py-3 px-4 text-[13px] text-slate-500 font-medium text-right border-r border-slate-100 italic">{formatCurrency(row.cogs)}</td>
+                                    <td className="py-3 px-4 text-[13px] text-slate-400 font-medium text-right border-r border-slate-100 italic">-{formatCurrency(row.materialCost || 0)}</td>
+                                    <td className="py-3 px-4 text-[13px] text-rose-500 font-medium text-right border-r border-slate-100 italic">-{formatCurrency(row.laborCost || 0)}</td>
+                                    <td className="py-3 px-4 text-[13px] text-indigo-500 font-medium text-right border-r border-slate-100 italic">-{formatCurrency(row.operatingCost || 0)}</td>
+                                    <td className="py-3 px-4 text-[13px] text-emerald-600 font-black text-right border-r border-slate-100 bg-emerald-50/50">{formatCurrency(row.realNetProfit)}</td>
+                                    <td className="py-3 px-4 text-[13px] text-center border-r border-slate-100">
+                                       {row.hasCashflow ? (
+                                          <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold border border-emerald-200">ĐÃ GHI</span>
+                                       ) : (
+                                          <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-400 text-[10px] font-bold border border-slate-200">CHƯA GHI</span>
+                                       )}
+                                    </td>
                                  </tr>
                               ))}
                            </tbody>
-                           <tfoot className="sticky bottom-0 z-10 bg-white border-t-2 border-slate-300 shadow-[0_-2px_6px_rgba(0,0,0,0.05)]">
-                               <tr className="h-14">
-                                  <td colSpan={4} className="py-2 px-4 text-[12px] font-black text-slate-800 border-r border-slate-300/30 text-right uppercase bg-slate-50">Tổng cộng:</td>
-                                  <td className="py-2 px-4 border-r border-slate-300/30 text-right">
-                                     <div className="text-[9px] uppercase text-slate-400 font-bold mb-0.5">Tiền bán hàng</div>
-                                     <span className="text-[14px] font-black text-slate-900">{formatCurrency(salesTotals.salesRevenue)}</span>
-                                  </td>
-                                  <td className="py-2 px-4 border-r border-slate-300/30 text-right bg-amber-50/20">
-                                     <div className="text-[9px] uppercase text-amber-500 font-bold mb-0.5">Tiền thu cọc</div>
-                                     <span className="text-[14px] font-black text-amber-700">{formatCurrency(salesTotals.forfeitIncome)}</span>
-                                  </td>
-                                  <td className="py-2 px-4 border-r border-slate-300/30 text-right bg-rose-50/20">
-                                     <div className="text-[9px] uppercase text-rose-500 font-bold mb-0.5">Tiền hoàn cọc</div>
-                                     <span className="text-[14px] font-black text-rose-700">{formatCurrency(salesTotals.refundAmount)}</span>
-                                  </td>
-                                  <td className="py-2 px-4 border-r border-slate-300/30 text-right bg-slate-100/50">
-                                     <div className="text-[9px] uppercase text-slate-500 font-bold mb-0.5">Tổng doanh thu</div>
-                                     <span className="text-[14px] font-black text-slate-900">{formatCurrency(salesTotals.totalRevenue)}</span>
-                                  </td>
-                                  <td className="py-2 px-4 border-r border-slate-300/30 text-right">
-                                     <div className="text-[9px] uppercase text-slate-400 font-bold mb-0.5">Tổng giá vốn</div>
-                                     <span className="text-[14px] font-bold text-slate-700">{formatCurrency(salesTotals.cogs)}</span>
-                                  </td>
-                                  <td className="py-2 px-4 text-right bg-emerald-600 text-white min-w-[150px]">
-                                     <div className="text-[9px] uppercase text-emerald-100 font-bold mb-0.5">Lãi Gộp (Thực nhận)</div>
-                                     <span className="text-[16px] font-black tracking-tight">{formatCurrency(salesTotals.grossProfit)}</span>
-                                  </td>
-                               </tr>
-                            </tfoot>
                         </table>
                      </div>
                   </>
@@ -453,6 +612,178 @@ export default function OwnerReports() {
                            </tr>
                         </tfoot>
                      </table>
+                  </div>
+               )}
+
+                {activeReport === "profit_by_lot" && (
+                  <div className="flex-1 flex flex-col overflow-hidden">
+                     {/* Sub-tab Switcher */}
+                     <div className="px-4 py-3 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
+                        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl">
+                           <button 
+                              onClick={() => setSubTab("profit")}
+                              className={cn(
+                                 "px-4 py-1.5 rounded-lg text-[12px] font-bold transition-all",
+                                 subTab === "profit" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                              )}
+                           >
+                              Lợi nhuận theo lô
+                           </button>
+                           <button 
+                              onClick={() => setSubTab("inventory")}
+                              className={cn(
+                                 "px-4 py-1.5 rounded-lg text-[12px] font-bold transition-all",
+                                 subTab === "inventory" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                              )}
+                           >
+                              Tồn kho theo lô
+                           </button>
+                        </div>
+                        <div className="flex items-center gap-4">
+                           <div className="flex items-center gap-1.5">
+                              <div className="w-2.5 h-2.5 rounded-sm bg-rose-500" />
+                              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight">Cần xử lý (Hàng tồn lâu)</span>
+                           </div>
+                           <div className="flex items-center gap-1.5">
+                              <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />
+                              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tight">Lãi ròng tốt</span>
+                           </div>
+                        </div>
+                     </div>
+
+                     <div className="flex-1 overflow-auto">
+                        <table className="w-full text-left border-collapse min-w-[1200px]">
+                           <thead className="sticky top-0 z-10">
+                              <tr className="bg-slate-100 border-b border-slate-200 shadow-[0_1px_0_0_#e2e8f0]">
+                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 w-[50px] text-center">STT</th>
+                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 w-[120px]">Mã Chứng Từ</th>
+                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 w-[100px]">Mã Lô</th>
+                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200">Tên Sản Phẩm</th>
+                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-center w-[100px]">Ngày nhập</th>
+                                 
+                                 {subTab === "profit" ? (
+                                    <>
+                                       <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-center w-[80px]">SL Nhập</th>
+                                       <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-center w-[80px]">Đã bán</th>
+                                       <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-right w-[140px] bg-slate-50/50">Giá vốn đã bán</th>
+                                       <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-right w-[140px]">Doanh thu</th>
+                                       <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-right w-[140px] bg-emerald-50/50 text-emerald-700">Lãi gộp</th>
+                                       <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-center w-[100px]">% Lợi nhuận</th>
+                                    </>
+                                 ) : (
+                                    <>
+                                       <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-center w-[80px]">SL Nhập</th>
+                                       <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-center w-[80px]">Đã bán</th>
+                                       <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-center w-[80px] bg-indigo-50/50 text-indigo-700">Tồn kho</th>
+                                       <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-right w-[150px]">Tổng giá nhập lô</th>
+                                       <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-center w-[120px]">Tuổi kho (Ngày)</th>
+                                    </>
+                                 )}
+                                 <th className="py-3 px-4 text-[12px] font-bold text-slate-700 uppercase whitespace-nowrap border-r border-slate-200 text-center w-[140px]">Trạng thái</th>
+                              </tr>
+                           </thead>
+                           <tbody className="divide-y divide-slate-200">
+                              {paginatedData.map((row, idx) => (
+                                 <tr key={row.id} className={cn(
+                                    "hover:bg-blue-50/50 transition-colors group",
+                                    row.isSlowMoving && subTab === "inventory" && "bg-rose-50/30"
+                                 )}>
+                                    <td className="py-3 px-4 text-[13px] text-slate-500 font-medium text-center border-r border-slate-100">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
+                                    <td className="py-3 px-4 text-[12px] font-bold text-slate-900 border-r border-slate-100 text-center">{row.receiptCode || "NK-" + row.id.split('-')[1]}</td>
+                                    <td className="py-3 px-4 text-[12px] font-mono text-indigo-600 border-r border-slate-100 text-center">{row.id}</td>
+                                    <td className="py-3 px-4 text-[13px] text-slate-800 font-semibold border-r border-slate-100">
+                                       <div className="flex flex-col">
+                                          <span>{row.productName}</span>
+                                          {row.isSlowMoving && (
+                                             <span className="text-[9px] text-rose-600 font-black uppercase flex items-center gap-1 mt-0.5">
+                                                <TrendingDown size={10} /> Lô bán chậm
+                                             </span>
+                                          )}
+                                       </div>
+                                    </td>
+                                    <td className="py-3 px-4 text-[13px] text-slate-600 font-medium border-r border-slate-100 text-center">{row.formattedImportDate}</td>
+                                    
+                                    {subTab === "profit" ? (
+                                       <>
+                                          <td className="py-3 px-4 text-[13px] text-slate-700 text-center border-r border-slate-100">{row.importQty}</td>
+                                          <td className="py-3 px-4 text-[13px] text-slate-700 text-center border-r border-slate-100">{row.soldQty}</td>
+                                          <td className="py-3 px-4 text-[13px] text-slate-600 font-medium text-right border-r border-slate-100 bg-slate-50/30">{formatCurrency(row.cogs)}</td>
+                                          <td className="py-3 px-4 text-[13px] text-slate-900 font-bold text-right border-r border-slate-100">{formatCurrency(row.revenue)}</td>
+                                          <td className="py-3 px-4 text-[13px] text-emerald-600 font-black text-right border-r border-slate-100 bg-emerald-50/30">{formatCurrency(row.grossProfit)}</td>
+                                          <td className="py-3 px-4 text-[13px] text-center border-r border-slate-100 font-bold">
+                                             <span className={cn(
+                                                "px-1.5 py-0.5 rounded",
+                                                row.profitMargin > 40 ? "text-emerald-700 bg-emerald-100" : (row.profitMargin > 20 ? "text-blue-700 bg-blue-100" : "text-amber-700 bg-amber-100")
+                                             )}>{row.profitMargin.toFixed(1)}%</span>
+                                          </td>
+                                       </>
+                                    ) : (
+                                       <>
+                                          <td className="py-3 px-4 text-[13px] text-slate-700 text-center border-r border-slate-100">{row.importQty}</td>
+                                          <td className="py-3 px-4 text-[13px] text-slate-700 text-center border-r border-slate-100">{row.soldQty}</td>
+                                          <td className="py-3 px-4 text-[13px] text-indigo-700 font-black text-center border-r border-slate-100 bg-indigo-50/30">{row.remainingQty}</td>
+                                          <td className="py-3 px-4 text-[13px] text-slate-900 font-bold text-right border-r border-slate-100">{formatCurrency(row.totalImportCost)}</td>
+                                          <td className="py-3 px-4 text-[13px] text-center border-r border-slate-100">
+                                             <span className={cn(
+                                                "font-bold",
+                                                row.agingDays > 180 ? "text-rose-600" : (row.agingDays > 90 ? "text-amber-600" : "text-emerald-600")
+                                             )}>{row.agingDays} d</span>
+                                          </td>
+                                       </>
+                                    )}
+
+                                    <td className="py-3 px-4 text-[13px] text-center border-r border-slate-100">
+                                       <span className={cn(
+                                          "px-2 py-0.5 rounded text-[11px] font-bold",
+                                          row.status === "Hết hàng" ? "bg-slate-100 text-slate-500" : (row.status === "Đang bán" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")
+                                       )}>{row.status}</span>
+                                    </td>
+                                 </tr>
+                              ))}
+                           </tbody>
+                           <tfoot className="sticky bottom-0 z-10 bg-white border-t-2 border-slate-300 shadow-[0_-2px_6px_rgba(0,0,0,0.05)]">
+                               {subTab === "profit" ? (
+                                  <tr className="h-14">
+                                     <td colSpan={6} className="py-2 px-4 text-[12px] font-black text-slate-800 border-r border-slate-300/30 text-right uppercase bg-slate-50">Tổng cộng Lợi nhuận (Theo lô):</td>
+                                     <td className="py-2 px-4 border-r border-slate-300/30 text-right bg-slate-50/50">
+                                        <div className="text-[9px] uppercase text-slate-500 font-bold mb-0.5">Giá vốn đã bán</div>
+                                        <span className="text-[14px] font-bold text-slate-700">{formatCurrency(lotProfitTotals.cogs)}</span>
+                                     </td>
+                                     <td className="py-2 px-4 border-r border-slate-300/30 text-right">
+                                        <div className="text-[9px] uppercase text-slate-500 font-bold mb-0.5">Tổng doanh thu</div>
+                                        <span className="text-[14px] font-black text-slate-900">{formatCurrency(lotProfitTotals.revenue)}</span>
+                                     </td>
+                                     <td colSpan={2} className="py-2 px-4 text-right bg-indigo-600 text-white min-w-[200px]">
+                                        <div className="text-[9px] uppercase text-indigo-100 font-bold mb-0.5">Lãi gộp thực tế</div>
+                                        <span className="text-[18px] font-black tracking-tight">{formatCurrency(lotProfitTotals.grossProfit)}</span>
+                                     </td>
+                                     <td className="bg-slate-50 border-l border-slate-200"></td>
+                                  </tr>
+                               ) : (
+                                  <tr className="h-14">
+                                     <td colSpan={4} className="py-2 px-4 text-[12px] font-black text-slate-800 border-r border-slate-300/30 text-right uppercase bg-slate-50">Tổng số lượng & Giá trị nhập:</td>
+                                     <td className="py-2 px-4 border-r border-slate-300/30 text-center">
+                                        <div className="text-[9px] uppercase text-slate-500 font-bold mb-0.5">Tổng Nhập</div>
+                                        <span className="text-[14px] font-bold text-slate-700">{lotProfitTotals.importQty}</span>
+                                     </td>
+                                     <td className="py-2 px-4 border-r border-slate-300/30 text-center">
+                                        <div className="text-[9px] uppercase text-slate-500 font-bold mb-0.5">Đã xuất</div>
+                                        <span className="text-[14px] font-bold text-slate-700">{lotProfitTotals.soldQty}</span>
+                                     </td>
+                                     <td className="py-2 px-4 border-r border-slate-300/30 text-center bg-indigo-50/50">
+                                        <div className="text-[9px] uppercase text-indigo-600 font-bold mb-0.5">Tồn thực tế</div>
+                                        <span className="text-[15px] font-black text-indigo-700">{lotProfitTotals.remainingQty}</span>
+                                     </td>
+                                     <td className="py-2 px-4 border-r border-slate-300/30 text-right">
+                                        <div className="text-[9px] uppercase text-slate-500 font-bold mb-0.5">Tổng vốn nhập kho</div>
+                                        <span className="text-[14px] font-black text-slate-900">{formatCurrency(lotProfitTotals.totalImportCost)}</span>
+                                     </td>
+                                     <td colSpan={2} className="bg-slate-50 border-l border-slate-200"></td>
+                                  </tr>
+                               )}
+                            </tfoot>
+                        </table>
+                     </div>
                   </div>
                )}
 

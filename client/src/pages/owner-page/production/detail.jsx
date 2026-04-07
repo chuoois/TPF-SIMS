@@ -233,6 +233,7 @@ export default function ProductionDetail() {
   const [showDelayModal, setShowDelayModal] = useState(false);
   const [selectedWorker, setSelectedWorker] = useState(null);
   const [newDeadline, setNewDeadline] = useState("");
+  const [previewImage, setPreviewImage] = useState(null);
 
   const sc = getStatusColor(p.status, p.subStage, p.isPendingApproval, p.needsRedo);
   const progress = p.quantityPlanned > 0 ? Math.round((p.quantityCompleted / p.quantityPlanned) * 100) : 0;
@@ -324,26 +325,38 @@ export default function ProductionDetail() {
               </div>
             </div>
 
-            {/* Action buttons */}
-            <div className="flex items-center gap-2">
+            {/* Action buttons with Photo Preview */}
+            <div className="flex items-center gap-4">
               {p.isPendingApproval && p.status === "Đang sơn" && (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setShowRedoModal(true)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer border shadow-sm"
-                    style={{ backgroundColor: "#fff", color: "#EF4444", borderColor: "#FCA5A5" }}
-                  >
-                    <RotateCcw size={14} />
-                    Yêu cầu sửa lại
-                  </button>
-                  <button
-                    onClick={handleOwnerApprove}
-                    className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-[13px] font-bold transition hover:bg-emerald-700 cursor-pointer shadow-xl"
-                    style={{ backgroundColor: "#10B981", color: "#fff" }}
-                  >
-                    <CheckCircle size={18} />
-                    Duyệt & Hoàn thành
-                  </button>
+                <div className="flex items-center gap-1.5 p-1.5 bg-gray-50 border border-gray-100 rounded-2xl shadow-sm">
+                   {p.completionPhoto && (
+                     <div 
+                      className="w-24 h-16 rounded-xl overflow-hidden border border-emerald-100 cursor-pointer hover:opacity-80 transition relative group"
+                      onClick={() => setPreviewImage(p.completionPhoto)}
+                     >
+                        <img src={p.completionPhoto} className="w-full h-full object-cover" alt="Bằng chứng hoàn thiện" />
+                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Eye size={14} className="text-white" />
+                        </div>
+                     </div>
+                   )}
+                   <div className="flex flex-col gap-1.5 px-2">
+                     <span className="text-[10px] font-black text-emerald-600 uppercase tracking-tighter">Bằng chứng thợ gửi</span>
+                     <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setShowRedoModal(true)}
+                        className="px-4 py-2 rounded-xl text-[12px] font-bold transition hover:opacity-90 cursor-pointer border shadow-sm bg-white text-rose-500 border-rose-100"
+                      >
+                        SỬA LẠI
+                      </button>
+                      <button
+                        onClick={handleOwnerApprove}
+                        className="px-6 py-2 rounded-xl text-[13px] font-bold transition hover:bg-emerald-700 cursor-pointer shadow-xl bg-emerald-600 text-white"
+                      >
+                        DUYỆT NGAY
+                      </button>
+                     </div>
+                   </div>
                 </div>
               )}
 
@@ -800,6 +813,19 @@ export default function ProductionDetail() {
           </div>
         )}
       </div>
+
+      {/* GLOBAL IMAGE PREVIEW */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-[2000] bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-8 transition-all animate-in fade-in cursor-zoom-out"
+          onClick={() => setPreviewImage(null)}
+        >
+          <img src={previewImage} className="max-w-[90vw] max-h-[90vh] object-contain shadow-2xl rounded-lg border border-white/10 p-1 bg-white/5 animate-in zoom-in-95 duration-300" alt="Full Preview" />
+          <button className="absolute top-8 right-8 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all backdrop-blur-md">
+            <X size={24} />
+          </button>
+        </div>
+      )}
     </>
   );
 }

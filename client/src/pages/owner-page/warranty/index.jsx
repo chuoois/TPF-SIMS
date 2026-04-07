@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Search,
   Filter,
@@ -11,7 +12,10 @@ import {
   Calendar,
   User,
   Phone,
-  FileText
+  FileText,
+  Wrench,
+  Settings,
+  History,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import DataTable from "@/components/control/DataTable";
@@ -19,6 +23,7 @@ import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useReactToPrint } from "react-to-print";
 import { PrintableWarrantyCertificate } from "./PrintTemplates";
+import WarrantySettings from "./WarrantySettings";
 import "@/pages/owner-page/warranty/mock.js";
 
 // Helper components
@@ -44,7 +49,9 @@ const StatusBadge = ({ status }) => {
 };
 
 export default function WarrantyPage() {
+  const navigate = useNavigate();
   const [warranties, setWarranties] = useState([]);
+  const [activeTab, setActiveTab] = useState("history"); // "history" | "settings"
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("Tất cả");
 
@@ -66,7 +73,27 @@ export default function WarrantyPage() {
   useEffect(() => {
     const rawData = localStorage.getItem("tpf_simulated_warranties");
     if (rawData) {
-      setWarranties(JSON.parse(rawData));
+      let parsed = JSON.parse(rawData);
+      
+      // Auto-update status based on current date
+      const today = new Date();
+      const updated = parsed.map(w => {
+        const end = new Date(w.endDate);
+        const diffDays = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+        
+        let newStatus = "Hết hạn";
+        if (diffDays > 30) newStatus = "Còn hạn";
+        else if (diffDays > 0) newStatus = "Sắp hết hạn";
+        
+        return { ...w, status: newStatus };
+      });
+      
+      setWarranties(updated);
+      
+      // Sync back if statuses changed
+      if (JSON.stringify(updated) !== rawData) {
+        localStorage.setItem("tpf_simulated_warranties", JSON.stringify(updated));
+      }
     }
   }, []);
 
@@ -74,10 +101,10 @@ export default function WarrantyPage() {
     // 1. Filter individual warranties first
     const filtered = warranties.filter((w) => {
       const matchSearch = 
-        w.customerName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        w.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        w.phone.includes(searchQuery) ||
-        w.productName.toLowerCase().includes(searchQuery.toLowerCase());
+        (w.customerName || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
+        (w.id || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (w.phone || "").includes(searchQuery) ||
+        (w.productName || "").toLowerCase().includes(searchQuery.toLowerCase());
       const matchStatus = statusFilter === "Tất cả" || w.status === statusFilter;
       return matchSearch && matchStatus;
     });
@@ -88,8 +115,8 @@ export default function WarrantyPage() {
       if (!acc[key]) {
         acc[key] = {
           id: key, // Used by DataTable for expansion
-          customerName: w.customerName,
-          phone: w.phone,
+          customerName: w.customerName || "Khách ẩn danh",
+          phone: w.phone || "---",
           items: [],
           statusCounts: { "Còn hạn": 0, "Sắp hết hạn": 0, "Hết hạn": 0 }
         };
@@ -123,7 +150,7 @@ export default function WarrantyPage() {
       render: (item) => (
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs">
-            {item.customerName.charAt(0)}
+            {(item.customerName || "?").charAt(0)}
           </div>
           <div>
             <div className="font-semibold text-gray-800">{item.customerName}</div>
@@ -187,12 +214,20 @@ export default function WarrantyPage() {
               
               <div className="space-y-2 text-xs text-gray-500 mb-4">
                 <div className="flex items-center gap-2">
-                  <Calendar size={12} className="text-gray-400" />
-                  <span>Hiệu lực: {format(new Date(w.startDate), "dd/MM/yyyy")} - {format(new Date(w.endDate), "dd/MM/yyyy")}</span>
+                  <Calendar size={12} className="text-indigo-400" />
+                  <span className="font-medium text-gray-700">
+                    {format(new Date(w.startDate), "dd/MM/yyyy")} - {format(new Date(w.endDate), "dd/MM/yyyy")}
+                  </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <ShieldCheck size={12} className="text-gray-400" />
-                  <span>Thời hạn: {w.warrantyMonths} tháng</span>
+                <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-gray-50">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[9px] uppercase font-bold text-gray-400">Chất liệu</span>
+                    <span className="font-semibold text-gray-700 truncate">{w.material || "Gỗ tự nhiên"}</span>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[9px] uppercase font-bold text-gray-400">Kích thước</span>
+                    <span className="font-semibold text-gray-700 truncate">{w.size || "Chuẩn"}</span>
+                  </div>
                 </div>
               </div>
 
@@ -205,6 +240,19 @@ export default function WarrantyPage() {
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[11px] font-bold hover:bg-indigo-100 transition-colors"
                 >
                   <Eye size={12} /> CHI TIẾT
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate("/owner/warranty/repairs", { state: { prefill: w } });
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all border ${
+                    w.status === "Hết hạn" 
+                      ? "bg-red-50 text-red-600 border-red-100 hover:bg-red-100" 
+                      : "bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100"
+                  }`}
+                >
+                  <Wrench size={12} /> {w.status === "Hết hạn" ? "SỬA CHỮA DỊCH VỤ" : "TIẾP NHẬN BẢO HÀNH"}
                 </button>
               </div>
             </div>
@@ -222,80 +270,107 @@ export default function WarrantyPage() {
       <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
         <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2 mb-4">
           <ShieldCheck className="text-[var(--brand-primary)]" />
-          Phiếu Bảo Hành
+          Phiếu Bảo Hành & Bảo Trì
         </h1>
         
-        <div className="flex gap-6">
-           <div className="flex flex-col">
-             <span className="text-sm text-gray-500">Tổng phiếu</span>
-             <span className="text-2xl font-bold text-gray-800">{warranties.length}</span>
-           </div>
-           <div className="flex flex-col">
-             <span className="text-sm text-gray-500">Còn hạn</span>
-             <span className="text-2xl font-bold text-green-600">
-               {warranties.filter(w => w.status === "Còn hạn").length}
-             </span>
-           </div>
-           <div className="flex flex-col">
-             <span className="text-sm text-gray-500">Sắp hết hạn</span>
-             <span className="text-2xl font-bold text-amber-600">
-               {warranties.filter(w => w.status === "Sắp hết hạn").length}
-             </span>
-           </div>
-        </div>
-      </div>
-
-      {/* Filters & Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-4 border-b border-gray-100 flex flex-wrap gap-4 justify-between items-center bg-gray-50/50">
-           <div className="flex gap-4">
-             {/* Search */}
-             <div className="relative">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                size={18}
-              />
-              <input
-                type="text"
-                placeholder="Tìm mã phiếu, khách hàng..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 w-[280px] border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 transition-all bg-white"
-              />
-            </div>
-
-            {/* Status Filter */}
-            <div className="flex bg-white border border-gray-200 rounded-lg p-1">
-               {["Tất cả", "Còn hạn", "Sắp hết hạn", "Hết hạn"].map(st => (
-                 <button
-                    key={st}
-                    onClick={() => setStatusFilter(st)}
-                    className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                      statusFilter === st 
-                        ? "bg-[var(--brand-primary)] text-white" 
-                        : "text-gray-600 hover:bg-gray-100"
-                    }`}
-                 >
-                   {st}
-                 </button>
-               ))}
-            </div>
-           </div>
+        <div className="flex bg-gray-100 p-1 rounded-xl w-fit mb-6">
+          <button 
+            onClick={() => setActiveTab("history")}
+            className={`px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'history' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            <History size={16} /> LỊCH SỬ PHIẾU
+          </button>
+          <button 
+            onClick={() => setActiveTab("settings")}
+            className={`px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'settings' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            <Settings size={16} /> CẤU HÌNH CHÍNH SÁCH
+          </button>
         </div>
 
-        <DataTable
-          columns={columns}
-          data={paginatedData}
-          renderDetail={renderWarrantyDetail}
-          pagination={{
-            total: groupedCustomers.length,
-            currentPage,
-            setCurrentPage,
-            itemsPerPage,
-            setItemsPerPage
-          }}
-        />
+        {activeTab === "history" ? (
+          <div className="flex gap-6">
+             <div className="flex flex-col">
+               <span className="text-sm text-gray-500">Tổng phiếu</span>
+               <span className="text-2xl font-bold text-gray-800">
+                 {warranties.length}
+               </span>
+             </div>
+             <div className="flex flex-col">
+               <span className="text-sm text-gray-500">Còn hạn</span>
+               <span className="text-2xl font-bold text-green-600">
+                 {warranties.filter(w => w.status === "Còn hạn").length}
+               </span>
+             </div>
+             <div className="flex flex-col">
+               <span className="text-sm text-gray-500">Sắp hết hạn</span>
+               <span className="text-2xl font-bold text-amber-600">
+                 {warranties.filter(w => w.status === "Sắp hết hạn").length}
+               </span>
+             </div>
+          </div>
+        ) : (
+          <div className="flex flex-col">
+            <span className="text-sm text-gray-500 uppercase font-black text-[10px] tracking-widest text-blue-500">Thiết lập đặc quyền</span>
+            <span className="text-lg font-bold text-slate-800">Cài đặt quy tắc bảo hành cho Xưởng Trọng Phóng</span>
+          </div>
+        )}
       </div>
+
+      {activeTab === "history" ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-4 border-b border-gray-100 flex flex-wrap gap-4 justify-between items-center bg-gray-50/50">
+             <div className="flex gap-4">
+               {/* Search */}
+               <div className="relative">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={18}
+                />
+                <input
+                  type="text"
+                  placeholder="Tìm mã phiếu, khách hàng..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-4 py-2 w-[280px] border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 transition-all bg-white"
+                />
+              </div>
+
+              {/* Status Filter */}
+              <div className="flex bg-white border border-gray-200 rounded-lg p-1">
+                 {["Tất cả", "Còn hạn", "Sắp hết hạn", "Hết hạn"].map(st => (
+                   <button
+                      key={st}
+                      onClick={() => setStatusFilter(st)}
+                      className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                        statusFilter === st 
+                          ? "bg-[var(--brand-primary)] text-white" 
+                          : "text-gray-600 hover:bg-gray-100"
+                      }`}
+                   >
+                     {st}
+                   </button>
+                 ))}
+              </div>
+             </div>
+          </div>
+
+          <DataTable
+            columns={columns}
+            data={paginatedData}
+            renderDetail={renderWarrantyDetail}
+            pagination={{
+              total: groupedCustomers.length,
+              currentPage,
+              setCurrentPage,
+              itemsPerPage,
+              setItemsPerPage
+            }}
+          />
+        </div>
+      ) : (
+        <WarrantySettings />
+      )}
 
       {/* Detail Modal */}
       {modalOpen && selectedWarranty && (

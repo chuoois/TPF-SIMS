@@ -32,7 +32,7 @@ import toast from "react-hot-toast";
 import DataTable from "@/components/control/DataTable";
 import { MOCK_PRODUCTIONS, STAGES, STATUS_ICONS } from "./mockData";
 
-const STATUSES = ["Tất cả", "Đang đánh giấy ráp", "Đang sơn", "Chờ duyệt", "Hoàn thành"];
+const STATUSES = ["Tất cả", "Đang đánh giấy ráp", "Đang sơn", "Chờ nghiệm thu", "Hoàn thành"];
 const ORDER_TYPES = ["Tất cả", "Hàng mộc", "Hàng khách đặt"];
 
 const formatDateTime = (dateString) => {
@@ -67,7 +67,7 @@ const getStatusColor = (status, isPendingApproval = false, needsRedo = false) =>
   const STATUS_CONFIG = {
     "Đang đánh giấy ráp": { label: "Đánh giấy", bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB", icon: Layers },
     "Đang sơn": { label: "Đang sơn", bg: "#E0F2FE", text: "#0369A1", border: "#BAE6FD", icon: Paintbrush },
-    "Chờ duyệt": { label: "Đợi duyệt", bg: "#FEF3C7", text: "#D97706", border: "#FDE68A", icon: Clock },
+    "Chờ nghiệm thu": { label: "Chờ KCS", bg: "#FEF3C7", text: "#D97706", border: "#FDE68A", icon: Clock },
     "Hoàn thành": { label: "Hoàn chỉnh", bg: "#F0FDF4", text: "#166534", border: "#BBF7D0", icon: CheckCircle2 },
   };
 
@@ -134,6 +134,12 @@ const ProductionItemRow = ({ item, onInspect, onRedo, onDelay }) => {
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Hạn bàn giao</span>
               <span className="text-[12px] font-bold" style={{ color: ds.color }}>{ds.text}</span>
             </div>
+            {item.painterLabor > 0 && (
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Công sơn khoán</span>
+                <span className="text-[12px] font-black text-emerald-700">{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(item.painterLabor)}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -152,6 +158,16 @@ const ProductionItemRow = ({ item, onInspect, onRedo, onDelay }) => {
               {sc.primaryBadge.label}
             </div>
           </div>
+
+          {(item.isPendingApproval || item.status === "Chờ nghiệm thu") && (
+            <button
+              onClick={() => onInspect(item)}
+              className="h-9 px-3 rounded-lg bg-emerald-600 text-white text-[12px] font-bold hover:bg-emerald-700 transition shadow-md flex items-center gap-1.5 animate-pulse"
+              title="Kiểm tra chất lượng qua ảnh"
+            >
+              <Camera size={14} /> NGHIỆM THU
+            </button>
+          )}
 
           <Link
             to={`/owner/production/${item.id}`}
@@ -224,7 +240,7 @@ export default function OwnerProduction() {
   const filtered = useMemo(() => {
     let result = productions.filter(p => p.orderType !== "Hàng sẵn");
     if (statusFilter !== "Tất cả") {
-      if (statusFilter === "Chờ duyệt") result = result.filter(p => p.isPendingApproval);
+      if (statusFilter === "Chờ nghiệm thu") result = result.filter(p => p.isPendingApproval || p.status === "Chờ nghiệm thu");
       else if (statusFilter === "Đang sơn") result = result.filter(p => p.status === "Đang sơn" && !p.isPendingApproval);
       else result = result.filter((p) => p.status === statusFilter);
     }
@@ -266,7 +282,7 @@ export default function OwnerProduction() {
 
       if (g.items.some(i => i.needsRedo)) g.status = "Sửa lại";
       else if (g.items.some(i => i.isDelayed)) g.status = "Báo chậm";
-      else if (g.items.some(i => i.isPendingApproval)) g.status = "Chờ duyệt";
+      else if (g.items.some(i => i.isPendingApproval || i.status === "Chờ nghiệm thu")) g.status = "Chờ nghiệm thu";
       else if (completed === total) g.status = "Hoàn thành";
       else {
         if (g.items.some(i => i.status === "Đang đánh giấy ráp")) g.status = "Đang đánh giấy ráp";
@@ -392,7 +408,7 @@ export default function OwnerProduction() {
       "Tất cả": valid.length,
       "Đang đánh giấy ráp": valid.filter(p => p.status === "Đang đánh giấy ráp").length,
       "Đang sơn": valid.filter(p => p.status === "Đang sơn" && !p.isPendingApproval).length,
-      "Chờ duyệt": valid.filter(p => p.isPendingApproval).length,
+      "Chờ nghiệm thu": valid.filter(p => p.isPendingApproval || p.status === "Chờ nghiệm thu").length,
       "Hoàn thành": valid.filter(p => p.status === "Hoàn thành").length,
     };
   }, [productions]);
@@ -481,6 +497,7 @@ export default function OwnerProduction() {
                     {group.items.map((item) => (
                       <ProductionItemRow
                         key={item.id} item={item}
+                        onInspect={(it) => { setSelectedItem(it); setShowInspectModal(true); }}
                       />
                     ))}
                   </div>
