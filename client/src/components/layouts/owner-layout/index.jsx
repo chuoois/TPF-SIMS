@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { NavbarSale } from "@/layouts/sales-layout/NavbarSale";
+import { NavbarSale } from "@/components/layouts/sales-layout/NavbarSale";
 import { SidebarOwner } from "./SidebarOwner";
 
 export default function OwnerLayout() {

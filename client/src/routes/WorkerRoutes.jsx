@@ -1,4 +1,4 @@
-import { WorkerLayout } from "@/layouts/worker-layout";
+import { WorkerLayout } from "@/components/layouts/worker-layout";
 import WorkerDashboard from "@/pages/worker-page/dashboard";
 import WorkerCompleted from "@/pages/worker-page/completed";
 import CompletedTaskDetail from "@/pages/worker-page/completed/detail";

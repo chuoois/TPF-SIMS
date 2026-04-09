@@ -52,6 +52,7 @@ const DataTable = ({
   renderDetail, // (item) => ReactNode
   expandedIds: controlledExpandedIds, // Optional controlled state
   onToggleExpand: controlledOnToggleExpand, // Optional controlled callback
+  expandableIf, // Optional: (item) => boolean — only rows matching this can expand
 
   pagination = {
     total: 0,
@@ -105,6 +106,8 @@ const DataTable = ({
       header: "",
       headerClassName: "w-[40px] text-center",
       render: (item) => {
+        const canExpand = !expandableIf || expandableIf(item);
+        if (!canExpand) return <div className="w-[40px]" />;
         const isExpanded = expandedList.includes(item.id);
         const Icon = isExpanded ? ChevronUp : ChevronDown;
         return (
@@ -384,7 +387,9 @@ const DataTable = ({
                   <React.Fragment key={item.id || rowIdx}>
                     <tr
                       onClick={() => {
-                        if (renderDetail) {
+                        // If row can expand AND no explicit onRowClick, toggle expand
+                        const canExpand = renderDetail && (!expandableIf || expandableIf(item));
+                        if (canExpand && !onRowClick) {
                           handleToggleExpand(item.id);
                         } else if (onRowClick) {
                           onRowClick(item);
@@ -419,7 +424,7 @@ const DataTable = ({
                     </tr>
 
                     {/* Expandable Detail Row */}
-                    {renderDetail && isExpanded && (
+                    {renderDetail && isExpanded && (!expandableIf || expandableIf(item)) && (
                       <tr className="animate-in fade-in slide-in-from-top-1 duration-200">
                         <td
                           colSpan={enhancedColumns.length}

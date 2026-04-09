@@ -34,7 +34,7 @@ const menuItems = [
     path: "/owner/requirements",
   },
   { text: "Đơn hàng", icon: ClipboardList, path: "/owner/orders" },
-  
+
   {
     text: "Sản phẩm",
     icon: Package,
@@ -54,9 +54,6 @@ const menuItems = [
     },
   },
   { text: "Mã giảm giá", icon: Tag, path: "/owner/coupons" },
-
-  { text: "Quản lý sản xuất", icon: Hammer, path: "/owner/production" },
-  
   { text: "Nhà cung cấp", icon: Building2, path: "/owner/suppliers" },
   { text: "Quản lý tài khoản", icon: UserCog, path: "/owner/employees" },
   {
@@ -98,10 +95,9 @@ function SubLink({ text, path, exactMatch }) {
     <NavLink
       to={path}
       className={`flex items-center gap-2 px-3 py-1.5 text-[13px] rounded-md transition-colors no-underline
-        ${
-          isActive
-            ? "text-[var(--brand-primary)] font-semibold bg-white/[0.08]"
-            : "text-gray-400 hover:text-white hover:bg-white/[0.06]"
+        ${isActive
+          ? "text-[var(--brand-primary)] font-semibold bg-white/[0.08]"
+          : "text-gray-400 hover:text-white hover:bg-white/[0.06]"
         }`}
     >
       <span
@@ -152,10 +148,9 @@ function SettingsGroup({ group }) {
                 key={item.path}
                 to={item.path}
                 className={`flex items-center gap-2 px-3 py-1.5 text-[12px] no-underline transition-colors
-                  ${
-                    isActive
-                      ? "text-[var(--brand-primary)] font-semibold"
-                      : "text-gray-500 hover:text-gray-300"
+                  ${isActive
+                    ? "text-[var(--brand-primary)] font-semibold"
+                    : "text-gray-500 hover:text-gray-300"
                   }`}
               >
                 <span
@@ -191,10 +186,9 @@ function CollapsibleMenuItem({ item }) {
       <div
         onClick={() => setExpanded((v) => !v)}
         className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg cursor-pointer transition-all duration-200
-          ${
-            isActive
-              ? "bg-[var(--brand-primary)] text-white font-medium shadow-sm shadow-black/20"
-              : "text-gray-300 hover:text-white hover:bg-white/[0.1]"
+          ${isActive
+            ? "bg-[var(--brand-primary)] text-white font-medium shadow-sm shadow-black/20"
+            : "text-gray-300 hover:text-white hover:bg-white/[0.1]"
           }`}
       >
         {Icon && (
@@ -241,10 +235,9 @@ function MenuItem({ item }) {
     <NavLink
       to={item.path}
       className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-all duration-200 no-underline
-        ${
-          isActive
-            ? "bg-[var(--brand-primary)] text-white font-medium shadow-sm shadow-black/20"
-            : "text-gray-300 hover:text-white hover:bg-white/[0.1]"
+        ${isActive
+          ? "bg-[var(--brand-primary)] text-white font-medium shadow-sm shadow-black/20"
+          : "text-gray-300 hover:text-white hover:bg-white/[0.1]"
         }`}
     >
       {Icon && (

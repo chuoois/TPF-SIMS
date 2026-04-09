@@ -7,15 +7,20 @@ const { Sequelize } = require("sequelize");
  */
 
 const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
+  (process.env.DB_NAME || "").trim(),
+  (process.env.DB_USER || "").trim(),
+  (process.env.DB_PASSWORD || "").trim(),
   {
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
+    host: (process.env.DB_HOST || "").trim(),
+    port: (process.env.DB_PORT || "").trim(),
     dialect: "mysql",
     logging: false,
+    dialectOptions: {
+      ssl: {
+        rejectUnauthorized: false, // Required for Aiven MySQL
+      },
+    },
   }
 );
 
-module.exports = sequelize;
+module.exports = sequelize;

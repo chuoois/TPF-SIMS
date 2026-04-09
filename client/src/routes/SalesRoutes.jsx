@@ -1,4 +1,4 @@
-import { SalesLayout } from "@/layouts/sales-layout/index";
+import { SalesLayout } from "@/components/layouts/sales-layout/index";
 import SalesCustomerManage from "@/pages/sales-page/customer-manage";
 import InStockInvoicePage from "@/pages/sales-page/invoice-instock";
 import CustomOrderInvoicePage from "@/pages/sales-page/requirement-custom-order";
