@@ -7,7 +7,7 @@
 
 import { useState, useRef } from "react";
 import {
-    X, Plus, Trash2, Upload, FileImage,
+    X, Plus, Trash2, Upload, FileImage, Search,
     Building2, Calendar, Package, ChevronDown, AlignLeft,
     BarChart2, Image, Layers, CheckCircle,
 } from "lucide-react";
@@ -21,7 +21,8 @@ import {
     FORM_TYPES, 
     PRODUCT_TYPES, 
     MOCK_PRODUCTS, 
-    MOCK_BUNDLES 
+    MOCK_BUNDLES,
+    ALL_PRODUCTS
 } from "../mockData";
 
 // ── Helpers ────────────────────────────────────────────
@@ -258,6 +259,51 @@ export default function CreateImportModal({ onClose, onSaved }) {
 
     const grandTotal = lines.reduce((s, l) => s + lineTotal(l), 0);
 
+    // ── Pull from Custom Order ─────────────────────────
+    const applyCustomProduct = (p) => {
+        const qtyToImport = p.stockBreakdown?.processing || 1;
+        if (p.isBundle) {
+            const newBundle = emptyBundle();
+            newBundle._id = Math.random();
+            newBundle.bundleCode = p.sku || p.id;
+            newBundle.bundleName = p.name;
+            newBundle.category = p.category || "";
+            newBundle.materialType = p.materialType || "";
+            newBundle.color = p.color || "";
+            newBundle.productType = p.type || "CUSTOM";
+            newBundle.bundleQty = qtyToImport;
+            newBundle.bundlePrice = p.importPrice || "";
+            newBundle.items = (p.items || []).map(it => ({ ...it, _id: Math.random(), productNote: "" }));
+            if (qtyToImport > 0 && newBundle.bundleCode) {
+                 newBundle.unitIds = generateBundleUnitIds({ ...newBundle, bundleCode: newBundle.bundleCode }, qtyToImport);
+            }
+            // Remove initial empty line if untouched
+            setLines(prev => {
+                if (prev.length === 1 && !prev[0].isBundle && !prev[0].productCode && !prev[0].productName) return [newBundle];
+                return [...prev, newBundle];
+            });
+        } else {
+            const newLine = emptyLine();
+            newLine._id = Math.random();
+            newLine.productCode = p.sku || p.id;
+            newLine.productName = p.name;
+            newLine.category = p.category || "";
+            newLine.materialType = p.materialType || "";
+            newLine.color = p.color || "";
+            newLine.productType = p.type || "CUSTOM";
+            newLine.qty = qtyToImport;
+            newLine.importPrice = p.importPrice || "";
+            if (qtyToImport > 0 && newLine.productCode) {
+                 newLine.unitIds = generateUnitIds(newLine, qtyToImport);
+            }
+            setLines(prev => {
+                if (prev.length === 1 && !prev[0].isBundle && !prev[0].productCode && !prev[0].productName) return [newLine];
+                return [...prev, newLine];
+            });
+        }
+        toast.success(`Đã kéo thành công: ${p.name}`, { style: { fontSize: "13px" } });
+    };
+
     // ── Submit ─────────────────────────────────────────
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -386,15 +432,55 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                     Chi tiết nhập
                                 </p>
                                 <div className="flex items-center gap-2">
+                                    <div className="relative">
+                                        <button type="button" onClick={() => setActiveDropdown(activeDropdown?.id === "pullOrder" ? {id: null, field: null} : {id: "pullOrder", field: "pullOrder"})}
+                                            className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-[12px] font-bold cursor-pointer hover:opacity-80 transition"
+                                            style={{ backgroundColor: "#10B981", color: "#fff" }}>
+                                            <Search size={13} /> Kéo từ Khách đặt
+                                        </button>
+                                        {activeDropdown.id === "pullOrder" && (
+                                            <div className="absolute right-0 top-[100%] mt-2 w-[400px] bg-white rounded-xl shadow-2xl border flex flex-col z-[100] overflow-hidden" style={{ borderColor: "var(--grid-border)" }}>
+                                                <div className="p-3 border-b" style={{ borderColor: "var(--grid-border)", backgroundColor: "#FAFAFA" }}>
+                                                    <p className="text-[12px] font-bold mb-2">Sản phẩm Hàng Đặt (CUSTOM) chờ nhập kho:</p>
+                                                    <input type="text" autoFocus 
+                                                        onChange={(e) => setActiveDropdown({...activeDropdown, search: e.target.value})}
+                                                        placeholder="Tìm Tên khách, Mã, HĐ..."
+                                                        className="w-full h-8 px-3 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-emerald-400 cursor-text"
+                                                        style={{ borderColor: "var(--grid-border)", color: "var(--text-main)" }} />
+                                                </div>
+                                                <div className="max-h-60 overflow-y-auto w-full flex flex-col">
+                                                    {(() => {
+                                                        const q = (activeDropdown.search || "").toLowerCase();
+                                                        let results = ALL_PRODUCTS.filter(p => p.type === "CUSTOM" && (p.stockBreakdown?.processing > 0));
+                                                        if (q) {
+                                                            results = results.filter(p => p.name.toLowerCase().includes(q) || (p.details || "").toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q));
+                                                        }
+                                                        if (results.length === 0) return <div className="p-4 text-center text-[12px] text-gray-500">Chưa có sản phẩm Khách Đặt nào chờ nhập.</div>;
+                                                        return results.map(p => (
+                                                            <div key={p.id} className="p-3 border-b border-gray-100 last:border-0 hover:bg-emerald-50 cursor-pointer transition flex flex-col gap-1"
+                                                            onClick={() => { applyCustomProduct(p); setActiveDropdown({id: null, field: null}); }}>
+                                                                <p className="text-[13px] font-bold text-gray-800">{p.name}</p>
+                                                                <div className="flex gap-2 items-center">
+                                                                    <span className="text-[10px] font-mono px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">{p.sku}</span>
+                                                                    <span className="text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-700 font-bold rounded flex items-center gap-1">Cần nhập: {p.stockBreakdown?.processing}</span>
+                                                                </div>
+                                                                {p.details && <p className="text-[11px] text-gray-500 italic mt-0.5 line-clamp-1 truncate">{p.details}</p>}
+                                                            </div>
+                                                        ))
+                                                    })()}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                     <button type="button" onClick={() => setLines(p => [...p, emptyLine()])}
                                         className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-[12px] font-bold cursor-pointer hover:opacity-80 transition"
                                         style={{ backgroundColor: "var(--brand-primary)", color: "#fff" }}>
-                                        <Plus size={13} /> Thêm theo sản phẩm lẻ
+                                        <Plus size={13} /> Thêm lẻ
                                     </button>
                                     <button type="button" onClick={() => setLines(p => [...p, emptyBundle()])}
                                         className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-[12px] font-bold cursor-pointer hover:opacity-80 transition"
                                         style={{ backgroundColor: "#7C3AED", color: "#fff" }}>
-                                        <Layers size={13} /> Thêm theo bộ
+                                        <Layers size={13} /> Thêm bộ
                                     </button>
                                 </div>
                             </div>
