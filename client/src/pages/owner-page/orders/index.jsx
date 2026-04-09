@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   Package,
   Clock,
@@ -10,47 +10,22 @@ import {
   Activity,
   AlertCircle,
   Eye,
+  Paintbrush,
+  Camera,
+  Layers,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import DataTable from "@/components/control/DataTable";
 import ConfirmModal from "@/components/control/ConfirmModal";
 import toast from "react-hot-toast";
 import InvoiceDetailsPopup from "./components/InvoiceDetailsPopup";
-
-const INITIAL_ORDERS = [
-  // ========== NHÓM 1: HÀNG SẴN (6 Trạng thái) ==========
-  { id: "DH-S01", code: "DH-SAN-001", customerName: "Nguyễn Văn Hùng", phone: "0912345678", type: "Hàng sẵn", total: 18500000, status: "Chờ xử lý", date: "2026-03-29T08:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-04-01", deposit: 2000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Bàn ăn gỗ Sồi Nga 6 ghế", specs: "160x80 cm, Sơn màu hạt dẻ" }] },
-  { id: "DH-S02", code: "DH-SAN-002", customerName: "Lê Thị Lan", phone: "0345678901", type: "Hàng sẵn", total: 8500000, status: "Chờ giao hàng", date: "2026-03-28T14:20:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-30", deposit: 8500000, fulfillmentType: "Lấy tại cửa hàng", products: [{ name: "Kệ Tivi gỗ Sồi", specs: "2m2, Cánh mây tự nhiên" }] },
-  { id: "DH-S03", code: "DH-SAN-003", customerName: "Trần Minh Quang", phone: "0909123456", type: "Hàng sẵn", total: 42000000, status: "Đang giao hàng", date: "2026-03-27T09:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-31", deposit: 20000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Bộ Sofa gỗ Sồi chữ U", specs: "Nệm da Hàn Quốc, màu nâu" }] },
-  { id: "DH-S04", code: "DH-SAN-004", customerName: "Phạm Thành Nam", phone: "0987654321", type: "Hàng sẵn", total: 15600000, status: "Hoàn thành", date: "2026-03-25T16:45:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-26", deposit: 15600000, fulfillmentType: "Giao tận nơi", products: [{ name: "Tủ giày thông minh", specs: "Gỗ sồi, 3 tầng cánh lật" }] },
-  { id: "DH-S05", code: "DH-SAN-005", customerName: "Ngô Quốc Bảo", phone: "0901222333", type: "Hàng sẵn", total: 12800000, status: "Chờ duyệt hủy", date: "2026-03-20T10:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-22", deposit: 5000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Bàn làm việc Giám đốc", specs: "Gỗ Gụ, 1m6x80cm" }] },
-  { id: "DH-S06", code: "DH-SAN-006", customerName: "Nguyễn Trung Kiên", phone: "0344111222", type: "Hàng sẵn", total: 5500000, status: "Đơn đã hủy", date: "2026-03-10T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-12", deposit: 1000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Ghế xoay văn phòng ĐK", specs: "Lưới đen, ben hơi" }] },
-
-  // ========== NHÓM 2: HÀNG MỘC (7 Trạng thái) ==========
-  { id: "DH-T01", code: "DH-MOC-001", customerName: "Hoàng Nguyệt Ánh", phone: "0978901234", type: "Hàng mộc", total: 56000000, status: "Chờ xử lý", date: "2026-03-30T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-04-10", deposit: 10000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Sập thờ Tứ Linh", specs: "Gỗ mít, Chân 18, Dạ 5 phân" }] },
-  { id: "DH-T02", code: "DH-MOC-002", customerName: "Đặng Tuấn Kiệt", phone: "0931234567", type: "Hàng mộc", total: 32000000, status: "Đang gia công", date: "2026-03-28T15:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-04-05", deposit: 15000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Bộ bàn ghế Âu Á", specs: "Gỗ Hương Đá, Chương voi" }] },
-  { id: "DH-T03", code: "DH-MOC-003", customerName: "Vũ Tuấn Anh", phone: "0344555666", type: "Hàng mộc", total: 24500000, status: "Chờ giao hàng", date: "2026-03-15T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-25", deposit: 24500000, fulfillmentType: "Giao tận nơi", products: [{ name: "Kệ tivi gỗ Hương Đá", specs: "Dài 2m4, mẫu hoa hồng" }] },
-  { id: "DH-T04", code: "DH-MOC-004", customerName: "Lê Văn Lộc", phone: "0966777888", type: "Hàng mộc", total: 48000000, status: "Đang giao hàng", date: "2026-03-26T14:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-28", deposit: 10000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Giường ngủ chữ X", specs: "Gỗ Gõ đỏ, 1m8x2m" }] },
-  { id: "DH-T05", code: "DH-MOC-005", customerName: "Trần Thế Vinh", phone: "0333999000", type: "Hàng mộc", total: 15000000, status: "Hoàn thành", date: "2026-03-20T08:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-22", deposit: 15000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Tab đầu giường", specs: "Gỗ sồi, 2 ngăn kéo" }] },
-  { id: "DH-T06", code: "DH-MOC-006", customerName: "Phạm Hữu Tài", phone: "0355111222", type: "Hàng mộc", total: 22000000, status: "Chờ duyệt hủy", date: "2026-03-22T11:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-24", deposit: 5000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Bàn phấn trang điểm", specs: "Gỗ Gõ, gương tròn" }] },
-  { id: "DH-T07", code: "DH-MOC-007", customerName: "Trịnh Gia Bảo", phone: "0944000333", type: "Hàng mộc", total: 12000000, status: "Đơn đã hủy", date: "2026-03-05T14:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-07", deposit: 2000000, fulfillmentType: "Lấy tại xưởng", products: [{ name: "Ghế đôn gỗ Trắc", specs: "Đường kính 30cm" }] },
-
-  // ========== NHÓM 3: HÀNG KHÁCH ĐẶT (8 Trạng thái) ==========
-  { id: "DH-D01", code: "DH-DAT-001", customerName: "Nguyễn Thị Hồng", phone: "0912123123", type: "Hàng khách đặt", total: 125000000, status: "Chờ sản xuất", date: "2026-03-30T11:15:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-04-30", deposit: 40000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Trường kỷ Sen Vịt", specs: "Gỗ Gụ Lào, 2m17, Đục tay kỹ" }] },
-  { id: "DH-D02", code: "DH-DAT-002", customerName: "Lê Văn Tám", phone: "0321654987", type: "Hàng khách đặt", total: 75000000, status: "Đã nhập kho", date: "2026-03-25T09:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-04-05", deposit: 30000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Tủ chè khảm trai", specs: "Gỗ Gụ, Cánh cong đục tích" }] },
-  { id: "DH-D03", code: "DH-DAT-003", customerName: "Bùi Tiến Dũng", phone: "0911223344", type: "Hàng khách đặt", total: 210000000, status: "Hoàn thành", date: "2026-03-05T08:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-15", deposit: 210000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Bộ bàn ghế Âu Á siêu phẩm", specs: "Gỗ Cẩm Lai, nạm ngọc" }] },
-  { id: "DH-D04", code: "DH-DAT-004", customerName: "Đỗ Mạnh Hùng", phone: "0988000111", type: "Hàng khách đặt", total: 45000000, status: "Đang gia công", date: "2026-03-20T14:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-04-02", deposit: 20000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Bàn ăn tròn 8 ghế", specs: "Gỗ Cẩm Lai, nạm ngọc" }] },
-  { id: "DH-D05", code: "DH-DAT-005", customerName: "Lý Thành Nam", phone: "0311222333", type: "Hàng khách đặt", total: 18000000, status: "Đơn đã hủy", date: "2026-03-10T11:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-12", deposit: 5000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Đôn gỗ trang trí", specs: "Gỗ sồi, mạ bạc" }] },
-  { id: "DH-D06", code: "DH-DAT-006", customerName: "Trương Mỹ Linh", phone: "0900111222", type: "Hàng khách đặt", total: 85000000, status: "Chờ giao hàng", date: "2026-03-18T10:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-28", deposit: 30000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Tủ rượu âm tường", specs: "Gỗ Gõ đỏ, kính cường lực" }] },
-  { id: "DH-D07", code: "DH-DAT-007", customerName: "Kiều Minh Tâm", phone: "0922333444", type: "Hàng khách đặt", total: 120000000, status: "Đang giao hàng", date: "2026-03-12T15:30:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-03-26", deposit: 50000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Bộ bàn ghế Minh Quốc", specs: "Gỗ Mun Lào, 10 món" }] },
-  { id: "DH-D08", code: "DH-DAT-008", customerName: "Tạ Thu Thủy", phone: "0377444555", type: "Hàng khách đặt", total: 65000000, status: "Chờ duyệt hủy", date: "2026-03-27T08:00:00", salesPerson: "Bình Nguyễn", deliveryDate: "2026-04-15", deposit: 15000000, fulfillmentType: "Giao tận nơi", products: [{ name: "Án gian thờ khảm trai", specs: "Gỗ Gụ, 1m97x97cm" }] },
-];
+import { INITIAL_ORDERS, INITIAL_PRODUCTIONS } from "./mockData";
 
 const ORDER_TYPES = ["Hàng sẵn", "Hàng mộc", "Hàng khách đặt"];
 
 const HANG_SAN_STATUSES = ["Chờ giao hàng", "Đang giao hàng", "Hoàn thành", "Chờ duyệt hủy", "Đơn đã hủy"];
 const HANG_THO_STATUSES = ["Chờ xử lý", "Đang gia công", "Chờ giao hàng", "Đang giao hàng", "Hoàn thành", "Chờ duyệt hủy", "Đơn đã hủy"];
-const HANG_DAT_STATUSES = ["Chờ sản xuất", "Đã nhập kho", "Đang gia công", "Chờ giao hàng", "Đang giao hàng", "Hoàn thành", "Chờ duyệt hủy", "Đơn đã hủy"];
+const HANG_DAT_STATUSES = ["Chờ sản xuất", "Chờ xử lý", "Đang gia công", "Chờ giao hàng", "Đang giao hàng", "Hoàn thành", "Chờ duyệt hủy", "Đơn đã hủy"];
 const ALL_STATUSES = [...new Set([...HANG_SAN_STATUSES, ...HANG_THO_STATUSES, ...HANG_DAT_STATUSES])];
 
 const formatCurrency = (amount) => {
@@ -83,6 +58,61 @@ export default function OwnerOrders() {
     return [...saved, ...uniqueInitial];
   });
 
+  // Load production data to compute sub-statuses for "Đang gia công" orders
+  const [productions, setProductions] = useState(() => {
+    try {
+      const saved = localStorage.getItem("tpf_simulated_productions");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) { /* ignore */ }
+
+    // INITIAL MOCK PRODUCTION FOR TESTING (Fallback if missing)
+    localStorage.setItem("tpf_simulated_productions", JSON.stringify(INITIAL_PRODUCTIONS));
+    return INITIAL_PRODUCTIONS;
+  });
+
+  // Sync with localStorage updates (for when actions happen in popup)
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key === "tpf_simulated_productions") {
+        setProductions(JSON.parse(e.newValue || "[]"));
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    // Also poll every 2 seconds if you want a "real-time" feel without complex state lifting
+    const interval = setInterval(() => {
+      const current = localStorage.getItem("tpf_simulated_productions");
+      if (current) {
+        const parsed = JSON.parse(current);
+        // Only update if stringified version changed to avoid infinite loop
+        setProductions(prev => {
+          if (JSON.stringify(prev) !== current) return parsed;
+          return prev;
+        });
+      }
+    }, 2000);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Map orderId -> sub-status counts
+  const prodSubStatusMap = useMemo(() => {
+    const map = {};
+    productions.forEach(p => {
+      const key = p.orderId;
+      if (!key) return;
+      if (!map[key]) map[key] = { sand: 0, paint: 0, kcs: 0 };
+      if (p.isPendingApproval || p.status === "Chờ nghiệm thu") map[key].kcs++;
+      else if (p.status === "Đang sơn") map[key].paint++;
+      else if (p.status === "Đang đánh giấy ráp") map[key].sand++;
+    });
+    return map;
+  }, [productions]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -90,7 +120,6 @@ export default function OwnerOrders() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [itemsPerPage, setItemsPerPage] = useState(15);
   const [detailId, setDetailId] = useState(null);
-  const [previewImage, setPreviewImage] = useState(null);
 
   const updateParams = (newParams) => {
     const current = Object.fromEntries(searchParams.entries());
@@ -107,7 +136,6 @@ export default function OwnerOrders() {
   const handleBulkCancel = () => {
     setOrders(prev => prev.map(o => selectedIds.includes(o.id) ? { ...o, status: "Đơn đã hủy" } : o));
 
-    // Sync with localStorage
     const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
     const updatedSaved = saved.map(o => selectedIds.includes(o.id) ? { ...o, status: "Đơn đã hủy" } : o);
     localStorage.setItem("tpf_simulated_orders", JSON.stringify(updatedSaved));
@@ -119,7 +147,6 @@ export default function OwnerOrders() {
   const handleSingleCancel = (o) => {
     setOrders(prev => prev.map(item => item.id === o.id ? { ...item, status: "Đơn đã hủy" } : item));
 
-    // Sync with localStorage
     const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
     const updatedSaved = saved.map(item => item.id === o.id ? { ...item, status: "Đơn đã hủy" } : item);
     localStorage.setItem("tpf_simulated_orders", JSON.stringify(updatedSaved));
@@ -128,7 +155,7 @@ export default function OwnerOrders() {
   };
 
   const filtered = useMemo(() => {
-    let result = orders.filter(o => !(o.type === "Hàng sẵn" && o.status === "Chờ xử lý"));
+    let result = orders;
     if (activeTab !== "Tất cả") result = result.filter(o => o.type === activeTab);
     if (statusFilter !== "Tất cả") result = result.filter(o => o.status === statusFilter);
     if (dateFrom) {
@@ -151,7 +178,7 @@ export default function OwnerOrders() {
   }, [orders, activeTab, searchTerm, statusFilter, dateFrom, dateTo]);
 
   const { possibleStatuses, statusCounts } = useMemo(() => {
-    let baseOrders = orders.filter(o => !(o.type === "Hàng sẵn" && o.status === "Chờ xử lý"));
+    let baseOrders = orders;
     if (activeTab !== "Tất cả") baseOrders = baseOrders.filter(o => o.type === activeTab);
 
     let statuses = [];
@@ -218,13 +245,78 @@ export default function OwnerOrders() {
       header: "Trạng thái",
       headerClassName: "text-right pr-12",
       render: (o) => {
-        const sc = getStatusColor(o.status);
+        const sc = { ...getStatusColor(o.status) };
+        const isInProduction = o.status === "Đang gia công";
+        const sub = isInProduction ? (prodSubStatusMap[o.id] || { sand: 0, paint: 0, kcs: 0 }) : null;
+        const needsKcs = sub && sub.kcs > 0;
+
+        if (needsKcs) {
+          sc.bg = "#FEF2F2";
+          sc.text = "#DC2626";
+          sc.border = "#FECACA";
+        }
+
         return (
           <div className="flex flex-col items-end gap-1.5">
-            <span className="inline-flex items-center justify-center w-[140px] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-md border gap-1.5 shrink-0" style={{ backgroundColor: sc.bg, color: sc.text, borderColor: sc.border }}>
+            <span
+              className={`inline-flex items-center justify-center min-w-[140px] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-md border gap-1.5 shrink-0 relative transition-colors`}
+              style={{ backgroundColor: sc.bg, color: sc.text, borderColor: sc.border }}
+              title={needsKcs ? "Có sản phẩm chờ chủ xưởng nghiệm thu" : ""}
+            >
               {sc.icon && <sc.icon size={12} />}
               {o.status}
+              {needsKcs && <AlertCircle size={10} className="text-red-500 animate-pulse ml-0.5" />}
+
+              {needsKcs && (
+                <span className="absolute -top-1.5 -right-1.5 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border border-white"></span>
+                </span>
+              )}
             </span>
+
+            {/* Sub-status mini badges for "Đang gia công" */}
+            {isInProduction && sub && (
+              <div className="flex items-center gap-1">
+                <span
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold border"
+                  style={{
+                    backgroundColor: sub.sand > 0 ? "#F3F4F6" : "#FAFAFA",
+                    color: sub.sand > 0 ? "#374151" : "#9CA3AF",
+                    borderColor: sub.sand > 0 ? "#D1D5DB" : "#E5E7EB",
+                  }}
+                  title="Đánh giấy ráp"
+                >
+                  <Layers size={9} />
+                  {sub.sand}
+                </span>
+                <span
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold border"
+                  style={{
+                    backgroundColor: sub.paint > 0 ? "#E0F2FE" : "#FAFAFA",
+                    color: sub.paint > 0 ? "#0369A1" : "#9CA3AF",
+                    borderColor: sub.paint > 0 ? "#BAE6FD" : "#E5E7EB",
+                  }}
+                  title="Đang sơn"
+                >
+                  <Paintbrush size={9} />
+                  {sub.paint}
+                </span>
+                <span
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold border ${sub.kcs > 0 ? "animate-pulse" : ""
+                    }`}
+                  style={{
+                    backgroundColor: sub.kcs > 0 ? "#ECFDF5" : "#FAFAFA",
+                    color: sub.kcs > 0 ? "#059669" : "#9CA3AF",
+                    borderColor: sub.kcs > 0 ? "#6EE7B7" : "#E5E7EB",
+                  }}
+                  title="Chờ nghiệm thu"
+                >
+                  <Camera size={9} />
+                  {sub.kcs}
+                </span>
+              </div>
+            )}
           </div>
         );
       },
@@ -237,7 +329,7 @@ export default function OwnerOrders() {
   return (
     <>
       <PageHelmet title="Quản lý đơn hàng | TPF-SIMS" />
-      <div className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 space-y-4" style={{ backgroundColor: "var(--bg-main)" }}>
+      <div className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 gap-4" style={{ backgroundColor: "var(--bg-main)" }}>
         <div className="flex items-center justify-between shrink-0">
           <div>
             <h1 className="text-xl font-bold flex items-center gap-2" style={{ color: "var(--text-main)" }}>
@@ -246,6 +338,7 @@ export default function OwnerOrders() {
             </h1>
             <p className="text-[13px] mt-0.5" style={{ color: "var(--text-placeholder)" }}>{filtered.length} đơn hàng ({activeTab.toLowerCase()})</p>
           </div>
+
           <div className="flex p-1 rounded-lg" style={{ backgroundColor: "var(--grid-header-bg)", border: "1px solid var(--grid-border)" }}>
             {ORDER_TYPES.map((tab) => (
               <button key={tab} onClick={() => updateParams({ tab, status: "Tất cả" })} className="px-4 py-1.5 rounded-lg text-[13px] font-semibold transition-all cursor-pointer" style={{ backgroundColor: activeTab === tab ? "#fff" : "transparent", color: activeTab === tab ? "var(--text-main)" : "var(--text-secondary)" }}>
@@ -255,71 +348,72 @@ export default function OwnerOrders() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0 px-1 flex-wrap">
-          {possibleStatuses.map((s) => {
-            const isActive = statusFilter === s;
-            const sc = s !== "Tất cả" ? getStatusColor(s) : null;
-            return (
-              <button key={s} onClick={() => updateParams({ status: s })} className="px-4 py-1.5 rounded-lg text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border" style={{ backgroundColor: isActive ? (sc ? sc.bg : "#fff") : "transparent", color: isActive ? (sc ? sc.text : "var(--brand-primary)") : "var(--text-secondary)", borderColor: isActive ? (sc ? sc.border : "var(--grid-border)") : "transparent" }}>
-                {s !== "Tất cả" && sc?.icon && <sc.icon size={14} />}
-                {s} <span className="text-[10px] opacity-60 bg-black/5 px-1.5 rounded-md ml-0.5">{statusCounts[s] || 0}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        <DataTable
-          columns={columns}
-          data={paginatedOrders}
-          onRowClick={(o) => setDetailId(o.id)}
-          rowStyle={(item) => ({
-            backgroundColor: selectedIds.includes(item.id) ? "var(--status-focus)" : "transparent"
-          })}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          dateFrom={dateFrom}
-          setDateFrom={setDateFrom}
-          dateTo={dateTo}
-          setDateTo={setDateTo}
-          hasActiveFilters={hasActiveFilters}
-          clearAllFilters={() => { updateParams({ status: "Tất cả" }); setDateFrom(""); setDateTo(""); setSearchTerm(""); }}
-          selectedIds={selectedIds}
-          setSelectedIds={setSelectedIds}
-          rowActions={[
-            {
-              icon: Eye,
-              label: "Xem chi tiết",
-              onClick: (o) => setDetailId(o.id),
-            },
-            {
-              icon: Trash2,
-              label: "Hủy đơn",
-              onClick: (o) => handleSingleCancel(o),
-              className: "bg-white border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200",
-              requireConfirm: true,
-              confirmTitle: "Xác nhận hủy đơn hàng?",
-              confirmMessage: "Mọi thông tin thanh toán và trạng thái của đơn sẽ được chuyển về 'Đơn đã hủy'. Bạn chắc chắn chứ?"
-            },
-          ]}
-          bulkActions={[
-            {
-              label: "HỦY ĐƠN HÀNG LOẠT",
-              icon: Trash2,
-              onClick: handleBulkCancel,
-              requireConfirm: true,
-              confirmTitle: "Hủy hàng loạt đơn hàng?",
-              confirmMessage: `Hệ thống sẽ chuyển ${selectedIds.length} đơn hàng đã chọn sang trạng thái hủy. Hành động này không thể hoàn tác.`
-            }
-          ]}
-          pagination={{
-            total: filtered.length,
-            currentPage: currentPage,
-            setCurrentPage: setCurrentPage,
-            itemsPerPage: itemsPerPage,
-            setItemsPerPage: setItemsPerPage,
-          }}
-        />
+      <div className="flex items-center gap-2 shrink-0 px-1 flex-wrap">
+        {possibleStatuses.map((s) => {
+          const isActive = statusFilter === s;
+          const sc = s !== "Tất cả" ? getStatusColor(s) : null;
+          return (
+            <button key={s} onClick={() => updateParams({ status: s })} className="px-4 py-1.5 rounded-lg text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border" style={{ backgroundColor: isActive ? (sc ? sc.bg : "#fff") : "transparent", color: isActive ? (sc ? sc.text : "var(--brand-primary)") : "var(--text-secondary)", borderColor: isActive ? (sc ? sc.border : "var(--grid-border)") : "transparent" }}>
+              {s !== "Tất cả" && sc?.icon && <sc.icon size={14} />}
+              {s} <span className="text-[10px] opacity-60 bg-black/5 px-1.5 rounded-md ml-0.5">{statusCounts[s] || 0}</span>
+            </button>
+          );
+        })}
       </div>
+
+      <DataTable
+        columns={columns}
+        data={paginatedOrders}
+        onRowClick={(o) => setDetailId(o.id)}
+        rowStyle={(item) => ({
+          backgroundColor: selectedIds.includes(item.id) ? "var(--status-focus)" : "transparent"
+        })}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        dateFrom={dateFrom}
+        setDateFrom={setDateFrom}
+        dateTo={dateTo}
+        setDateTo={setDateTo}
+        hasActiveFilters={hasActiveFilters}
+        clearAllFilters={() => { updateParams({ status: "Tất cả" }); setDateFrom(""); setDateTo(""); setSearchTerm(""); }}
+        selectedIds={selectedIds}
+        setSelectedIds={setSelectedIds}
+
+        rowActions={[
+          {
+            icon: Eye,
+            label: "Xem chi tiết",
+            onClick: (o) => setDetailId(o.id),
+          },
+          {
+            icon: Trash2,
+            label: "Hủy đơn",
+            onClick: (o) => handleSingleCancel(o),
+            className: "bg-white border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200",
+            requireConfirm: true,
+            confirmTitle: "Xác nhận hủy đơn hàng?",
+            confirmMessage: "Mọi thông tin thanh toán và trạng thái của đơn sẽ được chuyển về 'Đơn đã hủy'. Bạn chắc chắn chứ?"
+          },
+        ]}
+        bulkActions={[
+          {
+            label: "HỦY ĐƠN HÀNG LOẠT",
+            icon: Trash2,
+            onClick: handleBulkCancel,
+            requireConfirm: true,
+            confirmTitle: "Hủy hàng loạt đơn hàng?",
+            confirmMessage: `Hệ thống sẽ chuyển ${selectedIds.length} đơn hàng đã chọn sang trạng thái hủy. Hành động này không thể hoàn tác.`
+          }
+        ]}
+        pagination={{
+          total: filtered.length,
+          currentPage: currentPage,
+          setCurrentPage: setCurrentPage,
+          itemsPerPage: itemsPerPage,
+          setItemsPerPage: setItemsPerPage,
+        }}
+      />
+    </div >
 
       <InvoiceDetailsPopup
         invoiceId={detailId}

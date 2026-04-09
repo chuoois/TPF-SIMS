@@ -1,186 +1,15 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   X, Package, Calendar, User, Phone, MapPin,
-  Clock, CheckCircle, AlertTriangle, Hammer,
+  Clock, CheckCircle, CheckCircle2, AlertTriangle, Hammer,
   Camera, FileText, Ban, RefreshCw, XCircle,
-  Truck, Trash2, Lock, ShieldAlert
+  Truck, Trash2, Lock, ShieldAlert,
+  Paintbrush, Layers, RotateCcw, ChevronRight, Eye, Activity, AlertCircle
 } from "lucide-react";
 import CustomCheckbox from "@/components/control/CustomCheckbox";
 import toast from "react-hot-toast";
+import { MOCK_ORDERS_DETAILED } from "../mockData";
 
-// ===================== MOCK DATA (Ported from detail.jsx & matched with INITIAL_ORDERS) =====================
-// ===================== MOCK DATA (Matched with INITIAL_ORDERS in orders/index.jsx) =====================
-const MOCK_ORDERS_DETAILED = {
-  "DH-S01": {
-    code: "DH-SAN-001", type: "Hàng sẵn", status: "Chờ xử lý",
-    date: "2026-03-29T08:30:00", deliveryDate: "2026-04-01", fulfillmentType: "Giao tận nhà",
-    customer: { name: "Nguyễn Văn Hùng", phone: "0912345678", address: "45 Đường Giải Phóng, Hà Đông, Hà Nội" },
-    salesPerson: "Bình Nguyễn", total: 18500000, deposit: 2000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
-    notes: "Khách cần bọc lót kỹ phần chân gỗ khi vận chuyển.",
-    products: [{
-      name: "Bàn ăn gỗ Sồi Nga 6 ghế",
-      image: "https://noithatzito.com/wp-content/uploads/2021/04/bo-ban-an-go-soi-nga-6-ghe.jpg",
-      customerSampleImage: "https://th.bing.com/th/id/OIP.vr9BRteYrPsEUU_wlBWOpwHaFj?o=7rm=3&rs=1&pid=ImgDetMain&o=7&rm=3",
-      material: "Gỗ sồi tự nhiên", size: "160x80 cm", finish: "Sơn màu hạt dẻ", qty: 1, price: 18500000, note: "Màu hạt dẻ"
-    }],
-    timeline: [
-      { time: "29/03/2026 08:30", label: "Tiếp nhận đơn", desc: "Đơn hàng mới từ showroom", active: true },
-      { time: "29/03/2026 09:15", label: "Đang kiểm kho", desc: "Xác nhận hàng sẵn có tại kho Hà Đông", active: false }
-    ],
-  },
-  "DH-S02": {
-    code: "DH-SAN-002", type: "Hàng sẵn", status: "Chờ giao hàng",
-    date: "2026-03-28T14:20:00", deliveryDate: "2026-03-30", fulfillmentType: "Lấy tại cửa hàng",
-    customer: { name: "Lê Thị Lan", phone: "0345678901", address: "Căn 1204, Tòa C, Vinhomes Ocean Park" },
-    salesPerson: "Bình Nguyễn", total: 8500000, deposit: 8500000, depositMethod: "Tiền mặt", paymentStatus: "full",
-    products: [{ name: "Kệ Tivi gỗ Sồi", image: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=800", material: "Gỗ sồi", size: "2m2", finish: "Cánh mây", qty: 1, price: 8500000, note: "" }],
-    timeline: [
-      { time: "28/03/2026 14:20", label: "Tiếp nhận đơn", active: true },
-      { time: "29/03/2026 10:00", label: "Đã chuẩn bị xong", desc: "Hàng đã được đóng gói chờ khách lấy", active: true }
-    ],
-  },
-  "DH-S03": {
-    code: "DH-SAN-003", type: "Hàng sẵn", status: "Đang giao hàng",
-    date: "2026-03-27T09:15:00", deliveryDate: "2026-03-31", fulfillmentType: "Giao tận nơi",
-    customer: { name: "Trần Minh Quang", phone: "0909123456", address: "Số 88 Cầu Giấy, Hà Nội" },
-    salesPerson: "Bình Nguyễn", total: 42000000, deposit: 20000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
-    products: [{ name: "Bộ Sofa gỗ Sồi chữ U", image: "https://dogophihung.com/wp-content/uploads/2020/05/bo-sofa-go-soi-chu-u.jpg", material: "Gỗ Sồi Nga", size: "Chữ U 2m8x1m8", finish: "Sơn màu hạt dẻ", qty: 1, price: 42000000, note: "Nệm da Hàn Quốc màu nâu" }],
-    timeline: [
-      { time: "27/03/2026 09:15", label: "Tiếp nhận đơn", active: true },
-      { time: "30/03/2026 08:30", label: "Đang giao hàng", desc: "Tài xế Nguyễn Văn A (0988xxx) đang vận chuyển", active: true }
-    ],
-  },
-  "DH-S04": {
-    code: "DH-SAN-004", type: "Hàng sẵn", status: "Hoàn thành",
-    date: "2026-03-25T16:45:00", deliveryDate: "2026-03-26", fulfillmentType: "Giao tận nơi",
-    customer: { name: "Phạm Thành Nam", phone: "0987654321", address: "BT Linh Đàm, Hoàng Mai, Hà Nội" },
-    salesPerson: "Bình Nguyễn", total: 15600000, deposit: 15600000, depositMethod: "Tiền mặt", paymentStatus: "full",
-    products: [{ name: "Tủ giày thông minh", image: "https://images.unsplash.com/photo-1595515106969-a0ff2bc82092?q=80&w=800", material: "Gỗ sồi", size: "3 tầng cánh lật", finish: "Sơn Lau", qty: 1, price: 15600000, note: "" }],
-    timeline: [{ time: "26/03/2026 15:00", label: "Đã giao hàng", desc: "Hàng đã bàn giao đầy đủ cho khách", active: true }],
-  },
-  "DH-T01": {
-    code: "DH-MOC-001", type: "Hàng mộc", status: "Chờ xử lý",
-    date: "2026-03-30T10:00:00", deliveryDate: "2026-04-10", fulfillmentType: "Giao tận nơi",
-    customer: { name: "Hoàng Nguyệt Ánh", phone: "0978901234", address: "KĐT Ecopark, Hưng Yên" },
-    salesPerson: "Bình Nguyễn", total: 56000000, deposit: 10000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
-    products: [{
-      name: "Sập thờ Tứ Linh",
-      image: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg",
-      customerSampleImage: "https://th.bing.com/th/id/OIP.vr9BRteYrPsEUU_wlBWOpwHaFj?o=7rm=3&rs=1&pid=ImgDetMain&o=7&rm=3",
-      material: "Gỗ mít", size: "Chân 18, Dạ 5 phân", finish: "Mộc", qty: 1, price: 56000000, note: "Đục tay kỹ",
-      painterLabor: 1200000, finishingDays: 7
-    }],
-    timeline: [
-      { time: "30/03/2026 10:00", label: "Tạo đơn", desc: "Nhận đơn hàng mộc từ kho", active: true }
-    ],
-  },
-  "DH-T02": {
-    code: "DH-MOC-002", type: "Hàng mộc", status: "Đang gia công",
-    date: "2026-03-28T15:30:00", deliveryDate: "2026-04-05", fulfillmentType: "Giao tận nơi",
-    customer: { name: "Đặng Tuấn Kiệt", phone: "0931234567", address: "Số 12A Xuân Thủy, Cầu Giấy" },
-    salesPerson: "Bình Nguyễn", total: 32000000, deposit: 15000000, depositMethod: "Tiền mặt", paymentStatus: "partial",
-    products: [{
-      name: "Bộ bàn ghế Âu Á",
-      image: "https://xuongdogogiagoc.com/wp-content/uploads/2020/06/bo-ghe-au-a-go-huong-da-moc.jpg",
-      customerSampleImage: "https://images.unsplash.com/photo-1595515106969-a0ff2bc82092?q=80&w=800",
-      material: "Gỗ Hương Đá", size: "Chương voi", finish: "Sơn Lau", qty: 1, price: 32000000, note: "Hàng mộc về xưởng"
-    }],
-    timeline: [{ time: "29/03/2026 14:00", label: "Gia công", desc: "Đang trong giai đoạn sơn PU lớp 2", active: true }],
-  },
-  "DH-D01": {
-    code: "DH-DAT-001", type: "Hàng khách đặt", status: "Chờ sản xuất",
-    date: "2026-03-30T11:15:00", deliveryDate: "2026-04-30", fulfillmentType: "Giao tận nơi",
-    customer: { name: "Nguyễn Thị Hồng", phone: "0912123123", address: "Số 5 Đường Thành, Hoàn Kiếm" },
-    salesPerson: "Bình Nguyễn", total: 125000000, deposit: 40000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
-    products: [{
-      name: "Trường kỷ Sen Vịt",
-      image: "https://langnghedoanhnhan.com/wp-content/uploads/2021/04/truong-ky-go-gu-lao-moc.jpg",
-      customerSampleImage: "https://images.unsplash.com/photo-1540632739335-ade38b0070bc?q=80&w=800",
-      material: "Gỗ Gụ Lào", size: "2m17", finish: "Đục tay kỹ", qty: 1, price: 125000000, note: "Đóng mộng thủ công"
-    }],
-    timeline: [{ time: "30/03/2026 11:15", label: "Nhận đơn", desc: "Đơn hàng đặt sản xuất theo mẫu riêng", active: true }],
-  },
-  "DH-D02": {
-    code: "DH-DAT-002", type: "Hàng khách đặt", status: "Đã nhập kho",
-    date: "2026-03-25T09:00:00", deliveryDate: "2026-04-05", fulfillmentType: "Giao tận nơi",
-    customer: { name: "Lê Văn Tám", phone: "0321654987", address: "Quận 1, TP.HCM" },
-    total: 105000000, deposit: 30000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
-    products: [
-      { name: "Tủ chè khảm trai", image: "https://images.unsplash.com/photo-1616486341351-70252447aece?q=80&w=800", material: "Gỗ Gụ", size: "Cánh cong", finish: "Khảm trai kỹ", qty: 1, price: 75000000, note: "Khảm tích cổ" },
-      { name: "Sập gụ mai cài thọ", image: "https://th.bing.com/th/id/OIP.UePrfAtU4_o8f6tGZ0qfHAHaFj?pid=ImgDet&rs=1", material: "Gỗ Gụ Lào", size: "1m8 x 2m2", finish: "Đục tay", qty: 1, price: 30000000, note: "Quây dày 10 phân" }
-    ],
-    timeline: [
-      { time: "25/03/2026 09:00", label: "Tạo đơn đặt hàng", active: true },
-      { time: "28/03/2026 15:30", label: "Đã nhập mộc", desc: "Mộc về kho chờ khách duyệt mộc", active: true }
-    ],
-  },
-  "DH-D03": {
-    code: "DH-DAT-003", type: "Hàng khách đặt", status: "Hoàn thành",
-    date: "2026-03-10T08:30:00", deliveryDate: "2026-03-20", fulfillmentType: "Giao tận nơi",
-    customer: { name: "Bùi Tiến Dũng", phone: "0911223344", address: "Hải Phòng" },
-    salesPerson: "Bình Nguyễn", total: 210000000, deposit: 210000000, depositMethod: "Chuyển khoản", paymentStatus: "full",
-    products: [{ name: "Combo phòng thờ VIP", image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=800", material: "Gỗ Gụ", size: "Phòng 25m2", finish: "Sơn Lau vàng óng", qty: 1, price: 210000000, note: "Bao gồm sập thờ, cuốn thư" }],
-    timeline: [{ time: "20/03/2026 10:00", label: "Hoàn tất", desc: "Đã bàn giao và lắp đặt hoàn thiện", active: true }],
-  },
-  "DH-D07": {
-    code: "DH-DAT-007", type: "Hàng khách đặt", status: "Đang giao hàng",
-    date: "2026-03-12T15:30:00", deliveryDate: "2026-03-26", fulfillmentType: "Giao tận nơi",
-    customer: { name: "Kiều Minh Tâm", phone: "0922333444", address: "KĐT Times City, Hai Bà Trưng, Hà Nội" },
-    salesPerson: "Bình Nguyễn", total: 120000000, deposit: 50000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
-    products: [{ name: "Bộ bàn ghế Minh Quốc", image: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=800", material: "Gỗ Mun Lào", size: "10 món", finish: "Sơn bóng gương", qty: 1, price: 120000000, note: "Khảm trai kỹ" }],
-    timeline: [
-      { time: "12/03/2026 15:30", label: "Nhận đơn", desc: "Đơn đặt hàng sản xuất riêng", active: true },
-      { time: "24/03/2026 09:00", label: "Đang giao hàng", desc: "Tài xế đang vận chuyển tới KĐT Times City", active: true }
-    ],
-  },
-  "DH-S05": {
-    code: "DH-SAN-005", type: "Hàng sẵn", status: "Chờ duyệt hủy",
-    date: "2026-03-20T10:15:00", deliveryDate: "2026-03-22", fulfillmentType: "Giao tận nơi",
-    customer: { name: "Ngô Quốc Bảo", phone: "0901222333", address: "Số 12 Quang Trung, Hà Đông, Hà Nội" },
-    salesPerson: "Bình Nguyễn", total: 12800000, deposit: 5000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
-    products: [{ name: "Bàn làm việc Giám đốc", material: "Gỗ Gụ", size: "1m6x80cm", finish: "Sơn bóng", qty: 1, price: 12800000, note: "" }],
-    timeline: [
-      { time: "20/03/2026 10:15", label: "Tiếp nhận đơn", active: true },
-      { time: "22/03/2026 09:00", label: "Yêu cầu hủy", desc: "Khách hàng đổi ý sang mẫu khác", active: true }
-    ],
-  },
-  "DH-T06": {
-    code: "DH-MOC-006", type: "Hàng mộc", status: "Chờ duyệt hủy",
-    date: "2026-03-22T11:00:00", deliveryDate: "2026-03-24", fulfillmentType: "Giao tận nơi",
-    customer: { name: "Phạm Hữu Tài", phone: "0355111222", address: "KĐT Gamuda, Hoàng Mai" },
-    salesPerson: "Bình Nguyễn", total: 22000000, deposit: 5000000, depositMethod: "Tiền mặt", paymentStatus: "partial",
-    products: [{ name: "Bàn phấn trang điểm", material: "Gỗ Gõ", size: "Gương tròn", finish: "Sơn Lau", qty: 1, price: 22000000, note: "" }],
-    timeline: [
-      { time: "22/03/2026 11:00", label: "Tạo đơn", active: true },
-      { time: "23/03/2026 14:00", label: "Đã nhập mộc", desc: "Mộc về xưởng sơn", active: true },
-      { time: "23/03/2026 16:30", label: "Yêu cầu hủy", desc: "Khách hủy do vấn đề tài chính cá nhân", active: true }
-    ],
-  }
-};
-
-const INITIAL_ORDERS_LIST = [
-  { id: "DH-S01", code: "DH-SAN-001", customerName: "Nguyễn Văn Hùng", phone: "0912345678", type: "Hàng sẵn", total: 18500000, status: "Chờ xử lý", deposit: 2000000 },
-  { id: "DH-S02", code: "DH-SAN-002", customerName: "Lê Thị Lan", phone: "0345678901", type: "Hàng sẵn", total: 8500000, status: "Chờ giao hàng", deposit: 8500000 },
-  { id: "DH-S03", code: "DH-SAN-003", customerName: "Trần Minh Quang", phone: "0909123456", type: "Hàng sẵn", total: 42000000, status: "Đang giao hàng", deposit: 20000000 },
-  { id: "DH-S04", code: "DH-SAN-004", customerName: "Phạm Thành Nam", phone: "0987654321", type: "Hàng sẵn", total: 15600000, status: "Hoàn thành", deposit: 15600000 },
-  { id: "DH-S05", code: "DH-SAN-005", customerName: "Ngô Quốc Bảo", phone: "0901222333", type: "Hàng sẵn", total: 12800000, status: "Chờ duyệt hủy", deposit: 5000000 },
-  { id: "DH-S06", code: "DH-SAN-006", customerName: "Nguyễn Trung Kiên", phone: "0344111222", type: "Hàng sẵn", total: 5500000, status: "Đơn đã hủy", deposit: 1000000 },
-  { id: "DH-T01", code: "DH-MOC-001", customerName: "Hoàng Nguyệt Ánh", phone: "0978901234", type: "Hàng mộc", total: 56000000, status: "Chờ xử lý", deposit: 10000000 },
-  { id: "DH-T02", code: "DH-MOC-002", customerName: "Đặng Tuấn Kiệt", phone: "0931234567", type: "Hàng mộc", total: 32000000, status: "Đang gia công", deposit: 15000000 },
-  { id: "DH-T03", code: "DH-MOC-003", customerName: "Vũ Tuấn Anh", phone: "0344555666", type: "Hàng mộc", total: 24500000, status: "Chờ giao hàng", deposit: 24500000 },
-  { id: "DH-T04", code: "DH-MOC-004", customerName: "Lê Văn Lộc", phone: "0966777888", type: "Hàng mộc", total: 48000000, status: "Đang giao hàng", deposit: 10000000 },
-  { id: "DH-T05", code: "DH-MOC-005", customerName: "Trần Thế Vinh", phone: "0333999000", type: "Hàng mộc", total: 15000000, status: "Hoàn thành", deposit: 15000000 },
-  { id: "DH-T06", code: "DH-MOC-006", customerName: "Phạm Hữu Tài", phone: "0355111222", type: "Hàng mộc", total: 22000000, status: "Chờ duyệt hủy", deposit: 5000000 },
-  { id: "DH-T07", code: "DH-MOC-007", customerName: "Trịnh Gia Bảo", phone: "0944000333", type: "Hàng mộc", total: 12000000, status: "Đơn đã hủy", deposit: 2000000 },
-  { id: "DH-D01", code: "DH-DAT-001", customerName: "Nguyễn Thị Hồng", phone: "0912123123", type: "Hàng khách đặt", total: 125000000, status: "Chờ sản xuất", deposit: 40000000 },
-  { id: "DH-D02", code: "DH-DAT-002", customerName: "Lê Văn Tám", phone: "0321654987", type: "Hàng khách đặt", total: 105000000, status: "Đã nhập kho", deposit: 30000000 },
-  { id: "DH-D03", code: "DH-DAT-003", customerName: "Bùi Tiến Dũng", phone: "0911223344", type: "Hàng khách đặt", total: 210000000, status: "Hoàn thành", deposit: 210000000 },
-  { id: "DH-D04", code: "DH-DAT-004", customerName: "Đỗ Mạnh Hùng", phone: "0988000111", type: "Hàng khách đặt", total: 45000000, status: "Đang gia công", deposit: 20000000 },
-  { id: "DH-D05", code: "DH-DAT-005", customerName: "Lý Thành Nam", phone: "0311222333", type: "Hàng khách đặt", total: 18000000, status: "Đơn đã hủy", deposit: 5000000 },
-  { id: "DH-D06", code: "DH-DAT-006", customerName: "Trương Mỹ Linh", phone: "0900111222", type: "Hàng khách đặt", total: 85000000, status: "Chờ giao hàng", deposit: 30000000 },
-  { id: "DH-D07", code: "DH-DAT-007", customerName: "Kiều Minh Tâm", phone: "0922333444", type: "Hàng khách đặt", total: 120000000, status: "Đang giao hàng", deposit: 50000000 },
-  { id: "DH-D08", code: "DH-DAT-008", customerName: "Tạ Thu Thủy", phone: "0377444555", type: "Hàng khách đặt", total: 65000000, status: "Chờ duyệt hủy", deposit: 15000000 },
-];
 
 const fmtCurrency = (n) =>
   n != null ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n) : "—";
@@ -371,9 +200,25 @@ const StandardOrderView = ({
   lastActiveStatus,
   isStarted,
   isRefundBlocked,
-  hasProduction
+  hasProduction,
+  onInspect,
+  onRedoRequest,
+  productions = [],
+  activeTab,
+  setActiveTab
 }) => {
   const isCancellable = o.status === "Chờ duyệt hủy";
+
+  // Check if all items in production are actually finished
+  const allProdItemsFinished = useMemo(() => {
+    if (productions.length === 0) return true; // If no production orders, it's effectively finished or not started
+    return productions.every(p => p.status === "Hoàn thành");
+  }, [productions]);
+
+  const pendingKcsCount = useMemo(() => {
+    return productions.filter(p => p.isPendingApproval || p.status === "Chờ nghiệm thu").length;
+  }, [productions]);
+
 
   // Recommendation logic
   const recommendation = isStarted ? "THU CỌC" : "HOÀN CỌC";
@@ -382,284 +227,430 @@ const StandardOrderView = ({
     : `Đơn chưa được triển khai sản xuất (đang ${lastActiveStatus}). Bạn có thể hoàn cọc 100%.`;
 
   return (
-    <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* LEFT COL */}
-        <div className="space-y-4">
-          <CustomerInfoCard o={o} />
-
-          {/* ── CARD: Danh sách sản phẩm ── */}
-          <div
-            className="rounded-lg overflow-hidden bg-white/50 backdrop-blur-sm shadow-sm"
-          >
-            <div
-              className="px-5 py-3 flex items-center gap-2 border-b border-gray-50/10"
-            >
-              <Package size={14} className="text-gray-400" />
-              <span className="text-[12px] font-bold uppercase tracking-wider text-gray-500">Giám sát & Đối soát sản phẩm ({o.products.length})</span>
-            </div>
-            <div className="p-4 space-y-4 bg-gray-50/30">
-              {o.products.map((p, idx) => (
-                <div key={idx} className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
-                  {/* 1. Visual Comparison Header (The "Observation" Zone) */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-gray-100/50 border-b border-gray-50/10">
-                    {/* Reality Photo */}
-                    <div className="relative h-48 bg-gray-50 group cursor-pointer overflow-hidden" onClick={() => p.image && onPreview(p.image)}>
-                      {p.image ? (
-                        <img src={p.image} alt="Thực tế" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gray-50">
-                          <Package size={48} strokeWidth={1} />
-                        </div>
-                      )}
-                      <div className="absolute top-3 left-3 px-3 py-1 bg-black/70 backdrop-blur-md rounded-full border border-white/20">
-                        <span className="text-[10px] font-black text-white uppercase tracking-widest">Ảnh thực tế xưởng</span>
-                      </div>
-                    </div>
-
-                    {/* Customer Sample Photo */}
-                    <div className="relative h-48 bg-amber-50/30 group cursor-pointer overflow-hidden border-l border-gray-50/50" onClick={() => p.customerSampleImage && onPreview(p.customerSampleImage)}>
-                      {p.customerSampleImage ? (
-                        <img src={p.customerSampleImage} alt="Mẫu khách" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-amber-200/50">
-                          <Camera size={48} strokeWidth={1} />
-                        </div>
-                      )}
-                      <div className="absolute top-3 right-3 px-3 py-1 bg-amber-600/90 backdrop-blur-md rounded-full border border-amber-400/30">
-                        <span className="text-[10px] font-black text-white uppercase tracking-widest">Mẫu khách gửi</span>
-                      </div>
-                      {!p.customerSampleImage && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-[11px] font-bold text-amber-600/40 uppercase tracking-tighter">Không có ảnh mẫu đối chiếu</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 2. Product Info Body */}
-                  <div className="p-5 space-y-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <h4 className="text-[16px] font-black text-slate-800 leading-tight">{p.name}</h4>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="px-2.5 py-1 bg-[var(--brand-primary)] text-white rounded-lg text-[11px] font-black uppercase tracking-wider">
-                            x{p.qty} {p.unit || "Bộ"}
-                          </span>
-                          <span className="px-2.5 py-1 bg-slate-100 text-slate-500 rounded-lg text-[11px] font-bold uppercase tracking-wider border border-slate-100">
-                            Đơn giá: {fmtCurrency(p.price)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-1">Thành tiền</p>
-                        <p className="text-[18px] font-black text-slate-900">{fmtCurrency(p.price * p.qty)}</p>
-                      </div>
-                    </div>
-
-                    {/* 3. Specs Grid (The "Technical Datasheet" Zone) */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-lg relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--brand-primary)]/5 rounded-full -mr-16 -mt-16 pointer-events-none" />
-
-                      <div className="space-y-1 relative">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Mã sản phẩm</span>
-                        <p className="text-[12px] font-bold text-slate-700">{p.sku || `SKU-${idx + 101}`}</p>
-                      </div>
-                      <div className="space-y-1 relative">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Chất liệu</span>
-                        <p className="text-[12px] font-bold text-slate-700">{p.material || "—"}</p>
-                      </div>
-                      <div className="space-y-1 relative">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Kích thước</span>
-                        <p className="text-[12px] font-bold text-slate-700">{p.size || "—"}</p>
-                      </div>
-                      <div className="space-y-1 relative">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Màu sắc</span>
-                        <p className="text-[12px] font-bold text-slate-700">{p.finish || "—"}</p>
-                      </div>
-
-                      {/* Technical/Internal Info with Print Suppression */}
-                      <div className="space-y-1 relative">
-                        <span className="text-[9px] font-black text-[var(--brand-primary)] uppercase tracking-widest block flex items-center gap-1">
-                          Bảo hành
-                        </span>
-                        <p className="text-[12px] font-bold text-slate-700">{p.warranty || "12"} tháng</p>
-                      </div>
-                    </div>
-
-                    {/* 4. Technical Notes & Requirements */}
-                    <div className="flex flex-col gap-3">
-                      {p.note && (
-                        <div className="flex items-start gap-3 p-3 bg-amber-50/50 border border-amber-100 rounded-lg">
-                          <div className="mt-0.5"><FileText size={14} className="text-amber-500" /></div>
-                          <div>
-                            <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest block mb-0.5">Ghi chú kỹ thuật & Yêu cầu khách</span>
-                            <p className="text-[12px] font-bold text-amber-800 italic leading-relaxed">{p.note}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+    <div className="flex-1 overflow-y-auto custom-scrollbar">
+      {/* ── 1. IDENTITY BAR ── */}
+      <div className="bg-slate-900 text-white px-6 py-4 grid grid-cols-2 md:grid-cols-4 gap-4 sticky top-0 z-20 shadow-xl">
+        <div className="flex items-center gap-3 border-r border-white/10 pr-4">
+          <div className="h-10 w-10 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
+            <User size={18} className="text-indigo-400" />
           </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Khách hàng</p>
+            <p className="text-[14px] font-black truncate">{o.customer.name}</p>
+          </div>
+        </div>
 
-          {/* ── CARD: Lệnh sản xuất liên quan ── */}
-          {o.productionOrders && o.productionOrders.length > 0 && (
-            <div className="rounded-lg overflow-hidden bg-white/50 backdrop-blur-sm shadow-sm production-section printer-hidden">
-              <div className="px-5 py-3 flex items-center gap-2 border-b border-gray-50/10 bg-gray-50/30">
-                <Hammer size={14} className="text-gray-400" />
-                <span className="text-[12px] font-bold uppercase tracking-wider text-gray-500">Gia công & Sản xuất</span>
+        <div className="flex items-center gap-3 border-r border-white/10 pr-4">
+          <div className="h-10 w-10 rounded-full bg-amber-500/20 flex items-center justify-center border border-amber-500/30">
+            <Calendar size={18} className="text-amber-400" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lịch trình</p>
+            <p className="text-[13px] font-bold">
+              <span className="text-slate-400">Giao:</span> {o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString("vi-VN") : "Chưa hẹn"}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 border-r border-white/10 pr-4 relative">
+          <div className={`h-10 w-10 rounded-full flex items-center justify-center border ${pendingKcsCount > 0 ? "bg-red-500/20 border-red-500/30" : "bg-emerald-500/20 border-emerald-500/30"}`}>
+            {pendingKcsCount > 0 ? (
+              <AlertCircle size={18} className="text-red-400 animate-pulse" />
+            ) : (
+              <CheckCircle size={18} className="text-emerald-400" />
+            )}
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Trạng thái</p>
+            <p className={`text-[13px] font-bold uppercase tracking-tighter flex items-center gap-1.5 ${pendingKcsCount > 0 ? "text-red-400" : "text-emerald-400"}`}>
+              {o.status}
+              {pendingKcsCount > 0 && (
+                <span className="relative flex h-2.5 w-2.5 mt-0.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-rose-500/20 flex items-center justify-center border border-rose-500/30">
+            <Lock size={18} className="text-rose-400" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Công nợ</p>
+            <p className="text-[14px] font-black text-rose-400">{fmtCurrency(remaining)}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 2. TAB NAVIGATION ── */}
+      <div className="bg-white/95 backdrop-blur-md px-6 pt-4 border-b border-gray-100 flex items-center gap-6 sticky top-[72px] z-10">
+        {[
+          { id: "info", label: "Tổng quan", icon: FileText },
+          { id: "products", label: `Sản phẩm (${o.products.length})`, icon: Package },
+          { id: "production", label: "Tiến độ", icon: Hammer, visible: o.status === "Đang gia công" || productions.length > 0 },
+        ].map(tab => {
+          if (tab.visible === false) return null;
+          const active = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`pb-3 flex items-center gap-2 text-[13px] font-black transition-all relative ${active ? "text-indigo-600" : "text-gray-400 hover:text-gray-600"
+                }`}
+            >
+              <tab.icon size={14} />
+              {tab.label}
+              {active && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-full" />}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* PRIMARY CONTENT (2/3) */}
+          <div className="lg:col-span-2 space-y-6">
+            {activeTab === "info" && (
+              <div className="space-y-6">
+                <CustomerInfoCard o={o} />
+
+                {o.customRequirements && (
+                  <div className="bg-amber-50/50 p-5 rounded-xl border border-amber-100/50 space-y-2">
+                    <div className="flex items-center gap-2 text-amber-700">
+                      <FileText size={16} />
+                      <span className="text-[12px] font-black uppercase tracking-tight">Yêu cầu đặc biệt từ khách</span>
+                    </div>
+                    <p className="text-[14px] text-amber-900 leading-relaxed italic">
+                      "{o.customRequirements || "Khách yêu cầu làm kỹ phần đục chạm, đánh nhám kỹ trước khi lót. Chân quỳ đặc."}"
+                    </p>
+                  </div>
+                )}
+
+                <div className="lg:hidden">
+                  <HistoryCard o={o} />
+                </div>
               </div>
-              <div className="divide-y divide-gray-50">
-                {o.productionOrders.map((lsx, idx) => (
-                  <div key={idx} className="px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <span className={`w-2 h-2 rounded-full ${lsx.status === 'Hoàn thành' ? 'bg-[var(--status-success)]' : 'bg-[var(--palette-purple)] animate-pulse'}`} />
-                      <div>
-                        <p className="text-[13px] font-bold text-gray-800">{lsx.code}</p>
-                        <p className="text-[12px] text-gray-500 mt-0.5">{lsx.desc} • Thợ: {lsx.worker}</p>
+            )}
+
+            {activeTab === "products" && (
+              <div className="space-y-6">
+                {o.products.map((p, idx) => (
+                  <div key={idx} className="bg-white rounded-xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md transition-all">
+                    {/* Visual Comparison */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-slate-100/50 border-b border-slate-100">
+                      <div className="relative h-56 bg-white group cursor-pointer overflow-hidden" onClick={() => p.image && onPreview(p.image)}>
+                        {p.image ? (
+                          <img src={p.image} alt="Thực tế" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-slate-200"><Package size={48} /></div>
+                        )}
+                        <div className="absolute top-4 left-4 px-2.5 py-1 bg-black/60 backdrop-blur-md rounded border border-white/20">
+                          <span className="text-[9px] font-black text-white uppercase tracking-widest">Thực tế xưởng</span>
+                        </div>
+                      </div>
+                      <div className="relative h-56 bg-amber-50/20 group cursor-pointer overflow-hidden border-l border-slate-100" onClick={() => p.customerSampleImage && onPreview(p.customerSampleImage)}>
+                        {p.customerSampleImage ? (
+                          <img src={p.customerSampleImage} alt="Mẫu khách" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-amber-200/40"><Camera size={48} /></div>
+                        )}
+                        <div className="absolute top-4 right-4 px-2.5 py-1 bg-amber-600/80 backdrop-blur-md rounded border border-amber-400/30">
+                          <span className="text-[9px] font-black text-white uppercase tracking-widest">Mẫu khách</span>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold ${lsx.status === 'Hoàn thành' ? 'bg-[var(--status-success)]/10 text-[var(--status-success)]' : 'bg-[var(--palette-purple)]/10 text-[var(--palette-purple)]'}`}>
-                        {lsx.status}
-                      </span>
+                    {/* Info */}
+                    <div className="p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-[18px] font-black text-slate-800 leading-tight">{p.name}</h4>
+                          <span className="mt-2 inline-block px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 text-[11px] font-black uppercase">x{p.qty} {p.unit}</span>
+                        </div>
+                        <p className="text-[20px] font-black text-slate-900 ml-4">{fmtCurrency(p.price)}</p>
+                      </div>
+                      <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-xl">
+                        {[
+                          { label: "Chất liệu", val: p.material },
+                          { label: "Kích thước", val: p.size },
+                          { label: "Hoàn thiện", val: p.finish },
+                          { label: "Bảo hành", val: `${p.warranty || 12}T` },
+                        ].map((spec, i) => (
+                          <div key={i} className="space-y-1">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">{spec.label}</span>
+                            <p className="text-[12px] font-bold text-slate-700">{spec.val || "—"}</p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
 
-          {o.type === "Hàng khách đặt" && (
-            <MediaGallery
-              title="Bản thiết kế từ Chủ"
-              icon={FileText}
-              images={o.designSketches}
-              onPreview={onPreview}
-              colorClass="emerald"
-            />
-          )}
-
-          {o.type === "Hàng khách đặt" && (
-            <div className="rounded-lg overflow-hidden bg-white/50 backdrop-blur-sm shadow-sm pt-4 px-5 pb-5">
-              <p className="text-[11px] uppercase tracking-wider font-bold text-gray-400 flex items-center gap-2 mb-2">
-                <FileText size={12} /> Yêu cầu chi tiết
-              </p>
-              <div className="bg-amber-50/50 p-3 rounded-lg">
-                <p className="text-[13px] text-amber-900 leading-relaxed italic">
-                  {o.customRequirements || "Khách yêu cầu làm kỹ phần đục chạm, đánh nhám kỹ trước khi lót. Chân quỳ đặc."}
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* RIGHT COL */}
-        <div className="space-y-4">
-          {hasPricing && (
-            <div className="rounded-lg overflow-hidden bg-white/50 backdrop-blur-sm shadow-sm">
-              <div className="px-5 py-3 flex items-center gap-2 border-b border-gray-50/10 bg-gray-50/30">
-                <FileText size={14} className="text-gray-400" />
-                <span className="text-[12px] font-bold uppercase tracking-wider text-gray-500">Thanh toán</span>
-              </div>
-              <div className="px-5 py-4 space-y-3">
-                <div className="flex justify-between text-[13px]">
-                  <span className="text-gray-500">Tiền hàng</span>
-                  <span className="font-bold text-gray-800">{fmtCurrency(productTotal)}</span>
-                </div>
-
-                <div className="h-px bg-slate-100 my-1"></div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[14px] font-black text-slate-800 uppercase tracking-tight">Tổng thanh toán</span>
-                  <span className="text-[18px] font-black text-[var(--brand-primary)] leading-none">{fmtCurrency(productTotal)}</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 pt-2">
-                  <div className="p-3 bg-slate-50 rounded-lg">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Đặt cọc</p>
-                    <p className="text-[14px] font-black text-[var(--status-success)]">{fmtCurrency(o.deposit || 0)}</p>
-                  </div>
-                  <div className="p-3 bg-slate-50 rounded-lg">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Đã thu thêm</p>
-                    <p className="text-[14px] font-black text-[var(--status-success)]">{fmtCurrency(o.receivedAmount || 0)}</p>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-[var(--status-error)]/5 border border-[var(--status-error)]/10 rounded-lg flex items-center justify-between">
-                  <span className="text-[14px] font-black text-[var(--status-error)] uppercase tracking-tight">Còn lại</span>
-                  <span className="text-[20px] font-black text-[var(--status-error)] leading-none">{fmtCurrency(remaining)}</span>
-                </div>
-
-                <div className="pt-2 flex flex-wrap gap-2">
-                  {remaining > 0 && (
-                    <div className="px-3 py-1.5 bg-[var(--status-pending)]/10 text-[var(--status-pending)] text-[10px] font-black rounded-full w-fit uppercase tracking-widest border border-[var(--status-pending)]/20 shadow-sm animate-pulse">
-                      Thanh toán một phần (Ghi nợ)
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="rounded-lg overflow-hidden bg-white/50 backdrop-blur-sm shadow-sm">
-            <div className="px-5 py-3 flex items-center gap-2 border-b border-gray-50/10 bg-gray-50/30">
-              <Truck size={14} className="text-gray-400" />
-              <span className="text-[12px] font-bold uppercase tracking-wider text-gray-500">Giao hàng</span>
-            </div>
-            <div className="px-5 py-4 space-y-4">
-              <div className="flex items-start gap-3">
-                <MapPin size={15} className="mt-0.5 text-gray-400" />
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400">Địa chỉ giao</p>
-                  <p className="text-[13px] font-semibold mt-0.5 text-gray-700">{o.customer.address}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Calendar size={15} className="mt-0.5 text-gray-400" />
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400">Ngày giao dự kiến</p>
-                  <p className="text-[13px] font-semibold mt-0.5 text-gray-700">{fmtDate(o.deliveryDate)}</p>
-                </div>
-              </div>
-
-              {o.deliveryImage && (
-                <div className="mt-2 pt-2 border-t border-gray-50">
-                  <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-2">Ảnh giao hàng</p>
-                  <img src={o.deliveryImage} alt="Ảnh giao hàng" className="w-full bg-gray-100 h-48 rounded-lg object-cover cursor-zoom-in" onClick={() => onPreview(o.deliveryImage)} />
-                </div>
-              )}
-
-              {!o.deliveryImage && deliveryImage && (
-                <div className="mt-2 pt-2 border-t border-gray-50">
-                  <p className="text-[10px] uppercase tracking-wider font-bold text-green-600 mb-2">Ảnh vừa tải lên</p>
-                  <img src={deliveryImage} alt="Ảnh giao hàng" className="w-full bg-gray-100 h-48 rounded-lg object-cover" />
-                </div>
-              )}
-
-              {o.status === "Đang giao hàng" && !o.deliveryImage && (
-                <div className="mt-2 pt-2 border-t border-gray-50">
-                  <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--brand-primary)] mb-2">Tải ảnh giao hàng để hoàn tất</p>
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[var(--brand-primary)]/20 rounded-lg hover:bg-[var(--brand-primary)]/5 cursor-pointer transition-all">
-                    <Camera size={24} className="text-[var(--brand-primary)]/40 mb-2" />
-                    <span className="text-[12px] font-bold text-[var(--brand-primary)]">Chọn ảnh thực tế</span>
-                    <input type="file" className="hidden" accept="image/*" onChange={onDeliveryImageChange} />
-                  </label>
-                </div>
-              )}
-            </div>
+            {activeTab === "production" && (
+              <ProductionProgressCard
+                order={o}
+                onInspect={onInspect}
+                onRedoRequest={onRedoRequest}
+                productions={productions}
+              />
+            )}
           </div>
 
-          <HistoryCard o={o} />
+          {/* SIDEBAR CONTENT (1/3) */}
+          <div className="space-y-6">
+            {hasPricing && (
+              <div className="rounded-xl overflow-hidden bg-white border border-slate-100 shadow-sm">
+                <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+                  <Lock size={14} className="text-slate-400" />
+                  <span className="text-[11px] font-black uppercase tracking-widest text-slate-500">Tóm tắt tài chính</span>
+                </div>
+                <div className="p-5 space-y-4">
+                  <div className="flex justify-between text-[13px] text-slate-500">
+                    <span>Tổng tiền hàng</span>
+                    <span className="font-bold text-slate-800">{fmtCurrency(productTotal)}</span>
+                  </div>
+                  <div className="h-px bg-slate-100" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-emerald-50/50 rounded-lg border border-emerald-100/50">
+                      <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1">Đã cọc/thu</p>
+                      <p className="text-[14px] font-black text-emerald-700">{fmtCurrency((o.deposit || 0) + (o.receivedAmount || 0))}</p>
+                    </div>
+                    <div className="p-3 bg-rose-50 rounded-lg border border-rose-100/50">
+                      <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1">CÒN LẠI</p>
+                      <p className="text-[16px] font-black text-rose-700">{fmtCurrency(remaining)}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="rounded-xl overflow-hidden bg-white border border-slate-100 shadow-sm">
+              <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+                <Truck size={14} className="text-slate-400" />
+                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500">Giao nhận & Logistics</span>
+              </div>
+              <div className="p-5 space-y-4">
+                {[
+                  { icon: MapPin, label: "Địa chỉ giao", val: o.customer.address },
+                  { icon: Calendar, label: "Ngày hẹn", val: fmtDate(o.deliveryDate) },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <item.icon size={15} className="mt-0.5 text-slate-400" />
+                    <div>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{item.label}</p>
+                      <p className="text-[13px] font-bold text-slate-700 leading-tight">{item.val}</p>
+                    </div>
+                  </div>
+                ))}
+
+                {o.deliveryImage && (
+                  <div className="pt-2">
+                    <img src={o.deliveryImage} className="w-full h-32 rounded-lg object-cover cursor-zoom-in border border-slate-100" onClick={() => onPreview(o.deliveryImage)} />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <HistoryCard o={o} className="hidden lg:block" />
+          </div>
         </div>
       </div>
     </div>
   );
 };
+
+// =================== PRODUCTION PROGRESS CARD ===================
+const PROD_STATUS_CFG = {
+  "Đang đánh giấy ráp": { label: "Gia công mộc", bg: "#F3F4F6", text: "#4B5563", border: "#D1D5DB", icon: Layers },
+  "Đang sơn": { label: "Đang sơn", bg: "#E0F2FE", text: "#0369A1", border: "#BAE6FD", icon: Paintbrush },
+  "Chờ nghiệm thu": { label: "Chờ KCS", bg: "#FEF3C7", text: "#D97706", border: "#FDE68A", icon: Clock },
+  "Hoàn thành": { label: "Hoàn chỉnh", bg: "#F0FDF4", text: "#166534", border: "#BBF7D0", icon: CheckCircle2 },
+};
+
+const STEP_LABELS = [
+  { key: "Đánh giấy ráp", icon: Layers },
+  { key: "Sơn hoàn thiện", icon: Paintbrush },
+  { key: "Nghiệm thu", icon: Camera },
+  { key: "Hoàn thành", icon: CheckCircle2 },
+];
+
+function getItemStep(item) {
+  if (item.status === "Hoàn thành") return 4;
+  if (item.isPendingApproval || item.status === "Chờ nghiệm thu") return 3;
+  if (item.status === "Đang sơn") return 2;
+  if (item.status === "Đang đánh giấy ráp") return 1;
+  return 0;
+}
+
+function ProdItemRow({ item, onInspect }) {
+  const cfg = PROD_STATUS_CFG[item.isPendingApproval ? "Chờ nghiệm thu" : item.status]
+    || { label: item.status, bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB", icon: Package };
+  const step = getItemStep(item);
+  const needsKCS = item.isPendingApproval || item.status === "Chờ nghiệm thu";
+
+  const deadlineStyle = (() => {
+    if (!item.expectedEndDate) return { color: "#6B7280", urgent: false };
+    const diff = Math.ceil((new Date(item.expectedEndDate) - new Date()) / 86400000);
+    if (diff < 0) return { color: "#E5484D", urgent: true };
+    if (diff <= 3) return { color: "#D97706", urgent: true };
+    return { color: "#374151", urgent: false };
+  })();
+
+  return (
+    <div className="p-4 border border-gray-100 rounded-xl bg-white shadow-xs space-y-3">
+      <div className="flex items-start gap-3">
+        <div className="h-12 w-12 rounded-lg overflow-hidden shrink-0 border border-gray-100 bg-gray-50 relative">
+          {item.productImage
+            ? <img src={item.productImage} alt={item.productName} className="w-full h-full object-cover" />
+            : <div className="w-full h-full flex items-center justify-center"><Package size={20} className="text-gray-300" /></div>
+          }
+          {item.needsRedo && (
+            <div className="absolute inset-0 bg-red-500/10 flex items-center justify-center">
+              <RotateCcw size={14} className="text-red-500" style={{ animation: "spin 3s linear infinite" }} />
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap mb-1">
+            <p className="text-[13px] font-bold text-gray-900 truncate">{item.productName}</p>
+            {item.needsRedo && <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-red-50 text-red-600 border border-red-100 uppercase">Cần sửa</span>}
+            {item.isDelayed && <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-50 text-amber-600 border border-amber-100 uppercase">Trễ hạn</span>}
+          </div>
+          <div className="flex items-center gap-4 flex-wrap">
+            <div>
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Thợ phụ trách</p>
+              <p className="text-[12px] font-bold text-gray-700">{item.assignedWorker?.replace("Thợ cả: ", "") || "Chưa giao"}</p>
+            </div>
+            <div>
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Hạn bàn giao</p>
+              <p className="text-[12px] font-bold" style={{ color: deadlineStyle.color }}>
+                {item.expectedEndDate ? new Date(item.expectedEndDate).toLocaleDateString("vi-VN") : "—"}
+              </p>
+            </div>
+            {item.quantityPlanned > 1 && (
+              <div>
+                <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Số lượng</p>
+                <p className="text-[12px] font-bold text-indigo-600">{item.quantityCompleted}/{item.quantityPlanned} sp</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          <span
+            className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border ${needsKCS ? "animate-pulse" : ""
+              }`}
+            style={{ backgroundColor: cfg.bg, color: cfg.text, borderColor: cfg.border }}
+          >
+            <cfg.icon size={11} /> {cfg.label}
+          </span>
+          {needsKCS && (
+            <button
+              onClick={() => onInspect(item)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-black hover:bg-emerald-700 transition shadow-sm"
+            >
+              <Camera size={12} /> NGHIỆM THU
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-0">
+        {STEP_LABELS.map((s, i) => {
+          const done = step > i;
+          const active = step === i + 1;
+          const Icon = s.icon;
+          return (
+            <div key={i} className="flex items-center flex-1">
+              <div className="flex flex-col items-center gap-0.5">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all ${done ? "bg-emerald-500 border-emerald-500" :
+                  active ? "bg-amber-400 border-amber-400" :
+                    "bg-white border-gray-200"
+                  }`}>
+                  <Icon size={11} className={done || active ? "text-white" : "text-gray-300"} />
+                </div>
+                <span className={`text-[9px] font-bold whitespace-nowrap ${done ? "text-emerald-600" : active ? "text-amber-600" : "text-gray-300"
+                  }`}>{s.key}</span>
+              </div>
+              {i < 3 && (
+                <div className={`flex-1 h-0.5 mx-1 rounded ${step > i + 1 ? "bg-emerald-400" : step === i + 1 ? "bg-amber-300" : "bg-gray-100"
+                  }`} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ProductionProgressCard({ order, onInspect, onRedoRequest, productions }) {
+  const updateProductionInLocal = (itemId, updates) => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("tpf_simulated_productions") || "[]");
+      const index = saved.findIndex(p => p.id === itemId);
+      if (index !== -1) {
+        saved[index] = { ...saved[index], ...updates };
+        localStorage.setItem("tpf_simulated_productions", JSON.stringify(saved));
+        window.dispatchEvent(new Event("storage"));
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  if (productions.length === 0) return null;
+
+  const total = productions.length;
+  const completed = productions.filter(p => p.status === "Hoàn thành").length;
+  const hasPendingKCS = productions.some(p => p.isPendingApproval || p.status === "Chờ nghiệm thu");
+  const progress = Math.round((completed / total) * 100);
+
+  return (
+    <div className="rounded-xl overflow-hidden bg-white/50 backdrop-blur-sm shadow-sm printer-hidden">
+      <div className="px-5 py-3 flex items-center justify-between gap-2 border-b border-gray-100 bg-amber-50/40">
+        <div className="flex items-center gap-2">
+          <Hammer size={14} className="text-amber-600" />
+          <span className="text-[12px] font-bold uppercase tracking-wider text-amber-700">Tiến độ gia công</span>
+          {hasPendingKCS && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase animate-pulse">
+              <Camera size={9} /> Chờ nghiệm thu
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, backgroundColor: progress === 100 ? "#16A34A" : "#F59E0B" }} />
+            </div>
+            <span className="text-[10px] font-black text-gray-500">{completed}/{total}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-4 space-y-3">
+        {productions.map(item => (
+          <ProdItemRow
+            key={item.id}
+            item={item}
+            onInspect={onInspect}
+            onUpdate={updateProductionInLocal}
+          />
+        ))}
+      </div>
+
+      <div className="px-5 py-2 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
+        <p className="text-[10px] text-gray-400 italic">* Tiến độ được thợ xưởng cập nhật trực tiếp</p>
+        <p className="text-[9px] font-bold text-indigo-300 uppercase">Test Mode Enabled</p>
+      </div>
+    </div>
+  );
+}
 export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStatusChanged }) {
-  const [viewState, setViewState] = useState("loading"); // loading | ready | error
+  const [viewState, setViewState] = useState("loading");
   const [order, setOrder] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
@@ -671,21 +662,44 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
   const [paymentMethod, setPaymentMethod] = useState("Chuyển khoản");
   const [painterCost, setPainterCost] = useState(0);
 
-  // Handover Modal State
   const [handoverDeadline, setHandoverDeadline] = useState("");
-  const [handoverItemsData, setHandoverItemsData] = useState([]); // [{ labor: 0, days: "" }]
+  const [handoverItemsData, setHandoverItemsData] = useState([]);
   const [handoverNotes, setHandoverNotes] = useState("");
-  const [handoverChecks, setHandoverChecks] = useState({ dimension: false, material: false, techNotes: false });
+
+  const [inspectItem, setInspectItem] = useState(null);
+  const [redoItem, setRedoItem] = useState(null);
+  const [redoNote, setRedoNote] = useState("");
+  const [productions, setProductions] = useState([]);
+  const [activeTab, setActiveTab] = useState("info");
 
   const popupRef = useRef(null);
 
   const handlePrint = () => {
-    // Add print class to body temporarily or just call print
     window.print();
   };
 
+  const syncProductions = useCallback((orderData) => {
+    if (!orderData) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem("tpf_simulated_productions") || "[]");
+      const filtered = saved.filter(p => p.orderId === orderData.id || p.orderCode === orderData.code);
+      setProductions(filtered);
+    } catch (e) { }
+  }, []);
 
-  // Fetch & Normalize Data
+  useEffect(() => {
+    if (isOpen && order) {
+      syncProductions(order);
+      window.addEventListener("storage", () => syncProductions(order));
+      // Poll every 2s for local changes that don't trigger storage event
+      const interval = setInterval(() => syncProductions(order), 2000);
+      return () => {
+        window.removeEventListener("storage", () => syncProductions(order));
+        clearInterval(interval);
+      };
+    }
+  }, [isOpen, order, syncProductions]);
+
   useEffect(() => {
     if (!isOpen || !invoiceId) {
       setHasUnsavedChanges(false);
@@ -733,7 +747,6 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
     }, 600);
   }, [invoiceId, isOpen]);
 
-  // Sync Final Payment when modal opens
   useEffect(() => {
     if (showCompleteModal && order) {
       const calculatedTotal = order.products.reduce((acc, p) => acc + (p.price || 0) * p.qty, 0);
@@ -743,7 +756,6 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
     }
   }, [showCompleteModal, order]);
 
-  // Sync Handover States when modal opens
   useEffect(() => {
     if (showHandoverModal && order) {
       if (order.deliveryDate) {
@@ -753,11 +765,9 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
       }
       setHandoverNotes("");
 
-      // 🔍 Auto-fill from Inventory (Valuation data)
       const savedProducts = JSON.parse(localStorage.getItem("tpf_simulated_products") || "[]");
 
       const initializedData = order.products.map(p => {
-        // Try to find matching product in inventory to get pre-defined costs
         const invItem = savedProducts.find(inv => inv.code === p.code || inv.name === p.name);
 
         return {
@@ -770,7 +780,6 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
     }
   }, [showHandoverModal, order]);
 
-  // Auto-calculate deadline based on max finishing days
   useEffect(() => {
     if (showHandoverModal && handoverItemsData.length > 0) {
       const maxDays = Math.max(0, ...handoverItemsData.map(item => parseInt(item.days) || 0));
@@ -846,12 +855,9 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
     toast.success(`Đã tự động nhập ${newItems.length} món vào Kho!`, { icon: "📦" });
   };
 
-
-
   const productTotal = order?.products?.reduce((acc, p) => acc + (p.price || 0) * (p.qty || 1), 0) || 0;
   const remainingValue = productTotal - (order?.deposit || 0) - (order?.receivedAmount || 0);
 
-  // Cancellation & Strict Policy Logic (Elevated to Parent)
   const lastActiveStatus = useMemo(() => {
     if (!order?.timeline) return "Chờ xử lý";
     const cancelIdx = order.timeline.findIndex(t => t.label.includes("Yêu cầu hủy") || t.label.includes("Chờ duyệt hủy"));
@@ -863,17 +869,14 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
   const isStarted = ["Đang sản xuất", "Đã nhập kho", "Đang gia công", "Chờ giao hàng"].includes(lastActiveStatus) || hasProduction;
   const isRefundBlocked = isStarted;
 
-  // Actions logic
   const handleUpdate = (newStatus, extraData = {}) => {
     const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
     let target = { ...order, status: newStatus, ...extraData };
 
-    // Automation: Convert to stock if forfeited
     if (newStatus === "Đơn đã hủy" && extraData.depositResolution === "forfeited") {
       convertCancelledToStock(target);
     }
 
-    // Add timeline entry
     const now = new Date();
     const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} — ${now.toLocaleDateString("vi-VN")}`;
 
@@ -886,7 +889,6 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
     const newEntry = { time: timeStr, label, desc, active: true };
     target.timeline = [...(target.timeline || []), newEntry];
 
-    // Remove internal flags from data
     delete target.timelineLabel;
     delete target.timelineDesc;
 
@@ -905,7 +907,6 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
       return;
     }
 
-    // Warranty Activation logic (simulated by adding to warranties list)
     try {
       const savedWarranties = JSON.parse(localStorage.getItem("tpf_simulated_warranties") || "[]");
       const newWarranties = order.products.map((p, idx) => {
@@ -950,10 +951,9 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
     const newStatus = isMoc ? "Đang sản xuất" : "Đang gia công";
     const deadlineStr = new Date(handoverDeadline).toLocaleDateString("vi-VN");
 
-    // Update products with their specific labor/days
     const updatedProducts = order.products.map((p, idx) => ({
       ...p,
-      painterLabor: handoverItemsData[idx]?.unitLabor || 0, // Storing unit labor
+      painterLabor: handoverItemsData[idx]?.unitLabor || 0,
       finishingDays: handoverItemsData[idx]?.days || ""
     }));
 
@@ -974,7 +974,6 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
     });
     setShowHandoverModal(false);
   };
-
 
   const handleSafeClose = () => {
     if (hasUnsavedChanges) {
@@ -1028,7 +1027,6 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
         className="bg-white w-full max-w-5xl h-[90vh] md:h-[85vh] rounded-lg shadow-2xl overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-300"
         style={{ boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
       >
-        {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0 bg-white">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-lg bg-[var(--brand-primary)]/10 flex items-center justify-center text-[var(--brand-primary)] shadow-sm border border-[var(--brand-primary)]/10">
@@ -1067,9 +1065,6 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
           </div>
         </div>
 
-
-
-        {/* Content Body */}
         <div className="flex-1 overflow-hidden flex flex-col relative">
           {viewState === "loading" && <LoadingSkeleton />}
           {viewState === "error" && <ErrorState onRetry={() => setViewState("loading")} />}
@@ -1094,27 +1089,27 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
               isStarted={isStarted}
               isRefundBlocked={isRefundBlocked}
               hasProduction={hasProduction}
+              onInspect={setInspectItem}
+              onRedoRequest={setRedoItem}
+              productions={productions}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
             />
           )}
         </div>
 
-        {/* Footer Actions Section */}
         {viewState === "ready" && order && (
           <div className="p-4 border-t border-gray-50/10 bg-gray-50 flex items-center justify-end shrink-0 popup-footer printer-hidden">
-            {/* Action Buttons Column */}
             <div className="flex items-center gap-3">
-              {/* 1. Bàn giao xưởng */}
-              {(((order.status === "Chờ xử lý" || order.status === "Đã nhập kho") && order.type === "Hàng mộc") || 
-                (order.status === "Đã nhập kho" && order.type === "Hàng khách đặt")) && (
-                <button
-                  className="px-5 py-2 bg-[var(--brand-primary)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center gap-2"
-                  onClick={() => setShowHandoverModal(true)}
-                >
-                  <Hammer size={16} /> BÀN GIAO XƯỞNG
-                </button>
-              )}
+              {order.status === "Chờ xử lý" && (order.type === "Hàng mộc" || order.type === "Hàng khách đặt") && (
+                  <button
+                    className="px-5 py-2 bg-[var(--brand-primary)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center gap-2"
+                    onClick={() => setShowHandoverModal(true)}
+                  >
+                    <Hammer size={16} /> BÀN GIAO XƯỞNG
+                  </button>
+                )}
 
-              {/* 2. Xác nhận đơn (Hàng sẵn) */}
               {order.status === "Chờ xử lý" && order.type === "Hàng sẵn" && (
                 <button
                   className="px-5 py-2 bg-emerald-600 text-white rounded-lg text-[13px] font-bold hover:bg-emerald-700 transition-all active:scale-95 flex items-center gap-2"
@@ -1128,21 +1123,25 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                 </button>
               )}
 
-              {/* 3. Hoàn tất gia công */}
               {order.status === "Đang gia công" && (order.type === "Hàng mộc" || order.type === "Hàng khách đặt") && (
                 <button
-                  className="px-5 py-2 bg-emerald-600 text-white rounded-lg text-[13px] font-bold hover:bg-emerald-700 transition-all active:scale-95 flex items-center gap-2"
+                  disabled={productions.length > 0 && !productions.every(p => p.status === "Hoàn thành")}
+                  className={`h-10 px-5 rounded-lg text-[13px] font-bold transition-all active:scale-95 flex items-center gap-2 ${productions.length > 0 && !productions.every(p => p.status === "Hoàn thành")
+                    ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+                    : "bg-emerald-600 text-white hover:bg-emerald-700"
+                    }`}
                   onClick={() => {
                     if (window.confirm("Xác nhận sản phẩm đã hoàn thiện và sẵn sàng để giao?")) {
                       handleUpdate("Chờ giao hàng");
                     }
                   }}
+                  title={productions.length > 0 && !productions.every(p => p.status === "Hoàn thành") ? "Chờ thợ hoàn thiện 100% các món hàng" : ""}
                 >
-                  <CheckCircle size={16} /> HOÀN TẤT GIA CÔNG
+                  {productions.length > 0 && !productions.every(p => p.status === "Hoàn thành") ? <Clock size={16} /> : <CheckCircle size={16} />}
+                  {productions.length > 0 && !productions.every(p => p.status === "Hoàn thành") ? "CHỜ XƯỞNG HOÀN THIỆN" : "HOÀN TẤT GIA CÔNG"}
                 </button>
               )}
 
-              {/* 4. Bắt đầu giao hàng */}
               {order.status === "Chờ giao hàng" && (
                 <button
                   className="px-5 py-2 bg-[var(--palette-blue)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center gap-2"
@@ -1152,7 +1151,6 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                 </button>
               )}
 
-              {/* 5. Hoàn tất đơn hàng */}
               {order.status === "Đang giao hàng" && (
                 <button
                   className="px-5 py-2 bg-[var(--status-success)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center gap-2"
@@ -1162,11 +1160,10 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                 </button>
               )}
 
-              {/* 6. Duyệt hủy (Nếu là Chờ duyệt hủy) */}
               {order.status === "Chờ duyệt hủy" && (
                 <div className="flex gap-2 p-1 bg-white border border-gray-100 rounded-xl shadow-sm">
                   <button
-                    disabled={["Đang sản xuất", "Đã nhập kho", "Đang gia công", "Chờ giao hàng"].includes(lastActiveStatus) || (order.productionOrders?.length > 0)}
+                    disabled={["Đang sản xuất", "Đang gia công", "Chờ giao hàng"].includes(lastActiveStatus) || (order.productionOrders?.length > 0)}
                     className="px-6 py-2.5 bg-slate-100 text-slate-600 rounded-lg text-[13px] font-bold hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex items-center gap-2"
                     onClick={() => {
                       if (window.confirm("Duyệt hủy đơn và HOÀN TRẢ TIỀN CỌC cho khách hàng?")) {
@@ -1178,7 +1175,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                       }
                     }}
                   >
-                    {["Đang sản xuất", "Đã nhập kho", "Đang gia công", "Chờ giao hàng"].includes(lastActiveStatus) ? <Lock size={16} /> : <RefreshCw size={16} />}
+                    {["Đang sản xuất", "Đang gia công", "Chờ giao hàng"].includes(lastActiveStatus) ? <Lock size={16} /> : <RefreshCw size={16} />}
                     DUYỆT & HOÀN CỌC
                   </button>
                   <button
@@ -1192,7 +1189,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                         handleUpdate("Đơn đã hủy", {
                           depositResolution: "forfeited",
                           timelineLabel: "Duyệt đơn hủy (Thu cọc)",
-                          timelineDesc: `Quyết định của Chủ: Thu hồi ${recoveryAmt} cọc bồi thường chi phí. Tự động nhập kho ${itemCount} món hàng sẵn/mộc.`
+                          timelineDesc: `Quyết định của Chủ: Thu hồi ${recoveryAmt} cọc bồi thường chi phí. Tự động nhập kho món hàng sẵn/mộc.`
                         });
                       }
                     }}
@@ -1202,8 +1199,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                 </div>
               )}
 
-              {/* 7. Yêu cầu hủy (Cho các trạng thái khác) */}
-              {["Chờ xử lý", "Chờ sản xuất", "Đã nhập kho", "Đang gia công", "Chờ giao hàng"].includes(order.status) && (
+              {["Chờ xử lý", "Chờ sản xuất", "Đang gia công", "Chờ giao hàng"].includes(order.status) && (
                 <button
                   className="px-4 py-2 bg-white text-[var(--status-error)] border border-[var(--status-error)]/10 rounded-lg text-[13px] font-bold hover:bg-[var(--status-error)]/5 transition-all flex items-center gap-2"
                   onClick={() => {
@@ -1225,291 +1221,424 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
             </div>
           </div>
         )}
-
-        {/* INTERNAL MODALS (PORTAL-STYLE WITHIN POPUP) */}
-        {/* These must be at the top level of the relative container to overlay header/footer */}
-        {showCompleteModal && (
-          <div className="absolute inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-            <div className="bg-white w-full max-w-xl rounded-lg shadow-2xl overflow-hidden modal-content transform animate-in zoom-in-95 duration-300">
-              <div className="px-6 py-5 border-b border-slate-50/10 flex items-center justify-between bg-slate-50/80">
-                <h3 className="text-[16px] font-black text-slate-800 flex items-center gap-2">
-                  <CheckCircle className="text-[var(--status-success)]" size={20} /> HOÀN TẤT ĐƠN HÀNG
-                </h3>
-                <button onClick={() => setShowCompleteModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
-                  <X size={18} />
-                </button>
-              </div>
-              <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                <div className="bg-slate-50/80 rounded-lg p-5 space-y-3">
-                  <div className="flex justify-between items-center text-[13px] text-slate-500 font-medium">
-                    <span>Tổng tiền hàng:</span>
-                    <span className="font-bold text-slate-700">{fmtCurrency(productTotal)}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-[13px] text-slate-500 font-medium">
-                    <span>Đã đặt cọc:</span>
-                    <span className="font-bold text-slate-700">{fmtCurrency(order.deposit || 0)}</span>
-                  </div>
-                  <div className="pt-2 border-t border-slate-100 flex justify-between items-baseline">
-                    <span className="text-[var(--status-success)] font-bold text-[14px]">Cần thanh toán:</span>
-                    <span className="text-[var(--status-success)] font-black text-[22px] tracking-tight">{fmtCurrency(remainingValue)}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Số thực thu tại chỗ</label>
-                    <div className="mt-1.5 relative">
-                      <input
-                        type="text"
-                        className="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-lg font-black text-lg text-slate-800 focus:ring-4 focus:ring-[var(--status-success)]/10 focus:border-[var(--status-success)] transition-all outline-none"
-                        value={formatNumberInput(finalPayment)}
-                        onChange={(e) => {
-                          const val = Number(parseNumberInput(e.target.value)) || 0;
-                          const maxPayable = Math.max(0, remainingValue);
-                          if (val > maxPayable) {
-                            setFinalPayment(maxPayable);
-                            toast.error("Số thực thu không được vượt quá số tiền cần thanh toán", { id: "payment-limit-error" });
-                          } else {
-                            setFinalPayment(val);
-                          }
-                        }}
-                      />
-                      <span className="absolute right-5 top-1/2 -translate-y-1/2 font-bold text-slate-400">₫</span>
-                    </div>
-                    {remainingValue - finalPayment > 0 && (
-                      <div className="mt-2 text-right">
-                        <span className="text-[11px] font-black uppercase text-[var(--status-error)] bg-[var(--status-error)]/5 px-3 py-1 rounded-full border border-[var(--status-error)]/10">
-                          Ghi nợ: {fmtCurrency(remainingValue - finalPayment)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Hình thức thanh toán</label>
-                    <div className="grid grid-cols-2 gap-2 mt-1.5">
-                      {["Chuyển khoản", "Tiền mặt"].map(m => (
-                        <button
-                          key={m}
-                          onClick={() => setPaymentMethod(m)}
-                          className={`py-2 px-4 rounded-lg border font-bold text-[13px] transition-all ${paymentMethod === m ? 'bg-[var(--brand-primary)] border-[var(--brand-primary)] text-white' : 'bg-white border-slate-100 text-slate-500 hover:bg-slate-50'
-                            }`}
-                        >
-                          {m}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Ảnh giao hàng thực tế</label>
-                    <label className={`mt-2 w-full h-24 rounded-lg border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${deliveryImage ? 'border-[var(--status-success)] bg-[var(--status-success)]/5' : 'border-slate-100 bg-slate-50 hover:bg-slate-100'
-                      }`}>
-                      {deliveryImage ? (
-                        <img src={deliveryImage} className="h-20 w-auto rounded-lg object-cover" alt="Delivery" />
-                      ) : (
-                        <div className="flex flex-col items-center gap-1 text-slate-400">
-                          <Camera size={20} />
-                          <span className="text-[10px] font-bold uppercase">Nhấp để tải ảnh</span>
-                        </div>
-                      )}
-                      <input type="file" accept="image/*" className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onloadend = () => setDeliveryImage(reader.result);
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleFinishOrder}
-                  className="w-full py-2 bg-[var(--status-success)] hover:opacity-90 text-white rounded-lg font-bold text-[13px] transition-all active:scale-[0.98] mt-2 h-10 flex items-center justify-center"
-                >
-                  XÁC NHẬN HOÀN TẤT
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {showHandoverModal && (
-          <div className="absolute inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-            <div className="bg-white w-full max-w-xl rounded-lg shadow-2xl overflow-hidden modal-content transform animate-in zoom-in-95 duration-300">
-              <div className="px-6 py-5 border-b border-[var(--brand-primary)]/5 flex items-center justify-between bg-[var(--brand-primary)]/5">
-                <h3 className="text-[16px] font-black text-[var(--brand-primary)] flex items-center gap-2">
-                  <Hammer className="text-[var(--brand-primary)]" size={20} /> BÀN GIAO XƯỞNG
-                </h3>
-                <button onClick={() => setShowHandoverModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
-                  <X size={18} />
-                </button>
-              </div>
-              <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto custom-scrollbar">
-                {/* 0. Delivery Reference Card */}
-                <div className="bg-[var(--brand-primary)]/5 rounded-lg p-4 flex items-center justify-between">
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-black text-[var(--brand-primary)] opacity-60 uppercase tracking-widest block">Ngày khách hẹn nhận hàng</span>
-                    <div className="flex items-center gap-2 text-[var(--brand-primary)]">
-                      <Calendar size={18} />
-                      <span className="text-[18px] font-black">{fmtDate(order?.deliveryDate)}</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[10px] font-black text-[var(--brand-primary)] opacity-60 uppercase tracking-widest block">Loại đơn</span>
-                    <span className="px-2 py-0.5 bg-[var(--brand-primary)] text-white rounded-md text-[11px] font-bold uppercase mt-1 inline-block">{order?.type}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Kiểm tra thông số</label>
-                    <div className="space-y-2">
-                      {[
-                        { id: 'dimension', label: 'Kích thước chuẩn yêu cầu' },
-                        { id: 'material', label: 'Chất liệu gỗ chuẩn loại' },
-                        { id: 'techNotes', label: 'Ghi chú kỹ thuật dặn thợ' }
-                      ].map(check => (
-                        <label key={check.id} className="flex items-center gap-3 p-3 rounded-lg bg-slate-50/50 cursor-pointer hover:bg-slate-50 transition-colors">
-                          <CustomCheckbox
-                            checked={handoverChecks[check.id]}
-                            onChange={(val) => setHandoverChecks({ ...handoverChecks, [check.id]: val })}
-                          />
-                          <span className="text-[13px] font-bold text-slate-700">{check.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* 1. Item-by-item Production Params */}
-                  <div className="space-y-4">
-                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Kế hoạch gia công từng món</label>
-                    <div className="border border-slate-100 rounded-xl overflow-hidden shadow-sm">
-                      <table className="w-full text-left border-collapse">
-                        <thead className="bg-slate-50 border-b border-slate-100">
-                          <tr>
-                            <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-wider">Sản phẩm</th>
-                            <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-wider w-[140px]">Công/Sản phẩm (₫)</th>
-                            <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-wider w-[120px] text-right">Thành tiền</th>
-                            <th className="px-3 py-3 text-[10px] font-black text-slate-500 uppercase tracking-wider w-[80px]">Hoàn Thiện Dự kiến</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50">
-                          {order?.products?.map((p, idx) => (
-                            <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                              <td className="px-4 py-3">
-                                <p className="text-[13px] font-bold text-slate-800 line-clamp-1">{p.name}</p>
-                                <p className="text-[11px] font-bold text-[var(--brand-primary)] mt-0.5">SL: {p.qty} {p.unit}</p>
-                              </td>
-                                <td className="px-4 py-3">
-                                  <div className="relative">
-                                    <input
-                                      type="text"
-                                      className="w-full pl-3 pr-7 py-2 bg-white border border-slate-200 rounded-lg font-bold text-[13px] text-slate-600 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
-                                      value={formatNumberInput(handoverItemsData[idx]?.unitLabor)}
-                                      onChange={(e) => {
-                                        const newData = [...handoverItemsData];
-                                        newData[idx] = { ...newData[idx], unitLabor: Number(parseNumberInput(e.target.value)) || 0 };
-                                        setHandoverItemsData(newData);
-                                      }}
-                                    />
-                                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300">₫</span>
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3 text-right">
-                                  <p className="text-[13px] font-black text-indigo-600">
-                                    {fmtCurrency((handoverItemsData[idx]?.unitLabor || 0) * (p.qty || 1))}
-                                  </p>
-                                </td>
-                                <td className="px-3 py-3">
-                                  <div className="relative">
-                                    <input
-                                      type="number"
-                                      className="w-full pl-2 pr-6 py-2 bg-white border border-slate-200 rounded-lg font-bold text-[13px] text-orange-600 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all text-center"
-                                      placeholder="0"
-                                      value={handoverItemsData[idx]?.days}
-                                      onChange={(e) => {
-                                        const newData = [...handoverItemsData];
-                                        newData[idx] = { ...newData[idx], days: e.target.value };
-                                        setHandoverItemsData(newData);
-                                      }}
-                                    />
-                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300 italic">n</span>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                        </tbody>
-                        <tfoot className="bg-indigo-50/30 border-t border-indigo-100/50 font-bold">
-                          <tr>
-                            <td className="px-4 py-3 text-[11px] text-indigo-600 uppercase tracking-wider" colSpan={2}>Tổng cộng tiền thợ sơn đơn này</td>
-                            <td className="px-4 py-3 text-[16px] text-indigo-700 text-right" colSpan={2}>
-                              {fmtCurrency(order?.products?.reduce((sum, p, idx) => sum + (handoverItemsData[idx]?.unitLabor || 0) * (p.qty || 1), 0))}
-                            </td>
-                          </tr>
-                        </tfoot>
-                      </table>
-                    </div>
-                  </div>
-
-
-
-                  <div className="bg-slate-50 rounded-lg p-5 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <Calendar size={12} className="text-slate-400" /> Hạn hoàn thành xong toàn đơn
-                      </label>
-                    </div>
-
-                    <input
-                      type="date"
-                      className="w-full px-5 py-2.5 bg-white border border-slate-100 rounded-lg font-bold text-[15px] text-slate-800 focus:ring-4 focus:ring-slate-500/10 focus:border-slate-500 outline-none transition-all shadow-sm"
-                      value={handoverDeadline}
-                      onChange={(e) => setHandoverDeadline(e.target.value)}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                      <FileText size={12} className="text-[var(--brand-primary)]" /> Ghi chú dặn thợ
-                    </label>
-                    <textarea
-                      className="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-lg font-medium text-[13px] text-slate-700 mt-1.5 focus:ring-4 focus:ring-[var(--brand-primary)]/10 focus:border-[var(--brand-primary)] outline-none min-h-[100px] transition-all"
-                      placeholder="Nhập các yêu cầu cụ thể..."
-                      value={handoverNotes}
-                      onChange={(e) => setHandoverNotes(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <button
-                  disabled={!handoverChecks.dimension || !handoverChecks.material}
-                  onClick={handleHandoverConfirm}
-                  className={`w-full py-2 text-white rounded-lg font-bold text-[13px] transition-all active:scale-[0.98] h-10 flex items-center justify-center ${(!handoverChecks.dimension || !handoverChecks.material) ? 'bg-slate-300 cursor-not-allowed' : 'bg-[var(--brand-primary)] hover:opacity-90'
-                    }`}
-                >
-                  XÁC NHẬN BÀN GIAO
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* GLOBAL IMAGE PREVIEW */}
+      {showCompleteModal && (
+        <div className="absolute inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
+          <div className="bg-white w-full max-w-xl rounded-lg overflow-hidden modal-content transform animate-in zoom-in-95 duration-300 border border-gray-200">
+            <div className="px-6 py-5 border-b border-slate-50/10 flex items-center justify-between bg-slate-50/80">
+              <h3 className="text-[16px] font-black text-slate-800 flex items-center gap-2">
+                <CheckCircle className="text-[var(--status-success)]" size={20} /> HOÀN TẤT ĐƠN HÀNG
+              </h3>
+              <button onClick={() => setShowCompleteModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+              <div className="bg-slate-50/80 rounded-lg p-5 space-y-3">
+                <div className="flex justify-between items-center text-[13px] text-slate-500 font-medium">
+                  <span>Tổng tiền hàng:</span>
+                  <span className="font-bold text-slate-700">{fmtCurrency(productTotal)}</span>
+                </div>
+                <div className="flex justify-between items-center text-[13px] text-slate-500 font-medium">
+                  <span>Đã đặt cọc:</span>
+                  <span className="font-bold text-slate-700">{fmtCurrency(order.deposit || 0)}</span>
+                </div>
+                <div className="pt-2 border-t border-slate-100 flex justify-between items-baseline">
+                  <span className="text-[var(--status-success)] font-bold text-[14px]">Cần thanh toán:</span>
+                  <span className="text-[var(--status-success)] font-black text-[22px] tracking-tight">{fmtCurrency(remainingValue)}</span>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Số thực thu tại chỗ</label>
+                  <div className="mt-1.5 relative">
+                    <input
+                      type="text"
+                      className="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-lg font-black text-lg text-slate-800 focus:ring-4 focus:ring-[var(--status-success)]/10 focus:border-[var(--status-success)] transition-all outline-none"
+                      value={formatNumberInput(finalPayment)}
+                      onChange={(e) => {
+                        const val = Number(parseNumberInput(e.target.value)) || 0;
+                        const maxPayable = Math.max(0, remainingValue);
+                        if (val > maxPayable) {
+                          setFinalPayment(maxPayable);
+                          toast.error("Số thực thu không được vượt quá số tiền cần thanh toán", { id: "payment-limit-error" });
+                        } else {
+                          setFinalPayment(val);
+                        }
+                      }}
+                    />
+                    <span className="absolute right-5 top-1/2 -translate-y-1/2 font-bold text-slate-400">₫</span>
+                  </div>
+                  {remainingValue - finalPayment > 0 && (
+                    <div className="mt-2 text-right">
+                      <span className="text-[11px] font-black uppercase text-[var(--status-error)] bg-[var(--status-error)]/5 px-3 py-1 rounded-full border border-[var(--status-error)]/10">
+                        Ghi nợ: {fmtCurrency(remainingValue - finalPayment)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Hình thức thanh toán</label>
+                  <div className="grid grid-cols-2 gap-2 mt-1.5">
+                    {["Chuyển khoản", "Tiền mặt"].map(m => (
+                      <button
+                        key={m}
+                        onClick={() => setPaymentMethod(m)}
+                        className={`py-2 px-4 rounded-lg border font-bold text-[13px] transition-all ${paymentMethod === m ? 'bg-[var(--brand-primary)] border-[var(--brand-primary)] text-white' : 'bg-white border-slate-100 text-slate-500 hover:bg-slate-50'
+                          }`}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Ảnh giao hàng thực tế</label>
+                  <label className={`mt-2 w-full h-24 rounded-lg border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${deliveryImage ? 'border-[var(--status-success)] bg-[var(--status-success)]/5' : 'border-slate-100 bg-slate-50 hover:bg-slate-100'
+                    }`}>
+                    {deliveryImage ? (
+                      <img src={deliveryImage} className="h-20 w-auto rounded-lg object-cover" alt="Delivery" />
+                    ) : (
+                      <div className="flex flex-col items-center gap-1 text-slate-400">
+                        <Camera size={20} />
+                        <span className="text-[10px] font-bold uppercase">Nhấp để tải ảnh</span>
+                      </div>
+                    )}
+                    <input type="file" accept="image/*" className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => setDeliveryImage(reader.result);
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <button
+                onClick={handleFinishOrder}
+                className="w-full h-10 bg-[var(--status-success)] hover:opacity-90 text-white rounded-lg font-bold text-[13px] transition-all active:scale-95 mt-2 flex items-center justify-center"
+              >
+                XÁC NHẬN HOÀN TẤT
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showHandoverModal && (
+        <div className="absolute inset-0 z-[100] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white w-full max-w-xl rounded-lg overflow-hidden modal-content transform animate-in zoom-in-95 duration-300 border border-gray-200">
+            <div className="px-6 py-5 border-b border-[var(--grid-border)] flex items-center justify-between bg-[var(--grid-header-bg)]">
+              <h3 className="text-[16px] font-black text-gray-800 flex items-center gap-2">
+                <Hammer className="text-[var(--brand-primary)]" size={20} /> BÀN GIAO GIA CÔNG
+              </h3>
+              <button onClick={() => setShowHandoverModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
+              {/* Header Info */}
+              <div className="bg-[var(--status-focus)]/50 rounded-xl p-5 grid grid-cols-2 gap-6 border border-[var(--brand-primary)]/10">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Lịch khách hẹn nhận</span>
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <Calendar size={16} className="text-[var(--brand-primary)]" />
+                    <span className="text-[16px] font-black">{fmtDate(order?.deliveryDate)}</span>
+                  </div>
+                </div>
+                <div className="text-right space-y-1">
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Phân loại đơn</span>
+                  <span className="px-2.5 py-1 bg-[var(--brand-primary)] text-white rounded-lg text-[10px] font-black uppercase inline-block letter-spacing-wide">
+                    {order?.type}
+                  </span>
+                </div>
+              </div>
+
+              {/* Bulk Apply Action */}
+              <div className="bg-[var(--bg-main)] p-4 rounded-xl border border-[var(--grid-border)] flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[var(--brand-primary)]/10 flex items-center justify-center text-[var(--brand-primary)]">
+                    <Activity size={18} />
+                  </div>
+                  <div>
+                    <p className="text-[12px] font-black text-gray-800">Thiết lập nhanh</p>
+                    <p className="text-[10px] text-gray-400">Áp dụng cho tất cả các món</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="relative w-[130px]">
+                    <input
+                      type="text"
+                      placeholder="Tiền công..."
+                      className="w-full pl-3 pr-7 py-2 bg-white border border-[var(--grid-border)] rounded-lg font-black text-[12px] focus:ring-4 focus:ring-[var(--brand-primary)]/10 focus:border-[var(--brand-primary)] outline-none"
+                      onChange={(e) => {
+                        const val = Number(parseNumberInput(e.target.value)) || 0;
+                        setHandoverItemsData(prev => prev.map(item => ({ ...item, unitLabor: val })));
+                      }}
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-300">₫</span>
+                  </div>
+                  <div className="relative w-[80px]">
+                    <input
+                      type="number"
+                      placeholder="Ngày..."
+                      className="w-full h-9 bg-white border border-[var(--grid-border)] rounded-lg font-black text-[12px] text-center focus:ring-4 focus:ring-[var(--brand-primary)]/10 focus:border-[var(--brand-primary)] outline-none"
+                      onChange={(e) => {
+                        const days = e.target.value;
+                        setHandoverItemsData(prev => prev.map(item => ({ ...item, days })));
+                        if (days && !isNaN(days)) {
+                          const d = new Date();
+                          d.setDate(d.getDate() + parseInt(days));
+                          setHandoverDeadline(d.toISOString().split('T')[0]);
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Handover Table */}
+              <div className="space-y-3">
+                <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                  <Package size={14} className="text-[var(--brand-primary)]" /> Kế hoạch gia công từng món
+                </label>
+                <div className="border border-[var(--grid-border)] rounded-xl overflow-hidden shadow-xs bg-white">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-[var(--grid-header-bg)] border-b border-[var(--grid-border)]">
+                      <tr>
+                        <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-wider">Sản phẩm</th>
+                        <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-wider w-[140px]">Công sơn (₫)</th>
+                        <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-wider w-[80px] text-center">Hạn (n)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--bg-main)]">
+                      {order?.products?.map((p, idx) => (
+                        <tr key={idx} className="hover:bg-[var(--status-focus)]/20 transition-colors">
+                          <td className="px-4 py-3">
+                            <p className="text-[13px] font-bold text-gray-800 line-clamp-1">{p.name}</p>
+                            <p className="text-[11px] font-bold text-[var(--brand-primary)] mt-0.5">SL: {p.qty} {p.unit}</p>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="relative group">
+                              <input
+                                type="text"
+                                className="w-full pl-3 pr-7 py-2 bg-gray-50/50 border border-[var(--grid-border)] rounded-lg font-black text-[13px] text-gray-700 focus:ring-4 focus:ring-[var(--brand-primary)]/10 focus:border-[var(--brand-primary)] focus:bg-white outline-none transition-all"
+                                value={formatNumberInput(handoverItemsData[idx]?.unitLabor)}
+                                onChange={(e) => {
+                                  const newData = [...handoverItemsData];
+                                  newData[idx] = { ...newData[idx], unitLabor: Number(parseNumberInput(e.target.value)) || 0 };
+                                  setHandoverItemsData(newData);
+                                }}
+                              />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-300">₫</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="relative group">
+                              <input
+                                type="number"
+                                className="w-full h-9 bg-[var(--palette-orange)]/5 border border-[var(--palette-orange)]/20 rounded-lg font-black text-[13px] text-[var(--palette-orange)] focus:ring-4 focus:ring-[var(--palette-orange)]/10 focus:border-[var(--palette-orange)] focus:bg-white outline-none transition-all text-center"
+                                placeholder="0"
+                                value={handoverItemsData[idx]?.days}
+                                onChange={(e) => {
+                                  const newData = [...handoverItemsData];
+                                  newData[idx] = { ...newData[idx], days: e.target.value };
+                                  setHandoverItemsData(newData);
+                                }}
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="bg-[var(--grid-header-bg)] border-t border-[var(--grid-border)] font-bold">
+                      <tr>
+                        <td className="px-4 py-4 text-[10px] text-gray-400 uppercase tracking-widest" colSpan={1}>Tổ hợp tiền thợ sơn</td>
+                        <td className="px-4 py-4 text-[15px] text-gray-900 text-right font-black" colSpan={2}>
+                          <span className="text-[var(--brand-primary)]">
+                            {fmtCurrency(order?.products?.reduce((sum, p, idx) => sum + (handoverItemsData[idx]?.unitLabor || 0) * (p.qty || 1), 0))}
+                          </span>
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Ngày xong dự kiến</label>
+                  <input
+                    type="date"
+                    className="w-full px-4 py-2.5 bg-[var(--bg-main)] border border-[var(--grid-border)] rounded-xl text-[13px] font-black text-gray-800 focus:ring-4 focus:ring-[var(--brand-primary)]/10 focus:border-[var(--brand-primary)] focus:bg-white outline-none transition-all"
+                    value={handoverDeadline}
+                    onChange={(e) => setHandoverDeadline(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Ghi chú dặn thợ</label>
+                  <textarea
+                    className="w-full px-4 py-2 bg-[var(--bg-main)] border border-[var(--grid-border)] rounded-xl text-[13px] font-medium text-gray-700 focus:ring-4 focus:ring-[var(--brand-primary)]/10 focus:border-[var(--brand-primary)] focus:bg-white outline-none transition-all min-h-[42px] max-h-[80px] resize-none"
+                    placeholder="Ghi chú quan trọng cho xưởng..."
+                    value={handoverNotes}
+                    onChange={(e) => setHandoverNotes(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  onClick={handleHandoverConfirm}
+                  className="w-full h-10 bg-[var(--brand-primary)] hover:opacity-90 text-white rounded-lg font-bold text-[13px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
+                  XÁC NHẬN BÀN GIAO SẢN XUẤT
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {previewImage && (
         <div
           className="fixed inset-0 z-[2000] bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-8 transition-all animate-in fade-in cursor-zoom-out"
           onClick={() => setPreviewImage(null)}
         >
-          <img src={previewImage} className="max-w-[90vw] max-h-[90vh] object-contain shadow-2xl rounded-lg border border-white/10 p-1 bg-white/5 animate-in zoom-in-95 duration-300" alt="Full Preview" />
+          <img src={previewImage} className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg border border-white/10 p-1 bg-white/5 animate-in zoom-in-95 duration-300" alt="Full Preview" />
           <button className="absolute top-8 right-8 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all backdrop-blur-md">
             <X size={24} />
           </button>
+        </div>
+      )}
+
+      {inspectItem && (
+        <div className="absolute inset-0 z-[110] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
+          <div className="bg-white w-full max-w-lg rounded-lg overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-200">
+            <div className="px-6 py-4 border-b border-emerald-50 bg-emerald-50/30 flex items-center justify-between">
+              <h3 className="text-[15px] font-black text-emerald-700 flex items-center gap-2 uppercase tracking-tight">
+                <Camera size={18} /> Nghiệm thu sản phẩm
+              </h3>
+              <button onClick={() => setInspectItem(null)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              <div className="flex gap-4">
+                <div className="w-24 h-24 rounded-lg overflow-hidden border border-gray-100 shrink-0">
+                  <img src={inspectItem.productImage} className="w-full h-full object-cover" alt="" />
+                </div>
+                <div>
+                  <h4 className="font-black text-slate-800 text-[16px]">{inspectItem.productName}</h4>
+                  <p className="text-[12px] text-slate-500 mt-1">Đơn hàng: <span className="font-bold text-slate-700">{order?.code}</span></p>
+                  <p className="text-[12px] text-slate-500">Thợ đảm trách: <span className="font-bold text-slate-700">{inspectItem.assignedWorker}</span></p>
+                </div>
+              </div>
+
+              {inspectItem.completionPhoto && (
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Ảnh hoàn thiện từ xưởng</label>
+                  <div className="relative aspect-video rounded-lg overflow-hidden border border-gray-100 shadow-inner group">
+                    <img src={inspectItem.completionPhoto} className="w-full h-full object-cover" alt="KCS Preview" />
+                    <button
+                      onClick={() => setPreviewImage(inspectItem.completionPhoto)}
+                      className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Eye className="text-white" size={24} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    setRedoItem(inspectItem);
+                    setInspectItem(null);
+                  }}
+                  className="h-10 px-4 bg-rose-50 border border-rose-100 text-rose-600 rounded-lg text-[13px] font-bold hover:bg-rose-100 transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
+                  <RotateCcw size={16} /> YÊU CẦU SỬA LẠI
+                </button>
+                <button
+                  onClick={() => {
+                    updateProductionInLocal(inspectItem.id, {
+                      status: "Hoàn thành",
+                      isPendingApproval: false,
+                      quantityCompleted: inspectItem.quantityPlanned
+                    });
+                    toast.success("Đã nghiệm thu thành công sản phẩm!");
+                    setInspectItem(null);
+                  }}
+                  className="h-10 px-4 bg-emerald-600 text-white rounded-lg text-[13px] font-bold hover:bg-emerald-700 transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
+                  <CheckCircle2 size={16} /> ĐẠT YÊU CẦU
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {redoItem && (
+        <div className="absolute inset-0 z-[120] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
+          <div className="bg-white w-full max-w-md rounded-lg overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-200">
+            <div className="px-6 py-4 border-b border-rose-50 bg-rose-50/30 flex items-center justify-between">
+              <h3 className="text-[15px] font-black text-rose-700 flex items-center gap-2 uppercase tracking-tight">
+                <RotateCcw size={18} /> Yêu cầu sửa lại
+              </h3>
+              <button onClick={() => setRedoItem(null)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="text-[13px] text-slate-600 font-medium">Bạn muốn thợ <span className="font-bold text-slate-800">{redoItem.assignedWorker}</span> sửa lại nội dung gì cho sản phẩm này?</p>
+
+              <textarea
+                autoFocus
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-[13px] text-slate-800 focus:ring-4 focus:ring-rose-500/10 focus:border-rose-500 outline-none transition-all min-h-[120px]"
+                placeholder="Ví dụ: Nước sơn còn hơi mỏng, cần bắn thêm lót 2..."
+                value={redoNote}
+                onChange={(e) => setRedoNote(e.target.value)}
+              />
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setRedoItem(null)}
+                  className="flex-1 h-10 px-4 border border-slate-200 text-slate-500 rounded-lg text-[13px] font-bold hover:bg-slate-50 transition-all active:scale-95 flex items-center justify-center"
+                >
+                  HỦY
+                </button>
+                <button
+                  onClick={() => {
+                    if (!redoNote.trim()) { toast.error("Vui lòng nhập nội dung cần sửa"); return; }
+                    updateProductionInLocal(redoItem.id, {
+                      status: "Đang sơn",
+                      isPendingApproval: false,
+                      needsRedo: true,
+                      redoNote: redoNote
+                    });
+                    toast.success("Đã gửi yêu cầu sửa lại cho thợ!");
+                    setRedoItem(null);
+                    setRedoNote("");
+                  }}
+                  className="flex-1 h-10 px-4 bg-rose-600 text-white rounded-lg text-[13px] font-bold hover:bg-rose-700 transition-all active:scale-95 flex items-center justify-center"
+                >
+                  GỬI YÊU CẦU
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

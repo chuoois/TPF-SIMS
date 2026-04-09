@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import AccountantLayout from "../layouts/accountant-layout/index";
+import AccountantLayout from "../components/layouts/accountant-layout/index";
 import AccountantHome from "../pages/accountant-page/accountant-home";
 import AccountantDashboard from "../pages/accountant-page/accountant-dashboard";
 import AccountantProductManage from "../pages/accountant-page/accountant-product";

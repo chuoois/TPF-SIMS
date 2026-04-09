@@ -1,6 +1,6 @@
-import { LoginPage } from "@/pages/login/index"
-import { ForgotPasswordPage } from "@/pages/forgot-password/index"
-import { AuthLayout } from "@/layouts/auth-layout/index"
+import { LoginPage } from "@/pages/auth-page/login/index"
+import { ForgotPasswordPage } from "@/pages/auth-page/forgot-password/index"
+import { AuthLayout } from "@/components/layouts/auth-layout/index"
 
 /**
  * Authentication Routes

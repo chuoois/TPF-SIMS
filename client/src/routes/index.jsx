@@ -1,15 +1,12 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import { NotFoundPage } from "@/pages/not-found";
-import { NoPermissionPage } from "@/pages/no-permission";
+import { NotFoundPage } from "@/pages/auth-page/not-found";
+import { NoPermissionPage } from "@/pages/auth-page/no-permission";
 import { authRoutes } from "./AuthRoutes";
 import { ownerRoutes } from "./OwnerRoutes";
 import { salesRoutes } from "./SalesRoutes";
 import { accountantRoutes } from "./AccountantRoutes";
 import { workerRoutes } from "./WorkerRoutes";
 import ProtectedRoute from "./ProtectedRoute";
-import LogisticsPortal from "@/pages/owner-page/warranty/LogisticsPortal";
-
-
 
 export const router = createBrowserRouter([
   authRoutes,
@@ -32,7 +29,6 @@ export const router = createBrowserRouter([
   // },
   // test
   ownerRoutes, accountantRoutes, workerRoutes, salesRoutes,
-  { path: "/logistics/:id", element: <LogisticsPortal /> },
   { path: "/404", element: <NotFoundPage /> },
   { path: "/403", element: <NoPermissionPage /> },
   { path: "*", element: <Navigate to="/404" replace /> },
