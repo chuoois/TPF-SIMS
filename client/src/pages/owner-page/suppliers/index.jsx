@@ -71,7 +71,7 @@ const formatCurrency = (amount) => {
 // ===================== SUB-COMPONENTS =====================
 const ModalContainer = ({ title, onClose, children, maxWidth = "max-w-2xl" }) => (
   <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-    <div className={`bg-white rounded-lg w-full ${maxWidth} shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200`}>
+    <div className={`bg-white rounded-lg w-full ${maxWidth} flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200`}>
       <div className="px-6 py-4 border-b flex items-center justify-between shrink-0" style={{ borderColor: "var(--grid-border)" }}>
         <h3 className="text-base font-bold text-gray-900">{title}</h3>
         <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition text-gray-400 hover:text-gray-600">
@@ -143,7 +143,7 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Cột trái: Hồ sơ chi tiết */}
                 <div className="lg:col-span-2 space-y-6">
-                  <div className="p-7 rounded-lg border border-gray-100 bg-white shadow-xs">
+                  <div className="p-7 rounded-lg border border-gray-100 bg-white ">
                     <div className="flex items-center gap-3 mb-6 font-sans">
                       <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center text-green-600">
                         <Building2 size={20} />
@@ -260,7 +260,7 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
           {activeTab === "history" && (
             <div className="animate-in fade-in duration-300">
               {!activeShipment ? (
-                <div className="rounded-lg border border-gray-100 overflow-hidden shadow-xs bg-white">
+                <div className="rounded-lg border border-gray-100 overflow-hidden bg-white">
                   <table className="w-full text-left text-[13px]">
                     <thead className="bg-[#F8FAFC] border-b border-gray-100">
                       <tr>
@@ -313,7 +313,7 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
                     </div>
                   </div>
 
-                  <div className="rounded-lg border border-gray-200 overflow-hidden shadow-sm bg-white">
+                  <div className="rounded-lg border border-gray-200 overflow-hidden bg-white">
                     <table className="w-full text-left text-[13px]">
                       <thead className="bg-[#F8FAFC] border-b border-gray-200">
                         <tr>
@@ -346,24 +346,24 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
           {activeTab === "ledger" && !activeShipment && (
             <div className="space-y-6 animate-in fade-in duration-300">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div className="p-5 rounded-lg bg-white border-2 border-gray-50 shadow-sm relative overflow-hidden group">
+                <div className="p-5 rounded-lg bg-white border-2 border-gray-50 relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-red-50 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform duration-500" />
                   <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 relative z-10"> Tổng tiền nhập hàng</p>
                   <p className="text-2xl font-bold text-gray-900 relative z-10">{formatCurrency(totalIncurred)}</p>
                 </div>
-                <div className="p-5 rounded-lg bg-white border-2 border-gray-50 shadow-sm relative overflow-hidden group">
+                <div className="p-5 rounded-lg bg-white border-2 border-gray-50 relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform duration-500" />
                   <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 relative z-10">Đã thanh toán (-)</p>
                   <p className="text-2xl font-bold text-gray-900 relative z-10">{formatCurrency(totalPaid)}</p>
                 </div>
-                <div className="p-5 rounded-lg bg-green-600 text-white shadow-lg relative overflow-hidden group">
+                <div className="p-5 rounded-lg bg-green-600 text-white relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform duration-500" />
                   <p className="text-[11px] font-bold text-white/70 uppercase tracking-widest mb-2 relative z-10">Nợ hiện tại</p>
                   <p className="text-2xl font-bold text-white relative z-10">{formatCurrency(supplier.debt)}</p>
                 </div>
               </div>
 
-              <div className="rounded-lg border border-gray-200 overflow-hidden shadow-sm bg-white">
+              <div className="rounded-lg border border-gray-200 overflow-hidden bg-white">
                 <table className="w-full text-left text-[13px]">
                   <thead className="bg-[#F8FAFC] border-b border-gray-200">
                     <tr>
@@ -681,7 +681,7 @@ const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
             </button>
             <button
               type="submit"
-              className="px-8 py-2.5 bg-green-600 text-white font-bold text-[13px] rounded-lg hover:bg-green-700 shadow-lg shadow-green-100 transition cursor-pointer"
+              className="px-8 py-2.5 bg-green-600 text-white font-bold text-[13px] rounded-lg hover:bg-green-700 transition cursor-pointer"
             >
               {supplier ? "Cập nhật thông tin" : "Tạo mới nhà cung cấp"}
             </button>
@@ -886,13 +886,14 @@ export default function OwnerSuppliers() {
             </p>
           </div>
 
-          <Button
+          <button
             onClick={() => openModal(null, "action")}
-            className="h-10 px-6 bg-green-600 hover:bg-green-700 text-white font-bold text-[13px] rounded-lg flex items-center gap-2 shadow-lg shadow-green-100 transition-all active:scale-95"
+            className="h-10 px-6 rounded-xl flex items-center gap-2 text-[13px] font-bold text-white transition-all hover:opacity-90 shadow-sm active:scale-95 cursor-pointer"
+            style={{ backgroundColor: "var(--brand-primary)" }}
           >
             <Plus size={18} />
             Thêm nhà cung cấp
-          </Button>
+          </button>
         </div>
 
         {/* Standard DataTable Integration */}
