@@ -433,7 +433,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                 </p>
                                 <div className="flex items-center gap-2">
                                     <div className="relative">
-                                        <button type="button" onClick={() => setActiveDropdown(activeDropdown?.id === "pullOrder" ? {id: null, field: null} : {id: "pullOrder", field: "pullOrder"})}
+                                        <button type="button" onClick={() => setActiveDropdown(activeDropdown?.id === "pullOrder" ? {id: null, field: null} : {id: "pullOrder", field: "pullOrder", selectedItemIds: []})}
                                             className="flex items-center gap-1.5 h-7 px-3 rounded-lg text-[12px] font-bold cursor-pointer hover:opacity-80 transition"
                                             style={{ backgroundColor: "#10B981", color: "#fff" }}>
                                             <Search size={13} /> Kéo từ Khách đặt
@@ -448,27 +448,84 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                                         className="w-full h-8 px-3 rounded-md text-[13px] border focus:outline-none focus:ring-1 focus:ring-emerald-400 cursor-text"
                                                         style={{ borderColor: "var(--grid-border)", color: "var(--text-main)" }} />
                                                 </div>
-                                                <div className="max-h-60 overflow-y-auto w-full flex flex-col">
+                                                <div className="max-h-64 overflow-y-auto w-full flex flex-col">
                                                     {(() => {
                                                         const q = (activeDropdown.search || "").toLowerCase();
-                                                        let results = ALL_PRODUCTS.filter(p => p.type === "CUSTOM" && (p.stockBreakdown?.processing > 0));
+                                                        let pending = ALL_PRODUCTS.filter(p => p.type === "CUSTOM" && (p.stockBreakdown?.processing > 0));
                                                         if (q) {
-                                                            results = results.filter(p => p.name.toLowerCase().includes(q) || (p.details || "").toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q));
+                                                            pending = pending.filter(p => p.name.toLowerCase().includes(q) || (p.details || "").toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q));
                                                         }
-                                                        if (results.length === 0) return <div className="p-4 text-center text-[12px] text-gray-500">Chưa có sản phẩm Khách Đặt nào chờ nhập.</div>;
-                                                        return results.map(p => (
-                                                            <div key={p.id} className="p-3 border-b border-gray-100 last:border-0 hover:bg-emerald-50 cursor-pointer transition flex flex-col gap-1"
-                                                            onClick={() => { applyCustomProduct(p); setActiveDropdown({id: null, field: null}); }}>
-                                                                <p className="text-[13px] font-bold text-gray-800">{p.name}</p>
-                                                                <div className="flex gap-2 items-center">
-                                                                    <span className="text-[10px] font-mono px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">{p.sku}</span>
-                                                                    <span className="text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-700 font-bold rounded flex items-center gap-1">Cần nhập: {p.stockBreakdown?.processing}</span>
+                                                        if (pending.length === 0) return <div className="p-4 text-center text-[12px] text-gray-500">Chưa có sản phẩm Khách Đặt nào chờ nhập.</div>;
+                                                        
+                                                        // Group by customer or order
+                                                        const groups = {};
+                                                        pending.forEach(p => {
+                                                            let groupName = "Đơn lẻ / Khác";
+                                                            const parts = p.name.split("–");
+                                                            if (parts.length > 1) groupName = "Đơn của: " + parts[parts.length - 1].trim();
+                                                            if (p.orderCode) groupName = "Hợp đồng: " + p.orderCode;
+                                                            if (!groups[groupName]) groups[groupName] = [];
+                                                            groups[groupName].push(p);
+                                                        });
+
+                                                        const toggleItem = (id) => {
+                                                            const currentIds = activeDropdown.selectedItemIds || [];
+                                                            if (currentIds.includes(id)) {
+                                                                setActiveDropdown({...activeDropdown, selectedItemIds: currentIds.filter(x => x !== id)});
+                                                            } else {
+                                                                setActiveDropdown({...activeDropdown, selectedItemIds: [...currentIds, id]});
+                                                            }
+                                                        };
+
+                                                        return Object.keys(groups).map((gName, gIdx) => (
+                                                            <div key={gIdx} className="border-b last:border-0 border-gray-100 pb-1">
+                                                                <div className="px-3 py-2 bg-gray-50 text-[11px] font-bold uppercase tracking-wider text-gray-500 sticky top-0 z-10 border-b border-gray-100 flex items-center justify-between">
+                                                                    {gName}
                                                                 </div>
-                                                                {p.details && <p className="text-[11px] text-gray-500 italic mt-0.5 line-clamp-1 truncate">{p.details}</p>}
+                                                                {groups[gName].map(p => {
+                                                                    const isSelected = (activeDropdown.selectedItemIds || []).includes(p.id);
+                                                                    return (
+                                                                        <div key={p.id} className={`px-3 py-2.5 cursor-pointer transition flex items-start gap-2.5 border-b last:border-0 border-gray-50 ${isSelected ? "bg-emerald-50/50" : "hover:bg-gray-50"}`}
+                                                                            onClick={() => toggleItem(p.id)}>
+                                                                            <div className="mt-0.5">
+                                                                                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isSelected ? "bg-emerald-500 border-emerald-500" : "border-gray-300 bg-white"}`}>
+                                                                                    {isSelected && <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M10 3L4.5 8.5L2 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="flex-1 flex flex-col gap-0.5">
+                                                                                <p className="text-[13px] font-semibold text-gray-800 leading-tight">{p.name}</p>
+                                                                                <div className="flex gap-2 items-center mt-1">
+                                                                                    <span className="text-[10px] font-mono px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">{p.sku}</span>
+                                                                                    <span className="text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-700 font-bold rounded">Cần Nhập: {p.stockBreakdown?.processing}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
                                                             </div>
-                                                        ))
+                                                        ));
                                                     })()}
                                                 </div>
+                                                {/* Action Bar */}
+                                                {(activeDropdown.selectedItemIds || []).length > 0 && (
+                                                    <div className="p-3 border-t bg-gray-50 flex items-center justify-between shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20" style={{ borderColor: "var(--grid-border)" }}>
+                                                        <span className="text-[12px] font-medium text-gray-600">
+                                                            Đã chọn: <span className="font-bold text-emerald-600">{(activeDropdown.selectedItemIds || []).length}</span> món
+                                                        </span>
+                                                        <button type="button" onClick={() => {
+                                                            const pending = ALL_PRODUCTS.filter(p => p.type === "CUSTOM");
+                                                            (activeDropdown.selectedItemIds || []).forEach(id => {
+                                                                const p = pending.find(x => x.id === id);
+                                                                if(p) applyCustomProduct(p);
+                                                            });
+                                                            setActiveDropdown({id: null, field: null});
+                                                        }}
+                                                            className="h-8 px-4 rounded-lg text-[12px] font-bold text-white shadow-sm hover:opacity-90 transition cursor-pointer"
+                                                            style={{ backgroundColor: "#10B981" }}>
+                                                            Xác nhận kéo
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
                                     </div>
