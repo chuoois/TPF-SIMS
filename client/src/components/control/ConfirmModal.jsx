@@ -14,7 +14,7 @@ const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel }) => {
 
       {/* Modal */}
       <div
-        className="relative bg-white w-full max-w-[400px] rounded-lg shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200"
+        className="relative bg-white w-full max-w-[400px] rounded-lg border border-gray-100 overflow-hidden animate-in zoom-in-95 fade-in duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6">

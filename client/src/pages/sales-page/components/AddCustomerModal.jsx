@@ -91,7 +91,7 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
 
       {/* Modal */}
       <div
-        className="relative bg-white rounded-2xl w-full max-w-lg mx-4 overflow-hidden animate-in zoom-in-95"
+        className="relative bg-white rounded-lg w-full max-w-lg mx-4 overflow-hidden animate-in zoom-in-95"
         style={{ boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
       >
         {/* Header */}

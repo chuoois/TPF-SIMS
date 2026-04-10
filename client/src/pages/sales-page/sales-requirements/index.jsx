@@ -30,6 +30,8 @@ import {
   RefreshCw,
   MapPin,
 } from "lucide-react";
+import DataTable from "@/components/control/DataTable";
+import ConfirmModal from "@/components/control/ConfirmModal";
 
 // ===================== MOCK DATA =====================
 const MOCK_REQUIREMENTS = [
@@ -196,44 +198,6 @@ const STATUS_CONFIG = {
 };
 
 // ===================== SUB-COMPONENTS =====================
-const CancelRequestModal = ({ target, onSuccess, onCancel }) => {
-  if (!target) return null;
-  return (
-    <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col scale-in duration-200">
-        <div className="p-8 flex flex-col items-center text-center">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-red-50 text-red-600 mb-4">
-            <AlertCircle size={32} />
-          </div>
-          <h3 className="text-[18px] font-bold text-gray-900 mb-2">
-            Xác nhận hủy?
-          </h3>
-          <p className="text-[14px] text-gray-500 mb-6 font-medium leading-relaxed">
-            Bạn có chắc chắn muốn hủy yêu cầu mã{" "}
-            <strong className="text-gray-900">{target.code}</strong> không?{" "}
-            <br />
-            Hành động này sẽ chuyển trạng thái sang "Đơn đã hủy" ngay lập tức.
-          </p>
-
-          <div className="flex flex-col w-full gap-2">
-            <button
-              onClick={onSuccess}
-              className="w-full py-3 rounded-xl text-[14px] font-bold text-white bg-red-600 hover:bg-red-700 transition-all active:scale-[0.98] shadow-lg shadow-red-100"
-            >
-              Xác nhận hủy
-            </button>
-            <button
-              onClick={onCancel}
-              className="w-full py-3 rounded-xl text-[14px] font-bold text-gray-600 hover:bg-gray-100 transition-all"
-            >
-              Quay lại
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const ImageViewer = ({ src, onClose }) => {
   if (!src) return null;
@@ -287,7 +251,7 @@ const RequirementDetailModal = ({ req, onClose, onEnlarge, onOpenCancel }) => {
 
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-xl flex flex-col overflow-hidden relative">
+      <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-lg shadow-xl flex flex-col overflow-hidden relative">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0 bg-gray-50">
           <div className="flex items-center gap-4">
@@ -328,7 +292,7 @@ const RequirementDetailModal = ({ req, onClose, onEnlarge, onOpenCancel }) => {
                 <h3 className="text-[13px] font-bold text-gray-800 uppercase tracking-wider mb-2 flex items-center gap-2">
                   <User size={16} className="text-gray-400" /> Khách hàng
                 </h3>
-                <div className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 space-y-2">
+                <div className="p-4 rounded-lg border border-gray-100 bg-gray-50/50 space-y-2">
                   <p className="text-[14px] font-bold text-gray-900">
                     {req.customer}
                   </p>
@@ -355,7 +319,7 @@ const RequirementDetailModal = ({ req, onClose, onEnlarge, onOpenCancel }) => {
                   <h3 className="text-[13px] font-bold text-gray-800 uppercase tracking-wider mb-2 flex items-center gap-2">
                     <FileText size={16} className="text-gray-400" /> Ghi chú
                   </h3>
-                  <div className="w-full h-[104px] p-4 rounded-xl border border-gray-200 bg-gray-50 text-gray-600 text-[13px] overflow-y-auto">
+                  <div className="w-full h-[104px] p-4 rounded-lg border border-gray-200 bg-gray-50 text-gray-600 text-[13px] overflow-y-auto">
                     {surveyNotes || req.notes || "Không có ghi chú"}
                   </div>
                 </div>
@@ -364,7 +328,7 @@ const RequirementDetailModal = ({ req, onClose, onEnlarge, onOpenCancel }) => {
           </div>
 
           {/* THỜI GIAN HOÀN THIỆN (LEAD TIME) */}
-          <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/40 flex items-center justify-between mb-2">
+          <div className="p-4 rounded-lg border border-amber-200 bg-amber-50/40 flex items-center justify-between mb-2">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
                 <Clock size={20} />
@@ -393,7 +357,7 @@ const RequirementDetailModal = ({ req, onClose, onEnlarge, onOpenCancel }) => {
                 return (
                   <div
                     key={spec.id}
-                    className="p-5 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden"
+                    className="p-5 rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden"
                   >
                     {/* Item Header */}
                     <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
@@ -559,20 +523,106 @@ export default function SalesRequirements() {
   const [selectedReqId, setSelectedReqId] = useState(null);
   const [enlargedImg, setEnlargedImg] = useState(null);
 
+  // Selection State
+  const [selectedIds, setSelectedIds] = useState([]);
+
   // Cancellation States
   const [cancelTarget, setCancelTarget] = useState(null);
-  const [cancelSuccess, setCancelSuccess] = useState(false);
 
-  const handleCancelSubmit = () => {
-    if (!cancelTarget) return;
+  // Column definitions for DataTable
+  const columns = [
+    {
+      header: "STT",
+      render: (_, idx) => (currentPage - 1) * itemsPerPage + idx + 1,
+      headerClassName: "w-[60px] text-center",
+      className: "text-center font-medium text-slate-400",
+    },
+    {
+      header: "Mã yêu cầu",
+      key: "code",
+      className: "font-mono font-bold text-slate-700",
+    },
+    {
+      header: "Khách hàng",
+      render: (r) => (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center font-bold text-[12px] text-slate-400 uppercase">
+            {r.customer.charAt(0)}
+          </div>
+          <div>
+            <p className="font-bold text-slate-800 leading-tight">{r.customer}</p>
+            <p className="text-[11px] text-slate-400 font-medium">{r.phone}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Ngày nhận",
+      render: (r) => (
+        <div className="flex items-center gap-2 text-slate-600">
+           <Calendar size={14} className="text-slate-300" />
+           <span className="font-medium">{r.createdDate?.split("-").reverse().join("/")}</span>
+        </div>
+      ),
+    },
+    {
+      header: "Trạng thái",
+      headerClassName: "text-right pr-12",
+      className: "text-right pr-12",
+      render: (r) => {
+        const sc = STATUS_CONFIG[r.status] || STATUS_CONFIG["Đang xử lý"];
+        return (
+          <div className="flex justify-end">
+            <span
+              className="inline-flex items-center px-2.5 py-1 text-[11px] font-bold rounded-lg border min-w-[120px] justify-center"
+              style={{
+                backgroundColor: sc.bg,
+                color: sc.text,
+                borderColor: sc.border,
+              }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: sc.text }}></span>
+              {r.status}
+            </span>
+          </div>
+        );
+      },
+    },
+  ];
+
+  // Row actions (hover buttons)
+  const rowActions = [
+    {
+      label: "Hủy yêu cầu",
+      icon: AlertCircle,
+      className: "bg-white border-red-100 text-red-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200",
+      showIf: (r) => r.status === "Đang xử lý",
+      requireConfirm: true,
+      confirmTitle: "Xác nhận hủy yêu cầu?",
+      confirmMessage: (r) => `Bạn có chắc chắn muốn hủy yêu cầu thiết kế mã ${r.code} của khách hàng ${r.customer}? Hành động này không thể hoàn tác.`,
+      onClick: (r) => {
+        setCancelTarget(r);
+        handleCancelSubmit(r);
+      }
+    },
+    {
+      label: "Xem chi tiết",
+      icon: Eye,
+      className: "bg-white border-slate-100 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100",
+      onClick: (r) => setSelectedReqId(r.id),
+    }
+  ];
+
+  const handleCancelSubmit = (target = cancelTarget) => {
+    if (!target) return;
     setRequirements((prev) =>
       prev.map((r) =>
-        r.id === cancelTarget.id ? { ...r, status: "Đơn đã hủy" } : r,
+        r.id === target.id ? { ...r, status: "Đơn đã hủy" } : r,
       ),
     );
-    toast.success(`Đã hủy yêu cầu ${cancelTarget.code} thành công`);
+    toast.success(`Đã hủy yêu cầu ${target.code} thành công`);
     setCancelTarget(null);
-    setSelectedReqId(null); // Close detail modal if it was open
+    setSelectedReqId(null);
   };
 
   const statusFilter = searchParams.get("status") || "Tất cả";
@@ -655,27 +705,26 @@ export default function SalesRequirements() {
         className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 space-y-4"
         style={{ backgroundColor: "var(--bg-main)" }}
       >
-        {/* Header */}
+        {/* Header Section */}
         <div className="flex items-center justify-between shrink-0">
           <div>
-            <h1
-              className="text-xl font-bold flex items-center gap-2"
-              style={{ color: "var(--text-main)" }}
-            >
+            <h1 className="text-xl font-bold flex items-center gap-2" style={{ color: "var(--text-main)" }}>
               <Package size={22} style={{ color: "var(--brand-primary)" }} />
               Yêu cầu từ khách hàng
             </h1>
-            <p
-              className="text-[13px] mt-0.5"
-              style={{ color: "var(--text-placeholder)" }}
-            >
+            <p className="text-[13px] mt-0.5" style={{ color: "var(--text-placeholder)" }}>
               {filtered.length} yêu cầu ({statusFilter.toLowerCase()})
             </p>
           </div>
+          
+          {/* Optional: Add a placeholder for tabs if needed in future, currently empty to match spacing */}
+          <div className="flex p-1 rounded-lg invisible">
+             <button className="px-4 py-1.5 rounded-lg text-[13px] font-semibold">Placeholder</button>
+          </div>
         </div>
 
-        {/* Status Pills Filter */}
-        <div className="flex items-center gap-2 shrink-0 px-1 flex-wrap">
+        {/* Status Bar (Mirroring Owner Style) */}
+        <div className="flex items-center gap-2 shrink-0 flex-wrap py-1">
           {["Tất cả", ...Object.keys(STATUS_CONFIG)].map((s) => {
             const isActive = statusFilter === s;
             const sc = s !== "Tất cả" ? STATUS_CONFIG[s] : null;
@@ -683,23 +732,11 @@ export default function SalesRequirements() {
               <button
                 key={s}
                 onClick={() => updateParams({ status: s })}
-                className="px-4 py-1.5 rounded-xl text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border"
+                className="px-4 py-1.5 rounded-lg text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border"
                 style={{
-                  backgroundColor: isActive
-                    ? sc
-                      ? sc.bg
-                      : "#fff"
-                    : "transparent",
-                  color: isActive
-                    ? sc
-                      ? sc.text
-                      : "var(--brand-primary)"
-                    : "var(--text-secondary)",
-                  borderColor: isActive
-                    ? sc
-                      ? sc.border
-                      : "var(--grid-border)"
-                    : "transparent",
+                  backgroundColor: isActive ? (sc ? sc.bg : "#fff") : "transparent",
+                  color: isActive ? (sc ? sc.text : "var(--brand-primary)") : "var(--text-secondary)",
+                  borderColor: isActive ? (sc ? sc.border : "var(--grid-border)") : "transparent",
                   boxShadow: isActive ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
                 }}
               >
@@ -720,347 +757,90 @@ export default function SalesRequirements() {
           })}
         </div>
 
-        {/* Search + Table Card */}
-        <div
-          className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden"
-          style={{
-            boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+        {/* DataTable Section */}
+        <DataTable
+          columns={columns}
+          data={paginatedRequirements}
+          onRowClick={(r) => setSelectedReqId(r.id)}
+          rowStyle={(item) => ({
+            backgroundColor:
+              item.status === "Đang xử lý"
+                ? "rgba(14, 165, 233, 0.03)"
+                : "transparent",
+          })}
+          
+          // Selection
+          selectedIds={selectedIds}
+          setSelectedIds={setSelectedIds}
+
+          // Search & Filters
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          searchPlaceholder="Mã yêu cầu, khách hàng..."
+          dateFrom={dateFrom}
+          setDateFrom={setDateFrom}
+          dateTo={dateTo}
+          setDateTo={setDateTo}
+          hasActiveFilters={hasActiveFilters}
+          clearAllFilters={clearAllFilters}
+
+          // Row Actions (Hủy, Chi tiết)
+          rowActions={rowActions}
+
+          // Bulk Actions
+          bulkActions={[
+            {
+              label: "HỦY HÀNG LOẠT",
+              icon: AlertCircle,
+              className: "text-red-600 hover:bg-red-50",
+              showIf: (selectedRows) => {
+                 // Only show if at least one selected item is "Đang xử lý"
+                 return selectedRows.some(r => r.status === "Đang xử lý");
+              },
+              requireConfirm: true,
+              confirmTitle: "Hủy hàng loạt yêu cầu?",
+              confirmMessage: (selectedRows) => {
+                const cancelableCount = selectedRows.filter(r => r.status === "Đang xử lý").length;
+                return `Bạn có chắc chắn muốn hủy ${cancelableCount} yêu cầu 'Đang xử lý' trong danh sách chọn? Hành động này không thể hoàn tác.`;
+              },
+              onClick: (selectedRows) => {
+                const cancelableIds = selectedRows
+                  .filter(r => r.status === "Đang xử lý")
+                  .map(r => r.id);
+                
+                setRequirements((prev) =>
+                  prev.map((r) =>
+                    cancelableIds.includes(r.id) ? { ...r, status: "Đơn đã hủy" } : r,
+                  ),
+                );
+                setSelectedIds([]);
+                toast.success(`Đã hủy ${cancelableIds.length} yêu cầu thành công`);
+              }
+            }
+          ]}
+
+          pagination={{
+            total: filtered.length,
+            currentPage: currentPage,
+            setCurrentPage: setCurrentPage,
+            itemsPerPage: itemsPerPage,
+            setItemsPerPage: setItemsPerPage,
           }}
-        >
-          {/* Search Header */}
-          <div
-            className="px-4 py-3 shrink-0 flex flex-wrap items-center justify-between gap-4"
-            style={{
-              backgroundColor: "var(--grid-header-bg)",
-              borderBottom: "1px solid var(--grid-border)",
-            }}
-          >
-            <div className="flex items-center gap-4 flex-1 min-w-[300px]">
-              <div className="relative flex-1 max-w-sm">
-                <Search
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2"
-                  style={{ color: "var(--text-placeholder)" }}
-                />
-                <input
-                  type="text"
-                  placeholder="Mã yêu cầu, khách hàng..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] border focus:outline-none focus:ring-1 transition"
-                  style={{
-                    borderColor: "var(--grid-border)",
-                    backgroundColor: "#fff",
-                    color: "var(--text-main)",
-                  }}
-                />
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm("")}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full cursor-pointer"
-                  >
-                    <X size={14} style={{ color: "var(--text-placeholder)" }} />
-                  </button>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Calendar
-                    size={14}
-                    className="absolute left-2.5 top-1/2 -translate-y-1/2"
-                    style={{ color: "var(--text-placeholder)" }}
-                  />
-                  <input
-                    type="date"
-                    value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
-                    className="h-9 pl-9 pr-3 rounded-lg text-[13px] border focus:outline-none shadow-xs"
-                    style={{
-                      borderColor: dateFrom
-                        ? "var(--brand-primary)"
-                        : "var(--grid-border)",
-                      backgroundColor: "#fff",
-                      color: "var(--text-main)",
-                    }}
-                  />
-                </div>
-                <span className="text-gray-400 text-xs font-bold">~</span>
-                <input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  className="h-9 px-3 rounded-lg text-[13px] border focus:outline-none shadow-xs"
-                  style={{
-                    borderColor: dateTo
-                      ? "var(--brand-primary)"
-                      : "var(--grid-border)",
-                    backgroundColor: "#fff",
-                    color: "var(--text-main)",
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {hasActiveFilters && (
-                <button
-                  onClick={clearAllFilters}
-                  className="h-9 px-3 rounded-lg text-[12px] font-bold text-red-600 hover:bg-red-50 transition border border-transparent hover:border-red-100 cursor-pointer"
-                >
-                  Xóa bộ lọc
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            <table className="w-full text-left relative">
-              <thead
-                className="sticky top-0 z-10"
-                style={{
-                  backgroundColor: "var(--grid-header-bg)",
-                  borderBottom: "1px solid var(--grid-border)",
-                }}
-              >
-                <tr>
-                  {[
-                    "STT",
-                    "Mã yêu cầu",
-                    "Khách hàng",
-                    "Ngày nhận",
-                    "Trạng thái",
-                    "",
-                  ].map((h, i) => (
-                    <th
-                      key={i}
-                      className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${
-                        i === 0
-                          ? "text-center w-[50px]"
-                          : i === 4 || i === 5
-                          ? "text-right"
-                          : ""
-                      } ${i === 5 ? "w-[150px]" : ""}`}
-                      style={{ color: "var(--text-placeholder)" }}
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedRequirements.map((r, idx) => {
-                  const statusConfig =
-                    STATUS_CONFIG[r.status] || STATUS_CONFIG["Đang xử lý"];
-                  return (
-                    <tr
-                      key={r.id}
-                      onClick={() => setSelectedReqId(r.id)}
-                      className="group relative hover:bg-gray-50/50 transition-colors cursor-pointer"
-                      style={{ borderBottom: "1px solid var(--grid-border)" }}
-                    >
-                      <td
-                        className="px-4 py-3 text-center text-[13px] font-medium"
-                        style={{ color: "var(--text-secondary)" }}
-                      >
-                        {(currentPage - 1) * itemsPerPage + idx + 1}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className="text-[13px] font-bold font-mono"
-                          style={{ color: "var(--text-main)" }}
-                        >
-                          {r.code}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[12px] transition group-hover:bg-white border"
-                            style={{
-                              backgroundColor: "var(--bg-main)",
-                              color: "var(--text-placeholder)",
-                              borderColor: "var(--grid-border)",
-                            }}
-                          >
-                            {r.customer.charAt(0)}
-                          </div>
-                          <div>
-                            <p
-                              className="text-[13px] font-semibold"
-                              style={{ color: "var(--text-main)" }}
-                            >
-                              {r.customer}
-                            </p>
-                            <p
-                              className="text-[11px]"
-                              style={{ color: "var(--text-placeholder)" }}
-                            >
-                              {r.phone}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td
-                        className="px-4 py-3 text-[13px] font-medium"
-                        style={{ color: "var(--text-secondary)" }}
-                      >
-                        {r.createdDate?.split("-").reverse().join("/")}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span
-                          className="inline-flex items-center px-2.5 py-1 text-[11px] font-bold rounded-md whitespace-nowrap"
-                          style={{
-                            backgroundColor: statusConfig.bg,
-                            color: statusConfig.text,
-                            border: `1px solid ${statusConfig.border}`,
-                          }}
-                        >
-                          <span
-                            className="w-1.5 h-1.5 rounded-full mr-1.5"
-                            style={{ backgroundColor: statusConfig.text }}
-                          ></span>
-                          {r.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right w-[120px]">
-                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                          {r.status === "Đang xử lý" && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setCancelTarget(r);
-                              }}
-                              className="flex items-center gap-2 bg-white border border-red-200 text-red-600 px-3 py-1.5 rounded-xl shadow-lg hover:bg-red-50 active:scale-95 transition-all text-[10px] font-black uppercase tracking-wider outline-none whitespace-nowrap"
-                            >
-                              Hủy
-                            </button>
-                          )}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedReqId(r.id);
-                            }}
-                            className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-xl shadow-lg hover:bg-slate-50 active:scale-95 transition-all text-[10px] font-black uppercase tracking-wider outline-none whitespace-nowrap"
-                          >
-                            Chi tiết
-                            <Eye size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination Footer */}
-          {filtered.length > 0 && (
-            <div
-              className="flex items-center justify-between px-6 py-3 border-t shrink-0"
-              style={{
-                borderColor: "var(--grid-border)",
-                backgroundColor: "var(--bg-main)",
-              }}
-            >
-              <div
-                className="text-[13px]"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                Tổng số bản ghi:{" "}
-                <span
-                  className="font-bold"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  {filtered.length}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <span
-                    className="text-[13px]"
-                    style={{ color: "var(--text-secondary)" }}
-                  >
-                    Số bản ghi/trang
-                  </span>
-                  <select
-                    value={itemsPerPage}
-                    onChange={(e) => {
-                      setItemsPerPage(Number(e.target.value));
-                      setCurrentPage(1);
-                    }}
-                    className="h-8 px-2 pr-6 rounded-md text-[13px] border cursor-pointer focus:outline-none focus:ring-1 transition appearance-none"
-                    style={{
-                      borderColor: "var(--grid-border)",
-                      backgroundColor: "#fff",
-                      color: "var(--text-main)",
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-                      backgroundRepeat: "no-repeat",
-                      backgroundPosition: "right 8px center",
-                    }}
-                  >
-                    {[15, 30, 50, 100].map((size) => (
-                      <option key={size} value={size}>
-                        {size}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div
-                  className="text-[13px]"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  <span
-                    className="font-bold"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    {(currentPage - 1) * itemsPerPage + 1} -{" "}
-                    {Math.min(currentPage * itemsPerPage, filtered.length)}
-                  </span>{" "}
-                  bản ghi
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    <ChevronLeft size={16} strokeWidth={2.5} />
-                  </button>
-                  <button
-                    onClick={() =>
-                      setCurrentPage((p) => Math.min(totalPages, p + 1))
-                    }
-                    disabled={currentPage === totalPages || totalPages === 0}
-                    className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    <ChevronRight size={16} strokeWidth={2.5} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        />
 
         {/* Modal */}
         <RequirementDetailModal
           req={selectedReq}
           onClose={() => setSelectedReqId(null)}
           onEnlarge={(src) => setEnlargedImg(src)}
-          onOpenCancel={(r) => {
-            setCancelTarget(r);
-            setCancelSuccess(false);
-          }}
+          onOpenCancel={(r) => setCancelTarget(r)}
         />
 
-        <CancelRequestModal
-          target={cancelTarget}
-          onSuccess={handleCancelSubmit}
+        <ConfirmModal
+          isOpen={!!cancelTarget}
+          title="Xác nhận hủy yêu cầu?"
+          message={`Bạn có chắc chắn muốn hủy yêu cầu thiết kế mã ${cancelTarget?.code} của khách hàng ${cancelTarget?.customer}? Hành động này không thể hoàn tác.`}
+          onConfirm={() => handleCancelSubmit(cancelTarget)}
           onCancel={() => setCancelTarget(null)}
         />
 

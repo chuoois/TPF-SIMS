@@ -8,7 +8,8 @@
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
-import { Plus,
+import { 
+  Plus,
   Pencil,
   NotebookPen,
   X,
@@ -25,11 +26,17 @@ import { Plus,
   UserPlus,
   ChevronLeft,
   ChevronRight,
-  ShoppingCart, Package, ChevronDown } from "lucide-react";
+  ShoppingCart, 
+  Package, 
+  ChevronDown,
+  Eye,
+  Tag
+} from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
-import { INITIAL_ORDERS } from "../order-manage";
-import { MOCK_ORDERS_DETAIL } from "../order-manage/detail";
+import DataTable from "@/components/control/DataTable";
+import ConfirmModal from "@/components/control/ConfirmModal";
+import { INITIAL_ORDERS } from "../orders/mockData";
 
 // ===================== STATIC DATA =====================
 const INITIAL_CUSTOMERS = [
@@ -368,6 +375,8 @@ export default function SalesCustomerManage() {
   const [currentCustomer, setCurrentCustomer] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [genderFilter, setGenderFilter] = useState("Tất cả");
 
   // Form state
   const [form, setForm] = useState({
@@ -385,15 +394,26 @@ export default function SalesCustomerManage() {
 
   // Filtered customers
   const filtered = useMemo(() => {
-    if (!searchTerm.trim()) return customers;
-    const q = searchTerm.toLowerCase();
-    return customers.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.phone.includes(q) ||
-        c.code.toLowerCase().includes(q),
-    );
-  }, [searchTerm, customers]);
+    let result = customers;
+    
+    // Search
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase();
+      result = result.filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          c.phone.includes(q) ||
+          c.code.toLowerCase().includes(q),
+      );
+    }
+
+    // Gender Filter
+    if (genderFilter !== "Tất cả") {
+      result = result.filter(c => c.gender === genderFilter);
+    }
+
+    return result;
+  }, [searchTerm, customers, genderFilter]);
 
   // Reset trang về 1 khi tìm kiếm
   useEffect(() => {
@@ -507,6 +527,116 @@ export default function SalesCustomerManage() {
     if (formErrors[field]) setFormErrors((p) => ({ ...p, [field]: null }));
   };
 
+  // ===================== DATATABLE CONFIG =====================
+  const columns = [
+    {
+      header: "STT",
+      headerClassName: "w-[60px]",
+      render: (_, idx) => (
+        <span className="text-[12px] font-medium text-[var(--text-placeholder)]">
+          {(currentPage - 1) * itemsPerPage + idx + 1}
+        </span>
+      ),
+    },
+    {
+      header: "Khách hàng",
+      render: (c) => (
+        <div className="flex items-center gap-3">
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[12px] font-bold shrink-0"
+            style={{
+              backgroundColor: "var(--status-focus)",
+              color: "var(--brand-primary)",
+            }}
+          >
+            {c.name.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <p className="text-[13px] font-semibold text-[var(--text-main)]">
+              {c.name}
+            </p>
+            <p className="text-[10px] font-mono tracking-wide text-[var(--text-placeholder)]">
+              {c.code}
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "SĐT / Email",
+      render: (c) => (
+        <div>
+          <p className="text-[13px] font-medium text-[var(--text-main)]">
+            {c.phone}
+          </p>
+          <p className="text-[11px] text-[var(--text-placeholder)]">
+            {c.email || "—"}
+          </p>
+        </div>
+      ),
+    },
+    {
+      header: "Địa chỉ",
+      render: (c) => (
+        <p
+          className="text-[12px] max-w-[180px] truncate text-[var(--text-secondary)]"
+          title={c.address}
+        >
+          {c.address || "—"}
+        </p>
+      ),
+    },
+    {
+      header: "Ghi chú",
+      render: (c) => (
+        <div className="max-w-[180px]">
+          {c.note ? (
+            <p
+              className="text-[12px] italic line-clamp-2 text-[var(--text-secondary)]"
+              title={c.note}
+            >
+              {c.note}
+            </p>
+          ) : (
+            <span className="text-[12px] text-[var(--text-placeholder)]">—</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      header: "Ngày tạo",
+      render: (c) => (
+        <span className="text-[12px] text-[var(--text-placeholder)]">
+          {formatDate(c.createdAt)}
+        </span>
+      ),
+    },
+  ];
+
+  const rowActions = [
+    {
+      icon: Eye,
+      label: "Chi tiết & Lịch sử",
+      onClick: (c) => handleOpenHistory(c),
+    },
+    {
+      icon: Pencil,
+      label: "Sửa thông tin",
+      onClick: (c) => handleOpenEdit(c),
+    },
+    {
+      icon: NotebookPen,
+      label: "Ghi chú nhanh",
+      onClick: (c) => handleOpenNote(c),
+    },
+    {
+      icon: Trash2,
+      label: "Xóa",
+      onClick: (c) => setDeleteConfirm(c),
+      className: "text-red-500 hover:bg-red-50 hover:border-red-200",
+    },
+  ];
+
   // ===================== RENDER =====================
   return (
     <>
@@ -542,333 +672,80 @@ export default function SalesCustomerManage() {
           </Button>
         </div>
 
-        {/* Search + Table Card */}
-        <div
-          className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden"
-          style={{
-            boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
-          }}
-        >
-          {/* Search */}
-          <div
-            className="px-4 py-3 border-b shrink-0"
-            style={{ borderColor: "var(--grid-border)" }}
-          >
-            <div className="relative max-w-sm">
-              <Search
-                size={15}
-                className="absolute left-3 top-1/2 -translate-y-1/2"
-                style={{ color: "var(--text-placeholder)" }}
-              />
-              <input
-                type="text"
-                placeholder="Tìm tên, SĐT, mã KH..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
+        {/* DataTable Wrapper */}
+        <DataTable
+          columns={columns}
+          data={paginatedCustomers}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          searchPlaceholder="Tìm tên, SĐT, mã KH..."
+          rowActions={rowActions}
+          onRowClick={(c) => handleOpenEdit(c)}
+          selectedIds={selectedIds}
+          setSelectedIds={setSelectedIds}
+          bulkActions={[
+            {
+              label: "Xóa hàng loạt",
+              icon: Trash2,
+              onClick: () => {
+                setCustomers(prev => prev.filter(c => !selectedIds.includes(c.id)));
+                setSelectedIds([]);
+                toast.success(`Đã xóa ${selectedIds.length} khách hàng thành công`);
+              },
+              requireConfirm: true,
+              confirmTitle: "Xác nhận xóa hàng loạt?",
+              confirmMessage: `Bạn có chắc chắn muốn xóa ${selectedIds.length} khách hàng đã chọn?`,
+            }
+          ]}
+          extraFilters={
+            <div className="relative flex items-center">
+              <select
+                value={genderFilter}
+                onChange={(e) => setGenderFilter(e.target.value)}
+                className="h-10 px-3 pr-9 rounded-lg text-[13px] font-medium outline-none cursor-pointer focus:ring-2 transition appearance-none"
                 style={{
-                  border: "1px solid var(--grid-border)",
-                  backgroundColor: "var(--bg-main)",
-                  color: "var(--text-main)",
-                }}
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer"
-                  style={{ color: "var(--text-placeholder)" }}
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Table Container - Fixed Height Scroll */}
-          <div className="flex-1 overflow-y-auto">
-            <table className="w-full text-left relative">
-              <thead
-                className="sticky top-0 z-10"
-                style={{
-                  backgroundColor: "var(--grid-header-bg)",
-                  borderBottom: "1px solid var(--grid-border)",
+                  border:
+                    genderFilter !== "Tất cả"
+                      ? "1px solid var(--brand-primary)"
+                      : "1px solid var(--grid-border)",
+                  backgroundColor:
+                    genderFilter !== "Tất cả"
+                      ? "var(--status-focus)"
+                      : "#fff",
+                  color:
+                    genderFilter !== "Tất cả"
+                      ? "var(--brand-primary)"
+                      : "var(--text-main)",
                 }}
               >
-                <tr>
-                  {[
-                    "STT",
-                    "Khách hàng",
-                    "SĐT / Email",
-                    "Địa chỉ",
-                    "Ghi chú",
-                    "Ngày tạo",
-                    "",
-                  ].map((h, i) => (
-                    <th
-                      key={i}
-                      className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${i === 6 ? "text-right" : ""}`}
-                      style={{ color: "var(--text-placeholder)" }}
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedCustomers.map((c, idx) => (
-                  <tr
-                    key={c.id}
-                    className="hover:bg-gray-50/50 transition-colors"
-                    style={{ borderBottom: "1px solid var(--grid-border)" }}
-                  >
-                    <td
-                      className="px-4 py-3 text-[12px] font-medium"
-                      style={{ color: "var(--text-placeholder)" }}
-                    >
-                      {(currentPage - 1) * itemsPerPage + idx + 1}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-[12px] font-bold shrink-0"
-                          style={{
-                            backgroundColor: "var(--status-focus)",
-                            color: "var(--brand-primary)",
-                          }}
-                        >
-                          {c.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p
-                            className="text-[13px] font-semibold"
-                            style={{ color: "var(--text-main)" }}
-                          >
-                            {c.name}
-                          </p>
-                          <p
-                            className="text-[10px] font-mono tracking-wide"
-                            style={{ color: "var(--text-placeholder)" }}
-                          >
-                            {c.code}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <p
-                        className="text-[13px] font-medium"
-                        style={{ color: "var(--text-main)" }}
-                      >
-                        {c.phone}
-                      </p>
-                      <p
-                        className="text-[11px]"
-                        style={{ color: "var(--text-placeholder)" }}
-                      >
-                        {c.email || "—"}
-                      </p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <p
-                        className="text-[12px] max-w-[180px] truncate"
-                        style={{ color: "var(--text-secondary)" }}
-                        title={c.address}
-                      >
-                        {c.address || "—"}
-                      </p>
-                    </td>
-                    <td className="px-4 py-3 max-w-[180px]">
-                      {c.note ? (
-                        <p
-                          className="text-[12px] italic line-clamp-2"
-                          style={{ color: "var(--text-secondary)" }}
-                          title={c.note}
-                        >
-                          {c.note}
-                        </p>
-                      ) : (
-                        <span
-                          className="text-[12px]"
-                          style={{ color: "var(--text-placeholder)" }}
-                        >
-                          —
-                        </span>
-                      )}
-                    </td>
-                    <td
-                      className="px-4 py-3 text-[12px]"
-                      style={{ color: "var(--text-placeholder)" }}
-                    >
-                      {formatDate(c.createdAt)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex justify-end gap-1">
-                        <button
-                          onClick={() => handleOpenEdit(c)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100"
-                          style={{ color: "var(--text-placeholder)" }}
-                          title="Sửa"
-                        >
-                          <Pencil size={13} />
-                        </button>
-                        <button
-                          onClick={() => handleOpenHistory(c)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-blue-50 hover:text-blue-500"
-                          style={{ color: "var(--text-placeholder)" }}
-                          title="Lịch sử mua hàng"
-                        >
-                          <ShoppingCart size={13} />
-                        </button>
-                        <button
-                          onClick={() => handleOpenNote(c)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-amber-50"
-                          style={{ color: "var(--text-placeholder)" }}
-                          title="Ghi chú"
-                        >
-                          <NotebookPen size={13} />
-                        </button>
-                        <button
-                          onClick={() => setDeleteConfirm(c)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-red-50 hover:text-red-500"
-                          style={{ color: "var(--text-placeholder)" }}
-                          title="Xóa"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                <option value="Tất cả">Giới tính: Tất cả</option>
+                {GENDER_OPTIONS.map((g) => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
                 ))}
-                {paginatedCustomers.length === 0 && (
-                  <tr>
-                    <td colSpan="7" className="py-24 text-center">
-                      <div
-                        className="flex flex-col items-center gap-2"
-                        style={{ color: "var(--text-placeholder)" }}
-                      >
-                        <div
-                          className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                          style={{ backgroundColor: "var(--bg-main)" }}
-                        >
-                          <Users size={28} strokeWidth={1.5} />
-                        </div>
-                        <p className="text-sm font-medium mt-1">
-                          {searchTerm
-                            ? `Không tìm thấy "${searchTerm}"`
-                            : "Chưa có khách hàng nào"}
-                        </p>
-                        {searchTerm && (
-                          <button
-                            onClick={() => setSearchTerm("")}
-                            className="text-[13px] font-medium cursor-pointer"
-                            style={{ color: "var(--brand-primary)" }}
-                          >
-                            Xóa bộ lọc
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination Footer */}
-          {filtered.length > 0 && (
-            <div
-              className="flex items-center justify-between px-6 py-3 border-t shrink-0"
-              style={{
-                borderColor: "var(--grid-border)",
-                backgroundColor: "var(--bg-main)",
-              }}
-            >
-              <div
-                className="text-[13px]"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                Tổng số bản ghi:{" "}
-                <span
-                  className="font-bold"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  {filtered.length}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-6">
-                {/* Items per page indicator */}
-                <div className="flex items-center gap-2">
-                  <span
-                    className="text-[13px]"
-                    style={{ color: "var(--text-secondary)" }}
-                  >
-                    Số bản ghi/trang
-                  </span>
-                  <select
-                    value={itemsPerPage}
-                    onChange={(e) => {
-                      setItemsPerPage(Number(e.target.value));
-                      setCurrentPage(1); // Reset to page 1 when changing items per page
-                    }}
-                    className="h-8 px-2 pr-6 rounded-md text-[13px] border cursor-pointer focus:outline-none focus:ring-1 transition appearance-none"
-                    style={{
-                      borderColor: "var(--grid-border)",
-                      backgroundColor: "#fff",
-                      color: "var(--text-main)",
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-                      backgroundRepeat: "no-repeat",
-                      backgroundPosition: "right 8px center",
-                    }}
-                  >
-                    {[15, 30, 50, 100].map((size) => (
-                      <option key={size} value={size}>
-                        {size}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Range Info */}
-                <div
-                  className="text-[13px]"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  <span
-                    className="font-bold"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    {(currentPage - 1) * itemsPerPage + 1} -{" "}
-                    {Math.min(currentPage * itemsPerPage, filtered.length)}
-                  </span>{" "}
-                  bản ghi
-                </div>
-
-                {/* Arrows */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    <ChevronLeft size={16} strokeWidth={2.5} />
-                  </button>
-                  <button
-                    onClick={() =>
-                      setCurrentPage((p) => Math.min(totalPages, p + 1))
-                    }
-                    disabled={currentPage === totalPages || totalPages === 0}
-                    className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
-                    style={{ color: "var(--text-main)" }}
-                  >
-                    <ChevronRight size={16} strokeWidth={2.5} />
-                  </button>
-                </div>
-              </div>
+              </select>
+              <ChevronDown
+                size={14}
+                className="absolute right-3 pointer-events-none opacity-50"
+                style={{
+                  color:
+                    genderFilter !== "Tất cả"
+                      ? "var(--brand-primary)"
+                      : "var(--text-main)",
+                }}
+                strokeWidth={2.5}
+              />
             </div>
-          )}
-        </div>
+          }
+          pagination={{
+            total: filtered.length,
+            currentPage,
+            setCurrentPage,
+            itemsPerPage,
+            setItemsPerPage,
+          }}
+        />
       </div>
 
       {/* ═══ MODAL: CREATE / EDIT ═══ */}
@@ -879,7 +756,7 @@ export default function SalesCustomerManage() {
             onClick={() => setIsFormOpen(false)}
           />
           <div
-            className="relative bg-white rounded-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95"
+            className="relative bg-white rounded-lg w-full max-w-lg overflow-hidden animate-in zoom-in-95"
             style={{ boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
           >
             {/* Header */}
@@ -1155,7 +1032,7 @@ export default function SalesCustomerManage() {
             onClick={() => setIsNoteOpen(false)}
           />
           <div
-            className="relative bg-white rounded-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95"
+            className="relative bg-white rounded-lg w-full max-w-md overflow-hidden animate-in zoom-in-95"
             style={{ boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
           >
             <div
@@ -1207,7 +1084,7 @@ export default function SalesCustomerManage() {
                 />
               </div>
               <div
-                className="rounded-xl p-3"
+                className="rounded-lg p-3"
                 style={{
                   backgroundColor: "#FFF7ED",
                   border: "1px solid #FED7AA",
@@ -1256,7 +1133,7 @@ export default function SalesCustomerManage() {
             onClick={() => setIsHistoryOpen(false)}
           />
           <div
-            className="relative bg-white rounded-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95"
+            className="relative bg-white rounded-lg w-full max-w-2xl overflow-hidden animate-in zoom-in-95"
             style={{ boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
           >
             <div
@@ -1373,11 +1250,11 @@ export default function SalesCustomerManage() {
                 </div>
               ) : (
                 <div className="text-center py-10">
-                   <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                       <ShoppingCart size={20} style={{ color: "var(--text-placeholder)" }} />
-                   </div>
-                   <p className="text-[13px] font-medium" style={{ color: "var(--text-main)" }}>Chưa có đơn hàng nào</p>
-                   <p className="text-[12px] mt-1" style={{ color: "var(--text-placeholder)" }}>Khách hàng này chưa thực hiện giao dịch nào.</p>
+                  <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <ShoppingCart size={20} style={{ color: "var(--text-placeholder)" }} />
+                  </div>
+                  <p className="text-[13px] font-medium" style={{ color: "var(--text-main)" }}>Chưa có đơn hàng nào</p>
+                  <p className="text-[12px] mt-1" style={{ color: "var(--text-placeholder)" }}>Khách hàng này chưa thực hiện giao dịch nào.</p>
                 </div>
               )}
             </div>
@@ -1385,71 +1262,14 @@ export default function SalesCustomerManage() {
         </div>
       )}
 
-
-      {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
-            onClick={() => setDeleteConfirm(null)}
-          />
-          <div
-            className="relative bg-white rounded-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95"
-            style={{ boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
-          >
-            <div className="p-5 space-y-4">
-              <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto"
-                style={{
-                  backgroundColor: "#FEE2E2",
-                  color: "var(--status-error)",
-                }}
-              >
-                <Trash2 size={22} />
-              </div>
-              <div className="text-center">
-                <h3
-                  className="text-[15px] font-bold"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  Xác nhận xóa
-                </h3>
-                <p
-                  className="text-[13px] mt-2"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  Bạn có chắc muốn xóa khách hàng{" "}
-                  <strong style={{ color: "var(--text-main)" }}>
-                    {deleteConfirm.name}
-                  </strong>
-                  ?
-                </p>
-                <p
-                  className="text-[11px] mt-1"
-                  style={{ color: "var(--text-placeholder)" }}
-                >
-                  Hành động này không thể hoàn tác.
-                </p>
-              </div>
-              <div className="flex gap-2.5 pt-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setDeleteConfirm(null)}
-                  className="flex-1 rounded-lg cursor-pointer text-[13px]"
-                >
-                  Hủy
-                </Button>
-                <Button
-                  onClick={handleDelete}
-                  className="flex-1 rounded-lg text-[13px] font-bold text-white cursor-pointer"
-                  style={{ backgroundColor: "var(--status-error)" }}
-                >
-                  Xóa
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        isOpen={!!deleteConfirm}
+        title="Xác nhận xóa khách hàng"
+        message={`Bạn có chắc chắn muốn xóa khách hàng "${deleteConfirm?.name}"? Hành động này không thể hoàn tác.`}
+        confirmText="Xóa khách hàng"
+        onCancel={() => setDeleteConfirm(null)}
+        onConfirm={handleDelete}
+      />
     </>
   );
 }

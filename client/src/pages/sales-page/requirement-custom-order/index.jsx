@@ -120,7 +120,7 @@ const createEmptyTab = () => ({
 
 // ===================== SHARED INPUT STYLE =====================
 const inputBase =
-  "w-full text-[13px] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all bg-white border border-gray-200 hover:border-gray-300";
+  "w-full text-[13px] rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all bg-white border border-gray-200 hover:border-gray-300";
 const inputStyle = {
   color: "var(--text-main)",
 };
@@ -315,7 +315,7 @@ export default function CustomOrderRequirementsPage() {
       >
         {/* ═══════════════ LEFT — ORDER ITEMS ═══════════════ */}
         <div
-          className="flex flex-col w-[56%] bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100"
+          className="flex flex-col w-[56%] bg-white rounded-lg overflow-hidden border border-slate-200"
         >
           {/* Enhanced Tab Bar Header */}
           <div
@@ -323,7 +323,7 @@ export default function CustomOrderRequirementsPage() {
             style={{ borderColor: "var(--grid-border)", backgroundColor: "var(--grid-header-bg)" }}
           >
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]">
+              <div className="p-2 rounded-lg bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]">
                 <Receipt size={18} />
               </div>
               <div>
@@ -334,7 +334,7 @@ export default function CustomOrderRequirementsPage() {
 
             <button
               onClick={() => setShowAddForm(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-black tracking-wider transition-all cursor-pointer shadow-sm hover:shadow-md hover:translate-y-[-1px] active:translate-y-[0px] uppercase"
+              className="flex items-center gap-2 px-3.5 h-9 rounded-lg text-[12px] font-black tracking-wider transition-all cursor-pointer uppercase border border-[var(--brand-primary)]/20 hover:bg-[var(--brand-primary)]/5 active:scale-95"
               style={{
                 backgroundColor: "var(--brand-primary)",
                 color: "white",
@@ -355,8 +355,8 @@ export default function CustomOrderRequirementsPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTabId(tab.id)}
-                  className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-[13px] whitespace-nowrap transition-all shrink-0 cursor-pointer border ${
-                    isActive ? "font-bold shadow-sm" : "border-transparent text-slate-400 hover:bg-slate-50"
+                  className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] whitespace-nowrap transition-all shrink-0 cursor-pointer border ${
+                    isActive ? "font-bold" : "border-transparent text-slate-400 hover:bg-slate-50"
                   }`}
                   style={isActive ? {
                     backgroundColor: "var(--status-focus)",
@@ -368,7 +368,7 @@ export default function CustomOrderRequirementsPage() {
                   <span>Phiếu {idx + 1}</span>
                   {tab.cartItems.length > 0 && (
                     <span
-                      className={`text-[10px] font-black px-1.5 py-0.5 rounded-md leading-none transition-colors ${
+                      className={`text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none transition-colors ${
                         isActive ? "bg-[var(--brand-primary)] text-white" : "bg-slate-200 text-slate-500"
                       }`}
                     >
@@ -388,7 +388,7 @@ export default function CustomOrderRequirementsPage() {
             
             <button
               onClick={addTab}
-              className="w-8 h-8 rounded-xl flex items-center justify-center transition shrink-0 cursor-pointer hover:bg-slate-50 text-slate-400 border border-transparent hover:border-slate-100"
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition shrink-0 cursor-pointer hover:bg-slate-50 text-slate-400 border border-transparent hover:border-slate-100"
               title="Thêm yêu cầu mới"
             >
               <Plus size={16} />
@@ -406,7 +406,7 @@ export default function CustomOrderRequirementsPage() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] flex items-center justify-center shadow-sm">
+                  <div className="w-10 h-10 rounded-lg bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] flex items-center justify-center">
                     <Package size={20} />
                   </div>
                   <div>
@@ -432,7 +432,7 @@ export default function CustomOrderRequirementsPage() {
                       images: [],
                     });
                   }}
-                  className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white hover:shadow-sm transition-all cursor-pointer text-slate-300 hover:text-slate-600"
+                  className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white active:scale-95 transition-all cursor-pointer text-slate-300 hover:text-slate-600 border border-transparent hover:border-slate-100"
                 >
                   <X size={20} />
                 </button>
@@ -475,12 +475,12 @@ export default function CustomOrderRequirementsPage() {
                         style={{ ...inputStyle, backgroundColor: "white" }}
                       />
                       {showWoodDropdown && (
-                        <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-2xl shadow-xl z-50 overflow-hidden border-slate-100 ring-1 ring-black/5">
+                        <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow-xl z-50 overflow-hidden border-slate-100 ring-1 ring-black/5">
                           <div className="max-h-48 overflow-y-auto p-1">
                             {WOOD_TYPES.filter((w) => w.toLowerCase().includes(newItem.woodType.toLowerCase())).map((w) => (
                               <div
                                 key={w}
-                                className="px-3 py-2.5 text-[13px] cursor-pointer transition rounded-xl hover:bg-slate-50 font-bold text-slate-700"
+                                className="px-3 py-2.5 text-[13px] cursor-pointer transition rounded-lg hover:bg-slate-50 font-bold text-slate-700"
                                 onMouseDown={(e) => {
                                   e.preventDefault();
                                   updateNewItem("woodType", w);
@@ -515,12 +515,12 @@ export default function CustomOrderRequirementsPage() {
                         style={{ ...inputStyle, backgroundColor: "white" }}
                       />
                       {showColorDropdown && (
-                        <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-2xl shadow-xl z-50 overflow-hidden border-slate-100 ring-1 ring-black/5">
+                        <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow-xl z-50 overflow-hidden border-slate-100 ring-1 ring-black/5">
                           <div className="max-h-48 overflow-y-auto p-1">
                             {COLORS.filter((c) => c.toLowerCase().includes(newItem.color.toLowerCase())).map((c) => (
                               <div
                                 key={c}
-                                className="px-3 py-2.5 text-[13px] cursor-pointer transition rounded-xl hover:bg-slate-50 font-bold text-slate-700"
+                                className="px-3 py-2.5 text-[13px] cursor-pointer transition rounded-lg hover:bg-slate-50 font-bold text-slate-700"
                                 onMouseDown={(e) => {
                                   e.preventDefault();
                                   updateNewItem("color", c);
@@ -584,7 +584,7 @@ export default function CustomOrderRequirementsPage() {
                 <div className="flex items-end justify-between pt-2">
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
-                      <label className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-black uppercase tracking-wider cursor-pointer transition-all bg-white border border-dashed border-slate-200 text-slate-500 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] hover:bg-white shadow-sm">
+                      <label className="flex items-center gap-2 px-3.5 h-9 rounded-lg text-[12px] font-black uppercase tracking-wider cursor-pointer transition-all bg-white border border-dashed border-slate-200 text-slate-500 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] hover:bg-white">
                         <ImagePlus size={16} /> Thêm ảnh mẫu
                         <input
                           type="file"
@@ -614,7 +614,7 @@ export default function CustomOrderRequirementsPage() {
                               <img src={img} alt="" className="w-full h-full object-cover" />
                               <button
                                 onClick={() => setNewItem((prev) => ({ ...prev, images: prev.images.filter((_, idx) => idx !== i) }))}
-                                className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition shadow-inner"
+                                className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition"
                               >
                                 <X size={14} className="text-white" />
                               </button>
@@ -638,28 +638,28 @@ export default function CustomOrderRequirementsPage() {
                         setNewItem({
                           productName: "",
                           woodType: "",
-                          length: "",
-                          width: "",
-                          height: "",
-                          color: "",
-                          quantity: 1,
-                          note: "",
-                          images: [],
-                        });
-                      }}
-                      className="px-6 py-2.5 rounded-xl text-[12px] font-black uppercase tracking-wider text-slate-400 hover:text-slate-600 transition-colors"
-                    >
-                      Hủy
-                    </button>
-                    <Button
-                      onClick={addCustomItem}
-                      disabled={!newItem.productName.trim()}
-                      className="px-8 h-10 rounded-xl text-[13px] font-black uppercase tracking-wider shadow-lg shadow-[var(--brand-primary)]/20 hover:translate-y-[-1px] transition-all"
-                      style={{ backgroundColor: "var(--brand-primary)", color: "white" }}
-                    >
-                      {editingItemId ? "Lưu thay đổi" : "Thêm vào danh sách"}
-                    </Button>
-                  </div>
+                           length: "",
+                           width: "",
+                           height: "",
+                           color: "",
+                           quantity: 1,
+                           note: "",
+                           images: [],
+                         });
+                       }}
+                       className="px-4 h-9 rounded-lg text-[12px] font-black uppercase tracking-wider text-slate-400 hover:text-slate-600 transition-colors"
+                     >
+                       Hủy
+                     </button>
+                     <Button
+                       onClick={addCustomItem}
+                       disabled={!newItem.productName.trim()}
+                       className="px-6 h-9 rounded-lg text-[13px] font-black uppercase tracking-wider hover:translate-y-[-1px] transition-all"
+                       style={{ backgroundColor: "var(--brand-primary)", color: "white" }}
+                     >
+                       {editingItemId ? "Lưu thay đổi" : "Thêm vào danh sách"}
+                     </Button>
+                   </div>
                 </div>
               </div>
             </div>
@@ -672,7 +672,7 @@ export default function CustomOrderRequirementsPage() {
                 className="flex flex-col items-center justify-center h-full gap-2 p-10 text-center"
               >
                 <div
-                  className="w-24 h-24 rounded-[2rem] flex items-center justify-center bg-slate-50 text-slate-300 shadow-inner"
+                  className="w-24 h-24 rounded-lg flex items-center justify-center bg-slate-50 text-slate-300"
                 >
                   <Package size={42} strokeWidth={1} />
                 </div>
@@ -682,7 +682,7 @@ export default function CustomOrderRequirementsPage() {
                 </div>
                 <button
                   onClick={() => setShowAddForm(true)}
-                  className="mt-6 flex items-center gap-2 px-8 py-3 rounded-2xl text-[13px] font-black transition-all cursor-pointer bg-[var(--brand-primary)] text-white shadow-lg shadow-[var(--brand-primary)]/20 hover:scale-105 active:scale-95 uppercase tracking-wider"
+                  className="mt-6 flex items-center gap-2 px-6 h-9 rounded-lg text-[13px] font-black transition-all cursor-pointer bg-[var(--brand-primary)] text-white hover:scale-105 active:scale-95 uppercase tracking-wider"
                 >
                   <Plus size={18} strokeWidth={3} /> Thêm ngay
                 </button>
@@ -741,11 +741,11 @@ export default function CustomOrderRequirementsPage() {
                                 key={i}
                                 src={img}
                                 alt=""
-                                className="w-12 h-12 object-cover rounded-xl border border-slate-100 shadow-sm"
+                                className="w-12 h-12 object-cover rounded-lg border border-slate-100 shadow-sm"
                               />
                             ))}
                             {item.images.length > 4 && (
-                                <div className="w-12 h-12 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-center text-[10px] font-black text-slate-400">
+                                <div className="w-12 h-12 rounded-lg border border-slate-100 bg-slate-50 flex items-center justify-center text-[10px] font-black text-slate-400">
                                     +{item.images.length - 4}
                                 </div>
                             )}
@@ -756,7 +756,7 @@ export default function CustomOrderRequirementsPage() {
                       {/* Right Group: Quantity + Actions */}
                       <div className="flex flex-col items-end gap-3 shrink-0">
                         {/* Quantity controls */}
-                        <div className="flex items-center gap-1 bg-white p-1 rounded-xl shadow-sm border border-slate-100">
+                        <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-100">
                           <button
                             onClick={() => updateQuantity(item.id, -1)}
                             className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer hover:bg-slate-50 text-slate-400 hover:text-rose-500"
@@ -782,21 +782,21 @@ export default function CustomOrderRequirementsPage() {
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => setViewingItem(item)}
-                            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer bg-blue-50 text-blue-600 hover:bg-blue-100"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer bg-blue-50 text-blue-600 hover:bg-blue-100"
                             title="Xem chi tiết"
                           >
                             <Eye size={16} />
                           </button>
                           <button
                             onClick={() => handleEditItem(item)}
-                            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer bg-slate-50 text-slate-600 hover:bg-slate-200"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer bg-slate-50 text-slate-600 hover:bg-slate-200"
                             title="Sửa"
                           >
                             <Pencil size={16} />
                           </button>
                           <button
                             onClick={() => removeFromCart(item.id)}
-                            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer bg-rose-50 text-rose-600 hover:bg-rose-100"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer bg-rose-50 text-rose-600 hover:bg-rose-100"
                             title="Xóa khỏi danh sách"
                           >
                             <Trash2 size={16} />
@@ -827,7 +827,7 @@ export default function CustomOrderRequirementsPage() {
               className="flex items-center gap-3 px-5 py-3 border-b"
               style={{ borderColor: "var(--grid-border)" }}
             >
-              <div className="w-8 h-8 rounded-xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-300">
+              <div className="w-8 h-8 rounded-lg bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-300">
                 <Pencil size={14} />
               </div>
               <input
@@ -842,19 +842,19 @@ export default function CustomOrderRequirementsPage() {
 
             {/* Checkout bar */}
             <div
-              className="flex items-center justify-between px-6 py-5"
+              className="flex items-center justify-between px-6 py-4"
             >
               <div className="flex flex-col">
                 <p className="text-[10px] uppercase tracking-[0.2em] font-black text-slate-400">
                   Tổng số lượng sản phẩm
                 </p>
                 <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-3xl font-black text-slate-800 leading-none">{itemCount}</span>
-                  <span className="text-[13px] font-black text-slate-400 uppercase tracking-widest">Sản phẩm</span>
+                  <span className="text-2xl font-black text-slate-800 leading-none">{itemCount}</span>
+                  <span className="text-[12px] font-black text-slate-400 uppercase tracking-widest">Sản phẩm</span>
                 </div>
               </div>
               <Button
-                className="h-14 px-12 text-[15px] font-black uppercase tracking-wider text-white rounded-2xl transition-all duration-300 active:scale-95 cursor-pointer disabled:opacity-30 flex items-center gap-3 group shadow-xl shadow-[var(--brand-primary)]/20 hover:shadow-2xl hover:translate-y-[-2px]"
+                className="h-11 px-8 text-[14px] font-black uppercase tracking-wider text-white rounded-lg transition-all duration-300 active:scale-95 cursor-pointer disabled:opacity-30"
                 style={{
                   backgroundColor: "var(--brand-primary)",
                 }}
@@ -862,9 +862,6 @@ export default function CustomOrderRequirementsPage() {
                 onClick={handleCreateOrder}
               >
                 Gửi yêu cầu ngay
-                <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center group-hover:rotate-12 transition-transform">
-                    <CheckCircle2 size={16} className="text-white" />
-                </div>
               </Button>
             </div>
           </div>
@@ -872,15 +869,15 @@ export default function CustomOrderRequirementsPage() {
 
         {/* ═══════════════ RIGHT — CUSTOMER & DELIVERY ═══════════════ */}
         <div
-          className="flex flex-col w-[44%] bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100"
+          className="flex flex-col w-[44%] bg-white rounded-lg overflow-hidden border border-slate-200"
         >
           {/* Order Info Header */}
           <div
-            className="flex items-center justify-between px-5 py-4 border-b bg-slate-50/50"
+            className="flex items-center justify-between px-5 py-4 border-b bg-[var(--grid-header-bg)]"
             style={{ borderColor: "var(--grid-border)" }}
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-white shadow-sm border border-slate-100 text-slate-400">
+              <div className="p-2 rounded-lg bg-white border border-slate-100 text-slate-400">
                 <FileText size={16} />
               </div>
               <div>
@@ -893,7 +890,7 @@ export default function CustomOrderRequirementsPage() {
               </div>
             </div>
             <div
-              className="px-3 py-1.5 rounded-xl flex items-center gap-2 border shadow-sm"
+              className="px-2.5 py-1 rounded-lg flex items-center gap-2 border"
               style={{
                 backgroundColor: "var(--status-focus)",
                 color: "var(--brand-primary)",
@@ -921,8 +918,8 @@ export default function CustomOrderRequirementsPage() {
                 {/* Customer Search Bar */}
                 <div className="relative flex items-center gap-1.5 w-[65%]" ref={customerSearchRef}>
                   {activeTab.selectedCustomer ? (
-                    <div className="flex items-center gap-2.5 px-3 py-2 flex-1 min-w-0 rounded-2xl bg-indigo-50/50 border border-indigo-100 shadow-sm animate-in zoom-in-95">
-                      <div className="w-8 h-8 rounded-xl bg-indigo-500 flex items-center justify-center shrink-0 shadow-sm">
+                    <div className="flex items-center gap-2.5 px-3 py-2 flex-1 min-w-0 rounded-lg bg-indigo-50/50 border border-indigo-100 animate-in zoom-in-95">
+                      <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center shrink-0">
                         <User size={14} className="text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -938,14 +935,14 @@ export default function CustomOrderRequirementsPage() {
                           updateActiveTab({ selectedCustomer: null, customerName: "", customerPhone: "" });
                           setCustomerSearch("");
                         }}
-                        className="w-7 h-7 flex items-center justify-center rounded-xl hover:bg-white transition-all cursor-pointer text-indigo-400 hover:text-rose-500 shadow-sm border border-transparent hover:border-rose-100"
+                        className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white transition-all cursor-pointer text-indigo-400 hover:text-rose-500 border border-transparent hover:border-rose-100"
                       >
                         <X size={16} />
                       </button>
                     </div>
                   ) : (
-                    <div className={`flex items-center gap-1.5 px-3.5 flex-1 min-w-0 rounded-2xl bg-white border transition-all ${
-                        showCustomerDropdown ? "ring-4 ring-indigo-500/10 border-indigo-500/30" : "border-slate-200 hover:border-slate-300 shadow-sm"
+                    <div className={`flex items-center gap-1.5 px-3.5 flex-1 min-w-0 rounded-lg bg-white border transition-all ${
+                        showCustomerDropdown ? "ring-4 ring-indigo-500/10 border-indigo-500/30" : "border-slate-200 hover:border-slate-300"
                       }`}>
                       <Search size={14} className="text-slate-400 shrink-0" />
                       <input
@@ -963,7 +960,7 @@ export default function CustomOrderRequirementsPage() {
                       />
                       <button
                         onClick={() => setShowAddCustomer(true)}
-                        className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-all bg-indigo-50 text-indigo-600 hover:bg-indigo-100 shadow-sm shrink-0"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-all bg-indigo-50 text-indigo-600 hover:bg-indigo-100 shrink-0"
                         title="Thêm mới"
                       >
                         <UserPlus size={16} />
@@ -973,7 +970,7 @@ export default function CustomOrderRequirementsPage() {
 
                   {/* Customer search dropdown */}
                   {showCustomerDropdown && customerSearch.trim() && (
-                    <div className="absolute right-0 top-full mt-2 w-full bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[60] ring-1 ring-black/5 animate-in slide-in-from-top-2">
+                    <div className="absolute right-0 top-full mt-2 w-full bg-white rounded-lg shadow-lg border border-slate-100 overflow-hidden z-[60] ring-1 ring-black/5 animate-in slide-in-from-top-2">
                       {customerResults.length > 0 ? (
                         <div className="max-h-[250px] overflow-y-auto p-1.5 custom-scrollbar">
                           {customerResults.map((c) => (
@@ -985,9 +982,9 @@ export default function CustomOrderRequirementsPage() {
                                 setCustomerSearch("");
                                 setShowCustomerDropdown(false);
                               }}
-                              className="w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl hover:bg-slate-50 transition-colors cursor-pointer group"
+                              className="w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg hover:bg-slate-50 transition-colors cursor-pointer group"
                             >
-                              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-[12px] font-black bg-slate-100 text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 text-[12px] font-black bg-slate-100 text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
                                 {c.name.charAt(0)}
                               </div>
                               <div className="flex-1 min-w-0">
@@ -1024,7 +1021,7 @@ export default function CustomOrderRequirementsPage() {
                       value={activeTab.customerName}
                       onChange={(e) => updateActiveTab({ customerName: e.target.value })}
                       className={`${inputBase} pl-10`}
-                      style={{ ...inputStyle, backgroundColor: "white", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.02)" }}
+                      style={{ ...inputStyle, backgroundColor: "white" }}
                     />
                   </div>
                 </div>
@@ -1038,7 +1035,7 @@ export default function CustomOrderRequirementsPage() {
                       value={activeTab.customerPhone}
                       onChange={(e) => updateActiveTab({ customerPhone: e.target.value })}
                       className={`${inputBase} pl-10`}
-                      style={{ ...inputStyle, backgroundColor: "white", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.02)" }}
+                      style={{ ...inputStyle, backgroundColor: "white" }}
                     />
                   </div>
                 </div>
@@ -1063,7 +1060,7 @@ export default function CustomOrderRequirementsPage() {
                     value={activeTab.deliveryInfo.address}
                     onChange={(e) => updateDelivery("address", e.target.value)}
                     className={`${inputBase} pl-10 py-3 resize-none min-h-[60px]`}
-                    style={{ ...inputStyle, backgroundColor: "white", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.02)" }}
+                    style={{ ...inputStyle, backgroundColor: "white" }}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -1093,9 +1090,9 @@ export default function CustomOrderRequirementsPage() {
 
             {/* Note Section */}
             <div className="p-5">
-              <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-100/50 shadow-inner">
+              <div className="p-4 rounded-lg bg-amber-50/50 border border-amber-100/50">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600 shadow-sm shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
                     <Lightbulb size={16} />
                   </div>
                   <div>
@@ -1130,12 +1127,12 @@ export default function CustomOrderRequirementsPage() {
       {viewingItem && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
           <div
-            className="bg-white rounded-[2.5rem] w-full max-w-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-500 border border-white"
+            className="bg-white rounded-lg w-full max-w-3xl overflow-hidden shadow-xl animate-in zoom-in-95 duration-500 border border-white"
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between px-8 py-6 border-b border-slate-50 bg-slate-50/50">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] flex items-center justify-center shadow-sm">
+                <div className="w-12 h-12 rounded-lg bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] flex items-center justify-center">
                     <Hammer size={24} />
                 </div>
                 <div>
@@ -1145,7 +1142,7 @@ export default function CustomOrderRequirementsPage() {
               </div>
               <button
                 onClick={() => setViewingItem(null)}
-                className="w-10 h-10 rounded-2xl flex items-center justify-center hover:bg-white hover:shadow-md text-slate-300 hover:text-slate-900 transition-all cursor-pointer"
+                className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-white text-slate-300 hover:text-slate-900 transition-all cursor-pointer"
               >
                 <X size={24} />
               </button>
@@ -1160,13 +1157,13 @@ export default function CustomOrderRequirementsPage() {
                   {viewingItem.images && viewingItem.images.length > 0 ? (
                     <div className="grid grid-cols-2 gap-3">
                       {viewingItem.images.map((img, i) => (
-                        <div key={i} className="aspect-square rounded-3xl overflow-hidden border border-slate-100 shadow-sm relative group">
+                        <div key={i} className="aspect-square rounded-lg overflow-hidden border border-slate-100 relative group">
                           <img src={img} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="aspect-square rounded-[2rem] bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3 text-slate-300">
+                    <div className="aspect-square rounded-lg bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3 text-slate-300">
                       <Camera size={32} strokeWidth={1} />
                       <span className="text-[11px] font-black uppercase tracking-widest">Không có ảnh mẫu</span>
                     </div>
@@ -1177,16 +1174,16 @@ export default function CustomOrderRequirementsPage() {
                 <div className="w-full md:w-[55%] space-y-6 text-left">
                   <div className="space-y-2">
                     <h2 className="text-[26px] font-black text-slate-800 leading-tight">{viewingItem.productName}</h2>
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-orange-50 text-orange-600 border border-orange-100">
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-50 text-orange-600 border border-orange-100">
                         <Star size={12} fill="currentColor" />
                         <span className="text-[11px] font-black uppercase tracking-wider">Hàng thiết kế riêng</span>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 gap-4">
-                    <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-between group hover:border-[var(--brand-primary)] transition-colors">
+                    <div className="p-4 rounded-lg bg-white border border-slate-100 flex items-center justify-between group hover:border-[var(--brand-primary)] transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
+                        <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
                             <TreePine size={18} />
                         </div>
                         <span className="text-[13px] font-black text-slate-400 uppercase tracking-widest">Chất liệu</span>
@@ -1194,9 +1191,9 @@ export default function CustomOrderRequirementsPage() {
                       <span className="text-[15px] font-black text-slate-700">{viewingItem.woodType || "—"}</span>
                     </div>
                     
-                    <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-between group hover:border-[var(--brand-primary)] transition-colors">
+                    <div className="p-4 rounded-lg bg-white border border-slate-100 flex items-center justify-between group hover:border-[var(--brand-primary)] transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
+                        <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
                             <Palette size={18} />
                         </div>
                         <span className="text-[13px] font-black text-slate-400 uppercase tracking-widest">Màu sắc</span>
@@ -1204,9 +1201,9 @@ export default function CustomOrderRequirementsPage() {
                       <span className="text-[15px] font-black text-slate-700">{viewingItem.color || "—"}</span>
                     </div>
 
-                    <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-between group hover:border-[var(--brand-primary)] transition-colors">
+                    <div className="p-4 rounded-lg bg-white border border-slate-100 flex items-center justify-between group hover:border-[var(--brand-primary)] transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                        <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
                             <Ruler size={18} />
                         </div>
                         <span className="text-[13px] font-black text-slate-400 uppercase tracking-widest">Kích thước</span>
@@ -1219,17 +1216,17 @@ export default function CustomOrderRequirementsPage() {
 
               {/* Note Section */}
               {viewingItem.note && (
-                <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100 relative overflow-hidden group">
+                <div className="p-6 rounded-lg bg-slate-50 border border-slate-100 relative overflow-hidden group">
                   <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                       <ClipboardEdit size={80} strokeWidth={1} />
                   </div>
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
                         <ClipboardEdit size={18} />
                     </div>
                     <span className="text-[12px] font-black text-indigo-900 uppercase tracking-[0.2em]">Yêu cầu bổ sung kỹ thuật</span>
                   </div>
-                  <p className="text-[14px] font-bold text-slate-600 leading-relaxed italic relative z-10 bg-white/50 p-4 rounded-xl shadow-inner">
+                  <p className="text-[14px] font-bold text-slate-600 leading-relaxed italic relative z-10 bg-white/50 p-4 rounded-lg">
                     "{viewingItem.note}"
                   </p>
                 </div>
@@ -1239,7 +1236,7 @@ export default function CustomOrderRequirementsPage() {
             <div className="px-8 py-6 border-t border-slate-50 bg-slate-50/50 flex justify-end">
               <Button
                 onClick={() => setViewingItem(null)}
-                className="h-12 rounded-2xl px-12 font-black uppercase tracking-wider text-white shadow-lg shadow-[var(--brand-primary)]/20 hover:scale-105 active:scale-95 transition-all"
+                className="h-11 rounded-lg px-12 font-black uppercase tracking-wider text-white active:scale-95 transition-all"
                 style={{ backgroundColor: "var(--brand-primary)" }}
               >
                 Đã hiểu
