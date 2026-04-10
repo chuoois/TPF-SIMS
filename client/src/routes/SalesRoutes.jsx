@@ -2,8 +2,7 @@ import { SalesLayout } from "@/components/layouts/sales-layout/index";
 import SalesCustomerManage from "@/pages/sales-page/customer-manage";
 import InStockInvoicePage from "@/pages/sales-page/invoice-instock";
 import CustomOrderInvoicePage from "@/pages/sales-page/requirement-custom-order";
-import OrderManagePage from "@/pages/sales-page/order-manage";
-import SalesOrderDetail from "@/pages/sales-page/order-manage/detail";
+import Orders from "../pages/sales-page/orders";
 import SalesRequirements from "@/pages/sales-page/sales-requirements";
 
 /**
@@ -32,11 +31,7 @@ export const salesRoutes = {
     },
     {
       path: "dashboard/orders",
-      element: <OrderManagePage />,
-    },
-    {
-      path: "dashboard/orders/:id",
-      element: <SalesOrderDetail />,
+      element: <Orders />,
     },
     {
       path: "dashboard/requirements",

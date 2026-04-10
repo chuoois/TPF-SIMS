@@ -44,7 +44,7 @@ import {
   ToggleRight,
   Clock,
 } from "lucide-react";
-import { PrintableInvoice } from "../order-manage/detail";
+import { PrintableInvoice } from "../orders/components/PrintableInvoice";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
 import AddCustomerModal from "@/pages/sales-page/components/AddCustomerModal";
@@ -1167,7 +1167,7 @@ export default function InStockInvoicePage() {
       >
         {/* ═══════════════ LEFT PANEL – CART ═══════════════ */}
         <div
-          className="flex flex-col w-[56%] bg-white rounded-2xl overflow-hidden"
+          className="flex flex-col w-[56%] bg-white rounded-lg overflow-hidden"
           style={{
             boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
           }}
@@ -1243,7 +1243,7 @@ export default function InStockInvoicePage() {
                 style={{ color: "var(--text-placeholder)" }}
               >
                 <div
-                  className="w-20 h-20 rounded-2xl flex items-center justify-center"
+                  className="w-20 h-20 rounded-lg flex items-center justify-center"
                   style={{ backgroundColor: "var(--bg-main)" }}
                 >
                   <ShoppingCart size={32} strokeWidth={1.5} />
@@ -1525,7 +1525,7 @@ export default function InStockInvoicePage() {
                 {/* Customer search dropdown */}
                 {showCustomerDropdown && customerSearch.trim() && (
                   <div
-                    className="absolute left-0 bottom-full mb-1 w-full bg-white rounded-xl shadow-lg border overflow-hidden z-30"
+                    className="absolute left-0 bottom-full mb-1 w-full bg-white rounded-lg shadow-lg border overflow-hidden z-30"
                     style={{ borderColor: "var(--grid-border)" }}
                   >
                     {customerResults.length > 0 ? (
@@ -1849,7 +1849,7 @@ export default function InStockInvoicePage() {
                 </p>
               </div>
               <Button
-                className="h-11 px-8 text-sm font-bold text-white rounded-xl transition-all duration-200 active:scale-[0.97] cursor-pointer disabled:opacity-40"
+                className="h-11 px-8 text-sm font-bold text-white rounded-lg transition-all duration-200 active:scale-[0.97] cursor-pointer disabled:opacity-40"
                 style={{
                   backgroundColor: "var(--brand-primary)",
                   boxShadow:
@@ -1868,7 +1868,7 @@ export default function InStockInvoicePage() {
 
         {/* ═══════════════ RIGHT PANEL – PRODUCTS ═══════════════ */}
         <div
-          className="flex flex-col w-[44%] bg-white rounded-2xl overflow-hidden"
+          className="flex flex-col w-[44%] bg-white rounded-lg overflow-hidden"
           style={{
             boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
           }}
@@ -1877,7 +1877,7 @@ export default function InStockInvoicePage() {
           <div className="flex flex-col gap-3 px-4 pt-4 pb-3">
             <div className="flex gap-2">
               <div
-                className="flex-1 flex rounded-xl overflow-hidden"
+                className="flex-1 flex rounded-lg overflow-hidden"
                 style={{
                   border: "1px solid var(--grid-border)",
                   backgroundColor: "var(--bg-main)",
@@ -1909,7 +1909,7 @@ export default function InStockInvoicePage() {
 
               <button
                 onClick={() => setIsFilterDrawerOpen(true)}
-                className="relative p-2.5 rounded-xl transition cursor-pointer flex items-center justify-center bg-white hover:bg-gray-50 active:scale-95"
+                className="relative p-2.5 rounded-lg transition cursor-pointer flex items-center justify-center bg-white hover:bg-gray-50 active:scale-95"
                 style={{
                   border: "1px solid var(--grid-border)",
                   color:
@@ -1934,7 +1934,7 @@ export default function InStockInvoicePage() {
             {/* Toggle chọn loại giá cho Hàng mộc */}
             {productTypeTab === "Hàng mộc" && (
               <div
-                className="flex items-center rounded-xl overflow-hidden"
+                className="flex items-center rounded-lg overflow-hidden"
                 style={{
                   border: "1px solid var(--grid-border)",
                   backgroundColor: "var(--bg-main)",
@@ -2094,7 +2094,7 @@ export default function InStockInvoicePage() {
                 style={{ color: "var(--text-placeholder)" }}
               >
                 <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                  className="w-16 h-16 rounded-lg flex items-center justify-center"
                   style={{ backgroundColor: "var(--bg-main)" }}
                 >
                   <Package size={28} strokeWidth={1.5} />
@@ -2112,7 +2112,7 @@ export default function InStockInvoicePage() {
                       key={product.id}
                       onClick={() => addToCart(product)}
                       disabled={outOfStock}
-                      className={`group flex flex-col rounded-xl transition-all duration-200 text-left cursor-pointer relative overflow-hidden ${
+                      className={`group flex flex-col rounded-lg transition-all duration-200 text-left cursor-pointer relative overflow-hidden ${
                         outOfStock
                           ? "opacity-50 cursor-not-allowed grayscale"
                           : "hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-0.5"
@@ -2344,7 +2344,7 @@ export default function InStockInvoicePage() {
             {/* Modal Body */}
             <div className="flex flex-col md:flex-row p-6 gap-6 max-h-[80vh] overflow-y-auto">
               {/* Product Image */}
-              <div className="w-full md:w-1/2 aspect-square rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shadow-inner">
+              <div className="w-full md:w-1/2 aspect-square rounded-lg overflow-hidden bg-gray-50 border border-gray-100 shadow-inner">
                 <img
                   src={selectedProductForView.image}
                   alt={selectedProductForView.name}
@@ -2365,7 +2365,7 @@ export default function InStockInvoicePage() {
 
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                    <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                         Màu sắc
                       </p>
@@ -2375,7 +2375,7 @@ export default function InStockInvoicePage() {
                           : selectedProductForView.color || "—"}
                       </p>
                     </div>
-                    <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                    <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                         Kích thước
                       </p>
@@ -2398,7 +2398,7 @@ export default function InStockInvoicePage() {
                     </div>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                  <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                       Danh mục
                     </p>
@@ -2408,7 +2408,7 @@ export default function InStockInvoicePage() {
                   </div>
 
                   {selectedProductForView.discount > 0 ? (
-                    <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-left">
+                    <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-100 text-left">
                       <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
                         {selectedProductForView.productType === "Hàng mộc"
                           ? woodPriceMode === "finished"
@@ -2446,7 +2446,7 @@ export default function InStockInvoicePage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-left">
+                    <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-100 text-left">
                       <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
                         {selectedProductForView.productType === "Hàng mộc"
                           ? woodPriceMode === "finished"
@@ -2469,7 +2469,7 @@ export default function InStockInvoicePage() {
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-100">
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-100">
                     <Package size={14} className="text-amber-600" />
                     <span className="text-[13px] font-bold text-amber-700">
                       Tồn kho: {selectedProductForView.stock} sản phẩm
@@ -2477,7 +2477,7 @@ export default function InStockInvoicePage() {
                   </div>
 
                   {selectedProductForView.description && (
-                    <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+                    <div className="p-4 rounded-lg bg-gray-50 border border-gray-100">
                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
                         Mô tả sản phẩm
                       </p>
@@ -2495,7 +2495,7 @@ export default function InStockInvoicePage() {
                     addToCart(selectedProductForView);
                     setSelectedProductForView(null);
                   }}
-                  className="w-full h-12 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-brand-primary/20"
+                  className="w-full h-12 rounded-lg font-bold flex items-center justify-center gap-2 shadow-lg shadow-brand-primary/20"
                 >
                   <Plus size={18} />
                   Thêm vào giỏ hàng
@@ -2551,7 +2551,7 @@ export default function InStockInvoicePage() {
                     return (
                       <label
                         key={cat}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-[13px] cursor-pointer transition select-none ${
+                        className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-[13px] cursor-pointer transition select-none ${
                           isActive
                             ? "border-green-500 bg-green-50/50"
                             : "border-gray-200 hover:border-green-200 hover:bg-gray-50"
@@ -2604,7 +2604,7 @@ export default function InStockInvoicePage() {
                     return (
                       <label
                         key={type}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-[13px] cursor-pointer transition select-none ${
+                        className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-[13px] cursor-pointer transition select-none ${
                           isActive
                             ? "border-green-500 bg-green-50/50"
                             : "border-gray-200 hover:border-green-200 hover:bg-gray-50"
@@ -2665,7 +2665,7 @@ export default function InStockInvoicePage() {
                         setPriceRange((p) => ({ ...p, min: raw }));
                         setCurrentPage(1);
                       }}
-                      className="w-full text-[13px] pl-3 pr-2 py-2.5 rounded-xl transition-all focus:outline-none focus:ring-1 bg-white"
+                      className="w-full text-[13px] pl-3 pr-2 py-2.5 rounded-lg transition-all focus:outline-none focus:ring-1 bg-white"
                       style={{
                         border: "1px solid var(--grid-border)",
                         color: "var(--text-main)",
@@ -2683,7 +2683,7 @@ export default function InStockInvoicePage() {
                         setPriceRange((p) => ({ ...p, max: raw }));
                         setCurrentPage(1);
                       }}
-                      className="w-full text-[13px] pl-3 pr-2 py-2.5 rounded-xl transition-all focus:outline-none focus:ring-1 bg-white"
+                      className="w-full text-[13px] pl-3 pr-2 py-2.5 rounded-lg transition-all focus:outline-none focus:ring-1 bg-white"
                       style={{
                         border: "1px solid var(--grid-border)",
                         color: "var(--text-main)",
@@ -2703,13 +2703,13 @@ export default function InStockInvoicePage() {
                   setPriceRange({ min: "", max: "" });
                   setCurrentPage(1);
                 }}
-                className="flex-1 py-2.5 rounded-xl text-[13px] font-medium border cursor-pointer border-gray-200 text-gray-600 hover:bg-gray-50 transition"
+                className="flex-1 py-2.5 rounded-lg text-[13px] font-medium border cursor-pointer border-gray-200 text-gray-600 hover:bg-gray-50 transition"
               >
                 Thiết lập lại
               </button>
               <button
                 onClick={() => setIsFilterDrawerOpen(false)}
-                className="flex-1 py-2.5 rounded-xl text-[13px] cursor-pointer font-medium bg-green-500 text-white hover:bg-green-600 transition shadow-md shadow-green-500/20"
+                className="flex-1 py-2.5 rounded-lg text-[13px] cursor-pointer font-medium bg-green-500 text-white hover:bg-green-600 transition shadow-md shadow-green-500/20"
               >
                 Áp dụng
               </button>
