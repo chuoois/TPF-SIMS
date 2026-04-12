@@ -263,10 +263,10 @@ export default function OwnerEmployees() {
             </p>
           </div>
 
-          <button 
+          <button
             onClick={() => { setEditingAccount(null); setShowAddEditModal(true); }}
-            className="h-10 px-4 rounded-xl flex items-center gap-2 text-[13px] font-bold text-white shadow-sm hover:-translate-y-0.5 transition cursor-pointer"
-            style={{ backgroundColor: "var(--brand-primary)", boxShadow: "0 4px 10px rgba(16, 185, 129, 0.2)" }}
+            className="h-10 px-6 rounded-xl flex items-center gap-2 text-[13px] font-bold text-white transition-all hover:opacity-90 shadow-sm active:scale-95 cursor-pointer"
+            style={{ backgroundColor: "var(--brand-primary)" }}
           >
             <Plus size={18} /> Thêm tài khoản
           </button>

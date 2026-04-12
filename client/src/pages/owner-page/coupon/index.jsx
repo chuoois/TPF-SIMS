@@ -300,10 +300,10 @@ export default function CouponListPage() {
                     </div>
                     <button
                         onClick={() => navigate("/owner/coupons/create")}
-                        className="h-10 px-4 rounded-xl flex items-center gap-2 text-[13px] font-bold text-white transition hover:-translate-y-0.5 cursor-pointer"
+                        className="h-10 px-6 rounded-xl flex items-center gap-2 text-[13px] font-bold text-white transition-all hover:opacity-90 shadow-sm active:scale-95 cursor-pointer"
                         style={{ backgroundColor: "var(--brand-primary)" }}
                     >
-                        <Plus size={17} /> Thêm mã giảm giá
+                        <Plus size={18} /> Thêm mã giảm giá
                     </button>
                 </div>
 

@@ -87,7 +87,7 @@ export default function LogisticsPortal() {
 
       <div className="max-w-md mx-auto p-4 space-y-4">
         {/* Info Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
           <div className="flex justify-between items-start border-b border-slate-100 pb-3">
             <div>
               <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">Mã phiếu</span>
@@ -139,7 +139,7 @@ export default function LogisticsPortal() {
           {request.status === "Chờ xử lý" && (
             <button 
               onClick={() => handleUpdateStatus("Đang thực hiện")}
-              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-amber-200 flex items-center justify-center gap-2 transition-transform active:scale-95"
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-95 cursor-pointer"
             >
               <Truck size={24} /> BẮT ĐẦU NHẬN VIỆC / ĐẾN KHÁCH
             </button>
@@ -159,7 +159,7 @@ export default function LogisticsPortal() {
               </div>
               <button 
                 onClick={() => handleUpdateStatus("Hoàn thành")}
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-2xl shadow-lg shadow-green-200 flex items-center justify-center gap-2 transition-transform active:scale-95"
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-95 cursor-pointer"
               >
                 <CheckCircle2 size={24} /> XÁC NHẬN HOÀN THÀNH
               </button>

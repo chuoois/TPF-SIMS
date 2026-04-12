@@ -492,6 +492,10 @@ export default function OwnerProducts() {
       let frPrice = Number(finishedRetailPrice);
 
       if (newStatus === "Quà tặng") {
+         if (productType !== "Hàng sẵn") {
+           toast.error("Chỉ hàng sẵn mới có thể chuyển sang trạng thái Quà tặng!");
+           return;
+         }
          rPrice = 0;
          rrPrice = 0;
          frPrice = 0;
@@ -910,7 +914,9 @@ export default function OwnerProducts() {
                           value={productStatus}
                           onChange={(e) => setProductStatus(e.target.value)}
                         >
-                          {PRODUCT_STATUSES.map((s) => (
+                          {PRODUCT_STATUSES.filter((s) =>
+                            s !== "Quà tặng" || productType === "Hàng sẵn"
+                          ).map((s) => (
                             <option key={s} value={s}>
                               {s}
                             </option>
