@@ -275,45 +275,62 @@ export default function OwnerOrders() {
               )}
             </span>
 
-            {/* Sub-status mini badges for "Đang gia công" */}
+            {/* Sub-status breakdown for "Đang gia công" */}
             {isInProduction && sub && (
-              <div className="flex items-center gap-1">
+              <div
+                className="flex items-center gap-1 mt-0.5"
+                style={{
+                  backgroundColor: "var(--bg-main)",
+                  border: "1px solid var(--grid-border)",
+                  borderRadius: "6px",
+                  padding: "3px 6px",
+                }}
+              >
+                {/* Ráp */}
                 <span
-                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold border"
+                  className="inline-flex items-center gap-1 px-1.5 py-[2px] rounded text-[10px] font-bold"
                   style={{
-                    backgroundColor: sub.sand > 0 ? "#F3F4F6" : "#FAFAFA",
-                    color: sub.sand > 0 ? "#374151" : "#9CA3AF",
-                    borderColor: sub.sand > 0 ? "#D1D5DB" : "#E5E7EB",
+                    backgroundColor: sub.sand > 0 ? "#F3F4F6" : "transparent",
+                    color: sub.sand > 0 ? "#374151" : "#C4C9D4",
                   }}
-                  title="Đánh giấy ráp"
+                  title={`Đánh giấy ráp: ${sub.sand} sản phẩm`}
                 >
-                  <Layers size={9} />
-                  {sub.sand}
+                  <Layers size={10} strokeWidth={2.2} />
+                  <span>{sub.sand}</span>
                 </span>
+
+                {/* Divider */}
+                <span style={{ color: "var(--grid-border)", fontSize: "10px", lineHeight: 1 }}>|</span>
+
+                {/* Sơn */}
                 <span
-                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold border"
+                  className="inline-flex items-center gap-1 px-1.5 py-[2px] rounded text-[10px] font-bold"
                   style={{
-                    backgroundColor: sub.paint > 0 ? "#E0F2FE" : "#FAFAFA",
-                    color: sub.paint > 0 ? "#0369A1" : "#9CA3AF",
-                    borderColor: sub.paint > 0 ? "#BAE6FD" : "#E5E7EB",
+                    backgroundColor: sub.paint > 0 ? "#E0F2FE" : "transparent",
+                    color: sub.paint > 0 ? "#0369A1" : "#C4C9D4",
                   }}
-                  title="Đang sơn"
+                  title={`Đang sơn: ${sub.paint} sản phẩm`}
                 >
-                  <Paintbrush size={9} />
-                  {sub.paint}
+                  <Paintbrush size={10} strokeWidth={2.2} />
+                  <span>{sub.paint}</span>
                 </span>
+
+                {/* Divider */}
+                <span style={{ color: "var(--grid-border)", fontSize: "10px", lineHeight: 1 }}>|</span>
+
+                {/* KCS */}
                 <span
-                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold border ${sub.kcs > 0 ? "animate-pulse" : ""
-                    }`}
+                  className={`inline-flex items-center gap-1 px-1.5 py-[2px] rounded text-[10px] font-bold transition-all${
+                    sub.kcs > 0 ? " ring-1 ring-emerald-300" : ""
+                  }`}
                   style={{
-                    backgroundColor: sub.kcs > 0 ? "#ECFDF5" : "#FAFAFA",
-                    color: sub.kcs > 0 ? "#059669" : "#9CA3AF",
-                    borderColor: sub.kcs > 0 ? "#6EE7B7" : "#E5E7EB",
+                    backgroundColor: sub.kcs > 0 ? "#D1FAE5" : "transparent",
+                    color: sub.kcs > 0 ? "#065F46" : "#C4C9D4",
                   }}
-                  title="Chờ nghiệm thu"
+                  title={`Chờ nghiệm thu: ${sub.kcs} sản phẩm`}
                 >
-                  <Camera size={9} />
-                  {sub.kcs}
+                  <Camera size={10} strokeWidth={2.2} />
+                  <span>{sub.kcs}</span>
                 </span>
               </div>
             )}

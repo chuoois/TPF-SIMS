@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import CustomCheckbox from "@/components/control/CustomCheckbox";
 import toast from "react-hot-toast";
-import { MOCK_ORDERS_DETAILED } from "../mockData";
+import { MOCK_ORDERS_DETAILED, INITIAL_ORDERS } from "../mockData";
 
 
 const fmtCurrency = (n) =>
@@ -715,7 +715,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
         found = saved.find(o => o.id === invoiceId || o.code === invoiceId);
       }
       if (!found) {
-        found = INITIAL_ORDERS_LIST.find(o => o.id === invoiceId || o.code === invoiceId);
+        found = INITIAL_ORDERS.find(o => o.id === invoiceId || o.code === invoiceId);
       }
 
       if (found) {

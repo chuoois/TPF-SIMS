@@ -89,6 +89,23 @@ export const INITIAL_ORDERS = [
     fulfillmentType: "Giao tận nơi",
     products: [{ name: "Sofa Nguyên Khối", specs: "Gỗ Hương Vân, Dày 10cm", qty: 1, unit: "Bộ" }]
   },
+  {
+    id: "DH-MOC-003",
+    code: "DH-MOC-003",
+    customerName: "Hoàng Minh Tuấn",
+    phone: "0903456789",
+    type: "Hàng mộc",
+    total: 148000000,
+    status: "Đang gia công",
+    date: new Date().toISOString(),
+    salesPerson: "Bình Nguyễn",
+    deliveryDate: "2026-05-30",
+    deposit: 60000000,
+    fulfillmentType: "Giao tận nơi",
+    products: [
+      { name: "Ghế Louis C-back", specs: "Gỗ Hương Đá, Khắc CNC", qty: 10, unit: "Chiếc" }
+    ]
+  },
 ];
 
 export const INITIAL_PRODUCTIONS = [
@@ -119,7 +136,18 @@ export const INITIAL_PRODUCTIONS = [
     quantityCompleted: 1,
     productImage: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg",
     workerNotes: "Hoàn thiện sơn bóng mờ PU theo yêu cầu, chờ nghiệm thu."
-  }
+  },
+  // DH-MOC-003 — 10 sản phẩm: 4 đánh ráp, 3 đang sơn, 3 chờ nghiệm thu
+  { id: "PROD-MOC-003-01", orderId: "DH-MOC-003", orderCode: "DH-MOC-003", productName: "Ghế Louis C-back #1",  assignedWorker: "Lê Văn A", status: "Đang đánh giấy ráp", isPendingApproval: false, expectedEndDate: new Date(Date.now() + 86400000 * 7).toISOString().split('T')[0], quantityPlanned: 1, quantityCompleted: 0 },
+  { id: "PROD-MOC-003-02", orderId: "DH-MOC-003", orderCode: "DH-MOC-003", productName: "Ghế Louis C-back #2",  assignedWorker: "Lê Văn A", status: "Đang đánh giấy ráp", isPendingApproval: false, expectedEndDate: new Date(Date.now() + 86400000 * 7).toISOString().split('T')[0], quantityPlanned: 1, quantityCompleted: 0 },
+  { id: "PROD-MOC-003-03", orderId: "DH-MOC-003", orderCode: "DH-MOC-003", productName: "Ghế Louis C-back #3",  assignedWorker: "Nguyễn Văn B", status: "Đang đánh giấy ráp", isPendingApproval: false, expectedEndDate: new Date(Date.now() + 86400000 * 6).toISOString().split('T')[0], quantityPlanned: 1, quantityCompleted: 0 },
+  { id: "PROD-MOC-003-04", orderId: "DH-MOC-003", orderCode: "DH-MOC-003", productName: "Ghế Louis C-back #4",  assignedWorker: "Nguyễn Văn B", status: "Đang đánh giấy ráp", isPendingApproval: false, expectedEndDate: new Date(Date.now() + 86400000 * 6).toISOString().split('T')[0], quantityPlanned: 1, quantityCompleted: 0 },
+  { id: "PROD-MOC-003-05", orderId: "DH-MOC-003", orderCode: "DH-MOC-003", productName: "Ghế Louis C-back #5",  assignedWorker: "Trần Văn C", status: "Đang sơn", isPendingApproval: false, expectedEndDate: new Date(Date.now() + 86400000 * 4).toISOString().split('T')[0], quantityPlanned: 1, quantityCompleted: 0 },
+  { id: "PROD-MOC-003-06", orderId: "DH-MOC-003", orderCode: "DH-MOC-003", productName: "Ghế Louis C-back #6",  assignedWorker: "Trần Văn C", status: "Đang sơn", isPendingApproval: false, expectedEndDate: new Date(Date.now() + 86400000 * 4).toISOString().split('T')[0], quantityPlanned: 1, quantityCompleted: 0 },
+  { id: "PROD-MOC-003-07", orderId: "DH-MOC-003", orderCode: "DH-MOC-003", productName: "Ghế Louis C-back #7",  assignedWorker: "Phạm Văn D", status: "Đang sơn", isPendingApproval: false, expectedEndDate: new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0], quantityPlanned: 1, quantityCompleted: 0 },
+  { id: "PROD-MOC-003-08", orderId: "DH-MOC-003", orderCode: "DH-MOC-003", productName: "Ghế Louis C-back #8",  assignedWorker: "Phạm Văn D", status: "Chờ nghiệm thu", isPendingApproval: true,  expectedEndDate: new Date(Date.now() + 86400000 * 1).toISOString().split('T')[0], quantityPlanned: 1, quantityCompleted: 1 },
+  { id: "PROD-MOC-003-09", orderId: "DH-MOC-003", orderCode: "DH-MOC-003", productName: "Ghế Louis C-back #9",  assignedWorker: "Hoàng Văn E", status: "Chờ nghiệm thu", isPendingApproval: true,  expectedEndDate: new Date(Date.now() + 86400000 * 1).toISOString().split('T')[0], quantityPlanned: 1, quantityCompleted: 1 },
+  { id: "PROD-MOC-003-10", orderId: "DH-MOC-003", orderCode: "DH-MOC-003", productName: "Ghế Louis C-back #10", assignedWorker: "Hoàng Văn E", status: "Chờ nghiệm thu", isPendingApproval: true,  expectedEndDate: new Date(Date.now() + 86400000 * 1).toISOString().split('T')[0], quantityPlanned: 1, quantityCompleted: 1 },
 ];
 
 export const MOCK_ORDERS_DETAILED = {
@@ -210,5 +238,21 @@ export const MOCK_ORDERS_DETAILED = {
       painterLabor: 4000000, finishingDays: 15
     }],
     timeline: [{ time: "25/03/2026 14:20", label: "Đang gia công", desc: "Đã bàn giao cho thợ hoàn thiện", active: true }],
+  },
+  "DH-MOC-003": {
+    code: "DH-MOC-003", type: "Hàng mộc", status: "Đang gia công",
+    date: new Date().toISOString(), deliveryDate: "2026-05-30", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Hoàng Minh Tuấn", phone: "0903456789", address: "Số 88 Phố Huế, Hai Bà Trưng, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 148000000, deposit: 60000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
+    products: [{
+      name: "Ghế Louis C-back",
+      image: "https://images.unsplash.com/photo-1581412340231-8f967f678edc?q=80&w=800",
+      customerSampleImage: "https://images.unsplash.com/photo-1592078615290-033ee584e267?q=80&w=800",
+      material: "Gỗ Hương Đá", size: "Tiêu chuẩn", finish: "Sơn Lau", qty: 10, price: 14800000, note: "Khắc CNC sâu, hoàn thiện kỹ"
+    }],
+    timeline: [
+      { time: "10/04/2026 09:00", label: "Tiếp nhận mộc", desc: "Đã kiểm đếm 10 ghế mộc từ xưởng mộc", active: true },
+      { time: "11/04/2026 14:00", label: "Gia công", desc: "Đang triển khai đánh giấy ráp và lót sơn", active: true }
+    ],
   }
 };
