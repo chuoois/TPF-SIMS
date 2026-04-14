@@ -334,13 +334,21 @@ const RequirementDetailModal = ({ req, onClose, onEnlarge, onOpenCancel }) => {
                 <Clock size={20} />
               </div>
               <div>
-                <p className="text-[14px] font-bold text-amber-900">Tiến độ sản xuất cam kết</p>
-                <p className="text-[12px] text-amber-700">Dự kiến hoàn thiện cho toàn bộ yêu cầu kỹ thuật</p>
+                <p className="text-[14px] font-bold text-amber-900">
+                  Tiến độ sản xuất cam kết
+                </p>
+                <p className="text-[12px] text-amber-700">
+                  Dự kiến hoàn thiện cho toàn bộ yêu cầu kỹ thuật
+                </p>
               </div>
             </div>
             <div className="text-right">
-              <span className="text-[24px] font-black text-amber-600 leading-none">{req.leadTime || 0}</span>
-              <span className="ml-1 text-[13px] font-bold text-amber-500 uppercase tracking-wider">Ngày</span>
+              <span className="text-[24px] font-black text-amber-600 leading-none">
+                {req.leadTime || 0}
+              </span>
+              <span className="ml-1 text-[13px] font-bold text-amber-500 uppercase tracking-wider">
+                Ngày
+              </span>
             </div>
           </div>
 
@@ -550,7 +558,9 @@ export default function SalesRequirements() {
             {r.customer.charAt(0)}
           </div>
           <div>
-            <p className="font-bold text-slate-800 leading-tight">{r.customer}</p>
+            <p className="font-bold text-slate-800 leading-tight">
+              {r.customer}
+            </p>
             <p className="text-[11px] text-slate-400 font-medium">{r.phone}</p>
           </div>
         </div>
@@ -560,8 +570,10 @@ export default function SalesRequirements() {
       header: "Ngày nhận",
       render: (r) => (
         <div className="flex items-center gap-2 text-slate-600">
-           <Calendar size={14} className="text-slate-300" />
-           <span className="font-medium">{r.createdDate?.split("-").reverse().join("/")}</span>
+          <Calendar size={14} className="text-slate-300" />
+          <span className="font-medium">
+            {r.createdDate?.split("-").reverse().join("/")}
+          </span>
         </div>
       ),
     },
@@ -581,7 +593,10 @@ export default function SalesRequirements() {
                 borderColor: sc.border,
               }}
             >
-              <span className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: sc.text }}></span>
+              <span
+                className="w-1.5 h-1.5 rounded-full mr-1.5"
+                style={{ backgroundColor: sc.text }}
+              ></span>
               {r.status}
             </span>
           </div>
@@ -595,22 +610,25 @@ export default function SalesRequirements() {
     {
       label: "Hủy yêu cầu",
       icon: AlertCircle,
-      className: "bg-white border-red-100 text-red-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200",
+      className:
+        "bg-white border-red-100 text-red-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200",
       showIf: (r) => r.status === "Đang xử lý",
       requireConfirm: true,
       confirmTitle: "Xác nhận hủy yêu cầu?",
-      confirmMessage: (r) => `Bạn có chắc chắn muốn hủy yêu cầu thiết kế mã ${r.code} của khách hàng ${r.customer}? Hành động này không thể hoàn tác.`,
+      confirmMessage: (r) =>
+        `Bạn có chắc chắn muốn hủy yêu cầu thiết kế mã ${r.code} của khách hàng ${r.customer}? Hành động này không thể hoàn tác.`,
       onClick: (r) => {
         setCancelTarget(r);
         handleCancelSubmit(r);
-      }
+      },
     },
     {
       label: "Xem chi tiết",
       icon: Eye,
-      className: "bg-white border-slate-100 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100",
+      className:
+        "bg-white border-slate-100 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100",
       onClick: (r) => setSelectedReqId(r.id),
-    }
+    },
   ];
 
   const handleCancelSubmit = (target = cancelTarget) => {
@@ -708,18 +726,26 @@ export default function SalesRequirements() {
         {/* Header Section */}
         <div className="flex items-center justify-between shrink-0">
           <div>
-            <h1 className="text-xl font-bold flex items-center gap-2" style={{ color: "var(--text-main)" }}>
+            <h1
+              className="text-xl font-bold flex items-center gap-2"
+              style={{ color: "var(--text-main)" }}
+            >
               <Package size={22} style={{ color: "var(--brand-primary)" }} />
               Yêu cầu từ khách hàng
             </h1>
-            <p className="text-[13px] mt-0.5" style={{ color: "var(--text-placeholder)" }}>
+            <p
+              className="text-[13px] mt-0.5"
+              style={{ color: "var(--text-placeholder)" }}
+            >
               {filtered.length} yêu cầu ({statusFilter.toLowerCase()})
             </p>
           </div>
-          
+
           {/* Optional: Add a placeholder for tabs if needed in future, currently empty to match spacing */}
           <div className="flex p-1 rounded-lg invisible">
-             <button className="px-4 py-1.5 rounded-lg text-[13px] font-semibold">Placeholder</button>
+            <button className="px-4 py-1.5 rounded-lg text-[13px] font-semibold">
+              Placeholder
+            </button>
           </div>
         </div>
 
@@ -734,9 +760,21 @@ export default function SalesRequirements() {
                 onClick={() => updateParams({ status: s })}
                 className="px-4 py-1.5 rounded-lg text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border"
                 style={{
-                  backgroundColor: isActive ? (sc ? sc.bg : "#fff") : "transparent",
-                  color: isActive ? (sc ? sc.text : "var(--brand-primary)") : "var(--text-secondary)",
-                  borderColor: isActive ? (sc ? sc.border : "var(--grid-border)") : "transparent",
+                  backgroundColor: isActive
+                    ? sc
+                      ? sc.bg
+                      : "#fff"
+                    : "transparent",
+                  color: isActive
+                    ? sc
+                      ? sc.text
+                      : "var(--brand-primary)"
+                    : "var(--text-secondary)",
+                  borderColor: isActive
+                    ? sc
+                      ? sc.border
+                      : "var(--grid-border)"
+                    : "transparent",
                   boxShadow: isActive ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
                 }}
               >
@@ -768,11 +806,9 @@ export default function SalesRequirements() {
                 ? "rgba(14, 165, 233, 0.03)"
                 : "transparent",
           })}
-          
           // Selection
           selectedIds={selectedIds}
           setSelectedIds={setSelectedIds}
-
           // Search & Filters
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
@@ -783,10 +819,8 @@ export default function SalesRequirements() {
           setDateTo={setDateTo}
           hasActiveFilters={hasActiveFilters}
           clearAllFilters={clearAllFilters}
-
           // Row Actions (Hủy, Chi tiết)
           rowActions={rowActions}
-
           // Bulk Actions
           bulkActions={[
             {
@@ -794,31 +828,36 @@ export default function SalesRequirements() {
               icon: AlertCircle,
               className: "text-red-600 hover:bg-red-50",
               showIf: (selectedRows) => {
-                 // Only show if at least one selected item is "Đang xử lý"
-                 return selectedRows.some(r => r.status === "Đang xử lý");
+                // Only show if at least one selected item is "Đang xử lý"
+                return selectedRows.some((r) => r.status === "Đang xử lý");
               },
               requireConfirm: true,
               confirmTitle: "Hủy hàng loạt yêu cầu?",
               confirmMessage: (selectedRows) => {
-                const cancelableCount = selectedRows.filter(r => r.status === "Đang xử lý").length;
+                const cancelableCount = selectedRows.filter(
+                  (r) => r.status === "Đang xử lý",
+                ).length;
                 return `Bạn có chắc chắn muốn hủy ${cancelableCount} yêu cầu 'Đang xử lý' trong danh sách chọn? Hành động này không thể hoàn tác.`;
               },
               onClick: (selectedRows) => {
                 const cancelableIds = selectedRows
-                  .filter(r => r.status === "Đang xử lý")
-                  .map(r => r.id);
-                
+                  .filter((r) => r.status === "Đang xử lý")
+                  .map((r) => r.id);
+
                 setRequirements((prev) =>
                   prev.map((r) =>
-                    cancelableIds.includes(r.id) ? { ...r, status: "Đơn đã hủy" } : r,
+                    cancelableIds.includes(r.id)
+                      ? { ...r, status: "Đơn đã hủy" }
+                      : r,
                   ),
                 );
                 setSelectedIds([]);
-                toast.success(`Đã hủy ${cancelableIds.length} yêu cầu thành công`);
-              }
-            }
+                toast.success(
+                  `Đã hủy ${cancelableIds.length} yêu cầu thành công`,
+                );
+              },
+            },
           ]}
-
           pagination={{
             total: filtered.length,
             currentPage: currentPage,
