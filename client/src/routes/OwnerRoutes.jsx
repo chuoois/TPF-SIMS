@@ -14,8 +14,6 @@ import ProductCategories from "../pages/owner-page/products/management/Categorie
 import ProductColors from "../pages/owner-page/products/management/ColorsPage";
 import ProductUnits from "../pages/owner-page/products/management/UnitsPage";
 import ProductMaterials from "../pages/owner-page/products/management/MaterialsPage";
-import Warranty from "../pages/owner-page/warranty";
-import RepairRequests from "../pages/owner-page/warranty/RepairRequests";
 
 export const ownerRoutes = {
   path: "/owner",
@@ -54,13 +52,6 @@ export const ownerRoutes = {
         { path: "properties/colors", element: <ProductColors /> },
         { path: "properties/units", element: <ProductUnits /> },
         { path: "properties/materials", element: <ProductMaterials /> },
-      ],
-    },
-    {
-      path: "warranty",
-      children: [
-        { index: true, element: <Warranty /> },
-        { path: "repairs", element: <RepairRequests /> },
       ],
     },
     {

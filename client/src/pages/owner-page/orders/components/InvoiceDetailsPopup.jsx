@@ -4,9 +4,8 @@ import {
   Clock, CheckCircle, CheckCircle2, AlertTriangle, Hammer,
   Camera, FileText, Ban, RefreshCw, XCircle,
   Truck, Trash2, Lock, ShieldAlert,
-  Paintbrush, Layers, RotateCcw, ChevronRight, Eye, Activity, AlertCircle
+  Paintbrush, Layers, RotateCcw, ChevronRight, Eye, AlertCircle
 } from "lucide-react";
-import CustomCheckbox from "@/components/control/CustomCheckbox";
 import toast from "react-hot-toast";
 import { MOCK_ORDERS_DETAILED, INITIAL_ORDERS } from "../mockData";
 
@@ -45,7 +44,7 @@ const statusStyle = (status) => {
     "Chờ duyệt hủy": { bg: "var(--status-warning)/10", text: "var(--status-pending)", border: "var(--status-warning)/20" },
     "Đơn đã hủy": { bg: "var(--status-error)/5", text: "var(--status-error)", border: "var(--status-error)/10" },
   };
-  return m[status] || { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
+  return m[status] || { bg: "var(--bg-main)", text: "var(--text-secondary)", border: "var(--grid-border)" };
 };
 
 const Badge = ({ children, style }) => (
@@ -59,10 +58,10 @@ const Badge = ({ children, style }) => (
 
 const CustomerInfoCard = ({ o }) => (
   <div
-    className="rounded-lg overflow-hidden bg-white/50 backdrop-blur-sm shadow-sm"
+    className="rounded-lg overflow-hidden bg-[var(--bg-main)]/40 backdrop-blur-sm border border-[var(--grid-border)]"
   >
     <div
-      className="px-5 py-4 flex items-center gap-4 border-b border-gray-50/10"
+      className="px-5 py-4 flex items-center gap-4 border-b border-[var(--grid-border)]/10"
     >
       <div
         className="w-11 h-11 rounded-lg flex items-center justify-center text-[15px] font-bold shrink-0 bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] border border-[var(--brand-primary)]/10"
@@ -70,14 +69,14 @@ const CustomerInfoCard = ({ o }) => (
         {o.customer.name.charAt(0)}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[14px] font-bold truncate text-gray-800">{o.customer.name}</p>
+        <p className="text-[14px] font-bold truncate text-[var(--text-main)]">{o.customer.name}</p>
         <div className="flex items-center gap-4 mt-0.5 flex-wrap">
-          <span className="inline-flex items-center gap-1 text-[12px] text-gray-500">
-            <Phone size={11} className="text-gray-400" />
+          <span className="inline-flex items-center gap-1 text-[12px] text-[var(--text-secondary)]">
+            <Phone size={11} className="text-[var(--text-placeholder)]" />
             {o.customer.phone}
           </span>
-          <span className="inline-flex items-center gap-1 text-[12px] text-gray-500">
-            <MapPin size={11} className="text-gray-400" />
+          <span className="inline-flex items-center gap-1 text-[12px] text-[var(--text-secondary)]">
+            <MapPin size={11} className="text-[var(--text-placeholder)]" />
             {o.customer.address}
           </span>
         </div>
@@ -87,62 +86,61 @@ const CustomerInfoCard = ({ o }) => (
     <div className="px-5 py-4">
       <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3">
         <div>
-          <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400">Mã đơn</p>
-          <p className="text-[13px] font-semibold mt-0.5 text-gray-700">{o.code}</p>
+          <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--text-placeholder)]">Mã đơn</p>
+          <p className="text-[13px] font-semibold mt-0.5 text-[var(--text-main)]">{o.code}</p>
         </div>
         <div>
-          <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400">Loại hàng</p>
-          <p className="text-[13px] font-semibold mt-0.5 text-gray-700">{o.type}</p>
+          <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--text-placeholder)]">Loại hàng</p>
+          <p className="text-[13px] font-semibold mt-0.5 text-[var(--text-main)]">{o.type}</p>
         </div>
         <div>
-          <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400">Nhân viên</p>
-          <p className="text-[13px] font-semibold mt-0.5 text-gray-700">{o.salesPerson}</p>
+          <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--text-placeholder)]">Nhân viên</p>
+          <p className="text-[13px] font-semibold mt-0.5 text-[var(--text-main)]">{o.salesPerson}</p>
         </div>
         <div>
-          <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400">Ngày tạo</p>
-          <p className="text-[13px] font-semibold mt-0.5 text-gray-700">{fmtDateTime(o.date)}</p>
+          <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--text-placeholder)]">Ngày tạo</p>
+          <p className="text-[13px] font-semibold mt-0.5 text-[var(--text-main)]">{fmtDateTime(o.date)}</p>
         </div>
         <div>
-          <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400">Ngày giao</p>
-          <p className="text-[13px] font-semibold mt-0.5 text-gray-700">{fmtDate(o.deliveryDate)}</p>
+          <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--text-placeholder)]">Ngày giao</p>
+          <p className="text-[13px] font-semibold mt-0.5 text-[var(--text-main)]">{fmtDate(o.deliveryDate)}</p>
         </div>
         <div className="md:col-span-1">
-          <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400">Ghi chú</p>
-          <p className="text-[13px] font-semibold mt-0.5 text-gray-700">{o.notes || "—"}</p>
+          <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--text-placeholder)]">Ghi chú</p>
+          <p className="text-[13px] font-semibold mt-0.5 text-[var(--text-main)]">{o.notes || "—"}</p>
         </div>
       </div>
     </div>
   </div>
 );
 
-const HistoryCard = ({ o }) => (
+const HistoryCard = ({ o, className = "" }) => (
   <div
-    className="rounded-lg overflow-hidden bg-white/50 backdrop-blur-sm shadow-sm printer-hidden"
+    className={`rounded-lg overflow-hidden bg-[var(--bg-main)]/40 backdrop-blur-sm border border-[var(--grid-border)] printer-hidden ${className}`}
   >
     <div
-      className="px-5 py-3 flex items-center gap-2 border-b border-gray-50/10 bg-gray-50/30"
+      className="px-5 py-3 flex items-center gap-2 border-b border-[var(--grid-border)]/10 bg-[var(--grid-header-bg)]/30"
     >
-      <Clock size={14} className="text-gray-400" />
-      <span className="text-[12px] font-bold uppercase tracking-wider text-gray-500">Lịch sử đơn hàng</span>
+      <span className="text-[12px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">Lịch sử đơn hàng</span>
     </div>
     <div className="px-5 py-5 space-y-6 relative ml-3 mt-2">
-      <div className="absolute top-2 bottom-2 left-[-13px] w-0.5 bg-gray-100" />
+      <div className="absolute top-2 bottom-2 left-[-13px] w-0.5 bg-[var(--grid-border)]" />
       {o.timeline?.map((t, idx) => (
         <div key={idx} className="relative pl-1">
           <div
-            className={`absolute top-1 left-[-21px] w-4 h-4 rounded-full border-2 bg-white flex items-center justify-center z-10 transition-colors ${t.active ? "border-[var(--brand-primary)] shadow-[0_0_8px_rgba(52,176,87,0.3)]" : "border-gray-200"
+            className={`absolute top-1 left-[-21px] w-4 h-4 rounded-full border-2 bg-[var(--background)] flex items-center justify-center z-10 transition-colors ${t.active ? "border-[var(--brand-primary)] shadow-[0_0_8px_rgba(52,176,87,0.3)]" : "border-[var(--grid-border)]"
               }`}
           >
             {t.active && <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand-primary)]" />}
           </div>
           <div className="flex items-start justify-between min-w-0">
             <div className="min-w-0">
-              <p className={`text-[13px] font-bold ${t.active ? "text-gray-800" : "text-gray-400"}`}>
+              <p className={`text-[13px] font-bold ${t.active ? "text-[var(--text-main)]" : "text-[var(--text-placeholder)]"}`}>
                 {t.label}
               </p>
-              <p className="text-[11px] text-gray-500 mt-0.5">{t.desc}</p>
+              <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">{t.desc}</p>
             </div>
-            <span className="text-[10px] font-bold text-gray-400 shrink-0 ml-4">
+            <span className="text-[10px] font-bold text-[var(--text-placeholder)] shrink-0 ml-4">
               {t.time}
             </span>
           </div>
@@ -162,8 +160,8 @@ const MediaGallery = ({ title, icon: Icon, images, onPreview, colorClass = "emer
   const c = colorMap[colorClass] || colorMap.emerald;
 
   return (
-    <div className="rounded-lg overflow-hidden bg-white/50 backdrop-blur-sm shadow-sm group media-gallery-section printer-hidden">
-      <div className={`px-5 py-3 flex items-center gap-2 border-b border-gray-50/10 ${c.bg}/30`}>
+    <div className="rounded-lg overflow-hidden bg-[var(--bg-main)]/40 backdrop-blur-sm border border-[var(--grid-border)] group media-gallery-section printer-hidden">
+      <div className={`px-5 py-3 flex items-center gap-2 border-b border-[var(--grid-border)]/10 ${c.bg}/30`}>
         <Icon size={14} className={c.text} />
         <span className={`text-[12px] font-bold uppercase tracking-wider ${c.text}`}>{title}</span>
       </div>
@@ -172,7 +170,7 @@ const MediaGallery = ({ title, icon: Icon, images, onPreview, colorClass = "emer
           {images.map((img, idx) => (
             <div
               key={idx}
-              className="relative aspect-square rounded-lg overflow-hidden cursor-zoom-in hover:ring-2 hover:ring-[var(--brand-primary)]/40 transition-all group/img border border-gray-50/50 shadow-sm"
+              className="relative aspect-square rounded-lg overflow-hidden cursor-zoom-in hover:ring-2 hover:ring-[var(--brand-primary)]/40 transition-all group/img border border-[var(--grid-border)]/50 shadow-sm"
               onClick={() => onPreview(img)}
             >
               <img src={img} alt={`Gallery ${idx}`} className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-110" />
@@ -229,45 +227,45 @@ const StandardOrderView = ({
   return (
     <div className="flex-1 overflow-y-auto custom-scrollbar">
       {/* ── 1. IDENTITY BAR ── */}
-      <div className="bg-slate-900 text-white px-6 py-4 grid grid-cols-2 md:grid-cols-4 gap-4 sticky top-0 z-20 shadow-xl">
-        <div className="flex items-center gap-3 border-r border-white/10 pr-4">
-          <div className="h-10 w-10 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
-            <User size={18} className="text-indigo-400" />
+      <div className="bg-[var(--sidebar)] text-[var(--sidebar-foreground)] px-6 py-4 grid grid-cols-2 md:grid-cols-4 gap-4 sticky top-0 z-20 border-b border-[var(--sidebar-border)]">
+        <div className="flex items-center gap-3 border-r border-[var(--sidebar-border)] pr-4">
+          <div className="h-10 w-10 rounded-full bg-[var(--brand-primary)]/10 flex items-center justify-center border border-[var(--brand-primary)]/20">
+            <User size={18} className="text-[var(--brand-primary)]" />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Khách hàng</p>
+            <p className="text-[10px] font-black text-[var(--sidebar-foreground)]/50 uppercase tracking-widest">Khách hàng</p>
             <p className="text-[14px] font-black truncate">{o.customer.name}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 border-r border-white/10 pr-4">
-          <div className="h-10 w-10 rounded-full bg-amber-500/20 flex items-center justify-center border border-amber-500/30">
-            <Calendar size={18} className="text-amber-400" />
+        <div className="flex items-center gap-3 border-r border-[var(--sidebar-border)] pr-4">
+          <div className="h-10 w-10 rounded-full bg-[var(--status-warning)]/10 flex items-center justify-center border border-[var(--status-warning)]/20">
+            <Calendar size={18} className="text-[var(--status-pending)]" />
           </div>
           <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lịch trình</p>
+            <p className="text-[10px] font-black text-[var(--sidebar-foreground)]/50 uppercase tracking-widest">Lịch trình</p>
             <p className="text-[13px] font-bold">
-              <span className="text-slate-400">Giao:</span> {o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString("vi-VN") : "Chưa hẹn"}
+              <span className="text-[var(--sidebar-foreground)]/40">Giao:</span> {o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString("vi-VN") : "Chưa hẹn"}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 border-r border-white/10 pr-4 relative">
-          <div className={`h-10 w-10 rounded-full flex items-center justify-center border ${pendingKcsCount > 0 ? "bg-red-500/20 border-red-500/30" : "bg-emerald-500/20 border-emerald-500/30"}`}>
+        <div className="flex items-center gap-3 border-r border-[var(--sidebar-border)] pr-4 relative">
+          <div className={`h-10 w-10 rounded-full flex items-center justify-center border ${pendingKcsCount > 0 ? "bg-[var(--status-error)]/20 border-[var(--status-error)]/30" : "bg-[var(--status-success)]/20 border-[var(--status-success)]/30"}`}>
             {pendingKcsCount > 0 ? (
-              <AlertCircle size={18} className="text-red-400 animate-pulse" />
+              <AlertCircle size={18} className="text-[var(--status-error)] animate-pulse" />
             ) : (
-              <CheckCircle size={18} className="text-emerald-400" />
+              <CheckCircle size={18} className="text-[var(--status-success)]" />
             )}
           </div>
           <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Trạng thái</p>
-            <p className={`text-[13px] font-bold uppercase tracking-tighter flex items-center gap-1.5 ${pendingKcsCount > 0 ? "text-red-400" : "text-emerald-400"}`}>
+            <p className="text-[10px] font-black text-[var(--sidebar-foreground)]/50 uppercase tracking-widest">Trạng thái</p>
+            <p className={`text-[13px] font-bold uppercase tracking-tighter flex items-center gap-1.5 ${pendingKcsCount > 0 ? "text-[var(--status-error)]" : "text-[var(--status-success)]"}`}>
               {o.status}
               {pendingKcsCount > 0 && (
                 <span className="relative flex h-2.5 w-2.5 mt-0.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--status-error)] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[var(--status-error)]"></span>
                 </span>
               )}
             </p>
@@ -275,18 +273,18 @@ const StandardOrderView = ({
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-rose-500/20 flex items-center justify-center border border-rose-500/30">
-            <Lock size={18} className="text-rose-400" />
+          <div className="h-10 w-10 rounded-full bg-[var(--status-error)]/10 flex items-center justify-center border border-[var(--status-error)]/20">
+            <Lock size={18} className="text-[var(--status-error)]" />
           </div>
           <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Công nợ</p>
-            <p className="text-[14px] font-black text-rose-400">{fmtCurrency(remaining)}</p>
+            <p className="text-[10px] font-black text-[var(--sidebar-foreground)]/50 uppercase tracking-widest">Công nợ</p>
+            <p className="text-[14px] font-black text-[var(--status-error)]">{fmtCurrency(remaining)}</p>
           </div>
         </div>
       </div>
 
       {/* ── 2. TAB NAVIGATION ── */}
-      <div className="bg-white/95 backdrop-blur-md px-6 pt-4 border-b border-gray-100 flex items-center gap-6 sticky top-[72px] z-10">
+      <div className="bg-[var(--background)]/95 backdrop-blur-md px-6 pt-4 border-b border-[var(--grid-border)]/50 flex items-center gap-6 sticky top-[72px] z-10">
         {[
           { id: "info", label: "Tổng quan", icon: FileText },
           { id: "products", label: `Sản phẩm (${o.products.length})`, icon: Package },
@@ -298,12 +296,12 @@ const StandardOrderView = ({
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`pb-3 flex items-center gap-2 text-[13px] font-black transition-all relative ${active ? "text-indigo-600" : "text-gray-400 hover:text-gray-600"
+              className={`pb-3 flex items-center gap-2 text-[13px] font-black transition-all relative ${active ? "text-[var(--brand-primary)]" : "text-[var(--text-placeholder)] hover:text-[var(--text-secondary)]"
                 }`}
             >
               <tab.icon size={14} />
               {tab.label}
-              {active && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-full" />}
+              {active && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--brand-primary)] rounded-full" />}
             </button>
           );
         })}
@@ -312,18 +310,18 @@ const StandardOrderView = ({
       <div className="p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* PRIMARY CONTENT (2/3) */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6 lg:border-r lg:border-[var(--grid-border)] lg:pr-6">
             {activeTab === "info" && (
               <div className="space-y-6">
                 <CustomerInfoCard o={o} />
 
                 {o.customRequirements && (
-                  <div className="bg-amber-50/50 p-5 rounded-xl border border-amber-100/50 space-y-2">
-                    <div className="flex items-center gap-2 text-amber-700">
+                  <div className="bg-[var(--status-warning)]/5 p-5 rounded-xl border border-[var(--status-warning)]/10 space-y-2">
+                    <div className="flex items-center gap-2 text-[var(--status-pending)]">
                       <FileText size={16} />
                       <span className="text-[12px] font-black uppercase tracking-tight">Yêu cầu đặc biệt từ khách</span>
                     </div>
-                    <p className="text-[14px] text-amber-900 leading-relaxed italic">
+                    <p className="text-[14px] text-[var(--text-main)] italic opacity-80 leading-relaxed">
                       "{o.customRequirements || "Khách yêu cầu làm kỹ phần đục chạm, đánh nhám kỹ trước khi lót. Chân quỳ đặc."}"
                     </p>
                   </div>
@@ -338,26 +336,26 @@ const StandardOrderView = ({
             {activeTab === "products" && (
               <div className="space-y-6">
                 {o.products.map((p, idx) => (
-                  <div key={idx} className="bg-white rounded-xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md transition-all">
+                  <div key={idx} className="bg-[var(--background)] rounded-xl overflow-hidden border border-[var(--grid-border)]/50 transition-all">
                     {/* Visual Comparison */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-slate-100/50 border-b border-slate-100">
-                      <div className="relative h-56 bg-white group cursor-pointer overflow-hidden" onClick={() => p.image && onPreview(p.image)}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-[var(--grid-border)]/20 border-b border-[var(--grid-border)]/50">
+                      <div className="relative h-56 bg-[var(--background)] group cursor-pointer overflow-hidden" onClick={() => p.image && onPreview(p.image)}>
                         {p.image ? (
                           <img src={p.image} alt="Thực tế" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-slate-200"><Package size={48} /></div>
+                          <div className="w-full h-full flex items-center justify-center text-[var(--text-placeholder)]/20"><Package size={48} /></div>
                         )}
                         <div className="absolute top-4 left-4 px-2.5 py-1 bg-black/60 backdrop-blur-md rounded border border-white/20">
                           <span className="text-[9px] font-black text-white uppercase tracking-widest">Thực tế xưởng</span>
                         </div>
                       </div>
-                      <div className="relative h-56 bg-amber-50/20 group cursor-pointer overflow-hidden border-l border-slate-100" onClick={() => p.customerSampleImage && onPreview(p.customerSampleImage)}>
+                      <div className="relative h-56 bg-[var(--status-warning)]/5 group cursor-pointer overflow-hidden border-l border-[var(--grid-border)]" onClick={() => p.customerSampleImage && onPreview(p.customerSampleImage)}>
                         {p.customerSampleImage ? (
                           <img src={p.customerSampleImage} alt="Mẫu khách" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-amber-200/40"><Camera size={48} /></div>
+                          <div className="w-full h-full flex items-center justify-center text-[var(--status-warning)]/20"><Camera size={48} /></div>
                         )}
-                        <div className="absolute top-4 right-4 px-2.5 py-1 bg-amber-600/80 backdrop-blur-md rounded border border-amber-400/30">
+                        <div className="absolute top-4 right-4 px-2.5 py-1 bg-[var(--status-pending)]/80 backdrop-blur-md rounded border border-[var(--status-pending)]/30">
                           <span className="text-[9px] font-black text-white uppercase tracking-widest">Mẫu khách</span>
                         </div>
                       </div>
@@ -366,12 +364,12 @@ const StandardOrderView = ({
                     <div className="p-6">
                       <div className="flex items-start justify-between">
                         <div className="min-w-0 flex-1">
-                          <h4 className="text-[18px] font-black text-slate-800 leading-tight">{p.name}</h4>
-                          <span className="mt-2 inline-block px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 text-[11px] font-black uppercase">x{p.qty} {p.unit}</span>
+                          <h4 className="text-[18px] font-black text-[var(--text-main)] leading-tight">{p.name}</h4>
+                          <span className="mt-2 inline-block px-2 py-0.5 rounded bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] text-[11px] font-black uppercase">x{p.qty} {p.unit}</span>
                         </div>
-                        <p className="text-[20px] font-black text-slate-900 ml-4">{fmtCurrency(p.price)}</p>
+                        <p className="text-[20px] font-black text-[var(--text-main)] ml-4">{fmtCurrency(p.price)}</p>
                       </div>
-                      <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-xl">
+                      <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-[var(--bg-main)] rounded-xl">
                         {[
                           { label: "Chất liệu", val: p.material },
                           { label: "Kích thước", val: p.size },
@@ -379,8 +377,8 @@ const StandardOrderView = ({
                           { label: "Bảo hành", val: `${p.warranty || 12}T` },
                         ].map((spec, i) => (
                           <div key={i} className="space-y-1">
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">{spec.label}</span>
-                            <p className="text-[12px] font-bold text-slate-700">{spec.val || "—"}</p>
+                            <span className="text-[9px] font-black text-[var(--text-placeholder)] uppercase tracking-widest block">{spec.label}</span>
+                            <p className="text-[12px] font-bold text-[var(--text-secondary)]">{spec.val || "—"}</p>
                           </div>
                         ))}
                       </div>
@@ -403,35 +401,33 @@ const StandardOrderView = ({
           {/* SIDEBAR CONTENT (1/3) */}
           <div className="space-y-6">
             {hasPricing && (
-              <div className="rounded-xl overflow-hidden bg-white border border-slate-100 shadow-sm">
-                <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
-                  <Lock size={14} className="text-slate-400" />
-                  <span className="text-[11px] font-black uppercase tracking-widest text-slate-500">Tóm tắt tài chính</span>
+              <div className="rounded-xl overflow-hidden bg-[var(--bg-main)]/40 border border-[var(--grid-border)]">
+                <div className="px-5 py-3 border-b border-[var(--grid-border)]/50 bg-[var(--grid-header-bg)]/50 flex items-center gap-2">
+                  <span className="text-[11px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Thanh toán</span>
                 </div>
                 <div className="p-5 space-y-4">
-                  <div className="flex justify-between text-[13px] text-slate-500">
+                  <div className="flex justify-between text-[13px] text-[var(--text-secondary)]">
                     <span>Tổng tiền hàng</span>
-                    <span className="font-bold text-slate-800">{fmtCurrency(productTotal)}</span>
+                    <span className="font-bold text-[var(--text-main)]">{fmtCurrency(productTotal)}</span>
                   </div>
-                  <div className="h-px bg-slate-100" />
+                  <div className="h-px bg-[var(--grid-border)]/30" />
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 bg-emerald-50/50 rounded-lg border border-emerald-100/50">
-                      <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1">Đã cọc/thu</p>
-                      <p className="text-[14px] font-black text-emerald-700">{fmtCurrency((o.deposit || 0) + (o.receivedAmount || 0))}</p>
+                    <div className="p-3 bg-[var(--status-success)]/10 rounded-lg border border-[var(--status-success)]/10">
+                      <p className="text-[9px] font-black text-[var(--status-success)] uppercase tracking-widest mb-1">Đã cọc/thu</p>
+                      <p className="text-[14px] font-black text-[var(--status-success)]">{fmtCurrency((o.deposit || 0) + (o.receivedAmount || 0))}</p>
                     </div>
-                    <div className="p-3 bg-rose-50 rounded-lg border border-rose-100/50">
-                      <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1">CÒN LẠI</p>
-                      <p className="text-[16px] font-black text-rose-700">{fmtCurrency(remaining)}</p>
+                    <div className="p-3 bg-[var(--status-error)]/10 rounded-lg border border-[var(--status-error)]/10">
+                      <p className="text-[9px] font-black text-[var(--status-error)] uppercase tracking-widest mb-1">CÒN LẠI</p>
+                      <p className="text-[16px] font-black text-[var(--status-error)]">{fmtCurrency(remaining)}</p>
                     </div>
                   </div>
                 </div>
               </div>
             )}
 
-            <div className="rounded-xl overflow-hidden bg-white border border-slate-100 shadow-sm">
-              <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
-                <Truck size={14} className="text-slate-400" />
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500">Giao nhận & Logistics</span>
+            <div className="rounded-xl overflow-hidden bg-[var(--bg-main)]/40 border border-[var(--grid-border)]">
+              <div className="px-5 py-3 border-b border-[var(--grid-border)]/50 bg-[var(--grid-header-bg)]/50 flex items-center gap-2">
+                <span className="text-[11px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Giao nhận</span>
               </div>
               <div className="p-5 space-y-4">
                 {[
@@ -439,17 +435,17 @@ const StandardOrderView = ({
                   { icon: Calendar, label: "Ngày hẹn", val: fmtDate(o.deliveryDate) },
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
-                    <item.icon size={15} className="mt-0.5 text-slate-400" />
+                    <item.icon size={15} className="mt-0.5 text-[var(--text-placeholder)]" />
                     <div>
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{item.label}</p>
-                      <p className="text-[13px] font-bold text-slate-700 leading-tight">{item.val}</p>
+                      <p className="text-[9px] font-black text-[var(--text-placeholder)] uppercase tracking-widest">{item.label}</p>
+                      <p className="text-[13px] font-bold text-[var(--text-main)] leading-tight">{item.val}</p>
                     </div>
                   </div>
                 ))}
 
                 {o.deliveryImage && (
                   <div className="pt-2">
-                    <img src={o.deliveryImage} className="w-full h-32 rounded-lg object-cover cursor-zoom-in border border-slate-100" onClick={() => onPreview(o.deliveryImage)} />
+                    <img src={o.deliveryImage} className="w-full h-32 rounded-lg object-cover cursor-zoom-in border border-[var(--grid-border)]" onClick={() => onPreview(o.deliveryImage)} />
                   </div>
                 )}
               </div>
@@ -465,10 +461,10 @@ const StandardOrderView = ({
 
 // =================== PRODUCTION PROGRESS CARD ===================
 const PROD_STATUS_CFG = {
-  "Đang đánh giấy ráp": { label: "Gia công mộc", bg: "#F3F4F6", text: "#4B5563", border: "#D1D5DB", icon: Layers },
-  "Đang sơn": { label: "Đang sơn", bg: "#E0F2FE", text: "#0369A1", border: "#BAE6FD", icon: Paintbrush },
-  "Chờ nghiệm thu": { label: "Chờ KCS", bg: "#FEF3C7", text: "#D97706", border: "#FDE68A", icon: Clock },
-  "Hoàn thành": { label: "Hoàn chỉnh", bg: "#F0FDF4", text: "#166534", border: "#BBF7D0", icon: CheckCircle2 },
+  "Đang đánh giấy ráp": { label: "Gia công mộc", bg: "var(--bg-main)", text: "var(--text-secondary)", border: "var(--grid-border)", icon: Layers },
+  "Đang sơn": { label: "Đang sơn", bg: "var(--palette-blue)/10", text: "var(--palette-dark-blue)", border: "var(--palette-blue)/20", icon: Paintbrush },
+  "Chờ nghiệm thu": { label: "Chờ KCS", bg: "var(--status-warning)/10", text: "var(--palette-orange)", border: "var(--status-warning)/20", icon: Clock },
+  "Hoàn thành": { label: "Hoàn chỉnh", bg: "var(--status-success)/10", text: "var(--brand-primary)", border: "var(--status-success)/20", icon: CheckCircle2 },
 };
 
 const STEP_LABELS = [
@@ -488,54 +484,54 @@ function getItemStep(item) {
 
 function ProdItemRow({ item, onInspect }) {
   const cfg = PROD_STATUS_CFG[item.isPendingApproval ? "Chờ nghiệm thu" : item.status]
-    || { label: item.status, bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB", icon: Package };
+    || { label: item.status, bg: "var(--bg-main)", text: "var(--text-placeholder)", border: "var(--grid-border)", icon: Package };
   const step = getItemStep(item);
   const needsKCS = item.isPendingApproval || item.status === "Chờ nghiệm thu";
 
   const deadlineStyle = (() => {
-    if (!item.expectedEndDate) return { color: "#6B7280", urgent: false };
+    if (!item.expectedEndDate) return { color: "var(--text-placeholder)", urgent: false };
     const diff = Math.ceil((new Date(item.expectedEndDate) - new Date()) / 86400000);
-    if (diff < 0) return { color: "#E5484D", urgent: true };
-    if (diff <= 3) return { color: "#D97706", urgent: true };
-    return { color: "#374151", urgent: false };
+    if (diff < 0) return { color: "var(--status-error)", urgent: true };
+    if (diff <= 3) return { color: "var(--palette-orange)", urgent: true };
+    return { color: "var(--text-main)", urgent: false };
   })();
 
   return (
-    <div className="p-4 border border-gray-100 rounded-xl bg-white shadow-xs space-y-3">
+    <div className="p-4 border border-[var(--grid-border)]/50 rounded-xl bg-[var(--background)] space-y-3">
       <div className="flex items-start gap-3">
-        <div className="h-12 w-12 rounded-lg overflow-hidden shrink-0 border border-gray-100 bg-gray-50 relative">
+        <div className="h-12 w-12 rounded-lg overflow-hidden shrink-0 border border-[var(--grid-border)]/50 bg-[var(--bg-main)] relative">
           {item.productImage
             ? <img src={item.productImage} alt={item.productName} className="w-full h-full object-cover" />
-            : <div className="w-full h-full flex items-center justify-center"><Package size={20} className="text-gray-300" /></div>
+            : <div className="w-full h-full flex items-center justify-center"><Package size={20} className="text-[var(--text-placeholder)]" /></div>
           }
           {item.needsRedo && (
-            <div className="absolute inset-0 bg-red-500/10 flex items-center justify-center">
-              <RotateCcw size={14} className="text-red-500" style={{ animation: "spin 3s linear infinite" }} />
+            <div className="absolute inset-0 bg-[var(--status-error)]/10 flex items-center justify-center">
+              <RotateCcw size={14} className="text-[var(--status-error)]" style={{ animation: "spin 3s linear infinite" }} />
             </div>
           )}
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap mb-1">
-            <p className="text-[13px] font-bold text-gray-900 truncate">{item.productName}</p>
-            {item.needsRedo && <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-red-50 text-red-600 border border-red-100 uppercase">Cần sửa</span>}
-            {item.isDelayed && <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-50 text-amber-600 border border-amber-100 uppercase">Trễ hạn</span>}
+            <p className="text-[13px] font-bold text-[var(--text-main)] truncate">{item.productName}</p>
+            {item.needsRedo && <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-[var(--status-error)]/10 text-[var(--status-error)] border border-[var(--status-error)]/20 uppercase">Cần sửa</span>}
+            {item.isDelayed && <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-[var(--status-warning)]/10 text-[var(--palette-orange)] border border-[var(--status-warning)]/20 uppercase">Trễ hạn</span>}
           </div>
           <div className="flex items-center gap-4 flex-wrap">
             <div>
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Thợ phụ trách</p>
-              <p className="text-[12px] font-bold text-gray-700">{item.assignedWorker?.replace("Thợ cả: ", "") || "Chưa giao"}</p>
+              <p className="text-[9px] font-black text-[var(--text-placeholder)] uppercase tracking-wider">Thợ phụ trách</p>
+              <p className="text-[12px] font-bold text-[var(--text-secondary)]">{item.assignedWorker?.replace("Thợ cả: ", "") || "Chưa giao"}</p>
             </div>
             <div>
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Hạn bàn giao</p>
+              <p className="text-[9px] font-black text-[var(--text-placeholder)] uppercase tracking-wider">Hạn bàn giao</p>
               <p className="text-[12px] font-bold" style={{ color: deadlineStyle.color }}>
                 {item.expectedEndDate ? new Date(item.expectedEndDate).toLocaleDateString("vi-VN") : "—"}
               </p>
             </div>
             {item.quantityPlanned > 1 && (
               <div>
-                <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">Số lượng</p>
-                <p className="text-[12px] font-bold text-indigo-600">{item.quantityCompleted}/{item.quantityPlanned} sp</p>
+                <p className="text-[9px] font-black text-[var(--text-placeholder)] uppercase tracking-wider">Số lượng</p>
+                <p className="text-[12px] font-bold text-[var(--brand-primary)]">{item.quantityCompleted}/{item.quantityPlanned} sp</p>
               </div>
             )}
           </div>
@@ -552,7 +548,7 @@ function ProdItemRow({ item, onInspect }) {
           {needsKCS && (
             <button
               onClick={() => onInspect(item)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-black hover:bg-emerald-700 transition shadow-sm"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--status-success)] text-[var(--primary-foreground)] text-[11px] font-black hover:opacity-90 transition shadow-sm"
             >
               <Camera size={12} /> NGHIỆM THU
             </button>
@@ -568,17 +564,17 @@ function ProdItemRow({ item, onInspect }) {
           return (
             <div key={i} className="flex items-center flex-1">
               <div className="flex flex-col items-center gap-0.5">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all ${done ? "bg-emerald-500 border-emerald-500" :
-                  active ? "bg-amber-400 border-amber-400" :
-                    "bg-white border-gray-200"
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-all ${done ? "bg-[var(--status-success)] border-[var(--status-success)]" :
+                  active ? "bg-[var(--status-warning)] border-[var(--status-warning)]" :
+                    "bg-[var(--background)] border-[var(--grid-border)]"
                   }`}>
-                  <Icon size={11} className={done || active ? "text-white" : "text-gray-300"} />
+                  <Icon size={11} className={done || active ? "text-[var(--primary-foreground)]" : "text-[var(--text-placeholder)]"} />
                 </div>
-                <span className={`text-[9px] font-bold whitespace-nowrap ${done ? "text-emerald-600" : active ? "text-amber-600" : "text-gray-300"
+                <span className={`text-[9px] font-bold whitespace-nowrap ${done ? "text-[var(--status-success)]" : active ? "text-[var(--palette-orange)]" : "text-[var(--text-placeholder)]"
                   }`}>{s.key}</span>
               </div>
               {i < 3 && (
-                <div className={`flex-1 h-0.5 mx-1 rounded ${step > i + 1 ? "bg-emerald-400" : step === i + 1 ? "bg-amber-300" : "bg-gray-100"
+                <div className={`flex-1 h-0.5 mx-1 rounded ${step > i + 1 ? "bg-[var(--status-success)]/40" : step === i + 1 ? "bg-[var(--status-warning)]/40" : "bg-[var(--bg-main)]"
                   }`} />
               )}
             </div>
@@ -610,23 +606,23 @@ function ProductionProgressCard({ order, onInspect, onRedoRequest, productions }
   const progress = Math.round((completed / total) * 100);
 
   return (
-    <div className="rounded-xl overflow-hidden bg-white/50 backdrop-blur-sm shadow-sm printer-hidden">
-      <div className="px-5 py-3 flex items-center justify-between gap-2 border-b border-gray-100 bg-amber-50/40">
+    <div className="rounded-xl overflow-hidden bg-[var(--bg-main)]/40 backdrop-blur-sm border border-[var(--grid-border)] printer-hidden">
+      <div className="px-5 py-3 flex items-center justify-between gap-2 border-b border-[var(--grid-border)]/50 bg-[var(--status-warning)]/5">
         <div className="flex items-center gap-2">
-          <Hammer size={14} className="text-amber-600" />
-          <span className="text-[12px] font-bold uppercase tracking-wider text-amber-700">Tiến độ gia công</span>
+          <Hammer size={14} className="text-[var(--status-pending)]" />
+          <span className="text-[12px] font-bold uppercase tracking-wider text-[var(--status-pending)]">Tiến độ gia công</span>
           {hasPendingKCS && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase animate-pulse">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--status-success)]/10 text-[var(--status-success)] text-[9px] font-black uppercase animate-pulse">
               <Camera size={9} /> Chờ nghiệm thu
             </span>
           )}
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5">
-            <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, backgroundColor: progress === 100 ? "#16A34A" : "#F59E0B" }} />
+            <div className="w-20 h-1.5 bg-[var(--bg-main)] rounded-full overflow-hidden">
+              <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, backgroundColor: progress === 100 ? "var(--status-success)" : "var(--status-warning)" }} />
             </div>
-            <span className="text-[10px] font-black text-gray-500">{completed}/{total}</span>
+            <span className="text-[10px] font-black text-[var(--text-placeholder)]">{completed}/{total}</span>
           </div>
         </div>
       </div>
@@ -642,9 +638,9 @@ function ProductionProgressCard({ order, onInspect, onRedoRequest, productions }
         ))}
       </div>
 
-      <div className="px-5 py-2 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
-        <p className="text-[10px] text-gray-400 italic">* Tiến độ được thợ xưởng cập nhật trực tiếp</p>
-        <p className="text-[9px] font-bold text-indigo-300 uppercase">Test Mode Enabled</p>
+      <div className="px-5 py-2 bg-[var(--bg-main)]/50 border-t border-[var(--grid-border)]/50 flex items-center justify-between">
+        <p className="text-[10px] text-[var(--text-placeholder)] italic">* Tiến độ được thợ xưởng cập nhật trực tiếp</p>
+        <p className="text-[9px] font-bold text-[var(--brand-primary)]/50 uppercase">PRODUCTION TRACKER</p>
       </div>
     </div>
   );
@@ -769,10 +765,14 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
       const initializedData = order.products.map(p => {
         const invItem = savedProducts.find(inv => inv.code === p.code || inv.name === p.name);
+        const days = p.finishingDays || invItem?.leadTime || 7;
+        const deadlineDate = new Date();
+        deadlineDate.setDate(deadlineDate.getDate() + parseInt(days));
 
         return {
           unitLabor: p.painterLabor || invItem?.paintCost || 0,
-          days: p.finishingDays || invItem?.leadTime || ""
+          days: days,
+          deadline: deadlineDate.toISOString().split('T')[0]
         };
       });
 
@@ -782,11 +782,15 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
   useEffect(() => {
     if (showHandoverModal && handoverItemsData.length > 0) {
-      const maxDays = Math.max(0, ...handoverItemsData.map(item => parseInt(item.days) || 0));
-      if (maxDays > 0) {
-        const today = new Date();
-        today.setDate(today.getDate() + maxDays);
-        setHandoverDeadline(today.toISOString().split('T')[0]);
+      // Find the furthest deadline among all products
+      const allDates = handoverItemsData
+        .map(item => item.deadline)
+        .filter(d => !!d)
+        .map(d => new Date(d));
+
+      if (allDates.length > 0) {
+        const maxDate = new Date(Math.max(...allDates));
+        setHandoverDeadline(maxDate.toISOString().split('T')[0]);
       }
     }
   }, [handoverItemsData, showHandoverModal]);
@@ -947,17 +951,37 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
   };
 
   const handleHandoverConfirm = () => {
-    const isMoc = order.type === "Hàng mộc";
-    const newStatus = isMoc ? "Đang sản xuất" : "Đang gia công";
+    const newStatus = "Đang gia công";
     const deadlineStr = new Date(handoverDeadline).toLocaleDateString("vi-VN");
 
     const updatedProducts = order.products.map((p, idx) => ({
       ...p,
       painterLabor: handoverItemsData[idx]?.unitLabor || 0,
-      finishingDays: handoverItemsData[idx]?.days || ""
+      finishingDays: handoverItemsData[idx]?.days || "",
+      deadline: handoverItemsData[idx]?.deadline || handoverDeadline
     }));
 
     const totalLabor = updatedProducts.reduce((sum, p) => sum + (p.painterLabor * (p.qty || 1)), 0);
+
+    // Create production items for each product
+    try {
+      const savedProds = JSON.parse(localStorage.getItem("tpf_simulated_productions") || "[]");
+      const newProds = updatedProducts.map((p, idx) => ({
+        id: `PROD-${order.code}-${idx + 1}-${Date.now()}`,
+        orderId: order.id || order.code,
+        orderCode: order.code,
+        productName: p.name,
+        assignedWorker: "Chưa giao",
+        status: "Đang đánh giấy ráp",
+        isPendingApproval: false,
+        expectedEndDate: p.deadline,
+        quantityPlanned: p.qty || 1,
+        quantityCompleted: 0,
+        productImage: p.image || "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg",
+        workerNotes: "Bàn giao gia công sản xuất mới."
+      }));
+      localStorage.setItem("tpf_simulated_productions", JSON.stringify([...savedProds, ...newProds]));
+    } catch (e) { console.error(e); }
 
     handleUpdate(newStatus, {
       products: updatedProducts,
@@ -1020,24 +1044,23 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
         }
       `}</style>
       <div
-        className="absolute inset-0 bg-black/30 backdrop-blur-[2px] animate-in fade-in duration-200"
+        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
         onClick={handleSafeClose}
       />
       <div
-        className="bg-white w-full max-w-5xl h-[90vh] md:h-[85vh] rounded-lg shadow-2xl overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-300"
-        style={{ boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
+        className="bg-[var(--background)] w-full max-w-5xl h-[90vh] md:h-[85vh] rounded-lg overflow-hidden flex flex-col relative border border-[var(--grid-border)]"
       >
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0 bg-white">
+        <div className="px-6 py-4 border-b border-[var(--grid-border)] flex items-center justify-between shrink-0 bg-[var(--background)]">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-[var(--brand-primary)]/10 flex items-center justify-center text-[var(--brand-primary)] shadow-sm border border-[var(--brand-primary)]/10">
+            <div className="w-10 h-10 rounded-lg bg-[var(--brand-primary)]/10 flex items-center justify-center text-[var(--brand-primary)] border border-[var(--brand-primary)]/10">
               <Package size={20} />
             </div>
             <div>
               <div className="flex items-center gap-3">
-                <h2 className="text-[17px] font-bold text-gray-900">
+                <h2 className="text-[17px] font-bold text-[var(--text-main)]">
                   Chi tiết đơn hàng
                 </h2>
-                <span className="px-2 py-0.5 bg-gray-50 border border-gray-200 text-gray-600 rounded-md text-[11px] font-bold font-mono">
+                <span className="px-2 py-0.5 bg-[var(--bg-main)] border border-[var(--grid-border)] text-[var(--text-secondary)] rounded-md text-[11px] font-bold font-mono">
                   {order?.code || invoiceId}
                 </span>
                 {order && (
@@ -1058,7 +1081,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
           <div className="flex items-center gap-3">
             <button
               onClick={handleSafeClose}
-              className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors printer-hidden"
+              className="p-2 rounded-lg text-[var(--text-placeholder)] hover:text-[var(--text-main)] hover:bg-[var(--bg-main)] transition-colors printer-hidden"
             >
               <X size={20} />
             </button>
@@ -1099,27 +1122,15 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
         </div>
 
         {viewState === "ready" && order && (
-          <div className="p-4 border-t border-gray-50/10 bg-gray-50 flex items-center justify-end shrink-0 popup-footer printer-hidden">
+          <div className="p-4 border-t border-[var(--grid-border)]/50 bg-[var(--bg-main)]/50 flex items-center justify-end shrink-0 popup-footer printer-hidden">
             <div className="flex items-center gap-3">
+              {/* ── Hàng mộc & Hàng khách đặt: bàn giao xưởng ── */}
               {order.status === "Chờ xử lý" && (order.type === "Hàng mộc" || order.type === "Hàng khách đặt") && (
-                  <button
-                    className="px-5 py-2 bg-[var(--brand-primary)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center gap-2"
-                    onClick={() => setShowHandoverModal(true)}
-                  >
-                    <Hammer size={16} /> BÀN GIAO XƯỞNG
-                  </button>
-                )}
-
-              {order.status === "Chờ xử lý" && order.type === "Hàng sẵn" && (
                 <button
-                  className="px-5 py-2 bg-emerald-600 text-white rounded-lg text-[13px] font-bold hover:bg-emerald-700 transition-all active:scale-95 flex items-center gap-2"
-                  onClick={() => {
-                    if (window.confirm("Xác nhận đơn hàng và Chờ giao hàng?")) {
-                      handleUpdate("Chờ giao hàng");
-                    }
-                  }}
+                  className="px-5 py-2 bg-[var(--brand-primary)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center gap-2"
+                  onClick={() => setShowHandoverModal(true)}
                 >
-                  <CheckCircle size={16} /> XÁC NHẬN ĐƠN
+                  <Hammer size={16} /> BÀN GIAO XƯỞNG
                 </button>
               )}
 
@@ -1127,8 +1138,8 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                 <button
                   disabled={productions.length > 0 && !productions.every(p => p.status === "Hoàn thành")}
                   className={`h-10 px-5 rounded-lg text-[13px] font-bold transition-all active:scale-95 flex items-center gap-2 ${productions.length > 0 && !productions.every(p => p.status === "Hoàn thành")
-                    ? "bg-slate-300 text-slate-500 cursor-not-allowed"
-                    : "bg-emerald-600 text-white hover:bg-emerald-700"
+                    ? "bg-[var(--text-placeholder)]/20 text-[var(--text-placeholder)] cursor-not-allowed"
+                    : "bg-[var(--status-success)] text-[var(--primary-foreground)] hover:opacity-90"
                     }`}
                   onClick={() => {
                     if (window.confirm("Xác nhận sản phẩm đã hoàn thiện và sẵn sàng để giao?")) {
@@ -1161,10 +1172,10 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
               )}
 
               {order.status === "Chờ duyệt hủy" && (
-                <div className="flex gap-2 p-1 bg-white border border-gray-100 rounded-xl shadow-sm">
+                <div className="flex gap-2 p-1 bg-[var(--background)] border border-[var(--grid-border)]/50 rounded-xl">
                   <button
                     disabled={["Đang sản xuất", "Đang gia công", "Chờ giao hàng"].includes(lastActiveStatus) || (order.productionOrders?.length > 0)}
-                    className="px-6 py-2.5 bg-slate-100 text-slate-600 rounded-lg text-[13px] font-bold hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex items-center gap-2"
+                    className="px-6 py-2.5 bg-[var(--bg-main)] text-[var(--text-secondary)] rounded-lg text-[13px] font-bold hover:bg-[var(--grid-border)]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex items-center gap-2"
                     onClick={() => {
                       if (window.confirm("Duyệt hủy đơn và HOÀN TRẢ TIỀN CỌC cho khách hàng?")) {
                         handleUpdate("Đơn đã hủy", {
@@ -1179,7 +1190,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                     DUYỆT & HOÀN CỌC
                   </button>
                   <button
-                    className="px-6 py-2.5 bg-orange-600 text-white rounded-lg text-[13px] font-bold hover:bg-orange-700 shadow-md shadow-orange-200 transition-all active:scale-95 flex items-center gap-2"
+                    className="px-6 py-2.5 bg-[var(--palette-orange)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center gap-2"
                     onClick={() => {
                       const recoveryAmt = order.deposit || 0;
                       const msg = recoveryAmt > 0
@@ -1201,7 +1212,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
               {["Chờ xử lý", "Chờ sản xuất", "Đang gia công", "Chờ giao hàng"].includes(order.status) && (
                 <button
-                  className="px-4 py-2 bg-white text-[var(--status-error)] border border-[var(--status-error)]/10 rounded-lg text-[13px] font-bold hover:bg-[var(--status-error)]/5 transition-all flex items-center gap-2"
+                  className="px-4 py-2 bg-[var(--background)] text-[var(--status-error)] border border-[var(--status-error)]/10 rounded-lg text-[13px] font-bold hover:bg-[var(--status-error)]/5 transition-all flex items-center gap-2"
                   onClick={() => {
                     const isInitial = order.status === "Chờ xử lý" || order.status === "Chờ sản xuất";
                     let confirmMsg = "Xác nhận yêu cầu hủy đơn hàng này?";
@@ -1224,27 +1235,27 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
       </div>
 
       {showCompleteModal && (
-        <div className="absolute inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white w-full max-w-xl rounded-lg overflow-hidden modal-content transform animate-in zoom-in-95 duration-300 border border-gray-200">
-            <div className="px-6 py-5 border-b border-slate-50/10 flex items-center justify-between bg-slate-50/80">
-              <h3 className="text-[16px] font-black text-slate-800 flex items-center gap-2">
+        <div className="absolute inset-0 z-[100] flex items-center justify-center p-6 bg-[var(--sidebar)]/60 backdrop-blur-md animate-in fade-in">
+          <div className="bg-[var(--background)] w-full max-w-xl rounded-xl overflow-hidden modal-content transform border border-[var(--grid-border)]">
+            <div className="px-6 py-5 border-b border-[var(--grid-border)] flex items-center justify-between bg-[var(--grid-header-bg)]">
+              <h3 className="text-[16px] font-black text-[var(--text-main)] flex items-center gap-2">
                 <CheckCircle className="text-[var(--status-success)]" size={20} /> HOÀN TẤT ĐƠN HÀNG
               </h3>
-              <button onClick={() => setShowCompleteModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
+              <button onClick={() => setShowCompleteModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--bg-main)] text-[var(--text-placeholder)] transition-colors">
                 <X size={18} />
               </button>
             </div>
             <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
-              <div className="bg-slate-50/80 rounded-lg p-5 space-y-3">
-                <div className="flex justify-between items-center text-[13px] text-slate-500 font-medium">
+              <div className="bg-[var(--bg-main)]/40 rounded-xl p-5 space-y-3">
+                <div className="flex justify-between items-center text-[13px] text-[var(--text-secondary)] font-medium">
                   <span>Tổng tiền hàng:</span>
-                  <span className="font-bold text-slate-700">{fmtCurrency(productTotal)}</span>
+                  <span className="font-bold text-[var(--text-main)]">{fmtCurrency(productTotal)}</span>
                 </div>
-                <div className="flex justify-between items-center text-[13px] text-slate-500 font-medium">
+                <div className="flex justify-between items-center text-[13px] text-[var(--text-secondary)] font-medium">
                   <span>Đã đặt cọc:</span>
-                  <span className="font-bold text-slate-700">{fmtCurrency(order.deposit || 0)}</span>
+                  <span className="font-bold text-[var(--text-main)]">{fmtCurrency(order.deposit || 0)}</span>
                 </div>
-                <div className="pt-2 border-t border-slate-100 flex justify-between items-baseline">
+                <div className="pt-2 border-t border-[var(--grid-border)]/50 flex justify-between items-baseline">
                   <span className="text-[var(--status-success)] font-bold text-[14px]">Cần thanh toán:</span>
                   <span className="text-[var(--status-success)] font-black text-[22px] tracking-tight">{fmtCurrency(remainingValue)}</span>
                 </div>
@@ -1252,11 +1263,11 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
               <div className="space-y-4">
                 <div>
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Số thực thu tại chỗ</label>
+                  <label className="text-[11px] font-black text-[var(--text-placeholder)] uppercase tracking-widest ml-1">Số thực thu tại chỗ</label>
                   <div className="mt-1.5 relative">
                     <input
                       type="text"
-                      className="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-lg font-black text-lg text-slate-800 focus:ring-4 focus:ring-[var(--status-success)]/10 focus:border-[var(--status-success)] transition-all outline-none"
+                      className="w-full px-5 py-3 bg-[var(--bg-main)] border border-[var(--grid-border)]/50 rounded-lg font-black text-lg text-[var(--text-main)] focus:ring-4 focus:ring-[var(--status-success)]/10 focus:border-[var(--status-success)] transition-all outline-none"
                       value={formatNumberInput(finalPayment)}
                       onChange={(e) => {
                         const val = Number(parseNumberInput(e.target.value)) || 0;
@@ -1269,7 +1280,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                         }
                       }}
                     />
-                    <span className="absolute right-5 top-1/2 -translate-y-1/2 font-bold text-slate-400">₫</span>
+                    <span className="absolute right-5 top-1/2 -translate-y-1/2 font-bold text-[var(--text-placeholder)]">₫</span>
                   </div>
                   {remainingValue - finalPayment > 0 && (
                     <div className="mt-2 text-right">
@@ -1281,13 +1292,13 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Hình thức thanh toán</label>
+                  <label className="text-[11px] font-black text-[var(--text-placeholder)] uppercase tracking-widest ml-1">Hình thức thanh toán</label>
                   <div className="grid grid-cols-2 gap-2 mt-1.5">
                     {["Chuyển khoản", "Tiền mặt"].map(m => (
                       <button
                         key={m}
                         onClick={() => setPaymentMethod(m)}
-                        className={`py-2 px-4 rounded-lg border font-bold text-[13px] transition-all ${paymentMethod === m ? 'bg-[var(--brand-primary)] border-[var(--brand-primary)] text-white' : 'bg-white border-slate-100 text-slate-500 hover:bg-slate-50'
+                        className={`py-2 px-4 rounded-lg border font-bold text-[13px] transition-all ${paymentMethod === m ? 'bg-[var(--brand-primary)] border-[var(--brand-primary)] text-[var(--primary-foreground)]' : 'bg-[var(--background)] border-[var(--grid-border)] text-[var(--text-secondary)] hover:bg-[var(--grid-header-bg)]'
                           }`}
                       >
                         {m}
@@ -1297,13 +1308,13 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Ảnh giao hàng thực tế</label>
-                  <label className={`mt-2 w-full h-24 rounded-lg border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${deliveryImage ? 'border-[var(--status-success)] bg-[var(--status-success)]/5' : 'border-slate-100 bg-slate-50 hover:bg-slate-100'
+                  <label className="text-[11px] font-black text-[var(--text-placeholder)] uppercase tracking-widest ml-1">Ảnh giao hàng thực tế</label>
+                  <label className={`mt-2 w-full h-24 rounded-lg border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${deliveryImage ? 'border-[var(--status-success)] bg-[var(--status-success)]/5' : 'border-[var(--grid-border)] bg-[var(--bg-main)] hover:bg-[var(--grid-border)]/10'
                     }`}>
                     {deliveryImage ? (
                       <img src={deliveryImage} className="h-20 w-auto rounded-lg object-cover" alt="Delivery" />
                     ) : (
-                      <div className="flex flex-col items-center gap-1 text-slate-400">
+                      <div className="flex flex-col items-center gap-1 text-[var(--text-placeholder)]">
                         <Camera size={20} />
                         <span className="text-[10px] font-bold uppercase">Nhấp để tải ảnh</span>
                       </div>
@@ -1324,7 +1335,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
               <button
                 onClick={handleFinishOrder}
-                className="w-full h-10 bg-[var(--status-success)] hover:opacity-90 text-white rounded-lg font-bold text-[13px] transition-all active:scale-95 mt-2 flex items-center justify-center"
+                className="w-full h-10 bg-[var(--status-success)] hover:opacity-90 text-[var(--primary-foreground)] rounded-lg font-bold text-[13px] transition-all active:scale-95 mt-2 flex items-center justify-center"
               >
                 XÁC NHẬN HOÀN TẤT
               </button>
@@ -1334,173 +1345,192 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
       )}
 
       {showHandoverModal && (
-        <div className="absolute inset-0 z-[100] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white w-full max-w-xl rounded-lg overflow-hidden modal-content transform animate-in zoom-in-95 duration-300 border border-gray-200">
+        <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in">
+          <div className="bg-[var(--background)] w-full max-w-2xl rounded-2xl overflow-hidden modal-content border border-[var(--grid-border)] flex flex-col max-h-[90vh]">
+            {/* Header */}
             <div className="px-6 py-5 border-b border-[var(--grid-border)] flex items-center justify-between bg-[var(--grid-header-bg)]">
-              <h3 className="text-[16px] font-black text-gray-800 flex items-center gap-2">
-                <Hammer className="text-[var(--brand-primary)]" size={20} /> BÀN GIAO GIA CÔNG
-              </h3>
-              <button onClick={() => setShowHandoverModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
-                <X size={18} />
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[var(--brand-primary)]/10 flex items-center justify-center text-[var(--brand-primary)] border border-[var(--brand-primary)]/10">
+                  <Hammer size={20} />
+                </div>
+                <div>
+                  <h3 className="text-[17px] font-black text-[var(--text-main)] leading-none uppercase">BÀN GIAO GIA CÔNG</h3>
+                  <p className="text-[11px] text-[var(--text-secondary)] font-bold uppercase tracking-wider mt-1.5 flex items-center gap-1.5">
+                    <Package size={12} /> {order?.products?.length} sản phẩm cần bàn giao
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setShowHandoverModal(false)} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-[var(--bg-main)] text-[var(--text-placeholder)] transition-all">
+                <X size={20} />
               </button>
             </div>
 
-            <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
-              {/* Header Info */}
-              <div className="bg-[var(--status-focus)]/50 rounded-xl p-5 grid grid-cols-2 gap-6 border border-[var(--brand-primary)]/10">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Lịch khách hẹn nhận</span>
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <Calendar size={16} className="text-[var(--brand-primary)]" />
-                    <span className="text-[16px] font-black">{fmtDate(order?.deliveryDate)}</span>
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+              {/* Quick Info Bar */}
+              <div className="flex items-center justify-between p-4 bg-[var(--bg-main)]/40 rounded-xl border border-[var(--grid-border)]">
+                <div className="flex items-center gap-6">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-black text-[var(--text-placeholder)] uppercase tracking-widest">Hạn khách nhận</span>
+                    <div className="flex items-center gap-2 text-[var(--text-main)]">
+                      <Calendar size={14} className="text-[var(--brand-primary)]" />
+                      <span className="text-[14px] font-black">{fmtDate(order?.deliveryDate)}</span>
+                    </div>
+                  </div>
+                  <div className="w-px h-8 bg-[var(--grid-border)]" />
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-black text-[var(--text-placeholder)] uppercase tracking-widest">Loại đơn hàng</span>
+                    <p className="text-[13px] font-bold text-[var(--text-main)]">{order?.type}</p>
                   </div>
                 </div>
-                <div className="text-right space-y-1">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Phân loại đơn</span>
-                  <span className="px-2.5 py-1 bg-[var(--brand-primary)] text-white rounded-lg text-[10px] font-black uppercase inline-block letter-spacing-wide">
-                    {order?.type}
+                <div className="text-right">
+                  <span className="px-3 py-1 bg-[var(--status-pending)]/10 text-[var(--status-pending)] rounded-full text-[10px] font-black uppercase border border-[var(--status-pending)]/20">
+                    Chờ bàn giao
                   </span>
                 </div>
               </div>
 
-              {/* Bulk Apply Action */}
-              <div className="bg-[var(--bg-main)] p-4 rounded-xl border border-[var(--grid-border)] flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[var(--brand-primary)]/10 flex items-center justify-center text-[var(--brand-primary)]">
-                    <Activity size={18} />
-                  </div>
-                  <div>
-                    <p className="text-[12px] font-black text-gray-800">Thiết lập nhanh</p>
-                    <p className="text-[10px] text-gray-400">Áp dụng cho tất cả các món</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="relative w-[130px]">
-                    <input
-                      type="text"
-                      placeholder="Tiền công..."
-                      className="w-full pl-3 pr-7 py-2 bg-white border border-[var(--grid-border)] rounded-lg font-black text-[12px] focus:ring-4 focus:ring-[var(--brand-primary)]/10 focus:border-[var(--brand-primary)] outline-none"
-                      onChange={(e) => {
-                        const val = Number(parseNumberInput(e.target.value)) || 0;
-                        setHandoverItemsData(prev => prev.map(item => ({ ...item, unitLabor: val })));
-                      }}
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-300">₫</span>
-                  </div>
-                  <div className="relative w-[80px]">
-                    <input
-                      type="number"
-                      placeholder="Ngày..."
-                      className="w-full h-9 bg-white border border-[var(--grid-border)] rounded-lg font-black text-[12px] text-center focus:ring-4 focus:ring-[var(--brand-primary)]/10 focus:border-[var(--brand-primary)] outline-none"
-                      onChange={(e) => {
-                        const days = e.target.value;
-                        setHandoverItemsData(prev => prev.map(item => ({ ...item, days })));
-                        if (days && !isNaN(days)) {
-                          const d = new Date();
-                          d.setDate(d.getDate() + parseInt(days));
-                          setHandoverDeadline(d.toISOString().split('T')[0]);
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Handover Table */}
+              {/* Product List */}
               <div className="space-y-3">
-                <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                  <Package size={14} className="text-[var(--brand-primary)]" /> Kế hoạch gia công từng món
-                </label>
-                <div className="border border-[var(--grid-border)] rounded-xl overflow-hidden shadow-xs bg-white">
-                  <table className="w-full text-left border-collapse">
-                    <thead className="bg-[var(--grid-header-bg)] border-b border-[var(--grid-border)]">
-                      <tr>
-                        <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-wider">Sản phẩm</th>
-                        <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-wider w-[140px]">Công sơn (₫)</th>
-                        <th className="px-4 py-3 text-[10px] font-black text-gray-500 uppercase tracking-wider w-[80px] text-center">Hạn (n)</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[var(--bg-main)]">
-                      {order?.products?.map((p, idx) => (
-                        <tr key={idx} className="hover:bg-[var(--status-focus)]/20 transition-colors">
-                          <td className="px-4 py-3">
-                            <p className="text-[13px] font-bold text-gray-800 line-clamp-1">{p.name}</p>
-                            <p className="text-[11px] font-bold text-[var(--brand-primary)] mt-0.5">SL: {p.qty} {p.unit}</p>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="relative group">
+                {order?.products?.map((p, idx) => {
+                  const itemData = handoverItemsData[idx] || { unitLabor: 0, days: "0", deadline: "" };
+                  return (
+                    <div key={idx} className="group relative bg-[var(--background)] border border-[var(--grid-border)] rounded-2xl p-4 hover:border-[var(--brand-primary)]/30 transition-all">
+                      <div className="flex items-start gap-4">
+                        {/* Thumbnail */}
+                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-[var(--grid-header-bg)] border border-[var(--grid-border)] shrink-0">
+                          <img
+                            src={p.image || "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80"}
+                            alt={p.name}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                        </div>
+
+                        {/* Info & Inputs */}
+                        <div className="flex-1 min-w-0 space-y-4">
+                          <div className="flex items-start justify-between">
+                            <div className="min-w-0">
+                              <h4 className="text-[14px] font-black text-[var(--text-main)] truncate">{p.name}</h4>
+                              <p className="text-[11px] font-bold text-[var(--brand-primary)] mt-0.5 uppercase">SL: {p.qty} {p.unit}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[9px] font-black text-[var(--text-placeholder)] uppercase tracking-widest">Đơn giá</p>
+                              <p className="text-[13px] font-bold text-[var(--text-main)]">{fmtCurrency(p.price)}</p>
+                            </div>
+                          </div>
+
+                          {/* Control Row */}
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="space-y-1.5">
+                              <label className="text-[9px] font-black text-[var(--text-placeholder)] uppercase tracking-widest ml-1">Công thợ sơn</label>
+                              <div className="relative">
+                                <input
+                                  type="text"
+                                  className="w-full pl-3 pr-8 py-2 bg-[var(--bg-main)] border border-[var(--grid-border)] rounded-xl font-black text-[13px] text-[var(--text-main)] focus:ring-4 focus:ring-[var(--brand-primary)]/10 focus:border-[var(--brand-primary)] outline-none transition-all"
+                                  value={formatNumberInput(itemData.unitLabor)}
+                                  onChange={(e) => {
+                                    const newData = [...handoverItemsData];
+                                    newData[idx] = { ...itemData, unitLabor: Number(parseNumberInput(e.target.value)) || 0 };
+                                    setHandoverItemsData(newData);
+                                  }}
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[var(--text-placeholder)]">₫</span>
+                              </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                              <label className="text-[9px] font-black text-[var(--text-placeholder)] uppercase tracking-widest ml-1">Kỳ hạn (ngày)</label>
+                              <div className="relative">
+                                <input
+                                  type="number"
+                                  className="w-full pl-3 pr-8 py-2 bg-[var(--bg-main)] border border-[var(--grid-border)] rounded-xl font-black text-[13px] text-[var(--text-main)] focus:ring-4 focus:ring-[var(--brand-primary)]/10 focus:border-[var(--brand-primary)] outline-none transition-all"
+                                  value={itemData.days || "0"}
+                                  onChange={(e) => {
+                                    const d = parseInt(e.target.value) || 0;
+                                    const newData = [...handoverItemsData];
+                                    const newDate = new Date();
+                                    newDate.setDate(newDate.getDate() + d);
+                                    newData[idx] = {
+                                      ...itemData,
+                                      days: e.target.value,
+                                      deadline: newDate.toISOString().split('T')[0]
+                                    };
+                                    setHandoverItemsData(newData);
+                                  }}
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2"><Clock size={12} className="text-[var(--text-placeholder)]" /></span>
+                              </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                              <label className="text-[9px] font-black text-[var(--text-placeholder)] uppercase tracking-widest ml-1">Ngày xong SP</label>
                               <input
-                                type="text"
-                                className="w-full pl-3 pr-7 py-2 bg-gray-50/50 border border-[var(--grid-border)] rounded-lg font-black text-[13px] text-gray-700 focus:ring-4 focus:ring-[var(--brand-primary)]/10 focus:border-[var(--brand-primary)] focus:bg-white outline-none transition-all"
-                                value={formatNumberInput(handoverItemsData[idx]?.unitLabor)}
+                                type="date"
+                                className="w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--grid-border)] rounded-xl font-black text-[11px] text-[var(--text-main)] focus:ring-4 focus:ring-[var(--brand-primary)]/10 focus:border-[var(--brand-primary)] outline-none transition-all"
+                                value={itemData.deadline || ""}
                                 onChange={(e) => {
+                                  const newDeadline = e.target.value;
+                                  const diff = Math.ceil((new Date(newDeadline) - new Date()) / 86400000);
                                   const newData = [...handoverItemsData];
-                                  newData[idx] = { ...newData[idx], unitLabor: Number(parseNumberInput(e.target.value)) || 0 };
+                                  newData[idx] = {
+                                    ...itemData,
+                                    deadline: newDeadline,
+                                    days: (diff > 0 ? diff : 0).toString()
+                                  };
                                   setHandoverItemsData(newData);
                                 }}
                               />
-                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-300">₫</span>
                             </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="relative group">
-                              <input
-                                type="number"
-                                className="w-full h-9 bg-[var(--palette-orange)]/5 border border-[var(--palette-orange)]/20 rounded-lg font-black text-[13px] text-[var(--palette-orange)] focus:ring-4 focus:ring-[var(--palette-orange)]/10 focus:border-[var(--palette-orange)] focus:bg-white outline-none transition-all text-center"
-                                placeholder="0"
-                                value={handoverItemsData[idx]?.days}
-                                onChange={(e) => {
-                                  const newData = [...handoverItemsData];
-                                  newData[idx] = { ...newData[idx], days: e.target.value };
-                                  setHandoverItemsData(newData);
-                                }}
-                              />
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                    <tfoot className="bg-[var(--grid-header-bg)] border-t border-[var(--grid-border)] font-bold">
-                      <tr>
-                        <td className="px-4 py-4 text-[10px] text-gray-400 uppercase tracking-widest" colSpan={1}>Tổ hợp tiền thợ sơn</td>
-                        <td className="px-4 py-4 text-[15px] text-gray-900 text-right font-black" colSpan={2}>
-                          <span className="text-[var(--brand-primary)]">
-                            {fmtCurrency(order?.products?.reduce((sum, p, idx) => sum + (handoverItemsData[idx]?.unitLabor || 0) * (p.qty || 1), 0))}
-                          </span>
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Ngày xong dự kiến</label>
-                  <input
-                    type="date"
-                    className="w-full px-4 py-2.5 bg-[var(--bg-main)] border border-[var(--grid-border)] rounded-xl text-[13px] font-black text-gray-800 focus:ring-4 focus:ring-[var(--brand-primary)]/10 focus:border-[var(--brand-primary)] focus:bg-white outline-none transition-all"
-                    value={handoverDeadline}
-                    onChange={(e) => setHandoverDeadline(e.target.value)}
-                  />
+              {/* Summary Section */}
+              <div className="space-y-4 pt-2 border-t border-[var(--grid-border)]">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-[var(--status-focus)] border border-[var(--brand-primary)]/10 rounded-2xl relative overflow-hidden group">
+                    <div className="absolute top-[-10px] right-[-10px] opacity-10 group-hover:scale-120 transition-transform duration-700">
+                      <Hammer size={80} className="text-[var(--brand-primary)]" />
+                    </div>
+                    <span className="text-[10px] font-black text-[var(--brand-primary)] uppercase tracking-widest block mb-1">Tổng tiền thợ sơn</span>
+                    <p className="text-[20px] font-black text-[var(--brand-primary)] leading-none">
+                      {fmtCurrency(order?.products?.reduce((sum, p, idx) => sum + (handoverItemsData[idx]?.unitLabor || 0) * (p.qty || 1), 0))}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-[var(--sidebar)] border border-[var(--sidebar-border)] rounded-2xl shadow-xl">
+                    <span className="text-[10px] font-black text-[var(--sidebar-foreground)]/50 uppercase tracking-widest block mb-1">Hạn xong dự kiến</span>
+                    <input
+                      type="date"
+                      className="mt-1 bg-transparent border-none p-0 text-[18px] font-black text-[var(--sidebar-foreground)] focus:ring-0 outline-none w-full [color-scheme:dark]"
+                      value={handoverDeadline || ""}
+                      onChange={(e) => setHandoverDeadline(e.target.value)}
+                    />
+                  </div>
                 </div>
+
                 <div className="space-y-2">
-                  <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Ghi chú dặn thợ</label>
+                  <label className="text-[11px] font-black text-[var(--text-secondary)] uppercase tracking-widest ml-1 flex items-center gap-2">
+                    <FileText size={14} className="text-[var(--text-placeholder)]" /> Ghi chú bàn giao cho xưởng
+                  </label>
                   <textarea
-                    className="w-full px-4 py-2 bg-[var(--bg-main)] border border-[var(--grid-border)] rounded-xl text-[13px] font-medium text-gray-700 focus:ring-4 focus:ring-[var(--brand-primary)]/10 focus:border-[var(--brand-primary)] focus:bg-white outline-none transition-all min-h-[42px] max-h-[80px] resize-none"
-                    placeholder="Ghi chú quan trọng cho xưởng..."
+                    className="w-full p-4 bg-[var(--bg-main)] border border-[var(--grid-border)] rounded-2xl text-[13px] font-medium text-[var(--text-main)] focus:ring-4 focus:ring-[var(--brand-primary)]/10 focus:border-[var(--brand-primary)] outline-none transition-all min-h-[80px] max-h-[120px] resize-none"
+                    placeholder="Những dặn dò quan trọng nhất cho thợ..."
                     value={handoverNotes}
                     onChange={(e) => setHandoverNotes(e.target.value)}
                   />
                 </div>
               </div>
 
-              <div className="pt-2">
+              <div className="p-6 bg-[var(--background)] border-t border-[var(--grid-border)] shrink-0">
                 <button
                   onClick={handleHandoverConfirm}
-                  className="w-full h-10 bg-[var(--brand-primary)] hover:opacity-90 text-white rounded-lg font-bold text-[13px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
+                  className="w-full h-12 bg-[var(--brand-primary)] hover:opacity-90 text-[var(--primary-foreground)] rounded-2xl font-black text-[14px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-3 group"
                 >
-                  XÁC NHẬN BÀN GIAO SẢN XUẤT
+                  Xác nhận bàn giao gia công
+                  <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
             </div>
@@ -1510,7 +1540,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
       {previewImage && (
         <div
-          className="fixed inset-0 z-[2000] bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-8 transition-all animate-in fade-in cursor-zoom-out"
+          className="fixed inset-0 z-[2000] bg-[var(--sidebar)]/95 backdrop-blur-xl flex items-center justify-center p-8 transition-all animate-in fade-in cursor-zoom-out"
           onClick={() => setPreviewImage(null)}
         >
           <img src={previewImage} className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg border border-white/10 p-1 bg-white/5 animate-in zoom-in-95 duration-300" alt="Full Preview" />
@@ -1521,40 +1551,43 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
       )}
 
       {inspectItem && (
-        <div className="absolute inset-0 z-[110] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white w-full max-w-lg rounded-lg overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-200">
-            <div className="px-6 py-4 border-b border-emerald-50 bg-emerald-50/30 flex items-center justify-between">
-              <h3 className="text-[15px] font-black text-emerald-700 flex items-center gap-2 uppercase tracking-tight">
+        <div className="absolute inset-0 z-[110] flex items-center justify-center p-6 bg-[var(--sidebar)]/60 backdrop-blur-md animate-in fade-in">
+          <div className="bg-[var(--background)] w-full max-w-lg rounded-xl overflow-hidden animate-in zoom-in-95 duration-300 border border-[var(--grid-border)]">
+            <div className="px-6 py-4 border-b border-[var(--grid-border)] bg-[var(--grid-header-bg)] flex items-center justify-between">
+              <h3 className="text-[15px] font-black text-[var(--status-success)] flex items-center gap-2 uppercase tracking-tight">
                 <Camera size={18} /> Nghiệm thu sản phẩm
               </h3>
-              <button onClick={() => setInspectItem(null)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setInspectItem(null)} className="text-[var(--text-placeholder)] hover:text-[var(--text-main)]">
                 <X size={20} />
               </button>
             </div>
 
             <div className="p-6 space-y-5">
               <div className="flex gap-4">
-                <div className="w-24 h-24 rounded-lg overflow-hidden border border-gray-100 shrink-0">
+                <div
+                  className="w-24 h-24 rounded-lg overflow-hidden border border-gray-100 shrink-0 cursor-zoom-in hover:opacity-90 transition-opacity"
+                  onClick={() => setPreviewImage(inspectItem.productImage)}
+                >
                   <img src={inspectItem.productImage} className="w-full h-full object-cover" alt="" />
                 </div>
                 <div>
-                  <h4 className="font-black text-slate-800 text-[16px]">{inspectItem.productName}</h4>
-                  <p className="text-[12px] text-slate-500 mt-1">Đơn hàng: <span className="font-bold text-slate-700">{order?.code}</span></p>
-                  <p className="text-[12px] text-slate-500">Thợ đảm trách: <span className="font-bold text-slate-700">{inspectItem.assignedWorker}</span></p>
+                  <h4 className="font-black text-[var(--text-main)] text-[16px]">{inspectItem.productName}</h4>
+                  <p className="text-[12px] text-[var(--text-secondary)] mt-1">Đơn hàng: <span className="font-bold text-[var(--text-main)]">{order?.code}</span></p>
+                  <p className="text-[12px] text-[var(--text-secondary)]">Thợ đảm trách: <span className="font-bold text-[var(--text-main)]">{inspectItem.assignedWorker}</span></p>
                 </div>
               </div>
 
               {inspectItem.completionPhoto && (
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Ảnh hoàn thiện từ xưởng</label>
-                  <div className="relative aspect-video rounded-lg overflow-hidden border border-gray-100 shadow-inner group">
-                    <img src={inspectItem.completionPhoto} className="w-full h-full object-cover" alt="KCS Preview" />
-                    <button
-                      onClick={() => setPreviewImage(inspectItem.completionPhoto)}
-                      className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Eye className="text-white" size={24} />
-                    </button>
+                  <label className="text-[10px] font-black text-[var(--text-placeholder)] uppercase tracking-widest block">Ảnh hoàn thiện từ xưởng</label>
+                  <div
+                    className="relative aspect-video rounded-lg overflow-hidden border border-gray-100 shadow-inner group cursor-zoom-in"
+                    onClick={() => setPreviewImage(inspectItem.completionPhoto)}
+                  >
+                    <img src={inspectItem.completionPhoto} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="KCS Preview" />
+                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Eye className="text-white drop-shadow-md" size={28} />
+                    </div>
                   </div>
                 </div>
               )}
@@ -1565,7 +1598,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                     setRedoItem(inspectItem);
                     setInspectItem(null);
                   }}
-                  className="h-10 px-4 bg-rose-50 border border-rose-100 text-rose-600 rounded-lg text-[13px] font-bold hover:bg-rose-100 transition-all active:scale-95 flex items-center justify-center gap-2"
+                  className="h-10 px-4 bg-[var(--status-error)]/5 border border-[var(--status-error)]/10 text-[var(--status-error)] rounded-lg text-[13px] font-bold hover:bg-[var(--status-error)]/10 transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
                   <RotateCcw size={16} /> YÊU CẦU SỬA LẠI
                 </button>
@@ -1590,23 +1623,23 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
       )}
 
       {redoItem && (
-        <div className="absolute inset-0 z-[120] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white w-full max-w-md rounded-lg overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-200">
-            <div className="px-6 py-4 border-b border-rose-50 bg-rose-50/30 flex items-center justify-between">
-              <h3 className="text-[15px] font-black text-rose-700 flex items-center gap-2 uppercase tracking-tight">
+        <div className="absolute inset-0 z-[120] flex items-center justify-center p-6 bg-[var(--sidebar)]/60 backdrop-blur-md animate-in fade-in">
+          <div className="bg-[var(--background)] w-full max-w-md rounded-xl overflow-hidden animate-in zoom-in-95 duration-300 border border-[var(--grid-border)]">
+            <div className="px-6 py-4 border-b border-[var(--grid-border)] bg-[var(--grid-header-bg)] flex items-center justify-between">
+              <h3 className="text-[15px] font-black text-[var(--status-error)] flex items-center gap-2 uppercase tracking-tight">
                 <RotateCcw size={18} /> Yêu cầu sửa lại
               </h3>
-              <button onClick={() => setRedoItem(null)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setRedoItem(null)} className="text-[var(--text-placeholder)] hover:text-[var(--text-main)]">
                 <X size={20} />
               </button>
             </div>
 
             <div className="p-6 space-y-4">
-              <p className="text-[13px] text-slate-600 font-medium">Bạn muốn thợ <span className="font-bold text-slate-800">{redoItem.assignedWorker}</span> sửa lại nội dung gì cho sản phẩm này?</p>
+              <p className="text-[13px] text-[var(--text-secondary)] font-medium">Bạn muốn thợ <span className="font-bold text-[var(--text-main)]">{redoItem.assignedWorker}</span> sửa lại nội dung gì cho sản phẩm này?</p>
 
               <textarea
                 autoFocus
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-[13px] text-slate-800 focus:ring-4 focus:ring-rose-500/10 focus:border-rose-500 outline-none transition-all min-h-[120px]"
+                className="w-full px-4 py-3 bg-[var(--bg-main)]/40 border border-[var(--grid-border)] rounded-xl font-medium text-[13px] text-[var(--text-main)] focus:ring-4 focus:ring-[var(--brand-primary)]/10 focus:border-[var(--brand-primary)] outline-none transition-all min-h-[120px]"
                 placeholder="Ví dụ: Nước sơn còn hơi mỏng, cần bắn thêm lót 2..."
                 value={redoNote}
                 onChange={(e) => setRedoNote(e.target.value)}
@@ -1615,7 +1648,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setRedoItem(null)}
-                  className="flex-1 h-10 px-4 border border-slate-200 text-slate-500 rounded-lg text-[13px] font-bold hover:bg-slate-50 transition-all active:scale-95 flex items-center justify-center"
+                  className="flex-1 h-10 px-4 border border-[var(--grid-border)] text-[var(--text-placeholder)] rounded-lg text-[13px] font-bold hover:bg-[var(--bg-main)] transition-all active:scale-95 flex items-center justify-center"
                 >
                   HỦY
                 </button>
@@ -1632,7 +1665,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                     setRedoItem(null);
                     setRedoNote("");
                   }}
-                  className="flex-1 h-10 px-4 bg-rose-600 text-white rounded-lg text-[13px] font-bold hover:bg-rose-700 transition-all active:scale-95 flex items-center justify-center"
+                  className="flex-1 h-10 px-4 bg-[var(--status-error)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center justify-center"
                 >
                   GỬI YÊU CẦU
                 </button>
@@ -1651,28 +1684,28 @@ const LoadingSkeleton = () => (
   <div className="p-8 space-y-8 animate-pulse h-full overflow-hidden">
     <div className="grid grid-cols-2 gap-8 h-full">
       <div className="space-y-6">
-        <div className="h-40 bg-slate-100 rounded-lg" />
-        <div className="h-64 bg-slate-100 rounded-lg" />
+        <div className="h-40 bg-[var(--bg-main)]/60 rounded-xl" />
+        <div className="h-64 bg-[var(--bg-main)]/60 rounded-xl" />
       </div>
       <div className="space-y-6">
-        <div className="h-48 bg-slate-50 rounded-lg" />
-        <div className="h-32 bg-slate-50 rounded-lg" />
-        <div className="h-40 bg-slate-50 rounded-lg" />
+        <div className="h-48 bg-[var(--bg-main)]/40 rounded-xl" />
+        <div className="h-32 bg-[var(--bg-main)]/40 rounded-xl" />
+        <div className="h-40 bg-[var(--bg-main)]/40 rounded-xl" />
       </div>
     </div>
   </div>
 );
 
 const ErrorState = ({ onRetry }) => (
-  <div className="flex flex-col items-center justify-center p-12 text-center h-full bg-slate-50/50">
-    <div className="w-20 h-20 rounded-lg bg-rose-50 flex items-center justify-center text-rose-500 mb-6 shadow-sm border border-rose-100">
+  <div className="flex flex-col items-center justify-center p-12 text-center h-full bg-[var(--bg-main)]/20">
+    <div className="w-20 h-20 rounded-xl bg-[var(--status-error)]/10 flex items-center justify-center text-[var(--status-error)] mb-6 border border-[var(--status-error)]/20">
       <AlertTriangle size={36} />
     </div>
-    <h3 className="text-lg font-black text-slate-800">Không thể tải dữ liệu</h3>
-    <p className="text-[14px] text-slate-500 mt-2 max-w-xs leading-relaxed">Đơn hàng không tồn tại hoặc đã bị gỡ khỏi hệ thống. Vui lòng kiểm tra lại.</p>
+    <h3 className="text-lg font-black text-[var(--text-main)]">Không thể tải dữ liệu</h3>
+    <p className="text-[14px] text-[var(--text-secondary)] mt-2 max-w-xs leading-relaxed">Đơn hàng không tồn tại hoặc đã bị gỡ khỏi hệ thống. Vui lòng kiểm tra lại.</p>
     <button
       onClick={onRetry}
-      className="mt-6 px-6 py-2 bg-indigo-600 text-white rounded-lg text-[13px] font-bold hover:bg-indigo-700 transition-all active:scale-95"
+      className="mt-6 px-6 py-2 bg-[var(--brand-primary)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95"
     >
       THỬ LẠI
     </button>

@@ -597,18 +597,6 @@ export default function CouponCreatePage() {
                                 />
                             </FieldRow>
 
-                            {/* Active toggle */}
-                            <div className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: "var(--grid-border)" }}>
-                                <div>
-                                    <p className="text-[13px] font-bold text-gray-700">Kích hoạt ngay</p>
-                                    <p className="text-[11px] text-gray-400 mt-0.5">Mã sẽ hoạt động ngay sau khi lưu</p>
-                                </div>
-                                <button type="button" onClick={() => set("isActive", !form.isActive)} className="cursor-pointer">
-                                    <div className={cn("relative w-11 h-6 rounded-full transition-all duration-200", form.isActive ? "bg-emerald-500" : "bg-gray-200")}>
-                                        <span className={cn("absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200", form.isActive ? "translate-x-5" : "translate-x-0")} />
-                                    </div>
-                                </button>
-                            </div>
                         </SectionCard>
 
                         {/* ── Section 2: Discount & Date range ──────────────── */}

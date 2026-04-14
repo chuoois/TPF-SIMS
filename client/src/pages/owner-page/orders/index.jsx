@@ -320,9 +320,8 @@ export default function OwnerOrders() {
 
                 {/* KCS */}
                 <span
-                  className={`inline-flex items-center gap-1 px-1.5 py-[2px] rounded text-[10px] font-bold transition-all${
-                    sub.kcs > 0 ? " ring-1 ring-emerald-300" : ""
-                  }`}
+                  className={`inline-flex items-center gap-1 px-1.5 py-[2px] rounded text-[10px] font-bold transition-all${sub.kcs > 0 ? " ring-1 ring-emerald-300" : ""
+                    }`}
                   style={{
                     backgroundColor: sub.kcs > 0 ? "#D1FAE5" : "transparent",
                     color: sub.kcs > 0 ? "#065F46" : "#C4C9D4",
@@ -365,72 +364,72 @@ export default function OwnerOrders() {
           </div>
         </div>
 
-      <div className="flex items-center gap-2 shrink-0 px-1 flex-wrap">
-        {possibleStatuses.map((s) => {
-          const isActive = statusFilter === s;
-          const sc = s !== "Tất cả" ? getStatusColor(s) : null;
-          return (
-            <button key={s} onClick={() => updateParams({ status: s })} className="px-4 py-1.5 rounded-lg text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border" style={{ backgroundColor: isActive ? (sc ? sc.bg : "#fff") : "transparent", color: isActive ? (sc ? sc.text : "var(--brand-primary)") : "var(--text-secondary)", borderColor: isActive ? (sc ? sc.border : "var(--grid-border)") : "transparent" }}>
-              {s !== "Tất cả" && sc?.icon && <sc.icon size={14} />}
-              {s} <span className="text-[10px] opacity-60 bg-black/5 px-1.5 rounded-md ml-0.5">{statusCounts[s] || 0}</span>
-            </button>
-          );
-        })}
-      </div>
+        <div className="flex items-center gap-2 shrink-0 px-1 flex-wrap">
+          {possibleStatuses.map((s) => {
+            const isActive = statusFilter === s;
+            const sc = s !== "Tất cả" ? getStatusColor(s) : null;
+            return (
+              <button key={s} onClick={() => updateParams({ status: s })} className="px-4 py-1.5 rounded-lg text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border" style={{ backgroundColor: isActive ? (sc ? sc.bg : "#fff") : "transparent", color: isActive ? (sc ? sc.text : "var(--brand-primary)") : "var(--text-secondary)", borderColor: isActive ? (sc ? sc.border : "var(--grid-border)") : "transparent" }}>
+                {s !== "Tất cả" && sc?.icon && <sc.icon size={14} />}
+                {s} <span className="text-[10px] opacity-60 bg-black/5 px-1.5 rounded-md ml-0.5">{statusCounts[s] || 0}</span>
+              </button>
+            );
+          })}
+        </div>
 
-      <DataTable
-        columns={columns}
-        data={paginatedOrders}
-        onRowClick={(o) => setDetailId(o.id)}
-        rowStyle={(item) => ({
-          backgroundColor: selectedIds.includes(item.id) ? "var(--status-focus)" : "transparent"
-        })}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        dateFrom={dateFrom}
-        setDateFrom={setDateFrom}
-        dateTo={dateTo}
-        setDateTo={setDateTo}
-        hasActiveFilters={hasActiveFilters}
-        clearAllFilters={() => { updateParams({ status: "Tất cả" }); setDateFrom(""); setDateTo(""); setSearchTerm(""); }}
-        selectedIds={selectedIds}
-        setSelectedIds={setSelectedIds}
+        <DataTable
+          columns={columns}
+          data={paginatedOrders}
+          onRowClick={(o) => setDetailId(o.id)}
+          rowStyle={(item) => ({
+            backgroundColor: selectedIds.includes(item.id) ? "var(--status-focus)" : "transparent"
+          })}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          dateFrom={dateFrom}
+          setDateFrom={setDateFrom}
+          dateTo={dateTo}
+          setDateTo={setDateTo}
+          hasActiveFilters={hasActiveFilters}
+          clearAllFilters={() => { updateParams({ status: "Tất cả" }); setDateFrom(""); setDateTo(""); setSearchTerm(""); }}
+          selectedIds={selectedIds}
+          setSelectedIds={setSelectedIds}
 
-        rowActions={[
-          {
-            icon: Eye,
-            label: "Xem chi tiết",
-            onClick: (o) => setDetailId(o.id),
-          },
-          {
-            icon: Trash2,
-            label: "Hủy đơn",
-            onClick: (o) => handleSingleCancel(o),
-            className: "bg-white border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200",
-            requireConfirm: true,
-            confirmTitle: "Xác nhận hủy đơn hàng?",
-            confirmMessage: "Mọi thông tin thanh toán và trạng thái của đơn sẽ được chuyển về 'Đơn đã hủy'. Bạn chắc chắn chứ?"
-          },
-        ]}
-        bulkActions={[
-          {
-            label: "HỦY ĐƠN HÀNG LOẠT",
-            icon: Trash2,
-            onClick: handleBulkCancel,
-            requireConfirm: true,
-            confirmTitle: "Hủy hàng loạt đơn hàng?",
-            confirmMessage: `Hệ thống sẽ chuyển ${selectedIds.length} đơn hàng đã chọn sang trạng thái hủy. Hành động này không thể hoàn tác.`
-          }
-        ]}
-        pagination={{
-          total: filtered.length,
-          currentPage: currentPage,
-          setCurrentPage: setCurrentPage,
-          itemsPerPage: itemsPerPage,
-          setItemsPerPage: setItemsPerPage,
-        }}
-      />
-    </div >
+          rowActions={[
+            {
+              icon: Eye,
+              label: "Xem chi tiết",
+              onClick: (o) => setDetailId(o.id),
+            },
+            {
+              icon: Trash2,
+              label: "Hủy đơn",
+              onClick: (o) => handleSingleCancel(o),
+              className: "bg-white border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200",
+              requireConfirm: true,
+              confirmTitle: "Xác nhận hủy đơn hàng?",
+              confirmMessage: "Mọi thông tin thanh toán và trạng thái của đơn sẽ được chuyển về 'Đơn đã hủy'. Bạn chắc chắn chứ?"
+            },
+          ]}
+          bulkActions={[
+            {
+              label: "HỦY ĐƠN HÀNG LOẠT",
+              icon: Trash2,
+              onClick: handleBulkCancel,
+              requireConfirm: true,
+              confirmTitle: "Hủy hàng loạt đơn hàng?",
+              confirmMessage: `Hệ thống sẽ chuyển ${selectedIds.length} đơn hàng đã chọn sang trạng thái hủy. Hành động này không thể hoàn tác.`
+            }
+          ]}
+          pagination={{
+            total: filtered.length,
+            currentPage: currentPage,
+            setCurrentPage: setCurrentPage,
+            itemsPerPage: itemsPerPage,
+            setItemsPerPage: setItemsPerPage,
+          }}
+        />
+      </div >
 
       <InvoiceDetailsPopup
         invoiceId={detailId}
