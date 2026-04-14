@@ -1096,12 +1096,12 @@ export default function CustomOrderRequirementsPage() {
                   <CreditCard size={12} strokeWidth={3} />
                 </div>
                 <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">
-                  Báo giá & Đặt cọc
+                  Giá trị đơn hàng & Đặt cọc
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Báo giá dự kiến</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Giá trị đơn hàng</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -1367,14 +1367,14 @@ export default function CustomOrderRequirementsPage() {
               <div className="p-3 bg-blue-50/50 rounded-lg border border-blue-100/50 flex items-start gap-2.5">
                 <Info size={16} className="text-blue-500 mt-0.5 shrink-0" />
                 <p className="text-[12px] font-bold text-blue-800/80 leading-relaxed italic">
-                  Vì bạn đang tạo đơn hàng trực tiếp, "Báo giá dự kiến" sẽ trở thành <strong>Giá chính thức</strong>. Vui lòng xác nhận lại giá.
+                  Vì bạn đang tạo đơn hàng trực tiếp, vui lòng xác nhận lại giá.
                 </p>
               </div>
               
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
-                    Giá trị đơn hàng chính thức <span className="text-rose-500">*</span>
+                    Giá trị đơn hàng <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
                     <input
