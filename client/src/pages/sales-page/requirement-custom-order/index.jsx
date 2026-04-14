@@ -163,6 +163,13 @@ export default function CustomOrderRequirementsPage() {
   const [editingItemId, setEditingItemId] = useState(null);
   const [viewingItem, setViewingItem] = useState(null);
 
+  // Direct Order Conf Modal
+  const [showDirectOrderModal, setShowDirectOrderModal] = useState(false);
+  const [directOrderForm, setDirectOrderForm] = useState({
+    finalPrice: "",
+    finalDeposit: ""
+  });
+
   const updateActiveTab = useCallback(
     (updates) => {
       setTabs((prev) =>
@@ -297,14 +304,34 @@ export default function CustomOrderRequirementsPage() {
     }
     
     if (isDirect) {
-      toast.success(
-        `Tạo đơn hàng trực tiếp ${generateOrderCode()} thành công!`,
-      );
+      setDirectOrderForm({
+        finalPrice: activeTab.expectedQuote || "",
+        finalDeposit: activeTab.deposit || ""
+      });
+      setShowDirectOrderModal(true);
     } else {
       toast.success(
         `Gửi yêu cầu thiết kế ${generateOrderCode()} cho xưởng thành công!`,
       );
+      if (tabs.length <= 1) {
+        updateActiveTab(createEmptyTab());
+      } else {
+        closeTab(activeTabId, { stopPropagation: () => {} });
+      }
     }
+  };
+
+  const handleConfirmDirectOrder = () => {
+    if (!directOrderForm.finalPrice) {
+      toast.error("Vui lòng nhập giá trị đơn hàng chính thức!");
+      return;
+    }
+    
+    toast.success(
+      `Tạo đơn hàng trực tiếp ${generateOrderCode()} thành công!`,
+    );
+
+    setShowDirectOrderModal(false);
 
     if (tabs.length <= 1) {
       updateActiveTab(createEmptyTab());
@@ -1309,6 +1336,93 @@ export default function CustomOrderRequirementsPage() {
               >
                 Đã hiểu
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Direct Order Confirmation Modal ── */}
+      {showDirectOrderModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-white rounded-xl w-full max-w-md overflow-hidden shadow-xl animate-in zoom-in-95 duration-300">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                  <CheckCircle2 size={20} />
+                </div>
+                <div>
+                  <h3 className="text-[16px] font-black text-slate-800 leading-none">Xác nhận tạo đơn hàng</h3>
+                  <p className="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Tạo trực tiếp không qua chủ</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowDirectOrderModal(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white text-slate-300 hover:text-slate-900 transition-all cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-5">
+              <div className="p-3 bg-blue-50/50 rounded-lg border border-blue-100/50 flex items-start gap-2.5">
+                <Info size={16} className="text-blue-500 mt-0.5 shrink-0" />
+                <p className="text-[12px] font-bold text-blue-800/80 leading-relaxed italic">
+                  Vì bạn đang tạo đơn hàng trực tiếp, "Báo giá dự kiến" sẽ trở thành <strong>Giá chính thức</strong>. Vui lòng xác nhận lại giá.
+                </p>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                    Giá trị đơn hàng chính thức <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="VD: 15,000,000"
+                      value={directOrderForm.finalPrice ? fmt(directOrderForm.finalPrice) : ""}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "");
+                        setDirectOrderForm(p => ({ ...p, finalPrice: val ? Number(val) : "" }));
+                      }}
+                      className={`${inputBase} bg-white border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100/50 transition-all font-bold text-slate-800 h-12`}
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-400">VND</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Đã thu tiền cọc</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="VD: 5,000,000"
+                      value={directOrderForm.finalDeposit ? fmt(directOrderForm.finalDeposit) : ""}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "");
+                        setDirectOrderForm(p => ({ ...p, finalDeposit: val ? Number(val) : "" }));
+                      }}
+                      className={`${inputBase} bg-white border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100/50 transition-all font-bold text-slate-800 h-12`}
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-400">VND</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex gap-3">
+              <button
+                onClick={() => setShowDirectOrderModal(false)}
+                className="flex-1 h-11 rounded-lg font-black text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 transition-all text-[12px] uppercase tracking-wider cursor-pointer"
+              >
+                Trở lại
+              </button>
+              <button
+                onClick={handleConfirmDirectOrder}
+                className="flex-1 h-11 rounded-lg font-black text-white bg-emerald-500 hover:bg-emerald-600 border border-transparent transition-all text-[12px] uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-500/20"
+              >
+                Chốt Đơn Lập Tức
+              </button>
             </div>
           </div>
         </div>

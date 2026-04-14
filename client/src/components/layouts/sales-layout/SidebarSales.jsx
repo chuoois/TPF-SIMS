@@ -33,7 +33,7 @@ const menuItems = [
     path: "/sales/dashboard/invoice-instock",
   },
   {
-    text: "Tạo yêu cầu đặt hàng",
+    text: "Hàng khách đặt",
     icon: ClipboardList,
     path: "/sales/dashboard/requirements-custom-order",
   },
