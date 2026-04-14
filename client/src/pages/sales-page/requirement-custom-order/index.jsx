@@ -110,6 +110,8 @@ const createEmptyTab = () => ({
   selectedCustomer: null,
   customerName: "",
   customerPhone: "",
+  expectedQuote: "",
+  deposit: "",
   deliveryInfo: {
     address: "",
     district: "",
@@ -283,7 +285,7 @@ export default function CustomOrderRequirementsPage() {
   // Checkout
   const itemCount = activeTab.cartItems.reduce((sum, i) => sum + i.quantity, 0);
 
-  const handleCreateOrder = () => {
+  const handleCreateOrder = (isDirect = false) => {
     if (activeTab.cartItems.length === 0) return;
     if (!activeTab.customerName.trim()) {
       toast.error("Vui lòng nhập tên khách hàng");
@@ -293,9 +295,17 @@ export default function CustomOrderRequirementsPage() {
       toast.error("Vui lòng nhập số điện thoại");
       return;
     }
-    toast.success(
-      `Tạo yêu cầu đặt hàng ${generateOrderCode()} thành công!`,
-    );
+    
+    if (isDirect) {
+      toast.success(
+        `Tạo đơn hàng trực tiếp ${generateOrderCode()} thành công!`,
+      );
+    } else {
+      toast.success(
+        `Gửi yêu cầu thiết kế ${generateOrderCode()} cho xưởng thành công!`,
+      );
+    }
+
     if (tabs.length <= 1) {
       updateActiveTab(createEmptyTab());
     } else {
@@ -853,16 +863,26 @@ export default function CustomOrderRequirementsPage() {
                   <span className="text-[12px] font-black text-slate-400 uppercase tracking-widest">Sản phẩm</span>
                 </div>
               </div>
-              <Button
-                className="h-11 px-8 text-[14px] font-black uppercase tracking-wider text-white rounded-lg transition-all duration-300 active:scale-95 cursor-pointer disabled:opacity-30"
-                style={{
-                  backgroundColor: "var(--brand-primary)",
-                }}
-                disabled={activeTab.cartItems.length === 0}
-                onClick={handleCreateOrder}
-              >
-                Gửi yêu cầu ngay
-              </Button>
+              <div className="flex items-center gap-3">
+                <Button
+                  className="h-11 px-6 text-[13px] font-black uppercase tracking-wider bg-white text-indigo-600 border border-indigo-200 rounded-lg transition-all duration-300 hover:bg-indigo-50 active:scale-95 cursor-pointer disabled:opacity-30 flex items-center gap-2"
+                  disabled={activeTab.cartItems.length === 0}
+                  onClick={() => handleCreateOrder(true)}
+                >
+                  <CheckCircle2 size={18} />
+                  Tạo đơn trực tiếp
+                </Button>
+                <Button
+                  className="h-11 px-6 text-[13px] font-black uppercase tracking-wider text-white rounded-lg transition-all duration-300 active:scale-95 cursor-pointer disabled:opacity-30"
+                  style={{
+                    backgroundColor: "var(--brand-primary)",
+                  }}
+                  disabled={activeTab.cartItems.length === 0}
+                  onClick={() => handleCreateOrder()}
+                >
+                  Gửi cho chủ
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -1037,6 +1057,54 @@ export default function CustomOrderRequirementsPage() {
                       className={`${inputBase} pl-10`}
                       style={{ ...inputStyle, backgroundColor: "white" }}
                     />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Info Card */}
+            <div className="p-5 border-b border-slate-50 space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+                  <CreditCard size={12} strokeWidth={3} />
+                </div>
+                <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">
+                  Báo giá & Đặt cọc
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Báo giá dự kiến</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="VD: 15,000,000"
+                      value={activeTab.expectedQuote ? fmt(activeTab.expectedQuote) : ""}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "");
+                        updateActiveTab({ expectedQuote: val ? Number(val) : "" });
+                      }}
+                      className={inputBase}
+                      style={{ ...inputStyle, backgroundColor: "white" }}
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-300">VND</span>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tiền cọc đã nhận</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="VD: 5,000,000"
+                      value={activeTab.deposit ? fmt(activeTab.deposit) : ""}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "");
+                        updateActiveTab({ deposit: val ? Number(val) : "" });
+                      }}
+                      className={inputBase}
+                      style={{ ...inputStyle, backgroundColor: "white" }}
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-300">VND</span>
                   </div>
                 </div>
               </div>
