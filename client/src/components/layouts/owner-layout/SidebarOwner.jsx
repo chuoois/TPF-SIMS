@@ -21,6 +21,7 @@ import {
   ChevronDown,
   ChevronRight,
   Settings2,
+  FileStack,
 } from "lucide-react";
 
 // ─── Menu structure ───────────────────────────────────────────────────────────
@@ -34,6 +35,7 @@ const menuItems = [
     path: "/owner/requirements",
   },
   { text: "Đơn hàng", icon: ClipboardList, path: "/owner/orders" },
+  { text: "Phiếu gia công", icon: FileStack, path: "/owner/manufacturing-orders" },
 
   {
     text: "Sản phẩm",
