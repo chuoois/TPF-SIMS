@@ -87,7 +87,10 @@ export const INITIAL_ORDERS = [
     deliveryDate: "2026-04-20",
     deposit: 13500000,
     fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Sản phẩm Hàng mộc 1", specs: "Kích thước tiêu chuẩn", qty: 10, unit: "Cái" }]
+    products: [
+      { name: "Bộ bàn ghế ăn 6 chỗ", material: "Gỗ sồi", size: "D180 R90 C75", color: "Nâu đậm", finish: "Sơn PU bóng mờ", qty: 1, unit: "Bộ", note: "Bo góc tròn, chân tiện tròn kiểu cổ điển", image: "https://noithatzito.com/wp-content/uploads/2021/04/bo-ban-an-go-soi-nga-6-ghe.jpg" },
+      { name: "Tủ rượu cánh kính", material: "Gỗ sồi", size: "D120 R40 C200", color: "Nâu đậm", finish: "Sơn PU bóng mờ", qty: 2, unit: "Chiếc", note: "Kính cường lực 8mm, bản lề giảm chấn Blum", image: "https://noithatminhkhoi.com/upload/images/tu-quan-ao-go-soi-nga-4-canh-dep.jpg" }
+    ]
   },
   {
     id: "DH-MOC-102",
@@ -102,7 +105,10 @@ export const INITIAL_ORDERS = [
     deliveryDate: "2026-04-18",
     deposit: 13500000,
     fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Sản phẩm Hàng mộc 2", specs: "Kích thước tiêu chuẩn", qty: 10, unit: "Cái" }]
+    products: [
+      { name: "Sập thờ tứ linh", material: "Gỗ mít", size: "D197 R107 C87", color: "Tự nhiên", finish: "Đánh vecni bóng", qty: 1, unit: "Chiếc", note: "Đục chạm tứ linh: Long - Lân - Quy - Phụng, chân quỳ", image: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg" },
+      { name: "Kệ thờ treo tường", material: "Gỗ mít", size: "D107 R47 C57", color: "Tự nhiên", finish: "Đánh vecni bóng", qty: 2, unit: "Chiếc", note: "Chạm hoa sen, đục thủng 2 bên", image: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg" }
+    ]
   },
   {
     id: "DH-MOC-103",
@@ -192,7 +198,10 @@ export const INITIAL_ORDERS = [
     deliveryDate: "2026-04-20",
     deposit: 25500000,
     fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Sản phẩm Hàng khách đặt 1", specs: "Kích thước tiêu chuẩn", qty: 10, unit: "Cái" }]
+    products: [
+      { name: "Bàn giám đốc chữ L", material: "Gỗ óc chó", size: "D200 R90 C75 + D140 R60", color: "Nâu óc chó", finish: "Sơn PU 7 lớp bóng mờ 40%", qty: 1, unit: "Chiếc", note: "Hộc tủ 3 ngăn bên phải, lỗ luồn dây điện mặt bàn, chân sắt sơn tĩnh điện đen", image: "https://noithatzito.com/wp-content/uploads/2021/04/bo-ban-an-go-soi-nga-6-ghe.jpg" },
+      { name: "Tủ hồ sơ 4 cánh", material: "Gỗ óc chó", size: "D160 R45 C200", color: "Nâu óc chó", finish: "Sơn PU bóng mờ", qty: 1, unit: "Chiếc", note: "Khóa âm, bản lề giảm chấn, ngăn trên cánh kính" }
+    ]
   },
   {
     id: "DH-DAT-102",
@@ -207,7 +216,11 @@ export const INITIAL_ORDERS = [
     deliveryDate: "2026-04-18",
     deposit: 25500000,
     fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Sản phẩm Hàng khách đặt 2", specs: "Kích thước tiêu chuẩn", qty: 10, unit: "Cái" }]
+    products: [
+      { name: "Giường ngủ đầu bọc nệm", material: "Gỗ tần bì", size: "D200 R180 C35 (đầu giường C120)", color: "Trắng ngà", finish: "Sơn PU trắng bóng mờ", qty: 1, unit: "Chiếc", note: "Đầu giường bọc nệm da Ý màu ghi, có hộc kéo 2 bên, dát phản" },
+      { name: "Tab đầu giường", material: "Gỗ tần bì", size: "D50 R40 C55", color: "Trắng ngà", finish: "Sơn PU trắng bóng mờ", qty: 2, unit: "Chiếc", note: "2 ngăn kéo, tay nắm đồng vàng" },
+      { name: "Tủ quần áo 6 cánh", material: "Gỗ tần bì", size: "D300 R60 C240", color: "Trắng ngà", finish: "Sơn PU trắng bóng mờ", qty: 1, unit: "Chiếc", note: "3 khoang, 2 cánh kính, thanh treo inox, ngăn kéo bên dưới, bản lề Blum" }
+    ]
   },
   {
     id: "DH-DAT-103",
@@ -222,7 +235,10 @@ export const INITIAL_ORDERS = [
     deliveryDate: "2026-04-16",
     deposit: 25500000,
     fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Sản phẩm Hàng khách đặt 3", specs: "Kích thước tiêu chuẩn", qty: 10, unit: "Cái" }]
+    products: [
+      { name: "Bộ trường kỷ gỗ gụ", material: "Gỗ gụ", size: "D220 R70 C85", color: "Đỏ nâu tự nhiên", finish: "Đánh vecni bóng", qty: 1, unit: "Bộ", note: "Chạm đào - trúc - cúc - mai, lưng ghế chạm thủng, mặt ngồi phẳng", image: "https://langnghedoanhnhan.com/wp-content/uploads/2021/04/truong-ky-go-gu-lao-moc.jpg" },
+      { name: "Đôn kê trường kỷ", material: "Gỗ gụ", size: "D50 R50 C50", color: "Đỏ nâu tự nhiên", finish: "Đánh vecni bóng", qty: 2, unit: "Chiếc", note: "Chạm hoa lá, có ngăn kéo" }
+    ]
   },
   {
     id: "DH-DAT-104",
@@ -313,8 +329,8 @@ export const INITIAL_ORDERS = [
     deposit: 10000000,
     fulfillmentType: "Giao tận nơi",
     products: [
-      { name: "Ghế trường kỷ gỗ gụ", specs: "Dài 2m", qty: 1, unit: "Chiếc" },
-      { name: "Bàn trà đục chạm", specs: "Rộng 80cm", qty: 1, unit: "Cái" }
+      { name: "Ghế trường kỷ gỗ gụ", material: "Gỗ gụ", size: "D200 R65 C90", color: "Cánh gián", finish: "Đánh vecni bóng", qty: 1, unit: "Chiếc", note: "Tay vịn chạm rồng cuốn, lưng chạm tứ quý, mặt ngồi phẳng bo cạnh" },
+      { name: "Bàn trà đục chạm", material: "Gỗ gụ", size: "D120 R80 C48", color: "Cánh gián", finish: "Đánh vecni bóng", qty: 1, unit: "Cái", note: "Mặt bàn đục chạm mai điểu, chân quỳ, có ngăn kéo giữa" }
     ]
   },
 ];

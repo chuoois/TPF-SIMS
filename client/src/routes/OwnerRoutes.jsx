@@ -14,6 +14,7 @@ import ProductCategories from "../pages/owner-page/products/management/Categorie
 import ProductColors from "../pages/owner-page/products/management/ColorsPage";
 import ProductUnits from "../pages/owner-page/products/management/UnitsPage";
 import ProductMaterials from "../pages/owner-page/products/management/MaterialsPage";
+import ManufacturingOrdersPage from "../pages/owner-page/manufacturing-orders";
 
 export const ownerRoutes = {
   path: "/owner",
@@ -27,6 +28,10 @@ export const ownerRoutes = {
     {
       path: "orders",
       element: <Orders />,
+    },
+    {
+      path: "manufacturing-orders",
+      element: <ManufacturingOrdersPage />,
     },
     {
       path: "coupons",
