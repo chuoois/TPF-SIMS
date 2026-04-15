@@ -243,9 +243,9 @@ const StandardOrderView = ({
             <Calendar size={18} className="text-[var(--status-pending)]" />
           </div>
           <div>
-            <p className="text-[10px] font-black text-[var(--sidebar-foreground)]/50 uppercase tracking-widest">Lịch trình</p>
+            <p className="text-[10px] font-black text-[var(--sidebar-foreground)]/50 uppercase tracking-widest">Ngày giao:</p>
             <p className="text-[13px] font-bold">
-              <span className="text-[var(--sidebar-foreground)]/40">Giao:</span> {o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString("vi-VN") : "Chưa hẹn"}
+              {o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString("vi-VN") : "Chưa hẹn"}
             </p>
           </div>
         </div>
@@ -373,8 +373,8 @@ const StandardOrderView = ({
                         {[
                           { label: "Chất liệu", val: p.material },
                           { label: "Kích thước", val: p.size },
-                          { label: "Hoàn thiện", val: p.finish },
-                          { label: "Bảo hành", val: `${p.warranty || 12}T` },
+                          { label: "Màu sắc", val: p.finish },
+                          { label: "Bảo hành", val: `${p.warranty || 12} Tháng` },
                         ].map((spec, i) => (
                           <div key={i} className="space-y-1">
                             <span className="text-[9px] font-black text-[var(--text-placeholder)] uppercase tracking-widest block">{spec.label}</span>
@@ -432,7 +432,7 @@ const StandardOrderView = ({
               <div className="p-5 space-y-4">
                 {[
                   { icon: MapPin, label: "Địa chỉ giao", val: o.customer.address },
-                  { icon: Calendar, label: "Ngày hẹn", val: fmtDate(o.deliveryDate) },
+                  { icon: Calendar, label: "Ngày giao", val: fmtDate(o.deliveryDate) },
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <item.icon size={15} className="mt-0.5 text-[var(--text-placeholder)]" />
