@@ -56,7 +56,7 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
       <html lang="vi">
       <head>
         <meta charset="UTF-8"/>
-        <title>Phiếu Gia công ${order.id}</title>
+        <title>Yêu cầu Nhập hàng ${order.id}</title>
         <style>
           * { box-sizing: border-box; margin: 0; padding: 0; }
           body { font-family: 'Times New Roman', serif; font-size: 13px; color: #111; background: #fff; padding: 20px 28px; }
@@ -125,7 +125,7 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
             </div>
             <div>
               <h2 className="text-[15px] font-bold" style={{ color: "var(--text-main)" }}>
-                Chi tiết phiếu gia công
+                Chi tiết yêu cầu nhập hàng
               </h2>
               <p className="text-[12px] font-mono" style={{ color: "var(--text-secondary)" }}>{order.id}</p>
             </div>
@@ -211,7 +211,7 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
 
           {/* ════════ Danh sách sản phẩm — ĐẦY ĐỦ thông tin ════════ */}
           <p className="text-[11px] font-bold uppercase tracking-wide mb-3" style={{ color: "var(--text-placeholder)" }}>
-            Danh sách sản phẩm cần gia công ({order.items?.length || 0})
+            Danh sách sản phẩm cần nhập ({order.items?.length || 0})
           </p>
           <div className="flex flex-col gap-3">
             {order.items?.map((item, idx) => {
@@ -365,7 +365,7 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
           <div ref={printRef}>
             <div className="print-header">
               <div className="company">TPF - Xưởng Gỗ Mỹ Nghệ</div>
-              <h1>Phiếu Yêu cầu Gia công</h1>
+              <h1>Phiếu Yêu cầu Nhập hàng</h1>
               <div className="meta">Mã phiếu: <strong>{order.id}</strong> &nbsp;|&nbsp; Ngày in: {formatDate(new Date().toISOString())}</div>
             </div>
 
@@ -407,7 +407,7 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
             )}
 
             {/* Sản phẩm — mỗi SP 1 card riêng, hiện ĐẦY ĐỦ */}
-            <div className="section-title">Chi tiết sản phẩm cần gia công</div>
+            <div className="section-title">Chi tiết sản phẩm yêu cầu nhập kho</div>
             {order.items?.map((item, idx) => {
               const sizeDisplay = getDisplaySize(item);
               const allImages = [

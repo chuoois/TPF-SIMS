@@ -1,6 +1,6 @@
 /**
  * ManufacturingOrdersPage
- * Trang quản lý Phiếu gia công — Owner
+ * Trang quản lý Yêu cầu nhập hàng — Owner
  * Chỉ gom đơn hàng và tạo phiếu, không có trạng thái
  */
 
@@ -14,6 +14,33 @@ import toast from "react-hot-toast";
 import CreateManufacturingOrderModal from "./components/CreateManufacturingOrderModal";
 import ManufacturingOrderDetail from "./components/ManufacturingOrderDetail";
 import { INITIAL_ORDERS } from "../orders/mockData";
+
+const INITIAL_PRODUCTS = [
+  {
+    id: "SP001",
+    code: "ST-HS-197x107x108-Mit",
+    name: "Sập thờ Mai Điểu chân 20",
+    material: "Gỗ Mít",
+    dimensions: "197x107x108",
+    img: "https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=600",
+  },
+  {
+    id: "SP002",
+    code: "TA-HM-160x200x55-XoanDao",
+    name: "Tủ áo gỗ Xoan Đào (3 cánh)",
+    material: "Gỗ xoan đào",
+    dimensions: "160x200x55",
+    img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=600",
+  },
+  {
+    id: "SP005",
+    code: "QT-DK-01",
+    name: "Đế kê tượng gỗ Hương",
+    material: "Gỗ Hương",
+    dimensions: "30x30x20",
+    img: "https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=600",
+  },
+];
 
 // ── Load all orders (same pattern as orders page) ────────────────────────────
 function loadAllOrders() {
@@ -29,9 +56,10 @@ function loadAllOrders() {
 // ── Load all products (from catalog) ─────────────────────────────────────────
 function loadAllProducts() {
   try {
-    return JSON.parse(localStorage.getItem("tpf_simulated_products") || "[]");
+    const saved = JSON.parse(localStorage.getItem("tpf_simulated_products") || "[]");
+    return saved.length > 0 ? saved : INITIAL_PRODUCTS;
   } catch {
-    return [];
+    return INITIAL_PRODUCTS;
   }
 }
 
@@ -84,7 +112,7 @@ export default function ManufacturingOrdersPage() {
   const handleDelete = (id) => {
     const updated = manufacturingOrders.filter((o) => o.id !== id);
     persist(updated);
-    toast.success("Đã xóa phiếu gia công");
+    toast.success("Đã xóa yêu cầu nhập hàng");
   };
 
   // ── Filter ──
@@ -184,7 +212,7 @@ export default function ManufacturingOrdersPage() {
 
   return (
     <>
-      <PageHelmet title="Phiếu gia công | TPF-SIMS" />
+      <PageHelmet title="Yêu cầu nhập hàng | TPF-SIMS" />
       <div className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 gap-4" style={{ backgroundColor: "var(--bg-main)" }}>
 
         {/* ── Title bar ── */}
@@ -192,10 +220,10 @@ export default function ManufacturingOrdersPage() {
           <div>
             <h1 className="text-xl font-bold flex items-center gap-2" style={{ color: "var(--text-main)" }}>
               <FileStack size={22} style={{ color: "var(--brand-primary)" }} />
-              Phiếu gia công
+              Yêu cầu nhập hàng
             </h1>
             <p className="text-[13px] mt-0.5" style={{ color: "var(--text-placeholder)" }}>
-              {filtered.length} phiếu
+              {filtered.length} yêu cầu
             </p>
           </div>
           <button
@@ -203,7 +231,7 @@ export default function ManufacturingOrdersPage() {
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold cursor-pointer transition-all"
             style={{ background: "var(--brand-primary)", color: "#fff" }}
           >
-            <Plus size={16} /> Tạo phiếu mới
+            <Plus size={16} /> Tạo yêu cầu mới
           </button>
         </div>
 
@@ -214,9 +242,9 @@ export default function ManufacturingOrdersPage() {
               <FileStack size={40} style={{ color: "var(--brand-primary)" }} />
             </div>
             <div className="text-center">
-              <p className="text-[16px] font-bold mb-1" style={{ color: "var(--text-main)" }}>Chưa có phiếu gia công nào</p>
+              <p className="text-[16px] font-bold mb-1" style={{ color: "var(--text-main)" }}>Chưa có yêu cầu nhập hàng nào</p>
               <p className="text-[13px]" style={{ color: "var(--text-placeholder)" }}>
-                Nhấn "Tạo phiếu mới" để tổng hợp sản phẩm từ các đơn hàng cần gia công
+                Nhấn "Tạo yêu cầu mới" để tổng hợp sản phẩm từ các đơn hàng cần gia công
               </p>
             </div>
             <button
@@ -224,7 +252,7 @@ export default function ManufacturingOrdersPage() {
               className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-[14px] font-bold cursor-pointer transition-all"
               style={{ background: "var(--brand-primary)", color: "#fff" }}
             >
-              <Plus size={16} /> Tạo phiếu đầu tiên
+              <Plus size={16} /> Tạo yêu cầu đầu tiên
             </button>
           </div>
         ) : (
@@ -244,16 +272,16 @@ export default function ManufacturingOrdersPage() {
               },
               {
                 icon: Printer,
-                label: "In phiếu",
+                label: "In yêu cầu",
                 onClick: (o) => { setDetailOrder(o); },
               },
               {
                 icon: Trash2,
-                label: "Xóa phiếu",
+                label: "Xóa yêu cầu",
                 onClick: (o) => handleDelete(o.id),
                 className: "bg-white border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200",
                 requireConfirm: true,
-                confirmTitle: "Xóa phiếu gia công?",
+                confirmTitle: "Xóa yêu cầu nhập hàng?",
                 confirmMessage: "Phiếu sẽ bị xóa vĩnh viễn. Bạn chắc chắn chứ?",
               },
             ]}
