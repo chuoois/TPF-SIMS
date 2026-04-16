@@ -461,25 +461,23 @@ const StandardOrderView = ({
 
 // =================== PRODUCTION PROGRESS CARD ===================
 const PROD_STATUS_CFG = {
-  "Đang đánh giấy ráp": { label: "Gia công mộc", bg: "var(--bg-main)", text: "var(--text-secondary)", border: "var(--grid-border)", icon: Layers },
-  "Đang sơn": { label: "Đang sơn", bg: "var(--palette-blue)/10", text: "var(--palette-dark-blue)", border: "var(--palette-blue)/20", icon: Paintbrush },
-  "Chờ nghiệm thu": { label: "Chờ KCS", bg: "var(--status-warning)/10", text: "var(--palette-orange)", border: "var(--status-warning)/20", icon: Clock },
-  "Hoàn thành": { label: "Hoàn chỉnh", bg: "var(--status-success)/10", text: "var(--brand-primary)", border: "var(--status-success)/20", icon: CheckCircle2 },
+  "Tiếp nhận": { label: "Tiếp nhận", bg: "var(--palette-blue)/10", text: "var(--palette-dark-blue)", border: "var(--palette-blue)/20", icon: Package },
+  "Đang đánh giấy ráp": { label: "Tiếp nhận", bg: "var(--palette-blue)/10", text: "var(--palette-dark-blue)", border: "var(--palette-blue)/20", icon: Package },
+  "Đang sơn": { label: "Tiếp nhận", bg: "var(--palette-blue)/10", text: "var(--palette-dark-blue)", border: "var(--palette-blue)/20", icon: Package },
+  "Chờ nghiệm thu": { label: "Nghiệm thu", bg: "var(--status-warning)/10", text: "var(--palette-orange)", border: "var(--status-warning)/20", icon: Camera },
+  "Hoàn thành": { label: "Hoàn thành", bg: "var(--status-success)/10", text: "var(--brand-primary)", border: "var(--status-success)/20", icon: CheckCircle2 },
 };
 
 const STEP_LABELS = [
-  { key: "Đánh giấy ráp", icon: Layers },
-  { key: "Sơn hoàn thiện", icon: Paintbrush },
+  { key: "Tiếp nhận", icon: Package },
   { key: "Nghiệm thu", icon: Camera },
   { key: "Hoàn thành", icon: CheckCircle2 },
 ];
 
 function getItemStep(item) {
-  if (item.status === "Hoàn thành") return 4;
-  if (item.isPendingApproval || item.status === "Chờ nghiệm thu") return 3;
-  if (item.status === "Đang sơn") return 2;
-  if (item.status === "Đang đánh giấy ráp") return 1;
-  return 0;
+  if (item.status === "Hoàn thành" || item.status === "COMPLETED") return 3;
+  if (item.isPendingApproval || item.status === "Chờ nghiệm thu" || item.status === "OWNER_PENDING" || item.status === "QC_PENDING") return 2;
+  return 1;
 }
 
 function ProdItemRow({ item, onInspect }) {
@@ -518,10 +516,6 @@ function ProdItemRow({ item, onInspect }) {
             {item.isDelayed && <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-[var(--status-warning)]/10 text-[var(--palette-orange)] border border-[var(--status-warning)]/20 uppercase">Trễ hạn</span>}
           </div>
           <div className="flex items-center gap-4 flex-wrap">
-            <div>
-              <p className="text-[9px] font-black text-[var(--text-placeholder)] uppercase tracking-wider">Thợ phụ trách</p>
-              <p className="text-[12px] font-bold text-[var(--text-secondary)]">{item.assignedWorker?.replace("Thợ cả: ", "") || "Chưa giao"}</p>
-            </div>
             <div>
               <p className="text-[9px] font-black text-[var(--text-placeholder)] uppercase tracking-wider">Hạn bàn giao</p>
               <p className="text-[12px] font-bold" style={{ color: deadlineStyle.color }}>
@@ -573,7 +567,7 @@ function ProdItemRow({ item, onInspect }) {
                 <span className={`text-[9px] font-bold whitespace-nowrap ${done ? "text-[var(--status-success)]" : active ? "text-[var(--palette-orange)]" : "text-[var(--text-placeholder)]"
                   }`}>{s.key}</span>
               </div>
-              {i < 3 && (
+              {i < 2 && (
                 <div className={`flex-1 h-0.5 mx-1 rounded ${step > i + 1 ? "bg-[var(--status-success)]/40" : step === i + 1 ? "bg-[var(--status-warning)]/40" : "bg-[var(--bg-main)]"
                   }`} />
               )}

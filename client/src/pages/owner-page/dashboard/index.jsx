@@ -28,6 +28,7 @@ import {
   BarChart2,
   ChevronRight,
   Truck,
+  Camera,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import {
@@ -244,9 +245,8 @@ export default function OwnerDashboard() {
     const pendingWarranty = warrantyRequests.filter((r) => r.status === "PENDING").length;
     const itemsToApprove = productions.filter((p) => p.isPendingApproval).length;
     const stageSummary = {
-      moc: productions.filter((p) => p.status === "Đang đánh giấy ráp").length,
-      son: productions.filter((p) => p.status === "Đang sơn" && !p.isPendingApproval).length,
-      hoan_thanh: productions.filter((p) => p.status === "Hoàn thành").length,
+      received: productions.filter((p) => p.status === "Tiếp nhận" || p.status === "Đang đánh giấy ráp" || p.status === "Đang sơn").length,
+      hoan_thanh: productions.filter((p) => p.status === "Hoàn thành" || p.status === "COMPLETED").length,
     };
     const totalContractValue = 85500000;
     const estimatedProfit = totalContractValue * 0.42;
@@ -256,9 +256,9 @@ export default function OwnerDashboard() {
   const currentRevenueData = revenueFilter === "7_days" ? REVENUE_DATA_7_DAYS : REVENUE_DATA_30_DAYS;
 
   const PIPELINE_DATA = [
-    { name: "Đánh giấy ráp", value: dynamicStats.stageSummary.moc, icon: Hammer, link: "/owner/production?status=Đang đánh giấy ráp" },
-    { name: "Công đoạn sơn", value: dynamicStats.stageSummary.son, icon: Paintbrush, link: "/owner/production?status=Đang sơn" },
-    { name: "Nghiệm thu hoàn thiện", value: dynamicStats.itemsToApprove, icon: CheckCircle2, link: "/owner/production?status=Chờ duyệt" },
+    { name: "Tiếp nhận sản xuất", value: dynamicStats.stageSummary.received, icon: Package, link: "/owner/manufacturing-orders" },
+    { name: "Chờ nghiệm thu xưởng", value: dynamicStats.itemsToApprove, icon: Camera, link: "/owner/manufacturing-orders" },
+    { name: "Đã hoàn thành", value: dynamicStats.stageSummary.hoan_thanh, icon: CheckCircle2, link: "/owner/manufacturing-orders" },
   ];
 
   const sortedActivities = [...RECENT_ACTIVITIES].sort((a, b) => b.id - a.id);

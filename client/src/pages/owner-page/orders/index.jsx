@@ -105,10 +105,9 @@ export default function OwnerOrders() {
     productions.forEach(p => {
       const key = p.orderId;
       if (!key) return;
-      if (!map[key]) map[key] = { sand: 0, paint: 0, kcs: 0 };
-      if (p.isPendingApproval || p.status === "Chờ nghiệm thu") map[key].kcs++;
-      else if (p.status === "Đang sơn") map[key].paint++;
-      else if (p.status === "Đang đánh giấy ráp") map[key].sand++;
+      if (!map[key]) map[key] = { received: 0, kcs: 0 };
+      if (p.isPendingApproval || p.status === "Chờ nghiệm thu" || p.status === "OWNER_PENDING" || p.status === "QC_PENDING") map[key].kcs++;
+      else if (p.status !== "Hoàn thành" && p.status !== "COMPLETED") map[key].received++;
     });
     return map;
   }, [productions]);
@@ -247,7 +246,7 @@ export default function OwnerOrders() {
       render: (o) => {
         const sc = { ...getStatusColor(o.status) };
         const isInProduction = o.status === "Đang gia công";
-        const sub = isInProduction ? (prodSubStatusMap[o.id] || { sand: 0, paint: 0, kcs: 0 }) : null;
+        const sub = isInProduction ? (prodSubStatusMap[o.id] || { received: 0, kcs: 0 }) : null;
         const needsKcs = sub && sub.kcs > 0;
 
         if (needsKcs) {
@@ -286,45 +285,29 @@ export default function OwnerOrders() {
                   padding: "3px 6px",
                 }}
               >
-                {/* Ráp */}
+                {/* Tiếp nhận */}
                 <span
                   className="inline-flex items-center gap-1 px-1.5 py-[2px] rounded text-[10px] font-bold"
                   style={{
-                    backgroundColor: sub.sand > 0 ? "#F3F4F6" : "transparent",
-                    color: sub.sand > 0 ? "#374151" : "#C4C9D4",
+                    backgroundColor: sub.received > 0 ? "#E0F2FE" : "transparent",
+                    color: sub.received > 0 ? "#0369A1" : "#C4C9D4",
                   }}
-                  title={`Đánh giấy ráp: ${sub.sand} sản phẩm`}
+                  title={`Tiếp nhận: ${sub.received} sản phẩm`}
                 >
-                  <Layers size={10} strokeWidth={2.2} />
-                  <span>{sub.sand}</span>
+                  <Package size={10} strokeWidth={2.2} />
+                  <span>{sub.received}</span>
                 </span>
 
                 {/* Divider */}
                 <span style={{ color: "var(--grid-border)", fontSize: "10px", lineHeight: 1 }}>|</span>
 
-                {/* Sơn */}
-                <span
-                  className="inline-flex items-center gap-1 px-1.5 py-[2px] rounded text-[10px] font-bold"
-                  style={{
-                    backgroundColor: sub.paint > 0 ? "#E0F2FE" : "transparent",
-                    color: sub.paint > 0 ? "#0369A1" : "#C4C9D4",
-                  }}
-                  title={`Đang sơn: ${sub.paint} sản phẩm`}
-                >
-                  <Paintbrush size={10} strokeWidth={2.2} />
-                  <span>{sub.paint}</span>
-                </span>
-
-                {/* Divider */}
-                <span style={{ color: "var(--grid-border)", fontSize: "10px", lineHeight: 1 }}>|</span>
-
-                {/* KCS */}
+                {/* Nghiệm thu (KCS) */}
                 <span
                   className={`inline-flex items-center gap-1 px-1.5 py-[2px] rounded text-[10px] font-bold transition-all${sub.kcs > 0 ? " ring-1 ring-emerald-300" : ""
                     }`}
                   style={{
-                    backgroundColor: sub.kcs > 0 ? "#D1FAE5" : "transparent",
-                    color: sub.kcs > 0 ? "#065F46" : "#C4C9D4",
+                    backgroundColor: sub.kcs > 0 ? "#FFEDD5" : "transparent",
+                    color: sub.kcs > 0 ? "#9A3412" : "#C4C9D4",
                   }}
                   title={`Chờ nghiệm thu: ${sub.kcs} sản phẩm`}
                 >
