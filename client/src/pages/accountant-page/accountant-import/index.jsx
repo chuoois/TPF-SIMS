@@ -13,7 +13,7 @@
 import { useState, useMemo, useEffect } from "react";
 import {
     Search, ArrowDownToLine, Eye, Plus, X,
-    ChevronLeft, ChevronRight, Calendar, CheckCircle2, Clock,
+    ChevronLeft, ChevronRight, Calendar,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { toast } from "react-hot-toast";

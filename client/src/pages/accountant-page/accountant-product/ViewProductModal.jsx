@@ -234,38 +234,7 @@ function BundleItemsTable({ items }) {
   );
 }
 
-// ── Unit Chip ──────────────────────────────────────────────
-function UnitChip({ unit }) {
-  const cfg = UNIT_STATUS_CONFIG[unit.status] || UNIT_STATUS_CONFIG.AVAILABLE;
 
-  return (
-    <div className="relative group">
-      <div
-        title={unit.note ? `${unit.unitId} - ${unit.note}` : unit.unitId}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all border shadow-sm"
-        style={{
-          backgroundColor: cfg.bg,
-          color: cfg.color,
-          borderColor: cfg.border,
-          minWidth: "80px",
-        }}
-      >
-        <span
-          className="w-2 h-2 rounded-full shrink-0"
-          style={{ backgroundColor: cfg.color }}
-        />
-        <span className="font-mono tracking-tight">{unit.unitId}</span>
-      </div>
-      {/* Tooltip hiển thị ghi chú nếu có */}
-      {unit.note && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-30 pointer-events-none">
-          {unit.note}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ── Receipt Group Card ────────────────────────────────────
 function ReceiptGroupCard({ receiptId, units, index }) {

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * AccountantProductManage – Kho Hàng (Read-Only)
  * Hiển thị toàn bộ sản phẩm trong kho theo 3 loại:
  *   - Hàng hoàn thiện (FINISHED)
@@ -251,25 +251,7 @@ export default function AccountantProductManage() {
     </th>
   );
 
-  const StatusChip = ({ status }) => {
-    const sc = getStatusColor(status);
-    return (
-      <span
-        className="inline-flex items-center px-2.5 py-1 text-[11px] font-bold rounded-md"
-        style={{
-          backgroundColor: sc.bg,
-          color: sc.text,
-          border: `1px solid ${sc.border}`,
-        }}
-      >
-        <span
-          className="w-1.5 h-1.5 rounded-full mr-1.5"
-          style={{ backgroundColor: sc.text }}
-        />
-        {status}
-      </span>
-    );
-  };
+
 
   return (
     <>
