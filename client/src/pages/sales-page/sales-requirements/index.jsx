@@ -327,30 +327,7 @@ const RequirementDetailModal = ({ req, onClose, onEnlarge, onOpenCancel }) => {
             )}
           </div>
 
-          {/* THỜI GIAN HOÀN THIỆN (LEAD TIME) */}
-          <div className="p-4 rounded-lg border border-amber-200 bg-amber-50/40 flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
-                <Clock size={20} />
-              </div>
-              <div>
-                <p className="text-[14px] font-bold text-amber-900">
-                  Tiến độ sản xuất cam kết
-                </p>
-                <p className="text-[12px] text-amber-700">
-                  Dự kiến hoàn thiện cho toàn bộ yêu cầu kỹ thuật
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              <span className="text-[24px] font-black text-amber-600 leading-none">
-                {req.leadTime || 0}
-              </span>
-              <span className="ml-1 text-[13px] font-bold text-amber-500 uppercase tracking-wider">
-                Ngày
-              </span>
-            </div>
-          </div>
+         
 
           {/* Section 3: Chi tiết Sản phẩm & Thông số kỹ thuật */}
           <div className="border-t border-gray-100 pt-6">
