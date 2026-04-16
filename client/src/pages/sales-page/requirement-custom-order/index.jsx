@@ -156,6 +156,7 @@ export default function CustomOrderRequirementsPage() {
     width: "",
     height: "",
     color: "",
+    expectedPrice: "",
     quantity: 1,
     note: "",
     images: [],
@@ -250,6 +251,7 @@ export default function CustomOrderRequirementsPage() {
       width: "",
       height: "",
       color: "",
+      expectedPrice: "",
       quantity: 1,
       note: "",
       images: [],
@@ -291,6 +293,8 @@ export default function CustomOrderRequirementsPage() {
 
   // Checkout
   const itemCount = activeTab.cartItems.reduce((sum, i) => sum + i.quantity, 0);
+  const computedTotal = activeTab.cartItems.reduce((sum, i) => sum + (Number(i.expectedPrice) || 0) * i.quantity, 0);
+  const displayQuote = computedTotal > 0 ? computedTotal : activeTab.expectedQuote;
 
   const handleCreateOrder = (isDirect = false) => {
     if (activeTab.cartItems.length === 0) return;
@@ -305,7 +309,7 @@ export default function CustomOrderRequirementsPage() {
     
     if (isDirect) {
       setDirectOrderForm({
-        finalPrice: activeTab.expectedQuote || "",
+        finalPrice: displayQuote || "",
         finalDeposit: activeTab.deposit || ""
       });
       setShowDirectOrderModal(true);
@@ -464,6 +468,7 @@ export default function CustomOrderRequirementsPage() {
                       width: "",
                       height: "",
                       color: "",
+                      expectedPrice: "",
                       quantity: 1,
                       note: "",
                       images: [],
@@ -495,7 +500,7 @@ export default function CustomOrderRequirementsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="flex items-center gap-2 text-[11px] font-black text-slate-500 uppercase tracking-wider ml-1">
-                      <TreePine size={12} className="text-slate-400" /> Loại hàng/Chất liệu
+                      <TreePine size={12} className="text-slate-400" /> Chất liệu
                     </label>
                     <div className="relative">
                       <input
@@ -574,13 +579,12 @@ export default function CustomOrderRequirementsPage() {
                   </div>
                 </div>
 
-                {/* Row 3: Dimensions & Quantity */}
-                <div className="grid grid-cols-4 gap-4">
+                {/* Row 3: Dimensions */}
+                <div className="grid grid-cols-3 gap-4">
                   {[
                     { label: "Dài (cm)", field: "length", icon: Ruler },
                     { label: "Rộng (cm)", field: "width", icon: Ruler },
                     { label: "Cao (cm)", field: "height", icon: Ruler },
-                    { label: "Số lượng", field: "quantity", icon: PackageCheck },
                   ].map((dim) => (
                     <div key={dim.field} className="space-y-1.5">
                       <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
@@ -603,7 +607,56 @@ export default function CustomOrderRequirementsPage() {
                   ))}
                 </div>
 
-                {/* Row 4: Note */}
+                {/* Row 4: Quantity & Expected Price */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                      <PackageCheck size={11} /> Số lượng <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="flex items-center h-[46px] bg-white rounded-lg border border-gray-200 overflow-hidden hover:border-gray-300 transition-all">
+                      <button
+                        onClick={() => updateNewItem("quantity", Math.max(1, (newItem.quantity || 1) - 1))}
+                        className="w-12 h-full flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-[var(--brand-primary)] transition-colors"
+                      >
+                        <Minus size={14} strokeWidth={3} />
+                      </button>
+                      <input
+                        type="number"
+                        value={newItem.quantity}
+                        onChange={(e) => updateNewItem("quantity", parseInt(e.target.value) || 1)}
+                        className="flex-1 h-full text-center font-black focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        style={{ color: "var(--text-main)" }}
+                      />
+                      <button
+                        onClick={() => updateNewItem("quantity", (newItem.quantity || 1) + 1)}
+                        className="w-12 h-full flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-[var(--brand-primary)] transition-colors"
+                      >
+                        <Plus size={14} strokeWidth={3} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                      <CreditCard size={11} /> Đơn giá dự kiến (VNĐ)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="VD: 5,000,000"
+                        value={newItem.expectedPrice ? fmt(newItem.expectedPrice) : ""}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, "");
+                          updateNewItem("expectedPrice", val ? Number(val) : "");
+                        }}
+                        className={`${inputBase} font-bold h-[46px]`}
+                        style={{ ...inputStyle, backgroundColor: "white" }}
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-300">VND</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Row 5: Note */}
                 <div className="space-y-1.5">
                   <label className="flex items-center gap-2 text-[11px] font-black text-slate-500 uppercase tracking-wider ml-1">
                     <ClipboardEdit size={12} className="text-slate-400" /> Chi tiết về sản phẩm (Kỹ thuật/Ghi chú)
@@ -679,6 +732,7 @@ export default function CustomOrderRequirementsPage() {
                            width: "",
                            height: "",
                            color: "",
+                           expectedPrice: "",
                            quantity: 1,
                            note: "",
                            images: [],
@@ -769,6 +823,13 @@ export default function CustomOrderRequirementsPage() {
                               <span className="text-[11px] font-bold text-slate-700">{item.size}</span>
                             </div>
                           )}
+                          {item.expectedPrice && (
+                            <div className="flex items-center gap-1.5 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100">
+                              <CreditCard size={10} className="text-emerald-500" />
+                              <span className="text-[10px] font-black text-emerald-600 uppercase tracking-tight">Đơn giá:</span>
+                              <span className="text-[11px] font-bold text-emerald-700">{fmt(item.expectedPrice)} đ</span>
+                            </div>
+                          )}
                         </div>
 
                         {item.images && item.images.length > 0 && (
@@ -790,54 +851,65 @@ export default function CustomOrderRequirementsPage() {
                         )}
                       </div>
 
-                      {/* Right Group: Quantity + Actions */}
-                      <div className="flex flex-col items-end gap-3 shrink-0">
-                        {/* Quantity controls */}
-                        <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-100">
-                          <button
-                            onClick={() => updateQuantity(item.id, -1)}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer hover:bg-slate-50 text-slate-400 hover:text-rose-500"
-                          >
-                            <Minus size={12} strokeWidth={3} />
-                          </button>
-                          <input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) => setQuantity(item.id, e.target.value)}
-                            className="w-10 text-center text-[14px] font-black focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            style={{ color: "var(--text-main)" }}
-                          />
-                          <button
-                            onClick={() => updateQuantity(item.id, 1)}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer hover:bg-slate-50 text-slate-400 hover:text-[var(--brand-primary)]"
-                          >
-                            <Plus size={12} strokeWidth={3} />
-                          </button>
-                        </div>
+                      {/* Right Group: Line Total, Quantity + Actions */}
+                      <div className="flex flex-col items-end gap-2.5 shrink-0">
+                        {/* Line Total */}
+                        {item.expectedPrice && (
+                          <div className="flex items-center gap-3 mt-1">
+                            <div className="flex flex-col items-end mr-1">
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Thành tiền</span>
+                              <span className="text-[15px] font-black text-emerald-600 leading-none">{fmt(Number(item.expectedPrice) * item.quantity)}<span className="text-[11px] ml-1 text-emerald-500">đ</span></span>
+                            </div>
+                          </div>
+                        )}
 
-                        {/* Action Buttons: View, Edit, Delete grouped on Far Right as requested */}
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => setViewingItem(item)}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer bg-blue-50 text-blue-600 hover:bg-blue-100"
-                            title="Xem chi tiết"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleEditItem(item)}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer bg-slate-50 text-slate-600 hover:bg-slate-200"
-                            title="Sửa"
-                          >
-                            <Pencil size={16} />
-                          </button>
-                          <button
-                            onClick={() => removeFromCart(item.id)}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer bg-rose-50 text-rose-600 hover:bg-rose-100"
-                            title="Xóa khỏi danh sách"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                        {/* Quantity and Actions row */}
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => setViewingItem(item)}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer bg-blue-50 text-blue-600 hover:bg-blue-100"
+                              title="Xem chi tiết"
+                            >
+                              <Eye size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleEditItem(item)}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer bg-slate-50 text-slate-600 hover:bg-slate-200"
+                              title="Sửa"
+                            >
+                              <Pencil size={16} />
+                            </button>
+                            <button
+                              onClick={() => removeFromCart(item.id)}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer bg-rose-50 text-rose-600 hover:bg-rose-100"
+                              title="Xóa khỏi danh sách"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+
+                          <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-100 hover:border-[var(--brand-primary)]/40 transition-colors">
+                            <button
+                              onClick={() => updateQuantity(item.id, -1)}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer hover:bg-slate-50 text-slate-400 hover:text-rose-500"
+                            >
+                              <Minus size={12} strokeWidth={3} />
+                            </button>
+                            <input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => setQuantity(item.id, e.target.value)}
+                              className="w-8 text-center text-[13px] font-black focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              style={{ color: "var(--text-main)" }}
+                            />
+                            <button
+                              onClick={() => updateQuantity(item.id, 1)}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer hover:bg-slate-50 text-slate-400 hover:text-[var(--brand-primary)]"
+                            >
+                              <Plus size={12} strokeWidth={3} />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1099,39 +1171,62 @@ export default function CustomOrderRequirementsPage() {
                   Giá trị đơn hàng & Đặt cọc
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Giá trị đơn hàng</label>
+                  <label className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                    Giá trị đơn hàng
+                    {computedTotal > 0 && <span className="text-[9px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 normal-case tracking-normal">Tự động cộng dồn</span>}
+                  </label>
                   <div className="relative">
                     <input
                       type="text"
                       placeholder="VD: 15,000,000"
-                      value={activeTab.expectedQuote ? fmt(activeTab.expectedQuote) : ""}
+                      value={displayQuote ? fmt(displayQuote) : ""}
                       onChange={(e) => {
+                        if (computedTotal > 0) return;
                         const val = e.target.value.replace(/\D/g, "");
                         updateActiveTab({ expectedQuote: val ? Number(val) : "" });
                       }}
-                      className={inputBase}
-                      style={{ ...inputStyle, backgroundColor: "white" }}
+                      disabled={computedTotal > 0}
+                      className={`${inputBase} h-12 text-[15px] font-black ${computedTotal > 0 ? "bg-slate-50/70 text-slate-800 cursor-not-allowed border-slate-100" : ""}`}
+                      style={{ ...inputStyle, backgroundColor: computedTotal > 0 ? "var(--bg-main)" : "white" }}
                     />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-300">VND</span>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-400">VND</span>
                   </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tiền cọc đã nhận</label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="VD: 5,000,000"
-                      value={activeTab.deposit ? fmt(activeTab.deposit) : ""}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, "");
-                        updateActiveTab({ deposit: val ? Number(val) : "" });
-                      }}
-                      className={inputBase}
-                      style={{ ...inputStyle, backgroundColor: "white" }}
-                    />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-300">VND</span>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Cọc ban đầu</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="VD: 5,000,000"
+                        value={activeTab.deposit ? fmt(activeTab.deposit) : ""}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, "");
+                          updateActiveTab({ deposit: val ? Number(val) : "" });
+                        }}
+                        className={`${inputBase} font-bold`}
+                        style={{ ...inputStyle, backgroundColor: "white" }}
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-300">VND</span>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Số tiền còn lại</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={displayQuote > 0 ? (activeTab.deposit ? fmt(Math.max(0, displayQuote - activeTab.deposit)) : fmt(displayQuote)) : ""}
+                        disabled
+                        placeholder={displayQuote > 0 ? "0" : "Chờ báo giá"}
+                        className={`${inputBase} font-bold bg-slate-50/50 ${displayQuote > 0 ? "text-status-focus" : "text-slate-400"} cursor-not-allowed border-slate-100 placeholder:italic placeholder:font-normal`}
+                        style={{ backgroundColor: "var(--bg-main)" }}
+                      />
+                      {displayQuote > 0 && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-300">VND</span>}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1184,21 +1279,7 @@ export default function CustomOrderRequirementsPage() {
             </div>
 
             {/* Note Section */}
-            <div className="p-5">
-              <div className="p-4 rounded-lg bg-amber-50/50 border border-amber-100/50">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
-                    <Lightbulb size={16} />
-                  </div>
-                  <div>
-                    <h5 className="text-[12px] font-black text-amber-800 uppercase tracking-tight">Lưu ý nghiệp vụ</h5>
-                    <p className="text-[11px] font-bold text-amber-700/70 leading-relaxed mt-1 italic font-sans">
-                      Dữ liệu chỉ lưu thông tin yêu cầu. Trạng thái "Mới tạo" dành cho Sales chuẩn bị thông tin trước khi đẩy xuống xưởng.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+          
           </div>
         </div>
       </div>
@@ -1275,37 +1356,64 @@ export default function CustomOrderRequirementsPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="p-4 rounded-lg bg-white border border-slate-100 flex items-center justify-between group hover:border-[var(--brand-primary)] transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
-                            <TreePine size={18} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3.5 rounded-xl bg-white border border-slate-100 flex flex-col gap-2 group hover:border-[var(--brand-primary)] transition-colors hover:shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-500 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
+                            <TreePine size={14} />
                         </div>
-                        <span className="text-[13px] font-black text-slate-400 uppercase tracking-widest">Chất liệu</span>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chất liệu</span>
                       </div>
-                      <span className="text-[15px] font-black text-slate-700">{viewingItem.woodType || "—"}</span>
+                      <span className="text-[13px] font-black text-slate-700 pl-1">{viewingItem.woodType || "—"}</span>
                     </div>
                     
-                    <div className="p-4 rounded-lg bg-white border border-slate-100 flex items-center justify-between group hover:border-[var(--brand-primary)] transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
-                            <Palette size={18} />
+                    <div className="p-3.5 rounded-xl bg-white border border-slate-100 flex flex-col gap-2 group hover:border-[var(--brand-primary)] transition-colors hover:shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-500 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
+                            <Palette size={14} />
                         </div>
-                        <span className="text-[13px] font-black text-slate-400 uppercase tracking-widest">Màu sắc</span>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Màu sắc</span>
                       </div>
-                      <span className="text-[15px] font-black text-slate-700">{viewingItem.color || "—"}</span>
+                      <span className="text-[13px] font-black text-slate-700 pl-1">{viewingItem.color || "—"}</span>
                     </div>
 
-                    <div className="p-4 rounded-lg bg-white border border-slate-100 flex items-center justify-between group hover:border-[var(--brand-primary)] transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                            <Ruler size={18} />
+                    <div className="p-3.5 rounded-xl bg-white border border-slate-100 flex flex-col gap-2 group hover:border-[var(--brand-primary)] transition-colors hover:shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-500 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                            <Ruler size={14} />
                         </div>
-                        <span className="text-[13px] font-black text-slate-400 uppercase tracking-widest">Kích thước</span>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Kích thước</span>
                       </div>
-                      <span className="text-[15px] font-black text-slate-700">{viewingItem.size || "—"}</span>
+                      <span className="text-[13px] font-black text-slate-700 pl-1">{viewingItem.size || "—"}</span>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-white border border-slate-100 flex flex-col gap-2 group hover:border-[var(--brand-primary)] transition-colors hover:shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-500 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+                            <PackageCheck size={14} />
+                        </div>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Số lượng</span>
+                      </div>
+                      <span className="text-[13px] font-black text-slate-700 pl-1">{viewingItem.quantity || 1} Sản phẩm</span>
                     </div>
                   </div>
+
+                  {viewingItem.expectedPrice && (
+                    <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-between group relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-3 opacity-5">
+                          <CreditCard size={64} strokeWidth={2} />
+                      </div>
+                      <div className="flex items-center gap-3 relative z-10">
+                        <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                            <CreditCard size={18} />
+                        </div>
+                        <div>
+                          <span className="block text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-0.5">Đơn giá dự kiến</span>
+                          <span className="text-[18px] font-black text-emerald-700 leading-none">{fmt(viewingItem.expectedPrice)} VNĐ</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
