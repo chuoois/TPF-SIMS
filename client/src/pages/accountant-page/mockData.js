@@ -311,6 +311,72 @@ export const MOCK_BUNDLES = [
   },
 ];
 
+export const MOCK_IMPORT_REQUESTS = [
+  {
+    id: "REQ001",
+    requestCode: "YC-2604-01",
+    date: "2026-04-15",
+    createdBy: "Chủ cửa hàng (Tuấn Anh)",
+    note: "Nhập bổ sung nội thất sồi Nga",
+    status: "PENDING",
+    items: [
+      {
+        id: "RI001",
+        productCode: "SP-PN-002",
+        productName: "Tủ quần áo 4 cánh chạm hoa lá tây",
+        category: "Phòng Ngủ",
+        materialType: "Gỗ Sồi Nga",
+        color: "Óc chó",
+        length: "220", width: "60", height: "240",
+        productType: "FINISHED",
+        requestedQty: 5,
+        estimatedPrice: 22000000,
+        isBundle: false
+      },
+      {
+        id: "RI002",
+        productCode: "HS-PN-001",
+        productName: "Giường ngủ hoa hồng Tân cổ điển",
+        category: "Phòng Ngủ",
+        materialType: "Gỗ Sồi Nga",
+        color: "Óc chó",
+        length: "200", width: "160", height: "50",
+        productType: "FINISHED",
+        requestedQty: 3,
+        estimatedPrice: 15000000,
+        isBundle: false
+      }
+    ]
+  },
+  {
+    id: "REQ002",
+    requestCode: "YC-2604-02",
+    date: "2026-04-16",
+    createdBy: "Chủ cửa hàng (Tuấn Anh)",
+    note: "Nhập gấp bộ phòng ăn cho khách sỉ",
+    status: "PENDING",
+    items: [
+      {
+        id: "RI003",
+        productCode: "BO-PA-001",
+        bundleCode: "BO-PA-001",
+        bundleName: "Bộ bàn ăn 8 ghế nguyên khối",
+        category: "Phòng Ăn",
+        materialType: "Gỗ Hương",
+        color: "Hương",
+        productType: "FINISHED",
+        requestedQty: 4,
+        estimatedPrice: 32000000,
+        isBundle: true,
+        items: [
+          { _id: 1, name: "Bàn ăn", qty: 1 },
+          { _id: 2, name: "Ghế ăn", qty: 8 }
+        ]
+      }
+    ]
+  }
+];
+
 // ── accountant-import/index.jsx ───────────────────────────
 export const INIT_IMPORTS = [
   {

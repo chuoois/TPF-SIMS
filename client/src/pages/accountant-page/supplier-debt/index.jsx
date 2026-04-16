@@ -546,6 +546,8 @@ export default function AccountantSupplierDebt() {
 
   const filtered = useMemo(() => {
     let result = suppliers;
+
+    // Filter theo từ khoá tìm kiếm
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
       result = result.filter(
@@ -555,8 +557,24 @@ export default function AccountantSupplierDebt() {
           (s.code || "").toLowerCase().includes(q)
       );
     }
+
+    // Filter theo khoảng ngày giao dịch trong sổ công nợ
+    if (dateFrom || dateTo) {
+      result = result.filter((s) => {
+        if (!s.ledger || s.ledger.length === 0) return false;
+        return s.ledger.some((tx) => {
+          // tx.date có dạng "YYYY-MM-DD HH:mm" hoặc "YYYY-MM-DD"
+          const txDate = tx.date ? tx.date.slice(0, 10) : "";
+          if (!txDate) return false;
+          if (dateFrom && txDate < dateFrom) return false;
+          if (dateTo && txDate > dateTo) return false;
+          return true;
+        });
+      });
+    }
+
     return result;
-  }, [suppliers, searchTerm]);
+  }, [suppliers, searchTerm, dateFrom, dateTo]);
 
   const hasActiveFilters = !!(searchTerm || dateFrom || dateTo);
   const clearAllFilters = () => { setSearchTerm(""); setDateFrom(""); setDateTo(""); setCurrentPage(1); };
