@@ -11,7 +11,12 @@ import {
   CheckSquare, Square, Users, Layers,
   TreePine, Palette, Ruler, Plus, Minus,
   ShoppingCart, LayoutGrid, ListTodo,
+  PackageCheck, ClipboardEdit, ImagePlus,
+  StickyNote, AlertTriangle, Sparkles,
 } from "lucide-react";
+
+const WOOD_TYPES = ["Gỗ sồi", "Gỗ óc chó", "Gỗ tần bì", "Gỗ cao su", "Gỗ thông", "Gỗ hương"];
+const COLORS = ["Tự nhiên", "Nâu đậm", "Nâu nhạt", "Đen", "Trắng ngà", "Ghi xám"];
 import toast from "react-hot-toast";
 
 const ELIGIBLE_TYPES = ["Hàng khách đặt"];
@@ -32,11 +37,44 @@ function genId() {
   const now = new Date();
   const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
   const existing = JSON.parse(localStorage.getItem("tpf_manufacturing_orders") || "[]");
-  const todayPrefix = `PGC-${dateStr}-`;
+  const todayPrefix = `YCNH-${dateStr}-`;
   const todayOrders = existing.filter((o) => o.id.startsWith(todayPrefix));
   const seq = String(todayOrders.length + 1).padStart(3, "0");
   return `${todayPrefix}${seq}`;
 }
+
+// ── Step 2 Sub-component ──
+const ReviewItem = ({ item, isCustom }) => {
+  const sizeParts = [item.length ? `D${item.length}` : "", item.width ? `R${item.width}` : "", item.height ? `C${item.height}` : ""].filter(Boolean).join(" ");
+  const sizeDisplay = item.size || sizeParts;
+  const colorFinish = [item.color, item.finish].filter(Boolean).join(" / ");
+  const allImages = [...(item.image ? [item.image] : []), ...(item.images || [])];
+
+  return (
+    <div className={`flex gap-3 p-3 rounded-xl border-2 border-dashed ${isCustom ? 'border-green-100 bg-green-50/30' : 'border-purple-100 bg-purple-50/30'}`}>
+      {allImages.length > 0 && (
+        <div className={`w-14 h-14 rounded-lg overflow-hidden border shrink-0 bg-white ${isCustom ? 'border-green-100' : 'border-purple-100'}`}>
+          <img src={allImages[0]} alt="" className="w-full h-full object-cover" />
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className={`text-[13px] font-bold mb-1.5 px-0.5 rounded ${isCustom ? 'text-green-800' : 'text-purple-800'}`}>{item.productName}</p>
+        <div className="flex flex-wrap gap-1.5">
+          {item.material && <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] ${isCustom ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}`}>{item.material}</span>}
+          {sizeDisplay && <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] ${isCustom ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}`}>{sizeDisplay}</span>}
+          {item.color && <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] ${isCustom ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}`}>{item.color}</span>}
+        </div>
+        <p className={`mt-1.5 text-[11px] font-medium italic opacity-60 flex items-center gap-1 ${isCustom ? 'text-green-600' : 'text-purple-600'}`}>
+          {isCustom ? <><Sparkles size={10} /> Sản phẩm mới chưa có trong danh mục</> : <><Package size={10} /> Sản phẩm từ danh mục có sẵn</>}
+        </p>
+      </div>
+      <div className="shrink-0 flex flex-col items-center justify-center px-2">
+        <span className={`text-[16px] font-black ${isCustom ? 'text-green-700' : 'text-purple-700'}`}>{item.qty}</span>
+        <span className={`text-[10px] ${isCustom ? 'text-green-400' : 'text-purple-400'}`}>{item.unit || "Cái"}</span>
+      </div>
+    </div>
+  );
+};
 
 export default function CreateManufacturingOrderModal({ orders, catalogProducts, onClose, onCreated }) {
   const [step, setStep] = useState(1);
@@ -47,6 +85,15 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
   const [search, setSearch] = useState("");
   const [catSearch, setCatSearch] = useState("");
   const [previewImage, setPreviewImage] = useState(null);
+
+  // ── Manual Item Entry State ──
+  const [showCustomForm, setShowCustomForm] = useState(false);
+  const [customItems, setCustomItems] = useState([]);
+  const [newProduct, setNewProduct] = useState({
+    name: "", material: "", length: "", width: "", height: "", color: "", qty: 1, note: "", images: []
+  });
+  const [showWoodDropdown, setShowWoodDropdown] = useState(false);
+  const [showColorDropdown, setShowColorDropdown] = useState(false);
 
   // ── Eligible orders ──
   const eligibleOrders = useMemo(() =>
@@ -108,7 +155,7 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
     });
   };
 
-  const selectedCatCount = Object.keys(selectedCatalogProducts).length;
+  const selectedCatCount = Object.keys(selectedCatalogProducts).length + customItems.length;
 
   // ── Build items from selected orders (carry ALL product fields as-is) ──
   const buildItems = () => {
@@ -168,13 +215,37 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
       });
     });
 
+    // 3. From Custom Entries
+    customItems.forEach(ci => {
+      items.push({
+        id: Math.random().toString(36).substr(2, 9),
+        productName: ci.name || "",
+        material: ci.material || "",
+        size: [ci.length ? `D${ci.length}` : "", ci.width ? `R${ci.width}` : "", ci.height ? `C${ci.height}` : ""].filter(Boolean).join(" "),
+        color: ci.color || "",
+        finish: "Theo yêu cầu",
+        qty: ci.qty || 1,
+        unit: "Cái",
+        note: ci.note || "Sản phẩm mới nhập thêm",
+        image: ci.images?.[0] || "",
+        images: ci.images || [],
+        sourceOrders: ["MO-TAO"],
+        sourceOrderDetails: {
+          "MO-TAO": {
+            customerName: "Sản phẩm mới",
+            type: "Nhập mới",
+          }
+        },
+      });
+    });
+
     return items;
   };
 
-  const items = useMemo(() => step === 2 ? buildItems() : [], [step, selectedOrderIds, selectedCatalogProducts]);
+  const items = useMemo(() => step === 2 ? buildItems() : [], [step, selectedOrderIds, selectedCatalogProducts, customItems]);
   const totalQty = items.reduce((s, i) => s + (i.qty || 0), 0);
   const totalSelectedFromOrders = selectedOrders.reduce((s, o) => s + (o.products?.length || 0), 0);
-  const totalSelectedFromCatalog = Object.values(selectedCatalogProducts).reduce((s, q) => s + q, 0);
+  const totalSelectedFromCatalog = Object.values(selectedCatalogProducts).reduce((s, q) => s + q, 0) + customItems.reduce((s, i) => s + i.qty, 0);
 
   // ── Go to step 2 ──
   const goToStep2 = () => {
@@ -184,7 +255,9 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
     }
     const noProducts = selectedOrders.filter(o => !o.products?.length);
     if (noProducts.length > 0) {
-      toast("Lưu ý: " + noProducts.length + " đơn chưa có chi tiết sản phẩm.", { icon: "⚠️" });
+      toast("Lưu ý: " + noProducts.length + " đơn chưa có chi tiết sản phẩm.", { 
+        icon: <AlertTriangle size={18} className="text-amber-500" /> 
+      });
     }
     setStep(2);
   };
@@ -193,7 +266,7 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
   const handleSave = () => {
     const finalItems = buildItems();
     if (!finalItems.length) {
-      toast.error("Phiếu không có sản phẩm nào!");
+      toast.error("Yêu cầu không có sản phẩm nào!");
       return;
     }
 
@@ -220,7 +293,7 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
     };
     const existing = JSON.parse(localStorage.getItem("tpf_manufacturing_orders") || "[]");
     localStorage.setItem("tpf_manufacturing_orders", JSON.stringify([newOrder, ...existing]));
-    toast.success(`Đã tạo phiếu ${newOrder.id} thành công!`);
+    toast.success(`Đã tạo yêu cầu ${newOrder.id} thành công!`);
     onCreated?.(newOrder);
     onClose();
   };
@@ -263,7 +336,7 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
             </div>
             <div>
               <h2 className="text-[16px] font-bold" style={{ color: "var(--text-main)" }}>
-                Tạo phiếu gia công mới
+                Tạo yêu cầu nhập hàng mới
               </h2>
               <p className="text-[12px]" style={{ color: "var(--text-secondary)" }}>
                 {step === 1 ? (
@@ -429,8 +502,8 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
               ) : (
                 <>
                   {/* Catalog Content */}
-                  <div className="px-5 pt-4 pb-2 shrink-0">
-                    <div className="relative">
+                  <div className="px-5 pt-4 pb-2 shrink-0 flex items-center gap-3">
+                    <div className="relative flex-1">
                       <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                       <input
                         value={catSearch}
@@ -440,7 +513,154 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                         style={{ borderColor: "var(--grid-border)" }}
                       />
                     </div>
+                    <button
+                      onClick={() => setShowCustomForm(true)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-bold cursor-pointer transition border border-[var(--brand-primary)] text-[var(--brand-primary)] hover:bg-[var(--status-focus)]"
+                    >
+                      <Plus size={14} /> Thêm sản phẩm mới
+                    </button>
                   </div>
+
+                  {showCustomForm && (
+                    <div className="mx-5 mb-4 p-4 rounded-xl border-2 border-dashed border-[var(--brand-primary)]/20 bg-[var(--status-focus)]/30 animate-in slide-in-from-top-2">
+                       <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-[13px] font-black text-[var(--brand-primary)] uppercase tracking-wider flex items-center gap-2">
+                             <Package size={16} /> Nhập thông tin sản phẩm mới
+                          </h4>
+                          <button onClick={() => setShowCustomForm(false)} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>
+                       </div>
+                       
+                       <div className="grid grid-cols-2 gap-3 mb-3">
+                          <div className="col-span-2">
+                             <input 
+                               placeholder="Tên sản phẩm *" 
+                               className="w-full px-3 py-2 text-[13px] rounded-lg border focus:ring-1 focus:ring-[var(--brand-primary)] outline-none" 
+                               value={newProduct.name}
+                               onChange={e => setNewProduct({...newProduct, name: e.target.value})}
+                             />
+                          </div>
+                          <div className="relative">
+                             <input 
+                               type="text"
+                               placeholder="Gỗ/Chất liệu..." 
+                               className="w-full px-3 py-2 text-[13px] rounded-lg border focus:ring-1 focus:ring-[var(--brand-primary)] outline-none" 
+                               value={newProduct.material}
+                               onChange={e => {
+                                 setNewProduct({...newProduct, material: e.target.value});
+                                 setShowWoodDropdown(true);
+                               }}
+                               onFocus={() => setShowWoodDropdown(true)}
+                               onBlur={() => setTimeout(() => setShowWoodDropdown(false), 200)}
+                             />
+                             {showWoodDropdown && (
+                               <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow-xl z-50 overflow-hidden border-slate-100 ring-1 ring-black/5">
+                                 <div className="max-h-48 overflow-y-auto p-1">
+                                   {WOOD_TYPES.filter(w => w.toLowerCase().includes(newProduct.material.toLowerCase())).map(w => (
+                                     <div
+                                       key={w}
+                                       className="px-3 py-2 text-[13px] cursor-pointer transition rounded-lg hover:bg-slate-50 font-bold text-slate-700"
+                                       onMouseDown={(e) => {
+                                         e.preventDefault();
+                                         setNewProduct({...newProduct, material: w});
+                                         setShowWoodDropdown(false);
+                                       }}
+                                     >
+                                       {w}
+                                     </div>
+                                   ))}
+                                 </div>
+                               </div>
+                             )}
+                          </div>
+                          
+                          <div className="relative">
+                             <input 
+                               type="text"
+                               placeholder="Màu sắc..." 
+                               className="w-full px-3 py-2 text-[13px] rounded-lg border focus:ring-1 focus:ring-[var(--brand-primary)] outline-none" 
+                               value={newProduct.color}
+                               onChange={e => {
+                                 setNewProduct({...newProduct, color: e.target.value});
+                                 setShowColorDropdown(true);
+                               }}
+                               onFocus={() => setShowColorDropdown(true)}
+                               onBlur={() => setTimeout(() => setShowColorDropdown(false), 200)}
+                             />
+                             {showColorDropdown && (
+                               <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow-xl z-50 overflow-hidden border-slate-100 ring-1 ring-black/5">
+                                 <div className="max-h-48 overflow-y-auto p-1">
+                                   {COLORS.filter(c => c.toLowerCase().includes(newProduct.color.toLowerCase())).map(c => (
+                                     <div
+                                       key={c}
+                                       className="px-3 py-2 text-[13px] cursor-pointer transition rounded-lg hover:bg-slate-50 font-bold text-slate-700"
+                                       onMouseDown={(e) => {
+                                         e.preventDefault();
+                                         setNewProduct({...newProduct, color: c});
+                                         setShowColorDropdown(false);
+                                       }}
+                                     >
+                                       {c}
+                                     </div>
+                                   ))}
+                                 </div>
+                               </div>
+                             )}
+                          </div>
+                          <div className="flex items-center gap-2 col-span-2">
+                             {[
+                               {l: 'D', f: 'length'}, {l: 'R', f: 'width'}, {l: 'C', f: 'height'}
+                             ].map(d => (
+                               <input key={d.f} placeholder={d.l} type="number" className="flex-1 px-2 py-2 text-[13px] text-center rounded-lg border outline-none" 
+                                 value={newProduct[d.f]} onChange={e => setNewProduct({...newProduct, [d.f]: e.target.value})}
+                               />
+                             ))}
+                             <div className="flex items-center gap-1 bg-white border rounded-lg px-2 py-1 ml-2">
+                                <button onClick={() => setNewProduct({...newProduct, qty: Math.max(1, newProduct.qty - 1)})}><Minus size={14} /></button>
+                                <span className="text-[13px] font-bold min-w-[30px] text-center">{newProduct.qty}</span>
+                                <button onClick={() => setNewProduct({...newProduct, qty: newProduct.qty + 1})}><Plus size={14} /></button>
+                             </div>
+                          </div>
+                          <div className="col-span-2">
+                             <textarea 
+                               placeholder="Ghi chú kỹ thuật (kích thước chi tiết, mẫu mã...)" 
+                               className="w-full px-3 py-2 text-[13px] rounded-lg border outline-none h-16 resize-none"
+                               value={newProduct.note}
+                               onChange={e => setNewProduct({...newProduct, note: e.target.value})}
+                             />
+                          </div>
+                       </div>
+                       
+                       <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                          <label className="flex items-center gap-2 text-[11px] font-bold text-gray-500 cursor-pointer hover:text-[var(--brand-primary)]">
+                             <ImagePlus size={16} /> 
+                             {newProduct.images.length > 0 ? `Đã chọn ${newProduct.images.length} ảnh` : 'Thêm ảnh mẫu'}
+                             <input type="file" multiple className="hidden" onChange={e => {
+                                const files = Array.from(e.target.files || []);
+                                files.forEach(file => {
+                                   const reader = new FileReader();
+                                   reader.onload = ev => setNewProduct(prev => ({...prev, images: [...prev.images, ev.target.result]}));
+                                   reader.readAsDataURL(file);
+                                });
+                             }} />
+                          </label>
+                          <div className="flex gap-2">
+                             <button onClick={() => setShowCustomForm(false)} className="text-[12px] font-bold text-gray-400 px-3 py-1.5">Hủy</button>
+                             <button 
+                                onClick={() => {
+                                   if (!newProduct.name) return toast.error("Vui lòng nhập tên sản phẩm");
+                                   setCustomItems([...customItems, {...newProduct, id: Date.now()}]);
+                                   setNewProduct({name: "", material: "", length: "", width: "", height: "", color: "", qty: 1, note: "", images: []});
+                                   setShowCustomForm(false);
+                                   toast.success("Đã thêm sản phẩm mới vào danh sách");
+                                }}
+                                className="bg-[var(--brand-primary)] text-white text-[12px] font-bold px-4 py-1.5 rounded-lg shadow-sm"
+                             >
+                                Thêm vào danh sách
+                             </button>
+                          </div>
+                       </div>
+                    </div>
+                  )}
 
                   <div className="flex-1 overflow-y-auto px-5 pb-4 custom-scrollbar">
                     {filteredCatalog.length === 0 ? (
@@ -627,8 +847,9 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                                     )}
                                   </div>
                                   {item.note && (
-                                    <p className="mt-1.5 text-[11px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                                      📝 {item.note}
+                                    <p className="mt-1.5 text-[11px] leading-relaxed flex items-start gap-1" style={{ color: "var(--text-secondary)" }}>
+                                      <StickyNote size={12} className="shrink-0 mt-0.5" />
+                                      {item.note}
                                     </p>
                                   )}
                                 </div>
@@ -649,71 +870,49 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                   {/* Phase 2: Catalog Products */}
                   {selectedCatCount > 0 && (
                     <div className="animate-in fade-in slide-in-from-bottom-2">
-                       <div className="flex items-center gap-2 mb-2">
-                          <span className="text-[12px] font-bold px-2 py-1 rounded-lg" style={{ background: "#F5F3FF", color: "#5B21B6" }}>
-                            BỔ SUNG TỪ DANH MỤC
-                          </span>
-                          <span className="text-[11px] ml-auto" style={{ color: "var(--text-placeholder)" }}>
-                            {selectedCatCount} sản phẩm
-                          </span>
-                       </div>
-                       
-                       <div className="flex flex-col gap-2">
-                          {items.filter(it => it.sourceOrders.includes("DANH-MUC")).map((item) => {
-                             const sizeDisplay = getDisplaySize(item);
-                             const colorFinish = [item.color, item.finish].filter(Boolean).join(" / ");
-                             return (
-                               <div
-                                 key={item.id}
-                                 className="flex gap-3 p-3 rounded-xl border-2 border-dashed border-purple-100 bg-purple-50/30"
-                               >
-                                 {/* Thumbnail */}
-                                 {item.image && (
-                                   <div
-                                     className="w-14 h-14 rounded-lg overflow-hidden border border-purple-100 shrink-0 cursor-pointer"
-                                     onClick={() => setPreviewImage(item.image)}
-                                   >
-                                     <img src={item.image} alt="" className="w-full h-full object-cover" />
-                                   </div>
-                                 )}
+                       {Object.keys(selectedCatalogProducts).length > 0 && (
+                         <>
+                           <div className="flex items-center gap-2 mb-2">
+                              <span className="text-[12px] font-bold px-2 py-1 rounded-lg" style={{ background: "#F5F3FF", color: "#5B21B6" }}>
+                                BỔ SUNG TỪ DANH MỤC
+                              </span>
+                              <span className="text-[11px] ml-auto" style={{ color: "var(--text-placeholder)" }}>
+                                {Object.keys(selectedCatalogProducts).length} loại sản phẩm
+                              </span>
+                           </div>
+                           
+                           <div className="flex flex-col gap-2 mb-6">
+                              {items.filter(it => it.sourceOrders.includes("DANH-MUC")).map((item) => (
+                                <ReviewItem key={item.id} item={item} />
+                              ))}
+                           </div>
+                         </>
+                       )}
 
-                                 {/* Info */}
-                                 <div className="flex-1 min-w-0">
-                                   <p className="text-[13px] font-bold mb-1.5 px-0.5 rounded" style={{ color: "#4C1D95" }}>
-                                     {item.productName}
-                                   </p>
-                                   <div className="flex flex-wrap gap-1.5">
-                                     {item.material && (
-                                       <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px]" style={{ background: "#EDE9FE", color: "#5B21B6" }}>
-                                          {item.material}
-                                       </span>
-                                     )}
-                                     {sizeDisplay && (
-                                       <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px]" style={{ background: "#EDE9FE", color: "#5B21B6" }}>
-                                          {sizeDisplay}
-                                       </span>
-                                     )}
-                                   </div>
-                                   <p className="mt-1.5 text-[11px] font-medium italic opacity-60 text-purple-700">
-                                      📦 Sản phẩm bổ sung kho
-                                   </p>
-                                 </div>
-
-                                 {/* Quantity */}
-                                 <div className="shrink-0 flex flex-col items-center justify-center px-2">
-                                   <span className="text-[16px] font-black text-purple-700">{item.qty}</span>
-                                   <span className="text-[10px] text-purple-400">{item.unit}</span>
-                                 </div>
-                               </div>
-                             );
-                          })}
-                       </div>
+                       {customItems.length > 0 && (
+                         <>
+                           <div className="flex items-center gap-2 mb-2">
+                              <span className="text-[12px] font-bold px-2 py-1 rounded-lg" style={{ background: "#F0FDF4", color: "#166534" }}>
+                                SẢN PHẨM MỚI NHẬP THÊM
+                              </span>
+                              <span className="text-[11px] ml-auto" style={{ color: "var(--text-placeholder)" }}>
+                                {customItems.length} sản phẩm
+                              </span>
+                           </div>
+                           
+                           <div className="flex flex-col gap-2">
+                              {items.filter(it => it.sourceOrders.includes("MO-TAO")).map((item) => (
+                                <ReviewItem key={item.id} item={item} isCustom />
+                              ))}
+                           </div>
+                         </>
+                       )}
                     </div>
                   )}
 
                   {/* Total */}
                   <div className="flex items-center justify-end gap-4 px-4 py-3 rounded-xl shadow-sm" style={{ background: "var(--status-focus)", border: "1px solid var(--grid-border)" }}>
-                    <span className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Tổng cộng phiếu:</span>
+                    <span className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Tổng cộng yêu cầu:</span>
                     <span className="text-[20px] font-black" style={{ color: "var(--brand-primary)" }}>{totalQty}</span>
                     <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>chiếc / {items.length} dòng sản phẩm</span>
                   </div>
@@ -744,7 +943,7 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                   className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-[13px] font-bold text-white transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-lg hover:shadow-xl hover:-translate-y-0.5"
                   style={{ background: "var(--brand-primary)" }}
                 >
-                  <Check size={16} /> LẬP PHIẾU GIA CÔNG ({totalQty} chiếc)
+                  <Check size={16} /> LẬP YÊU CẦU NHẬP HÀNG ({totalQty} chiếc)
                 </button>
               </div>
             </div>

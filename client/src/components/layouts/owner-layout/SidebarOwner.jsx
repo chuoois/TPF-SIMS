@@ -35,7 +35,7 @@ const menuItems = [
     path: "/owner/requirements",
   },
   { text: "Đơn hàng", icon: ClipboardList, path: "/owner/orders" },
-  { text: "Phiếu gia công", icon: FileStack, path: "/owner/manufacturing-orders" },
+  { text: "Tạo yêu cầu nhập hàng", icon: FileStack, path: "/owner/manufacturing-orders" },
 
   {
     text: "Sản phẩm",
