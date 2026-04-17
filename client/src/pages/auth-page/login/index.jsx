@@ -28,7 +28,7 @@ export const LoginPage = () => {
     if (isAuthenticated && user) {
       const roleRedirectMap = {
         OWNER: "/owner/dashboard",
-        SALES: "/sales/home",
+        SALES: "/sales/dashboard/orders",
         ACCOUNTANT: "/accountant/dashboard",
         WORKER: "/worker/home",
       };
@@ -61,7 +61,7 @@ export const LoginPage = () => {
 
         const roleRedirectMap = {
           OWNER: "/owner/dashboard",
-          SALES: "/sales/home",
+          SALES: "/sales/dashboard/orders",
           ACCOUNTANT: "/accountant/dashboard",
           WORKER: "/worker/home",
         };

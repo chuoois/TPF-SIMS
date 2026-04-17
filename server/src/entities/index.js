@@ -3,6 +3,7 @@ const UserRole = require("./UserRole");
 const UserAccount = require("./UserAccount");
 const UserProfile = require("./UserProfile");
 const RefreshToken = require("./RefreshToken");
+const CustomerProfile = require("./CustomerProfile");
 
 /**
  * Định nghĩa quan hệ giữa các bảng
@@ -36,10 +37,22 @@ RefreshToken.belongsTo(UserAccount, {
   as: "account",
 });
 
+// UserAccount 1:1 CustomerProfile
+UserAccount.hasOne(CustomerProfile, {
+  foreignKey: "fk_user_account_id",
+  as: "customer",
+  onDelete: "CASCADE",
+});
+CustomerProfile.belongsTo(UserAccount, {
+  foreignKey: "fk_user_account_id",
+  as: "account",
+});
+
 module.exports = {
   sequelize,
   UserRole,
   UserAccount,
   UserProfile,
   RefreshToken,
+  CustomerProfile,
 };
