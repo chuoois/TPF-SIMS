@@ -198,9 +198,9 @@ const StandardOrderView = ({
             <Calendar size={18} className="text-[var(--status-pending)]" />
           </div>
           <div>
-            <p className="text-[10px] font-black text-[var(--sidebar-foreground)]/50 uppercase tracking-widest">Ngày giao:</p>
+            <p className="text-[10px] font-black text-[var(--sidebar-foreground)]/50 uppercase tracking-widest">Lịch trình</p>
             <p className="text-[13px] font-bold">
-              {o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString("vi-VN") : "Chưa hẹn"}
+              <span className="text-[var(--sidebar-foreground)]/40">Giao:</span> {o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString("vi-VN") : "Chưa hẹn"}
             </p>
           </div>
         </div>
@@ -328,8 +328,8 @@ const StandardOrderView = ({
                         {[
                           { label: "Chất liệu", val: p.material },
                           { label: "Kích thước", val: p.size },
-                          { label: "Màu sắc", val: p.finish },
-                          { label: "Bảo hành", val: `${p.warranty || 12} Tháng` },
+                          { label: "Hoàn thiện", val: p.finish },
+                          { label: "Bảo hành", val: `${p.warranty || 12}T` },
                         ].map((spec, i) => (
                           <div key={i} className="space-y-1">
                             <span className="text-[9px] font-black text-[var(--text-placeholder)] uppercase tracking-widest block">{spec.label}</span>
@@ -387,7 +387,7 @@ const StandardOrderView = ({
               <div className="p-5 space-y-4">
                 {[
                   { icon: MapPin, label: "Địa chỉ giao", val: o.customer.address },
-                  { icon: Calendar, label: "Ngày giao", val: fmtDate(o.deliveryDate) },
+                  { icon: Calendar, label: "Ngày hẹn", val: fmtDate(o.deliveryDate) },
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <item.icon size={15} className="mt-0.5 text-[var(--text-placeholder)]" />
@@ -484,7 +484,7 @@ function ProdItemRow({ item, onInspect }) {
               </div>
             )}
           </div>
-        </div>
+        </div>/
 
         <div className="flex flex-col items-end gap-2 shrink-0">
           <span
@@ -1385,35 +1385,24 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                             <p className="text-[9px] font-bold text-[var(--text-placeholder)] uppercase tracking-tight mb-1 ml-1">
                               Công thợ sơn
                             </p>
-                            {order?.type === "Hàng khách đặt" ? (
-                              <div className="relative">
-                                <input
-                                  type="text"
-                                  className="w-full pl-3 pr-7 py-1.5 bg-white border border-[var(--grid-border)] rounded-lg font-bold text-[13px] text-[var(--text-main)] focus:border-[var(--brand-primary)] outline-none transition-all text-right"
-                                  value={formatNumberInput(itemData.unitLabor)}
-                                  onChange={(e) => {
-                                    const newData = [...handoverItemsData];
-                                    newData[idx] = {
-                                      ...itemData,
-                                      unitLabor: Number(parseNumberInput(e.target.value)) || 0,
-                                    };
-                                    setHandoverItemsData(newData);
-                                  }}
-                                />
-                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[var(--text-placeholder)]">
-                                  ₫
-                                </span>
-                              </div>
-                            ) : (
-                              <div className="w-full px-3 py-1.5 bg-[var(--bg-main)] border border-[var(--grid-border)]/50 rounded-lg text-right flex items-center justify-end gap-1">
-                                <span className="font-bold text-[13px] text-[var(--text-main)]">
-                                  {formatNumberInput(itemData.unitLabor)}
-                                </span>
-                                <span className="text-[10px] font-bold text-[var(--text-placeholder)]">
-                                  ₫
-                                </span>
-                              </div>
-                            )}
+                            <div className="relative">
+                              <input
+                                type="text"
+                                className="w-full pl-3 pr-7 py-1.5 bg-white border border-[var(--grid-border)] rounded-lg font-bold text-[13px] text-[var(--text-main)] focus:border-[var(--brand-primary)] outline-none transition-all text-right"
+                                value={formatNumberInput(itemData.unitLabor)}
+                                onChange={(e) => {
+                                  const newData = [...handoverItemsData];
+                                  newData[idx] = {
+                                    ...itemData,
+                                    unitLabor: Number(parseNumberInput(e.target.value)) || 0,
+                                  };
+                                  setHandoverItemsData(newData);
+                                }}
+                              />
+                              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[var(--text-placeholder)]">
+                                ₫
+                              </span>
+                            </div>
                           </div>
 
                           {/* Deadline Input */}
