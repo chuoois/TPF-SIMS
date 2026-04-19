@@ -62,6 +62,7 @@ class AuthController {
         user_account_id: user.user_account_id,
         token: refreshToken,
         expires_at: expiresAt,
+        createby: user.user_account_id,
       });
 
       // Set cookie
@@ -146,6 +147,7 @@ class AuthController {
         user_account_id: user.user_account_id,
         token: newRefreshToken,
         expires_at: expiresAt,
+        createby: user.user_account_id,
       });
 
       // Cập nhật cookies
@@ -213,7 +215,11 @@ class AuthController {
       const hashedPassword = await bcrypt.hash(newPassword, 10);
 
       // Cập nhật vào DB
-      await user.update({ password_hash: hashedPassword });
+      await user.update({ 
+        password_hash: hashedPassword,
+        modifiedate: new Date(),
+        modifieby: user.user_account_id,
+      });
 
       // Gửi email
       await sendNewPasswordEmail(email, newPassword);

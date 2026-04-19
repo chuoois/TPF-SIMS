@@ -31,9 +31,18 @@ const UserProfile = sequelize.define(
     gender: {
       type: DataTypes.TINYINT,
     },
-    created_at: {
+    createdate: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
+    },
+    modifiedate: {
+      type: DataTypes.DATE,
+    },
+    createby: {
+      type: DataTypes.INTEGER,
+    },
+    modifieby: {
+      type: DataTypes.INTEGER,
     },
   },
   {

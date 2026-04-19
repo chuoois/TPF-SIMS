@@ -3,7 +3,9 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const sequelize = require("./config/db");
+require("./entities"); // Tự động load models và associations
 const authRoutes = require("./routes/auth.routes");
+const saleRoutes = require("./routes/sale.routes");
 const swaggerUi = require("swagger-ui-express");
 const swaggerJsDoc = require("swagger-jsdoc");
 
@@ -20,6 +22,7 @@ app.use(express.json());
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/sale", saleRoutes);
 
 // Swagger Configuration
 const swaggerOptions = {
@@ -67,10 +70,10 @@ app.listen(PORT, () => {
   console.log(`Swagger docs available at http://localhost:${PORT}/api-docs`);
 });
 
-sequelize.authenticate()
+sequelize.sync({ alter: true })
   .then(() => {
-    console.log("Database connected successful");
+    console.log("Database connected and synced successful");
   })
   .catch((err) => {
-    console.error("Unable to connect to the database:", err.message);
+    console.error("Unable to connect/sync the database:", err.message);
   });
