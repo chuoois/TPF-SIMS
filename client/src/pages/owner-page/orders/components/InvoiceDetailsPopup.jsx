@@ -2,9 +2,9 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   X, Package, Calendar, User, Phone, MapPin,
   Clock, CheckCircle, CheckCircle2, AlertTriangle, Hammer,
-  Camera, FileText, Ban, RefreshCw, XCircle,
-  Truck, Trash2, Lock, ShieldAlert,
-  Paintbrush, Layers, RotateCcw, ChevronRight, Eye, AlertCircle
+  Camera, FileText, Ban, RefreshCw,
+  Trash2, Lock,
+  Paintbrush, RotateCcw, ChevronRight, Eye, AlertCircle
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { MOCK_ORDERS_DETAILED, INITIAL_ORDERS } from "../mockData";
@@ -46,15 +46,6 @@ const statusStyle = (status) => {
   };
   return m[status] || { bg: "var(--bg-main)", text: "var(--text-secondary)", border: "var(--grid-border)" };
 };
-
-const Badge = ({ children, style }) => (
-  <span
-    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap"
-    style={style}
-  >
-    {children}
-  </span>
-);
 
 const CustomerInfoCard = ({ o }) => (
   <div
@@ -149,41 +140,6 @@ const HistoryCard = ({ o, className = "" }) => (
     </div>
   </div>
 );
-
-const MediaGallery = ({ title, icon: Icon, images, onPreview, colorClass = "emerald" }) => {
-  if (!images || images.length === 0) return null;
-  const colorMap = {
-    emerald: { bg: "bg-[var(--brand-primary)]/5", text: "text-[var(--brand-primary)]", dot: "bg-[var(--brand-primary)]" },
-    indigo: { bg: "bg-[var(--brand-primary)]/5", text: "text-[var(--brand-primary)]", dot: "bg-[var(--brand-primary)]" },
-    amber: { bg: "bg-[var(--status-warning)]/5", text: "text-[var(--status-pending)]", dot: "bg-[var(--status-pending)]" },
-  };
-  const c = colorMap[colorClass] || colorMap.emerald;
-
-  return (
-    <div className="rounded-lg overflow-hidden bg-[var(--bg-main)]/40 backdrop-blur-sm border border-[var(--grid-border)] group media-gallery-section printer-hidden">
-      <div className={`px-5 py-3 flex items-center gap-2 border-b border-[var(--grid-border)]/10 ${c.bg}/30`}>
-        <Icon size={14} className={c.text} />
-        <span className={`text-[12px] font-bold uppercase tracking-wider ${c.text}`}>{title}</span>
-      </div>
-      <div className="p-4">
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-          {images.map((img, idx) => (
-            <div
-              key={idx}
-              className="relative aspect-square rounded-lg overflow-hidden cursor-zoom-in hover:ring-2 hover:ring-[var(--brand-primary)]/40 transition-all group/img border border-[var(--grid-border)]/50 shadow-sm"
-              onClick={() => onPreview(img)}
-            >
-              <img src={img} alt={`Gallery ${idx}`} className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-110" />
-              <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover/img:opacity-100">
-                <Eye size={18} className="text-white drop-shadow-md" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
 const StandardOrderView = ({
   o,
   productTotal,
@@ -193,7 +149,6 @@ const StandardOrderView = ({
   deliveryImage,
   onDeliveryImageChange,
   onPreview,
-  onUpdateStatus,
   // New props from parent
   lastActiveStatus,
   isStarted,
@@ -495,7 +450,7 @@ function ProdItemRow({ item, onInspect }) {
   })();
 
   return (
-    <div className="p-4 border border-[var(--grid-border)]/50 rounded-xl bg-[var(--background)] space-y-3">
+    <div className="p-4 border border-[var(--grid-border)]/50 rounded-lg bg-[var(--background)] space-y-3">
       <div className="flex items-start gap-3">
         <div className="h-12 w-12 rounded-lg overflow-hidden shrink-0 border border-[var(--grid-border)]/50 bg-[var(--bg-main)] relative">
           {item.productImage
@@ -533,8 +488,7 @@ function ProdItemRow({ item, onInspect }) {
 
         <div className="flex flex-col items-end gap-2 shrink-0">
           <span
-            className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border ${needsKCS ? "animate-pulse" : ""
-              }`}
+            className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider border`}
             style={{ backgroundColor: cfg.bg, color: cfg.text, borderColor: cfg.border }}
           >
             <cfg.icon size={11} /> {cfg.label}
@@ -542,7 +496,7 @@ function ProdItemRow({ item, onInspect }) {
           {needsKCS && (
             <button
               onClick={() => onInspect(item)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--status-success)] text-[var(--primary-foreground)] text-[11px] font-black hover:opacity-90 transition shadow-sm"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--status-success)] text-[var(--primary-foreground)] text-[11px] font-black hover:opacity-90 transition"
             >
               <Camera size={12} /> NGHIỆM THU
             </button>
@@ -600,13 +554,13 @@ function ProductionProgressCard({ order, onInspect, onRedoRequest, productions }
   const progress = Math.round((completed / total) * 100);
 
   return (
-    <div className="rounded-xl overflow-hidden bg-[var(--bg-main)]/40 backdrop-blur-sm border border-[var(--grid-border)] printer-hidden">
-      <div className="px-5 py-3 flex items-center justify-between gap-2 border-b border-[var(--grid-border)]/50 bg-[var(--status-warning)]/5">
+    <div className="rounded-lg overflow-hidden bg-white border border-[var(--grid-border)] printer-hidden">
+      <div className="px-5 py-3 flex items-center justify-between gap-2 border-b border-[var(--grid-border)]/50 bg-[var(--grid-header-bg)]">
         <div className="flex items-center gap-2">
           <Hammer size={14} className="text-[var(--status-pending)]" />
           <span className="text-[12px] font-bold uppercase tracking-wider text-[var(--status-pending)]">Tiến độ gia công</span>
           {hasPendingKCS && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--status-success)]/10 text-[var(--status-success)] text-[9px] font-black uppercase animate-pulse">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--status-success)]/10 text-[var(--status-success)] text-[9px] font-black uppercase">
               <Camera size={9} /> Chờ nghiệm thu
             </span>
           )}
@@ -632,7 +586,7 @@ function ProductionProgressCard({ order, onInspect, onRedoRequest, productions }
         ))}
       </div>
 
-      <div className="px-5 py-2 bg-[var(--bg-main)]/50 border-t border-[var(--grid-border)]/50 flex items-center justify-between">
+      <div className="px-5 py-2 border-t border-[var(--grid-border)]/50 flex items-center justify-between">
         <p className="text-[10px] text-[var(--text-placeholder)] italic">* Tiến độ được thợ xưởng cập nhật trực tiếp</p>
         <p className="text-[9px] font-bold text-[var(--brand-primary)]/50 uppercase">PRODUCTION TRACKER</p>
       </div>
@@ -650,7 +604,6 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
   const [previewImage, setPreviewImage] = useState(null);
   const [finalPayment, setFinalPayment] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("Chuyển khoản");
-  const [painterCost, setPainterCost] = useState(0);
 
   const [handoverDeadline, setHandoverDeadline] = useState("");
   const [handoverItemsData, setHandoverItemsData] = useState([]);
@@ -934,7 +887,6 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
       receivedAmount: finalPayment,
       debtAmount: debtAmount,
       paymentMethod,
-      painter_cost: painterCost,
       paymentStatus: isFullPayment ? "full" : "partial",
       timelineLabel: "Hoàn tất đơn hàng",
       timelineDesc: isFullPayment
@@ -946,7 +898,6 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
   const handleHandoverConfirm = () => {
     const newStatus = "Đang gia công";
-    const deadlineStr = new Date(handoverDeadline).toLocaleDateString("vi-VN");
 
     const updatedProducts = order.products.map((p, idx) => ({
       ...p,
@@ -956,6 +907,13 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
     }));
 
     const totalLabor = updatedProducts.reduce((sum, p) => sum + (p.painterLabor * (p.qty || 1)), 0);
+
+    const finalDeadlines = updatedProducts.map(p => p.deadline).filter(d => !!d);
+    const maxDeadline = finalDeadlines.length > 0
+      ? new Date(Math.max(...finalDeadlines.map(d => new Date(d)))).toISOString().split('T')[0]
+      : handoverDeadline;
+
+    const deadlineStr = maxDeadline ? new Date(maxDeadline).toLocaleDateString("vi-VN") : "Chưa xác định";
 
     // Create production items for each product
     try {
@@ -968,7 +926,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
         assignedWorker: "Chưa giao",
         status: "Đang đánh giấy ráp",
         isPendingApproval: false,
-        expectedEndDate: p.deadline,
+        expectedEndDate: p.deadline || maxDeadline,
         quantityPlanned: p.qty || 1,
         quantityCompleted: 0,
         productImage: p.image || "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg",
@@ -979,16 +937,16 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
     handleUpdate(newStatus, {
       products: updatedProducts,
-      worker_deadline: handoverDeadline,
+      worker_deadline: maxDeadline,
       handover_notes: handoverNotes,
       handover_checklist: {
         approved_at: new Date().toISOString(),
         notes: handoverNotes,
-        deadline: handoverDeadline,
+        deadline: maxDeadline,
         total_painter_labor: totalLabor
       },
       timelineLabel: "Bàn giao gia công",
-      timelineDesc: `Bàn giao ${updatedProducts.length} món. Hạn: ${deadlineStr}. Tổng công sơn: ${fmtCurrency(totalLabor)}.`
+      timelineDesc: `Bàn giao ${updatedProducts.length} món. Hạn (muộn nhất): ${deadlineStr}. Tổng công sơn: ${fmtCurrency(totalLabor)}.`
     });
     setShowHandoverModal(false);
   };
@@ -1339,139 +1297,144 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
       )}
 
       {showHandoverModal && (
-        <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in">
-          <div className="bg-[var(--background)] w-full max-w-2xl rounded-2xl overflow-hidden modal-content border border-[var(--grid-border)] flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-[2px] animate-in fade-in duration-200"
+            onClick={() => setShowHandoverModal(false)}
+          />
+
+          <div className="relative bg-white w-full max-w-2xl rounded-lg border border-[var(--grid-border)] flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 fade-in duration-200">
             {/* Header */}
-            <div className="px-6 py-5 border-b border-[var(--grid-border)] flex items-center justify-between bg-[var(--grid-header-bg)]">
+            <div className="px-6 py-4 border-b border-[var(--grid-border)] flex items-center justify-between bg-[var(--grid-header-bg)]">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[var(--brand-primary)]/10 flex items-center justify-center text-[var(--brand-primary)] border border-[var(--brand-primary)]/10">
-                  <Hammer size={20} />
+                <div className="w-9 h-9 rounded-full bg-[var(--status-focus)] flex items-center justify-center text-[var(--brand-primary)] border border-[var(--brand-primary)]/10">
+                  <Paintbrush size={18} />
                 </div>
                 <div>
-                  <h3 className="text-[17px] font-black text-[var(--text-main)] leading-none uppercase">BÀN GIAO GIA CÔNG</h3>
-                  <p className="text-[11px] text-[var(--text-secondary)] font-bold uppercase tracking-wider mt-1.5 flex items-center gap-1.5">
-                    <Package size={12} /> {order?.products?.length} sản phẩm cần bàn giao
+                  <h3 className="text-[16px] font-bold text-[var(--text-main)] leading-none uppercase tracking-tight">
+                    BÀN GIAO GIA CÔNG XƯỞNG SƠN
+                  </h3>
+                  <p className="text-[11px] text-[var(--text-secondary)] mt-1.5 flex items-center gap-1.5">
+                    <Package size={12} className="opacity-60" /> {order?.products?.length} món hàng cần hoàn thiện
                   </p>
                 </div>
               </div>
-              <button onClick={() => setShowHandoverModal(false)} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-[var(--bg-main)] text-[var(--text-placeholder)] transition-all">
-                <X size={20} />
+              <button
+                onClick={() => setShowHandoverModal(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-[var(--text-placeholder)] transition-all cursor-pointer"
+              >
+                <X size={18} />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-              {/* Quick Info Bar */}
-              <div className="flex items-center justify-between p-4 bg-[var(--bg-main)]/40 rounded-xl border border-[var(--grid-border)]">
-                <div className="flex items-center gap-6">
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-black text-[var(--text-placeholder)] uppercase tracking-widest">Hạn khách nhận</span>
-                    <div className="flex items-center gap-2 text-[var(--text-main)]">
-                      <Calendar size={14} className="text-[var(--brand-primary)]" />
-                      <span className="text-[14px] font-black">{fmtDate(order?.deliveryDate)}</span>
-                    </div>
-                  </div>
-                  <div className="w-px h-8 bg-[var(--grid-border)]" />
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-black text-[var(--text-placeholder)] uppercase tracking-widest">Loại đơn hàng</span>
-                    <p className="text-[13px] font-bold text-[var(--text-main)]">{order?.type}</p>
+              {/* Overall Context */}
+              <div className="flex items-center justify-between p-1">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] font-bold text-[var(--text-placeholder)] uppercase tracking-widest">
+                    Hạn giao khách
+                  </span>
+                  <div className="flex items-center gap-2 text-[var(--text-main)]">
+                    <Calendar size={13} className="text-[var(--text-placeholder)]" />
+                    <span className="text-[13px] font-bold">{fmtDate(order?.deliveryDate)}</span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className="px-3 py-1 bg-[var(--status-pending)]/10 text-[var(--status-pending)] rounded-full text-[10px] font-black uppercase border border-[var(--status-pending)]/20">
-                    Chờ bàn giao
+                <div className="px-3 py-1.5 bg-[var(--status-focus)] border border-[var(--brand-primary)]/10 rounded-full flex items-center gap-2">
+                  <Hammer size={12} className="text-[var(--brand-primary)]" />
+                  <span className="text-[11px] font-bold text-[var(--brand-primary)] uppercase tracking-wider">
+                    Xưởng Sơn Hoàn Thiện
                   </span>
                 </div>
               </div>
 
-              {/* Product List */}
+              {/* Product List Section */}
               <div className="space-y-3">
+                <h4 className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-widest px-1">
+                  1. Danh sách sản phẩm & Công thợ
+                </h4>
                 {order?.products?.map((p, idx) => {
                   const itemData = handoverItemsData[idx] || { unitLabor: 0, days: "0", deadline: "" };
                   return (
-                    <div key={idx} className="group relative bg-[var(--background)] border border-[var(--grid-border)] rounded-2xl p-4 hover:border-[var(--brand-primary)]/30 transition-all">
-                      <div className="flex items-start gap-4">
-                        {/* Thumbnail */}
-                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-[var(--grid-header-bg)] border border-[var(--grid-border)] shrink-0">
+                    <div
+                      key={idx}
+                      className="bg-white border border-[var(--grid-border)] rounded-lg p-4"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-lg overflow-hidden bg-[var(--bg-main)] border border-[var(--grid-border)] shrink-0">
                           <img
-                            src={p.image || "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80"}
+                            src={p.image || "/api/placeholder/400/320"}
                             alt={p.name}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            className="w-full h-full object-cover"
                           />
                         </div>
-
-                        {/* Info & Inputs */}
-                        <div className="flex-1 min-w-0 space-y-4">
-                          <div className="flex items-start justify-between">
-                            <div className="min-w-0">
-                              <h4 className="text-[14px] font-black text-[var(--text-main)] truncate">{p.name}</h4>
-                              <p className="text-[11px] font-bold text-[var(--brand-primary)] mt-0.5 uppercase">SL: {p.qty} {p.unit}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-[9px] font-black text-[var(--text-placeholder)] uppercase tracking-widest">Đơn giá</p>
-                              <p className="text-[13px] font-bold text-[var(--text-main)]">{fmtCurrency(p.price)}</p>
-                            </div>
+                        <div className="flex-1 min-w-0 grid grid-cols-12 gap-4 items-center">
+                          <div className="col-span-4 min-w-0">
+                            <h4 className="text-[14px] font-bold text-[var(--text-main)] truncate">
+                              {p.name}
+                            </h4>
+                            <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">
+                              Số lượng:{" "}
+                              <span className="font-bold text-[var(--brand-primary)]">
+                                {p.qty} {p.unit}
+                              </span>
+                            </p>
                           </div>
 
-                          {/* Control Row */}
-                          <div className="grid grid-cols-3 gap-3">
-                            <div className="space-y-1.5">
-                              <label className="text-[9px] font-black text-[var(--text-placeholder)] uppercase tracking-widest ml-1">Công thợ sơn</label>
+                          {/* Unit Labor Input */}
+                          <div className="col-span-4">
+                            <p className="text-[9px] font-bold text-[var(--text-placeholder)] uppercase tracking-tight mb-1 ml-1">
+                              Công thợ sơn
+                            </p>
+                            {order?.type === "Hàng khách đặt" ? (
                               <div className="relative">
                                 <input
                                   type="text"
-                                  className="w-full pl-3 pr-8 py-2 bg-[var(--bg-main)] border border-[var(--grid-border)] rounded-xl font-black text-[13px] text-[var(--text-main)] focus:ring-4 focus:ring-[var(--brand-primary)]/10 focus:border-[var(--brand-primary)] outline-none transition-all"
+                                  className="w-full pl-3 pr-7 py-1.5 bg-white border border-[var(--grid-border)] rounded-lg font-bold text-[13px] text-[var(--text-main)] focus:border-[var(--brand-primary)] outline-none transition-all text-right"
                                   value={formatNumberInput(itemData.unitLabor)}
                                   onChange={(e) => {
                                     const newData = [...handoverItemsData];
-                                    newData[idx] = { ...itemData, unitLabor: Number(parseNumberInput(e.target.value)) || 0 };
-                                    setHandoverItemsData(newData);
-                                  }}
-                                />
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[var(--text-placeholder)]">₫</span>
-                              </div>
-                            </div>
-
-                            <div className="space-y-1.5">
-                              <label className="text-[9px] font-black text-[var(--text-placeholder)] uppercase tracking-widest ml-1">Kỳ hạn (ngày)</label>
-                              <div className="relative">
-                                <input
-                                  type="number"
-                                  className="w-full pl-3 pr-8 py-2 bg-[var(--bg-main)] border border-[var(--grid-border)] rounded-xl font-black text-[13px] text-[var(--text-main)] focus:ring-4 focus:ring-[var(--brand-primary)]/10 focus:border-[var(--brand-primary)] outline-none transition-all"
-                                  value={itemData.days || "0"}
-                                  onChange={(e) => {
-                                    const d = parseInt(e.target.value) || 0;
-                                    const newData = [...handoverItemsData];
-                                    const newDate = new Date();
-                                    newDate.setDate(newDate.getDate() + d);
                                     newData[idx] = {
                                       ...itemData,
-                                      days: e.target.value,
-                                      deadline: newDate.toISOString().split('T')[0]
+                                      unitLabor: Number(parseNumberInput(e.target.value)) || 0,
                                     };
                                     setHandoverItemsData(newData);
                                   }}
                                 />
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2"><Clock size={12} className="text-[var(--text-placeholder)]" /></span>
+                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[var(--text-placeholder)]">
+                                  ₫
+                                </span>
                               </div>
-                            </div>
+                            ) : (
+                              <div className="w-full px-3 py-1.5 bg-[var(--bg-main)] border border-[var(--grid-border)]/50 rounded-lg text-right flex items-center justify-end gap-1">
+                                <span className="font-bold text-[13px] text-[var(--text-main)]">
+                                  {formatNumberInput(itemData.unitLabor)}
+                                </span>
+                                <span className="text-[10px] font-bold text-[var(--text-placeholder)]">
+                                  ₫
+                                </span>
+                              </div>
+                            )}
+                          </div>
 
-                            <div className="space-y-1.5">
-                              <label className="text-[9px] font-black text-[var(--text-placeholder)] uppercase tracking-widest ml-1">Ngày xong SP</label>
+                          {/* Deadline Input */}
+                          <div className="col-span-4">
+                            <p className="text-[9px] font-bold text-[var(--text-placeholder)] uppercase tracking-tight mb-1 ml-1">
+                              Hạn xong SP
+                            </p>
+                            <div className="relative">
                               <input
                                 type="date"
-                                className="w-full px-3 py-2 bg-[var(--bg-main)] border border-[var(--grid-border)] rounded-xl font-black text-[11px] text-[var(--text-main)] focus:ring-4 focus:ring-[var(--brand-primary)]/10 focus:border-[var(--brand-primary)] outline-none transition-all"
+                                className="w-full pl-8 pr-2 py-1.5 bg-white border border-[var(--grid-border)] rounded-lg font-bold text-[11px] text-[var(--text-main)] focus:border-[var(--brand-primary)] outline-none transition-all"
                                 value={itemData.deadline || ""}
                                 onChange={(e) => {
-                                  const newDeadline = e.target.value;
-                                  const diff = Math.ceil((new Date(newDeadline) - new Date()) / 86400000);
                                   const newData = [...handoverItemsData];
-                                  newData[idx] = {
-                                    ...itemData,
-                                    deadline: newDeadline,
-                                    days: (diff > 0 ? diff : 0).toString()
-                                  };
+                                  newData[idx] = { ...itemData, deadline: e.target.value };
                                   setHandoverItemsData(newData);
                                 }}
+                              />
+                              <Calendar
+                                size={12}
+                                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-placeholder)]"
                               />
                             </div>
                           </div>
@@ -1483,48 +1446,53 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
               </div>
 
               {/* Summary Section */}
-              <div className="space-y-4 pt-2 border-t border-[var(--grid-border)]">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-[var(--status-focus)] border border-[var(--brand-primary)]/10 rounded-2xl relative overflow-hidden group">
-                    <div className="absolute top-[-10px] right-[-10px] opacity-10 group-hover:scale-120 transition-transform duration-700">
-                      <Hammer size={80} className="text-[var(--brand-primary)]" />
-                    </div>
-                    <span className="text-[10px] font-black text-[var(--brand-primary)] uppercase tracking-widest block mb-1">Tổng tiền thợ sơn</span>
-                    <p className="text-[20px] font-black text-[var(--brand-primary)] leading-none">
-                      {fmtCurrency(order?.products?.reduce((sum, p, idx) => sum + (handoverItemsData[idx]?.unitLabor || 0) * (p.qty || 1), 0))}
+              <div className="space-y-4 pt-4 border-t border-[var(--grid-border)]">
+                <div className="grid grid-cols-12 gap-6">
+                  <div className="col-span-5 p-4 bg-[var(--bg-main)] border border-[var(--grid-border)] rounded-lg flex flex-col justify-center">
+                    <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
+                      TỔNG TIỀN SƠN
+                    </span>
+                    <p className="text-[20px] font-bold text-[var(--brand-primary)] leading-none">
+                      {fmtCurrency(
+                        order?.products?.reduce(
+                          (sum, p, idx) =>
+                            sum + (handoverItemsData[idx]?.unitLabor || 0) * (p.qty || 1),
+                          0
+                        )
+                      )}
                     </p>
                   </div>
-                  <div className="p-4 bg-[var(--sidebar)] border border-[var(--sidebar-border)] rounded-2xl shadow-xl">
-                    <span className="text-[10px] font-black text-[var(--sidebar-foreground)]/50 uppercase tracking-widest block mb-1">Hạn xong dự kiến</span>
-                    <input
-                      type="date"
-                      className="mt-1 bg-transparent border-none p-0 text-[18px] font-black text-[var(--sidebar-foreground)] focus:ring-0 outline-none w-full [color-scheme:dark]"
-                      value={handoverDeadline || ""}
-                      onChange={(e) => setHandoverDeadline(e.target.value)}
+
+                  <div className="col-span-7 space-y-2">
+                    <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1 flex items-center gap-2">
+                      <FileText size={12} className="text-[var(--text-placeholder)]" /> Ghi chú cho
+                      thợ xưởng
+                    </label>
+                    <textarea
+                      className="w-full p-3 bg-white border border-[var(--grid-border)] rounded-lg text-[12px] font-medium text-[var(--text-main)] focus:border-[var(--brand-primary)] outline-none transition-all min-h-[70px] max-h-[100px] resize-none"
+                      placeholder="Màu sắc, độ bóng, yêu cầu riêng..."
+                      value={handoverNotes}
+                      onChange={(e) => setHandoverNotes(e.target.value)}
                     />
                   </div>
                 </div>
-
-                <div className="space-y-2">
-                  <label className="text-[11px] font-black text-[var(--text-secondary)] uppercase tracking-widest ml-1 flex items-center gap-2">
-                    <FileText size={14} className="text-[var(--text-placeholder)]" /> Ghi chú bàn giao cho xưởng
-                  </label>
-                  <textarea
-                    className="w-full p-4 bg-[var(--bg-main)] border border-[var(--grid-border)] rounded-2xl text-[13px] font-medium text-[var(--text-main)] focus:ring-4 focus:ring-[var(--brand-primary)]/10 focus:border-[var(--brand-primary)] outline-none transition-all min-h-[80px] max-h-[120px] resize-none"
-                    placeholder="Những dặn dò quan trọng nhất cho thợ..."
-                    value={handoverNotes}
-                    onChange={(e) => setHandoverNotes(e.target.value)}
-                  />
-                </div>
               </div>
+            </div>
 
-              <div className="p-6 bg-[var(--background)] border-t border-[var(--grid-border)] shrink-0">
+            <div className="p-6 bg-[var(--grid-header-bg)] border-t border-[var(--grid-border)] shrink-0 flex items-center justify-end">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setShowHandoverModal(false)}
+                  className="px-6 py-2.5 rounded-lg border border-[var(--grid-border)] text-[13px] font-bold text-[var(--text-secondary)] hover:bg-white transition-all cursor-pointer"
+                >
+                  Bỏ qua
+                </button>
                 <button
                   onClick={handleHandoverConfirm}
-                  className="w-full h-12 bg-[var(--brand-primary)] hover:opacity-90 text-[var(--primary-foreground)] rounded-2xl font-black text-[14px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-3 group"
+                  className="px-8 py-2.5 bg-[var(--brand-primary)] hover:opacity-90 text-white rounded-lg font-bold text-[13px] transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
                 >
-                  Xác nhận bàn giao gia công
-                  <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                  Xác nhận bàn giao
+                  <ChevronRight size={16} />
                 </button>
               </div>
             </div>

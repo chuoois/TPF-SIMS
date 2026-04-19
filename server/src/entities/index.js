@@ -4,6 +4,7 @@ const UserAccount = require("./UserAccount");
 const UserProfile = require("./UserProfile");
 const RefreshToken = require("./RefreshToken");
 const CustomerProfile = require("./CustomerProfile");
+const SystemLog = require("./SystemLog");
 
 /**
  * Định nghĩa quan hệ giữa các bảng
@@ -48,6 +49,16 @@ CustomerProfile.belongsTo(UserAccount, {
   as: "account",
 });
 
+// UserAccount 1:N SystemLog
+UserAccount.hasMany(SystemLog, {
+  foreignKey: "user_account_id",
+  as: "logs",
+});
+SystemLog.belongsTo(UserAccount, {
+  foreignKey: "user_account_id",
+  as: "account",
+});
+
 module.exports = {
   sequelize,
   UserRole,
@@ -55,4 +66,5 @@ module.exports = {
   UserProfile,
   RefreshToken,
   CustomerProfile,
+  SystemLog,
 };

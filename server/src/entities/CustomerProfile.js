@@ -4,7 +4,7 @@ const sequelize = require("../config/db");
 /**
  * Model CustomerProfile
  * Bảng thông tin khách hàng
- * Created By: Antigravity
+ * Created By: ThinhBui
  * Created Date: 17/04/2026
  */
 const CustomerProfile = sequelize.define(
