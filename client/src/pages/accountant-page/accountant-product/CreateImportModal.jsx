@@ -5,7 +5,7 @@
  *   2. Dòng bộ (bundle) – nhập cả bộ theo HĐ, ước tính giá từng món lẻ
  */
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import {
     X, Plus, Trash2, Upload, FileImage, Search,
     Building2, Calendar, Package, ChevronDown, AlignLeft,
@@ -166,9 +166,43 @@ export default function CreateImportModal({ onClose, onSaved }) {
     const fileRef = useRef(null);
 
     // Section 2 – Yêu cầu & lines
-    const [selectedRequestId, setSelectedRequestId] = useState("");
     const [lines, setLines] = useState([]);
     const [activeDropdown, setActiveDropdown] = useState({ id: null, field: null });
+
+    // Yêu cầu nhập hàng data & state
+    const [mergedRequests, setMergedRequests] = useState([]);
+    const [expandedRequests, setExpandedRequests] = useState({});
+    const [selectedRequestItems, setSelectedRequestItems] = useState({});
+    const [requestSearchTerm, setRequestSearchTerm] = useState("");
+
+    useEffect(() => {
+        const localData = JSON.parse(localStorage.getItem("tpf_manufacturing_orders") || "[]");
+        
+        const adaptedLocal = localData.map(r => ({
+            id: r.id,
+            requestCode: r.id,
+            date: r.createdAt ? r.createdAt.substring(0, 10) : "",
+            createdBy: r.createdBy || "Chủ xưởng",
+            note: r.note || "Yêu cầu từ xưởng",
+            status: r.status === "Mới tạo" ? "PENDING" : r.status,
+            items: (r.items || []).map((it, idx) => ({
+                id: `loc_item_${r.id}_${it.id || idx}`,
+                productCode: "",
+                productName: it.productName || it.name || "Sản phẩm",
+                category: "",
+                materialType: it.material || "",
+                color: it.color || "",
+                productType: "FINISHED",
+                requestedQty: it.qty || 1,
+                estimatedPrice: 0,
+                isBundle: false,
+                details: it.note || it.size || "",
+            }))
+        }));
+
+        const combined = [...adaptedLocal, ...MOCK_IMPORT_REQUESTS];
+        setMergedRequests(combined);
+    }, []);
 
     // ── File handlers ──────────────────────────────────
     const handleFile = (e) => {
@@ -255,18 +289,15 @@ export default function CreateImportModal({ onClose, onSaved }) {
 
     const grandTotal = lines.reduce((s, l) => s + lineTotal(l), 0);
 
-    // ── Gắn Request ────────────────────────────────────
-    const handleSelectRequest = (reqId) => {
-        if (!reqId) {
-            setLines([]);
-            setSelectedRequestId("");
+    // ── Gắn Request (Thêm các mặt hàng đã tick chọn) ───
+    const handleAddSelectedItems = () => {
+        const selectedItems = Object.values(selectedRequestItems).filter(item => item !== undefined);
+        if (selectedItems.length === 0) {
+            toast.error("Vui lòng chọn ít nhất 1 mặt hàng!");
             return;
         }
-        const req = MOCK_IMPORT_REQUESTS.find(r => r.id === reqId);
-        if (!req) return;
-        setSelectedRequestId(reqId);
-        
-        const newLines = req.items.map(p => {
+
+        const newLines = selectedItems.map(p => {
             const qtyToImport = p.requestedQty || 1;
             if (p.isBundle) {
                 const newBundle = emptyBundle();
@@ -295,14 +326,18 @@ export default function CreateImportModal({ onClose, onSaved }) {
                 newLine.productType = p.productType || "FINISHED";
                 newLine.qty = qtyToImport;
                 newLine.importPrice = p.estimatedPrice || "";
+                newLine.details = p.details || "";
                 if (qtyToImport > 0 && newLine.productCode) {
                     newLine.unitIds = generateUnitIds(newLine, qtyToImport);
                 }
                 return newLine;
             }
         });
-        setLines(newLines);
-        toast.success(`Đã lấy thông tin từ mã yêu cầu: ${req.requestCode}`, { style: { fontSize: "13px" } });
+
+        setLines(prev => [...prev, ...newLines]);
+        toast.success(`Đã thêm ${newLines.length} mặt hàng vào phiếu!`, { style: { fontSize: "13px" } });
+        
+        setSelectedRequestItems({});
     };
 
     // ── Submit ─────────────────────────────────────────
@@ -424,24 +459,114 @@ export default function CreateImportModal({ onClose, onSaved }) {
                         </div>
 
                         {/* ── KHU VỰC 2 ── */}
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-4 mb-4">
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-4 mb-2">
                                 <p className="text-[11px] font-bold uppercase tracking-widest flex items-center gap-2 whitespace-nowrap" style={{ color: "var(--brand-primary)" }}>
                                     <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-[10px] font-black" style={{ backgroundColor: "var(--brand-primary)" }}>2</span>
-                                    CHỌN YÊU CẦU NHẬP
+                                    CHỌN TỪ YÊU CẦU NHẬP
                                 </p>
-                                <div className="flex-1 max-w-sm">
-                                    <select 
-                                        value={selectedRequestId} 
-                                        onChange={(e) => handleSelectRequest(e.target.value)}
-                                        className="w-full h-8 px-3 rounded-lg text-[12px] font-bold border cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-300 transition"
-                                        style={{ borderColor: "var(--grid-border)", backgroundColor: "var(--bg-main)", color: "var(--brand-primary)" }}
+                            </div>
+
+                            {/* Thanh tìm kiếm yêu cầu */}
+                            <div className="relative">
+                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <input 
+                                    type="text" 
+                                    placeholder="Tìm theo mã yêu cầu hoặc ghi chú..." 
+                                    value={requestSearchTerm}
+                                    onChange={e => setRequestSearchTerm(e.target.value)}
+                                    className="w-full text-[13px] h-9 pl-9 pr-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-purple-300 transition"
+                                    style={{ borderColor: "var(--grid-border)" }}
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-3">
+                                <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                                    {mergedRequests
+                                        .filter(r => r.status === "PENDING" || r.status === "Chờ xử lý" || r.status === "Chờ sản xuất" || r.status === "Đang gia công")
+                                        .filter(r => (r.requestCode || "").toLowerCase().includes(requestSearchTerm.toLowerCase()) || (r.note || "").toLowerCase().includes(requestSearchTerm.toLowerCase()))
+                                        .map(req => {
+                                        const isExpanded = expandedRequests[req.id];
+                                        return (
+                                        <div key={req.id} className="border rounded-xl bg-white overflow-hidden transition-all shadow-sm" style={{ borderColor: "var(--grid-border)" }}>
+                                            <div 
+                                                className="px-4 py-3 cursor-pointer hover:bg-purple-50 flex items-center justify-between"
+                                                onClick={() => setExpandedRequests(p => ({...p, [req.id]: !p[req.id]}))}
+                                            >
+                                                <div className="flex flex-col gap-0.5">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-[13px] text-purple-700">{req.requestCode}</span>
+                                                        <span className="text-[11px] font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">{req.date}</span>
+                                                    </div>
+                                                    <span className="text-[12px] text-gray-600 font-medium line-clamp-1">{req.note}</span>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="text-[11px] text-gray-500 font-medium">({req.items?.length || 0} SP)</div>
+                                                    <ChevronDown size={16} className={`text-gray-400 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                                                </div>
+                                            </div>
+                                            
+                                            {isExpanded && (
+                                                <div className="border-t bg-gray-50 p-3" style={{ borderColor: "var(--grid-border)" }}>
+                                                    <div className="flex flex-col gap-2">
+                                                        {req.items.map(item => {
+                                                            const itemKey = `${req.id}_${item.id}`;
+                                                            const isChecked = !!selectedRequestItems[itemKey];
+                                                            return (
+                                                                <label key={item.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-white border cursor-pointer hover:border-purple-300 transition-colors" style={{ borderColor: isChecked ? "#c084fc" : "var(--grid-border)" }}>
+                                                                    <div className="shrink-0 flex items-center justify-center">
+                                                                        <input 
+                                                                            type="checkbox" 
+                                                                            className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500 cursor-pointer"
+                                                                            checked={isChecked}
+                                                                            onChange={(e) => {
+                                                                                setSelectedRequestItems(p => ({...p, [itemKey]: e.target.checked ? item : undefined}))
+                                                                            }}
+                                                                        />
+                                                                    </div>
+                                                                    <div className="flex-1 flex justify-between items-center text-[13px]">
+                                                                        <div className="flex flex-col">
+                                                                            <span className="font-bold text-gray-800">{item.productName}</span>
+                                                                            <div className="text-[11px] text-gray-500 flex gap-1.5 mt-0.5">
+                                                                                {item.materialType && <span className="bg-gray-100 px-1.5 rounded">{item.materialType}</span>}
+                                                                                {item.color && <span className="bg-gray-100 px-1.5 rounded">{item.color}</span>}
+                                                                                {item.details && <span className="text-gray-400 max-w-[150px] truncate italic">({item.details})</span>}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="shrink-0 flex items-center gap-1.5 bg-purple-50 px-2 py-1 rounded-md border border-purple-100">
+                                                                            <span className="text-[11px] text-purple-600 font-medium">SL:</span>
+                                                                            <span className="font-black text-[14px] text-purple-700">{item.requestedQty}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </label>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )
+                                })}
+                                {mergedRequests.filter(r => r.status === "PENDING" || r.status === "Chờ xử lý" || r.status === "Chờ sản xuất" || r.status === "Đang gia công")
+                                        .filter(r => (r.requestCode || "").toLowerCase().includes(requestSearchTerm.toLowerCase()) || (r.note || "").toLowerCase().includes(requestSearchTerm.toLowerCase())).length === 0 && (
+                                    <div className="p-6 text-center text-gray-400 border border-dashed rounded-xl text-[12px] bg-gray-50/50">
+                                        Không tìm thấy yêu cầu nào phù hợp.
+                                    </div>
+                                )}
+                                </div>
+                                <div className="flex justify-between items-center mt-1 border-t pt-3" style={{ borderColor: "var(--grid-border)" }}>
+                                    <span className="text-[11px] text-gray-500 italic">
+                                        Đã chọn {Object.values(selectedRequestItems).filter(i => i !== undefined).length} mặt hàng
+                                    </span>
+                                    <button 
+                                        type="button"
+                                        onClick={handleAddSelectedItems}
+                                        disabled={Object.values(selectedRequestItems).filter(i => i !== undefined).length === 0}
+                                        className="h-9 px-5 rounded-lg text-[13px] font-bold border transition-all flex items-center gap-2 shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        style={{ borderColor: "var(--brand-primary)", backgroundColor: "var(--brand-primary)", color: "#fff" }}
                                     >
-                                        <option value="">-- Chọn Yêu cầu nhập hàng từ Cửa hàng --</option>
-                                        {MOCK_IMPORT_REQUESTS.filter(r => r.status === "PENDING").map(r => (
-                                            <option key={r.id} value={r.id}>{r.requestCode} ({r.date}) - {r.note}</option>
-                                        ))}
-                                    </select>
+                                        <Plus size={16} strokeWidth={2.5} /> Thêm vào phiếu nhập ({Object.values(selectedRequestItems).filter(i => i !== undefined).length})
+                                    </button>
                                 </div>
                             </div>
 
