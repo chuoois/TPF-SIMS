@@ -587,7 +587,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                         onUpdateItem={(iid, f, v) => updateBundleItem(line._id, iid, f, v)}
                                         onFileChange={(e) => handleLineFile(line._id, e)}
                                         onRemoveImage={(idx) => removeLineImage(line._id, idx)}
-                                        canRemove={lines.length > 1}
+                                        canRemove={true}
                                         lineTotal={lineTotal(line)}
                                         activeDropdown={activeDropdown}
                                         setActiveDropdown={setActiveDropdown}
@@ -599,7 +599,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                         onRemove={() => removeLine(line._id)}
                                         onFileChange={(e) => handleLineFile(line._id, e)}
                                         onRemoveImage={(idx) => removeLineImage(line._id, idx)}
-                                        canRemove={lines.length > 1}
+                                        canRemove={true}
                                         lineTotal={lineTotal(line)}
                                         activeDropdown={activeDropdown}
                                         setActiveDropdown={setActiveDropdown}
@@ -676,16 +676,8 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveImage,
                 {/* Các input nhập liệu */}
                 <div className="grid grid-cols-3 gap-4 border-t pt-4" style={{ borderColor: "var(--grid-border)" }}>
                     <div>
-                        <label className={lbl} style={lblS}>Số lượng nhập *</label>
-                        <input type="number" min="1" value={line.qty} onChange={(e) => {
-                            const q = e.target.value;
-                            onUpdate("qty", q);
-                            if (q > 0 && line.productCode?.trim()) {
-                                onUpdate("unitIds", generateUnitIds(line, q));
-                            } else {
-                                onUpdate("unitIds", []);
-                            }
-                        }} placeholder="0" className={inp} style={inpS} />
+                        <label className={lbl} style={lblS}>Số lượng nhập</label>
+                        <input type="number" value={line.qty} readOnly className={`${inp} bg-gray-50 text-gray-500 cursor-not-allowed`} style={inpS} />
                     </div>
                     <div>
                         <label className={lbl} style={lblS}>Giá gốc nhập (₫) *</label>
@@ -808,17 +800,9 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                 {/* ── Row 2: Số bộ + Giá cả bộ ── */}
                 <div className="grid gap-3 grid-cols-2 mt-2">
                     <div>
-                        <label className={lbl} style={lblS}>Số bộ nhập *</label>
-                        <input type="number" min="1" value={bundle.bundleQty} onChange={(e) => {
-                            const q = e.target.value;
-                            onUpdate("bundleQty", q);
-                            if (q > 0 && bundle.bundleCode?.trim()) {
-                                onUpdate("unitIds", generateBundleUnitIds(bundle, q));
-                            } else {
-                                onUpdate("unitIds", []);
-                            }
-                        }}
-                            placeholder="1" className={inp} style={inpS} />
+                        <label className={lbl} style={lblS}>Số bộ nhập</label>
+                        <input type="number" value={bundle.bundleQty} readOnly
+                            className={`${inp} bg-gray-50 text-gray-500 cursor-not-allowed`} style={inpS} />
                     </div>
                     <div>
                         <label className={lbl} style={{ ...lblS }}><span className="text-purple-600">Giá cả bộ (₫) — theo HĐ *</span></label>
