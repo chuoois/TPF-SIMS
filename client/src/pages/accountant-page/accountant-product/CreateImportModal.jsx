@@ -488,7 +488,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                         .map(req => {
                                         const isExpanded = expandedRequests[req.id];
                                         return (
-                                        <div key={req.id} className="border rounded-xl bg-white overflow-hidden transition-all shadow-sm" style={{ borderColor: "var(--grid-border)" }}>
+                                        <div key={req.id} className="border rounded-xl bg-white overflow-hidden transition-all shadow-sm shrink-0" style={{ borderColor: "var(--grid-border)" }}>
                                             <div 
                                                 className="px-4 py-3 cursor-pointer hover:bg-purple-50 flex items-center justify-between"
                                                 onClick={() => setExpandedRequests(p => ({...p, [req.id]: !p[req.id]}))}
@@ -508,7 +508,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                             
                                             {isExpanded && (
                                                 <div className="border-t bg-gray-50 p-3" style={{ borderColor: "var(--grid-border)" }}>
-                                                    <div className="flex flex-col gap-2">
+                                                    <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto custom-scrollbar pr-1">
                                                         {req.items.map(item => {
                                                             const itemKey = `${req.id}_${item.id}`;
                                                             const isChecked = !!selectedRequestItems[itemKey];
