@@ -1179,7 +1179,7 @@ export default function TaskDetail() {
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setShowDeadlineModal(false)}
           />
-          <div className="relative bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative bg-white w-full max-w-sm rounded-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">

@@ -21,15 +21,10 @@ import {
 // ===================== STATIC DATA =====================
 import { MOCK_DEBTS, INITIAL_SUPPLIERS, MOCK_EMPLOYEES } from "../mockData";
 
-// Tái sử dụng logic tính lương
 const calculateTotalSalary = (emp) => {
     let total = 0;
-    if (["SALES", "ACCOUNTANT", "SANDER"].includes(emp.type)) {
+    if (["SALES", "ACCOUNTANT", "SANDER", "PAINTER"].includes(emp.type)) {
         total = (emp.base_rate * emp.days_worked) + emp.allowance;
-    } else if (emp.type === "PAINTER") {
-        const logTotal = (emp.products_log || []).reduce((s, p) => s + (p.price * (p.qty || 1)), 0);
-        const fallback = logTotal > 0 ? logTotal : (emp.base_rate * emp.products_finished);
-        total = fallback + emp.allowance;
     }
     return total;
 };
@@ -103,10 +98,8 @@ export default function AccountantHome() {
         totalFund: MOCK_EMPLOYEES.reduce((sum, e) => sum + calculateTotalSalary(e), 0),
         recentSalaries: MOCK_EMPLOYEES.slice(0, 6).map(emp => {
             let calc = "";
-            if (["SALES", "ACCOUNTANT", "SANDER"].includes(emp.type)) {
+            if (["SALES", "ACCOUNTANT", "SANDER", "PAINTER"].includes(emp.type)) {
                 calc = `${new Intl.NumberFormat("vi-VN").format(emp.base_rate)}₫ × ${emp.days_worked} ngày`;
-            } else if (emp.type === "PAINTER") {
-                calc = emp.products_log?.length ? "Theo đơn giá SP" : `${new Intl.NumberFormat("vi-VN").format(emp.base_rate)}₫ × ${emp.products_finished} SP`;
             }
             return {
                 ...emp,

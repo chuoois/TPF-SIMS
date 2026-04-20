@@ -2,34 +2,51 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
 /**
- * Model UserAccount
- * Bảng tài khoản người dùng
+ * Model CustomerProfile
+ * Bảng thông tin khách hàng
  * Created By: ThinhBui
- * Created Date: 14/03/2026
+ * Created Date: 17/04/2026
  */
-const UserAccount = sequelize.define(
-  "UserAccount",
+const CustomerProfile = sequelize.define(
+  "CustomerProfile",
   {
-    user_account_id: {
+    pk_customer_id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
-    role_id: {
+    fk_user_account_id: {
       type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    customer_code: {
+      type: DataTypes.STRING(50),
+      unique: true,
+    },
+    full_name: {
+      type: DataTypes.STRING(150),
       allowNull: false,
     },
     email: {
       type: DataTypes.STRING(255),
-      allowNull: false,
-      unique: true,
       validate: {
         isEmail: true,
       },
     },
-    password_hash: {
+    address: {
       type: DataTypes.STRING(255),
-      allowNull: false,
+    },
+    gender: {
+      type: DataTypes.TINYINT,
+    },
+    dob: {
+      type: DataTypes.DATEONLY,
+    },
+    phone_number: {
+      type: DataTypes.STRING(20),
+    },
+    note: {
+      type: DataTypes.TEXT,
     },
     status: {
       type: DataTypes.TINYINT,
@@ -50,9 +67,9 @@ const UserAccount = sequelize.define(
     },
   },
   {
-    tableName: "user_account",
+    tableName: "customer_profile",
     timestamps: false,
   }
 );
 
-module.exports = UserAccount;
+module.exports = CustomerProfile;

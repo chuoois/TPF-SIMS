@@ -308,49 +308,51 @@ const DataTable = ({
               )}
 
               {/* Date Filters */}
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <Calendar
-                      size={14}
-                      className="absolute left-2.5 top-1/2 -translate-y-1/2"
-                      style={{ color: "var(--text-placeholder)" }}
-                    />
+              {(setDateFrom || setDateTo) && (
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <Calendar
+                        size={14}
+                        className="absolute left-2.5 top-1/2 -translate-y-1/2"
+                        style={{ color: "var(--text-placeholder)" }}
+                      />
+                      <input
+                        type="date"
+                        value={dateFrom}
+                        onChange={(e) => setDateFrom(e.target.value)}
+                        className="h-10 pl-9 pr-3 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                        style={{
+                          borderColor: dateFrom ? "var(--brand-primary)" : "var(--grid-border)",
+                          backgroundColor: "#fff",
+                          color: "var(--text-main)",
+                        }}
+                      />
+                    </div>
+                    <span className="text-gray-400 text-xs font-bold">~</span>
                     <input
                       type="date"
-                      value={dateFrom}
-                      onChange={(e) => setDateFrom(e.target.value)}
-                      className="h-10 pl-9 pr-3 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                      value={dateTo}
+                      onChange={(e) => setDateTo(e.target.value)}
+                      className="h-10 px-3 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
                       style={{
-                        borderColor: dateFrom ? "var(--brand-primary)" : "var(--grid-border)",
+                        borderColor: dateTo ? "var(--brand-primary)" : "var(--grid-border)",
                         backgroundColor: "#fff",
                         color: "var(--text-main)",
                       }}
                     />
                   </div>
-                  <span className="text-gray-400 text-xs font-bold">~</span>
-                  <input
-                    type="date"
-                    value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
-                    className="h-10 px-3 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                    style={{
-                      borderColor: dateTo ? "var(--brand-primary)" : "var(--grid-border)",
-                      backgroundColor: "#fff",
-                      color: "var(--text-main)",
-                    }}
-                  />
-                </div>
 
-                {hasActiveFilters && (
-                  <button
-                    onClick={clearAllFilters}
-                    className="h-10 px-4 rounded-lg text-[12px] font-bold text-red-600 hover:bg-red-50 transition border border-transparent hover:border-red-100 cursor-pointer"
-                  >
-                    Xóa bộ lọc
-                  </button>
-                )}
-              </div>
+                  {hasActiveFilters && (
+                    <button
+                      onClick={clearAllFilters}
+                      className="h-10 px-4 rounded-lg text-[12px] font-bold text-red-600 hover:bg-red-50 transition border border-transparent hover:border-red-100 cursor-pointer"
+                    >
+                      Xóa bộ lọc
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </>
         )}

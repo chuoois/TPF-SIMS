@@ -28,7 +28,7 @@ export default function CreatePeriodModal({ isOpen, onClose, onCreate }) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
       onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm flex flex-col overflow-hidden"
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-sm flex flex-col overflow-hidden"
         onClick={e => e.stopPropagation()}>
 
         {/* Header */}

@@ -26,14 +26,23 @@ const UserRole = sequelize.define(
     description: {
       type: DataTypes.TEXT,
     },
-    created_at: {
+    createdate: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
+    },
+    modifiedate: {
+      type: DataTypes.DATE,
+    },
+    createby: {
+      type: DataTypes.INTEGER,
+    },
+    modifieby: {
+      type: DataTypes.INTEGER,
     },
   },
   {
     tableName: "user_role",
-    timestamps: false, // Explicitly using created_at in schema
+    timestamps: false,
   }
 );
 

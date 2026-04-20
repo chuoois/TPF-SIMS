@@ -2,33 +2,20 @@ import { useState, useMemo, useEffect } from "react";
 import {
   Pencil,
   Eye,
-  X,
-  Image as ImageIcon,
-  Gift,
   Package,
-  Banknote,
-  Info,
-  Clock,
-  ShieldCheck,
-  Hammer,
   Trash2,
   AlertCircle,
   ChevronDown,
-  Archive,
   Tag,
+  ShieldCheck,
+  Clock
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import toast from "react-hot-toast";
 import DataTable from "@/components/control/DataTable";
 import ConfirmModal from "@/components/control/ConfirmModal";
-import {
-  CATEGORIES,
-  WOOD_TYPES,
-  OTHER_MATERIALS,
-  COLORS,
-  PRODUCT_STATUSES,
-  UNITS,
-} from "./constants";
+import ProductModal from "./ProductModal";
+import { CATEGORIES } from "./constants";
 
 const INITIAL_PRODUCTS = [
   {
@@ -40,6 +27,7 @@ const INITIAL_PRODUCTS = [
     color: "Cánh gián",
     dimensions: "197x107x108",
     costPrice: 32000000,
+    paintCost: 2500000,
     retailPrice: 48000000,
     unit: "Chiếc",
     productType: "Hàng sẵn",
@@ -47,7 +35,6 @@ const INITIAL_PRODUCTS = [
     stock: 2,
     isPriced: true,
     warrantyMonths: 120,
-    warrantyContent: "Bảo hành mối mọt trọn đời cho lõi gỗ mít. Bảo hành nước sơn 5 năm.",
     leadTime: 0,
     img: "https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=600",
     description: "Sập thờ trạm khắc tỉ mỉ tinh xảo, chất liệu gỗ mít lõi liền khối chọn lọc.",
@@ -66,12 +53,7 @@ const INITIAL_PRODUCTS = [
     color: "Để mộc",
     dimensions: "160x200x55",
     costPrice: 8500000,
-    laborCost: 1500000,
-    materialCost: 500000,
     paintCost: 1200000,
-    setupCost: 800000,
-    targetMargin: 25,
-    taxPercent: 0,
     rawRetailPrice: 11000000,
     finishedRetailPrice: 14500000,
     unit: "Chiếc",
@@ -80,7 +62,6 @@ const INITIAL_PRODUCTS = [
     stock: 3,
     isPriced: true,
     warrantyMonths: 36,
-    warrantyContent: "Bảo hành kỹ thuật và nước sơn 3 năm.",
     img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=600",
     leadTime: 7,
     description: "Hàng mộc sẵn tại kho, có thể lấy ngay hoặc sơn hoàn thiện trong 7 ngày.",
@@ -97,6 +78,7 @@ const INITIAL_PRODUCTS = [
     color: "Mun",
     dimensions: "Tay 12 - 6 món",
     costPrice: 95000000,
+    paintCost: 0,
     retailPrice: 125000000,
     unit: "Bộ",
     productType: "Hàng khách đặt",
@@ -120,6 +102,7 @@ const INITIAL_PRODUCTS = [
     color: "Để mộc",
     dimensions: "Tay 10 - 6 món",
     costPrice: 18000000,
+    paintCost: 0,
     retailPrice: 0,
     unit: "Bộ",
     productType: "Hàng mộc",
@@ -142,6 +125,7 @@ const INITIAL_PRODUCTS = [
     color: "Cánh gián",
     dimensions: "30x30x20",
     costPrice: 450000,
+    paintCost: 0,
     retailPrice: 0,
     unit: "Cái",
     productType: "Hàng sẵn",
@@ -155,6 +139,29 @@ const INITIAL_PRODUCTS = [
       { lotId: "LOT-005", importDate: "2026-01-01", importPrice: 450000, initialQuantity: 20 }
     ]
   },
+  {
+    id: "SP006",
+    code: "GHE-HH-TEST",
+    name: "Ghế đa năng gỗ Sồi",
+    category: "Phòng khách",
+    material: "Gỗ Sồi",
+    color: "Tự nhiên",
+    dimensions: "50x50x100",
+    costPrice: 1200000,
+    paintCost: 200000,
+    retailPrice: 2000000,
+    unit: "Cái",
+    productType: "Hàng sẵn",
+    status: "Hết hàng",
+    stock: 0,
+    isPriced: true,
+    warrantyMonths: 12,
+    img: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?q=80&w=600",
+    description: "Sản phẩm đang tạm hết hàng, tuần sau sẽ nhập lô mới.",
+    lots: [
+      { lotId: "LOT-006", importDate: "2025-11-20", importPrice: 1200000, initialQuantity: 10, remainingQuantity: 0 }
+    ]
+  },
 ];
 
 // ===================== HELPERS =====================
@@ -163,55 +170,42 @@ const fmtCurrency = (n) => {
   return new Intl.NumberFormat("vi-VN").format(n) + "₫";
 };
 
-const formatNumberInput = (value) => {
-  if (value === "" || value === null || value === undefined) return "";
-  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-};
-
-const parseNumberInput = (value) => {
-  if (!value) return "";
-  return value.toString().replace(/\./g, "").replace(/[^\d]/g, "");
-};
-
 const getStatusConfig = (status) => {
   switch (status) {
     case "Chưa định giá":
-      return { bg: "#FEF2F2", text: "#DC2626", border: "#FECACA" }; // Red (warning)
+      return { bg: "#FEF2F2", text: "#DC2626", border: "#FECACA" };
     case "Hàng sẵn":
-      return { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" }; // Green
+      return { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" };
     case "Hàng mộc":
-      return { bg: "#FFFBEB", text: "#D97706", border: "#FDE68A" }; // Amber
+      return { bg: "#FFFBEB", text: "#D97706", border: "#FDE68A" };
     case "Hàng khách đặt":
-      return { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" }; // Blue
+      return { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" };
     case "Hết hàng":
-      return { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" }; // Orange
+      return { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" };
     case "Quà tặng":
-      return { bg: "#FAF5FF", text: "#7E22CE", border: "#E9D5FF" }; // Purple
+      return { bg: "#FAF5FF", text: "#7E22CE", border: "#E9D5FF" };
     default:
       return { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
   }
 };
 
-// ===================== SUB-COMPONENTS =====================
-
 // ===================== COMPONENT =====================
 export default function OwnerProducts() {
   const [products, setProducts] = useState(() => {
-    const saved = localStorage.getItem("tpf_simulated_products");
+    const saved = localStorage.getItem("tpf_simulated_products_v2");
     if (!saved) {
-      // First time: save default products to localStorage
       localStorage.setItem(
-        "tpf_simulated_products",
+        "tpf_simulated_products_v2",
         JSON.stringify(INITIAL_PRODUCTS),
       );
       return INITIAL_PRODUCTS;
     }
     const parsed = JSON.parse(saved);
-    
-    // Auto-sync missing data structure (like lots) from initial data
+
     let needsUpdate = false;
     const merged = parsed.map(p => {
-      // ── LOGIC MODERNIZATION: Hàng khách đặt không cần định giá ──
+      const defaultProduct = INITIAL_PRODUCTS.find(dp => dp.id === p.id);
+
       if (p.productType === "Hàng khách đặt") {
         if (!p.isPriced || p.status === "Chưa định giá") {
           p.isPriced = true;
@@ -220,8 +214,18 @@ export default function OwnerProducts() {
         }
       }
 
+      // Backfill pricing fields từ INITIAL_PRODUCTS nếu chưa có
+      if (defaultProduct) {
+        const pricingFields = ["paintCost"];
+        pricingFields.forEach(field => {
+          if (p[field] === undefined && defaultProduct[field] !== undefined) {
+            p[field] = defaultProduct[field];
+            needsUpdate = true;
+          }
+        });
+      }
+
       if (!p.lots) {
-        const defaultProduct = INITIAL_PRODUCTS.find(dp => dp.id === p.id);
         if (defaultProduct && defaultProduct.lots) {
           needsUpdate = true;
           return { ...p, lots: defaultProduct.lots };
@@ -230,7 +234,14 @@ export default function OwnerProducts() {
       return p;
     });
 
-    // Auto-fix any old 'Ngừng kinh doanh' status to 'Hết hàng'
+    if (!merged.some(p => p.id === "SP006")) {
+      const sp006 = INITIAL_PRODUCTS.find(p => p.id === "SP006");
+      if (sp006) {
+        merged.push(sp006);
+        needsUpdate = true;
+      }
+    }
+
     merged.forEach((p) => {
       if (p.status === "Ngừng kinh doanh") {
         p.status = "Hết hàng";
@@ -239,29 +250,27 @@ export default function OwnerProducts() {
     });
 
     if (needsUpdate) {
-      localStorage.setItem("tpf_simulated_products", JSON.stringify(merged));
+      localStorage.setItem("tpf_simulated_products_v2", JSON.stringify(merged));
     }
-    
+
     return merged;
   });
 
   // Sync to localStorage
   useEffect(() => {
-    localStorage.setItem("tpf_simulated_products", JSON.stringify(products));
+    localStorage.setItem("tpf_simulated_products_v2", JSON.stringify(products));
   }, [products]);
 
   // Listen for storage changes (from other tabs/pages)
   useEffect(() => {
     const handleStorageChange = (e) => {
-      if (e.key === "tpf_simulated_products" && e.newValue) {
+      if (e.key === "tpf_simulated_products_v2" && e.newValue) {
         setProducts(JSON.parse(e.newValue));
       }
     };
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
-
-
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState("");
@@ -273,81 +282,17 @@ export default function OwnerProducts() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
 
-  const [modal, setModal] = useState({ isOpen: false, view: null, data: null }); // view: 'detail' | 'form' | 'pricing'
-
-  const [costPrice, setCostPrice] = useState(0);
-  const [retailPrice, setRetailPrice] = useState(0);
-  const [rawRetailPrice, setRawRetailPrice] = useState(0);
-  const [finishedRetailPrice, setFinishedRetailPrice] = useState(0);
-  const [laborCost, setLaborCost] = useState(0);
-  const [materialCost, setMaterialCost] = useState(0);
-  const [paintCost, setPaintCost] = useState(0);
-  const [setupCost, setSetupCost] = useState(0);
-  const [productType, setProductType] = useState("Hàng sẵn");
-  const [productCategory, setProductCategory] = useState("");
-  const [warrantyMonths, setWarrantyMonths] = useState(12);
-  const [warrantyContent, setWarrantyContent] = useState("Bảo hành các lỗi kỹ thuật.");
-  const [targetMargin, setTargetMargin] = useState(20);
-  const [taxPercent, setTaxPercent] = useState(0);
-  const [woodType, setWoodType] = useState("");
-  const [color, setColor] = useState("");
-  const [dimL, setDimL] = useState("");
-  const [dimW, setDimW] = useState("");
-  const [dimH, setDimH] = useState("");
-  const [productStatus, setProductStatus] = useState("");
-  const [leadTime, setLeadTime] = useState(0);
-  const [techNotes, setTechNotes] = useState({ leg: "", apron: "", other: "" });
-
-  // — Labor Calculation (New: Based on Daily Wage) —
-  const [dailyWage, setDailyWage] = useState(350000);
-  const [laborDays, setLaborDays] = useState(0);
-
   const [selectedIds, setSelectedIds] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
 
-  // Auto-suggest warranty based on woodType
-  useEffect(() => {
-    if (!woodType || modal.view !== "form") return;
-    
-    try {
-      const savedSettingsStr = localStorage.getItem("tpf_warranty_settings");
-      if (savedSettingsStr) {
-        const settings = JSON.parse(savedSettingsStr);
-        const mat = woodType.toLowerCase();
-        
-        const matchedRule = settings.materialRules.find(r => 
-          mat.includes(r.material.toLowerCase())
-        );
-        
-        if (matchedRule) {
-          setWarrantyMonths(matchedRule.months);
-          // Only update content if it's empty or default
-          if (!warrantyContent || warrantyContent === "Bảo hành các lỗi kỹ thuật.") {
-            setWarrantyContent(settings.defaultTerms);
-          }
-        } else {
-           // Default if no wood match -> use finish warranty
-           setWarrantyMonths(settings.finishWarrantyMonths || 6);
-        }
-      }
-    } catch (e) {
-      console.error("Error loading warranty settings:", e);
-    }
-  }, [woodType, modal.view]);
+  // Modal state: { product, mode: 'view' | 'edit' }
+  const [modalState, setModalState] = useState({ product: null, mode: "view" });
+
+  const openModal = (product, mode = "view") => setModalState({ product, mode });
+  const closeModal = () => setModalState({ product: null, mode: "view" });
 
   // Actions
-  const toggleStatus = (id, newStatus) => {
-    const product = products.find((p) => p.id === id);
-    if (!product) return;
-
-    setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status: newStatus } : p)),
-    );
-    toast.success(`Đã cập nhật trạng thái: ${newStatus}`);
-  };
-
-
   const handleConfirmDelete = (item, e = null) => {
     if (e && e.stopPropagation) e.stopPropagation();
     if (item.stock > 0 || (item.lots && item.lots.length > 0)) {
@@ -358,55 +303,12 @@ export default function OwnerProducts() {
     setShowDeleteConfirm(true);
   };
 
-  const handleOpenModal = (view, product = null, e = null) => {
-    if (e && e.stopPropagation) e.stopPropagation();
-
-    if (view === "form" || view === "pricing") {
-      if (product) {
-        // Lấy giá vốn theo lô nhập MỚI NHẤT
-        let latestCost = product.costPrice || product.importPrice || 0;
-        if (product.lots && product.lots.length > 0) {
-          const sorted = [...product.lots].sort((a, b) =>
-            new Date(b.importDate) - new Date(a.importDate)
-          );
-          latestCost = sorted[0].importPrice || latestCost;
-        }
-        setCostPrice(latestCost);
-        setRetailPrice(product.retailPrice || 0);
-        setRawRetailPrice(product.rawRetailPrice || 0);
-        setFinishedRetailPrice(product.finishedRetailPrice || 0);
-        setLaborCost(product.laborCost || 0);
-        setMaterialCost(product.materialCost || 0);
-        setPaintCost(product.paintCost || 0);
-        setSetupCost(product.setupCost || 0);
-        setProductType(product.productType || "Hàng sẵn");
-        setProductCategory(product.category || "");
-        setWarrantyMonths(product.warrantyMonths || 12);
-        setWarrantyContent(product.warrantyContent || "Bảo hành các lỗi kỹ thuật.");
-        setTargetMargin(product.targetMargin || 20);
-        setTaxPercent(product.taxPercent || 0);
-        setWoodType(product.material || product.materialType || ""); // Fix: mapping from accountant materialType
-        setColor(product.color || "");
-        const dims = (product.dimensions || "")
-          .split(/[xX*×]/)
-          .map((d) => d.trim());
-        setDimL(dims[0] || "");
-        setDimW(dims[1] || "");
-        setDimH(dims[2] || "");
-        setProductStatus(product.status || "");
-        setLeadTime(product.leadTime || 0);
-        setTechNotes(product.techNotes || { leg: "", apron: "", other: "" });
-
-        // Initialize Labor Calculation
-        setDailyWage(product.dailyWage || 350000);
-        setLaborDays(product.laborDays || 0);
-      }
-    }
-
-    setModal({ isOpen: true, view, data: product });
+  const handleDeleteProduct = (id) => {
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+    setShowDeleteConfirm(false);
+    setItemToDelete(null);
+    toast.success("Đã xóa sản phẩm thành công!");
   };
-
-  const closeModal = () => setModal({ isOpen: false, view: null, data: null });
 
   // Filter logic
   const statusCounts = useMemo(() => {
@@ -464,1063 +366,16 @@ export default function OwnerProducts() {
     currentPage * itemsPerPage,
   );
 
-  const handleSaveAddEdit = () => {
-    const editItem = modal.data;
-    if (editItem) {
-      if (productType === "Hàng sẵn" && Number(retailPrice) < Number(costPrice)) {
-        toast.error("Cảnh báo: Giá bán đang thấp hơn giá vốn nhập gần nhất!");
-        return;
-      }
-      if (productType === "Hàng mộc") {
-        if (Number(rawRetailPrice) < Number(costPrice)) {
-          toast.error("Cảnh báo: Giá bán mộc đang thấp hơn giá vốn nhập gần nhất!");
-          return;
-        }
-        const totalCosts = Number(costPrice) + Number(laborCost) + Number(materialCost) + Number(paintCost) + Number(setupCost);
-        if (Number(finishedRetailPrice) < totalCosts) {
-          toast.error("Cảnh báo: Giá bán hoàn thiện đang thấp hơn tổng chi phí (Vốn + Mộc + Vật tư + Sơn + Vận hành)!");
-          return;
-        }
-      }
-
-      // Logic for editing existing product
-      let newStatus = productStatus || editItem.status;
-      let isPriced = editItem.isPriced;
-
-      let rPrice = Number(retailPrice);
-      let rrPrice = Number(rawRetailPrice);
-      let frPrice = Number(finishedRetailPrice);
-
-      if (newStatus === "Quà tặng") {
-         if (productType !== "Hàng sẵn") {
-           toast.error("Chỉ hàng sẵn mới có thể chuyển sang trạng thái Quà tặng!");
-           return;
-         }
-         rPrice = 0;
-         rrPrice = 0;
-         frPrice = 0;
-         isPriced = true;
-      } else if (productType === "Hàng khách đặt") {
-        isPriced = true; 
-        newStatus = "Hàng khách đặt";
-      } else if (newStatus === "Chưa định giá") {
-        isPriced = true;
-      }
-
-      if (editItem.stock === 0 && newStatus !== "Quà tặng" && productType !== "Hàng khách đặt") {
-        newStatus = "Hết hàng";
-      } else if (newStatus === "Chưa định giá" || newStatus === "Hết hàng" || newStatus === "Hàng khách đặt") {
-        newStatus = productType === "Hàng sẵn" ? "Hàng sẵn" : (productType === "Hàng mộc" ? "Hàng mộc" : "Hàng khách đặt");
-      }
-
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === editItem.id
-            ? {
-              ...p,
-              costPrice: Number(costPrice),
-              retailPrice: rPrice,
-              rawRetailPrice: rrPrice,
-              finishedRetailPrice: frPrice,
-              price: rPrice || rrPrice || 0, 
-              status: newStatus,
-              isPriced: true,
-              laborCost: Number(laborCost),
-              materialCost: Number(materialCost),
-              paintCost: Number(paintCost),
-              setupCost: Number(setupCost),
-              dailyWage: Number(dailyWage),
-              laborDays: Number(laborDays),
-              productType,
-              category: productCategory,
-              warrantyMonths: Number(warrantyMonths),
-              warrantyContent,
-              targetMargin: Number(targetMargin),
-              taxPercent: Number(taxPercent),
-              woodType,
-              material: woodType,
-              color,
-              dimensions: [dimL, dimW, dimH].filter(Boolean).join(" × "),
-              leadTime: Number(leadTime),
-              techNotes: { ...techNotes },
-            }
-            : p,
-        ),
-      );
-      toast.success("Đã cập nhật thông tin sản phẩm và định giá thành công!");
-    }
+  // ===================== HANDLE SAVE =====================
+  const handleSave = (updated, message) => {
+    setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+    toast.success(message || "Đã cập nhật sản phẩm thành công!");
     closeModal();
   };
 
-  // ===================== UNIFIED MODAL (DETAIL & EDIT & PRICING) =====================
-  const renderProductModal = () => {
-    if (!modal.isOpen || !modal.view) return null;
-    const editing = modal.view === "form";
-    const pricing = modal.view === "pricing";
-    const detailItem = modal.data;
-    const editItem = modal.data;
-    const sc = detailItem ? getStatusConfig(detailItem.status) : null;
-
-    return (
-      <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6">
-        <div
-          className="absolute inset-0 bg-black/30 backdrop-blur-[2px] animate-in fade-in duration-200"
-          onClick={closeModal}
-        />
-        <div
-          className={`bg-white w-full max-w-5xl h-[92vh] md:h-[88vh] rounded-2xl overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-300 border border-slate-200/50`}
-        >
-          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0 bg-white">
-            <h2
-              className="text-lg font-bold flex items-center gap-2"
-              style={{ color: "var(--text-main)" }}
-            >
-              {pricing ? (
-                editItem?.status === "Chưa định giá" ? (
-                  <span className="flex items-center gap-2 text-[var(--status-error)]">
-                    <Banknote size={20} /> Định giá sản phẩm mới
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2 text-emerald-700">
-                    <Tag size={18} /> Định giá sản phẩm
-                  </span>
-                )
-              ) : editing ? (
-                "Sửa thông tin sản phẩm"
-              ) : (
-                <>
-                  Chi tiết sản phẩm
-                  <span className="text-[var(--brand-primary)] font-mono text-sm tracking-wider px-2 py-0.5 bg-[var(--brand-primary)]/5 rounded-md ml-2">
-                    {detailItem?.code}
-                  </span>
-                </>
-              )}
-            </h2>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={closeModal}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-200 transition cursor-pointer text-[var(--text-placeholder)]"
-              >
-                <X size={18} />
-              </button>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-            {!editing && !pricing ? (
-              /* ================= DETAIL VIEW ================= */
-              <div className="flex gap-6">
-                <div className="w-1/3 shrink-0 space-y-3">
-                  {detailItem.img ? (
-                    <img
-                      src={detailItem.img}
-                      alt={detailItem.name}
-                      className="w-full aspect-square object-cover rounded-xl border"
-                    />
-                  ) : (
-                    <div className="w-full aspect-square bg-gray-100 rounded-xl border flex flex-col items-center justify-center text-[var(--text-placeholder)]">
-                      <ImageIcon size={40} className="mb-2" />
-                      <span className="text-sm">Chưa có ảnh</span>
-                    </div>
-                  )}
-                  <div className="flex justify-center">
-                    <span
-                      className="inline-flex items-center px-3 py-1 text-[13px] font-bold rounded-lg"
-                      style={{
-                        backgroundColor: sc?.bg,
-                        color: sc?.text,
-                        border: `1px solid ${sc?.border}`,
-                      }}
-                    >
-                      <span
-                        className="w-2 h-2 rounded-full mr-2"
-                        style={{ backgroundColor: sc?.text }}
-                      />
-                      Trạng thái: {detailItem.status}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex-1 space-y-5">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h1 className="text-xl font-bold text-[var(--text-main)] mb-1">
-                        {detailItem.name}
-                      </h1>
-                      <p className="text-sm text-[var(--text-secondary)]">
-                        {detailItem.category}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
-                    <div>
-                      <span className="text-[var(--text-secondary)] block text-xs">
-                        Loại hàng
-                      </span>
-                      <span className="font-semibold text-[var(--text-main)]">
-                        {detailItem.productType}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[var(--text-secondary)] block text-xs">
-                        Chất liệu
-                      </span>
-                      <span className="font-semibold text-[var(--text-main)]">
-                        {detailItem.material}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[var(--text-secondary)] block text-xs">
-                        Màu sắc
-                      </span>
-                      <span className="font-semibold text-[var(--text-main)]">
-                        {detailItem.color}
-                      </span>
-                    </div>
-                    {detailItem.status !== "Chưa định giá" && (
-                      <div>
-                        <span className="text-[var(--text-secondary)] block text-xs italic">
-                          Bảo hành
-                        </span>
-                        <span className="font-bold text-[var(--brand-primary)] flex items-center gap-1">
-                          <ShieldCheck size={14} />{" "}
-                          {detailItem.warrantyMonths || 12} tháng
-                        </span>
-                      </div>
-                    )}
-                    <div>
-                      <span className="text-[var(--text-secondary)] block text-xs">
-                        Kích thước
-                      </span>
-                      <span className="font-semibold text-[var(--text-main)]">
-                        {detailItem.dimensions}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="p-5 bg-slate-50/80 rounded-2xl border border-slate-100 flex flex-col gap-4">
-                    {detailItem.status === "Quà tặng" ? (
-                      <div className="flex items-center justify-between bg-purple-50 p-4 rounded-xl border border-purple-100">
-                         <div>
-                          <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest block mb-1">Trạng thái định giá</span>
-                          <span className="text-2xl font-black text-purple-700">MIỄN PHÍ</span>
-                        </div>
-                        <div className="flex flex-col items-end">
-                           <div className="px-3 py-1 bg-purple-600 text-white rounded-lg text-[10px] font-black mb-1">HÀNG QUÀ TẶNG</div>
-                           <span className="text-[10px] text-purple-400 font-bold italic text-right leading-tight">Giá bán mặc định = 0đ<br/>Chỉ theo dõi giá vốn</span>
-                        </div>
-                      </div>
-                    ) : detailItem.productType === "Hàng khách đặt" ? (
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100/50">
-                           <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block mb-1">Giá nhập hàng</span>
-                           <span className="text-xl font-black text-emerald-700">{fmtCurrency(detailItem.costPrice)}</span>
-                        </div>
-                        <div className="bg-amber-50/50 p-3 rounded-xl border border-amber-100/50">
-                          <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest block mb-1">Giá bán đã chốt</span>
-                          <span className="text-xl font-black text-amber-700">{fmtCurrency(detailItem.retailPrice)}</span>
-                        </div>
-                      </div>
-                    ) : detailItem.productType === "Hàng mộc" ? (
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <span className="text-[var(--text-secondary)] block text-[10px] font-bold uppercase mb-1">
-                            Giá bán mộc
-                          </span>
-                          <span className="text-lg font-black text-[var(--palette-orange)]">
-                            {fmtCurrency(detailItem.rawRetailPrice)}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-[var(--text-secondary)] block text-[10px] font-bold uppercase mb-1">
-                            Giá bán hoàn thiện
-                          </span>
-                          <span className="text-lg font-black text-emerald-600">
-                            {fmtCurrency(detailItem.finishedRetailPrice)}
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <span className="text-[var(--text-secondary)] block text-[10px] font-bold uppercase mb-1">
-                          Giá bán niêm yết
-                        </span>
-                        <span
-                          className={`text-2xl font-black ${detailItem.status === "Chưa định giá" ? "text-[var(--status-error)] animate-pulse" : "text-[var(--brand-primary)]"}`}
-                        >
-                          {detailItem.status === "Chưa định giá"
-                            ? "CHỜ ĐỊNH GIÁ"
-                            : fmtCurrency(detailItem.retailPrice)}
-                        </span>
-                      </div>
-                    )}
-                    
-                    <div className="border-t border-slate-200/50 mt-2 pt-4 space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[var(--text-secondary)] text-xs font-medium">
-                          Tồn kho thực tế tại cửa hàng
-                        </span>
-                        <span className="text-lg font-black text-[var(--text-main)]">
-                          {detailItem.status === "Hàng khách đặt"
-                            ? "—"
-                            : `${detailItem.stock} ${detailItem.unit || "SP"}`}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center bg-white/80 p-3 rounded-xl border border-slate-200/60">
-                        <span className="text-slate-500 text-[11px] font-black flex items-center gap-1.5 uppercase tracking-wide italic">
-                          <Banknote size={14} className="text-emerald-500" /> Tổng giá thành (Gốc + Gia công + Vận hành)
-                        </span>
-                        <span className="text-[14px] font-black text-emerald-800 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-100">
-                          {fmtCurrency(Number(detailItem.costPrice || 0) + Number(detailItem.laborCost || 0) + Number(detailItem.materialCost || 0) + Number(detailItem.paintCost || 0) + Number(detailItem.setupCost || 0))}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center bg-white/80 p-3 rounded-xl border border-slate-200/60">
-                        <span className="text-[var(--status-pending)] text-[11px] font-black flex items-center gap-1.5 uppercase tracking-wide">
-                          <Clock size={14} /> Thời gian hoàn thiện
-                        </span>
-                        <span className="text-[14px] font-black text-slate-800 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
-                          {detailItem.leadTime || 0} ngày
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-[var(--text-secondary)] block text-xs font-semibold mb-1">
-                      Mô tả
-                    </span>
-                    <p className="text-sm text-gray-700 bg-[var(--bg-main)] p-3 rounded-lg leading-relaxed">
-                      {detailItem.description || "Chưa có mô tả."}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ) : editing ? (
-              /* ================= EDIT FORM VIEW (Info only) ================= */
-              <div className="grid grid-cols-3 gap-6">
-                {/* Left Column: Image & Barcode */}
-                <div className="col-span-1 space-y-4">
-                  <div className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center bg-[var(--bg-main)] hover:bg-[var(--brand-primary)]/5 hover:border-[var(--brand-primary)] transition cursor-pointer relative overflow-hidden group">
-                    {editItem?.img ? (
-                      <>
-                        <img
-                          src={editItem.img}
-                          alt="Product"
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <span className="text-white text-sm font-semibold flex items-center gap-2">
-                            <Pencil size={14} /> Đổi ảnh
-                          </span>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <ImageIcon
-                          size={40}
-                          className="text-[var(--text-placeholder)] mb-2 group-hover:text-[var(--brand-primary)] transition-colors"
-                        />
-                        <span className="text-sm font-medium text-[var(--text-secondary)] group-hover:text-[var(--brand-primary)] transition-colors">
-                          Tải ảnh lên (Max 5MB)
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Right Column: Form */}
-                <div className="col-span-2 space-y-6">
-                  {/* Section 1: Thông tin cơ bản */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-placeholder)] flex items-center gap-2">
-                      <Info size={14} /> Thông tin cơ bản
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="col-span-1 md:col-span-2">
-                        <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-                          Tên sản phẩm <span className="text-[var(--status-error)]">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--brand-primary)] outline-none"
-                          placeholder="Nhập tên sản phẩm"
-                          defaultValue={editItem?.name || ""}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-emerald-600 mb-1">
-                          Tồn kho thực tế
-                        </label>
-                        <div className="w-full bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 text-sm font-black text-emerald-700 flex items-center justify-between">
-                            <span className="text-lg leading-none">{editItem?.stock !== undefined ? editItem.stock : 0}</span>
-                            <span className="text-xs font-medium bg-emerald-200/50 px-2 py-0.5 rounded text-emerald-800">{editItem?.unit || "SP"}</span>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-                          Mã Sản Phẩm <span className="text-[var(--status-error)]">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--brand-primary)] outline-none"
-                          placeholder="VD: BBG-HS-1.8x0.9x0.75-Huong"
-                          defaultValue={editItem?.code || ""}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-                          Danh mục sản phẩm <span className="text-[var(--status-error)]">*</span>
-                        </label>
-                        <select
-                          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--brand-primary)] outline-none bg-white"
-                          value={productCategory}
-                          onChange={(e) => setProductCategory(e.target.value)}
-                        >
-                          <option value="">Chọn danh mục sản phẩm</option>
-                          {CATEGORIES.map((c) => (
-                            <option key={c} value={c}>
-                              {c}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-                          Đơn vị
-                        </label>
-                        <select
-                          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--brand-primary)] outline-none bg-white"
-                          defaultValue={editItem?.unit || ""}
-                        >
-                          <option value="">Chọn đơn vị</option>
-                          {UNITS.map((u) => (
-                            <option key={u} value={u}>
-                              {u}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-                          Trạng thái hiển thị
-                        </label>
-                        <select
-                          className={`w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 transition-all font-bold ${
-                            productStatus === "Quà tặng"
-                              ? "bg-purple-50 border-purple-200 text-purple-700 focus:ring-purple-500/20"
-                              : "bg-white border-gray-200 focus:ring-indigo-500/20"
-                          }`}
-                          value={productStatus}
-                          onChange={(e) => setProductStatus(e.target.value)}
-                        >
-                          {PRODUCT_STATUSES.filter((s) =>
-                            s !== "Quà tặng" || productType === "Hàng sẵn"
-                          ).map((s) => (
-                            <option key={s} value={s}>
-                              {s}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-                        Mô tả chi tiết
-                      </label>
-                      <textarea
-                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--brand-primary)] outline-none min-h-[80px]"
-                        placeholder="Nhập mô tả sản phẩm..."
-                        defaultValue={editItem?.description || ""}
-                      ></textarea>
-                    </div>
-                  </div>
-
-                  {/* Section 2: Thuộc tính sản phẩm (Kế toán khai báo) */}
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-4 gap-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-                          Chất liệu 
-                        </label>
-                        <select
-                          className="w-full border rounded-lg px-3 py-2 text-sm outline-none bg-slate-50 text-slate-700 cursor-not-allowed appearance-none"
-                          value={woodType}
-                          disabled
-                        >
-                          <option value="">Chọn chất liệu</option>
-                          {WOOD_TYPES.map((w) => (
-                            <option key={w} value={w}>
-                              {w}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-                          Màu sắc 
-                        </label>
-                        <select
-                          className="w-full border rounded-lg px-3 py-2 text-sm outline-none bg-slate-50 text-slate-700 cursor-not-allowed appearance-none"
-                          value={color}
-                          disabled
-                        >
-                          <option value="">Chọn màu</option>
-                          {COLORS.map((c) => (
-                            <option
-                              key={c}
-                              value={c}
-                            >
-                              {c}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="col-span-2">
-                        <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">
-                          Kích thước (D×R×C) (cm) 
-                        </label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="text"
-                            className="w-full border rounded-lg px-3 py-2 text-sm outline-none text-center bg-slate-50 text-slate-700 cursor-not-allowed"
-                            placeholder="Dài"
-                            value={dimL}
-                            readOnly
-                          />
-                          <span className="text-[var(--text-placeholder)] text-xs font-bold">
-                            ×
-                          </span>
-                          <input
-                            type="text"
-                            className="w-full border rounded-lg px-3 py-2 text-sm outline-none text-center bg-slate-50 text-slate-700 cursor-not-allowed"
-                            placeholder="Rộng"
-                            value={dimW}
-                            readOnly
-                          />
-                          <span className="text-[var(--text-placeholder)] text-xs font-bold">
-                            ×
-                          </span>
-                          <input
-                            type="text"
-                            className="w-full border rounded-lg px-3 py-2 text-sm outline-none text-center bg-slate-50 text-slate-700 cursor-not-allowed"
-                            placeholder="Cao"
-                            value={dimH}
-                            readOnly
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Section 3: THÔNG TIN GIÁ (Dành cho Hàng khách đặt) */}
-                  {productType === "Hàng khách đặt" && (
-                    <div className="space-y-4 pt-4 border-t border-gray-100">
-                        <div className="grid grid-cols-2 gap-6 bg-amber-50/20 p-6 rounded-2xl border border-amber-100 relative overflow-hidden">
-                           <div className="space-y-2">
-                              <label className="block text-[10px] font-black text-emerald-600 uppercase tracking-widest">Giá vốn nhập (VNĐ)</label>
-                              <input
-                                 type="text"
-                                 className="w-full border-2 border-emerald-100 rounded-xl px-4 py-3 text-xl font-black text-emerald-700 outline-none focus:border-emerald-500 bg-white"
-                                 value={formatNumberInput(costPrice)}
-                                 onChange={(e) => {
-                                   const val = parseNumberInput(e.target.value);
-                                   setCostPrice(val === "" ? 0 : Number(val));
-                                 }}
-                                 placeholder="Nhập giá nhập..."
-                              />
-                           </div>
-                           <div className="space-y-2">
-                              <label className="block text-[10px] font-black text-amber-600 uppercase tracking-widest">Giá bán khách (VNĐ)</label>
-                              <input
-                                 type="text"
-                                 className="w-full border-2 border-amber-200 rounded-xl px-4 py-3 text-xl font-black text-amber-700 outline-none focus:border-amber-500 bg-white"
-                                 value={formatNumberInput(retailPrice)}
-                                 onChange={(e) => {
-                                   const val = parseNumberInput(e.target.value);
-                                   setRetailPrice(val === "" ? 0 : Number(val));
-                                 }}
-                                 placeholder="Nhập giá bán..."
-                              />
-                           </div>
-                           <div className="absolute top-2 right-4 text-[10px] font-bold text-amber-400/50 uppercase tracking-tighter italic">Dữ liệu hàng đặt</div>
-                        </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : pricing ? (
-              /* ================= PRICING FORM VIEW ================= */
-              <div className="flex flex-col h-full">
-                {/* Product summary header - Compact & Floating style */}
-                <div className="flex items-center gap-4 p-3 mb-4 bg-slate-50/80 backdrop-blur-sm rounded-xl border border-slate-200/60 sticky top-0 z-20 shrink-0">
-                  {editItem?.img ? (
-                    <img src={editItem.img} alt={editItem.name} className="w-12 h-12 rounded-lg object-cover border" />
-                  ) : (
-                    <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-gray-100 border text-gray-300"><ImageIcon size={18} /></div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-[14px] font-bold text-slate-800 truncate leading-tight">{editItem?.name}</h3>
-                    <div className="flex items-center gap-3 mt-1">
-                      <p className="text-[11px] text-slate-500 font-mono bg-white px-1.5 py-0.5 rounded border border-slate-200">{editItem?.code}</p>
-                      <span className="text-[11px] font-bold text-slate-400 bg-slate-200/50 px-2 py-0.5 rounded uppercase">{editItem?.productType}</span>
-                    </div>
-                  </div>
-                  <div className="flex gap-4 pr-2">
-                    <div className="text-right">
-                       <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Tồn thực tế</span>
-                       <span className="text-[13px] font-black text-slate-700">{editItem?.stock} {editItem?.unit}</span>
-                    </div>
-                    <div className="h-8 w-px bg-slate-200 self-center"></div>
-                    <div className="text-right">
-                       <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Thời hạn BH</span>
-                       <span className="text-[13px] font-black text-indigo-600">{warrantyMonths} Tháng</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0 bg-white">
-                  {/* LEFT COLUMN: COST INPUTS */}
-                  <div className="lg:col-span-7 space-y-5 overflow-y-auto custom-scrollbar pr-1 pb-4">
-                    {/* Section 1: Giá vốn & Lô hàng */}
-                    <div className="bg-gradient-to-br from-slate-50 to-white p-5 rounded-2xl border border-slate-200/80 relative overflow-hidden">
-                      <div className="flex items-center justify-between border-b border-slate-200/60 pb-3 mb-4">
-                        <h3 className="text-[12px] font-black text-slate-800 flex items-center gap-2 uppercase tracking-wider">
-                          <Banknote size={16} className="text-emerald-500" /> 
-                          1. Giá vốn & Lô hàng
-                        </h3>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="bg-white p-4 rounded-xl border border-emerald-100 relative group overflow-hidden transition-all">
-                          <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
-                          <label className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider mb-2 block">
-                            Giá nhập (từ lô mới nhất)
-                          </label>
-                          <div className="flex items-baseline gap-1">
-                            <input
-                              type="text"
-                              className="w-full bg-slate-50 text-emerald-800 border-none rounded px-3 py-2 text-xl font-black outline-none cursor-not-allowed"
-                              value={formatNumberInput(costPrice)}
-                              readOnly
-                            />
-                            <span className="text-slate-400 font-bold text-xs uppercase">đ</span>
-                          </div>
-                        </div>
-                        
-                        {editItem?.lots && editItem.lots.length > 0 ? (
-                          <div className="bg-white border border-slate-200 rounded-xl p-3 flex flex-col max-h-[140px]">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center justify-between border-b border-slate-100 pb-1.5">
-                               <div className="flex items-center gap-1">
-                                 <Clock size={12} className="text-slate-400"/> Lịch sử nhập
-                               </div>
-                               <span className="bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded text-[8px]">T.Cộng: {editItem.lots.length}</span>
-                            </label>
-                            <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
-                                <table className="w-full text-left text-[11px]">
-                                  <tbody className="divide-y divide-slate-50">
-                                    {(() => {
-                                      let remainingStock = editItem?.stock || 0;
-                                      const sortedLots = [...editItem.lots].sort((a, b) => new Date(b.importDate) - new Date(a.importDate));
-                                      const lotsWithRemaining = sortedLots.map((lot) => {
-                                        const qty = lot.initialQuantity || lot.units?.length || 0;
-                                        const remaining = Math.min(remainingStock, qty);
-                                        remainingStock = Math.max(0, remainingStock - remaining);
-                                        return { ...lot, remaining, qty };
-                                      });
-                                      return lotsWithRemaining.map((lot) => (
-                                        <tr key={lot.lotId} className={`group transition-colors ${lot.remaining > 0 ? "hover:bg-emerald-50/50" : "opacity-60 grayscale-[50%]"}`}>
-                                          <td className="py-1 text-slate-500">
-                                               {new Date(lot.importDate).toLocaleDateString("vi-VN")}
-                                          </td>
-                                          <td className="py-1 text-center font-bold text-slate-700">
-                                               {lot.remaining}/{lot.qty}
-                                          </td>
-                                          <td className={`py-1 text-right font-black ${lot.remaining > 0 ? "text-emerald-600" : "text-slate-400"}`}>
-                                             {fmtCurrency(lot.importPrice).replace('₫','')}
-                                          </td>
-                                        </tr>
-                                      ));
-                                    })()}
-                                  </tbody>
-                                </table>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="bg-slate-50/50 border border-slate-100 border-dashed rounded-xl p-4 flex flex-col items-center justify-center text-center">
-                              <Archive size={16} className="text-slate-300 mb-1" />
-                              <span className="text-[10px] text-slate-400 font-medium">Không có lịch sử lô</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Section 2: Chi phí gia công & Vận hành */}
-                    <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-200/80 space-y-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-[12px] font-black text-slate-800 flex items-center gap-2 uppercase tracking-wider">
-                            <Hammer size={16} className="text-slate-500" />
-                            2. Chi phí gia công & Vận hành
-                          </h3>
-                        </div>
-
-                        {productType === "Hàng mộc" && (
-                          <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-4">
-                             <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-1">
-                                <label className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-1.5">
-                                   <Clock size={12} className="text-blue-500" /> Phân bổ công thợ ráp
-                                </label>
-                             </div>
-                             <div className="grid grid-cols-12 gap-4">
-                                <div className="col-span-4 space-y-1">
-                                  <label className="text-[9px] font-bold text-slate-400 uppercase">Lương ngày chuẩn</label>
-                                  <div className="flex items-baseline gap-1 border-b border-slate-200 pb-0.5">
-                                    <input
-                                      type="text"
-                                      className="w-full text-[13px] font-black text-slate-700 outline-none focus:border-blue-500 bg-transparent"
-                                      value={formatNumberInput(dailyWage)}
-                                      onChange={(e) => {
-                                        const wage = parseNumberInput(e.target.value);
-                                        setDailyWage(wage);
-                                        setLaborCost(wage * laborDays);
-                                      }}
-                                    />
-                                    <span className="text-slate-300 text-[9px] font-black">đ</span>
-                                  </div>
-                                </div>
-                                <div className="col-span-3 space-y-1">
-                                  <label className="text-[9px] font-bold text-slate-400 uppercase">Số công</label>
-                                  <div className="flex items-center gap-1 border-b border-slate-200 pb-0.5">
-                                    <input
-                                      type="number"
-                                      step="0.5"
-                                      className="w-full text-[13px] font-black text-slate-700 outline-none focus:border-blue-500 bg-transparent"
-                                      value={laborDays}
-                                      onChange={(e) => {
-                                        const days = parseFloat(e.target.value) || 0;
-                                        setLaborDays(days);
-                                        setLaborCost(dailyWage * days);
-                                      }}
-                                    />
-                                    <span className="text-[10px] font-bold text-slate-300 uppercase">C</span>
-                                  </div>
-                                </div>
-                                <div className="col-span-5 bg-blue-50/50 p-2 rounded-lg border border-blue-100/50 flex flex-col justify-center">
-                                  <label className="text-[9px] font-black text-blue-600 uppercase block leading-none mb-1">Thành tiền công</label>
-                                  <p className="text-[14px] font-black text-blue-700">{fmtCurrency(laborCost)}</p>
-                                </div>
-                             </div>
-                          </div>
-                        )}
-
-                        <div className="grid grid-cols-2 gap-4">
-                           {productType === "Hàng mộc" && (
-                             <>
-                                <div className="space-y-1.5">
-                                  <div className="flex items-center justify-between">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase">Vật tư phụ</label>
-                                    <button
-                                      onClick={() => setMaterialCost(Math.round(Number(costPrice) * 0.05))}
-                                      className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 hover:bg-emerald-100 transition-colors"
-                                    >
-                                      5% Vốn
-                                    </button>
-                                  </div>
-                                  <input
-                                    type="text"
-                                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[13px] font-bold text-slate-700 outline-none focus:ring-2 focus:ring-slate-300 bg-white"
-                                    value={formatNumberInput(materialCost)}
-                                    onChange={(e) => {
-                                      const val = parseNumberInput(e.target.value);
-                                      setMaterialCost(val === "" ? 0 : Number(val));
-                                    }}
-                                  />
-                                </div>
-                                <div className="space-y-1.5">
-                                  <label className="text-[10px] font-bold text-indigo-500 uppercase">Tiền sơn PU</label>
-                                  <input
-                                    type="text"
-                                    className="w-full border border-indigo-200 rounded-lg px-3 py-2 text-[13px] font-bold text-indigo-700 outline-none focus:ring-2 focus:ring-indigo-300 bg-indigo-50/30"
-                                    value={formatNumberInput(paintCost)}
-                                    onChange={(e) => {
-                                      const val = parseNumberInput(e.target.value);
-                                      setPaintCost(val === "" ? 0 : Number(val));
-                                    }}
-                                  />
-                                </div>
-                             </>
-                           )}
-
-                           <div className="col-span-2 space-y-1.5">
-                              <div className="flex items-center justify-between">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase">Chi phí vận hành & Setup</label>
-                                <div className="flex gap-1.5">
-                                  {[5, 10, 15].map(pct => (
-                                    <button
-                                      key={pct}
-                                      onClick={() => {
-                                        const base = Number(costPrice) + Number(laborCost) + Number(materialCost) + Number(paintCost);
-                                        setSetupCost(Math.round(base * (pct/100)));
-                                      }}
-                                      className="text-[9px] font-black text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-50 transition-colors"
-                                    >
-                                      {pct}%
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <input
-                                  type="text"
-                                  className="w-1/3 border border-slate-200 rounded-lg px-3 py-2 text-[13px] font-bold text-slate-700 outline-none focus:ring-2 focus:ring-slate-200 bg-white"
-                                  value={formatNumberInput(setupCost)}
-                                  onChange={(e) => {
-                                    const val = parseNumberInput(e.target.value);
-                                    setSetupCost(val === "" ? 0 : Number(val));
-                                  }}
-                                />
-                                <span className="text-[10px] text-slate-400 italic">Tính lợi nhuận ròng</span>
-                              </div>
-                           </div>
-                        </div>
-
-                        <div className="pt-4 mt-2 border-t border-slate-200 flex items-center justify-between">
-                            <div className="flex flex-col">
-                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">TỔNG GIÁ THÀNH THỰC TẾ</span>
-                                <span className="text-[10px] text-slate-400 italic font-medium">(Gốc + Công + Vật tư + Vận hành)</span>
-                            </div>
-                            <div className="flex items-baseline gap-1.5 bg-slate-800 text-white px-5 py-3 rounded-2xl transform transition-transform hover:scale-[1.02]">
-                                <span className="text-2xl font-black tracking-tight leading-none text-emerald-400">
-                                  {formatNumberInput(costPrice + laborCost + materialCost + paintCost + setupCost)}
-                                </span>
-                                <span className="text-[10px] font-black text-slate-400 uppercase">VNĐ</span>
-                            </div>
-                        </div>
-                    </div>
-                  </div>
-
-                  {/* RIGHT COLUMN: PRICING STRATEGY & OUTPUT */}
-                  <div className="lg:col-span-5 flex flex-col gap-5">
-                    {/* Section 3: Chiến lược Định giá */}
-                    <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-200/80 space-y-4">
-                        <h3 className="text-[12px] font-black text-slate-800 flex items-center gap-2 uppercase tracking-wider">
-                          <Tag size={16} className="text-indigo-500" />
-                          3. Chiến lược Định giá
-                        </h3>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                           <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold text-slate-500 uppercase block">Biên lãi gộp (%)</label>
-                              <div className="relative">
-                                <input
-                                  type="number"
-                                  className="w-full border-2 border-white rounded-xl px-4 py-2.5 text-lg font-black text-indigo-700 outline-none focus:border-indigo-500 bg-white"
-                                  value={targetMargin}
-                                  onChange={(e) => setTargetMargin(e.target.value)}
-                                />
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">%</div>
-                              </div>
-                           </div>
-                           <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold text-slate-500 uppercase block">Thuế / Phí (%)</label>
-                              <div className="relative">
-                                <input
-                                  type="number"
-                                  className="w-full border-2 border-white rounded-xl px-4 py-2.5 text-lg font-black text-slate-700 outline-none focus:border-slate-400 bg-white"
-                                  value={taxPercent}
-                                  onChange={(e) => setTaxPercent(e.target.value)}
-                                />
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">%</div>
-                              </div>
-                           </div>
-                        </div>
-                    </div>
-
-                    {/* Section 4: Giá bán niêm yết */}
-                    <div className="bg-gradient-to-br from-indigo-600 to-blue-700 p-5 rounded-2xl space-y-4 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl transition-all"></div>
-                        <div className="flex items-center justify-between relative z-10">
-                            <h3 className="text-[12px] font-black text-white/90 uppercase tracking-widest flex items-center gap-2">
-                              <Banknote size={16} /> Giá bán niêm yết
-                            </h3>
-                            <div className="bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full border border-white/20 uppercase">Hệ thống gợi ý</div>
-                        </div>
-
-                        <div className="space-y-4 relative z-10">
-                           {productType === "Hàng mộc" ? (
-                             <div className="space-y-4">
-                                <div className="space-y-1.5">
-                                   <div className="flex items-center justify-between">
-                                      <label className="text-[10px] font-bold text-white/70 uppercase">Giá bán MỘC</label>
-                                      <button 
-                                        onClick={() => setRawRetailPrice(Math.round(costPrice * (1 + targetMargin/100) * (1 + taxPercent/100)))}
-                                        className="text-[11px] font-black text-white bg-white/20 px-2 py-0.5 rounded border border-white/10 hover:bg-white/30 transition-all active:scale-95"
-                                      >
-                                        Gợi ý: {fmtCurrency(Math.round(costPrice * (1 + targetMargin/100) * (1 + taxPercent/100)))}
-                                      </button>
-                                   </div>
-                                   <input
-                                      type="text"
-                                      className="w-full bg-white/10 text-white border-2 border-white/20 rounded-xl px-4 py-3 text-2xl font-black outline-none focus:border-white transition-all"
-                                      value={formatNumberInput(rawRetailPrice)}
-                                      onChange={(e) => {
-                                        const val = parseNumberInput(e.target.value);
-                                        setRawRetailPrice(val === "" ? 0 : Number(val));
-                                      }}
-                                   />
-                                </div>
-                                <div className="space-y-1.5">
-                                   <div className="flex items-center justify-between">
-                                      <label className="text-[10px] font-bold text-white/70 uppercase">Giá bán HOÀN THIỆN</label>
-                                      <button 
-                                        onClick={() => {
-                                          const cost = Number(costPrice) + Number(laborCost) + Number(materialCost) + Number(paintCost) + Number(setupCost);
-                                          setFinishedRetailPrice(Math.round(cost * (1 + targetMargin/100) * (1 + taxPercent/100)));
-                                        }}
-                                        className="text-[11px] font-black text-white bg-white/20 px-2 py-0.5 rounded border border-white/10 hover:bg-white/30 transition-all active:scale-95"
-                                      >
-                                        Gợi ý: {fmtCurrency(Math.round((Number(costPrice) + Number(laborCost) + Number(materialCost) + Number(paintCost) + Number(setupCost)) * (1 + targetMargin/100) * (1 + taxPercent/100)))}
-                                      </button>
-                                   </div>
-                                   <input
-                                      type="text"
-                                      className="w-full bg-white text-indigo-700 border-none rounded-xl px-4 py-3 text-2xl font-black outline-none placeholder-indigo-200"
-                                      value={formatNumberInput(finishedRetailPrice)}
-                                      onChange={(e) => {
-                                        const val = parseNumberInput(e.target.value);
-                                        setFinishedRetailPrice(val === "" ? 0 : Number(val));
-                                      }}
-                                   />
-                                </div>
-                             </div>
-                           ) : (
-                               <div className="space-y-2">
-                                  <div className="flex items-center justify-between">
-                                      <label className="text-[10px] font-bold text-white/70 uppercase">Giá niêm yết bán lẻ</label>
-                                      <button 
-                                        onClick={() => {
-                                          const totalActualCost = Number(costPrice) + Number(laborCost) + Number(materialCost) + Number(paintCost) + Number(setupCost);
-                                          setRetailPrice(Math.round(totalActualCost * (1 + targetMargin/100) * (1 + taxPercent/100)));
-                                        }}
-                                        className="text-[11px] font-black text-white bg-white/20 px-2.5 py-1 rounded-lg border border-white/20 hover:bg-white/30 transition-all active:scale-95"
-                                      >
-                                        Gợi ý: {fmtCurrency(Math.round((Number(costPrice) + Number(laborCost) + Number(materialCost) + Number(paintCost) + Number(setupCost)) * (1 + targetMargin/100) * (1 + taxPercent/100)))}
-                                      </button>
-                                   </div>
-                                   <input
-                                      type="text"
-                                      className="w-full bg-white text-indigo-800 border-none rounded-2xl px-5 py-5 text-4xl font-black outline-none focus:ring-4 focus:ring-white/20 transition-all placeholder-indigo-100"
-                                      value={formatNumberInput(retailPrice)}
-                                      placeholder="0"
-                                      onChange={(e) => {
-                                        const val = parseNumberInput(e.target.value);
-                                        setRetailPrice(val === "" ? 0 : Number(val));
-                                      }}
-                                   />
-                                   <div className="pt-2 flex items-center justify-between text-white/60 text-[10px] font-bold italic">
-                                      <span>Bao gồm hoa hồng, vận chuyển nội bộ...</span>
-                                      <div className="flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-lg border border-white/10 uppercase font-black tracking-tighter">
-                                         <Clock size={12} /> HT: {leadTime}n
-                                      </div>
-                                   </div>
-                               </div>
-                           )}
-                        </div>
-                    </div>
-
-                    {/* Section 5: Bảo hành & Chính sách (Compact) */}
-                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                           <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-                              <ShieldCheck size={14} className="text-blue-500" /> BH & Cam kết
-                           </h3>
-                           <div className="flex items-center gap-1.5">
-                              <span className="text-[10px] font-bold text-slate-400">Tháng</span>
-                              <input
-                                type="number"
-                                className="w-12 text-center text-[13px] font-black text-blue-700 bg-white border border-slate-200 rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-blue-500"
-                                value={warrantyMonths}
-                                onChange={(e) => setWarrantyMonths(e.target.value)}
-                              />
-                           </div>
-                        </div>
-                        <textarea
-                          className="w-full border border-slate-200 rounded-xl px-3 py-2 text-[12px] font-medium text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 bg-white leading-relaxed min-h-[60px]"
-                          placeholder="Cam kết bảo hành cụ thể..."
-                          value={warrantyContent}
-                          onChange={(e) => setWarrantyContent(e.target.value)}
-                        />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-            <div className="px-6 py-4 border-t border-[var(--grid-border)] flex items-center justify-between bg-white shrink-0">
-              {(!detailItem || (detailItem.stock === 0 && (!detailItem.lots || detailItem.lots.length === 0))) ? (
-                <button
-                  onClick={(e) => handleConfirmDelete(detailItem, e)}
-                  className="px-4 py-2 rounded-lg text-[13px] font-bold transition-all border bg-red-50 text-red-600 border-red-100 hover:bg-red-100 flex items-center gap-2"
-                >
-                  <Trash2 size={16} /> Xóa sản phẩm
-                </button>
-              ) : (
-                <div></div>
-              )}
-
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={closeModal}
-                  className="px-5 py-2 rounded-lg text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-main)] transition cursor-pointer border border-transparent hover:border-[var(--grid-border)]"
-                >
-                  Đóng
-                </button>
-                {!editing && !pricing && detailItem?.status !== "Hết hàng" && (
-                  <>
-                    <button
-                      onClick={() => handleOpenModal("form", detailItem)}
-                      className="px-5 py-2.5 rounded-lg text-[13px] font-bold text-[var(--brand-primary)] bg-[var(--brand-primary)]/10 hover:bg-[var(--brand-primary)]/20 transition-all flex items-center gap-2 border border-[var(--brand-primary)]/20"
-                    >
-                      <Pencil size={15} /> Sửa thông tin
-                    </button>
-                    {detailItem?.productType !== "Hàng khách đặt" && (
-                      <button
-                        onClick={() => handleOpenModal("pricing", detailItem)}
-                        className={`px-5 py-2.5 rounded-lg text-[13px] font-bold text-white transition-all flex items-center gap-2 ${detailItem?.status === "Chưa định giá" ? "bg-[var(--status-error)] hover:opacity-90 animate-pulse" : "bg-emerald-600 hover:bg-emerald-700"}`}
-                      >
-                        <Tag size={15} /> {detailItem?.status === "Chưa định giá" ? "Định giá ngay" : "Định giá"}
-                      </button>
-                    )}
-                  </>
-                )}
-                {editing && (
-                  <button
-                    onClick={handleSaveAddEdit}
-                    className="px-6 py-2.5 rounded-lg text-sm font-bold text-white bg-[var(--brand-primary)] hover:opacity-90 transition-all flex items-center gap-2 transform active:scale-95"
-                  >
-                    <Pencil size={16} /> Lưu thông tin
-                  </button>
-                )}
-                {pricing && (
-                  <button
-                    onClick={handleSaveAddEdit}
-                    className={`px-6 py-2.5 rounded-lg text-sm font-bold text-white transition-all flex items-center gap-2 transform active:scale-95 ${editItem?.status === "Chưa định giá" ? "bg-[var(--status-error)] hover:opacity-90" : "bg-emerald-600 hover:bg-emerald-700"}`}
-                  >
-                    <Tag size={16} />
-                    {editItem?.status === "Chưa định giá"
-                      ? "Xác nhận định giá & Mở bán"
-                      : "Lưu định giá"}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    };
 
   // ===================== TABLE COLUMNS =====================
+
   const columns = [
     {
       header: "STT",
@@ -1626,22 +481,22 @@ export default function OwnerProducts() {
         if (item.status === "Quà tặng") {
           return (
             <div className="flex flex-col items-end">
-               <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-purple-100 text-purple-700 border border-purple-200">
-                 Quà tặng
-               </span>
-               <span className="text-[11px] font-bold text-purple-500 mt-1 italic">Miễn phí</span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-purple-100 text-purple-700 border border-purple-200">
+                Quà tặng
+              </span>
+              <span className="text-[11px] font-bold text-purple-500 mt-1 italic">Miễn phí</span>
             </div>
           );
         }
         if (item.status === "Hàng khách đặt") {
           return (
             <div className="flex flex-col items-end">
-               <span className="text-[13px] font-black text-amber-600">
-                 {fmtCurrency(item.retailPrice)}
-               </span>
-               <span className="text-[10px] font-bold text-amber-500 uppercase tracking-tighter mt-0.5">
-                 (Giá chốt theo đơn)
-               </span>
+              <span className="text-[13px] font-black text-amber-600">
+                {fmtCurrency(item.retailPrice)}
+              </span>
+              <span className="text-[10px] font-bold text-amber-500 uppercase tracking-tighter mt-0.5">
+                (Giá chốt theo đơn)
+              </span>
             </div>
           );
         }
@@ -1718,13 +573,20 @@ export default function OwnerProducts() {
     <>
       <PageHelmet title="Quản lý sản phẩm | TPF-SIMS" />
 
-      {renderProductModal()}
+      <ProductModal
+        product={modalState.product}
+        mode={modalState.mode}
+        onClose={closeModal}
+        onSave={handleSave}
+        onSwitchMode={(mode) => setModalState((s) => ({ ...s, mode }))}
+        onDelete={(item) => { closeModal(); handleConfirmDelete(item); }}
+      />
 
       <div
         className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 space-y-4"
         style={{ backgroundColor: "var(--bg-main)" }}
       >
-        {/* HEADER & TABS (Top Right Style) */}
+        {/* HEADER & TABS */}
         <div className="flex items-center justify-between shrink-0">
           <div>
             <h1 className="text-xl font-bold flex items-center gap-2" style={{ color: "var(--text-main)" }}>
@@ -1753,7 +615,7 @@ export default function OwnerProducts() {
           </div>
         </div>
 
-        {/* STATUS BAR (Admin Alerts Style) */}
+        {/* STATUS BAR */}
         <div className="flex items-center gap-2 shrink-0 flex-wrap py-1">
           {[
             { id: "Tất cả", label: "Tất cả" },
@@ -1790,13 +652,6 @@ export default function OwnerProducts() {
         <DataTable
           columns={columns}
           data={paginatedProducts}
-          onRowClick={(item) => handleOpenModal("detail", item)}
-          rowStyle={(item) => ({
-            backgroundColor:
-              item.status === "Chưa định giá"
-                ? "rgba(229, 72, 77, 0.03)"
-                : "transparent",
-          })}
           searchTerm={searchQuery}
           setSearchTerm={setSearchQuery}
           searchPlaceholder="Theo Mã Sản Phẩm, tên sản phẩm..."
@@ -1804,23 +659,24 @@ export default function OwnerProducts() {
           clearAllFilters={clearFilters}
           selectedIds={selectedIds}
           setSelectedIds={setSelectedIds}
+          onRowClick={(item) => openModal(item, "view")}
           rowActions={[
             {
               icon: Eye,
               label: "Xem chi tiết",
-              onClick: (item) => handleOpenModal("detail", item),
-            },
-            {
-              icon: Pencil,
-              label: "Sửa thông tin",
-              onClick: (item) => handleOpenModal("form", item),
-              showIf: (item) => item.status !== "Hết hàng",
+              onClick: (item) => openModal(item, "view"),
             },
             {
               icon: Tag,
               label: "Định giá",
-              onClick: (item) => handleOpenModal("pricing", item),
-              showIf: (item) => item.status !== "Hết hàng" && item.productType !== "Hàng khách đặt",
+              onClick: (item) => openModal(item, "pricing"),
+              showIf: (item) => item.productType !== "Hàng khách đặt",
+            },
+            {
+              icon: Pencil,
+              label: "Sửa thông tin",
+              onClick: (item) => openModal(item, "edit"),
+              showIf: (item) => item.status !== "Hết hàng",
             },
             {
               icon: Trash2,
