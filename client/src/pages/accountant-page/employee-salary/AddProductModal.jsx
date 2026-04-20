@@ -45,7 +45,7 @@ export default function AddProductModal({ isOpen, onClose, employee, onAdd }) {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col overflow-hidden"
+        className="bg-white w-full max-w-2xl rounded-lg shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

@@ -77,7 +77,7 @@ export default function EditProductModal({ product, onClose, onSave }) {
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
             onClick={e => { if (e.target === e.currentTarget) onClose(); }}
         >
-            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+            <div className="bg-white rounded-lg w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200 overflow-hidden"
                 style={{ maxHeight: "88vh" }}>
 
                 {/* ── Gradient Header by Type ── */}

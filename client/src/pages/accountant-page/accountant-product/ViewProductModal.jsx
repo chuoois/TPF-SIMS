@@ -1190,10 +1190,7 @@ export default function ViewProductModal({ product, onClose }) {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div
-        className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden"
-        style={{ maxHeight: "92vh" }}
-      >
+      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden">
         {/* ── Gradient Header by Type ── */}
         <div
           className="px-6 py-5 shrink-0 relative"

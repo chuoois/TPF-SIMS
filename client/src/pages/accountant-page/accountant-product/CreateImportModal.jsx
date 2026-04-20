@@ -375,7 +375,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl flex flex-col" style={{ maxHeight: "80vh" }}>
+            <div className="w-full max-w-3xl bg-white rounded-lg shadow-2xl flex flex-col overflow-hidden" style={{ maxHeight: "80vh" }}>
 
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b shrink-0" style={{ borderColor: "var(--grid-border)" }}>
