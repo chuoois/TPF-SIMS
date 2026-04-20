@@ -4,7 +4,7 @@
  * Thông tin SP đã đầy đủ từ sale, chủ chỉ cần chọn và xác nhận.
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
    X, Check, ChevronLeft, ChevronRight,
    FileStack, Package, Search,
@@ -35,6 +35,24 @@ const STATUS_BADGE = {
   "Đang gia công": { bg: "#FEF3C7", text: "#D97706" },
 };
 
+function removeAccents(str) {
+  if (!str) return "";
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D');
+}
+
+function getInitials(str) {
+  if (!str) return "";
+  return removeAccents(str)
+    .split(/\s+/)
+    .map(word => word[0])
+    .join('')
+    .toUpperCase();
+}
+
 function genId() {
   const now = new Date();
   const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
@@ -60,7 +78,10 @@ const ReviewItem = ({ item, isCustom }) => {
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <p className={`text-[13px] font-bold mb-1.5 px-0.5 rounded ${isCustom ? 'text-green-800' : 'text-purple-800'}`}>{item.productName}</p>
+        <div className="flex items-center justify-between gap-2 mb-1.5">
+          <p className={`text-[13px] font-bold truncate ${isCustom ? 'text-green-800' : 'text-purple-800'}`}>{item.productName}</p>
+          {item.code && <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-white/50 border border-current opacity-60 shrink-0">{item.code}</span>}
+        </div>
         <div className="flex flex-wrap gap-1.5">
           {item.material && <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] ${isCustom ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}`}>{item.material}</span>}
           {sizeDisplay && <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] ${isCustom ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}`}>{sizeDisplay}</span>}
@@ -93,8 +114,17 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [customItems, setCustomItems] = useState([]);
   const [newProduct, setNewProduct] = useState({
-    name: "", material: "", length: "", width: "", height: "", color: "", qty: 1, note: "", images: []
+    name: "", material: "", length: "", width: "", height: "", color: "", qty: 1, note: "", images: [], code: "", isManualCode: false
   });
+
+  useEffect(() => {
+    if (newProduct.isManualCode) return;
+    const initialsName = getInitials(newProduct.name);
+    const initialsMat = getInitials(newProduct.material);
+    const initialsColor = getInitials(newProduct.color);
+    const generated = [initialsName, initialsMat, initialsColor].filter(Boolean).join("-");
+    setNewProduct(prev => ({ ...prev, code: generated }));
+  }, [newProduct.name, newProduct.material, newProduct.color, newProduct.isManualCode]);
   const [showWoodDropdown, setShowWoodDropdown] = useState(false);
   const [showColorDropdown, setShowColorDropdown] = useState(false);
 
@@ -686,13 +716,22 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                     {/* Sub-modal Body (No scroll unless very small) */}
                     <div className="p-4 flex-1">
                         <div className="grid grid-cols-2 gap-x-3 gap-y-2 mb-3">
-                           <div className="col-span-2">
+                           <div className="col-span-1">
                               <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-0.5">Tên sản phẩm *</label>
                               <input 
                                 placeholder="Tên sản phẩm..." 
                                 className="w-full px-3 py-1.5 text-[12px] rounded-md border border-gray-200 focus:border-[var(--brand-primary)] outline-none bg-gray-50/20" 
                                 value={newProduct.name}
                                 onChange={e => setNewProduct({...newProduct, name: e.target.value})}
+                              />
+                           </div>
+                           <div className="col-span-1">
+                              <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-0.5">Mã sản phẩm</label>
+                              <input 
+                                placeholder="Mã tự động..." 
+                                className="w-full px-3 py-1.5 text-[12px] font-mono rounded-md border border-gray-200 focus:border-[var(--brand-primary)] outline-none bg-gray-50/20" 
+                                value={newProduct.code}
+                                onChange={e => setNewProduct({...newProduct, code: e.target.value, isManualCode: true})}
                               />
                            </div>
                            <div className="relative">
@@ -837,7 +876,7 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                           onClick={() => {
                              if (!newProduct.name) return toast.error("Vui lòng nhập tên sản phẩm");
                              setCustomItems([...customItems, {...newProduct, id: Date.now()}]);
-                             setNewProduct({name: "", material: "", length: "", width: "", height: "", color: "", qty: 1, note: "", images: []});
+                             setNewProduct({name: "", material: "", length: "", width: "", height: "", color: "", qty: 1, note: "", images: [], code: "", isManualCode: false});
                              setShowCustomForm(false);
                              toast.success("Đã thêm sản phẩm");
                           }}
