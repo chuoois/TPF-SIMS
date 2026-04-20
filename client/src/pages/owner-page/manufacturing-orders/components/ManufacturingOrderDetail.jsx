@@ -152,60 +152,32 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
         {/* ── Scrollable body ── */}
         <div className="flex-1 overflow-y-auto p-6">
 
-          {/* Info cards */}
-          <div className="grid gap-3 mb-5" style={{ gridTemplateColumns: "1fr 1fr 1fr 1fr" }}>
-            {[
-              { icon: Calendar, label: "Ngày tạo", value: formatDateTime(order.createdAt) },
-              { icon: User,     label: "Người tạo", value: order.createdBy || "Chủ xưởng" },
-              { icon: Package,  label: "Số sản phẩm", value: `${order.items?.length || 0} dòng / ${totalQty} chiếc` },
-            ].map(({ icon: Icon, label, value }) => (
-              <div key={label} className="flex flex-col gap-1 p-3 rounded-xl" style={{ border: "1px solid var(--grid-border)", background: "var(--grid-header-bg)" }}>
-                <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-placeholder)" }}>
-                  <Icon size={12} /> {label}
-                </div>
-                <div className="text-[13px] font-semibold" style={{ color: "var(--text-main)" }}>{value}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Đơn hàng liên quan */}
-          <div className="mb-5">
-            <p className="text-[11px] font-bold uppercase tracking-wide mb-2" style={{ color: "var(--text-placeholder)" }}>
-              Đơn hàng liên quan ({order.orderIds?.length || 0})
-            </p>
-            <div className="flex flex-col gap-2">
-              {order.orderIds?.map((oid) => {
-                const detail = order.sourceOrderDetails?.[oid];
-                return (
-                  <div key={oid} className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{ background: "var(--grid-header-bg)", border: "1px solid var(--grid-border)" }}>
-                    <span className="px-2 py-0.5 rounded-md text-[12px] font-mono font-bold" style={{ background: "var(--bg-main)", border: "1px solid var(--grid-border)", color: "var(--text-main)" }}>
-                      {oid}
-                    </span>
-                    {detail?.customerName && (
-                      <div className="flex items-center gap-1.5">
-                        <Users size={13} style={{ color: "var(--text-placeholder)" }} />
-                        <span className="text-[13px] font-semibold" style={{ color: "var(--text-main)" }}>{detail.customerName}</span>
-                      </div>
-                    )}
-                    {detail?.type && (
-                      <span className="text-[11px] px-2 py-0.5 rounded-md font-medium" style={{
-                        background: detail.type === "Hàng khách đặt" ? "#FEF3C7" : "#EFF6FF",
-                        color: detail.type === "Hàng khách đặt" ? "#B45309" : "#1D4ED8",
-                        border: `1px solid ${detail.type === "Hàng khách đặt" ? "#FDE68A" : "#BFDBFE"}`,
-                      }}>
-                        {detail.type}
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+          {/* Compact Summary Bar */}
+          <div className="flex items-center gap-4 mb-6 px-4 py-3 rounded-xl border border-dashed border-gray-200 bg-gray-50/50">
+             <div className="flex items-center gap-1.5 text-[12px]">
+                <Calendar size={14} className="text-gray-400" />
+                <span className="text-gray-400">Ngày tạo:</span>
+                <span className="font-bold text-gray-700">{formatDateTime(order.createdAt)}</span>
+             </div>
+             <div className="w-px h-4 bg-gray-200" />
+             <div className="flex items-center gap-1.5 text-[12px]">
+                <User size={14} className="text-gray-400" />
+                <span className="text-gray-400">Người tạo:</span>
+                <span className="font-bold text-gray-700">{order.createdBy || "Chủ xưởng"}</span>
+             </div>
+             <div className="w-px h-4 bg-gray-200" />
+             <div className="flex items-center gap-1.5 text-[12px]">
+                <Package size={14} className="text-gray-400" />
+                <span className="text-gray-400">Tổng cộng:</span>
+                <span className="font-bold text-[var(--brand-primary)]">{totalQty} chiếc</span>
+             </div>
           </div>
 
           {/* Ghi chú tổng */}
           {order.note && (
-            <div className="mb-5 p-3 rounded-xl text-[13px]" style={{ background: "#FFFBEB", border: "1px solid #FDE68A", color: "#92400E" }}>
-              <span className="font-bold">Ghi chú: </span>{order.note}
+            <div className="mb-6 p-4 rounded-xl text-[13px] leading-relaxed" style={{ background: "#FFFBEB", border: "1px solid #FDE68A", color: "#92400E" }}>
+              <span className="font-bold inline-flex items-center gap-1.5 mb-1"><Calendar size={14} /> Ghi chú từ chủ xưởng:</span>
+              <p>{order.note}</p>
             </div>
           )}
 
@@ -372,32 +344,8 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
             <div className="info-grid">
               <div><span className="label">Ngày tạo: </span><span className="value">{formatDateTime(order.createdAt)}</span></div>
               <div><span className="label">Người tạo: </span><span className="value">{order.createdBy || "Chủ xưởng"}</span></div>
-              <div><span className="label">Tổng số lượng: </span><span className="value">{totalQty} sản phẩm</span></div>
+            <div><span className="label">Tổng số lượng: </span><span className="value">{totalQty} sản phẩm</span></div>
             </div>
-
-            {/* Đơn hàng liên quan — bảng */}
-            <div className="section-title">Đơn hàng liên quan</div>
-            <table style={{ marginBottom: 16 }}>
-              <thead>
-                <tr>
-                  <th style={{ width: 130 }}>Mã đơn</th>
-                  <th>Khách hàng</th>
-                  <th style={{ width: 130 }}>Loại đơn</th>
-                </tr>
-              </thead>
-              <tbody>
-                {order.orderIds?.map((oid) => {
-                  const detail = order.sourceOrderDetails?.[oid];
-                  return (
-                    <tr key={oid}>
-                      <td style={{ fontFamily: "monospace", fontWeight: "bold" }}>{oid}</td>
-                      <td>{detail?.customerName || "—"}</td>
-                      <td>{detail?.type || "—"}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
 
             {order.note && (
               <>
@@ -439,29 +387,9 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                       <span className="detail-label">Hoàn thiện:</span>
                       <span className="detail-value">{item.finish || "—"}</span>
                     </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Đơn hàng:</span>
-                      <span className="detail-value">
-                        {item.sourceOrders?.map((o, i) => {
-                          const detail = item.sourceOrderDetails?.[o] || order.sourceOrderDetails?.[o];
-                          const label = o === "DANH-MUC" ? "Hàng có sẵn" : o;
-                          return `${label}${detail?.customerName ? ` (${detail.customerName})` : ""}`;
-                        }).join(", ")}
-                      </span>
-                    </div>
                     {item.note && (
                       <div className="detail-note">
                         <strong>Ghi chú KT:</strong> {item.note}
-                      </div>
-                    )}
-                    {allImages.length > 0 && (
-                      <div style={{ marginTop: 8 }}>
-                        <span className="detail-label">Ảnh mẫu:</span>
-                        <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
-                          {allImages.slice(0, 4).map((img, i) => (
-                            <img key={i} src={img} alt="" className="print-img" />
-                          ))}
-                        </div>
                       </div>
                     )}
                   </div>
