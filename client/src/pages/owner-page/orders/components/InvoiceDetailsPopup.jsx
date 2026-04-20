@@ -717,7 +717,6 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
         deadlineDate.setDate(deadlineDate.getDate() + parseInt(days));
 
         return {
-          unitLabor: p.painterLabor || invItem?.paintCost || 0,
           days: days,
           deadline: deadlineDate.toISOString().split('T')[0]
         };
@@ -901,12 +900,9 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
     const updatedProducts = order.products.map((p, idx) => ({
       ...p,
-      painterLabor: handoverItemsData[idx]?.unitLabor || 0,
       finishingDays: handoverItemsData[idx]?.days || "",
       deadline: handoverItemsData[idx]?.deadline || handoverDeadline
     }));
-
-    const totalLabor = updatedProducts.reduce((sum, p) => sum + (p.painterLabor * (p.qty || 1)), 0);
 
     const finalDeadlines = updatedProducts.map(p => p.deadline).filter(d => !!d);
     const maxDeadline = finalDeadlines.length > 0
@@ -943,10 +939,9 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
         approved_at: new Date().toISOString(),
         notes: handoverNotes,
         deadline: maxDeadline,
-        total_painter_labor: totalLabor
       },
       timelineLabel: "Bàn giao gia công",
-      timelineDesc: `Bàn giao ${updatedProducts.length} món. Hạn (muộn nhất): ${deadlineStr}. Tổng công sơn: ${fmtCurrency(totalLabor)}.`
+      timelineDesc: `Bàn giao ${updatedProducts.length} món. Hạn (muộn nhất): ${deadlineStr}.`
     });
     setShowHandoverModal(false);
   };
@@ -1350,7 +1345,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
               {/* Product List Section */}
               <div className="space-y-3">
                 <h4 className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-widest px-1">
-                  1. Danh sách sản phẩm & Công thợ
+                  1. Danh sách sản phẩm & Hạn hoàn thiện
                 </h4>
                 {order?.products?.map((p, idx) => {
                   const itemData = handoverItemsData[idx] || { unitLabor: 0, days: "0", deadline: "" };
@@ -1367,8 +1362,8 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <div className="flex-1 min-w-0 grid grid-cols-12 gap-4 items-center">
-                          <div className="col-span-4 min-w-0">
+                        <div className="flex-1 min-w-0 grid grid-cols-12 gap-8 items-center">
+                          <div className="col-span-7 min-w-0">
                             <h4 className="text-[14px] font-bold text-[var(--text-main)] truncate">
                               {p.name}
                             </h4>
@@ -1380,33 +1375,8 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                             </p>
                           </div>
 
-                          {/* Unit Labor Input */}
-                          <div className="col-span-4">
-                            <p className="text-[9px] font-bold text-[var(--text-placeholder)] uppercase tracking-tight mb-1 ml-1">
-                              Công thợ sơn
-                            </p>
-                            <div className="relative">
-                              <input
-                                type="text"
-                                className="w-full pl-3 pr-7 py-1.5 bg-white border border-[var(--grid-border)] rounded-lg font-bold text-[13px] text-[var(--text-main)] focus:border-[var(--brand-primary)] outline-none transition-all text-right"
-                                value={formatNumberInput(itemData.unitLabor)}
-                                onChange={(e) => {
-                                  const newData = [...handoverItemsData];
-                                  newData[idx] = {
-                                    ...itemData,
-                                    unitLabor: Number(parseNumberInput(e.target.value)) || 0,
-                                  };
-                                  setHandoverItemsData(newData);
-                                }}
-                              />
-                              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[var(--text-placeholder)]">
-                                ₫
-                              </span>
-                            </div>
-                          </div>
-
                           {/* Deadline Input */}
-                          <div className="col-span-4">
+                          <div className="col-span-5">
                             <p className="text-[9px] font-bold text-[var(--text-placeholder)] uppercase tracking-tight mb-1 ml-1">
                               Hạn xong SP
                             </p>
@@ -1436,34 +1406,17 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
               {/* Summary Section */}
               <div className="space-y-4 pt-4 border-t border-[var(--grid-border)]">
-                <div className="grid grid-cols-12 gap-6">
-                  <div className="col-span-5 p-4 bg-[var(--bg-main)] border border-[var(--grid-border)] rounded-lg flex flex-col justify-center">
-                    <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest block mb-1">
-                      TỔNG TIỀN SƠN
-                    </span>
-                    <p className="text-[20px] font-bold text-[var(--brand-primary)] leading-none">
-                      {fmtCurrency(
-                        order?.products?.reduce(
-                          (sum, p, idx) =>
-                            sum + (handoverItemsData[idx]?.unitLabor || 0) * (p.qty || 1),
-                          0
-                        )
-                      )}
-                    </p>
-                  </div>
-
-                  <div className="col-span-7 space-y-2">
-                    <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1 flex items-center gap-2">
-                      <FileText size={12} className="text-[var(--text-placeholder)]" /> Ghi chú cho
-                      thợ xưởng
-                    </label>
-                    <textarea
-                      className="w-full p-3 bg-white border border-[var(--grid-border)] rounded-lg text-[12px] font-medium text-[var(--text-main)] focus:border-[var(--brand-primary)] outline-none transition-all min-h-[70px] max-h-[100px] resize-none"
-                      placeholder="Màu sắc, độ bóng, yêu cầu riêng..."
-                      value={handoverNotes}
-                      onChange={(e) => setHandoverNotes(e.target.value)}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1 flex items-center gap-2">
+                    <FileText size={12} className="text-[var(--text-placeholder)]" /> Ghi chú cho
+                    thợ xưởng
+                  </label>
+                  <textarea
+                    className="w-full p-3 bg-white border border-[var(--grid-border)] rounded-lg text-[12px] font-medium text-[var(--text-main)] focus:border-[var(--brand-primary)] outline-none transition-all min-h-[70px] max-h-[100px] resize-none"
+                    placeholder="Màu sắc, độ bóng, yêu cầu riêng..."
+                    value={handoverNotes}
+                    onChange={(e) => setHandoverNotes(e.target.value)}
+                  />
                 </div>
               </div>
             </div>
@@ -1503,7 +1456,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
       {inspectItem && (
         <div className="absolute inset-0 z-[110] flex items-center justify-center p-6 bg-[var(--sidebar)]/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-[var(--background)] w-full max-w-lg rounded-xl overflow-hidden animate-in zoom-in-95 duration-300 border border-[var(--grid-border)]">
+          <div className="bg-[var(--background)] w-full max-w-lg rounded-lg overflow-hidden animate-in zoom-in-95 duration-300 border border-[var(--grid-border)]">
             <div className="px-6 py-4 border-b border-[var(--grid-border)] bg-[var(--grid-header-bg)] flex items-center justify-between">
               <h3 className="text-[15px] font-black text-[var(--status-success)] flex items-center gap-2 uppercase tracking-tight">
                 <Camera size={18} /> Nghiệm thu sản phẩm
