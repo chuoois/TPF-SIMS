@@ -35,14 +35,8 @@ const getRoleIcon = (type) => {
 
 const calculateTotalSalary = (emp) => {
     let total = 0;
-    if (["SALES", "ACCOUNTANT", "SANDER"].includes(emp.type)) {
+    if (["SALES", "ACCOUNTANT", "SANDER", "PAINTER"].includes(emp.type)) {
         total = (emp.base_rate * emp.days_worked) + emp.allowance;
-    } else if (emp.type === "PAINTER") {
-        // Sum each log entry individually (supports per-product price)
-        const logTotal = (emp.products_log || []).reduce((s, p) => s + (p.price * (p.qty || 1)), 0);
-        // Fallback to base_rate * products_finished if no log
-        const fallback = logTotal > 0 ? logTotal : (emp.base_rate * emp.products_finished);
-        total = fallback + emp.allowance;
     }
     return total;
 };
@@ -90,7 +84,7 @@ export default function AccountantEmployeeSalary() {
             payment_date: "",
             products_log: [],
             products_finished: 0,
-            days_worked: emp.type === "PAINTER" ? 0 : (emp.base_rate ? 0 : 26),
+            days_worked: emp.base_rate ? 0 : 26,
         }));
 
         setEmployees(prev => [...prev, ...newEntries]);
@@ -198,13 +192,9 @@ export default function AccountantEmployeeSalary() {
             const totalSalary = calculateTotalSalary(emp);
             let calcFormula = "";
             let specData = "";
-            if (["SALES", "ACCOUNTANT", "SANDER"].includes(emp.type)) {
+            if (["SALES", "ACCOUNTANT", "SANDER", "PAINTER"].includes(emp.type)) {
                 calcFormula = `${formatCurrency(emp.base_rate)} / ngày`;
                 specData = `${emp.days_worked} ngày công`;
-            } else if (emp.type === "PAINTER") {
-                const logTotal = (emp.products_log || []).reduce((s, p) => s + (p.price * (p.qty || 1)), 0);
-                calcFormula = logTotal > 0 ? "Đơn giá theo sản phẩm" : `${formatCurrency(emp.base_rate)} / SP`;
-                specData = `${emp.products_finished} sản phẩm`;
             }
 
             return {
@@ -395,13 +385,9 @@ export default function AccountantEmployeeSalary() {
                                     const isPainter = emp.type === "PAINTER";
                                     const isExpanded = expandedPainter === emp.id;
 
-                                    if (["SALES", "ACCOUNTANT", "SANDER"].includes(emp.type)) {
+                                    if (["SALES", "ACCOUNTANT", "SANDER", "PAINTER"].includes(emp.type)) {
                                         calcFormula = `${formatCurrency(emp.base_rate)} / ngày`;
                                         specData = `${emp.days_worked} ngày công`;
-                                    } else if (emp.type === "PAINTER") {
-                                        const logTotal = (emp.products_log || []).reduce((s, p) => s + (p.price * (p.qty || 1)), 0);
-                                        calcFormula = logTotal > 0 ? "Đơn giá khác nhau / SP" : `${formatCurrency(emp.base_rate)} / SP`;
-                                        specData = `${emp.products_finished} sản phẩm`;
                                     }
 
                                     return (
@@ -440,14 +426,6 @@ export default function AccountantEmployeeSalary() {
                                                 <td className="px-4 py-3 text-right">
                                                     <div className="flex items-center justify-end gap-1">
                                                         <span className="text-[13px] font-semibold" style={{ color: "var(--brand-primary)" }}>{specData}</span>
-                                                        {isPainter && emp.products_log?.length > 0 && (
-                                                            <button onClick={() => setExpandedPainter(isExpanded ? null : emp.id)}
-                                                                className="ml-1 p-0.5 rounded hover:bg-gray-100 cursor-pointer transition"
-                                                                title="Xem chi tiết sản phẩm">
-                                                                <ChevronDown size={13} className={`transition-transform ${isExpanded ? "rotate-180" : ""}`}
-                                                                    style={{ color: "var(--text-placeholder)" }} />
-                                                            </button>
-                                                        )}
                                                     </div>
                                                 </td>
 
@@ -484,13 +462,6 @@ export default function AccountantEmployeeSalary() {
                                                 {/* Hover action */}
                                                 <td className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                                     <div className="flex gap-1 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-gray-100">
-                                                        {isPainter && (
-                                                            <button onClick={() => setAddProductTarget(emp)}
-                                                                className="h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[12px] font-bold hover:bg-green-50 cursor-pointer transition text-green-700"
-                                                                title="Cộng sản phẩm mới">
-                                                                <Plus size={13} strokeWidth={2.5} /> Cộng SP
-                                                            </button>
-                                                        )}
                                                         <button onClick={() => { setEmployeeToEdit(emp); setIsModalOpen(true); }}
                                                             className="h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[12px] font-bold hover:bg-blue-50 cursor-pointer transition"
                                                             style={{ color: "var(--brand-primary)" }}>
@@ -505,50 +476,7 @@ export default function AccountantEmployeeSalary() {
                                                 </td>
                                             </tr>
 
-                                            {/* Painter product log expanded row */}
-                                            {isPainter && isExpanded && (
-                                                <tr key={`${emp.id}-log`} className="bg-gray-50/30">
-                                                    <td colSpan={11} className="px-6 py-4">
-                                                        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
-                                                            <table className="w-full text-left text-[12px]">
-                                                                <thead className="bg-gray-50 border-b border-gray-100">
-                                                                    <tr>
-                                                                        <th className="px-4 py-2 font-bold text-gray-500 uppercase text-[10px] tracking-wider text-center w-[40px]">STT</th>
-                                                                        <th className="px-4 py-2 font-bold text-gray-500 uppercase text-[10px] tracking-wider">Tên mặt hàng/Sản phẩm</th>
-                                                                        <th className="px-4 py-2 font-bold text-gray-500 uppercase text-[10px] tracking-wider text-center">Số lượng</th>
-                                                                        <th className="px-4 py-2 font-bold text-gray-500 uppercase text-[10px] tracking-wider text-right">Đơn giá sơn</th>
-                                                                        <th className="px-4 py-2 font-bold text-gray-500 uppercase text-[10px] tracking-wider text-right">Thành tiền</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody className="divide-y divide-gray-100">
-                                                                    {(emp.products_log || []).map((log, idx) => (
-                                                                        <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
-                                                                            <td className="px-4 py-2.5 text-center text-gray-400 font-medium">{idx + 1}</td>
-                                                                            <td className="px-4 py-2.5 font-bold text-gray-900">{log.productName}</td>
-                                                                            <td className="px-4 py-2.5 text-center font-bold text-gray-600">{log.qty}</td>
-                                                                            <td className="px-4 py-2.5 text-right font-medium text-gray-600">{formatCurrency(log.price)}</td>
-                                                                            <td className="px-4 py-2.5 text-right font-black text-gray-900">{formatCurrency(log.price * log.qty)}</td>
-                                                                        </tr>
-                                                                    ))}
-                                                                    {emp.products_log?.length === 0 && (
-                                                                        <tr>
-                                                                            <td colSpan={5} className="px-4 py-8 text-center text-gray-400 italic">Chưa có dữ liệu sản phẩm chi tiết</td>
-                                                                        </tr>
-                                                                    )}
-                                                                </tbody>
-                                                                <tfoot className="bg-gray-50/50 font-bold border-t border-gray-100">
-                                                                    <tr>
-                                                                        <td colSpan={4} className="px-4 py-2 text-right text-gray-500 text-[11px] uppercase tracking-wider">Tổng cộng sản phẩm</td>
-                                                                        <td className="px-4 py-2 text-right text-amber-600 text-[13px]">
-                                                                            {formatCurrency((emp.products_log || []).reduce((s, p) => s + p.price * (p.qty || 1), 0))}
-                                                                        </td>
-                                                                    </tr>
-                                                                </tfoot>
-                                                            </table>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            )}
+                                            {/* Painter product log expanded row removed */}
                                         </>
                                     );
                                 })}
@@ -670,9 +598,7 @@ export default function AccountantEmployeeSalary() {
                                 <div className="flex justify-between items-center text-[12px]">
                                     <span className="text-gray-500">Thông số công:</span>
                                     <span className="font-semibold text-gray-700">
-                                        {selectedEmpForPayment.type === "PAINTER"
-                                            ? `${selectedEmpForPayment.products_finished} SP`
-                                            : `${selectedEmpForPayment.days_worked} ngày`}
+                                        {`${selectedEmpForPayment.days_worked} ngày`}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center text-[12px]">

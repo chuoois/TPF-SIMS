@@ -486,8 +486,8 @@ export const HOME_MOCK_DATA = {
       { id: "NV002", name: "Trần Văn Khoa", role: "Nhân viên bán hàng", type: "SALES", calc: "Lương tháng cố định", total: 8500000, status: "Đã thanh toán" },
       { id: "NV003", name: "Lê Đình Chinh", role: "Nhân viên giấy ráp", type: "SANDER", calc: "400.000₫ × 22 ngày", total: 8800000, status: "Chưa thanh toán" },
       { id: "NV004", name: "Phạm Xuân Đạt", role: "Nhân viên giấy ráp", type: "SANDER", calc: "400.000₫ × 25 ngày", total: 10200000, status: "Chưa thanh toán" },
-      { id: "NV005", name: "Đỗ Hữu Hùng", role: "Thợ sơn", type: "PAINTER", calc: "150.000₫ × 120 SP", total: 18000000, status: "Chưa thanh toán" },
-      { id: "NV006", name: "Vũ Tấn Tài", role: "Thợ sơn", type: "PAINTER", calc: "200.000₫ × 85 SP", total: 17500000, status: "Đã thanh toán" },
+      { id: "NV005", name: "Đỗ Hữu Hùng", role: "Thợ sơn", type: "PAINTER", calc: "400.000₫ × 26 ngày", total: 10400000, status: "Chưa thanh toán" },
+      { id: "NV006", name: "Vũ Tấn Tài", role: "Thợ sơn", type: "PAINTER", calc: "400.000₫ × 20 ngày = 8.000.000₫ + Phụ cấp", total: 8500000, status: "Đã thanh toán" },
     ],
   },
 };
@@ -555,16 +555,8 @@ export const MOCK_EMPLOYEES = [
   { id: "KT001", name: "Lê Thị Hương", role: "Kế toán", type: "ACCOUNTANT", base_rate: 450000, days_worked: 26, allowance: 500000, products_finished: 0, products_log: [], status: "Chưa thanh toán", month: CURRENT_MONTH, payment_date: "" },
   { id: "NV003", name: "Lê Đình Chinh", role: "Nhân viên giấy ráp", type: "SANDER", base_rate: 400000, days_worked: 22, allowance: 0, products_finished: 0, products_log: [], status: "Chưa thanh toán", month: CURRENT_MONTH, payment_date: "" },
   { id: "NV004", name: "Phạm Xuân Đạt", role: "Nhân viên giấy ráp", type: "SANDER", base_rate: 400000, days_worked: 25, allowance: 200000, products_finished: 0, products_log: [], status: "Chưa thanh toán", month: CURRENT_MONTH, payment_date: "" },
-  {
-    id: "NV005", name: "Đỗ Hữu Hùng", role: "Thợ sơn", type: "PAINTER", base_rate: 150000, days_worked: 26, allowance: 0,
-    products_log: [{ productName: "Tủ gỗ sồi A1", price: 150000, qty: 40 }, { productName: "Ghế gỗ teak", price: 120000, qty: 35 }, { productName: "Kệ sách đôi", price: 180000, qty: 45 }],
-    products_finished: 120, status: "Chưa thanh toán", month: CURRENT_MONTH, payment_date: "",
-  },
-  {
-    id: "NV006", name: "Vũ Tấn Tài", role: "Thợ sơn", type: "PAINTER", base_rate: 200000, days_worked: 20, allowance: 500000,
-    products_log: [{ productName: "Bàn ăn gỗ thông", price: 200000, qty: 50 }, { productName: "Ghế bar", price: 200000, qty: 35 }],
-    products_finished: 85, status: "Đã thanh toán", month: CURRENT_MONTH, payment_date: "20/03/2024",
-  },
+  { id: "NV005", name: "Đỗ Hữu Hùng", role: "Thợ sơn", type: "PAINTER", base_rate: 400000, days_worked: 26, allowance: 0, products_finished: 0, products_log: [], status: "Chưa thanh toán", month: CURRENT_MONTH, payment_date: "" },
+  { id: "NV006", name: "Vũ Tấn Tài", role: "Thợ sơn", type: "PAINTER", base_rate: 400000, days_worked: 20, allowance: 500000, products_finished: 0, products_log: [], status: "Đã thanh toán", month: CURRENT_MONTH, payment_date: "20/03/2024" },
 ].map(emp => {
   if (emp.products_log?.length && emp.products_finished === 0) {
     emp.products_finished = emp.products_log.reduce((s, p) => s + (p.qty || 1), 0);

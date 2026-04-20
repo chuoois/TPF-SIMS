@@ -84,19 +84,11 @@ export default function EmployeeModal({
       payment_date: formData.paymentDate,
     };
 
-    if (["SALES", "ACCOUNTANT", "SANDER"].includes(formData.type)) {
+    if (["SALES", "ACCOUNTANT", "SANDER", "PAINTER"].includes(formData.type)) {
       employeeData.base_rate = Number(formData.baseRate) || 0;
       employeeData.days_worked = Number(formData.daysWorked) || 0; 
       employeeData.products_finished = 0;
       employeeData.products_log = [];
-    } else if (formData.type === "PAINTER") {
-      employeeData.base_rate = Number(formData.baseRate) || 0;
-      // Keep existing products log if editing
-      employeeData.products_log = employeeToEdit?.products_log || [];
-      // Recalculate products_finished from log
-      const logTotal = employeeData.products_log.reduce((s, p) => s + (p.qty || 1), 0);
-      employeeData.products_finished = logTotal || Number(formData.productsFinished) || 0;
-      employeeData.days_worked = Number(formData.daysWorked) || 0; 
     }
 
     onSave(employeeData);
@@ -155,8 +147,8 @@ export default function EmployeeModal({
                  <h4 className="text-[12px] font-bold uppercase tracking-wider text-gray-500">Thông số tính lương</h4>
               </div>
 
-              {/* SALES, ACCOUNTANT & SANDER – Same daily rate structure */}
-              {(["SALES", "ACCOUNTANT", "SANDER"].includes(formData.type)) && (
+              {/* SALES, ACCOUNTANT, SANDER & PAINTER – Same daily rate structure */}
+              {(["SALES", "ACCOUNTANT", "SANDER", "PAINTER"].includes(formData.type)) && (
                 <>
                   <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
@@ -171,19 +163,6 @@ export default function EmployeeModal({
                       </div>
                   </div>
                 </>
-              )}
-
-              {/* PAINTER – Salary calculated per product from log */}
-              {formData.type === "PAINTER" && (
-                <div className="p-4 rounded-xl bg-green-50 border border-green-200">
-                  <p className="text-[13px] text-green-800 font-semibold mb-1 flex items-center gap-1.5">
-                    🎨 Thợ sơn tính lương theo sản phẩm
-                  </p>
-                  <p className="text-[12px] text-green-700 leading-relaxed">
-                    Thông số tính lương cố định đã bị ẩn. Vui lòng sử dụng tính năng 
-                    <strong> "+ Cộng SP"</strong> trực tiếp trên bảng lương để ghi nhận sản phẩm và đơn giá cho thợ sơn.
-                  </p>
-                </div>
               )}
             </div>
 
