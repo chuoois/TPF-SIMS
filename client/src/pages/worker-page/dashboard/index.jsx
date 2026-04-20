@@ -44,7 +44,7 @@ const OrderItemRow = ({ item }) => {
             {item.productName}
           </h4>
           <span className={`px-2.5 py-1 ${config.color} rounded-full text-[11px] font-bold border flex items-center gap-1 w-fit`}>
-            <StatusIcon size={12} className={(item.status === 'SANDING' || item.status === 'PAINTING') ? 'animate-pulse' : ''} />
+            <StatusIcon size={12} className={(item.status === 'INSPECTION') ? 'animate-pulse' : ''} />
             {config.label}
           </span>
         </div>
