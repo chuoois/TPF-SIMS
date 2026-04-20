@@ -142,7 +142,7 @@ export default function ProductModal({
     name: "", code: "", category: "", unit: "", material: "", color: "",
     dimL: "", dimW: "", dimH: "", status: "", productType: "",
     warrantyMonths: 12, leadTime: 0, description: "",
-    costPrice: 0, paintCost: 0, margin: 20,
+    costPrice: 0, processingCost: 0, margin: 20,
     rawRetailPrice: 0, finishedRetailPrice: 0, retailPrice: 0,
   });
 
@@ -171,7 +171,7 @@ export default function ProductModal({
         description: product.description || "",
 
         costPrice: initialCost,
-        paintCost: product.paintCost || 0,
+        processingCost: product.processingCost || product.paintCost || 0,
         margin: 20,
         rawRetailPrice: product.rawRetailPrice || 0,
         finishedRetailPrice: product.finishedRetailPrice || 0,
@@ -216,7 +216,7 @@ export default function ProductModal({
     const updated = {
       ...product,
       costPrice: form.costPrice,
-      paintCost: form.paintCost,
+      processingCost: form.processingCost,
       warrantyMonths: Number(form.warrantyMonths),
       status: "Hàng sẵn",
       ...(isWood
@@ -242,7 +242,7 @@ export default function ProductModal({
     onSave?.(updated, "Đã định giá và mở bán thành công!");
   };
 
-  const totalCost = form.costPrice + form.paintCost;
+  const totalCost = form.costPrice + form.processingCost;
   const multiplier = 1 + (form.margin / 100);
   const suggestedRaw = form.costPrice * multiplier;
   const suggestedFinished = totalCost * multiplier;
@@ -436,7 +436,7 @@ export default function ProductModal({
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                      {/* Giá nhập & Công thợ sơn & Lịch sử */}
+                      {/* Giá nhập & Chi phí gia công & Lịch sử */}
                       <div className="col-span-2 grid grid-cols-3 gap-4 items-start">
                         <div className="col-span-1 flex flex-col gap-4">
                           {/* Giá nhập */}
@@ -503,13 +503,13 @@ export default function ProductModal({
 
                     <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">Công thợ sơn</label>
+                        <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">Chi phí gia công</label>
                         <div className="relative">
                           <input
                             type="text"
                             className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/30 focus:border-[var(--brand-primary)] transition pr-8 bg-white"
-                            value={formatNum(form.paintCost)}
-                            onChange={setNum("paintCost")}
+                            value={formatNum(form.processingCost)}
+                            onChange={setNum("processingCost")}
                             placeholder="0"
                           />
                           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">₫</span>

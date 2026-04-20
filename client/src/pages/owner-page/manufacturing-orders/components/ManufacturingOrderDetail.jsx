@@ -106,7 +106,7 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="relative flex flex-col rounded-2xl overflow-hidden"
+        className="relative flex flex-col rounded-lg overflow-hidden"
         style={{
           width: "min(920px, 95vw)",
           maxHeight: "92vh",

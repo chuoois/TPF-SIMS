@@ -126,7 +126,7 @@ function BundleLineCard({ line, idx }) {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {/* Bảng các món lẻ */}
                     {line.items && line.items.length > 0 && (
-                        <div className="rounded-xl border border-gray-200 bg-white flex flex-col shadow-sm overflow-hidden" style={{maxHeight: "220px"}}>
+                        <div className="rounded-lg border border-gray-200 bg-white flex flex-col shadow-sm overflow-hidden" style={{maxHeight: "220px"}}>
                             <div className="px-4 py-2.5 bg-gray-50/80 border-b border-gray-200 shrink-0">
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-gray-600 flex items-center gap-1.5">
                                     <List size={12}/> Các món lẻ trong bộ
