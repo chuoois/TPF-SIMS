@@ -1,12 +1,9 @@
 import { Clock, Play, CheckCircle2, AlertCircle } from "lucide-react";
 
 export const STATUS_CONFIG = {
-  WAITING: { label: "Chờ xử lý", color: "bg-gray-100 text-gray-700", icon: Clock },
-  SANDING: { label: "Đang xử lý (Giấy giáp)", color: "bg-blue-100 text-blue-700", icon: Play },
-  PAINTING: { label: "Đang xử lý (Sơn)", color: "bg-indigo-100 text-indigo-700", icon: Play },
+  WAITING: { label: "Tiếp nhận", color: "bg-gray-100 text-gray-700", icon: Clock },
+  INSPECTION: { label: "Nghiệm thu", color: "bg-blue-100 text-blue-700", icon: Play },
   OWNER_PENDING: { label: "Chờ chủ duyệt", color: "bg-amber-100 text-amber-700", icon: AlertCircle },
-  QC_PENDING: { label: "Chờ duyệt QC", color: "bg-orange-100 text-orange-700", icon: AlertCircle },
-  REWORK: { label: "Làm lại", color: "bg-red-100 text-red-700 font-bold", icon: AlertCircle },
   COMPLETED: { label: "Hoàn thành", color: "bg-green-100 text-green-700", icon: CheckCircle2 },
 };
 
@@ -81,7 +78,7 @@ export let MOCK_ORDERS = [
         color: "Trắng vân gỗ",
         quantity: 1,
         note: "Hậu tủ phay rãnh lùa, chạy chỉ âm viền ngoài 5mm, dùng bản lề giảm chấn",
-        status: "SANDING",
+        status: "INSPECTION",
         startedAt: "25/10/2023 10:15",
         deliveryDate: "30/10/2023",
         deadline: "28/10/2023",
@@ -186,7 +183,7 @@ export const updateMockTaskStatus = (itemId, newStatus, finishedImage = null) =>
         orderChanged = true;
         
         const updates = { ...item, status: newStatus };
-        if (newStatus === "SANDING" && !item.startedAt) {
+        if (newStatus === "INSPECTION" && !item.startedAt) {
           const now = new Date();
           const pad = (n) => String(n).padStart(2, '0');
           updates.startedAt = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;

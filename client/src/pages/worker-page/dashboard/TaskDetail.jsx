@@ -39,28 +39,21 @@ import {
 /* ─── Production Steps ─── */
 const STEPS = [
   { id: 1, key: "WAITING", label: "Tiếp nhận", icon: PackageCheck },
-  { id: 2, key: "SANDING", label: "Đánh giấy giáp", icon: Play },
-  { id: 3, key: "PAINTING", label: "Phun sơn", icon: Play },
-  { id: 4, key: "OWNER_PENDING", label: "Chờ chủ duyệt", icon: AlertCircle },
-  { id: 5, key: "QC_PENDING", label: "Hoàn thiện", icon: CheckCircle2 },
+  { id: 2, key: "INSPECTION", label: "Nghiệm thu", icon: Play },
+  { id: 3, key: "OWNER_PENDING", label: "Chờ chủ duyệt", icon: AlertCircle },
+  { id: 4, key: "COMPLETED", label: "Hoàn thành", icon: CheckCircle2 },
 ];
 
 const getStepIndex = (status) => {
   switch (status) {
     case "WAITING":
       return 0;
-    case "SANDING":
+    case "INSPECTION":
       return 1;
-    case "PAINTING":
-      return 2;
     case "OWNER_PENDING":
-      return 3;
-    case "QC_PENDING":
-      return 4;
-    case "REWORK":
-      return 1;
+      return 2;
     case "COMPLETED":
-      return 5;
+      return 4;
     default:
       return 0;
   }
@@ -70,40 +63,22 @@ const getStepIndex = (status) => {
 const getStatusBadge = (status) => {
   const map = {
     WAITING: {
-      label: "Chờ xử lý",
+      label: "Tiếp nhận",
       bg: "rgba(158,158,158,0.1)",
       color: "var(--text-secondary)",
       border: "var(--grid-border)",
     },
-    SANDING: {
-      label: "Đang đánh giấy giáp",
+    INSPECTION: {
+      label: "Đang nghiệm thu",
       bg: "rgba(33,164,244,0.08)",
       color: "#1a8fd4",
       border: "rgba(33,164,244,0.2)",
-    },
-    PAINTING: {
-      label: "Đang phun sơn",
-      bg: "rgba(67,104,224,0.08)",
-      color: "#4368E0",
-      border: "rgba(67,104,224,0.2)",
     },
     OWNER_PENDING: {
       label: "Chờ chủ duyệt",
       bg: "rgba(245,158,11,0.08)",
       color: "#d97706",
       border: "rgba(245,158,11,0.2)",
-    },
-    QC_PENDING: {
-      label: "Chờ QC duyệt",
-      bg: "rgba(255,153,0,0.08)",
-      color: "#e08a00",
-      border: "rgba(255,153,0,0.2)",
-    },
-    REWORK: {
-      label: "Cần làm lại",
-      bg: "rgba(229,72,77,0.08)",
-      color: "var(--status-error)",
-      border: "rgba(229,72,77,0.2)",
     },
     COMPLETED: {
       label: "Hoàn thành",
@@ -232,10 +207,10 @@ export default function TaskDetail() {
   };
 
   const handleStartProduction = () => {
-    updateMockTaskStatus(selectedTask.id, "SANDING");
+    updateMockTaskStatus(selectedTask.id, "INSPECTION");
     const updated = getTaskById(selectedTask.id);
     setSelectedTask(updated);
-    toast.success("Đã bắt đầu sản xuất!");
+    toast.success("Bắt đầu chuyển sang nghiệm thu!");
   };
 
   const handleSetPlanDate = () => {
@@ -265,7 +240,7 @@ export default function TaskDetail() {
     updateTaskDeadline(selectedTask.id, dateStr, urgency);
 
     if (isStartingProduction) {
-      updateMockTaskStatus(selectedTask.id, "SANDING");
+      updateMockTaskStatus(selectedTask.id, "INSPECTION");
       setIsStartingProduction(false);
     }
 
@@ -288,7 +263,7 @@ export default function TaskDetail() {
 
   /* ─── Action Button ─── */
   const renderActionButton = () => {
-    if (selectedTask.status === "WAITING" || selectedTask.status === "REWORK") {
+    if (selectedTask.status === "WAITING") {
       return (
         <button
           onClick={handleStartProduction}
@@ -302,111 +277,78 @@ export default function TaskDetail() {
           }
           onMouseLeave={(e) => (e.currentTarget.style.filter = "none")}
         >
-          <Play size={15} /> Bắt đầu sản xuất
+          <Play size={15} /> Bắt đầu nghiệm thu
         </button>
       );
     }
 
-    if (
-      selectedTask.status === "SANDING" ||
-      selectedTask.status === "PAINTING"
-    ) {
-      const isPainting = selectedTask.status === "PAINTING";
-      const canFinish = !isPainting || finishedImage;
-
+    if (selectedTask.status === "INSPECTION") {
       return (
         <div className="flex flex-col gap-4 items-end">
-          {isPainting && (
-            <div className="w-full max-w-sm">
-              <label className="block text-[12px] font-bold text-gray-500 mb-2 uppercase tracking-wider">
-                Ảnh sản phẩm hoàn thiện <span className="text-red-500">*</span>
-              </label>
-              <div className="relative group">
-                <label
-                  className={`w-full h-32 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${
-                    finishedImage
-                      ? "border-emerald-500 bg-emerald-50"
-                      : "border-gray-200 bg-gray-50 hover:bg-gray-100"
-                  }`}
-                >
-                  {finishedImage ? (
-                    <div className="flex items-center gap-4 px-4 w-full">
-                      <img
-                        src={finishedImage}
-                        className="w-24 h-24 rounded-xl object-cover border border-emerald-200 shadow-md"
-                        alt="Preview"
-                      />
-                      <div className="flex flex-col">
-                        <span className="text-emerald-700 font-bold text-[13px]">
-                          Ảnh đã chọn
-                        </span>
-                        <span className="text-[11px] text-gray-400 font-medium">
-                          Nhấp để thay đổi
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm mb-2 group-hover:scale-110 transition-transform">
-                        <Camera size={20} className="text-gray-400" />
-                      </div>
-                      <span className="text-gray-400 text-[11px] font-bold uppercase tracking-wider">
-                        Chụp hoặc tải ảnh lên
+          <div className="w-full max-w-sm">
+            <label className="block text-[12px] font-bold text-gray-500 mb-2 uppercase tracking-wider">
+              Ảnh sản phẩm hoàn thiện <span className="text-red-500">*</span>
+            </label>
+            <div className="relative group">
+              <label
+                className={`w-full h-32 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${
+                  finishedImage
+                    ? "border-emerald-500 bg-emerald-50"
+                    : "border-gray-200 bg-gray-50 hover:bg-gray-100"
+                }`}
+              >
+                {finishedImage ? (
+                  <div className="flex items-center gap-4 px-4 w-full">
+                    <img
+                      src={finishedImage}
+                      className="w-24 h-24 rounded-xl object-cover border border-emerald-200 shadow-md"
+                      alt="Preview"
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-emerald-700 font-bold text-[13px]">
+                        Ảnh đã chọn
                       </span>
-                    </>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageChange}
-                  />
-                </label>
-              </div>
+                      <span className="text-[11px] text-gray-400 font-medium">
+                        Nhấp để thay đổi
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm mb-2 group-hover:scale-110 transition-transform">
+                      <Camera size={20} className="text-gray-400" />
+                    </div>
+                    <span className="text-gray-400 text-[11px] font-bold uppercase tracking-wider">
+                      Chụp hoặc tải ảnh lên
+                    </span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+              </label>
             </div>
-          )}
+          </div>
           <button
             onClick={() => {
-              if (isPainting && !finishedImage) {
+              if (!finishedImage) {
                 toast.error("Vui lòng tải ảnh sản phẩm hoàn thiện!");
                 return;
               }
-              updateTaskStatus(
-                selectedTask.id,
-                selectedTask.status === "SANDING"
-                  ? "PAINTING"
-                  : "OWNER_PENDING",
-              );
+              updateTaskStatus(selectedTask.id, "OWNER_PENDING");
             }}
-            disabled={isUploading || (isPainting && !finishedImage)}
+            disabled={isUploading || !finishedImage}
             className={`h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 ${
-              isUploading || (isPainting && !finishedImage)
+              isUploading || !finishedImage
                 ? "opacity-50 cursor-not-allowed bg-gray-400"
                 : "cursor-pointer bg-emerald-600 hover:bg-emerald-700"
             }`}
             style={{ color: "#fff" }}
           >
-            <CheckCircle2 size={15} />
-            {isPainting ? "Xác nhận gửi chủ duyệt" : "Hoàn thành đánh giấy ráp"}
-          </button>
-        </div>
-      );
-    }
-
-    if (selectedTask.status === "QC_PENDING") {
-      return (
-        <div className="flex gap-3">
-          <button
-            disabled
-            className="h-11 px-6 rounded-xl font-semibold text-[14px] flex items-center justify-center gap-2 cursor-not-allowed opacity-70"
-            style={{
-              background: "rgba(255,153,0,0.08)",
-              color: "#e08a00",
-              border: "1px solid rgba(255,153,0,0.2)",
-            }}
-          >
-            <Clock size={15} />
-            Đang chờ QC duyệt
+            <CheckCircle2 size={15} /> Gửi ảnh cho chủ duyệt
           </button>
         </div>
       );
@@ -477,6 +419,24 @@ export default function TaskDetail() {
                   Đang chờ chủ duyệt
                 </>
               )}
+            </button>
+            <button
+              onClick={() => {
+                updateTaskStatus(selectedTask.id, "COMPLETED");
+                toast.success("Mô phỏng: Chủ xưởng đã duyệt!");
+              }}
+              className="h-11 px-6 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              <CheckCircle2 size={15} /> Giả lập Chủ Duyệt
+            </button>
+            <button
+              onClick={() => {
+                updateTaskStatus(selectedTask.id, "INSPECTION");
+                toast.error("Mô phỏng: Chủ xưởng yêu cầu làm lại!");
+              }}
+              className="h-11 px-6 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
+            >
+              <AlertCircle size={15} /> Giả lập Từ Chối
             </button>
           </div>
         </div>
