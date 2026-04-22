@@ -62,7 +62,7 @@ router.post("/refresh-token", AuthController.refreshToken);
  *       200:
  *         description: Logout successful
  */
-router.post("/logout", AuthController.logout);
+router.post("/logout", verifyAccessToken, AuthController.logout);
 
 /**
  * @swagger

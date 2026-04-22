@@ -6,7 +6,7 @@
 
 import { useState, useMemo } from "react";
 import {
-  FileStack, Plus, Search, Printer, Eye, Trash2,
+  FileStack, Plus, Search, Printer, Eye, Trash2, Clock, Calendar,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import DataTable from "@/components/control/DataTable";
@@ -158,6 +158,40 @@ export default function ManufacturingOrdersPage() {
       ),
     },
     {
+      header: "Nhà cung cấp",
+      render: (o) => (
+        <div className="flex flex-col">
+          <p className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>
+            {o.supplierName || "—"}
+          </p>
+          {o.supplierId && (
+            <p className="text-[11px] font-mono font-bold" style={{ color: "var(--text-placeholder)" }}>
+              {o.supplierId}
+            </p>
+          )}
+        </div>
+      ),
+    },
+    {
+      header: "Hẹn giao",
+      render: (o) => {
+        if (!o.expectedDate) return <span className="text-[13px] text-gray-400">—</span>;
+        const d = new Date(o.expectedDate);
+        const isOverdue = d < new Date().setHours(0,0,0,0) && o.status !== "Đã nhập kho";
+        return (
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-1">
+              <Clock size={12} style={{ color: isOverdue ? "#ef4444" : "var(--text-placeholder)" }} />
+              <span className="text-[13px] font-bold" style={{ color: isOverdue ? "#ef4444" : "var(--text-main)" }}>
+                {new Date(o.expectedDate).toLocaleDateString("vi-VN")}
+              </span>
+            </div>
+            {isOverdue && <span className="text-[10px] font-bold text-rose-500 uppercase tracking-tight">Quá hạn</span>}
+          </div>
+        );
+      }
+    },
+    {
       header: "Đơn hàng liên quan",
       render: (o) => (
         <div className="flex flex-col gap-1">
@@ -193,7 +227,7 @@ export default function ManufacturingOrdersPage() {
         return (
           <div className="flex flex-col items-center gap-0.5">
             <span className="text-[14px] font-black" style={{ color: "var(--text-main)" }}>{total}</span>
-            <span className="text-[10px]" style={{ color: "var(--text-placeholder)" }}>{o.items?.length || 0} dòng</span>
+            <span className="text-[11px]" style={{ color: "var(--text-placeholder)" }}>{o.items?.length || 0} dòng</span>
           </div>
         );
       },
@@ -201,7 +235,7 @@ export default function ManufacturingOrdersPage() {
     {
       header: "Ghi chú",
       render: (o) => (
-        <p className="text-[12px] truncate max-w-[200px]" style={{ color: "var(--text-secondary)" }}>
+        <p className="text-[13px] truncate max-w-[200px]" style={{ color: "var(--text-secondary)" }}>
           {o.note || "—"}
         </p>
       ),

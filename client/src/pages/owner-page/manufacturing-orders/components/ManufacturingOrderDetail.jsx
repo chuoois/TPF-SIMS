@@ -14,6 +14,7 @@ import {
   User,
   Package,
   Users,
+  Clock,
 } from "lucide-react";
 
 
@@ -24,9 +25,9 @@ const formatDate = (iso) =>
 const formatDateTime = (iso) =>
   iso
     ? new Date(iso).toLocaleString("vi-VN", {
-        day: "2-digit", month: "2-digit", year: "numeric",
-        hour: "2-digit", minute: "2-digit",
-      })
+      day: "2-digit", month: "2-digit", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    })
     : "—";
 
 // Helper: get display size
@@ -124,7 +125,7 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
               <FileStack size={18} style={{ color: "var(--brand-primary)" }} />
             </div>
             <div>
-              <h2 className="text-[15px] font-bold" style={{ color: "var(--text-main)" }}>
+              <h2 className="text-[16px] font-bold" style={{ color: "var(--text-main)" }}>
                 Chi tiết yêu cầu nhập hàng
               </h2>
               <p className="text-[12px] font-mono" style={{ color: "var(--text-secondary)" }}>{order.id}</p>
@@ -154,23 +155,41 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
 
           {/* Compact Summary Bar */}
           <div className="flex items-center gap-4 mb-6 px-4 py-3 rounded-xl border border-dashed border-gray-200 bg-gray-50/50">
-             <div className="flex items-center gap-1.5 text-[12px]">
-                <Calendar size={14} className="text-gray-400" />
-                <span className="text-gray-400">Ngày tạo:</span>
-                <span className="font-bold text-gray-700">{formatDateTime(order.createdAt)}</span>
-             </div>
-             <div className="w-px h-4 bg-gray-200" />
-             <div className="flex items-center gap-1.5 text-[12px]">
-                <User size={14} className="text-gray-400" />
-                <span className="text-gray-400">Người tạo:</span>
-                <span className="font-bold text-gray-700">{order.createdBy || "Chủ xưởng"}</span>
-             </div>
-             <div className="w-px h-4 bg-gray-200" />
-             <div className="flex items-center gap-1.5 text-[12px]">
-                <Package size={14} className="text-gray-400" />
-                <span className="text-gray-400">Tổng cộng:</span>
-                <span className="font-bold text-[var(--brand-primary)]">{totalQty} chiếc</span>
-             </div>
+            <div className="flex items-center gap-1.5 text-[12px]">
+              <Calendar size={14} style={{ color: "var(--text-placeholder)" }} />
+              <span style={{ color: "var(--text-placeholder)" }}>Ngày tạo:</span>
+              <span className="font-bold" style={{ color: "var(--text-main)" }}>{formatDateTime(order.createdAt)}</span>
+            </div>
+            <div className="w-px h-4 bg-gray-200" />
+            <div className="flex items-center gap-1.5 text-[12px]">
+              <User size={14} style={{ color: "var(--text-placeholder)" }} />
+              <span style={{ color: "var(--text-placeholder)" }}>Người tạo:</span>
+              <span className="font-bold" style={{ color: "var(--text-main)" }}>{order.createdBy || "Chủ xưởng"}</span>
+            </div>
+            <div className="w-px h-4 bg-gray-200" />
+            <div className="flex items-center gap-1.5 text-[12px]">
+              <Users size={14} style={{ color: "var(--text-placeholder)" }} />
+              <span style={{ color: "var(--text-placeholder)" }}>Nhà cung cấp:</span>
+              <span className="font-bold" style={{ color: "var(--text-main)" }}>{order.supplierName || "—"}</span>
+            </div>
+            <div className="w-px h-4 bg-gray-200" />
+            <div className="flex items-center gap-1.5 text-[12px]">
+              <Package size={14} style={{ color: "var(--text-placeholder)" }} />
+              <span style={{ color: "var(--text-placeholder)" }}>Tổng cộng:</span>
+              <span className="font-bold text-[var(--brand-primary)]">{totalQty} chiếc</span>
+            </div>
+            {order.expectedDate && (
+              <>
+                <div className="w-px h-4 bg-gray-200" />
+                <div className="flex items-center gap-1.5 text-[12px]">
+                  <Clock size={14} style={{ color: "var(--text-placeholder)" }} />
+                  <span style={{ color: "var(--text-placeholder)" }}>Hẹn sớm nhất:</span>
+                  <span className="font-bold text-rose-600">
+                    {new Date(order.expectedDate).toLocaleDateString("vi-VN")}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Ghi chú tổng */}
@@ -208,13 +227,21 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                       <span className="text-[11px] font-black w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "var(--brand-primary)", color: "#fff" }}>
                         {idx + 1}
                       </span>
-                      <span className="text-[14px] font-bold" style={{ color: "var(--text-main)" }}>
+                      <span className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>
                         {item.productName}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-[16px] font-black" style={{ color: "var(--brand-primary)" }}>×{item.qty}</span>
-                      <span className="text-[11px]" style={{ color: "var(--text-placeholder)" }}>{item.unit || "Cái"}</span>
+                    <div className="flex items-center gap-3">
+                      {(item.expectedDate || order.expectedDate) && (
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-rose-50 border border-rose-100 text-rose-600">
+                            <Clock size={12} />
+                            <span className="text-[11px] font-black uppercase">Đến: {new Date(item.expectedDate || order.expectedDate).toLocaleDateString("vi-VN")}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1">
+                        <span className="text-[16px] font-black" style={{ color: "var(--brand-primary)" }}>×{item.qty}</span>
+                        <span className="text-[11px]" style={{ color: "var(--text-placeholder)" }}>{item.unit || "Cái"}</span>
+                      </div>
                     </div>
                   </div>
 
@@ -284,10 +311,10 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                               const detail = item.sourceOrderDetails?.[src] || order.sourceOrderDetails?.[src];
                               return (
                                 <div key={src} className="flex items-center gap-1.5">
-                                  <span className="text-[11px] font-bold px-1.5 py-0.5 rounded" style={{ 
-                                    background: src === "DANH-MUC" ? "var(--status-focus)" : "#F3F4F6", 
-                                    color: src === "DANH-MUC" ? "var(--brand-primary)" : "var(--text-main)", 
-                                    border: "1px solid var(--grid-border)" 
+                                  <span className="text-[11px] font-bold px-1.5 py-0.5 rounded" style={{
+                                    background: src === "DANH-MUC" ? "var(--status-focus)" : "#F3F4F6",
+                                    color: src === "DANH-MUC" ? "var(--brand-primary)" : "var(--text-main)",
+                                    border: "1px solid var(--grid-border)"
                                   }}>
                                     {src === "DANH-MUC" ? "Hàng có sẵn" : src}
                                   </span>
@@ -297,7 +324,7 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                                     </span>
                                   )}
                                   {detail?.type && (
-                                    <span className="text-[10px] px-1 py-0.5 rounded font-medium" style={{
+                                    <span className="text-[11px] px-1 py-0.5 rounded font-medium" style={{
                                       background: detail.type === "Hàng khách đặt" ? "#FEF3C7" : "#EFF6FF",
                                       color: detail.type === "Hàng khách đặt" ? "#B45309" : "#1D4ED8",
                                     }}>
@@ -313,7 +340,7 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
 
                       {/* Ghi chú kỹ thuật */}
                       {item.note && (
-                        <div className="mt-3 px-3 py-2 rounded-lg text-[12px] leading-relaxed" style={{ background: "#FFFBEB", border: "1px solid #FDE68A", color: "#92400E" }}>
+                        <div className="mt-3 px-3 py-2 rounded-lg text-[13px] leading-relaxed" style={{ background: "#FFFBEB", border: "1px solid #FDE68A", color: "#92400E" }}>
                           <span className="font-bold">Ghi chú KT: </span>{item.note}
                         </div>
                       )}
@@ -344,7 +371,7 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
             <div className="info-grid">
               <div><span className="label">Ngày tạo: </span><span className="value">{formatDateTime(order.createdAt)}</span></div>
               <div><span className="label">Người tạo: </span><span className="value">{order.createdBy || "Chủ xưởng"}</span></div>
-            <div><span className="label">Tổng số lượng: </span><span className="value">{totalQty} sản phẩm</span></div>
+              <div><span className="label">Tổng số lượng: </span><span className="value">{totalQty} sản phẩm</span></div>
             </div>
 
             {order.note && (
@@ -368,7 +395,10 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                 <div key={idx} className="product-card">
                   <div className="product-card-header">
                     <span>{idx + 1}. {item.productName}</span>
-                    <span>SL: {item.qty} {item.unit || "Cái"}</span>
+                    <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                        {(item.expectedDate || order.expectedDate) && <span style={{ color: "red", fontSize: "11px" }}>Hạn: {new Date(item.expectedDate || order.expectedDate).toLocaleDateString("vi-VN")}</span>}
+                        <span>SL: {item.qty} {item.unit || "Cái"}</span>
+                    </div>
                   </div>
                   <div className="product-card-body">
                     <div className="detail-row">

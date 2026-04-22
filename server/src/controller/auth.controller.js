@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const { UserAccount, UserRole, UserProfile, RefreshToken } = require("../entities");
 const { generateAccessToken, generateRefreshToken } = require("../utils/jwt");
 const { sendNewPasswordEmail } = require("../utils/email");
+const systemLogController = require("./systemLog.controller");
 
 /**
  * Auth Controller
@@ -79,6 +80,9 @@ class AuthController {
         sameSite: "strict",
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
+
+      // Ghi log đăng nhập
+      await systemLogController.record(req, "LOGIN", `Người dùng ${user.email} đăng nhập thành công`, "INFO", user.user_account_id);
 
       return res.status(200).json({
         message: "Đăng nhập thành công",
@@ -186,6 +190,11 @@ class AuthController {
       res.clearCookie("accessToken");
       res.clearCookie("refreshToken");
 
+      // Ghi log đăng xuất
+      if (req.user) {
+        await systemLogController.record(req, "LOGOUT", `Người dùng ${req.user.email} đã đăng xuất`, "INFO");
+      }
+
       return res.status(200).json({ message: "Đăng xuất thành công" });
     } catch (error) {
       console.error("Logout error:", error);
@@ -223,6 +232,9 @@ class AuthController {
 
       // Gửi email
       await sendNewPasswordEmail(email, newPassword);
+
+      // Ghi log quên mật khẩu
+      await systemLogController.record(req, "FORGOT_PASSWORD", `Yêu cầu cấp lại mật khẩu cho email: ${email}`, "WARN", user.user_account_id);
 
       return res.status(200).json({ message: "Mật khẩu mới đã được gửi vào email của bạn" });
     } catch (error) {

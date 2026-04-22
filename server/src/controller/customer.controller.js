@@ -1,21 +1,54 @@
+const { Op } = require("sequelize");
 const { CustomerProfile } = require("../entities");
+const systemLogController = require("./systemLog.controller");
 
 /**
- * Sale Controller - Quản lý thông tin khách hàng
- * Created By: Antigravity
- * Created Date: 17/04/2026
+ * Customer Controller - Quản lý thông tin khách hàng
+ * Created By: ThinhBui
+ * Created Date: 22/04/2026
  */
-class SaleController {
+class CustomerController {
   /**
    * Lấy danh sách khách hàng (chưa xóa)
    */
   async getAllCustomers(req, res) {
     try {
-      const customers = await CustomerProfile.findAll({
-        where: { status: 1 },
+      const { search, gender, page = 1, limit = 10 } = req.query;
+      const offset = (page - 1) * limit;
+
+      const where = { status: 1 };
+
+      // Tìm kiếm (Search)
+      if (search) {
+        where[Op.or] = [
+          { full_name: { [Op.like]: `%${search}%` } },
+          { customer_code: { [Op.like]: `%${search}%` } },
+          { phone_number: { [Op.like]: `%${search}%` } },
+          { email: { [Op.like]: `%${search}%` } },
+        ];
+      }
+
+      // Lọc (Filter)
+      if (typeof gender !== 'undefined' && gender !== null && gender !== "") {
+        where.gender = gender;
+      }
+
+      const { count, rows } = await CustomerProfile.findAndCountAll({
+        where,
         order: [["createdate", "DESC"]],
+        limit: parseInt(limit),
+        offset: parseInt(offset),
       });
-      return res.status(200).json(customers);
+
+      return res.status(200).json({
+        data: rows,
+        pagination: {
+          totalItems: count,
+          totalPages: Math.ceil(count / limit),
+          currentPage: parseInt(page),
+          limit: parseInt(limit),
+        }
+      });
     } catch (error) {
       console.error("Get all customers error:", error);
       return res.status(500).json({ message: "Lỗi hệ thống khi lấy danh sách khách hàng" });
@@ -57,6 +90,9 @@ class SaleController {
         createby: userId,
       });
 
+      // Ghi log tạo khách hàng
+      await systemLogController.record(req, "CREATE_CUSTOMER", `Đã tạo khách hàng mới: ${newCustomer.full_name} (${newCustomer.customer_code || 'N/A'})`, "INFO", userId);
+
       return res.status(201).json({
         message: "Tạo khách hàng thành công",
         customer: newCustomer,
@@ -89,6 +125,9 @@ class SaleController {
         modifiedate: new Date(),
         modifieby: userId,
       });
+
+      // Ghi log cập nhật khách hàng
+      await systemLogController.record(req, "UPDATE_CUSTOMER", `Đã cập nhật thông tin khách hàng: ${customer.full_name} (ID: ${id})`, "INFO", userId);
 
       return res.status(200).json({
         message: "Cập nhật thông tin khách hàng thành công",
@@ -123,6 +162,9 @@ class SaleController {
         modifieby: userId,
       });
 
+      // Ghi log xóa khách hàng
+      await systemLogController.record(req, "DELETE_CUSTOMER", `Đã xóa khách hàng: ${customer.full_name} (ID: ${id})`, "WARN", userId);
+
       return res.status(200).json({ message: "Xóa khách hàng thành công (Soft Delete)" });
     } catch (error) {
       console.error("Delete customer error:", error);
@@ -131,4 +173,4 @@ class SaleController {
   }
 }
 
-module.exports = new SaleController();
+module.exports = new CustomerController();
