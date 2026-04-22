@@ -15,13 +15,13 @@ const CustomCheckbox = ({ checked, onChange, disabled }) => {
       }}
       disabled={disabled}
       className={`
-        relative w-5 h-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center cursor-pointer outline-none
+        relative w-5 h-5 rounded-md border-2 flex items-center justify-center cursor-pointer outline-none
         ${
           checked
-            ? "bg-[var(--brand-primary)] border-[var(--brand-primary)] scale-105"
-            : "bg-white border-[var(--grid-border)] hover:border-[var(--brand-primary)]"
+            ? "bg-[var(--brand-primary)] border-[var(--brand-primary)]"
+            : "bg-white border-[var(--grid-border)]"
         }
-        ${disabled ? "opacity-50 cursor-not-allowed" : "active:scale-95"}
+        ${disabled ? "opacity-50 cursor-not-allowed" : ""}
       `}
       style={checked ? { boxShadow: "0 2px 8px rgba(52, 176, 87, 0.4)" } : {}}
     >

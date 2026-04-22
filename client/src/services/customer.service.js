@@ -1,19 +1,20 @@
 import axiosInstance from "@/lib/axios";
 
 /**
- * Sale Service
- * Dịch vụ xử lý các yêu cầu liên quan đến quản lý bán hàng và khách hàng
+ * Customer Service
+ * Dịch vụ xử lý các yêu cầu liên quan đến quản lý khách hàng
  * 
  * Created By: Antigravity
  * Created Date: 17/04/2026
  */
-const saleService = {
+const customerService = {
   /**
-   * Lấy tất cả khách hàng (chưa xóa)
+   * Lấy tất cả khách hàng (có search, filter và phân trang)
+   * @param {Object} params - { search, gender, page, limit }
    * @returns {Promise}
    */
-  async getAllCustomers() {
-    const response = await axiosInstance.get("/sale/customers");
+  async getAllCustomers(params = {}) {
+    const response = await axiosInstance.get("/customer/customers", { params });
     return response.data;
   },
 
@@ -23,7 +24,7 @@ const saleService = {
    * @returns {Promise}
    */
   async getCustomerById(id) {
-    const response = await axiosInstance.get(`/sale/customers/${id}`);
+    const response = await axiosInstance.get(`/customer/customers/${id}`);
     return response.data;
   },
 
@@ -33,7 +34,7 @@ const saleService = {
    * @returns {Promise}
    */
   async createCustomer(customerData) {
-    const response = await axiosInstance.post("/sale/customers", customerData);
+    const response = await axiosInstance.post("/customer/customers", customerData);
     return response.data;
   },
 
@@ -44,7 +45,7 @@ const saleService = {
    * @returns {Promise}
    */
   async updateCustomer(id, updateData) {
-    const response = await axiosInstance.put(`/sale/customers/${id}`, updateData);
+    const response = await axiosInstance.put(`/customer/customers/${id}`, updateData);
     return response.data;
   },
 
@@ -54,9 +55,9 @@ const saleService = {
    * @returns {Promise}
    */
   async deleteCustomer(id) {
-    const response = await axiosInstance.delete(`/sale/customers/${id}`);
+    const response = await axiosInstance.delete(`/customer/customers/${id}`);
     return response.data;
   },
 };
 
-export default saleService;
+export default customerService;

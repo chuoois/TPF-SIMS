@@ -117,8 +117,7 @@ const DataTable = ({
                 e.stopPropagation();
                 handleToggleExpand(item.id);
               }}
-              className={`p-1.5 rounded-lg transition-all border ${isExpanded ? 'bg-indigo-50 border-indigo-100 text-indigo-600 shadow-sm' : 'hover:bg-gray-50 border-transparent text-gray-400 hover:text-gray-600'
-                }`}
+              className={`p-1.5 rounded-lg border ${isExpanded ? 'bg-indigo-50 border-indigo-100 text-indigo-600' : 'bg-transparent border-transparent text-gray-400'}`}
             >
               <Icon size={14} strokeWidth={3} />
             </button>
@@ -252,7 +251,7 @@ const DataTable = ({
                       action.onClick();
                     }
                   }}
-                  className={`h-8 px-4 text-white text-[11px] font-bold hover:brightness-110 transition active:scale-95 flex items-center gap-2 cursor-pointer border-none rounded-lg ${action.colorClass || 'bg-rose-600'}`}
+                  className={`h-8 px-4 text-white text-[11px] font-bold flex items-center gap-2 cursor-pointer border-none rounded-lg ${action.colorClass || 'bg-rose-600'}`}
                 >
                   {action.icon && <action.icon size={14} />}
                   {action.label}
@@ -260,7 +259,7 @@ const DataTable = ({
               ))}
               <button
                 onClick={() => setSelectedIds([])}
-                className="h-8 px-4 text-[11px] font-bold hover:bg-gray-200 transition cursor-pointer border-none ml-2 rounded-lg"
+                className="px-4 py-1.5 rounded-lg text-[11px] font-bold cursor-pointer border border-transparent ml-2"
                 style={{ backgroundColor: "var(--grid-border)", color: "var(--text-secondary)" }}
               >
                 BỎ CHỌN
@@ -291,7 +290,7 @@ const DataTable = ({
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full cursor-pointer"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full cursor-pointer"
                 >
                   <X size={14} style={{ color: "var(--text-placeholder)" }} />
                 </button>
@@ -346,7 +345,7 @@ const DataTable = ({
                   {hasActiveFilters && (
                     <button
                       onClick={clearAllFilters}
-                      className="h-10 px-4 rounded-lg text-[12px] font-bold text-red-600 hover:bg-red-50 transition border border-transparent hover:border-red-100 cursor-pointer"
+                      className="h-10 px-4 rounded-lg text-[12px] font-bold text-red-600 border border-transparent cursor-pointer"
                     >
                       Xóa bộ lọc
                     </button>
@@ -506,14 +505,14 @@ const DataTable = ({
               <button
                 onClick={() => pagination.setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={pagination.currentPage === 1}
-                className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
+                className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer rounded p-1 border-none bg-transparent"
               >
                 <ChevronLeft size={16} strokeWidth={2.5} />
               </button>
               <button
                 onClick={() => pagination.setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={pagination.currentPage === totalPages || totalPages === 0}
-                className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-200 rounded p-1"
+                className="flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer rounded p-1 border-none bg-transparent"
               >
                 <ChevronRight size={16} strokeWidth={2.5} />
               </button>

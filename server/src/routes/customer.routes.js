@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const SaleController = require("../controller/sale.controller");
+const CustomerController = require("../controller/customer.controller");
 const { verifyAccessToken } = require("../middleware/auth.middleware");
 
 /**
- * Sale Routes - Quản lý khách hàng
+ * Customer Routes - Quản lý khách hàng
  * Created By: Antigravity
  * Created Date: 17/04/2026
  */
@@ -17,19 +17,19 @@ router.use(verifyAccessToken);
  * /api/sale/customers:
  *   get:
  *     summary: Get all customers (active)
- *     tags: [Sale]
+ *     tags: [Customer]
  *     responses:
  *       200:
  *         description: List of customers
  */
-router.get("/customers", SaleController.getAllCustomers);
+router.get("/customers", CustomerController.getAllCustomers);
 
 /**
  * @swagger
  * /api/sale/customers/{id}:
  *   get:
  *     summary: Get customer by ID
- *     tags: [Sale]
+ *     tags: [Customer]
  *     parameters:
  *       - in: path
  *         name: id
@@ -40,14 +40,14 @@ router.get("/customers", SaleController.getAllCustomers);
  *       200:
  *         description: Customer details
  */
-router.get("/customers/:id", SaleController.getCustomerById);
+router.get("/customers/:id", CustomerController.getCustomerById);
 
 /**
  * @swagger
  * /api/sale/customers:
  *   post:
  *     summary: Create new customer
- *     tags: [Sale]
+ *     tags: [Customer]
  *     requestBody:
  *       required: true
  *       content:
@@ -76,14 +76,14 @@ router.get("/customers/:id", SaleController.getCustomerById);
  *       201:
  *         description: Customer created
  */
-router.post("/customers", SaleController.createCustomer);
+router.post("/customers", CustomerController.createCustomer);
 
 /**
  * @swagger
  * /api/sale/customers/{id}:
  *   put:
  *     summary: Update customer
- *     tags: [Sale]
+ *     tags: [Customer]
  *     parameters:
  *       - in: path
  *         name: id
@@ -94,14 +94,14 @@ router.post("/customers", SaleController.createCustomer);
  *       200:
  *         description: Customer updated
  */
-router.put("/customers/:id", SaleController.updateCustomer);
+router.put("/customers/:id", CustomerController.updateCustomer);
 
 /**
  * @swagger
  * /api/sale/customers/{id}:
  *   delete:
  *     summary: Soft delete customer
- *     tags: [Sale]
+ *     tags: [Customer]
  *     parameters:
  *       - in: path
  *         name: id
@@ -112,6 +112,6 @@ router.put("/customers/:id", SaleController.updateCustomer);
  *       200:
  *         description: Customer soft deleted
  */
-router.delete("/customers/:id", SaleController.deleteCustomer);
+router.delete("/customers/:id", CustomerController.deleteCustomer);
 
 module.exports = router;
