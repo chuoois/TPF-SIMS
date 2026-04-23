@@ -20,13 +20,11 @@ import {
   Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fmt, WOOD_FINISHING_RATE, CATEGORIES } from "./mockData";
+import { fmt, CATEGORIES } from "./mockData";
 
 export default function ProductPanel({
   productTypeTab,
   setProductTypeTab,
-  woodPriceMode,
-  setWoodPriceMode,
   productSearch,
   setProductSearch,
   selectedCategories,
@@ -109,52 +107,6 @@ export default function ProductPanel({
               )}
             </button>
           </div>
-
-          {/* Toggle chọn loại giá cho Hàng mộc */}
-          {productTypeTab === "Hàng mộc" && (
-            <div
-              className="flex items-center rounded-lg overflow-hidden"
-              style={{
-                border: "1px solid var(--grid-border)",
-                backgroundColor: "var(--bg-main)",
-              }}
-            >
-              <button
-                onClick={() => setWoodPriceMode("finished")}
-                className="flex-1 flex items-center justify-center gap-2 py-2 text-[12px] font-semibold transition-all cursor-pointer"
-                style={{
-                  backgroundColor:
-                    woodPriceMode === "finished"
-                      ? "var(--brand-primary)"
-                      : "transparent",
-                  color:
-                    woodPriceMode === "finished"
-                      ? "#fff"
-                      : "var(--text-secondary)",
-                }}
-              >
-                <PackageCheck size={14} />
-                Giá hoàn thiện
-              </button>
-              <button
-                onClick={() => setWoodPriceMode("raw")}
-                className="flex-1 flex items-center justify-center gap-2 py-2 text-[12px] font-semibold transition-all cursor-pointer"
-                style={{
-                  backgroundColor:
-                    woodPriceMode === "raw"
-                      ? "var(--brand-primary)"
-                      : "transparent",
-                  color:
-                    woodPriceMode === "raw"
-                      ? "#fff"
-                      : "var(--text-secondary)",
-                }}
-              >
-                <Hammer size={14} />
-                Giá thô
-              </button>
-            </div>
-          )}
 
           {/* Thanh tìm kiếm */}
           <div className="relative w-full">
@@ -367,15 +319,7 @@ export default function ProductPanel({
                       {product.discount > 0 ? (
                         <div className="flex items-center gap-1.5">
                           <span className="text-[11px] line-through text-gray-400">
-                            {fmt(
-                              product.productType === "Hàng mộc" &&
-                                woodPriceMode === "finished"
-                                ? Math.round(
-                                    product.price * WOOD_FINISHING_RATE,
-                                  )
-                                : product.price,
-                            )}
-                            đ
+                            {fmt(product.price)}đ
                           </span>
                           <span
                             className="text-[13px] font-bold"
@@ -383,11 +327,7 @@ export default function ProductPanel({
                           >
                             {fmt(
                               Math.round(
-                                (product.productType === "Hàng mộc" &&
-                                woodPriceMode === "finished"
-                                  ? product.price * WOOD_FINISHING_RATE
-                                  : product.price) *
-                                  (1 - product.discount / 100),
+                                product.price * (1 - product.discount / 100),
                               ),
                             )}
                             đ
@@ -398,16 +338,7 @@ export default function ProductPanel({
                           className="text-[13px] font-bold"
                           style={{ color: "var(--brand-primary)" }}
                         >
-                          {product.productType === "Hàng mộc"
-                            ? fmt(
-                                woodPriceMode === "finished"
-                                  ? Math.round(
-                                      product.price * WOOD_FINISHING_RATE,
-                                    )
-                                  : product.price,
-                              )
-                            : fmt(product.price)}
-                          đ
+                          {fmt(product.price)}đ
                         </p>
                       )}
 
@@ -573,34 +504,16 @@ export default function ProductPanel({
                   {selectedProductForView.discount > 0 ? (
                     <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-100 text-left">
                       <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
-                        {selectedProductForView.productType === "Hàng mộc"
-                          ? woodPriceMode === "finished"
-                            ? "Giá hoàn thiện"
-                            : "Giá thô"
-                          : "Giá niêm yết"}{" "}
-                        (Giảm {selectedProductForView.discount}%)
+                        Giá niêm yết (Giảm {selectedProductForView.discount}%)
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[14px] line-through text-emerald-600/60 font-medium">
-                          {fmt(
-                            selectedProductForView.productType === "Hàng mộc" &&
-                              woodPriceMode === "finished"
-                              ? Math.round(
-                                  selectedProductForView.price *
-                                    WOOD_FINISHING_RATE,
-                                )
-                              : selectedProductForView.price,
-                          )}
-                          đ
+                          {fmt(selectedProductForView.price)}đ
                         </span>
                         <span className="text-[20px] font-black text-red-600">
                           {fmt(
                             Math.round(
-                              (selectedProductForView.productType ===
-                                "Hàng mộc" && woodPriceMode === "finished"
-                                ? selectedProductForView.price *
-                                  WOOD_FINISHING_RATE
-                                : selectedProductForView.price) *
+                              selectedProductForView.price *
                                 (1 - selectedProductForView.discount / 100),
                             ),
                           )}
@@ -611,23 +524,10 @@ export default function ProductPanel({
                   ) : (
                     <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-100 text-left">
                       <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
-                        {selectedProductForView.productType === "Hàng mộc"
-                          ? woodPriceMode === "finished"
-                            ? "Giá hoàn thiện"
-                            : "Giá thô"
-                          : "Giá niêm yết"}
+                        Giá niêm yết
                       </p>
                       <p className="text-[20px] font-black text-emerald-700 mt-0.5">
-                        {fmt(
-                          selectedProductForView.productType === "Hàng mộc" &&
-                            woodPriceMode === "finished"
-                            ? Math.round(
-                                selectedProductForView.price *
-                                  WOOD_FINISHING_RATE,
-                              )
-                            : selectedProductForView.price,
-                        )}
-                        đ
+                        {fmt(selectedProductForView.price)}đ
                       </p>
                     </div>
                   )}

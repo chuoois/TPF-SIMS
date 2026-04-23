@@ -36,7 +36,7 @@ import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
 import DataTable from "@/components/control/DataTable";
 import ConfirmModal from "@/components/control/ConfirmModal";
-import { INITIAL_ORDERS } from "../orders/mockData";
+import { INITIAL_ORDERS, MOCK_ORDERS_DETAILED } from "../orders/mockData";
 
 // ===================== STATIC DATA =====================
 const INITIAL_CUSTOMERS = [
@@ -1172,7 +1172,7 @@ export default function SalesCustomerManage() {
                 <div className="space-y-3">
                   {customerOrders.map(order => {
                     const isExpanded = expandedOrderId === (order.id + order.code);
-                    const detail = MOCK_ORDERS_DETAIL[order.id];
+                    const detail = MOCK_ORDERS_DETAILED[order.id];
                     const products = detail?.products || [];
                     const fmtCurrency = (n) => n != null ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n) : "—";
 

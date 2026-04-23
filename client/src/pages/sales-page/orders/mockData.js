@@ -149,6 +149,36 @@ export const INITIAL_ORDERS = [
     fulfillmentType: "Giao tận nơi",
     products: [{ name: "Combo nội thất phòng thờ", specs: "Gỗ Hương Đá, Đục tay cao cấp", qty: 1, unit: "Bộ" }]
   },
+  {
+    id: "DH-SAN-004",
+    code: "DH-SAN-004",
+    customerName: "Nguyễn Văn Hoàng",
+    phone: "0901234567",
+    type: "Hàng sẵn",
+    total: 25000000,
+    status: "Giao hàng thành công",
+    date: new Date(Date.now() - 86400000 * 30).toISOString(),
+    salesPerson: "Bình Nguyễn",
+    deliveryDate: "2026-03-20",
+    deposit: 25000000,
+    fulfillmentType: "Giao tận nơi",
+    products: [{ name: "Tủ quần áo 4 cánh", specs: "Gỗ Hương", qty: 1, unit: "Chiếc" }]
+  },
+  {
+    id: "DH-DAT-005",
+    code: "DH-DAT-005",
+    customerName: "Nguyễn Văn Hoàng",
+    phone: "0901234567",
+    type: "Hàng khách đặt",
+    total: 110000000,
+    status: "Chờ sản xuất",
+    date: new Date(Date.now() - 86400000 * 2).toISOString(),
+    salesPerson: "Bình Nguyễn",
+    deliveryDate: "2026-05-20",
+    deposit: 50000000,
+    fulfillmentType: "Giao tận nơi",
+    products: [{ name: "Bộ bàn ghế Nguyên Khối", specs: "Gỗ Gõ Đỏ", qty: 1, unit: "Bộ" }]
+  }
 ];
 
 export const INITIAL_PRODUCTIONS = [
@@ -270,5 +300,27 @@ export const MOCK_ORDERS_DETAILED = {
       painterLabor: 4000000, finishingDays: 15
     }],
     timeline: [{ time: "25/03/2026 14:20", label: "Đang gia công", desc: "Đã bàn giao cho thợ hoàn thiện", active: true }],
+  },
+  "DH-SAN-004": {
+    code: "DH-SAN-004", type: "Hàng sẵn", status: "Giao hàng thành công",
+    date: "2026-03-20T08:30:00", deliveryDate: "2026-03-20", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Nguyễn Văn Hoàng", phone: "0901234567", address: "123 Nguyễn Huệ, Q.1, TP.HCM" },
+    salesPerson: "Bình Nguyễn", total: 25000000, deposit: 25000000, depositMethod: "Chuyển khoản", paymentStatus: "paid",
+    products: [{
+      name: "Tủ quần áo 4 cánh",
+      material: "Gỗ Hương", size: "2m x 2m2", finish: "Sơn bóng", qty: 1, price: 25000000
+    }],
+    timeline: [{ time: "20/03/2026 14:20", label: "Giao thành công", desc: "Khách đã nhận hàng", active: true }],
+  },
+  "DH-DAT-005": {
+    code: "DH-DAT-005", type: "Hàng khách đặt", status: "Chờ sản xuất",
+    date: "2026-04-18T14:20:00", deliveryDate: "2026-05-20", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Nguyễn Văn Hoàng", phone: "0901234567", address: "123 Nguyễn Huệ, Q.1, TP.HCM" },
+    salesPerson: "Bình Nguyễn", total: 110000000, deposit: 50000000, depositMethod: "Tiền mặt", paymentStatus: "partial",
+    products: [{
+      name: "Bộ bàn ghế Nguyên Khối",
+      material: "Gỗ Gõ Đỏ", size: "Dày 10cm", finish: "Mộc", qty: 1, price: 110000000
+    }],
+    timeline: [{ time: "18/04/2026 14:20", label: "Tạo đơn", desc: "Đã nhận cọc", active: true }],
   }
 };

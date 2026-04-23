@@ -11,7 +11,6 @@
 
 // ===================== CONSTANTS =====================
 export const SYSTEM_WARRANTY = "12 tháng"; // Cấu hình bảo hành từ hệ thống
-export const WOOD_FINISHING_RATE = 1.35; // Giá hoàn thiện = giá thô × 1.35 (bao gồm dịch vụ sơn, xử lý, hoàn thiện)
 export const ITEMS_PER_PAGE = 15;
 
 export const CATEGORIES = [

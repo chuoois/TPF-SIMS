@@ -3,7 +3,24 @@
  * Includes: Tab bar, Cart items, Customer search, Delivery, Summary, Checkout
  */
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
+
+// 1. Function tính toán thời gian chờ (backlog)
+const calculateEstimatedDays = (cartItems, totalPending = 20, capacityPerDay = 5) => {
+  const totalNewItems = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
+  const backlogDays = Math.ceil((totalPending + totalNewItems) / capacityPerDay);
+  return backlogDays + 1; // Thêm 1 ngày buffer
+};
+
+// 2. Function cộng thêm ngày vào hôm nay và format ra chuỗi DD/MM/YYYY
+const getEstimatedDateString = (daysToAdd) => {
+  const date = new Date();
+  date.setDate(date.getDate() + daysToAdd);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
 import {
   X,
   Plus,
@@ -53,6 +70,58 @@ export default function CartPanel({
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const customerSearchRef = useRef(null);
 
+  // 3. Hook tính ngày giao dựa trên logic Xưởng
+  const capacityPerDay = 5; 
+  const totalPending = 20;  
+
+  const { estimatedDays, estimatedDateStr } = useMemo(() => {
+    if (!activeTab.cartItems || activeTab.cartItems.length === 0) {
+      return { estimatedDays: 0, estimatedDateStr: "" };
+    }
+    const days = calculateEstimatedDays(activeTab.cartItems, totalPending, capacityPerDay);
+    const dateStr = getEstimatedDateString(days);
+    return { estimatedDays: days, estimatedDateStr: dateStr };
+  }, [activeTab.cartItems]);
+
+  // Deposit logic
+  const suggestedDepositInfo = (() => {
+    if (!activeTab.cartItems || activeTab.cartItems.length === 0)
+      return { amount: 0, percentage: 0, reason: "", optional: true };
+
+    // Quy tắc đặt cọc mới cho Hàng mộc & Hàng sẵn:
+    // - Dưới 10 triệu: cọc 10%
+    // - Từ 10 triệu trở lên: cọc 30%
+    const threshold = 10000000;
+    const isHighValue = subtotal >= threshold;
+    const rate = isHighValue ? 0.3 : 0.1;
+
+    let total = subtotal * rate;
+
+    // Làm tròn đến hàng chục nghìn cho đẹp số
+    total = Math.round(total / 10000) * 10000;
+    total = Math.min(total, subtotal);
+
+    const reason = isHighValue
+      ? `Áp dụng cho đơn hàng từ 10 triệu đồng trở lên.`
+      : `Áp dụng cho đơn hàng dưới 10 triệu đồng.`;
+
+    return {
+      amount: total,
+      percentage: Math.round(rate * 100),
+      reason,
+      optional: false,
+    };
+  })();
+
+  const prevDepsRef = useRef({ subtotal, method: activeTab.deliveryMethod, date: activeTab.storePickupDate || activeTab.deliveryDate });
+  useEffect(() => {
+    const deps = { subtotal, method: activeTab.deliveryMethod, date: activeTab.storePickupDate || activeTab.deliveryDate };
+    if (JSON.stringify(prevDepsRef.current) !== JSON.stringify(deps)) {
+      updateActiveTab({ depositAmount: suggestedDepositInfo.amount });
+      prevDepsRef.current = deps;
+    }
+  }, [subtotal, activeTab.deliveryMethod, activeTab.storePickupDate, activeTab.deliveryDate, suggestedDepositInfo.amount]);
+
   return (
     <div
       className="flex flex-col w-[56%] bg-white rounded-lg overflow-hidden"
@@ -74,9 +143,7 @@ export default function CartPanel({
             }`}
             style={{
               backgroundColor:
-                tab.id === activeTabId
-                  ? "var(--status-focus)"
-                  : "transparent",
+                tab.id === activeTabId ? "var(--status-focus)" : "transparent",
               color:
                 tab.id === activeTabId
                   ? "var(--brand-primary)"
@@ -94,9 +161,7 @@ export default function CartPanel({
                       ? "var(--brand-primary)"
                       : "var(--grid-border)",
                   color:
-                    tab.id === activeTabId
-                      ? "#fff"
-                      : "var(--text-secondary)",
+                    tab.id === activeTabId ? "#fff" : "var(--text-secondary)",
                 }}
               >
                 {tab.cartItems.length}
@@ -253,9 +318,7 @@ export default function CartPanel({
                       type="text"
                       placeholder="Ghi chú..."
                       value={item.note || ""}
-                      onChange={(e) =>
-                        updateItemNote(item.id, e.target.value)
-                      }
+                      onChange={(e) => updateItemNote(item.id, e.target.value)}
                       className="text-[12px] italic focus:outline-none bg-transparent w-full"
                       style={{ color: "var(--text-secondary)" }}
                     />
@@ -275,59 +338,56 @@ export default function CartPanel({
                   )}
                 </div>
 
-                {/* === Hàng mộc hoàn thiện: Giá cũ / Giá đã giảm + Upload ảnh === */}
-                {item.productType === "Hàng mộc" &&
-                  item.priceMode === "finished" && (
-                    <div className="mt-2 pl-11 space-y-2">
-                      {/* Dual pricing */}
+                {/* === Upload ảnh === */}
+                {item.productType === "Hàng mộc" && (
+                  <div className="mt-2 pl-11 space-y-2">
+                    {/* Dual pricing */}
 
-                      {/* Image upload */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {(item.images || []).map((img, imgIdx) => (
-                          <div
-                            key={imgIdx}
-                            className="relative w-14 h-14 rounded-lg overflow-hidden border border-gray-200 group/img"
-                          >
-                            <img
-                              src={
-                                typeof img === "string"
-                                  ? img
-                                  : URL.createObjectURL(img)
-                              }
-                              alt=""
-                              className="w-full h-full object-cover"
-                            />
-                            <button
-                              onClick={() =>
-                                removeItemImage(item.id, imgIdx)
-                              }
-                              className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition cursor-pointer shadow"
-                            >
-                              <X size={10} />
-                            </button>
-                          </div>
-                        ))}
-                        <label className="w-14 h-14 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-green-400 hover:bg-green-50/50 transition">
-                          <ImagePlus size={18} className="text-gray-400" />
-                          <input
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            className="hidden"
-                            onChange={(e) => {
-                              if (e.target.files?.length) {
-                                updateItemImages(
-                                  item.id,
-                                  Array.from(e.target.files),
-                                );
-                              }
-                              e.target.value = "";
-                            }}
+                    {/* Image upload */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {(item.images || []).map((img, imgIdx) => (
+                        <div
+                          key={imgIdx}
+                          className="relative w-14 h-14 rounded-lg overflow-hidden border border-gray-200 group/img"
+                        >
+                          <img
+                            src={
+                              typeof img === "string"
+                                ? img
+                                : URL.createObjectURL(img)
+                            }
+                            alt=""
+                            className="w-full h-full object-cover"
                           />
-                        </label>
-                      </div>
+                          <button
+                            onClick={() => removeItemImage(item.id, imgIdx)}
+                            className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition cursor-pointer shadow"
+                          >
+                            <X size={10} />
+                          </button>
+                        </div>
+                      ))}
+                      <label className="w-14 h-14 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-green-400 hover:bg-green-50/50 transition">
+                        <ImagePlus size={18} className="text-gray-400" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files?.length) {
+                              updateItemImages(
+                                item.id,
+                                Array.from(e.target.files),
+                              );
+                            }
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
                     </div>
-                  )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -335,10 +395,7 @@ export default function CartPanel({
       </div>
 
       {/* ── Footer ── */}
-      <div
-        className="border-t"
-        style={{ borderColor: "var(--grid-border)" }}
-      >
+      <div className="border-t" style={{ borderColor: "var(--grid-border)" }}>
         {/* Customer + Note row */}
         <div
           className="flex items-stretch divide-x"
@@ -390,8 +447,7 @@ export default function CartPanel({
                     setShowCustomerDropdown(true);
                   }}
                   onFocus={() => {
-                    if (customerSearch.trim())
-                      setShowCustomerDropdown(true);
+                    if (customerSearch.trim()) setShowCustomerDropdown(true);
                   }}
                   onBlur={() => {
                     setTimeout(() => setShowCustomerDropdown(false), 200);
@@ -491,16 +547,12 @@ export default function CartPanel({
               type="text"
               placeholder="Ghi chú..."
               value={activeTab.orderNote}
-              onChange={(e) =>
-                updateActiveTab({ orderNote: e.target.value })
-              }
+              onChange={(e) => updateActiveTab({ orderNote: e.target.value })}
               className="flex-1 text-[13px] focus:outline-none bg-transparent"
               style={{ color: "var(--text-secondary)" }}
             />
           </div>
         </div>
-
-
 
         {/* Delivery Method */}
         <div
@@ -517,8 +569,12 @@ export default function CartPanel({
               Giao hàng
             </p>
             {needsWorkshop && maxLeadTime > 0 && (
-              <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-bold ${workshopStats.bg} ${workshopStats.color} ${workshopStats.border}`}>
-                <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${workshopStats.level === 'Quá tải' ? 'bg-red-500' : workshopStats.level === 'Khá bận' ? 'bg-amber-500' : 'bg-green-500'}`} />
+              <div
+                className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-bold ${workshopStats.bg} ${workshopStats.color} ${workshopStats.border}`}
+              >
+                <div
+                  className={`w-1.5 h-1.5 rounded-full animate-pulse ${workshopStats.level === "Quá tải" ? "bg-red-500" : workshopStats.level === "Khá bận" ? "bg-amber-500" : "bg-green-500"}`}
+                />
                 Xưởng {workshopStats.level}
               </div>
             )}
@@ -612,11 +668,13 @@ export default function CartPanel({
                   ? `Khách hẹn lấy tại cửa hàng ngày ${activeTab.storePickupDate.split("-").reverse().join("/")}`
                   : "Để trống nếu khách lấy ngay tại cửa hàng"}
               </p>
-              {expectedReadyDate && (
-                <p className={`text-[10px] font-bold flex items-center gap-1 ml-1 ${workshopStats.buffer > 0 ? 'text-amber-600 animate-pulse' : 'text-blue-600'}`}>
+              {needsWorkshop && estimatedDays > 0 && (
+                <p
+                  className="text-[10px] font-bold flex items-center gap-1 ml-1 mt-1 animate-pulse"
+                  style={{ color: "var(--brand-primary)" }}
+                >
                   <AlertCircle size={10} />
-                  Gợi ý xưởng xong: {expectedReadyDate.split("-").reverse().join("/")} 
-                  {workshopStats.buffer > 0 && ` (+${workshopStats.buffer}n chờ xưởng)`}
+                  Xưởng đang kẹt {estimatedDays} ngày. Xong vào: {estimatedDateStr}
                 </p>
               )}
             </div>
@@ -651,11 +709,13 @@ export default function CartPanel({
                   }}
                 />
               </div>
-              {expectedReadyDate && (
-                <p className={`text-[10px] font-bold flex items-center gap-1 mt-1 ${workshopStats.buffer > 0 ? 'text-amber-600 animate-pulse' : 'text-blue-600'}`}>
+              {needsWorkshop && estimatedDays > 0 && (
+                <p
+                  className="text-[10px] font-bold flex items-center gap-1 mt-1 animate-pulse w-full col-span-2"
+                  style={{ color: "var(--brand-primary)" }}
+                >
                   <AlertCircle size={10} />
-                  Gợi ý xưởng xong: {expectedReadyDate.split("-").reverse().join("/")} 
-                  {workshopStats.buffer > 0 && ` (+${workshopStats.buffer}n chờ xưởng)`}
+                  Xưởng đang kẹt {estimatedDays} ngày. Xong vào: {estimatedDateStr}
                 </p>
               )}
             </div>
@@ -674,21 +734,24 @@ export default function CartPanel({
             <span style={{ color: "var(--text-secondary)" }}>
               Tổng ({itemCount} sản phẩm)
             </span>
-            <span
-              className="font-medium"
-              style={{ color: "var(--text-main)" }}
-            >
+            <span className="font-medium" style={{ color: "var(--text-main)" }}>
               {fmt(subtotal)}đ
             </span>
           </div>
-          <div className="flex justify-between text-[13px] items-center">
-            <span
-              className="font-medium"
-              style={{ color: "var(--text-secondary)" }}
-            >
-              <CreditCard size={12} className="inline mr-1.5" />
-              Tiền đặt cọc
-            </span>
+          <div className="flex flex-col">
+            <div className="flex justify-between text-[13px] items-center">
+              <span
+                className="font-medium flex items-center"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                <CreditCard size={12} className="inline mr-1.5" />
+                Tiền đặt cọc
+                {subtotal > 0 && activeTab.depositAmount > 0 && (
+                  <span className="ml-2 text-[10px] font-bold text-[var(--brand-primary)] bg-[var(--brand-primary)]/10 px-1.5 py-0.5 rounded">
+                    ({Math.round((activeTab.depositAmount / subtotal) * 100)}%)
+                  </span>
+                )}
+              </span>
             <div className="flex items-center gap-1">
               <span
                 className="text-[13px]"
@@ -710,13 +773,24 @@ export default function CartPanel({
                   });
                 }}
                 placeholder="0"
-                className="w-28 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white"
+                className={`w-28 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white ${
+                   activeTab.depositAmount < suggestedDepositInfo.amount ? "border-amber-400 ring-1 ring-amber-400 focus:ring-amber-500" : ""
+                }`}
                 style={{
-                  border: "1px solid var(--grid-border)",
+                  border: activeTab.depositAmount < suggestedDepositInfo.amount ? "1px solid #fbbf24" : "1px solid var(--grid-border)",
                   color: "var(--text-main)",
                 }}
               />
             </div>
+          </div>
+          {/* Quy tắc đặt cọc được áp dụng tự động dựa trên giá trị đơn hàng */}
+          {subtotal > 0 && activeTab.depositAmount < suggestedDepositInfo.amount && (
+            <div className="mt-2 text-right">
+              <p className="text-[10px] font-bold text-amber-600 animate-pulse">
+                ⚠️ Mức cọc quy định tối thiểu là {fmt(suggestedDepositInfo.amount)}đ
+              </p>
+            </div>
+          )}
           </div>
         </div>
 
