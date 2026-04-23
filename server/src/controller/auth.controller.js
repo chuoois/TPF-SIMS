@@ -112,8 +112,8 @@ class AuthController {
       // Kiểm tra token trong DB
       const storedToken = await RefreshToken.findOne({
         where: { token: refreshToken },
-        include: [{ 
-          model: UserAccount, 
+        include: [{
+          model: UserAccount,
           as: "account",
           include: [
             { model: UserRole, as: "role" },
@@ -144,7 +144,7 @@ class AuthController {
 
       // Rotate token: Xóa cũ, tạo mới
       await RefreshToken.destroy({ where: { token: refreshToken } });
-      
+
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
       await RefreshToken.create({
@@ -224,7 +224,7 @@ class AuthController {
       const hashedPassword = await bcrypt.hash(newPassword, 10);
 
       // Cập nhật vào DB
-      await user.update({ 
+      await user.update({
         password_hash: hashedPassword,
         modifiedate: new Date(),
         modifieby: user.user_account_id,

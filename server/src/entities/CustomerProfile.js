@@ -21,7 +21,6 @@ const CustomerProfile = sequelize.define(
     },
     customer_code: {
       type: DataTypes.STRING(50),
-      unique: true,
     },
     full_name: {
       type: DataTypes.STRING(150),
@@ -69,6 +68,13 @@ const CustomerProfile = sequelize.define(
   {
     tableName: "customer_profile",
     timestamps: false,
+    indexes: [
+      {
+        unique: true,
+        fields: ["customer_code"],
+        name: "unique_customer_code",
+      },
+    ],
   }
 );
 
