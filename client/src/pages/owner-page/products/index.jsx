@@ -8,7 +8,7 @@ import {
   ChevronDown,
   Tag,
   ShieldCheck,
-  Clock
+  Clock,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import toast from "react-hot-toast";
@@ -37,12 +37,27 @@ const INITIAL_PRODUCTS = [
     warrantyMonths: 120,
     leadTime: 0,
     img: "https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=600",
-    description: "Sập thờ trạm khắc tỉ mỉ tinh xảo, chất liệu gỗ mít lõi liền khối chọn lọc.",
-    techNotes: { leg: "Chân 20", apron: "Dạ đục tay Mai Điểu", other: "Hàng sạch rác, gỗ chọn vân." },
+    description:
+      "Sập thờ trạm khắc tỉ mỉ tinh xảo, chất liệu gỗ mít lõi liền khối chọn lọc.",
+    techNotes: {
+      leg: "Chân 20",
+      apron: "Dạ đục tay Mai Điểu",
+      other: "Hàng sạch rác, gỗ chọn vân.",
+    },
     lots: [
-      { lotId: "LOT-SP001-1", importDate: "2025-10-10", importPrice: 30000000, initialQuantity: 1 },
-      { lotId: "LOT-SP001-2", importDate: "2026-01-20", importPrice: 32000000, initialQuantity: 1 }
-    ]
+      {
+        lotId: "LOT-SP001-1",
+        importDate: "2025-10-10",
+        importPrice: 30000000,
+        initialQuantity: 1,
+      },
+      {
+        lotId: "LOT-SP001-2",
+        importDate: "2026-01-20",
+        importPrice: 32000000,
+        initialQuantity: 1,
+      },
+    ],
   },
   {
     id: "SP002",
@@ -64,10 +79,16 @@ const INITIAL_PRODUCTS = [
     warrantyMonths: 36,
     img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=600",
     leadTime: 7,
-    description: "Hàng mộc sẵn tại kho, có thể lấy ngay hoặc sơn hoàn thiện trong 7 ngày.",
+    description:
+      "Hàng mộc sẵn tại kho, có thể lấy ngay hoặc sơn hoàn thiện trong 7 ngày.",
     lots: [
-      { lotId: "LOT-002", importDate: "2026-02-10", importPrice: 8500000, initialQuantity: 3 }
-    ]
+      {
+        lotId: "LOT-002",
+        importDate: "2026-02-10",
+        importPrice: 8500000,
+        initialQuantity: 3,
+      },
+    ],
   },
   {
     id: "SP003",
@@ -88,10 +109,16 @@ const INITIAL_PRODUCTS = [
     warrantyMonths: 60,
     img: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=600",
     leadTime: 30,
-    description: "Hàng đặt theo yêu cầu của Anh Hùng (Thanh Hóa). Đục tay sắc nét.",
+    description:
+      "Hàng đặt theo yêu cầu của Anh Hùng (Thanh Hóa). Đục tay sắc nét.",
     lots: [
-      { lotId: "LOT-003", importDate: "2026-02-15", importPrice: 95000000, initialQuantity: 1 }
-    ]
+      {
+        lotId: "LOT-003",
+        importDate: "2026-02-15",
+        importPrice: 95000000,
+        initialQuantity: 1,
+      },
+    ],
   },
   {
     id: "SP004",
@@ -111,10 +138,16 @@ const INITIAL_PRODUCTS = [
     isPriced: false,
     warrantyMonths: 24,
     img: "https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?q=80&w=600",
-    description: "Hàng mới nhập kho sáng nay, gỗ đều màu, không rác. Cần định giá bán lẻ.",
+    description:
+      "Hàng mới nhập kho sáng nay, gỗ đều màu, không rác. Cần định giá bán lẻ.",
     lots: [
-      { lotId: "LOT-004", importDate: "2026-04-09", importPrice: 18000000, initialQuantity: 1 }
-    ]
+      {
+        lotId: "LOT-004",
+        importDate: "2026-04-09",
+        importPrice: 18000000,
+        initialQuantity: 1,
+      },
+    ],
   },
   {
     id: "SP005",
@@ -134,10 +167,16 @@ const INITIAL_PRODUCTS = [
     isPriced: true,
     warrantyMonths: 12,
     img: "https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=600",
-    description: "Sản phẩm dùng làm quà tặng kèm khi khách mua hóa đơn trên 50tr.",
+    description:
+      "Sản phẩm dùng làm quà tặng kèm khi khách mua hóa đơn trên 50tr.",
     lots: [
-      { lotId: "LOT-005", importDate: "2026-01-01", importPrice: 450000, initialQuantity: 20 }
-    ]
+      {
+        lotId: "LOT-005",
+        importDate: "2026-01-01",
+        importPrice: 450000,
+        initialQuantity: 20,
+      },
+    ],
   },
   {
     id: "SP006",
@@ -159,8 +198,14 @@ const INITIAL_PRODUCTS = [
     img: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?q=80&w=600",
     description: "Sản phẩm đang tạm hết hàng, tuần sau sẽ nhập lô mới.",
     lots: [
-      { lotId: "LOT-006", importDate: "2025-11-20", importPrice: 1200000, initialQuantity: 10, remainingQuantity: 0 }
-    ]
+      {
+        lotId: "LOT-006",
+        importDate: "2025-11-20",
+        importPrice: 1200000,
+        initialQuantity: 10,
+        remainingQuantity: 0,
+      },
+    ],
   },
 ];
 
@@ -203,8 +248,8 @@ export default function OwnerProducts() {
     const parsed = JSON.parse(saved);
 
     let needsUpdate = false;
-    const merged = parsed.map(p => {
-      const defaultProduct = INITIAL_PRODUCTS.find(dp => dp.id === p.id);
+    const merged = parsed.map((p) => {
+      const defaultProduct = INITIAL_PRODUCTS.find((dp) => dp.id === p.id);
 
       if (p.productType === "Hàng khách đặt") {
         if (!p.isPriced || p.status === "Chưa định giá") {
@@ -217,7 +262,7 @@ export default function OwnerProducts() {
       // Backfill pricing fields từ INITIAL_PRODUCTS nếu chưa có
       if (defaultProduct) {
         const pricingFields = ["paintCost"];
-        pricingFields.forEach(field => {
+        pricingFields.forEach((field) => {
           if (p[field] === undefined && defaultProduct[field] !== undefined) {
             p[field] = defaultProduct[field];
             needsUpdate = true;
@@ -234,8 +279,8 @@ export default function OwnerProducts() {
       return p;
     });
 
-    if (!merged.some(p => p.id === "SP006")) {
-      const sp006 = INITIAL_PRODUCTS.find(p => p.id === "SP006");
+    if (!merged.some((p) => p.id === "SP006")) {
+      const sp006 = INITIAL_PRODUCTS.find((p) => p.id === "SP006");
       if (sp006) {
         merged.push(sp006);
         needsUpdate = true;
@@ -289,14 +334,17 @@ export default function OwnerProducts() {
   // Modal state: { product, mode: 'view' | 'edit' }
   const [modalState, setModalState] = useState({ product: null, mode: "view" });
 
-  const openModal = (product, mode = "view") => setModalState({ product, mode });
+  const openModal = (product, mode = "view") =>
+    setModalState({ product, mode });
   const closeModal = () => setModalState({ product: null, mode: "view" });
 
   // Actions
   const handleConfirmDelete = (item, e = null) => {
     if (e && e.stopPropagation) e.stopPropagation();
     if (item.stock > 0 || (item.lots && item.lots.length > 0)) {
-      toast.error("Không thể xoá! Sản phẩm đang có tồn kho hoặc đã có lịch sử nhập lô.");
+      toast.error(
+        "Không thể xoá! Sản phẩm đang có tồn kho hoặc đã có lịch sử nhập lô.",
+      );
       return;
     }
     setItemToDelete(item);
@@ -348,7 +396,10 @@ export default function OwnerProducts() {
     return result;
   }, [products, statusFilter, productTypeFilter, categoryFilter, searchQuery]);
 
-  const hasActiveFilters = categoryFilter !== "Tất cả" || searchQuery || productTypeFilter !== "Tất cả";
+  const hasActiveFilters =
+    categoryFilter !== "Tất cả" ||
+    searchQuery ||
+    productTypeFilter !== "Tất cả";
   const clearFilters = () => {
     setCategoryFilter("Tất cả");
     setSearchQuery("");
@@ -372,7 +423,6 @@ export default function OwnerProducts() {
     toast.success(message || "Đã cập nhật sản phẩm thành công!");
     closeModal();
   };
-
 
   // ===================== TABLE COLUMNS =====================
 
@@ -484,7 +534,9 @@ export default function OwnerProducts() {
               <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-purple-100 text-purple-700 border border-purple-200">
                 Quà tặng
               </span>
-              <span className="text-[11px] font-bold text-purple-500 mt-1 italic">Miễn phí</span>
+              <span className="text-[11px] font-bold text-purple-500 mt-1 italic">
+                Miễn phí
+              </span>
             </div>
           );
         }
@@ -579,7 +631,10 @@ export default function OwnerProducts() {
         onClose={closeModal}
         onSave={handleSave}
         onSwitchMode={(mode) => setModalState((s) => ({ ...s, mode }))}
-        onDelete={(item) => { closeModal(); handleConfirmDelete(item); }}
+        onDelete={(item) => {
+          closeModal();
+          handleConfirmDelete(item);
+        }}
       />
 
       <div
@@ -589,29 +644,51 @@ export default function OwnerProducts() {
         {/* HEADER & TABS */}
         <div className="flex items-center justify-between shrink-0">
           <div>
-            <h1 className="text-xl font-bold flex items-center gap-2" style={{ color: "var(--text-main)" }}>
+            <h1
+              className="text-xl font-bold flex items-center gap-2"
+              style={{ color: "var(--text-main)" }}
+            >
               <Package size={22} style={{ color: "var(--brand-primary)" }} />
               Quản lý sản phẩm
             </h1>
-            <p className="text-[13px] mt-0.5" style={{ color: "var(--text-placeholder)" }}>
-              {filteredProducts.length} sản phẩm ({productTypeFilter === "Tất cả" ? "tất cả loại" : productTypeFilter.toLowerCase()})
+            <p
+              className="text-[13px] mt-0.5"
+              style={{ color: "var(--text-placeholder)" }}
+            >
+              {filteredProducts.length} sản phẩm (
+              {productTypeFilter === "Tất cả"
+                ? "tất cả loại"
+                : productTypeFilter.toLowerCase()}
+              )
             </p>
           </div>
 
-          <div className="flex p-1 rounded-lg" style={{ backgroundColor: "var(--grid-header-bg)", border: "1px solid var(--grid-border)" }}>
-            {["Tất cả", "Hàng sẵn", "Hàng mộc", "Hàng khách đặt"].map((type) => (
-              <button
-                key={type}
-                onClick={() => setProductTypeFilter(type)}
-                className="px-4 py-1.5 rounded-lg text-[13px] font-semibold transition-all cursor-pointer"
-                style={{
-                  backgroundColor: productTypeFilter === type ? "#fff" : "transparent",
-                  color: productTypeFilter === type ? "var(--text-main)" : "var(--text-secondary)"
-                }}
-              >
-                {type}
-              </button>
-            ))}
+          <div
+            className="flex p-1 rounded-lg"
+            style={{
+              backgroundColor: "var(--grid-header-bg)",
+              border: "1px solid var(--grid-border)",
+            }}
+          >
+            {["Tất cả", "Hàng sẵn", "Hàng mộc", "Hàng khách đặt"].map(
+              (type) => (
+                <button
+                  key={type}
+                  onClick={() => setProductTypeFilter(type)}
+                  className="px-4 py-1.5 rounded-lg text-[13px] font-semibold transition-all cursor-pointer"
+                  style={{
+                    backgroundColor:
+                      productTypeFilter === type ? "#fff" : "transparent",
+                    color:
+                      productTypeFilter === type
+                        ? "var(--text-main)"
+                        : "var(--text-secondary)",
+                  }}
+                >
+                  {type}
+                </button>
+              ),
+            )}
           </div>
         </div>
 
@@ -619,13 +696,30 @@ export default function OwnerProducts() {
         <div className="flex items-center gap-2 shrink-0 flex-wrap py-1">
           {[
             { id: "Tất cả", label: "Tất cả" },
-            { id: "Chưa định giá", label: "Chưa định giá", color: "red", icon: AlertCircle },
-            { id: "Hết hàng", label: "Hết hàng", color: "red", icon: AlertCircle },
-            { id: "Quà tặng", label: "Quà tặng", color: "purple" }
+            {
+              id: "Chưa định giá",
+              label: "Chưa định giá",
+              color: "red",
+              icon: AlertCircle,
+            },
+            {
+              id: "Hết hàng",
+              label: "Hết hàng",
+              color: "red",
+              icon: AlertCircle,
+            },
+            { id: "Quà tặng", label: "Quà tặng", color: "purple" },
           ].map((s) => {
             const isActive = statusFilter === s.id;
             const isRedForce = s.color === "red";
-            const sc = s.id !== "Tất cả" ? (isRedForce ? { bg: "#FEF2F2", text: "#B91C1C", border: "#FECACA" } : (s.color === "purple" ? { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" } : { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" })) : null;
+            const sc =
+              s.id !== "Tất cả"
+                ? isRedForce
+                  ? { bg: "#FEF2F2", text: "#B91C1C", border: "#FECACA" }
+                  : s.color === "purple"
+                    ? { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" }
+                    : { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" }
+                : null;
 
             return (
               <button
@@ -633,12 +727,35 @@ export default function OwnerProducts() {
                 onClick={() => setStatusFilter(s.id)}
                 className="px-4 py-1.5 rounded-lg text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border"
                 style={{
-                  backgroundColor: isActive ? (sc ? sc.bg : "#fff") : "transparent",
-                  color: isActive ? (sc ? sc.text : "var(--brand-primary)") : "var(--text-secondary)",
-                  borderColor: isActive ? (sc ? sc.border : "var(--grid-border)") : "transparent"
+                  backgroundColor: isActive
+                    ? sc
+                      ? sc.bg
+                      : "#fff"
+                    : "transparent",
+                  color: isActive
+                    ? sc
+                      ? sc.text
+                      : "var(--brand-primary)"
+                    : "var(--text-secondary)",
+                  borderColor: isActive
+                    ? sc
+                      ? sc.border
+                      : "var(--grid-border)"
+                    : "transparent",
                 }}
               >
-                {s.icon && <s.icon size={14} className={isActive ? (isRedForce ? "text-red-500" : "text-[var(--brand-primary)]") : "text-slate-300"} />}
+                {s.icon && (
+                  <s.icon
+                    size={14}
+                    className={
+                      isActive
+                        ? isRedForce
+                          ? "text-red-500"
+                          : "text-[var(--brand-primary)]"
+                        : "text-slate-300"
+                    }
+                  />
+                )}
                 {s.label}
                 <span className="text-[10px] opacity-60 bg-black/5 px-1.5 rounded-md ml-0.5">
                   {statusCounts[s.id] || 0}
@@ -683,7 +800,8 @@ export default function OwnerProducts() {
               label: "Xóa sản phẩm",
               onClick: (item) => handleConfirmDelete(item),
               className: "text-red-500 hover:bg-red-50",
-              showIf: (item) => item.stock === 0 && (!item.lots || item.lots.length === 0)
+              showIf: (item) =>
+                item.stock === 0 && (!item.lots || item.lots.length === 0),
             },
           ]}
           bulkActions={[
@@ -691,11 +809,14 @@ export default function OwnerProducts() {
               label: "XÓA HÀNG LOẠT",
               icon: Trash2,
               onClick: () => {
-                const invalidDeletes = products.filter(p => selectedIds.includes(p.id))
-                  .some(p => p.stock > 0 || (p.lots && p.lots.length > 0));
+                const invalidDeletes = products
+                  .filter((p) => selectedIds.includes(p.id))
+                  .some((p) => p.stock > 0 || (p.lots && p.lots.length > 0));
 
                 if (invalidDeletes) {
-                  toast.error("Lỗi: Tồn tại sản phẩm đang có tồn kho hoặc lịch sử kiện hàng trong danh sách chọn!");
+                  toast.error(
+                    "Lỗi: Tồn tại sản phẩm đang có tồn kho hoặc lịch sử kiện hàng trong danh sách chọn!",
+                  );
                   return;
                 }
 

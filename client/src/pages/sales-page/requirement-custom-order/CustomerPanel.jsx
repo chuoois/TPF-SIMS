@@ -3,7 +3,7 @@
  * Includes: Order info header, Customer search, Payment, Delivery
  */
 
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import {
   X,
   User,
@@ -16,7 +16,14 @@ import {
   FileText,
   Clock,
 } from "lucide-react";
-import { fmt, MOCK_CUSTOMERS, generateOrderCode, formatDateTime, inputBase, inputStyle } from "./mockData";
+import {
+  fmt,
+  MOCK_CUSTOMERS,
+  generateOrderCode,
+  formatDateTime,
+  inputBase,
+  inputStyle,
+} from "./mockData";
 
 export default function CustomerPanel({
   activeTab,
@@ -43,6 +50,40 @@ export default function CustomerPanel({
     });
   };
 
+  const suggestedDepositInfo = (() => {
+    if (!displayQuote) return { amount: 0, percentage: 0, reason: "" };
+    
+    let total = 0;
+    
+    if (computedTotal > 0 && activeTab.cartItems) {
+      activeTab.cartItems.forEach(item => {
+        const itemTotal = (Number(item.expectedPrice) || 0) * item.quantity;
+        total += itemTotal * (itemTotal >= 50000000 ? 0.5 : 0.4);
+      });
+    } else {
+      total = displayQuote * (displayQuote >= 50000000 ? 0.5 : 0.4);
+    }
+
+    total = Math.round(total / 10000) * 10000;
+    total = Math.min(total, displayQuote);
+
+    const percentage = displayQuote > 0 ? Math.round((total / displayQuote) * 100) : 0;
+    
+    return { 
+      amount: total, 
+      percentage, 
+      reason: "Đơn hàng có sản phẩm đặt làm riêng (Custom). Yêu cầu cọc để xưởng nhập phôi gỗ." 
+    };
+  })();
+
+  const prevDisplayQuoteRef = useRef(displayQuote);
+  useEffect(() => {
+    if (prevDisplayQuoteRef.current !== displayQuote) {
+      updateActiveTab({ deposit: suggestedDepositInfo.amount });
+      prevDisplayQuoteRef.current = displayQuote;
+    }
+  }, [displayQuote, suggestedDepositInfo.amount]);
+
   return (
     <div className="flex flex-col w-[44%] bg-white rounded-lg overflow-hidden border border-slate-200">
       {/* Order Info Header */}
@@ -68,11 +109,13 @@ export default function CustomerPanel({
           style={{
             backgroundColor: "var(--status-focus)",
             color: "var(--brand-primary)",
-            borderColor: "var(--brand-primary)/20"
+            borderColor: "var(--brand-primary)/20",
           }}
         >
           <Clock size={12} strokeWidth={3} className="animate-pulse" />
-          <span className="text-[11px] font-black uppercase tracking-wider">Mới tạo</span>
+          <span className="text-[11px] font-black uppercase tracking-wider">
+            Mới tạo
+          </span>
         </div>
       </div>
 
@@ -108,7 +151,10 @@ export default function CustomerPanel({
             </div>
 
             {/* Customer Search Bar */}
-            <div className="relative flex items-center gap-1.5 w-[65%]" ref={customerSearchRef}>
+            <div
+              className="relative flex items-center gap-1.5 w-[65%]"
+              ref={customerSearchRef}
+            >
               {activeTab.selectedCustomer ? (
                 <div className="flex items-center gap-2.5 px-3 py-2 flex-1 min-w-0 rounded-lg bg-indigo-50/50 border border-indigo-100 animate-in zoom-in-95">
                   <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center shrink-0">
@@ -124,7 +170,11 @@ export default function CustomerPanel({
                   </div>
                   <button
                     onClick={() => {
-                      updateActiveTab({ selectedCustomer: null, customerName: "", customerPhone: "" });
+                      updateActiveTab({
+                        selectedCustomer: null,
+                        customerName: "",
+                        customerPhone: "",
+                      });
                       setCustomerSearch("");
                     }}
                     className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white transition-all cursor-pointer text-indigo-400 hover:text-rose-500 border border-transparent hover:border-rose-100"
@@ -133,22 +183,36 @@ export default function CustomerPanel({
                   </button>
                 </div>
               ) : (
-                <div className={`flex items-center gap-1.5 px-3.5 flex-1 min-w-0 rounded-lg bg-white border transition-all ${
-                  showCustomerDropdown ? "ring-4 ring-indigo-500/10 border-indigo-500/30" : "border-slate-200 hover:border-slate-300"
-                }`}>
+                <div
+                  className={`flex items-center gap-1.5 px-3.5 flex-1 min-w-0 rounded-lg bg-white border transition-all ${
+                    showCustomerDropdown
+                      ? "ring-4 ring-indigo-500/10 border-indigo-500/30"
+                      : "border-slate-200 hover:border-slate-300"
+                  }`}
+                >
                   <Search size={14} className="text-slate-400 shrink-0" />
                   <input
                     type="text"
                     placeholder="Tìm khách hàng..."
                     value={customerSearch}
-                    onChange={(e) => { setCustomerSearch(e.target.value); setShowCustomerDropdown(true); }}
-                    onFocus={() => { if (customerSearch.trim()) setShowCustomerDropdown(true); }}
-                    onBlur={() => { setTimeout(() => setShowCustomerDropdown(false), 200); }}
+                    onChange={(e) => {
+                      setCustomerSearch(e.target.value);
+                      setShowCustomerDropdown(true);
+                    }}
+                    onFocus={() => {
+                      if (customerSearch.trim()) setShowCustomerDropdown(true);
+                    }}
+                    onBlur={() => {
+                      setTimeout(() => setShowCustomerDropdown(false), 200);
+                    }}
                     className="flex-1 text-[13px] py-2.5 focus:outline-none bg-transparent min-w-0 font-bold"
                     style={{ color: "var(--text-main)" }}
                   />
-                  <button onClick={() => setShowAddCustomer(true)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-all bg-indigo-50 text-indigo-600 hover:bg-indigo-100 shrink-0" title="Thêm mới">
+                  <button
+                    onClick={() => setShowAddCustomer(true)}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-all bg-indigo-50 text-indigo-600 hover:bg-indigo-100 shrink-0"
+                    title="Thêm mới"
+                  >
                     <UserPlus size={16} />
                   </button>
                 </div>
@@ -160,30 +224,47 @@ export default function CustomerPanel({
                   {customerResults.length > 0 ? (
                     <div className="max-h-[250px] overflow-y-auto p-1.5 custom-scrollbar">
                       {customerResults.map((c) => (
-                        <button key={c.id}
+                        <button
+                          key={c.id}
                           onMouseDown={(e) => {
                             e.preventDefault();
-                            updateActiveTab({ selectedCustomer: c, customerName: c.name, customerPhone: c.phone });
+                            updateActiveTab({
+                              selectedCustomer: c,
+                              customerName: c.name,
+                              customerPhone: c.phone,
+                            });
                             setCustomerSearch("");
                             setShowCustomerDropdown(false);
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg hover:bg-slate-50 transition-colors cursor-pointer group">
+                          className="w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg hover:bg-slate-50 transition-colors cursor-pointer group"
+                        >
                           <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 text-[12px] font-black bg-slate-100 text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
                             {c.name.charAt(0)}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-black text-slate-700 truncate">{c.name}</p>
-                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{c.phone}</p>
+                            <p className="text-[13px] font-black text-slate-700 truncate">
+                              {c.name}
+                            </p>
+                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                              {c.phone}
+                            </p>
                           </div>
                         </button>
                       ))}
                     </div>
                   ) : (
                     <div className="px-5 py-6 text-center">
-                      <p className="text-[13px] font-bold text-slate-400">Không tìm thấy kết quả</p>
+                      <p className="text-[13px] font-bold text-slate-400">
+                        Không tìm thấy kết quả
+                      </p>
                       <button
-                        onMouseDown={(e) => { e.preventDefault(); setShowAddCustomer(true); setShowCustomerDropdown(false); }}
-                        className="text-[12px] font-black mt-2 cursor-pointer text-indigo-600 hover:underline">
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setShowAddCustomer(true);
+                          setShowCustomerDropdown(false);
+                        }}
+                        className="text-[12px] font-black mt-2 cursor-pointer text-indigo-600 hover:underline"
+                      >
                         + Thêm khách mới
                       </button>
                     </div>
@@ -195,21 +276,45 @@ export default function CustomerPanel({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tên hiển thị</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                Tên hiển thị
+              </label>
               <div className="relative">
-                <User size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300" />
-                <input type="text" placeholder="Tên khách hàng" value={activeTab.customerName}
-                  onChange={(e) => updateActiveTab({ customerName: e.target.value })}
-                  className={`${inputBase} pl-10`} style={{ ...inputStyle, backgroundColor: "white" }} />
+                <User
+                  size={14}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300"
+                />
+                <input
+                  type="text"
+                  placeholder="Tên khách hàng"
+                  value={activeTab.customerName}
+                  onChange={(e) =>
+                    updateActiveTab({ customerName: e.target.value })
+                  }
+                  className={`${inputBase} pl-10`}
+                  style={{ ...inputStyle, backgroundColor: "white" }}
+                />
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Liên hệ</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                Liên hệ
+              </label>
               <div className="relative">
-                <Phone size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300" />
-                <input type="tel" placeholder="Số điện thoại" value={activeTab.customerPhone}
-                  onChange={(e) => updateActiveTab({ customerPhone: e.target.value })}
-                  className={`${inputBase} pl-10`} style={{ ...inputStyle, backgroundColor: "white" }} />
+                <Phone
+                  size={14}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300"
+                />
+                <input
+                  type="tel"
+                  placeholder="Số điện thoại"
+                  value={activeTab.customerPhone}
+                  onChange={(e) =>
+                    updateActiveTab({ customerPhone: e.target.value })
+                  }
+                  className={`${inputBase} pl-10`}
+                  style={{ ...inputStyle, backgroundColor: "white" }}
+                />
               </div>
             </div>
           </div>
@@ -230,42 +335,108 @@ export default function CustomerPanel({
               <div className="space-y-1.5">
                 <label className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
                   Giá trị đơn hàng
-                  {computedTotal > 0 && <span className="text-[9px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 normal-case tracking-normal">Tự động cộng dồn</span>}
+                  {computedTotal > 0 && (
+                    <span className="text-[9px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 normal-case tracking-normal">
+                      Tự động cộng dồn
+                    </span>
+                  )}
                 </label>
                 <div className="relative">
-                  <input type="text" placeholder="VD: 15,000,000"
+                  <input
+                    type="text"
+                    placeholder="VD: 15,000,000"
                     value={displayQuote ? fmt(displayQuote) : ""}
                     onChange={(e) => {
                       if (computedTotal > 0) return;
                       const val = e.target.value.replace(/\D/g, "");
-                      updateActiveTab({ expectedQuote: val ? Number(val) : "" });
+                      updateActiveTab({
+                        expectedQuote: val ? Number(val) : "",
+                      });
                     }}
                     disabled={computedTotal > 0}
                     className={`${inputBase} h-12 text-[15px] font-black ${computedTotal > 0 ? "bg-slate-50/70 text-slate-800 cursor-not-allowed border-slate-100" : ""}`}
-                    style={{ ...inputStyle, backgroundColor: computedTotal > 0 ? "var(--bg-main)" : "white" }} />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-400">VND</span>
+                    style={{
+                      ...inputStyle,
+                      backgroundColor:
+                        computedTotal > 0 ? "var(--bg-main)" : "white",
+                    }}
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-400">
+                    VND
+                  </span>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Đặt cọc</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                    Đặt cọc
+                  </label>
                   <div className="relative">
                     <input type="text" placeholder="VD: 5,000,000"
                       value={activeTab.deposit ? fmt(activeTab.deposit) : ""}
                       onChange={(e) => { const val = e.target.value.replace(/\D/g, ""); updateActiveTab({ deposit: val ? Number(val) : "" }); }}
-                      className={`${inputBase} font-bold`} style={{ ...inputStyle, backgroundColor: "white" }} />
+                      className={`${inputBase} font-bold ${activeTab.deposit < suggestedDepositInfo.amount ? "border-amber-400 ring-1 ring-amber-400 focus:ring-amber-500" : ""}`}
+                      style={{ ...inputStyle, backgroundColor: "white", borderColor: activeTab.deposit < suggestedDepositInfo.amount ? "#fbbf24" : "var(--grid-border)" }} />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-300">VND</span>
                   </div>
+                  {displayQuote > 0 && suggestedDepositInfo.amount > 0 && (
+                    <div className="flex flex-col gap-1 mt-1">
+                      <div className="flex justify-between items-center bg-[var(--brand-primary)]/5 px-2 py-1.5 rounded-md border border-[var(--brand-primary)]/20 mt-1">
+                        <p className="text-[10px] text-slate-500 italic flex-1">
+                          💡 Gợi ý cọc <span className="font-bold text-[var(--brand-primary)]">{suggestedDepositInfo.percentage}%</span>: {suggestedDepositInfo.reason}
+                        </p>
+                        <button
+                          onClick={() => updateActiveTab({ deposit: suggestedDepositInfo.amount })}
+                          className="shrink-0 ml-2 px-2 py-1 rounded text-[10px] font-bold bg-[var(--brand-primary)] text-white hover:bg-green-600 transition-all"
+                        >
+                          Lấy mức này
+                        </button>
+                      </div>
+                      {activeTab.deposit > 0 && activeTab.deposit < suggestedDepositInfo.amount && (
+                        <p className="text-[10px] font-bold text-amber-600 animate-pulse text-right">
+                          ⚠️ Cọc đang dưới mức an toàn (tối thiểu {fmt(suggestedDepositInfo.amount)}đ)
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {displayQuote > 0 && (
+                    <div className="flex gap-1.5 mt-1.5">
+                      {[30, 50, 100].map(pct => (
+                        <button
+                          key={pct}
+                          onClick={() => updateActiveTab({ deposit: Math.round(displayQuote * (pct / 100)) })}
+                          className="text-[10px] px-2 py-1 rounded bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-all"
+                        >
+                          {pct}%
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Số tiền còn lại</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                    Số tiền còn lại
+                  </label>
                   <div className="relative">
-                    <input type="text"
-                      value={displayQuote > 0 ? (activeTab.deposit ? fmt(Math.max(0, displayQuote - activeTab.deposit)) : fmt(displayQuote)) : ""}
-                      disabled placeholder={displayQuote > 0 ? "0" : "Chờ báo giá"}
+                    <input
+                      type="text"
+                      value={
+                        displayQuote > 0
+                          ? activeTab.deposit
+                            ? fmt(Math.max(0, displayQuote - activeTab.deposit))
+                            : fmt(displayQuote)
+                          : ""
+                      }
+                      disabled
+                      placeholder={displayQuote > 0 ? "0" : "Chờ báo giá"}
                       className={`${inputBase} font-bold bg-slate-50/50 ${displayQuote > 0 ? "text-status-focus" : "text-slate-400"} cursor-not-allowed border-slate-100 placeholder:italic placeholder:font-normal`}
-                      style={{ backgroundColor: "var(--bg-main)" }} />
-                    {displayQuote > 0 && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-300">VND</span>}
+                      style={{ backgroundColor: "var(--bg-main)" }}
+                    />
+                    {displayQuote > 0 && (
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-300">
+                        VND
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -285,19 +456,38 @@ export default function CustomerPanel({
           </div>
           <div className="space-y-4">
             <div className="relative">
-              <MapPin size={14} className="absolute left-3.5 top-4 text-slate-300" />
-              <textarea placeholder="Địa chỉ giao hàng chi tiết..."
-                value={activeTab.deliveryInfo.address} onChange={(e) => updateDelivery("address", e.target.value)}
-                className={`${inputBase} pl-10 py-3 resize-none min-h-[60px]`} style={{ ...inputStyle, backgroundColor: "white" }} />
+              <MapPin
+                size={14}
+                className="absolute left-3.5 top-4 text-slate-300"
+              />
+              <textarea
+                placeholder="Địa chỉ giao hàng chi tiết..."
+                value={activeTab.deliveryInfo.address}
+                onChange={(e) => updateDelivery("address", e.target.value)}
+                className={`${inputBase} pl-10 py-3 resize-none min-h-[60px]`}
+                style={{ ...inputStyle, backgroundColor: "white" }}
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="relative">
-                <input type="text" placeholder="Quận/Huyện" value={activeTab.deliveryInfo.district}
-                  onChange={(e) => updateDelivery("district", e.target.value)} className={inputBase} style={{ ...inputStyle, backgroundColor: "white" }} />
+                <input
+                  type="text"
+                  placeholder="Quận/Huyện"
+                  value={activeTab.deliveryInfo.district}
+                  onChange={(e) => updateDelivery("district", e.target.value)}
+                  className={inputBase}
+                  style={{ ...inputStyle, backgroundColor: "white" }}
+                />
               </div>
               <div className="relative">
-                <input type="text" placeholder="Phường/Xã" value={activeTab.deliveryInfo.ward}
-                  onChange={(e) => updateDelivery("ward", e.target.value)} className={inputBase} style={{ ...inputStyle, backgroundColor: "white" }} />
+                <input
+                  type="text"
+                  placeholder="Phường/Xã"
+                  value={activeTab.deliveryInfo.ward}
+                  onChange={(e) => updateDelivery("ward", e.target.value)}
+                  className={inputBase}
+                  style={{ ...inputStyle, backgroundColor: "white" }}
+                />
               </div>
             </div>
           </div>

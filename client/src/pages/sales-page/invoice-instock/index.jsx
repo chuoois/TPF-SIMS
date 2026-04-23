@@ -21,8 +21,7 @@ import {
   GIFT_PRODUCTS,
   MOCK_CUSTOMERS,
   ITEMS_PER_PAGE,
-  WOOD_FINISHING_RATE,
-  fmt,
+  SYSTEM_WARRANTY,
   createEmptyTab,
 } from "./mockData";
 
@@ -78,7 +77,7 @@ export default function InStockInvoicePage() {
   ]);
   const [activeTabId, setActiveTabId] = useState(1);
   const [productTypeTab, setProductTypeTab] = useState("Hàng mộc");
-  const [woodPriceMode, setWoodPriceMode] = useState("finished"); // "finished" | "raw"
+
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedProductTypes, setSelectedProductTypes] = useState([]);
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
@@ -190,9 +189,7 @@ export default function InStockInvoicePage() {
   };
 
   const addToCart = (product) => {
-    const isWood = product.productType === "Hàng mộc";
-    const isGift = productTypeTab === "Quà tặng";
-    const cartItemId = `${product.id + (isGift ? 10000 : 0)}${isWood ? `-${woodPriceMode}` : ""}`;
+    const cartItemId = product.id;
 
     const existing = activeTab.cartItems.find((i) => i.id === cartItemId);
     if (existing) {
@@ -210,38 +207,25 @@ export default function InStockInvoicePage() {
         toast.error(`"${product.name}" đã hết hàng`);
         return;
       }
-      const isWood = product.productType === "Hàng mộc";
       const isGift = productTypeTab === "Quà tặng";
-      let itemPrice = product.price;
-      if (isGift) itemPrice = 0;
-      else if (isWood && woodPriceMode === "finished")
-        itemPrice = Math.round(product.price * WOOD_FINISHING_RATE);
-
-      // Hàng mộc giá hoàn thiện: hỗ trợ giá cũ + giá đã giảm
-      const isWoodFinished = isWood && woodPriceMode === "finished";
       updateActiveTab({
         cartItems: [
           ...activeTab.cartItems,
           {
             id: cartItemId,
             name: product.name,
-            price: product.discount
-                ? Math.round(itemPrice * (1 - product.discount / 100))
-                : itemPrice,
+            price: isGift ? 0 : product.price,
             stock: product.stock,
             sku: product.sku,
             quantity: 1,
             note: "",
             productType: product.productType,
-            images: [],
+            images: product.productType === "Hàng mộc" ? [] : null,
             isGift,
-            priceMode: isWood ? woodPriceMode : null,
-            // Dual pricing cho Hàng mộc hoàn thiện
-            oldPrice: isWoodFinished ? itemPrice : null,
-            discountPrice: isWoodFinished ? (product.discount ? Math.round(itemPrice * (1 - product.discount / 100)) : itemPrice) : null,
             leadTime: product.leadTime || 0,
             warrantyMonths: product.warrantyMonths || 12,
-            warrantyContent: product.warrantyContent || "Bảo hành các lỗi kỹ thuật.",
+            warrantyContent:
+              product.warrantyContent || "Bảo hành các lỗi kỹ thuật.",
           },
         ],
       });
@@ -337,7 +321,7 @@ export default function InStockInvoicePage() {
 
   const maxLeadTime = useMemo(() => {
     return activeTab.cartItems.reduce((max, item) => {
-      const lt = item.priceMode === "raw" ? 0 : (item.leadTime || 0);
+      const lt = item.priceMode === "raw" ? 0 : item.leadTime || 0;
       return Math.max(max, lt);
     }, 0);
   }, [activeTab.cartItems]);
@@ -348,23 +332,51 @@ export default function InStockInvoicePage() {
       if (!stored) return { count: 0, level: "Bình thường", buffer: 0 };
       const orders = JSON.parse(stored);
       // Đếm các đơn đang chờ gia công hoặc đang gia công
-      const activeProduction = orders.filter(o => 
-        (o.status === "Đang gia công" || o.status === "Chờ xử lý") && 
-        (o.type === "Hàng mộc" || o.type === "Hàng khách đặt")
+      const activeProduction = orders.filter(
+        (o) =>
+          (o.status === "Đang gia công" || o.status === "Chờ xử lý") &&
+          (o.type === "Hàng mộc" || o.type === "Hàng khách đặt"),
       );
       const count = activeProduction.length;
-      if (count > 8) return { count, level: "Quá tải", buffer: 7, color: "text-red-600", bg: "bg-red-50", border: "border-red-200" };
-      if (count > 4) return { count, level: "Khá bận", buffer: 3, color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200" };
-      return { count, level: "Bình thường", buffer: 0, color: "text-green-600", bg: "bg-green-50", border: "border-green-200" };
-    } catch (e) { return { count: 0, level: "Bình thường", buffer: 0 }; }
+      if (count > 8)
+        return {
+          count,
+          level: "Quá tải",
+          buffer: 7,
+          color: "text-red-600",
+          bg: "bg-red-50",
+          border: "border-red-200",
+        };
+      if (count > 4)
+        return {
+          count,
+          level: "Khá bận",
+          buffer: 3,
+          color: "text-amber-600",
+          bg: "bg-amber-50",
+          border: "border-amber-200",
+        };
+      return {
+        count,
+        level: "Bình thường",
+        buffer: 0,
+        color: "text-green-600",
+        bg: "bg-green-50",
+        border: "border-green-200",
+      };
+    } catch (e) {
+      return { count: 0, level: "Bình thường", buffer: 0 };
+    }
   }, [activeTab.cartItems]);
 
   const needsWorkshop = useMemo(() => {
-    return activeTab.cartItems.some(item => {
+    return activeTab.cartItems.some((item) => {
       if (item.priceMode === "raw") return false;
-      return item.productType === "Hàng mộc" || 
-             item.productType === "Hàng khách đặt" || 
-             (item.leadTime && item.leadTime > 0);
+      return (
+        item.productType === "Hàng mộc" ||
+        item.productType === "Hàng khách đặt" ||
+        (item.leadTime && item.leadTime > 0)
+      );
     });
   }, [activeTab.cartItems]);
 
@@ -403,7 +415,9 @@ export default function InStockInvoicePage() {
         phone: activeTab.selectedCustomer?.phone || "",
         address: activeTab.selectedCustomer?.address || "",
       },
-      type: activeTab.cartItems.some(i => i.productType === "Hàng mộc") ? "Hàng mộc" : "Hàng sẵn",
+      type: activeTab.cartItems.some((i) => i.productType === "Hàng mộc")
+        ? "Hàng mộc"
+        : "Hàng sẵn",
       salesPerson: "Nhân viên bán hàng",
       products: activeTab.cartItems.map((item) => ({
         name: item.name,
@@ -411,7 +425,9 @@ export default function InStockInvoicePage() {
         size: "",
         qty: item.quantity,
         price: item.price,
-        warranty: item.isGift ? "Không bảo hành" : `${item.warrantyMonths || 12} tháng`,
+        warranty: item.isGift
+          ? "Không bảo hành"
+          : `${item.warrantyMonths || 12} tháng`,
         note: item.note || "",
         images: item.images || [],
         leadTime: item.leadTime || 0,
@@ -436,7 +452,7 @@ export default function InStockInvoicePage() {
     };
 
     const warranties = JSON.parse(
-      localStorage.getItem("tpf_simulated_warranties") || "[]"
+      localStorage.getItem("tpf_simulated_warranties") || "[]",
     );
 
     const newWarranties = activeTab.cartItems
@@ -445,7 +461,7 @@ export default function InStockInvoicePage() {
         const startDate = new Date();
         const endDate = new Date(startDate);
         endDate.setMonth(endDate.getMonth() + (item.warrantyMonths || 12));
-        
+
         return {
           id: `BH-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000000)}`,
           orderId: newOrder.code,
@@ -466,7 +482,7 @@ export default function InStockInvoicePage() {
     if (newWarranties.length > 0) {
       localStorage.setItem(
         "tpf_simulated_warranties",
-        JSON.stringify([...warranties, ...newWarranties])
+        JSON.stringify([...warranties, ...newWarranties]),
       );
     }
 
@@ -527,8 +543,6 @@ export default function InStockInvoicePage() {
         <ProductPanel
           productTypeTab={productTypeTab}
           setProductTypeTab={setProductTypeTab}
-          woodPriceMode={woodPriceMode}
-          setWoodPriceMode={setWoodPriceMode}
           productSearch={productSearch}
           setProductSearch={setProductSearch}
           selectedCategories={selectedCategories}
