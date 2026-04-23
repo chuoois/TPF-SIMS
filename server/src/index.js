@@ -6,6 +6,7 @@ const sequelize = require("./config/db");
 require("./entities"); // Tự động load models và associations
 const authRoutes = require("./routes/auth.routes");
 const customerRoutes = require("./routes/customer.routes");
+const orderRoutes = require("./routes/order.routes");
 const swaggerUi = require("swagger-ui-express");
 const swaggerJsDoc = require("swagger-jsdoc");
 
@@ -23,6 +24,7 @@ app.use(express.json());
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/customer", customerRoutes);
+app.use("/api/order", orderRoutes);
 
 // Swagger Configuration
 const swaggerOptions = {

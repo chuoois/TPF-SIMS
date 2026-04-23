@@ -2,37 +2,29 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
 /**
- * Model UserAccount
- * Bảng tài khoản người dùng
+ * Model ProductItem
+ * Bảng thông tin chi tiết từng sản phẩm (serial)
  * Created By: ThinhBui
- * Created Date: 14/03/2026
+ * Created Date: 23/04/2026
  */
-const UserAccount = sequelize.define(
-  "UserAccount",
+const ProductItem = sequelize.define(
+  "ProductItem",
   {
-    user_account_id: {
+    pk_item_id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
-    role_id: {
+    fk_product_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    email: {
-      type: DataTypes.STRING(255),
-      allowNull: false,
-      validate: {
-        isEmail: true,
-      },
+    item_serial: {
+      type: DataTypes.STRING(100),
     },
-    password_hash: {
-      type: DataTypes.STRING(255),
-      allowNull: false,
-    },
-    status: {
+    item_status: {
       type: DataTypes.TINYINT,
-      defaultValue: 1, // 1: Active, 0: Inactive
+      defaultValue: 1,
     },
     createdate: {
       type: DataTypes.DATE,
@@ -49,16 +41,16 @@ const UserAccount = sequelize.define(
     },
   },
   {
-    tableName: "user_account",
+    tableName: "product_item",
     timestamps: false,
     indexes: [
       {
         unique: true,
-        fields: ["email"],
-        name: "unique_email",
+        fields: ["item_serial"],
+        name: "unique_item_serial",
       },
     ],
   }
 );
 
-module.exports = UserAccount;
+module.exports = ProductItem;

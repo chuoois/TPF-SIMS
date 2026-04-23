@@ -1,0 +1,111 @@
+const express = require("express");
+const router = express.Router();
+const OrderController = require("../controller/order.controller");
+const { verifyAccessToken } = require("../middleware/auth.middleware");
+
+/**
+ * Order Routes - Quản lý đơn hàng
+ * Created By: ThinhBui
+ * Created Date: 23/04/2026
+ */
+
+// Yêu cầu đăng nhập để sử dụng các API này
+router.use(verifyAccessToken);
+
+/**
+ * @swagger
+ * /api/order:
+ *   get:
+ *     summary: Lấy danh sách đơn hàng (hỗ trợ lọc theo trạng thái và khách hàng)
+ *     tags: [Order]
+ *     parameters:
+ *       - in: query
+ *         name: order_status
+ *         schema:
+ *           type: integer
+ *         description: "Trạng thái đơn hàng (1: Pending, 2: Confirmed, 3: Processing, 4: Shipping, 5: Completed, 0: Cancelled)"
+ *       - in: query
+ *         name: customer_id
+ *         schema:
+ *           type: integer
+ *         description: ID của khách hàng
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Danh sách đơn hàng
+ */
+router.get("/", OrderController.getAllOrders);
+
+/**
+ * @swagger
+ * /api/order:
+ *   post:
+ *     summary: Tạo đơn hàng mới kèm chi tiết sản phẩm
+ *     tags: [Order]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fk_customer_id:
+ *                 type: integer
+ *               fulfillment_method:
+ *                 type: string
+ *               expected_fulfillment_date:
+ *                 type: string
+ *                 format: date-time
+ *               note:
+ *                 type: string
+ *               deposit_amount:
+ *                 type: number
+ *               address:
+ *                 type: string
+ *               total_amount:
+ *                 type: number
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     fk_product_id:
+ *                       type: integer
+ *                     item_name:
+ *                       type: string
+ *                     item_quantity:
+ *                       type: integer
+ *                     item_price:
+ *                       type: number
+ *                     item_material:
+ *                       type: string
+ *                     item_size:
+ *                       type: string
+ *                     item_color:
+ *                       type: string
+ *                     item_img:
+ *                       type: string
+ *                       description: "Ảnh gốc của sản phẩm (clone)"
+ *                     customer_img:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       description: "Danh sách ảnh từ khách hàng"
+ *                     item_note:
+ *                       type: string
+ *     responses:
+ *       201:
+ *         description: Đơn hàng đã được tạo thành công
+ */
+router.post("/", OrderController.createOrder);
+
+module.exports = router;
