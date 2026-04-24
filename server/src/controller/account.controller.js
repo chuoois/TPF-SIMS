@@ -302,6 +302,49 @@ class AccountController {
       return res.status(500).json({ message: "Lỗi hệ thống khi lấy danh sách vai trò" });
     }
   }
+
+  /**
+   * Xóa vĩnh viễn một tài khoản
+   */
+  async deleteAccount(req, res) {
+    try {
+      const { id } = req.params;
+      const currentUserId = req.user.userId;
+
+      const account = await UserAccount.findByPk(id, {
+        include: [{ model: UserProfile, as: "profile" }],
+      });
+
+      if (!account) {
+        return res.status(404).json({ message: "Không tìm thấy tài khoản" });
+      }
+
+      const email = account.email;
+      const fullName = account.profile?.full_name || email;
+
+      await UserAccount.sequelize.transaction(async (t) => {
+        // Xóa profile trước (vì có foreign key)
+        if (account.profile) {
+          await account.profile.destroy({ transaction: t });
+        }
+        await account.destroy({ transaction: t });
+      });
+
+      // Ghi log
+      await systemLogController.record(
+        req,
+        "DELETE_ACCOUNT",
+        `Đã xóa vĩnh viễn tài khoản: ${fullName} (${email})`,
+        "WARN",
+        currentUserId
+      );
+
+      return res.status(200).json({ message: "Xóa tài khoản thành công" });
+    } catch (error) {
+      console.error("Delete account error:", error);
+      return res.status(500).json({ message: "Lỗi hệ thống khi xóa tài khoản" });
+    }
+  }
 }
 
 module.exports = new AccountController();

@@ -28,155 +28,153 @@ import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 import DataTable from "@/components/control/DataTable";
 import ConfirmModal from "@/components/control/ConfirmModal";
+import accountService from "@/services/account.service";
 
 const STATUS_MAP = {
   1: { label: "Hoạt động", bg: "#ECFDF5", text: "#047857", border: "#A7F3D0" },
-  0: { label: "Nghỉ", bg: "#F3F4F6", text: "#6B7280", border: "#D1D5DB" },
-  "-1": { label: "Khóa", bg: "#FEF2F2", text: "#DC2626", border: "#FECACA" },
+  0: { label: "Khóa", bg: "#FEF2F2", text: "#DC2626", border: "#FECACA" },
 };
 
-const ROLES = [
-  { value: "Tất cả", label: "Tất cả" },
-  { value: "OWNER", label: "Chủ cửa hàng" },
-  { value: "SALES", label: "Nhân viên kinh doanh" },
-  { value: "ACCOUNTANT", label: "Kế toán" },
-  { value: "WORKER", label: "Thợ" },
-];
-
-const INITIAL_ACCOUNTS = [
-  {
-    pk_user_account_id: "fake-1",
-    email: "hieu.nd@tp-f.vn",
-    status: 1,
-    timestamp: "2026-03-01T08:00:00",
-    role: { role_code: "OWNER", role_name: "Chủ cửa hàng" },
-    profile: { full_name: "Nguyễn Đình Hiếu", phone_number: "0987654321" }
-  },
-  {
-    pk_user_account_id: "fake-2",
-    email: "anh.vd@tp-f.vn",
-    status: 1,
-    timestamp: "2026-03-02T09:30:00",
-    role: { role_code: "SALES", role_name: "Sales" },
-    profile: { full_name: "Võ Đức Anh", phone_number: "0945678901" }
-  },
-  {
-    pk_user_account_id: "fake-3",
-    email: "tuan.ba@tp-f.vn",
-    status: 0,
-    timestamp: "2026-03-04T10:15:00",
-    role: { role_code: "ACCOUNTANT", role_name: "Kế toán" },
-    profile: { full_name: "Bùi Tuấn Anh", phone_number: "0967890123" }
-  },
-  {
-    pk_user_account_id: "fake-4",
-    email: "mai.tt@tp-f.vn",
-    status: -1,
-    timestamp: "2026-03-05T14:45:00",
-    role: { role_code: "WORKER", role_name: "Công nhân" },
-    profile: { full_name: "Trần Thị Mai", phone_number: "0912345678" }
-  },
-  {
-    pk_user_account_id: "fake-5",
-    email: "lan.pt@tp-f.vn",
-    status: 1,
-    timestamp: "2026-03-06T11:20:00",
-    role: { role_code: "SALES", role_name: "Sales" },
-    profile: { 
-      full_name: "Phạm Thị Lan", 
-      phone_number: "0934567890",
-      address: "123 Đường ABC, Hà Nội",
-      gender: "Nữ",
-      dob: "1995-05-20"
-    }
-  }
-];
-
-const ModalContainer = ({ title, onClose, children, maxWidth = "max-w-md" }) => (
+const ModalContainer = ({
+  title,
+  onClose,
+  children,
+  maxWidth = "max-w-md",
+}) => (
   <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-    <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px] animate-in fade-in duration-200" onClick={onClose} />
-    <div className={cn("relative bg-white rounded-lg w-full shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200", maxWidth)}>
-      <div className="px-6 py-4 border-b flex items-center justify-between shrink-0" style={{ borderColor: "var(--grid-border)" }}>
+    <div
+      className="absolute inset-0 bg-black/30 backdrop-blur-[2px] animate-in fade-in duration-200"
+      onClick={onClose}
+    />
+    <div
+      className={cn(
+        "relative bg-white rounded-lg w-full shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200",
+        maxWidth,
+      )}
+    >
+      <div
+        className="px-6 py-4 border-b flex items-center justify-between shrink-0"
+        style={{ borderColor: "var(--grid-border)" }}
+      >
         <h3 className="text-[16px] font-bold text-gray-900">{title}</h3>
-        <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition text-gray-400 hover:text-gray-600 cursor-pointer">
+        <button
+          onClick={onClose}
+          className="p-2 hover:bg-gray-100 rounded-full transition text-gray-400 hover:text-gray-600 cursor-pointer"
+        >
           <X size={18} />
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto p-6 text-gray-900">
-        {children}
-      </div>
+      <div className="flex-1 overflow-y-auto p-6 text-gray-900">{children}</div>
     </div>
   </div>
 );
 
 export default function OwnerEmployees() {
-  const [activeTab, setActiveTab] = useState("Tất cả"); // Roles filter
+  const [activeTab, setActiveTab] = useState("Tất cả"); // Role filter
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
   const [accounts, setAccounts] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState({ page: 1, limit: 15, total: 0 });
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 15,
+    totalItems: 0,
+  });
 
   const [showAddEditModal, setShowAddEditModal] = useState(false);
   const [editingAccount, setEditingAccount] = useState(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [accountToDelete, setAccountToDelete] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [showResetModal, setShowResetModal] = useState(false);
   const [accountToReset, setAccountToReset] = useState(null);
 
-  const fetchAccounts = () => {
-    setLoading(true);
-    setTimeout(() => {
-      if (accounts.length === 0) {
-        setAccounts(INITIAL_ACCOUNTS);
-        setPagination(prev => ({ ...prev, total: INITIAL_ACCOUNTS.length }));
-      }
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState(null);
+
+  const fetchRoles = async () => {
+    try {
+      const data = await accountService.getRoles();
+      setRoles(data);
+    } catch (error) {
+      console.error("Fetch roles error:", error);
+    }
+  };
+
+  const fetchAccounts = async () => {
+    try {
+      setLoading(true);
+      const params = {
+        search,
+        page: pagination.page,
+        limit: pagination.limit,
+        fromDate: dateFrom,
+        toDate: dateTo,
+        role_id: activeTab === "Tất cả" ? undefined : activeTab,
+      };
+      const response = await accountService.getAllAccounts(params);
+      setAccounts(response.data);
+      setPagination((prev) => ({
+        ...prev,
+        totalItems: response.pagination.totalItems,
+      }));
+    } catch (error) {
+      toast.error("Không thể tải danh sách tài khoản");
+      console.error(error);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   useEffect(() => {
-    fetchAccounts();
+    fetchRoles();
   }, []);
 
-  const handleSearch = () => {};
+  useEffect(() => {
+    fetchAccounts();
+  }, [pagination.page, pagination.limit, activeTab]);
 
-  const handleSaveAccount = (formData) => {
-    if (editingAccount) {
-      setAccounts(prev => prev.map(a =>
-        a.pk_user_account_id === editingAccount.pk_user_account_id
-          ? { ...a, ...formData, profile: { ...a.profile, ...formData }, role: { ...a.role, role_code: formData.role_id } }
-          : a
-      ));
-      toast.success("Cập nhật tài khoản thành công");
-    } else {
-      const newAccount = {
-        pk_user_account_id: `fake-${Date.now()}`,
-        email: formData.email,
-        status: 1,
-        timestamp: new Date().toISOString(),
-        role: { role_code: formData.role_id, role_name: ROLES.find(r => r.value === formData.role_id)?.label },
-        profile: { full_name: formData.full_name, phone_number: formData.phone_number }
-      };
-      setAccounts(prev => [newAccount, ...prev]);
-      toast.success("Tạo tài khoản thành công");
-    }
-    setShowAddEditModal(false);
+  const handleSearch = () => {
+    setPagination((prev) => ({ ...prev, page: 1 }));
+    fetchAccounts();
   };
 
-  const handleUpdateStatus = (newStatus) => {
-    setAccounts(prev => prev.map(a =>
-      a.pk_user_account_id === selectedAccount.pk_user_account_id
-        ? { ...a, status: newStatus }
-        : a
-    ));
-    toast.success("Đã cập nhật trạng thái");
-    setShowStatusModal(false);
+  const handleSaveAccount = async (formData) => {
+    try {
+      if (editingAccount) {
+        await accountService.updateAccount(
+          editingAccount.user_account_id,
+          formData,
+        );
+        toast.success("Cập nhật tài khoản thành công");
+      } else {
+        await accountService.createAccount(formData);
+        toast.success("Tạo tài khoản thành công");
+      }
+      setShowAddEditModal(false);
+      fetchAccounts();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Lỗi khi lưu tài khoản");
+    }
+  };
+
+  const handleUpdateStatus = async (newStatus) => {
+    try {
+      await accountService.toggleStatus(
+        selectedAccount.user_account_id,
+        newStatus,
+      );
+      toast.success("Đã cập nhật trạng thái");
+      setShowStatusModal(false);
+      fetchAccounts();
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Lỗi khi cập nhật trạng thái",
+      );
+    }
   };
 
   const handleDeleteAccount = (acc) => {
@@ -184,87 +182,106 @@ export default function OwnerEmployees() {
     setShowDeleteConfirm(true);
   };
 
-  const confirmDeleteAccount = () => {
+  const confirmDeleteAccount = async () => {
     if (!accountToDelete) return;
-    setAccounts(prev => prev.filter(a => a.pk_user_account_id !== accountToDelete.pk_user_account_id));
-    toast.success("Đã xóa tài khoản thành công");
-    setShowDeleteConfirm(false);
-    setAccountToDelete(null);
-  };
-  
-  const handleBulkDelete = () => {
-    setAccounts(prev => prev.filter(a => !selectedIds.includes(a.pk_user_account_id)));
-    toast.success(`Đã xóa ${selectedIds.length} tài khoản`);
-    setSelectedIds([]);
+    try {
+      await accountService.deleteAccount(accountToDelete.user_account_id);
+      toast.success("Đã xóa tài khoản thành công");
+      setShowDeleteConfirm(false);
+      setAccountToDelete(null);
+      fetchAccounts();
+    } catch (error) {
+      toast.error("Lỗi khi xóa tài khoản");
+    }
   };
 
-  const handleResetPassword = (newPwd) => {
-    // In mock, just show toast for demonstration
-    toast.success(`Đã đặt lại mật khẩu cho "${accountToReset?.profile?.full_name}"`);
-    setShowResetModal(false);
-    setAccountToReset(null);
+  const handleBulkDelete = async () => {
+    try {
+      await Promise.all(
+        selectedIds.map((id) => accountService.deleteAccount(id)),
+      );
+      toast.success(`Đã xóa ${selectedIds.length} tài khoản`);
+      setSelectedIds([]);
+      fetchAccounts();
+    } catch (error) {
+      toast.error("Lỗi khi xóa hàng loạt");
+    }
   };
+
+  const handleResetPassword = async (newPwd) => {
+    try {
+      await accountService.updateAccount(accountToReset.user_account_id, {
+        password: newPwd,
+      });
+      toast.success(
+        `Đã đặt lại mật khẩu cho "${accountToReset?.profile?.full_name}"`,
+      );
+      setShowResetModal(false);
+      setAccountToReset(null);
+    } catch (error) {
+      toast.error("Lỗi khi đặt lại mật khẩu");
+    }
+  };
+
+  const displayRoles = useMemo(
+    () => [
+      { value: "Tất cả", label: "Tất cả vai trò" },
+      ...roles.map((r) => ({ value: r.role_id, label: r.role_name })),
+    ],
+    [roles],
+  );
 
   const processedAccounts = useMemo(() => {
-    let result = accounts;
+    return accounts.map((a) => ({ ...a, id: a.user_account_id }));
+  }, [accounts]);
 
-    if (search) {
-      const s = search.toLowerCase();
-      result = result.filter(a =>
-        (a.email || "").toLowerCase().includes(s) ||
-        (a.profile?.full_name || "").toLowerCase().includes(s) ||
-        (a.profile?.phone_number || "").toLowerCase().includes(s)
-      );
-    }
-
-    // Hide OWNER accounts
-    result = result.filter(a => (a.role?.role_code || a.role_id) !== "OWNER");
-
-    if (activeTab !== "Tất cả") {
-      result = result.filter(a => (a.role?.role_code || a.role_id) === activeTab);
-    }
-
-    if (dateFrom) {
-      const from = new Date(dateFrom);
-      from.setHours(0, 0, 0, 0);
-      result = result.filter((a) => new Date(a.timestamp) >= from);
-    }
-    if (dateTo) {
-      const to = new Date(dateTo);
-      to.setHours(23, 59, 59, 999);
-      result = result.filter((a) => new Date(a.timestamp) <= to);
-    }
-
-    return result.map(a => ({ ...a, id: a.pk_user_account_id }));
-  }, [accounts, activeTab, dateFrom, dateTo, search]);
-
-  const hasActiveFilters = activeTab !== "Tất cả" || dateFrom || dateTo || search;
+  const hasActiveFilters =
+    activeTab !== "Tất cả" || dateFrom || dateTo || search;
 
   const clearAllFilters = () => {
     setActiveTab("Tất cả");
     setDateFrom("");
     setDateTo("");
     setSearch("");
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   return (
     <>
       <PageHelmet title="Quản lý tài khoản | TPF-SIMS" />
 
-      <div className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 space-y-4" style={{ backgroundColor: "var(--bg-main)" }}>
+      <div
+        className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 space-y-4"
+        style={{ backgroundColor: "var(--bg-main)" }}
+      >
         <div className="flex items-center justify-between shrink-0 mb-1">
           <div>
-            <h1 className="text-[22px] font-bold flex items-center gap-2.5" style={{ color: "var(--text-main)", letterSpacing: "-0.01em" }}>
+            <h1
+              className="text-[22px] font-bold flex items-center gap-2.5"
+              style={{ color: "var(--text-main)", letterSpacing: "-0.01em" }}
+            >
               <Users size={24} style={{ color: "var(--brand-primary)" }} />
               Quản lý tài khoản
             </h1>
-            <p className="text-[13px] mt-1 font-medium italic" style={{ color: "var(--text-placeholder)" }}>
-              {processedAccounts.length} nhân viên ({activeTab === "Tất cả" ? "tất cả vai trò" : ROLES.find(r => r.value === activeTab)?.label.toLowerCase()})
+            <p
+              className="text-[13px] mt-1 font-medium italic"
+              style={{ color: "var(--text-placeholder)" }}
+            >
+              {pagination.totalItems} nhân viên (
+              {activeTab === "Tất cả"
+                ? "tất cả vai trò"
+                : displayRoles
+                    .find((r) => r.value === activeTab)
+                    ?.label?.toLowerCase()}
+              )
             </p>
           </div>
 
           <button
-            onClick={() => { setEditingAccount(null); setShowAddEditModal(true); }}
+            onClick={() => {
+              setEditingAccount(null);
+              setShowAddEditModal(true);
+            }}
             className="h-10 px-6 rounded-xl flex items-center gap-2 text-[13px] font-bold text-white transition-all hover:opacity-90 shadow-sm active:scale-95 cursor-pointer"
             style={{ backgroundColor: "var(--brand-primary)" }}
           >
@@ -292,24 +309,37 @@ export default function OwnerEmployees() {
               onClick: handleBulkDelete,
               requireConfirm: true,
               confirmTitle: "Xác nhận xóa hàng loạt",
-              confirmMessage: (ids) => `Bạn có chắc chắn muốn xóa vĩnh viễn ${selectedIds.length} tài khoản đã chọn không?`
-            }
+              confirmMessage: (ids) =>
+                `Bạn có chắc chắn muốn xóa vĩnh viễn ${selectedIds.length} tài khoản đã chọn không?`,
+            },
           ]}
           extraFilters={
             <div className="flex items-center gap-1.5 shrink-0 relative">
-               <select
-                  value={activeTab}
-                  onChange={(e) => setActiveTab(e.target.value)}
-                  className="h-10 px-3 pr-8 rounded-lg text-[13px] border cursor-pointer focus:outline-none appearance-none font-medium transition-all hover:border-gray-400"
-                  style={{ backgroundColor: activeTab !== "Tất cả" ? "var(--status-focus)" : "#fff", color: activeTab !== "Tất cả" ? "var(--brand-primary)" : "var(--text-main)", borderColor: "var(--grid-border)" }}
-               >
-                  {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-               </select>
-               <ChevronDown
-                  size={14}
-                  className="absolute right-2.5 pointer-events-none text-gray-400"
-                  strokeWidth={2.5}
-                />
+              <select
+                value={activeTab}
+                onChange={(e) => setActiveTab(e.target.value)}
+                className="h-10 px-3 pr-8 rounded-lg text-[13px] border cursor-pointer focus:outline-none appearance-none font-medium transition-all hover:border-gray-400"
+                style={{
+                  backgroundColor:
+                    activeTab !== "Tất cả" ? "var(--status-focus)" : "#fff",
+                  color:
+                    activeTab !== "Tất cả"
+                      ? "var(--brand-primary)"
+                      : "var(--text-main)",
+                  borderColor: "var(--grid-border)",
+                }}
+              >
+                {displayRoles.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={14}
+                className="absolute right-2.5 pointer-events-none text-gray-400"
+                strokeWidth={2.5}
+              />
             </div>
           }
           columns={[
@@ -318,7 +348,8 @@ export default function OwnerEmployees() {
               headerClassName: "text-center w-[60px]",
               className: "text-center font-medium",
               style: { color: "var(--text-secondary)" },
-              render: (_, idx) => (pagination.page - 1) * pagination.limit + idx + 1,
+              render: (_, idx) =>
+                (pagination.page - 1) * pagination.limit + idx + 1,
             },
             {
               header: "Nhân viên",
@@ -328,8 +359,12 @@ export default function OwnerEmployees() {
                     {a.profile?.full_name?.charAt(0) || <User size={18} />}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-gray-900 truncate">{a.profile?.full_name || "Chưa cập nhật"}</p>
-                    <p className="text-[11px] text-gray-400 flex items-center gap-1 truncate"><Mail size={12} className="shrink-0" /> {a.email}</p>
+                    <p className="font-bold text-gray-900 truncate">
+                      {a.profile?.full_name || "Chưa cập nhật"}
+                    </p>
+                    <p className="text-[11px] text-gray-400 flex items-center gap-1 truncate">
+                      <Mail size={12} className="shrink-0" /> {a.email}
+                    </p>
                   </div>
                 </div>
               ),
@@ -339,14 +374,15 @@ export default function OwnerEmployees() {
               className: "whitespace-nowrap",
               render: (a) => (
                 <div className="flex items-center gap-1.5 text-gray-600 font-medium">
-                  <Phone size={13} className="text-gray-400 shrink-0" /> {a.profile?.phone_number || "—"}
+                  <Phone size={13} className="text-gray-400 shrink-0" />{" "}
+                  {a.profile?.phone_number || "—"}
                 </div>
               ),
             },
             {
               header: "Vai trò",
               render: (a) => {
-                const roleLabel = ROLES.find(r => r.value === (a.role?.role_code || a.role_id))?.label || a.role?.role_name || a.role_id;
+                const roleLabel = a.role?.role_name || "N/A";
                 return (
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 uppercase tracking-tight">
                     <Shield size={12} /> {roleLabel}
@@ -358,7 +394,9 @@ export default function OwnerEmployees() {
               header: "Ngày tạo",
               render: (a) => (
                 <div className="text-gray-500 font-medium">
-                  {a.timestamp ? new Date(a.timestamp).toLocaleDateString("vi-VN") : "—"}
+                  {a.createdate
+                    ? new Date(a.createdate).toLocaleDateString("vi-VN")
+                    : "—"}
                 </div>
               ),
             },
@@ -367,41 +405,75 @@ export default function OwnerEmployees() {
             {
               icon: Pencil,
               label: "Sửa",
-              onClick: (a) => { setEditingAccount(a); setShowAddEditModal(true); },
+              onClick: (a) => {
+                setEditingAccount(a);
+                setShowAddEditModal(true);
+              },
             },
             {
               icon: Key,
               label: "Mật khẩu",
-              className: "bg-white border-gray-200 text-blue-500 hover:text-blue-600",
-              onClick: (a) => { setAccountToReset(a); setShowResetModal(true); },
+              className:
+                "bg-white border-gray-200 text-blue-500 hover:text-blue-600",
+              onClick: (a) => {
+                setAccountToReset(a);
+                setShowResetModal(true);
+              },
             },
             {
               icon: Lock,
               label: "Trạng thái",
-              className: "bg-white border-gray-200 text-amber-500 hover:text-amber-600",
-              onClick: (a) => { setSelectedAccount(a); setShowStatusModal(true); },
+              className:
+                "bg-white border-gray-200 text-amber-500 hover:text-amber-600",
+              onClick: (a) => {
+                setSelectedAccount(a);
+                setShowStatusModal(true);
+              },
             },
             {
               icon: Trash2,
               label: "Xóa",
-              className: "bg-white border-gray-200 text-red-500 hover:text-red-600",
+              className:
+                "bg-white border-gray-200 text-red-500 hover:text-red-600",
               onClick: (a) => handleDeleteAccount(a),
-            }
+            },
           ]}
           pagination={{
-            total: processedAccounts.length,
+            total: pagination.totalItems,
             currentPage: pagination.page,
-            setCurrentPage: (p) => setPagination(prev => ({ ...prev, page: p })),
+            setCurrentPage: (p) =>
+              setPagination((prev) => ({ ...prev, page: p })),
             itemsPerPage: pagination.limit,
-            setItemsPerPage: (l) => setPagination(prev => ({ ...prev, limit: l })),
+            setItemsPerPage: (l) =>
+              setPagination((prev) => ({ ...prev, limit: l })),
           }}
         />
       </div>
 
-      {showAddEditModal && <AccountFormModal account={editingAccount} onClose={() => setShowAddEditModal(false)} onSave={handleSaveAccount} />}
-      {showStatusModal && <StatusModal account={selectedAccount} onClose={() => setShowStatusModal(false)} onUpdate={handleUpdateStatus} />}
-      {showResetModal && <ResetPasswordModal account={accountToReset} onClose={() => setShowResetModal(false)} onConfirm={handleResetPassword} />}
-      
+      {showAddEditModal && (
+        <AccountFormModal
+          account={editingAccount}
+          roles={roles}
+          defaultRoleId={activeTab}
+          onClose={() => setShowAddEditModal(false)}
+          onSave={handleSaveAccount}
+        />
+      )}
+      {showStatusModal && (
+        <StatusModal
+          account={selectedAccount}
+          onClose={() => setShowStatusModal(false)}
+          onUpdate={handleUpdateStatus}
+        />
+      )}
+      {showResetModal && (
+        <ResetPasswordModal
+          account={accountToReset}
+          onClose={() => setShowResetModal(false)}
+          onConfirm={handleResetPassword}
+        />
+      )}
+
       <ConfirmModal
         isOpen={showDeleteConfirm}
         title="Xác nhận xóa tài khoản"
@@ -431,117 +503,247 @@ function ResetPasswordModal({ account, onClose, onConfirm }) {
   };
 
   return (
-    <ModalContainer title="Đặt lại mật khẩu" onClose={onClose} maxWidth="max-w-sm">
+    <ModalContainer
+      title="Đặt lại mật khẩu"
+      onClose={onClose}
+      maxWidth="max-w-sm"
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex flex-col items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
             <Key size={24} />
           </div>
           <div className="text-center">
-            <p className="text-[13px] text-gray-500">Đang đặt lại mật khẩu cho</p>
-            <p className="font-bold text-gray-900">{account?.profile?.full_name}</p>
+            <p className="text-[13px] text-gray-500">
+              Đang đặt lại mật khẩu cho
+            </p>
+            <p className="font-bold text-gray-900">
+              {account?.profile?.full_name}
+            </p>
           </div>
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Mật khẩu mới</label>
-          <Input 
-            required 
-            type="password" 
-            placeholder="••••••••" 
-            className="rounded-xl h-11" 
-            value={newPassword} 
-            onChange={e => setNewPassword(e.target.value)} 
+          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+            Mật khẩu mới
+          </label>
+          <Input
+            required
+            type="password"
+            placeholder="••••••••"
+            className="rounded-xl h-11"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
           />
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Xác nhận mật khẩu</label>
-          <Input 
-            required 
-            type="password" 
-            placeholder="••••••••" 
-            className="rounded-xl h-11" 
-            value={confirmPassword} 
-            onChange={e => setConfirmPassword(e.target.value)} 
+          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+            Xác nhận mật khẩu
+          </label>
+          <Input
+            required
+            type="password"
+            placeholder="••••••••"
+            className="rounded-xl h-11"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
           />
         </div>
 
         <div className="pt-2 flex gap-3">
-          <Button type="button" variant="ghost" onClick={onClose} className="flex-1 h-11 rounded-xl text-gray-500">Hủy</Button>
-          <Button type="submit" className="flex-1 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold">Xác nhận</Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onClose}
+            className="flex-1 h-11 rounded-xl text-gray-500"
+          >
+            Hủy
+          </Button>
+          <Button
+            type="submit"
+            className="flex-1 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold"
+          >
+            Xác nhận
+          </Button>
         </div>
       </form>
     </ModalContainer>
   );
 }
 
-function AccountFormModal({ account, onClose, onSave }) {
+function AccountFormModal({ account, roles, defaultRoleId, onClose, onSave }) {
   const [formData, setFormData] = useState({
     email: account?.email || "",
     password: "",
     full_name: account?.profile?.full_name || "",
     phone_number: account?.profile?.phone_number || "",
     address: account?.profile?.address || "",
-    gender: account?.profile?.gender || "Nam",
-    dob: account?.profile?.dob || "",
-    role_id: account?.role?.role_code || account?.role_id || "SALES",
+    gender: account?.profile?.gender || "1",
+    dob: account?.profile?.dob
+      ? new Date(account.profile.dob).toISOString().split("T")[0]
+      : "",
+    role_id:
+      account?.role_id ||
+      (defaultRoleId !== "Tất cả"
+        ? defaultRoleId
+        : roles.find((r) => r.role_code !== "OWNER")?.role_id || ""),
   });
 
   return (
-    <ModalContainer title={account ? "Cập nhật tài khoản" : "Thêm tài khoản mới"} onClose={onClose}>
-      <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
+    <ModalContainer
+      title={account ? "Cập nhật tài khoản" : "Thêm tài khoản mới"}
+      onClose={onClose}
+    >
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSave(formData);
+        }}
+        className="space-y-4"
+      >
         <div className="space-y-1.5">
-          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Họ tên</label>
-          <Input required className="rounded-xl h-11" placeholder="Họ và tên..." value={formData.full_name} onChange={e => setFormData({ ...formData, full_name: e.target.value })} />
+          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+            Họ tên
+          </label>
+          <Input
+            required
+            className="rounded-xl h-11 text-gray-900"
+            placeholder="Họ và tên..."
+            value={formData.full_name}
+            onChange={(e) =>
+              setFormData({ ...formData, full_name: e.target.value })
+            }
+          />
         </div>
         <div className="space-y-1.5">
-          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Email đăng nhập</label>
-          <Input required type="email" disabled={!!account} className="rounded-xl h-11 disabled:opacity-50" placeholder="email@tpf.vn" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+            Email đăng nhập
+          </label>
+          <Input
+            required
+            type="email"
+            disabled={!!account}
+            className="rounded-xl h-11 text-gray-900 disabled:opacity-50"
+            placeholder="email@tpf.vn"
+            value={formData.email}
+            onChange={(e) =>
+              setFormData({ ...formData, email: e.target.value })
+            }
+          />
         </div>
         {!account && (
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Mật khẩu</label>
-            <Input required type="password" placeholder="••••••••" className="rounded-xl h-11" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
+            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+              Mật khẩu
+            </label>
+            <Input
+              required
+              type="password"
+              placeholder="••••••••"
+              className="rounded-xl h-11 text-gray-900"
+              value={formData.password}
+              onChange={(e) =>
+                setFormData({ ...formData, password: e.target.value })
+              }
+            />
           </div>
         )}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Số điện thoại</label>
-            <Input className="rounded-xl h-11" placeholder="09xxxxxx" value={formData.phone_number} onChange={e => setFormData({ ...formData, phone_number: e.target.value })} />
+            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+              Số điện thoại
+            </label>
+            <Input
+              className="rounded-xl h-11 text-gray-900"
+              placeholder="09xxxxxx"
+              value={formData.phone_number}
+              onChange={(e) =>
+                setFormData({ ...formData, phone_number: e.target.value })
+              }
+            />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Vai trò</label>
-            <select value={formData.role_id} onChange={e => setFormData({ ...formData, role_id: e.target.value })} className="flex h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm focus:outline-none">
-              <option value="SALES">Kinh doanh</option>
-              <option value="ACCOUNTANT">Kế toán</option>
-              <option value="WORKER">Thợ</option>
+            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+              Vai trò
+            </label>
+            <select
+              value={formData.role_id}
+              onChange={(e) =>
+                setFormData({ ...formData, role_id: e.target.value })
+              }
+              className="flex h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:outline-none cursor-pointer"
+            >
+              {roles
+                .filter((r) => r.role_code !== "OWNER")
+                .map((r) => (
+                  <option key={r.role_id} value={r.role_id}>
+                    {r.role_name}
+                  </option>
+                ))}
             </select>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Ngày sinh</label>
-            <Input type="date" className="rounded-xl h-11" value={formData.dob} onChange={e => setFormData({ ...formData, dob: e.target.value })} />
+            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+              Ngày sinh
+            </label>
+            <Input
+              type="date"
+              className="rounded-xl h-11 text-gray-900"
+              value={formData.dob}
+              onChange={(e) =>
+                setFormData({ ...formData, dob: e.target.value })
+              }
+            />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Giới tính</label>
-            <select value={formData.gender} onChange={e => setFormData({ ...formData, gender: e.target.value })} className="flex h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm focus:outline-none">
-              <option value="Nam">Nam</option>
-              <option value="Nữ">Nữ</option>
-              <option value="Khác">Khác</option>
+            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+              Giới tính
+            </label>
+            <select
+              value={formData.gender}
+              onChange={(e) =>
+                setFormData({ ...formData, gender: e.target.value })
+              }
+              className="flex h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:outline-none cursor-pointer"
+            >
+              <option value="1">Nam</option>
+              <option value="0">Nữ</option>
             </select>
           </div>
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Địa chỉ</label>
-          <Input className="rounded-xl h-11" placeholder="Nhập địa chỉ cư trú..." value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
+          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+            Địa chỉ
+          </label>
+          <Input
+            className="rounded-xl h-11"
+            placeholder="Nhập địa chỉ cư trú..."
+            value={formData.address}
+            onChange={(e) =>
+              setFormData({ ...formData, address: e.target.value })
+            }
+          />
         </div>
         <div className="pt-4 flex gap-3">
-          <Button type="button" variant="ghost" onClick={onClose} className="flex-1 h-12 rounded-xl font-bold">Hủy</Button>
-          <Button type="submit" className="flex-1 h-12 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md">Lưu tài khoản</Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onClose}
+            className="flex-1 h-12 rounded-xl font-bold"
+          >
+            Hủy
+          </Button>
+          <Button
+            type="submit"
+            className="flex-1 h-12 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
+          >
+            Lưu tài khoản
+          </Button>
         </div>
       </form>
     </ModalContainer>
@@ -550,22 +752,62 @@ function AccountFormModal({ account, onClose, onSave }) {
 
 function StatusModal({ account, onClose, onUpdate }) {
   return (
-    <ModalContainer title="Trạng thái tài khoản" onClose={onClose} maxWidth="max-w-sm">
+    <ModalContainer
+      title="Trạng thái tài khoản"
+      onClose={onClose}
+      maxWidth="max-w-sm"
+    >
       <div className="text-center space-y-4">
-        <div className={cn("w-16 h-16 rounded-3xl mx-auto flex items-center justify-center border-2", String(account.status) === "-1" ? "bg-red-50 text-red-600 border-red-100" : "bg-emerald-50 text-emerald-600 border-emerald-100")}>
-          {String(account.status) === "-1" ? <Lock size={30} /> : <Unlock size={30} />}
+        <div
+          className={cn(
+            "w-16 h-16 rounded-3xl mx-auto flex items-center justify-center border-2",
+            String(account.status) === "-1"
+              ? "bg-red-50 text-red-600 border-red-100"
+              : "bg-emerald-50 text-emerald-600 border-emerald-100",
+          )}
+        >
+          {String(account.status) === "-1" ? (
+            <Lock size={30} />
+          ) : (
+            <Unlock size={30} />
+          )}
         </div>
-        <h4 className="font-bold text-gray-900">{String(account.status) === "-1" ? "Mở khóa tài khoản?" : "Cập nhật trạng thái?"}</h4>
+        <h4 className="font-bold text-gray-900">
+          {String(account.status) === "-1"
+            ? "Mở khóa tài khoản?"
+            : "Cập nhật trạng thái?"}
+        </h4>
         <div className="grid grid-cols-1 gap-2">
           {String(account.status) === "-1" ? (
-            <Button onClick={() => onUpdate(1)} className="h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold">Mở khóa tài khoản</Button>
+            <Button
+              onClick={() => onUpdate(1)}
+              className="h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+            >
+              Mở khóa tài khoản
+            </Button>
           ) : (
             <>
-              <Button onClick={() => onUpdate(-1)} className="h-12 rounded-xl border-red-100 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-200 border bg-red-50/50 font-bold">Khóa truy cập</Button>
-              <Button onClick={() => onUpdate(0)} className="h-12 rounded-xl border-gray-200 text-gray-600 hover:bg-gray-50 border bg-white font-bold">Tạm nghỉ</Button>
+              <Button
+                onClick={() => onUpdate(-1)}
+                className="h-12 rounded-xl border-red-100 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-200 border bg-red-50/50 font-bold"
+              >
+                Khóa truy cập
+              </Button>
+              <Button
+                onClick={() => onUpdate(0)}
+                className="h-12 rounded-xl border-gray-200 text-gray-600 hover:bg-gray-50 border bg-white font-bold"
+              >
+                Tạm nghỉ
+              </Button>
             </>
           )}
-          <Button onClick={onClose} variant="ghost" className="h-10 rounded-xl text-gray-400 font-medium">Đóng</Button>
+          <Button
+            onClick={onClose}
+            variant="ghost"
+            className="h-10 rounded-xl text-gray-400 font-medium"
+          >
+            Đóng
+          </Button>
         </div>
       </div>
     </ModalContainer>
