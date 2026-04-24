@@ -580,7 +580,7 @@ export default function InStockInvoicePage() {
           <div ref={printRef}>
             <PrintableInvoice
               o={printingOrder}
-              displayTotal={printingOrder.total}
+              displayTotal={printingOrder.subtotal - (printingOrder.discount || 0)}
             />
           </div>
         )}

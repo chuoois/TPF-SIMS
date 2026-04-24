@@ -730,14 +730,7 @@ export default function CartPanel({
             backgroundColor: "var(--grid-header-bg)",
           }}
         >
-          <div className="flex justify-between text-[13px]">
-            <span style={{ color: "var(--text-secondary)" }}>
-              Tổng ({itemCount} sản phẩm)
-            </span>
-            <span className="font-medium" style={{ color: "var(--text-main)" }}>
-              {fmt(subtotal)}đ
-            </span>
-          </div>
+
           <div className="flex flex-col">
             <div className="flex justify-between text-[13px] items-center">
               <span

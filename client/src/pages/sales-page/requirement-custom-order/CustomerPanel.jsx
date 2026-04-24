@@ -337,7 +337,7 @@ export default function CustomerPanel({
                   Giá trị đơn hàng
                   {computedTotal > 0 && (
                     <span className="text-[9px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 normal-case tracking-normal">
-                      Tự động cộng dồn
+                      Cập nhật tự động
                     </span>
                   )}
                 </label>
