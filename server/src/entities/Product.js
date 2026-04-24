@@ -61,7 +61,7 @@ const Product = sequelize.define(
       type: DataTypes.INTEGER,
     },
     size: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.JSON,
     },
     product_status: {
       type: DataTypes.TINYINT,

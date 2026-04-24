@@ -15,6 +15,9 @@ const OrderItem = require("./OrderItem");
 const OrderHistory = require("./OrderHistory");
 const ProductPricing = require("./ProductPricing");
 const ProductRoom = require("./ProductRoom");
+const CustomRequest = require("./CustomRequest");
+const CustomRequestItem = require("./CustomRequestItem");
+
 
 
 
@@ -115,6 +118,20 @@ OrderItem.belongsTo(Product, { foreignKey: "fk_product_id", as: "product" });
 Product.hasMany(ProductPricing, { foreignKey: "fk_product_id", as: "pricings" });
 ProductPricing.belongsTo(Product, { foreignKey: "fk_product_id", as: "product" });
 
+// CustomerProfile 1:N CustomRequest
+CustomerProfile.hasMany(CustomRequest, { foreignKey: "fk_customer_id", as: "customRequests" });
+CustomRequest.belongsTo(CustomerProfile, { foreignKey: "fk_customer_id", as: "customer" });
+
+// CustomRequest 1:1 Order (Optional)
+CustomRequest.belongsTo(Order, { foreignKey: "fk_order_id", as: "order" });
+Order.hasOne(CustomRequest, { foreignKey: "fk_order_id", as: "customRequest" });
+
+// CustomRequest 1:N CustomRequestItem
+CustomRequest.hasMany(CustomRequestItem, { foreignKey: "fk_custom_request_id", as: "items", onDelete: "CASCADE" });
+CustomRequestItem.belongsTo(CustomRequest, { foreignKey: "fk_custom_request_id", as: "request" });
+
+
+
 module.exports = {
   sequelize,
   UserRole,
@@ -133,5 +150,7 @@ module.exports = {
   OrderHistory,
   ProductPricing,
   ProductRoom,
+  CustomRequest,
+  CustomRequestItem,
 };
-
+

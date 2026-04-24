@@ -11,6 +11,7 @@ const systemLogRoutes = require("./routes/systemLog.routes");
 const orderRoutes = require("./routes/order.routes");
 const productRoutes = require("./routes/product.routes");
 const productAttributeRoutes = require("./routes/productAttribute.routes");
+const customRequestRoutes = require("./routes/customRequest.routes");
 const swaggerUi = require("swagger-ui-express");
 const swaggerJsDoc = require("swagger-jsdoc");
 
@@ -33,6 +34,7 @@ app.use("/api/system-log", systemLogRoutes);
 app.use("/api/order", orderRoutes);
 app.use("/api/product", productRoutes);
 app.use("/api/product-attribute", productAttributeRoutes);
+app.use("/api/custom-request", customRequestRoutes);
 
 // Swagger Configuration
 const swaggerOptions = {
