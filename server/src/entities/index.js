@@ -14,6 +14,7 @@ const Order = require("./Order");
 const OrderItem = require("./OrderItem");
 const OrderHistory = require("./OrderHistory");
 const ProductPricing = require("./ProductPricing");
+const ProductRoom = require("./ProductRoom");
 
 
 
@@ -82,6 +83,10 @@ Product.belongsTo(ProductColor, { foreignKey: "fk_color_id", as: "color" });
 ProductMaterial.hasMany(Product, { foreignKey: "fk_material_id", as: "products" });
 Product.belongsTo(ProductMaterial, { foreignKey: "fk_material_id", as: "material" });
 
+// ProductRoom 1:N Product
+ProductRoom.hasMany(Product, { foreignKey: "fk_room_id", as: "products" });
+Product.belongsTo(ProductRoom, { foreignKey: "fk_room_id", as: "room" });
+
 // Product 1:N ProductItem
 Product.hasMany(ProductItem, { foreignKey: "fk_product_id", as: "items" });
 ProductItem.belongsTo(Product, { foreignKey: "fk_product_id", as: "product" });
@@ -127,5 +132,6 @@ module.exports = {
   OrderItem,
   OrderHistory,
   ProductPricing,
+  ProductRoom,
 };
 

@@ -7,6 +7,8 @@ require("./entities"); // Tự động load models và associations
 const authRoutes = require("./routes/auth.routes");
 const customerRoutes = require("./routes/customer.routes");
 const orderRoutes = require("./routes/order.routes");
+const productRoutes = require("./routes/product.routes");
+const productAttributeRoutes = require("./routes/productAttribute.routes");
 const swaggerUi = require("swagger-ui-express");
 const swaggerJsDoc = require("swagger-jsdoc");
 
@@ -25,6 +27,8 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api/order", orderRoutes);
+app.use("/api/product", productRoutes);
+app.use("/api/product-attribute", productAttributeRoutes);
 
 // Swagger Configuration
 const swaggerOptions = {

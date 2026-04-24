@@ -30,6 +30,11 @@ router.use(verifyAccessToken);
  *           type: integer
  *         description: ID của khách hàng
  *       - in: query
+ *         name: order_type
+ *         schema:
+ *           type: integer
+ *         description: "Loại đơn hàng (1: Mộc, 2: Sẵn, 3: Custom)"
+ *       - in: query
  *         name: page
  *         schema:
  *           type: integer
@@ -73,6 +78,9 @@ router.get("/", OrderController.getAllOrders);
  *                 type: string
  *               total_amount:
  *                 type: number
+ *               order_type:
+ *                 type: integer
+ *                 description: "1: Đơn hàng mộc, 2: Đơn hàng sẵn, 3: Đơn hàng custom"
  *               items:
  *                 type: array
  *                 items:
@@ -107,5 +115,24 @@ router.get("/", OrderController.getAllOrders);
  *         description: Đơn hàng đã được tạo thành công
  */
 router.post("/", OrderController.createOrder);
+
+/**
+ * @swagger
+ * /api/order/customer/{id}:
+ *   get:
+ *     summary: Lấy danh sách đơn hàng theo ID khách hàng
+ *     tags: [Order]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID của khách hàng
+ *     responses:
+ *       200:
+ *         description: Danh sách đơn hàng của khách hàng
+ */
+router.get("/customer/:id", OrderController.getOrdersByCustomer);
 
 module.exports = router;
