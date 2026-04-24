@@ -5,7 +5,7 @@ const { verifyAccessToken } = require("../middleware/auth.middleware");
 
 /**
  * Customer Routes - Quản lý khách hàng
- * Created By: Antigravity
+ * Created By: ThinhBui
  * Created Date: 17/04/2026
  */
 

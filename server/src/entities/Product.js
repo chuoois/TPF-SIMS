@@ -27,6 +27,10 @@ const Product = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    fk_room_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     sku: {
       type: DataTypes.STRING(100),
     },
@@ -51,7 +55,7 @@ const Product = sequelize.define(
     },
     product_type: {
       type: DataTypes.TINYINT,
-      defaultValue: 1, // 1: Standard (Hàng mẫu/Sẵn), 2: Custom (Hàng đặt riêng)
+      defaultValue: 1, // 1: Standard (Hàng mẫu/Sẵn), 2: Custom (Hàng đặt riêng, 3: Hàng quà tặng)
     },
     warranty_months: {
       type: DataTypes.INTEGER,
