@@ -14,6 +14,7 @@ import toast from "react-hot-toast";
 import { PrintableInvoice } from "../orders/components/PrintableInvoice";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import AddCustomerModal from "@/pages/sales-page/components/AddCustomerModal";
+import WorkshopStatusModal from "@/pages/sales-page/components/WorkshopStatusModal";
 import CartPanel from "./CartPanel";
 import ProductPanel from "./ProductPanel";
 import {
@@ -29,6 +30,8 @@ import {
 export default function InStockInvoicePage() {
   const printRef = useRef(null);
   const [printingOrder, setPrintingOrder] = useState(null);
+  const [showWorkshopStatus, setShowWorkshopStatus] = useState(false);
+
 
   useEffect(() => {
     if (printingOrder && printRef.current) {
@@ -62,20 +65,40 @@ export default function InStockInvoicePage() {
     }
   }, [printingOrder]);
 
-  const [tabs, setTabs] = useState([
-    {
-      id: 1,
-      cartItems: [],
-      selectedCustomer: null,
-      orderNote: "",
-      discount: 0,
-      depositAmount: 0,
-      deliveryMethod: "store",
-      deliveryDate: "",
-      storePickupDate: "",
-    },
-  ]);
-  const [activeTabId, setActiveTabId] = useState(1);
+  const [tabs, setTabs] = useState(() => {
+    const saved = localStorage.getItem("tpf_instock_order_draft_tabs");
+    return saved
+      ? JSON.parse(saved)
+      : [
+          {
+            id: 1,
+            cartItems: [],
+            selectedCustomer: null,
+            orderNote: "",
+            discount: 0,
+            depositAmount: 0,
+            deliveryMethod: "store",
+            deliveryDate: "",
+            storePickupDate: "",
+          },
+        ];
+  });
+  const [activeTabId, setActiveTabId] = useState(() => {
+    const savedId = localStorage.getItem("tpf_instock_order_draft_active_id");
+    return savedId ? Number(savedId) : (tabs.length > 0 ? tabs[0].id : 1);
+  });
+
+  // Save drafts to localStorage
+  useEffect(() => {
+    localStorage.setItem("tpf_instock_order_draft_tabs", JSON.stringify(tabs));
+  }, [tabs]);
+
+  useEffect(() => {
+    if (activeTabId) {
+      localStorage.setItem("tpf_instock_order_draft_active_id", activeTabId);
+    }
+  }, [activeTabId]);
+
   const [productTypeTab, setProductTypeTab] = useState("Hàng mộc");
 
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -471,6 +494,7 @@ export default function InStockInvoicePage() {
           customerResults={customerResults}
           updateActiveTab={updateActiveTab}
           setShowAddCustomer={setShowAddCustomer}
+          setShowWorkshopStatus={setShowWorkshopStatus}
           subtotal={subtotal}
           itemCount={itemCount}
           totalPayable={totalPayable}
@@ -523,6 +547,12 @@ export default function InStockInvoicePage() {
           </div>
         )}
       </div>
+
+      {/* ── Workshop Status Quick View Modal ── */}
+      <WorkshopStatusModal 
+        isOpen={showWorkshopStatus} 
+        onClose={() => setShowWorkshopStatus(false)} 
+      />
     </>
   );
 }

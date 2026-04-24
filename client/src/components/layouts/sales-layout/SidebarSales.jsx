@@ -43,11 +43,6 @@ const menuItems = [
     icon: ClipboardList,
     path: "/sales/dashboard/requirements",
   },
-  {
-    text: "Tiến độ sản xuất",
-    icon: Hammer,
-    path: "/sales/dashboard/workshop-status",
-  },
 ];
 
 export const SidebarSales = () => {

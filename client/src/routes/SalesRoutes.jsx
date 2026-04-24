@@ -4,7 +4,6 @@ import InStockInvoicePage from "@/pages/sales-page/invoice-instock";
 import CustomOrderInvoicePage from "@/pages/sales-page/requirement-custom-order";
 import Orders from "../pages/sales-page/orders";
 import SalesRequirements from "@/pages/sales-page/sales-requirements";
-import WorkshopStatusPage from "@/pages/sales-page/workshop-status";
 
 /**
  * Sales Routes
@@ -37,10 +36,6 @@ export const salesRoutes = {
     {
       path: "dashboard/requirements",
       element: <SalesRequirements />,
-    },
-    {
-      path: "dashboard/workshop-status",
-      element: <WorkshopStatusPage />,
     },
   ],
 };
