@@ -310,11 +310,7 @@ export default function ProductPanel({
                             ? "Nguyên mộc"
                             : product.color}
                         </span>
-                        {product.leadTime > 0 && (
-                          <span className="text-[10px] font-bold text-amber-600 flex items-center gap-1 mt-0.5">
-                            <Clock size={10} /> Hoàn thiện: {product.leadTime} ngày
-                          </span>
-                        )}
+
                       </div>
                       {product.discount > 0 ? (
                         <div className="flex items-center gap-1.5">

@@ -33,32 +33,13 @@ export let MOCK_ORDERS = [
       {
         id: "ITEM-101",
         productName: "Bàn ăn gỗ sồi tân cổ điển",
-        picture: "https://images.unsplash.com/photo-1577140917170-285929fb55b7?q=80&w=200&auto=format&fit=crop",
+        picture: "https://images.unsplash.com/photo-1577140917170-285929fb55b7?q=80&w=200",
         size: "120x80x75 cm",
         type: "Gỗ sồi Nga",
         color: "Màu tự nhiên",
         quantity: 1,
-        note: "Bo tròn các góc bàn bán kính 2cm, sơn lót kỹ mặt dưới",
         status: "WAITING",
-        startedAt: "26/10/2023",
-        deliveryDate: "30/10/2023",
         deadline: "26/10/2023",
-        urgency: "NORMAL",
-      },
-      {
-        id: "ITEM-102",
-        productName: "Ghế đôn gỗ sồi",
-        picture: "https://images.unsplash.com/photo-1592078615290-033ee584e267?q=80&w=200&auto=format&fit=crop",
-        size: "45x45x90 cm",
-        type: "Gỗ sồi Nga",
-        color: "Màu tự nhiên",
-        quantity: 4,
-        note: "Trang bị đệm mút D40, bọc nỉ màu xám lông chuột",
-        status: "COMPLETED",
-        startedAt: "24/10/2023 08:00",
-        deliveryDate: "28/10/2023",
-        deadline: "26/10/2023",
-        urgency: "NORMAL",
       },
     ],
   },
@@ -72,87 +53,19 @@ export let MOCK_ORDERS = [
       {
         id: "ITEM-201",
         productName: "Tủ quần áo MDF 4 cánh",
-        picture: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=200&auto=format&fit=crop",
+        picture: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=200",
         size: "200x60x220 cm",
         type: "Gỗ MDF chống ẩm",
         color: "Trắng vân gỗ",
         quantity: 1,
-        note: "Hậu tủ phay rãnh lùa, chạy chỉ âm viền ngoài 5mm, dùng bản lề giảm chấn",
         status: "INSPECTION",
-        startedAt: "25/10/2023 10:15",
-        deliveryDate: "30/10/2023",
         deadline: "28/10/2023",
-        urgency: "WARNING",
       },
-    ],
-  },
-  {
-    id: "ORD-2023-003",
-    customerName: "Lê Minh Tuấn",
-    orderDate: "27/10/2023",
-    status: "WAITING",
-    isCustomOrder: true,
-    items: [
-      {
-        id: "ITEM-301",
-        productName: "Giường ngủ bọc da",
-        picture: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=200&auto=format&fit=crop",
-        size: "180x200 cm",
-        type: "Gỗ xoan đào",
-        color: "Nâu cánh gián",
-        quantity: 1,
-        note: "Đầu giường bọc da microfiber, may rút múi kim cương",
-        status: "WAITING",
-        startedAt: "06/11/2023",
-        deliveryDate: "05/11/2023",
-        deadline: "06/11/2023",
-        urgency: "NORMAL",
-      },
-      {
-        id: "ITEM-302",
-        productName: "Táp đầu giường",
-        picture: "https://images.unsplash.com/photo-1532372320572-cda25653a26d?q=80&w=200&auto=format&fit=crop",
-        size: "45x40x50 cm",
-        type: "Gỗ xoan đào",
-        color: "Nâu cánh gián",
-        quantity: 2,
-        note: "Các ngăn kéo dùng ray trượt bi giảm chấn Hafele âm",
-        status: "WAITING",
-        startedAt: null,
-        deadline: null,
-        urgency: "NORMAL",
-      },
-    ],
-  },
-  {
-    id: "ORD-2023-004",
-    customerName: "Phạm Hà Giang",
-    orderDate: "20/10/2023",
-    status: "COMPLETED",
-    isCustomOrder: true,
-    items: [
-      {
-        id: "ITEM-401",
-        productName: "Tủ rượu gỗ hương",
-        picture: "https://images.unsplash.com/photo-1595428774223-ef52624120ec?q=80&w=200&auto=format&fit=crop",
-        size: "80x40x200 cm",
-        type: "Gỗ hương",
-        color: "Nâu cánh gián",
-        quantity: 1,
-        note: "Lắp Kính cường lực 8li, gắn đèn LED hắt sáng bên trong",
-        status: "COMPLETED",
-        startedAt: "22/10/2023 08:00",
-        deadline: "24/10/2023",
-        urgency: "NORMAL",
-        finishedImage: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?q=80&w=400&auto=format&fit=crop"
-      }
     ],
   },
 ];
 
-export const getOrders = () => {
-  return [...MOCK_ORDERS];
-};
+export const getOrders = () => [...MOCK_ORDERS];
 
 export const getItemById = (id) => {
   for (const order of MOCK_ORDERS) {
@@ -160,10 +73,8 @@ export const getItemById = (id) => {
     if (item) {
       return { 
         ...item, 
-        image: item.picture, // Alias for TaskDetail.jsx
-        customerImages: item.customerImages || [item.picture, "https://images.unsplash.com/photo-1595428774223-ef52624120ec?auto=format&fit=crop&q=80&w=400"],
+        image: item.picture, 
         orderId: order.id, 
-        orderCode: order.id, 
         customerName: order.customerName, 
         isCustomOrder: order.isCustomOrder 
       };
@@ -172,98 +83,45 @@ export const getItemById = (id) => {
   return null;
 };
 
-// Map old getTaskById method into getItemById logic directly
 export const getTaskById = getItemById;
 
 export const updateMockTaskStatus = (itemId, newStatus, finishedImage = null) => {
-  MOCK_ORDERS = MOCK_ORDERS.map((order) => {
-    let orderChanged = false;
-    const newItems = order.items.map((item) => {
-      if (item.id === itemId) {
-        orderChanged = true;
-        
-        const updates = { ...item, status: newStatus };
-        if (newStatus === "INSPECTION" && !item.startedAt) {
-          const now = new Date();
-          const pad = (n) => String(n).padStart(2, '0');
-          updates.startedAt = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-        }
-        if (finishedImage) {
-          updates.finishedImage = finishedImage;
-        }
-        return updates;
-      }
-      return item;
-    });
-
-    if (orderChanged) {
-      const allCompleted = newItems.every(i => i.status === 'COMPLETED');
-      return { ...order, items: newItems, status: allCompleted ? 'COMPLETED' : 'PROCESSING' };
-    }
-    return order;
-  });
+  MOCK_ORDERS = MOCK_ORDERS.map(order => ({
+    ...order,
+    items: order.items.map(item => item.id === itemId ? { ...item, status: newStatus, finishedImage: finishedImage || item.finishedImage } : item)
+  }));
 };
 
 export const updateTaskFinishedImage = (itemId, finishedImage) => {
-  MOCK_ORDERS = MOCK_ORDERS.map((order) => {
-    let orderChanged = false;
-    const newItems = order.items.map((item) => {
-      if (item.id === itemId) {
-        orderChanged = true;
-        return { ...item, finishedImage };
-      }
-      return item;
-    });
-    return orderChanged ? { ...order, items: newItems } : order;
-  });
+  MOCK_ORDERS = MOCK_ORDERS.map(order => ({
+    ...order,
+    items: order.items.map(item => item.id === itemId ? { ...item, finishedImage } : item)
+  }));
 };
 
 export const updateTaskDeadline = (itemId, deadline, urgency) => {
-  MOCK_ORDERS = MOCK_ORDERS.map((order) => {
-    let orderChanged = false;
-    const newItems = order.items.map((item) => {
-      if (item.id === itemId) {
-        orderChanged = true;
-        return { ...item, deadline, urgency };
-      }
-      return item;
-    });
-    return orderChanged ? { ...order, items: newItems } : order;
-  });
+  MOCK_ORDERS = MOCK_ORDERS.map(order => ({
+    ...order,
+    items: order.items.map(item => item.id === itemId ? { ...item, deadline, urgency } : item)
+  }));
 };
 
 export const reportTaskIssue = (itemId, issueData) => {
-  MOCK_ORDERS = MOCK_ORDERS.map((order) => {
-    let orderChanged = false;
-    const newItems = order.items.map((item) => {
-      if (item.id === itemId) {
-        orderChanged = true;
-        return {
-          ...item,
-          issue: {
-            ...issueData,
-            reportedAt: new Date().toLocaleString("vi-VN"),
-          },
-        };
-      }
-      return item;
-    });
-    return orderChanged ? { ...order, items: newItems } : order;
-  });
+  MOCK_ORDERS = MOCK_ORDERS.map(order => ({
+    ...order,
+    items: order.items.map(item => item.id === itemId ? { ...item, issue: { ...issueData, reportedAt: new Date().toLocaleString("vi-VN") } } : item)
+  }));
 };
 
 export const clearTaskIssue = (itemId) => {
-  MOCK_ORDERS = MOCK_ORDERS.map((order) => {
-    let orderChanged = false;
-    const newItems = order.items.map((item) => {
+  MOCK_ORDERS = MOCK_ORDERS.map(order => ({
+    ...order,
+    items: order.items.map(item => {
       if (item.id === itemId) {
-        orderChanged = true;
         const { issue, ...rest } = item;
         return rest;
       }
       return item;
-    });
-    return orderChanged ? { ...order, items: newItems } : order;
-  });
+    })
+  }));
 };
-
