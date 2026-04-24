@@ -8,8 +8,7 @@
  * Created By: DNC
  * Created Date: 25/02/2026
  */
-
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import toast from "react-hot-toast";
 import {
   X,
@@ -24,21 +23,46 @@ import {
   Palette,
   Ruler,
   Info,
+  
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
 import AddCustomerModal from "@/pages/sales-page/components/AddCustomerModal";
+import WorkshopStatusModal from "@/pages/sales-page/components/WorkshopStatusModal";
 import OrderItemsPanel from "./OrderItemsPanel";
 import CustomerPanel from "./CustomerPanel";
 import { fmt, generateOrderCode, createEmptyTab, inputBase } from "./mockData";
 
 // ===================== COMPONENT =====================
 export default function CustomOrderRequirementsPage() {
-  const [tabs, setTabs] = useState([createEmptyTab()]);
-  const [activeTabId, setActiveTabId] = useState(tabs[0].id);
-  const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0];
+  const [tabs, setTabs] = useState(() => {
+    const saved = localStorage.getItem("tpf_custom_order_draft_tabs");
+    return saved ? JSON.parse(saved) : [createEmptyTab()];
+  });
+  const [activeTabId, setActiveTabId] = useState(() => {
+    const savedId = localStorage.getItem("tpf_custom_order_draft_active_id");
+    if (savedId) {
+      const parsed = Number(savedId);
+      return isNaN(parsed) ? savedId : parsed;
+    }
+    return tabs.length > 0 ? tabs[0].id : null;
+  });
+  
+  const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0] || createEmptyTab();
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const [viewingItem, setViewingItem] = useState(null);
+
+
+  // Save drafts to localStorage
+  useEffect(() => {
+    localStorage.setItem("tpf_custom_order_draft_tabs", JSON.stringify(tabs));
+  }, [tabs]);
+
+  useEffect(() => {
+    if (activeTabId) {
+      localStorage.setItem("tpf_custom_order_draft_active_id", activeTabId);
+    }
+  }, [activeTabId]);
 
   // Direct Order Conf Modal
   const [showDirectOrderModal, setShowDirectOrderModal] = useState(false);

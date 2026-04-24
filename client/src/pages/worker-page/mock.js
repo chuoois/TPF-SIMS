@@ -63,6 +63,68 @@ export let MOCK_ORDERS = [
       },
     ],
   },
+  {
+    id: "ORD-2023-003",
+    customerName: "Lê Minh Triết",
+    orderDate: "27/10/2023",
+    status: "WAITING",
+    isCustomOrder: true,
+    items: [
+      {
+        id: "ITEM-301",
+        productName: "Kệ tivi gỗ công nghiệp",
+        picture: "https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?q=80&w=200",
+        size: "180x40x45 cm",
+        type: "Gỗ MFC",
+        color: "Màu óc chó",
+        quantity: 1,
+        status: "WAITING",
+        deadline: "30/10/2023",
+      },
+      {
+        id: "ITEM-302",
+        productName: "Giá sách 5 tầng",
+        picture: "https://images.unsplash.com/photo-1594620302200-9a762244a156?q=80&w=200",
+        size: "80x30x180 cm",
+        type: "Gỗ cao su",
+        color: "Màu vàng sáng",
+        quantity: 1,
+        status: "WAITING",
+        deadline: "02/11/2023",
+      }
+    ],
+  },
+  {
+    id: "ORD-2023-004",
+    customerName: "Đặng Hoàng Nam",
+    orderDate: "28/10/2023",
+    status: "PROCESSING",
+    isCustomOrder: false,
+    items: [
+      {
+        id: "ITEM-401",
+        productName: "Bàn làm việc chữ L",
+        picture: "https://images.unsplash.com/photo-1518455027359-f3f816b1a23a?q=80&w=200",
+        size: "160x120x75 cm",
+        type: "Gỗ cao su ghép thanh",
+        color: "Màu tự nhiên",
+        quantity: 1,
+        status: "PROCESSING",
+        deadline: "05/11/2023",
+      },
+      {
+        id: "ITEM-402",
+        productName: "Ghế xoay văn phòng",
+        picture: "https://images.unsplash.com/photo-1505797149-43b007664a3d?q=80&w=200",
+        size: "Tiêu chuẩn",
+        type: "Nệm bọc lưới",
+        color: "Đen",
+        quantity: 1,
+        status: "WAITING",
+        deadline: "05/11/2023",
+      }
+    ],
+  },
 ];
 
 export const getOrders = () => [...MOCK_ORDERS];
