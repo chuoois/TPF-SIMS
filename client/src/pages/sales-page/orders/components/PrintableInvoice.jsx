@@ -406,34 +406,7 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
             )
           )}
           {/* Breakdown Rows */}
-          <tr>
-            <td
-              colSpan={5}
-              style={{
-                border: "1px solid #d32f2f",
-                padding: "6px 8px",
-                textAlign: "right",
-                color: "#d32f2f",
-                fontWeight: "bold",
-                fontSize: 14,
-              }}
-            >
-              CỘNG
-            </td>
-            <td
-              style={{
-                border: "1px solid #d32f2f",
-                padding: "6px 8px",
-                textAlign: "right",
-                color: "blue",
-                fontFamily: "'Caveat', 'Dancing Script', cursive, serif",
-                fontSize: 18,
-                fontWeight: "bold",
-              }}
-            >
-              {fmtCurrency(displayTotal + (o.discount || 0))}
-            </td>
-          </tr>
+
           {o.discount > 0 && (
             <tr>
               <td
@@ -474,7 +447,7 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
                 fontSize: 14,
               }}
             >
-              TỔNG CỘNG
+              TỔNG THANH TOÁN
             </td>
             <td
               style={{
@@ -502,7 +475,7 @@ export const PrintableInvoice = ({ o, displayTotal }) => {
                   fontSize: 13,
                 }}
               >
-                TẠM ỨNG / ĐẶT CỌC:
+                 ĐẶT CỌC:
               </td>
               <td
                 style={{
