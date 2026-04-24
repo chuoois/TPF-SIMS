@@ -94,7 +94,7 @@ class SystemLogController {
         level: level,
         detail: detail,
         ip_address: req.ip || req.connection.remoteAddress || "",
-        user_agent: req.headers["user-agent"] || "",
+        user_agent: req.headers ? req.headers["user-agent"] : "N/A",
       };
 
       await SystemLog.create(logData);
