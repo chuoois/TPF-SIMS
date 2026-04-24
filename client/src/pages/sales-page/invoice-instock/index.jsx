@@ -326,67 +326,11 @@ export default function InStockInvoicePage() {
     }, 0);
   }, [activeTab.cartItems]);
 
-  const workshopStats = useMemo(() => {
-    try {
-      const stored = localStorage.getItem("tpf_simulated_orders");
-      if (!stored) return { count: 0, level: "Bình thường", buffer: 0 };
-      const orders = JSON.parse(stored);
-      // Đếm các đơn đang chờ gia công hoặc đang gia công
-      const activeProduction = orders.filter(
-        (o) =>
-          (o.status === "Đang gia công" || o.status === "Chờ xử lý") &&
-          (o.type === "Hàng mộc" || o.type === "Hàng khách đặt"),
-      );
-      const count = activeProduction.length;
-      if (count > 8)
-        return {
-          count,
-          level: "Quá tải",
-          buffer: 7,
-          color: "text-red-600",
-          bg: "bg-red-50",
-          border: "border-red-200",
-        };
-      if (count > 4)
-        return {
-          count,
-          level: "Khá bận",
-          buffer: 3,
-          color: "text-amber-600",
-          bg: "bg-amber-50",
-          border: "border-amber-200",
-        };
-      return {
-        count,
-        level: "Bình thường",
-        buffer: 0,
-        color: "text-green-600",
-        bg: "bg-green-50",
-        border: "border-green-200",
-      };
-    } catch (e) {
-      return { count: 0, level: "Bình thường", buffer: 0 };
-    }
-  }, [activeTab.cartItems]);
 
-  const needsWorkshop = useMemo(() => {
-    return activeTab.cartItems.some((item) => {
-      if (item.priceMode === "raw") return false;
-      return (
-        item.productType === "Hàng mộc" ||
-        item.productType === "Hàng khách đặt" ||
-        (item.leadTime && item.leadTime > 0)
-      );
-    });
-  }, [activeTab.cartItems]);
 
-  const expectedReadyDate = useMemo(() => {
-    if (!needsWorkshop || maxLeadTime === 0) return null;
-    const totalDays = maxLeadTime + workshopStats.buffer;
-    const d = new Date();
-    d.setDate(d.getDate() + totalDays);
-    return d.toISOString().split("T")[0];
-  }, [maxLeadTime, workshopStats.buffer, needsWorkshop]);
+
+
+
 
   const totalPayable = Math.max(
     0,
@@ -436,8 +380,6 @@ export default function InStockInvoicePage() {
       subtotal: subtotal,
       discount: activeTab.discount,
       deposit: activeTab.depositAmount,
-      leadTime: maxLeadTime,
-      expectedReadyDate: expectedReadyDate,
       deliveryMethod: activeTab.deliveryMethod,
       // Hẹn ngày lấy hoặc lấy luôn (Hôm nay)
       deliveryDate:
@@ -529,10 +471,6 @@ export default function InStockInvoicePage() {
           customerResults={customerResults}
           updateActiveTab={updateActiveTab}
           setShowAddCustomer={setShowAddCustomer}
-          needsWorkshop={needsWorkshop}
-          maxLeadTime={maxLeadTime}
-          workshopStats={workshopStats}
-          expectedReadyDate={expectedReadyDate}
           subtotal={subtotal}
           itemCount={itemCount}
           totalPayable={totalPayable}

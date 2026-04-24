@@ -14,6 +14,7 @@ import {
   ChevronRight,
   PanelLeftClose,
   Package,
+  Hammer,
 } from "lucide-react";
 
 const menuItems = [
@@ -41,6 +42,11 @@ const menuItems = [
     text: "Quản lý yêu cầu từ khách hàng",
     icon: ClipboardList,
     path: "/sales/dashboard/requirements",
+  },
+  {
+    text: "Tiến độ sản xuất",
+    icon: Hammer,
+    path: "/sales/dashboard/workshop-status",
   },
 ];
 
