@@ -2,16 +2,16 @@ import axiosInstance from "@/lib/axios";
 
 /**
  * Product Service
- * Dịch vụ xử lý các yêu cầu liên quan đến sản phẩm và giá
- * 
+ * Dịch vụ xử lý các yêu cầu liên quan đến quản lý sản phẩm
+ *
  * Created By: ThinhBui
- * Created Date: 24/04/2026
+ * Created Date: 25/04/2026
  */
 const productService = {
   /**
-   * Lấy danh sách sản phẩm (có hỗ trợ filter theo category, color, material, sell_type)
-   * @param {Object} params - { category_id, color_id, material_id, product_type, sell_type, search, page, limit }
-   * @returns {Promise}
+   * Lấy danh sách sản phẩm (có search, filter và phân trang)
+   * @param {Object} params - { search, category_id, color_id, material_id, room_id, sell_type, page, limit }
+   * @returns {Promise<{ data: Array, pagination: Object }>}
    */
   async getAllProducts(params = {}) {
     const response = await axiosInstance.get("/product", { params });
@@ -20,34 +20,13 @@ const productService = {
 
   /**
    * Lấy chi tiết sản phẩm theo ID
-   * @param {number|string} id 
+   * @param {number|string} id
    * @returns {Promise}
    */
-  async getProductById(id) {
+  async getProductDetail(id) {
     const response = await axiosInstance.get(`/product/${id}`);
     return response.data;
   },
-
-  /**
-   * Helper: Lấy danh sách hàng mộc
-   */
-  async getRawProducts(params = {}) {
-    return this.getAllProducts({ ...params, sell_type: 1 });
-  },
-
-  /**
-   * Helper: Lấy danh sách hàng sẵn
-   */
-  async getStockProducts(params = {}) {
-    return this.getAllProducts({ ...params, sell_type: 2 });
-  },
-
-  /**
-   * Helper: Lấy danh sách hàng custom
-   */
-  async getCustomProducts(params = {}) {
-    return this.getAllProducts({ ...params, sell_type: 3 });
-  }
 };
 
 export default productService;

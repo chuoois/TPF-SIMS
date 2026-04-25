@@ -5,7 +5,7 @@ const systemLogController = require("./systemLog.controller");
 
 /**
  * Account Controller - Quản lý tài khoản và hồ sơ nhân viên
- * Created By: Antigravity
+ * Created By: ThinhBui
  * Created Date: 23/04/2026
  */
 class AccountController {

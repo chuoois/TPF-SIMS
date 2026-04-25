@@ -135,4 +135,40 @@ router.post("/", OrderController.createOrder);
  */
 router.get("/customer/:id", OrderController.getOrdersByCustomer);
 
+/**
+ * @swagger
+ * /api/order/convert-from-request:
+ *   post:
+ *     summary: Chuyển đổi một Yêu cầu đặt riêng thành Đơn hàng
+ *     tags: [Order]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               custom_request_id:
+ *                 type: integer
+ *               fulfillment_method:
+ *                 type: string
+ *               expected_fulfillment_date:
+ *                 type: string
+ *                 format: date-time
+ *               deposit_amount:
+ *                 type: number
+ *               address:
+ *                 type: string
+ *               final_price:
+ *                 type: number
+ *               design_files:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       201:
+ *         description: Chuyển đổi thành công
+ */
+router.post("/convert-from-request", OrderController.convertRequestToOrder);
+
 module.exports = router;

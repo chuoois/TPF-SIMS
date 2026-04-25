@@ -12,7 +12,7 @@ const { verifyAccessToken, verifyRole } = require("../middleware/auth.middleware
 
 /**
  * Account Routes
- * Created By: Antigravity
+ * Created By: ThinhBui
  * Created Date: 23/04/2026
  */
 

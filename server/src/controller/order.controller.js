@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { sequelize, Order, OrderItem, OrderHistory, CustomerProfile, Product, ProductPricing } = require("../entities");
+const { sequelize, Order, OrderItem, OrderHistory, CustomerProfile, Product, ProductPricing, CustomRequest, CustomRequestItem, ProductItem } = require("../entities");
 const systemLogController = require("./systemLog.controller");
 
 /**
@@ -121,7 +121,7 @@ class OrderController {
             });
 
             if (items && items.length > 0) {
-                const orderItemsData = items.map((item) => {
+                for (const item of items) {
                     const product = products.find((p) => p.pk_product_id === item.fk_product_id);
                     const pricing = pricings.find((p) => p.fk_product_id === item.fk_product_id);
 
@@ -132,32 +132,60 @@ class OrderController {
                         else final_is_finished = 1; // Đơn sẵn hoặc custom
                     }
 
-                    // Xác định giá dựa trên loại sản phẩm và việc có sơn hay không
+                    // Lấy giá mặc định theo lựa chọn mộc (raw) hoặc sơn (final)
                     let autoPrice = 0;
                     if (pricing) {
-                        if (product && product.product_type === 2) {
-                            // Hàng đặt riêng (Custom): Luôn lấy giá hoàn thiện (final_price)
-                            autoPrice = pricing.final_price;
-                        } else {
-                            // Hàng mẫu/sẵn: Lấy theo lựa chọn mộc (raw) hoặc sơn (final)
-                            autoPrice = final_is_finished ? pricing.final_price : pricing.raw_price;
-                        }
+                        autoPrice = final_is_finished ? pricing.final_price : pricing.raw_price;
                     }
 
-                    return {
-                        ...item,
-                        item_name: item.item_name || (product ? product.product_name : "Sản phẩm không xác định"),
-                        item_img: item.item_img || (product ? product.product_img : null),
-                        // Nếu request không gửi giá, tự động lấy giá từ bảng Pricing
-                        item_price: item.item_price || autoPrice,
-                        is_finished: final_is_finished ? 1 : 0, // Lưu lại trạng thái mộc/sơn vào đơn hàng
-                        fk_order_id: newOrder.pk_order_id,
-                        createby: userId,
-                        customer_img: Array.isArray(item.customer_img) ? item.customer_img : (item.customer_img ? [item.customer_img] : []),
-                    };
-                });
+                    const newOrderItem = await OrderItem.create(
+                        {
+                            ...item,
+                            item_name: item.item_name || (product ? product.product_name : "Sản phẩm không xác định"),
+                            item_img: item.item_img || (product ? product.product_img : null),
+                            // Nếu request không gửi giá, tự động lấy giá từ bảng Pricing
+                            item_price: item.item_price || autoPrice,
+                            is_finished: final_is_finished ? 1 : 0, // Lưu lại trạng thái mộc/sơn vào đơn hàng
+                            fk_order_id: newOrder.pk_order_id,
+                            createby: userId,
+                            customer_img: Array.isArray(item.customer_img) ? item.customer_img : (item.customer_img ? [item.customer_img] : []),
+                            design_img: Array.isArray(item.design_img) ? item.design_img : (item.design_img ? [item.design_img] : []),
+                        },
+                        { transaction: t }
+                    );
 
-                await OrderItem.bulkCreate(orderItemsData, { transaction: t });
+                    // Logic GIỮ CHỖ (Allocation): Nếu là hàng sẵn (order_type = 2)
+                    if (order_type == 2 && item.fk_product_id) {
+                        const quantityNeeded = item.item_quantity || 1;
+
+                        // Tìm các item đang ở trạng thái 1-Sẵn sàng
+                        const availableItems = await ProductItem.findAll({
+                            where: {
+                                fk_product_id: item.fk_product_id,
+                                item_status: 1, // Sẵn sàng
+                            },
+                            limit: quantityNeeded,
+                            transaction: t,
+                        });
+
+                        if (availableItems.length < quantityNeeded) {
+                            throw new Error(`Không đủ hàng trong kho cho sản phẩm: ${item.item_name || (product ? product.product_name : item.fk_product_id)} (Còn ${availableItems.length}, cần ${quantityNeeded})`);
+                        }
+
+                        // Cập nhật từng item sang trạng thái 2-Chờ giao
+                        for (const productItem of availableItems) {
+                            await productItem.update(
+                                {
+                                    item_status: 2, // Chờ giao
+                                    fk_order_item_id: newOrderItem.pk_order_item_id,
+                                    modifieby: userId,
+                                    modifiedate: new Date(),
+                                },
+                                { transaction: t }
+                            );
+                        }
+                    }
+                }
             }
 
             // 3. Tạo bản ghi lịch sử đơn hàng (OrderHistory)
@@ -209,7 +237,7 @@ class OrderController {
             const offset = (page - 1) * limit;
 
             const { count, rows } = await Order.findAndCountAll({
-                where: { 
+                where: {
                     fk_customer_id: id,
                     status: 1 // Chỉ lấy đơn hàng active
                 },
@@ -237,6 +265,112 @@ class OrderController {
         } catch (error) {
             console.error("Get orders by customer error:", error);
             return res.status(500).json({ message: "Lỗi hệ thống khi lấy danh sách đơn hàng của khách hàng" });
+        }
+    }
+
+    /**
+     * Chuyển đổi một Yêu cầu đặt riêng (CustomRequest) thành Đơn hàng (Order)
+     * Hỗ trợ chuyển đổi toàn bộ danh sách sản phẩm trong yêu cầu
+     */
+    async convertRequestToOrder(req, res) {
+        const t = await sequelize.transaction();
+        try {
+            const { custom_request_id, fulfillment_method, expected_fulfillment_date, deposit_amount, address } = req.body;
+            const userId = req.user.userId;
+
+            // 1. Kiểm tra yêu cầu tồn tại và lấy danh sách sản phẩm (Detail)
+            const customRequest = await CustomRequest.findByPk(custom_request_id, {
+                include: [{ model: CustomRequestItem, as: "items" }]
+            });
+
+            if (!customRequest) {
+                return res.status(404).json({ message: "Không tìm thấy yêu cầu đặt riêng" });
+            }
+
+            if (customRequest.status === 3) {
+                return res.status(400).json({ message: "Yêu cầu này đã được chuyển thành đơn hàng trước đó" });
+            }
+
+            if (!customRequest.items || customRequest.items.length === 0) {
+                return res.status(400).json({ message: "Yêu cầu này không có sản phẩm nào để chuyển đổi" });
+            }
+
+            // 2. Tạo đơn hàng mới (Order Header)
+            const newOrder = await Order.create({
+                fk_customer_id: customRequest.fk_customer_id,
+                fk_user_account_id: userId,
+                fulfillment_method: fulfillment_method || "Delivery",
+                expected_fulfillment_date: expected_fulfillment_date || null,
+                note: `Được tạo từ yêu cầu đặt riêng ID: ${customRequest.request_code || custom_request_id}`,
+                deposit_amount: deposit_amount || 0,
+                address: address || "",
+                total_amount: customRequest.total_estimated_price,
+                order_status: 1, // Pending
+                order_type: 3,   // Custom Order
+                status: 1,
+                createby: userId
+            }, { transaction: t });
+
+            // 3. Chuyển đổi từng CustomRequestItem sang OrderItem
+            for (const reqItem of customRequest.items) {
+                const newOrderItem = await OrderItem.create({
+                    fk_order_id: newOrder.pk_order_id,
+                    fk_product_id: null,
+                    item_name: reqItem.item_name,
+                    item_quantity: reqItem.item_quantity,
+                    item_material: reqItem.item_material,
+                    item_size: reqItem.item_size,
+                    item_color: reqItem.item_color,
+                    item_price: reqItem.item_price,
+                    item_note: reqItem.item_note,
+                    customer_img: reqItem.customer_img,
+                    design_img: reqItem.design_img,
+                    is_finished: 1,
+                    status: 1,
+                    createby: userId
+                }, { transaction: t });
+
+
+            }
+
+            // 5. Cập nhật trạng thái CustomRequest
+            await customRequest.update({
+                status: 3, // Ordered
+                fk_order_id: newOrder.pk_order_id,
+                modifieby: userId,
+                modifiedate: new Date()
+            }, { transaction: t });
+
+            // 6. Ghi lịch sử
+            await OrderHistory.create({
+                fk_order_id: newOrder.pk_order_id,
+                action: "CHUYỂN_TỪ_YÊU_CẦU_CUSTOM",
+                new_status: 1,
+                changed_by: userId,
+                note: `Chuyển đổi ${customRequest.items.length} sản phẩm từ yêu cầu #${custom_request_id}`,
+                createby: userId
+            }, { transaction: t });
+
+            await t.commit();
+
+            // Ghi log hệ thống
+            await systemLogController.record(
+                req,
+                "CONVERT_CUSTOM_REQUEST",
+                `Đã chuyển yêu cầu #${custom_request_id} thành đơn hàng #${newOrder.pk_order_id} (${customRequest.items.length} món)`,
+                "INFO",
+                userId
+            );
+
+            return res.status(201).json({
+                message: "Chuyển đổi đơn hàng thành công",
+                order: newOrder
+            });
+
+        } catch (error) {
+            await t.rollback();
+            console.error("Convert request error:", error);
+            return res.status(500).json({ message: "Lỗi hệ thống khi chuyển đổi yêu cầu" });
         }
     }
 }

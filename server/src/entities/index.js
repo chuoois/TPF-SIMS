@@ -15,13 +15,15 @@ const OrderItem = require("./OrderItem");
 const OrderHistory = require("./OrderHistory");
 const ProductPricing = require("./ProductPricing");
 const ProductRoom = require("./ProductRoom");
+const CustomRequest = require("./CustomRequest");
+const CustomRequestItem = require("./CustomRequestItem");
+const ProductCoupon = require("./ProductCoupon");
+const CouponProduct = require("./CouponProduct");
 // ── Payroll ──────────────────────────────────────────────
 const Employee = require("./Employee");
 const PayrollPeriod = require("./PayrollPeriod");
 const SalaryRecord = require("./SalaryRecord");
 const SalaryAdjustment = require("./SalaryAdjustment");
-
-
 
 /**
  * Định nghĩa quan hệ giữa các bảng
@@ -116,9 +118,39 @@ OrderHistory.belongsTo(Order, { foreignKey: "fk_order_id", as: "order" });
 Product.hasMany(OrderItem, { foreignKey: "fk_product_id", as: "orderItems" });
 OrderItem.belongsTo(Product, { foreignKey: "fk_product_id", as: "product" });
 
+// OrderItem 1:N ProductItem
+OrderItem.hasMany(ProductItem, { foreignKey: "fk_order_item_id", as: "items" });
+ProductItem.belongsTo(OrderItem, { foreignKey: "fk_order_item_id", as: "orderItem" });
+
 // Product 1:N ProductPricing
 Product.hasMany(ProductPricing, { foreignKey: "fk_product_id", as: "pricings" });
 ProductPricing.belongsTo(Product, { foreignKey: "fk_product_id", as: "product" });
+
+// CustomerProfile 1:N CustomRequest
+CustomerProfile.hasMany(CustomRequest, { foreignKey: "fk_customer_id", as: "customRequests" });
+CustomRequest.belongsTo(CustomerProfile, { foreignKey: "fk_customer_id", as: "customer" });
+
+// CustomRequest 1:1 Order (Optional)
+CustomRequest.belongsTo(Order, { foreignKey: "fk_order_id", as: "order" });
+Order.hasOne(CustomRequest, { foreignKey: "fk_order_id", as: "customRequest" });
+
+// CustomRequest 1:N CustomRequestItem
+CustomRequest.hasMany(CustomRequestItem, { foreignKey: "fk_custom_request_id", as: "items", onDelete: "CASCADE" });
+CustomRequestItem.belongsTo(CustomRequest, { foreignKey: "fk_custom_request_id", as: "request" });
+
+// Product Many:Many ProductCoupon
+Product.belongsToMany(ProductCoupon, {
+  through: CouponProduct,
+  foreignKey: "fk_product_id",
+  otherKey: "fk_coupon_id",
+  as: "coupons",
+});
+ProductCoupon.belongsToMany(Product, {
+  through: CouponProduct,
+  foreignKey: "fk_coupon_id",
+  otherKey: "fk_product_id",
+  as: "products",
+});
 
 // ── Payroll Associations ────────────────────────────────
 
@@ -156,10 +188,13 @@ module.exports = {
   OrderHistory,
   ProductPricing,
   ProductRoom,
+  CustomRequest,
+  CustomRequestItem,
+  ProductCoupon,
+  CouponProduct,
   // Payroll
   Employee,
   PayrollPeriod,
   SalaryRecord,
   SalaryAdjustment,
 };
-

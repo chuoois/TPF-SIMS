@@ -53,15 +53,15 @@ const Product = sequelize.define(
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
-    product_type: {
+    is_gift: {
       type: DataTypes.TINYINT,
-      defaultValue: 1, // 1: Standard (Hàng mẫu/Sẵn), 2: Custom (Hàng đặt riêng, 3: Hàng quà tặng)
+      defaultValue: 0, // 1: Quà tặng, 0: Hàng bán bình thường
     },
     warranty_months: {
       type: DataTypes.INTEGER,
     },
     size: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.JSON,
     },
     product_status: {
       type: DataTypes.TINYINT,

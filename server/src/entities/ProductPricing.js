@@ -30,6 +30,12 @@ const ProductPricing = sequelize.define(
     profit_margin: {
       type: DataTypes.DECIMAL(5, 2),
       defaultValue: 0,
+      comment: "Biên lợi nhuận (%)",
+    },
+    operating_margin: {
+      type: DataTypes.DECIMAL(5, 2),
+      defaultValue: 0,
+      comment: "% Chi phí vận hành",
     },
     raw_price: {
       type: DataTypes.DECIMAL(15, 2),

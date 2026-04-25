@@ -11,18 +11,18 @@ const systemLogRoutes = require("./routes/systemLog.routes");
 const orderRoutes = require("./routes/order.routes");
 const productRoutes = require("./routes/product.routes");
 const productAttributeRoutes = require("./routes/productAttribute.routes");
+const customRequestRoutes = require("./routes/customRequest.routes");
 // ── Payroll ───────────────────────────────────────────────
 const employeeRoutes = require("./routes/employee.routes");
 const payrollRoutes = require("./routes/payroll.routes");
 const swaggerUi = require("swagger-ui-express");
 const swaggerJsDoc = require("swagger-jsdoc");
 
-
 const app = express();
 
 // Middleware
 app.use(cors({
-  origin: true, // Allow all origins for dev, or specify your client URL
+  origin: true,
   credentials: true
 }));
 app.use(cookieParser());
@@ -36,6 +36,7 @@ app.use("/api/system-log", systemLogRoutes);
 app.use("/api/order", orderRoutes);
 app.use("/api/product", productRoutes);
 app.use("/api/product-attribute", productAttributeRoutes);
+app.use("/api/custom-request", customRequestRoutes);
 // ── Payroll ───────────────────────────────────────────────
 app.use("/api/employee", employeeRoutes);
 app.use("/api/payroll", payrollRoutes);
@@ -78,7 +79,6 @@ const swaggerOptions = {
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
