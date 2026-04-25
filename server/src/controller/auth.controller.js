@@ -67,17 +67,19 @@ class AuthController {
       });
 
       // Set cookie
+      const isProduction = process.env.NODE_ENV === "production";
+
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: isProduction,
+        sameSite: isProduction ? "None" : "Strict",
         maxAge: 15 * 60 * 1000, // 15 mins
       });
 
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: isProduction,
+        sameSite: isProduction ? "None" : "Strict",
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
@@ -155,17 +157,19 @@ class AuthController {
       });
 
       // Cập nhật cookies
+      const isProduction = process.env.NODE_ENV === "production";
+
       res.cookie("accessToken", newAccessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: isProduction,
+        sameSite: isProduction ? "None" : "Strict",
         maxAge: 15 * 60 * 1000,
       });
 
       res.cookie("refreshToken", newRefreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: isProduction,
+        sameSite: isProduction ? "None" : "Strict",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
@@ -187,8 +191,17 @@ class AuthController {
         await RefreshToken.destroy({ where: { token: refreshToken } });
       }
 
-      res.clearCookie("accessToken");
-      res.clearCookie("refreshToken");
+      const isProduction = process.env.NODE_ENV === "production";
+      res.clearCookie("accessToken", {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? "None" : "Strict",
+      });
+      res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? "None" : "Strict",
+      });
 
       // Ghi log đăng xuất
       if (req.user) {
