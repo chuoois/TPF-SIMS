@@ -9,20 +9,22 @@
 import { useState } from "react";
 import { X, User, Phone, Mail, MapPin, Calendar, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import customerService from "@/services/customer.service";
+import toast from "react-hot-toast";
 
 const GENDER_OPTIONS = [
-  { value: "Nam", label: "Nam" },
-  { value: "Nữ", label: "Nữ" },
-  { value: "Khác", label: "Khác" },
+  { value: 1, label: "Nam" },
+  { value: 2, label: "Nữ" },
+  { value: 0, label: "Khác" },
 ];
 
 const INITIAL_FORM = {
   full_name: "",
   phone_number: "",
   email: "",
-  address: "",
-  gender: "",
+  gender: 1, // Mặc định là Nam
   dob: "",
+  address: "",
   note: "",
 };
 
@@ -38,6 +40,7 @@ const labelClass =
 export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
   const [form, setForm] = useState({ ...INITIAL_FORM });
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
   if (!isOpen) return null;
 
@@ -46,7 +49,7 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const newErrors = {};
@@ -58,21 +61,33 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
       return;
     }
 
-    // Mock: create a fake customer object and return
-    const customer = {
-      pk_customer_id: `cust_${Date.now()}`,
-      full_name: form.full_name.trim(),
-      phone_number: form.phone_number.trim(),
-      email: form.email.trim() || null,
-      address: form.address.trim() || null,
-      gender: form.gender || null,
-      dob: form.dob || null,
-    };
+    setIsLoading(true);
+    try {
+      const response = await customerService.createCustomer({
+        full_name: form.full_name.trim(),
+        phone_number: form.phone_number.trim(),
+        email: form.email.trim() || null,
+        address: form.address.trim() || null,
+        gender: form.gender || null,
+        dob: form.dob || null,
+        note: form.note.trim() || null,
+      });
 
-    if (onCustomerAdded) onCustomerAdded(customer);
-    setForm({ ...INITIAL_FORM });
-    setErrors({});
-    onClose();
+      toast.success("Thêm khách hàng thành công");
+      
+      if (onCustomerAdded) {
+        // Trả về đối tượng khách hàng (nằm trong field 'customer' của response)
+        const newCustomer = response.data?.customer || response.customer || response;
+        onCustomerAdded(newCustomer);
+      }
+      
+      handleClose();
+    } catch (error) {
+      console.error("Failed to create customer:", error);
+      toast.error(error.response?.data?.message || "Lỗi khi thêm khách hàng");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleClose = () => {
@@ -345,11 +360,11 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
             </Button>
             <Button
               type="submit"
-              disabled={!form.full_name.trim() || !form.phone_number.trim()}
+              disabled={!form.full_name.trim() || !form.phone_number.trim() || isLoading}
               className="rounded-lg text-[13px] font-bold text-white min-w-[130px] cursor-pointer disabled:opacity-40"
               style={{ backgroundColor: "var(--brand-primary)" }}
             >
-              Thêm khách hàng
+              {isLoading ? "Đang xử lý..." : "Thêm khách hàng"}
             </Button>
           </div>
         </form>

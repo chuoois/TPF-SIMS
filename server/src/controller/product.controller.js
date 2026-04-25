@@ -174,7 +174,7 @@ class ProductController {
                     roomInclude,
                     couponInclude
                 ],
-                order: [["createdate", "DESC"]],
+                order: [[sequelize.col("Product.createdate"), "DESC"]],
                 // subQuery: false cần thiết khi search trên bảng join kết hợp với limit/offset
                 subQuery: false,
                 distinct: true,

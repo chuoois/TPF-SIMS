@@ -6,55 +6,22 @@ const { verifyAccessToken } = require("../middleware/auth.middleware");
 /**
  * Order Routes - Quản lý đơn hàng
  * Created By: ThinhBui
- * Created Date: 23/04/2026
+ * Created Date: 25/04/2026
  */
 
-// Yêu cầu đăng nhập để sử dụng các API này
+// Yêu cầu đăng nhập
 router.use(verifyAccessToken);
 
 /**
  * @swagger
  * /api/order:
- *   get:
- *     summary: Lấy danh sách đơn hàng (hỗ trợ lọc theo trạng thái và khách hàng)
- *     tags: [Order]
- *     parameters:
- *       - in: query
- *         name: order_status
- *         schema:
- *           type: integer
- *         description: "Trạng thái đơn hàng (1: Pending, 2: Confirmed, 3: Processing, 4: Shipping, 5: Completed, 0: Cancelled)"
- *       - in: query
- *         name: customer_id
- *         schema:
- *           type: integer
- *         description: ID của khách hàng
- *       - in: query
- *         name: order_type
- *         schema:
- *           type: integer
- *         description: "Loại đơn hàng (1: Mộc, 2: Sẵn, 3: Custom)"
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *     responses:
- *       200:
- *         description: Danh sách đơn hàng
- */
-router.get("/", OrderController.getAllOrders);
-
-/**
- * @swagger
- * /api/order:
  *   post:
- *     summary: Tạo đơn hàng mới kèm chi tiết sản phẩm
+ *     summary: Tạo mới đơn hàng (Bán hàng tại quầy/Online)
+ *     description: |
+ *       Tạo đơn hàng mới và tự động giữ chỗ (allocation) sản phẩm từ kho.
+ *       - Nếu `order_type = 1` (Hàng mộc): Giữ chỗ sản phẩm và gán trạng thái Chờ giao.
+ *       - Nếu `order_type = 2` (Hàng sẵn): Giữ chỗ sản phẩm và gán trạng thái Chờ giao.
+ *       - Tự động kế thừa thông tin Material, Color, Size từ Product nếu không truyền chi tiết.
  *     tags: [Order]
  *     requestBody:
  *       required: true
@@ -62,113 +29,106 @@ router.get("/", OrderController.getAllOrders);
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - fk_customer_id
+ *               - total_amount
+ *               - items
  *             properties:
  *               fk_customer_id:
  *                 type: integer
+ *                 example: 1
  *               fulfillment_method:
  *                 type: string
+ *                 description: "Phương thức giao hàng (VD: Tại kho, Giao tận nhà)"
+ *                 example: "Giao tận nhà"
  *               expected_fulfillment_date:
  *                 type: string
  *                 format: date-time
+ *                 description: "Ngày dự kiến giao hàng"
  *               note:
  *                 type: string
+ *                 example: "Giao vào giờ hành chính"
  *               deposit_amount:
  *                 type: number
+ *                 description: "Số tiền đặt cọc"
+ *                 example: 500000
  *               address:
  *                 type: string
+ *                 description: "Địa chỉ giao hàng"
+ *                 example: "123 Đường ABC, Quận 1, HCM"
  *               total_amount:
  *                 type: number
+ *                 description: "Tổng trị giá đơn hàng"
+ *                 example: 2500000
+ *               order_status:
+ *                 type: integer
+ *                 description: "Trạng thái (1: Chờ xác nhận, 2: Đã xác nhận, 3: Đang xử lý, 4: Chờ giao, 5: Hoàn thành, 0: Đã hủy)"
+ *                 default: 1
  *               order_type:
  *                 type: integer
- *                 description: "1: Đơn hàng mộc, 2: Đơn hàng sẵn, 3: Đơn hàng custom"
+ *                 description: "Loại đơn hàng (1: Đơn hàng mộc, 2: Đơn hàng sẵn, 3: Đơn hàng đặt riêng)"
+ *                 default: 1
  *               items:
  *                 type: array
+ *                 description: "Danh sách sản phẩm trong đơn hàng"
  *                 items:
  *                   type: object
  *                   properties:
  *                     fk_product_id:
  *                       type: integer
+ *                       description: "ID sản phẩm từ bảng Product"
  *                     item_name:
+ *                       type: string
+ *                       description: "Tên hiển thị trên đơn (mặc định lấy từ Product)"
+ *                     item_img:
  *                       type: string
  *                     item_quantity:
  *                       type: integer
+ *                       default: 1
  *                     item_price:
  *                       type: number
+ *                       description: "Giá bán của món hàng (nếu trống sẽ lấy từ ProductPricing)"
  *                     item_material:
- *                       type: string
- *                     item_size:
  *                       type: string
  *                     item_color:
  *                       type: string
- *                     item_img:
+ *                     item_size:
  *                       type: string
- *                       description: "Ảnh gốc của sản phẩm (clone)"
+ *                     item_warranty:
+ *                       type: integer
+ *                       description: "Số tháng bảo hành"
+ *                     item_note:
+ *                       type: string
+ *                     is_finished:
+ *                       type: integer
+ *                       description: "1: Hàng hoàn thiện (sơn), 0: Hàng mộc"
  *                     customer_img:
  *                       type: array
  *                       items:
  *                         type: string
- *                       description: "Danh sách ảnh từ khách hàng"
- *                     item_note:
- *                       type: string
+ *                       description: "Mảng URL ảnh khách hàng cung cấp"
+ *                     design_img:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       description: "Mảng URL ảnh thiết kế"
  *     responses:
  *       201:
- *         description: Đơn hàng đã được tạo thành công
+ *         description: Tạo đơn hàng thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 order:
+ *                   type: object
+ *       400:
+ *         description: Lỗi logic (Sản phẩm không tồn tại, Không đủ tồn kho, ...)
+ *       500:
+ *         description: Lỗi hệ thống
  */
 router.post("/", OrderController.createOrder);
-
-/**
- * @swagger
- * /api/order/customer/{id}:
- *   get:
- *     summary: Lấy danh sách đơn hàng theo ID khách hàng
- *     tags: [Order]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID của khách hàng
- *     responses:
- *       200:
- *         description: Danh sách đơn hàng của khách hàng
- */
-router.get("/customer/:id", OrderController.getOrdersByCustomer);
-
-/**
- * @swagger
- * /api/order/convert-from-request:
- *   post:
- *     summary: Chuyển đổi một Yêu cầu đặt riêng thành Đơn hàng
- *     tags: [Order]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               custom_request_id:
- *                 type: integer
- *               fulfillment_method:
- *                 type: string
- *               expected_fulfillment_date:
- *                 type: string
- *                 format: date-time
- *               deposit_amount:
- *                 type: number
- *               address:
- *                 type: string
- *               final_price:
- *                 type: number
- *               design_files:
- *                 type: array
- *                 items:
- *                   type: string
- *     responses:
- *       201:
- *         description: Chuyển đổi thành công
- */
-router.post("/convert-from-request", OrderController.convertRequestToOrder);
 
 module.exports = router;
