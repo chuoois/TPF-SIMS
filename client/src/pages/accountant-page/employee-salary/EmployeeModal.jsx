@@ -28,8 +28,7 @@ export default function EmployeeModal({
     name: "",
     type: "SALES",
     baseRate: "",
-    daysWorked: "",
-    overtimeHours: ""
+    daysWorked: ""
   });
 
   // Init form
@@ -40,16 +39,14 @@ export default function EmployeeModal({
           name: employeeToEdit.name || "",
           type: employeeToEdit.type || "SALES",
           baseRate: employeeToEdit.base_rate || "",
-          daysWorked: employeeToEdit.days_worked || "",
-          overtimeHours: employeeToEdit.overtime_hours || ""
+          daysWorked: employeeToEdit.days_worked || ""
         });
       } else {
         setFormData({
           name: "",
           type: "SALES",
           baseRate: "",
-          daysWorked: "",
-          overtimeHours: ""
+          daysWorked: ""
         });
       }
     }
@@ -81,7 +78,6 @@ export default function EmployeeModal({
     if (["SALES", "ACCOUNTANT", "SANDER", "PAINTER"].includes(formData.type)) {
       employeeData.base_rate = Number(formData.baseRate) || 0;
       employeeData.days_worked = Number(formData.daysWorked) || 0;
-      employeeData.overtime_hours = Number(formData.overtimeHours) || 0;
     }
 
     onSave(employeeData);
@@ -143,7 +139,7 @@ export default function EmployeeModal({
               {/* SALES, ACCOUNTANT, SANDER & PAINTER – Same daily rate structure */}
               {(["SALES", "ACCOUNTANT", "SANDER", "PAINTER"].includes(formData.type)) && (
                 <>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                           <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Đơn giá / Ngày</label>
                           <input type="text" value={formatNumber(formData.baseRate)} onChange={e => setFormData({...formData, baseRate: parseNumber(e.target.value)})} required
@@ -153,11 +149,6 @@ export default function EmployeeModal({
                           <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Số ngày công</label>
                           <input type="number" min="0" step="0.5" value={formData.daysWorked} onChange={e => setFormData({...formData, daysWorked: e.target.value})} required
                               className={inputClass} placeholder="26" style={inputStyle} />
-                      </div>
-                      <div className="space-y-1.5">
-                          <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Giờ tăng ca</label>
-                          <input type="number" min="0" step="0.5" value={formData.overtimeHours} onChange={e => setFormData({...formData, overtimeHours: e.target.value})}
-                              className={inputClass} placeholder="0" style={inputStyle} />
                       </div>
                   </div>
                 </>

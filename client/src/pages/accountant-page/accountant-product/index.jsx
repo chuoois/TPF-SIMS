@@ -75,6 +75,12 @@ const TYPE_FILTERS = [
     icon: Clock,
     activeStyle: { bg: "#FFF7ED", text: "#9A3412", border: "#FDBA74" },
   },
+  {
+    value: "DEFECTIVE",
+    label: "Hàng chờ xử lý",
+    icon: AlertTriangle,
+    activeStyle: { bg: "#FEF2F2", text: "#DC2626", border: "#FECACA" },
+  },
 ];
 
 const TYPE_BADGE = {
@@ -189,6 +195,8 @@ export default function AccountantProductManage() {
       );
     } else if (typeFilter === "LONG_STAY") {
       r = r.filter((p) => getDaysInStock(p) > LONG_STAY_DAYS);
+    } else if (typeFilter === "DEFECTIVE") {
+      r = r.filter((p) => (p.stockBreakdown?.defective || 0) > 0);
     } else if (typeFilter !== "ALL") {
       r = r.filter((p) => p.type === typeFilter);
     }
@@ -225,6 +233,7 @@ export default function AccountantProductManage() {
       CUSTOM: 0,
       LOW_STOCK: 0,
       LONG_STAY: 0,
+      DEFECTIVE: 0,
     };
     products.forEach((p) => {
       c[p.type] = (c[p.type] || 0) + 1;
@@ -237,6 +246,9 @@ export default function AccountantProductManage() {
       }
       if (getDaysInStock(p) > LONG_STAY_DAYS) {
         c.LONG_STAY++;
+      }
+      if ((p.stockBreakdown?.defective || 0) > 0) {
+        c.DEFECTIVE++;
       }
     });
     return c;
@@ -293,6 +305,14 @@ export default function AccountantProductManage() {
               >
                 ⏰ Hàng tồn trong kho quá {LONG_STAY_DAYS} ngày, cần xem xét xử
                 lý
+              </p>
+            )}
+            {typeFilter === "DEFECTIVE" && (
+              <p
+                className="text-[12px] mt-0.5 font-medium"
+                style={{ color: "#DC2626" }}
+              >
+                ⚠️ Các sản phẩm này có đơn vị hàng lỗi, cần tiến hành xử lý
               </p>
             )}
           </div>
