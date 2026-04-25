@@ -28,7 +28,10 @@ import {
   Info,
   ChevronDown,
   Hash,
+  AlertTriangle,
 } from "lucide-react";
+import ProcessDefectiveModal from "./ProcessDefectiveModal";
+import { toast } from "react-hot-toast";
 
 // ─────────────────────────────────────────────────────────
 // Cấu hình trạng thái đơn vị hàng
@@ -237,7 +240,7 @@ function BundleItemsTable({ items }) {
 
 
 // ── Receipt Group Card ────────────────────────────────────
-function ReceiptGroupCard({ receiptId, units, index }) {
+function ReceiptGroupCard({ receiptId, units, index, onChangeStatus }) {
   const [collapsed, setCollapsed] = useState(false);
 
   // Chỉ hiển thị các đơn vị còn trong kho (bỏ SOLD)
@@ -430,6 +433,12 @@ function ReceiptGroupCard({ receiptId, units, index }) {
                       <ClipboardList size={9} /> Phiếu nhập
                     </span>
                   </th>
+                  <th
+                    className="px-4 py-2 text-center text-[9px] font-bold uppercase tracking-wider"
+                    style={{ color: "#6D28D9" }}
+                  >
+                    Hành động
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -513,6 +522,27 @@ function ReceiptGroupCard({ receiptId, units, index }) {
                           {unit.importReceiptId || receiptId || "—"}
                         </span>
                       </td>
+                      {/* Hành động */}
+                      <td className="px-4 py-2.5 text-center">
+                        {unit.status !== "DEFECTIVE" && onChangeStatus && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onChangeStatus(unit.lotId, unit.unitId, "DEFECTIVE"); }}
+                            className="text-[10px] font-bold text-red-600 hover:text-red-700 hover:underline cursor-pointer"
+                            title="Báo lỗi khi kiểm kho"
+                          >
+                            Báo lỗi
+                          </button>
+                        )}
+                        {unit.status === "DEFECTIVE" && onChangeStatus && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onChangeStatus(unit.lotId, unit.unitId, "AVAILABLE"); }}
+                            className="text-[10px] font-bold text-green-600 hover:text-green-700 hover:underline cursor-pointer"
+                            title="Hoàn tác trạng thái"
+                          >
+                            Bỏ báo lỗi
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
@@ -526,7 +556,7 @@ function ReceiptGroupCard({ receiptId, units, index }) {
 }
 
 // ── Tab 2: Unit Detail by Receipt ─────────────────────────
-function UnitDetailTab({ product, lots }) {
+function UnitDetailTab({ product, lots, onChangeStatus }) {
   // Chỉ lấy các unit còn trong kho
   const allUnits = [];
   (lots || []).forEach((lot) => {
@@ -534,6 +564,7 @@ function UnitDetailTab({ product, lots }) {
       if (IN_STOCK_STATUSES.includes(u.status)) {
         allUnits.push({
           ...u,
+          lotId: lot.lotId,
           importDate: u.importDate || lot.importDate,
           importPrice: u.importPrice != null ? u.importPrice : lot.importPrice,
           importReceiptId: u.importReceiptId || lot.importReceiptId,
@@ -718,6 +749,7 @@ function UnitDetailTab({ product, lots }) {
             receiptId={receiptId === "__NO_RECEIPT__" ? null : receiptId}
             units={units}
             index={idx}
+            onChangeStatus={onChangeStatus}
           />
         ))}
       </div>
@@ -1143,6 +1175,7 @@ export default function ViewProductModal({ product, onClose }) {
   const [lots, setLots] = useState(() =>
     product?.lots ? JSON.parse(JSON.stringify(product.lots)) : [],
   );
+  const [isProcessingDefective, setIsProcessingDefective] = useState(false);
 
   if (!product) return null;
 
@@ -1152,6 +1185,16 @@ export default function ViewProductModal({ product, onClose }) {
     product.isBundle &&
     Array.isArray(product.items) &&
     product.items.length > 0;
+
+  const defectiveCount = lots.reduce((total, lot) => {
+    return total + (lot.units ? lot.units.filter(u => u.status === "DEFECTIVE").length : 0);
+  }, 0) + (product.units ? product.units.filter(u => u.status === "DEFECTIVE").length : 0) || (product.stockBreakdown?.defective || 0);
+
+  const handleProcessDefective = (data) => {
+    toast.success(`Đã xử lý ${data.unitIds.length} đơn vị hàng lỗi thành công!`, { style: { fontSize: "14px" } });
+    setIsProcessingDefective(false);
+    onClose(); // In a real app we might just refresh data
+  };
 
   // Cập nhật trạng thái đơn vị
   const handleChangeUnitStatus = (lotId, unitId, newStatus) => {
@@ -1324,7 +1367,7 @@ export default function ViewProductModal({ product, onClose }) {
               }}
             />
           ) : (
-            <UnitDetailTab product={product} lots={lots} />
+            <UnitDetailTab product={product} lots={lots} onChangeStatus={handleChangeUnitStatus} />
           )}
         </div>
 
@@ -1342,18 +1385,36 @@ export default function ViewProductModal({ product, onClose }) {
           >
             * Dữ liệu chỉ đơn vị còn trong kho – đơn vị đã bán không hiển thị
           </p>
-          <button
-            onClick={onClose}
-            className="h-10 px-8 rounded-xl text-[13px] font-bold border cursor-pointer hover:bg-gray-50 transition"
-            style={{
-              borderColor: "var(--grid-border)",
-              color: "var(--text-secondary)",
-            }}
-          >
-            Đóng
-          </button>
+          <div className="flex items-center gap-3">
+            {defectiveCount > 0 && (
+              <button
+                onClick={() => setIsProcessingDefective(true)}
+                className="h-10 px-5 rounded-xl text-[13px] font-bold text-white bg-red-600 hover:bg-red-700 transition-colors flex items-center gap-2 cursor-pointer"
+              >
+                <AlertTriangle size={15} /> Xử lý hàng lỗi ({defectiveCount})
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="h-10 px-8 rounded-xl text-[13px] font-bold border cursor-pointer hover:bg-gray-50 transition"
+              style={{
+                borderColor: "var(--grid-border)",
+                color: "var(--text-secondary)",
+              }}
+            >
+              Đóng
+            </button>
+          </div>
         </div>
       </div>
+
+      {isProcessingDefective && (
+        <ProcessDefectiveModal
+          product={product}
+          onClose={() => setIsProcessingDefective(false)}
+          onProcess={handleProcessDefective}
+        />
+      )}
     </div>
   );
 }

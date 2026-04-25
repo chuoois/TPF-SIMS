@@ -5,7 +5,8 @@ import { vi } from "date-fns/locale";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import {
     Search, X, Users, Wallet, Calendar, Hammer, Paintbrush, Plus, Trash2,
-    CheckCircle2, Clock, BriefcaseBusiness, CalendarPlus, FileDown
+    CheckCircle2, Clock, BriefcaseBusiness, CalendarPlus, FileDown,
+    Image as ImageIcon, UploadCloud
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import EmployeeModal from "./EmployeeModal";
@@ -74,6 +75,8 @@ export default function AccountantEmployeeSalary() {
     // Payment confirmation
     const [selectedEmpForPayment, setSelectedEmpForPayment] = useState(null);
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [paymentBill, setPaymentBill] = useState(null);
+    const [viewBillImage, setViewBillImage] = useState(null);
 
     // Adjustment Modal
     const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
@@ -168,19 +171,24 @@ export default function AccountantEmployeeSalary() {
             toast.success(`🔄 Đã đổi trạng thái về Chưa thanh toán`, { style: { fontSize: "13px" } });
         } else {
             setSelectedEmpForPayment(emp);
+            setPaymentBill(null);
             setIsPaymentModalOpen(true);
         }
     };
 
     const handleConfirmPayment = () => {
         if (!selectedEmpForPayment) return;
+        if (!paymentBill) {
+            toast.error("Vui lòng tải lên ảnh bill chuyển khoản trước khi xác nhận!", { style: { fontSize: "14px", fontWeight: "bold" } });
+            return;
+        }
 
         const newPaymentDate = format(new Date(), "dd/MM/yyyy", { locale: vi });
         const rid = selectedEmpForPayment.record_id || selectedEmpForPayment.id;
 
         setEmployees(prev => prev.map(e =>
             (e.record_id || e.id) === rid
-                ? { ...e, status: "Đã thanh toán", payment_date: newPaymentDate }
+                ? { ...e, status: "Đã thanh toán", payment_date: newPaymentDate, payment_bill: paymentBill }
                 : e
         ));
 
@@ -190,6 +198,7 @@ export default function AccountantEmployeeSalary() {
         
         setIsPaymentModalOpen(false);
         setSelectedEmpForPayment(null);
+        setPaymentBill(null);
     };
 
 
@@ -407,7 +416,7 @@ export default function AccountantEmployeeSalary() {
                                     let specData = "";
                                     if (["SALES", "ACCOUNTANT", "SANDER", "PAINTER"].includes(emp.type)) {
                                         calcFormula = `${formatCurrency(emp.base_rate)} / ngày`;
-                                        specData = `${emp.days_worked} ngày${emp.overtime_hours > 0 ? ` + ${emp.overtime_hours}h OT` : ''}`;
+                                        specData = `${emp.days_worked} ngày`;
                                     }
 
                                     const totalAdjustments = (emp.adjustments || []).reduce((s, a) => s + a.amount, 0);
@@ -490,7 +499,17 @@ export default function AccountantEmployeeSalary() {
                                                 </td>
 
                                                 <td className="px-4 py-3 text-center text-[12px] font-medium text-gray-600">
-                                                    {emp.payment_date || "-"}
+                                                    <div className="flex items-center justify-center gap-1.5">
+                                                        {emp.payment_date || "-"}
+                                                        {emp.payment_bill && (
+                                                            <button 
+                                                                onClick={() => setViewBillImage(emp.payment_bill)}
+                                                                className="text-blue-500 hover:text-blue-700 transition"
+                                                                title="Xem bill chuyển khoản">
+                                                                <ImageIcon size={14} />
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </td>
 
                                                 {/* Hover action */}
@@ -662,6 +681,39 @@ export default function AccountantEmployeeSalary() {
                                     </span>
                                 </div>
                             </div>
+                            
+                            <div className="space-y-1.5 mt-2">
+                                <label className="text-[12px] font-bold text-gray-700 flex items-center gap-1">
+                                    Ảnh bill chuyển khoản <span className="text-red-500">*</span>
+                                </label>
+                                <div className="border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 transition relative overflow-hidden"
+                                    style={{ borderColor: paymentBill ? "var(--brand-primary)" : "var(--grid-border)", minHeight: "100px" }}>
+                                    {paymentBill ? (
+                                        <div className="flex items-center gap-2">
+                                            <ImageIcon size={24} className="text-blue-500" />
+                                            <span className="text-[12px] font-medium text-blue-700 line-clamp-1 max-w-[200px]">bill_chuyen_khoan.jpg</span>
+                                            <button onClick={(e) => { e.stopPropagation(); setPaymentBill(null); }} className="p-1 hover:bg-blue-100 rounded-full text-blue-700 cursor-pointer">
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <UploadCloud size={24} className="text-gray-400 mb-2" />
+                                            <p className="text-[12px] font-medium text-gray-600">Nhấn để tải lên ảnh bill</p>
+                                            <p className="text-[10px] text-gray-400 mt-0.5">Hỗ trợ JPG, PNG</p>
+                                            <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                                onChange={(e) => {
+                                                    const file = e.target.files[0];
+                                                    if (file) {
+                                                        const reader = new FileReader();
+                                                        reader.onloadend = () => setPaymentBill(reader.result);
+                                                        reader.readAsDataURL(file);
+                                                    }
+                                                }} />
+                                        </>
+                                    )}
+                                </div>
+                            </div>
                         </div>
 
                         <div className="px-6 py-4 border-t flex items-center justify-end gap-3 bg-white" style={{ borderColor: "var(--grid-border)" }}>
@@ -676,6 +728,19 @@ export default function AccountantEmployeeSalary() {
                                 Xác nhận thanh toán
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+            {/* View Bill Modal */}
+            {viewBillImage && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+                    onClick={() => setViewBillImage(null)}>
+                    <div className="relative max-w-3xl w-full flex flex-col items-center" onClick={e => e.stopPropagation()}>
+                        <button onClick={() => setViewBillImage(null)}
+                            className="absolute -top-10 right-0 p-2 text-white/70 hover:text-white transition cursor-pointer">
+                            <X size={24} />
+                        </button>
+                        <img src={viewBillImage} alt="Bill chuyển khoản" className="max-w-full max-h-[85vh] rounded-lg shadow-2xl object-contain bg-white" />
                     </div>
                 </div>
             )}
