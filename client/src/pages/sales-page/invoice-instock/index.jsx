@@ -16,13 +16,14 @@ import { PageHelmet } from "@/components/seo/PageHelmet";
 import AddCustomerModal from "@/pages/sales-page/components/AddCustomerModal";
 import CartPanel from "./CartPanel";
 import ProductPanel from "./ProductPanel";
+import productService from "@/services/product.service";
+import productAttributeService from "@/services/productAttribute.service";
+import customerService from "@/services/customer.service";
 import {
-  WOOD_PRODUCTS,
-  GIFT_PRODUCTS,
-  MOCK_CUSTOMERS,
   ITEMS_PER_PAGE,
   SYSTEM_WARRANTY,
   createEmptyTab,
+  fmt,
 } from "./mockData";
 
 // ===================== COMPONENT =====================
@@ -76,15 +77,27 @@ export default function InStockInvoicePage() {
     },
   ]);
   const [activeTabId, setActiveTabId] = useState(1);
-  const [productTypeTab, setProductTypeTab] = useState("Hàng mộc");
+  const [productTypeTab, setProductTypeTab] = useState("Hàng sẵn"); // 1: Mộc, 2: Sẵn, 3: Quà tặng, 4: Custom
 
+  const [metadata, setMetadata] = useState({
+    categories: [],
+    colors: [],
+    materials: [],
+    rooms: [],
+  });
   const [selectedCategories, setSelectedCategories] = useState([]);
-  const [selectedProductTypes, setSelectedProductTypes] = useState([]);
+  const [selectedColors, setSelectedColors] = useState([]);
+  const [selectedMaterials, setSelectedMaterials] = useState([]);
+  const [selectedRooms, setSelectedRooms] = useState([]);
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [customerSearch, setCustomerSearch] = useState("");
-  const [productSearch, setProductSearch] = useState(""); // Thêm state tìm kiếm sản phẩm
+  const [customerResults, setCustomerResults] = useState([]);
+  const [productSearch, setProductSearch] = useState("");
+  const [products, setProducts] = useState([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0];
 
@@ -97,79 +110,100 @@ export default function InStockInvoicePage() {
     [activeTabId],
   );
 
-  const filteredProducts = useMemo(() => {
-    const source =
-      productTypeTab === "Quà tặng" ? GIFT_PRODUCTS : WOOD_PRODUCTS;
-    return source.filter((p) => {
-      const matchType =
-        productTypeTab === "Quà tặng" ? true : p.productType === productTypeTab;
-      const matchCategory =
-        selectedCategories.length === 0 ||
-        selectedCategories.includes(p.category);
+  // Fetch metadata
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      try {
+        const data = await productAttributeService.getAllAttributes();
+        setMetadata(data);
+      } catch (error) {
+        console.error("Failed to fetch metadata", error);
+      }
+    };
+    fetchMetadata();
+  }, []);
 
-      const pNameLower = p.name.toLowerCase();
-      let pType = "Khác";
-      if (pNameLower.includes("bàn") || pNameLower.includes("tab"))
-        pType = "Bàn";
-      else if (
-        pNameLower.includes("ghế") ||
-        pNameLower.includes("sofa") ||
-        pNameLower.includes("đôn")
-      )
-        pType = "Ghế";
-      else if (
-        pNameLower.includes("tủ") ||
-        pNameLower.includes("kệ") ||
-        pNameLower.includes("hộc") ||
-        pNameLower.includes("giá")
-      )
-        pType = "Tủ";
-      else if (pNameLower.includes("giường")) pType = "Giường";
+  // Fetch products
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setIsLoading(true);
+      try {
+        let sell_type = 2; // Default Hàng sẵn
+        let is_gift_param = 0;
 
-      const matchProductType =
-        selectedProductTypes.length === 0 ||
-        selectedProductTypes.includes(pType);
+        if (productTypeTab === "Hàng mộc") {
+          sell_type = 1;
+        } else if (productTypeTab === "Quà tặng") {
+          sell_type = null; // Quà tặng có thể không lọc theo sell_type (giá)
+          is_gift_param = 1;
+        } else if (productTypeTab === "Hàng custom") {
+          sell_type = 4;
+        }
 
-      const minP = parseInt(priceRange.min);
-      const maxP = parseInt(priceRange.max);
-      const matchPrice =
-        (isNaN(minP) || p.price >= minP) && (isNaN(maxP) || p.price <= maxP);
+        const params = {
+          search: productSearch,
+          category_id: selectedCategories.join(","),
+          color_id: selectedColors.join(","),
+          material_id: selectedMaterials.join(","),
+          room_id: selectedRooms.join(","),
+          sell_type: sell_type || undefined,
+          is_gift: is_gift_param,
+          min_price: priceRange.min,
+          max_price: priceRange.max,
+          page: currentPage,
+          limit: ITEMS_PER_PAGE,
+        };
 
-      // Lọc theo từ khóa tìm kiếm
-      const matchSearch =
-        !productSearch.trim() ||
-        p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-        p.sku.toLowerCase().includes(productSearch.toLowerCase());
-
-      return (
-        matchType &&
-        matchCategory &&
-        matchProductType &&
-        matchPrice &&
-        matchSearch
-      );
-    });
+        const res = await productService.getAllProducts(params);
+        setProducts(res.data);
+        setTotalItems(res.pagination.totalItems);
+      } catch (error) {
+        toast.error("Không thể tải danh sách sản phẩm");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProducts();
   }, [
     productTypeTab,
-    selectedCategories,
-    selectedProductTypes,
-    priceRange,
     productSearch,
+    selectedCategories,
+    selectedColors,
+    selectedMaterials,
+    selectedRooms,
+    priceRange,
+    currentPage,
   ]);
 
-  const customerResults = useMemo(() => {
-    if (!customerSearch.trim()) return [];
-    const q = customerSearch.toLowerCase();
-    return MOCK_CUSTOMERS.filter(
-      (c) => c.name.toLowerCase().includes(q) || c.phone.includes(q),
-    );
+  // Fetch customers
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      if (!customerSearch.trim()) {
+        setCustomerResults([]);
+        return;
+      }
+      try {
+        const res = await customerService.getAllCustomers({
+          search: customerSearch,
+          limit: 10,
+        });
+        // Map backend customer data to UI structure
+        const mapped = res.data.map((c) => ({
+          id: c.pk_customer_id,
+          name: c.full_name,
+          phone: c.phone_number,
+          address: c.address || "",
+        }));
+        setCustomerResults(mapped);
+      } catch (error) {
+        console.error("Failed to fetch customers", error);
+      }
+    };
+    const timer = setTimeout(fetchCustomers, 300);
+    return () => clearTimeout(timer);
   }, [customerSearch]);
 
-  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
-  );
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
 
   const addTab = () => {
     const newTab = createEmptyTab();
@@ -189,12 +223,12 @@ export default function InStockInvoicePage() {
   };
 
   const addToCart = (product) => {
-    const cartItemId = product.id;
+    const cartItemId = product.pk_product_id;
 
     const existing = activeTab.cartItems.find((i) => i.id === cartItemId);
     if (existing) {
-      if (existing.quantity >= product.stock) {
-        toast.error(`"${product.name}" đã hết hàng trong kho`);
+      if (existing.quantity >= product.available_quantity) {
+        toast.error(`"${product.product_name}" đã hết hàng trong kho`);
         return;
       }
       updateActiveTab({
@@ -203,8 +237,8 @@ export default function InStockInvoicePage() {
         ),
       });
     } else {
-      if (product.stock <= 0) {
-        toast.error(`"${product.name}" đã hết hàng`);
+      if (product.available_quantity <= 0 && productTypeTab !== "Hàng custom") {
+        toast.error(`"${product.product_name}" đã hết hàng`);
         return;
       }
       const isGift = productTypeTab === "Quà tặng";
@@ -213,16 +247,16 @@ export default function InStockInvoicePage() {
           ...activeTab.cartItems,
           {
             id: cartItemId,
-            name: product.name,
-            price: isGift ? 0 : product.price,
-            stock: product.stock,
+            name: product.product_name,
+            price: isGift ? 0 : parseFloat(product.display_price),
+            stock: product.available_quantity,
             sku: product.sku,
             quantity: 1,
             note: "",
-            productType: product.productType,
-            images: product.productType === "Hàng mộc" ? [] : null,
+            productType: productTypeTab,
+            images: productTypeTab === "Hàng mộc" ? [] : null,
             isGift,
-            leadTime: product.leadTime || 0,
+            leadTime: product.leadTime || 0, // Backend should provide this if needed
             warrantyMonths: product.warrantyMonths || 12,
             warrantyContent:
               product.warrantyContent || "Bảo hành các lỗi kỹ thuật.",
@@ -545,17 +579,23 @@ export default function InStockInvoicePage() {
           setProductTypeTab={setProductTypeTab}
           productSearch={productSearch}
           setProductSearch={setProductSearch}
+          metadata={metadata}
           selectedCategories={selectedCategories}
           setSelectedCategories={setSelectedCategories}
-          selectedProductTypes={selectedProductTypes}
-          setSelectedProductTypes={setSelectedProductTypes}
+          selectedColors={selectedColors}
+          setSelectedColors={setSelectedColors}
+          selectedMaterials={selectedMaterials}
+          setSelectedMaterials={setSelectedMaterials}
+          selectedRooms={selectedRooms}
+          setSelectedRooms={setSelectedRooms}
           priceRange={priceRange}
           setPriceRange={setPriceRange}
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
           totalPages={totalPages}
-          paginatedProducts={paginatedProducts}
+          products={products}
           addToCart={addToCart}
+          isLoading={isLoading}
         />
       </div>
 

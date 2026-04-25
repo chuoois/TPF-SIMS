@@ -48,6 +48,10 @@ const CustomRequestItem = sequelize.define(
     item_note: {
       type: DataTypes.TEXT,
     },
+    item_warranty: {
+      type: DataTypes.INTEGER,
+      comment: "Thời gian bảo hành (tháng)",
+    },
     createdate: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

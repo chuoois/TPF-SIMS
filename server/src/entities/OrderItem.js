@@ -59,6 +59,10 @@ const OrderItem = sequelize.define(
       type: DataTypes.TINYINT,
       defaultValue: 0, // 0: Mộc (Raw), 1: Sơn (Finished)
     },
+    item_warranty: {
+      type: DataTypes.INTEGER,
+      comment: "Thời gian bảo hành (tháng)",
+    },
     status: {
       type: DataTypes.TINYINT,
       defaultValue: 1,

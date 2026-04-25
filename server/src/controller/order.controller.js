@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { sequelize, Order, OrderItem, OrderHistory, CustomerProfile, Product, ProductPricing, CustomRequest, CustomRequestItem } = require("../entities");
+const { sequelize, Order, OrderItem, OrderHistory, CustomerProfile, Product, ProductPricing, CustomRequest, CustomRequestItem, ProductItem } = require("../entities");
 const systemLogController = require("./systemLog.controller");
 
 /**
@@ -121,7 +121,7 @@ class OrderController {
             });
 
             if (items && items.length > 0) {
-                const orderItemsData = items.map((item) => {
+                for (const item of items) {
                     const product = products.find((p) => p.pk_product_id === item.fk_product_id);
                     const pricing = pricings.find((p) => p.fk_product_id === item.fk_product_id);
 
@@ -132,33 +132,60 @@ class OrderController {
                         else final_is_finished = 1; // Đơn sẵn hoặc custom
                     }
 
-                    // Xác định giá dựa trên loại sản phẩm và việc có sơn hay không
+                    // Lấy giá mặc định theo lựa chọn mộc (raw) hoặc sơn (final)
                     let autoPrice = 0;
                     if (pricing) {
-                        if (product && product.product_type === 2) {
-                            // Hàng đặt riêng (Custom): Luôn lấy giá hoàn thiện (final_price)
-                            autoPrice = pricing.final_price;
-                        } else {
-                            // Hàng mẫu/sẵn: Lấy theo lựa chọn mộc (raw) hoặc sơn (final)
-                            autoPrice = final_is_finished ? pricing.final_price : pricing.raw_price;
-                        }
+                        autoPrice = final_is_finished ? pricing.final_price : pricing.raw_price;
                     }
 
-                    return {
-                        ...item,
-                        item_name: item.item_name || (product ? product.product_name : "Sản phẩm không xác định"),
-                        item_img: item.item_img || (product ? product.product_img : null),
-                        // Nếu request không gửi giá, tự động lấy giá từ bảng Pricing
-                        item_price: item.item_price || autoPrice,
-                        is_finished: final_is_finished ? 1 : 0, // Lưu lại trạng thái mộc/sơn vào đơn hàng
-                        fk_order_id: newOrder.pk_order_id,
-                        createby: userId,
-                        customer_img: Array.isArray(item.customer_img) ? item.customer_img : (item.customer_img ? [item.customer_img] : []),
-                        design_img: Array.isArray(item.design_img) ? item.design_img : (item.design_img ? [item.design_img] : []),
-                    };
-                });
+                    const newOrderItem = await OrderItem.create(
+                        {
+                            ...item,
+                            item_name: item.item_name || (product ? product.product_name : "Sản phẩm không xác định"),
+                            item_img: item.item_img || (product ? product.product_img : null),
+                            // Nếu request không gửi giá, tự động lấy giá từ bảng Pricing
+                            item_price: item.item_price || autoPrice,
+                            is_finished: final_is_finished ? 1 : 0, // Lưu lại trạng thái mộc/sơn vào đơn hàng
+                            fk_order_id: newOrder.pk_order_id,
+                            createby: userId,
+                            customer_img: Array.isArray(item.customer_img) ? item.customer_img : (item.customer_img ? [item.customer_img] : []),
+                            design_img: Array.isArray(item.design_img) ? item.design_img : (item.design_img ? [item.design_img] : []),
+                        },
+                        { transaction: t }
+                    );
 
-                await OrderItem.bulkCreate(orderItemsData, { transaction: t });
+                    // Logic GIỮ CHỖ (Allocation): Nếu là hàng sẵn (order_type = 2)
+                    if (order_type == 2 && item.fk_product_id) {
+                        const quantityNeeded = item.item_quantity || 1;
+
+                        // Tìm các item đang ở trạng thái 1-Sẵn sàng
+                        const availableItems = await ProductItem.findAll({
+                            where: {
+                                fk_product_id: item.fk_product_id,
+                                item_status: 1, // Sẵn sàng
+                            },
+                            limit: quantityNeeded,
+                            transaction: t,
+                        });
+
+                        if (availableItems.length < quantityNeeded) {
+                            throw new Error(`Không đủ hàng trong kho cho sản phẩm: ${item.item_name || (product ? product.product_name : item.fk_product_id)} (Còn ${availableItems.length}, cần ${quantityNeeded})`);
+                        }
+
+                        // Cập nhật từng item sang trạng thái 2-Chờ giao
+                        for (const productItem of availableItems) {
+                            await productItem.update(
+                                {
+                                    item_status: 2, // Chờ giao
+                                    fk_order_item_id: newOrderItem.pk_order_item_id,
+                                    modifieby: userId,
+                                    modifiedate: new Date(),
+                                },
+                                { transaction: t }
+                            );
+                        }
+                    }
+                }
             }
 
             // 3. Tạo bản ghi lịch sử đơn hàng (OrderHistory)
@@ -210,7 +237,7 @@ class OrderController {
             const offset = (page - 1) * limit;
 
             const { count, rows } = await Order.findAndCountAll({
-                where: { 
+                where: {
                     fk_customer_id: id,
                     status: 1 // Chỉ lấy đơn hàng active
                 },

@@ -27,20 +27,33 @@ export default function ProductPanel({
   setProductTypeTab,
   productSearch,
   setProductSearch,
+  metadata,
   selectedCategories,
   setSelectedCategories,
-  selectedProductTypes,
-  setSelectedProductTypes,
+  selectedColors,
+  setSelectedColors,
+  selectedMaterials,
+  setSelectedMaterials,
+  selectedRooms,
+  setSelectedRooms,
   priceRange,
   setPriceRange,
   currentPage,
   setCurrentPage,
   totalPages,
-  paginatedProducts,
+  products,
   addToCart,
+  isLoading,
 }) {
   const [selectedProductForView, setSelectedProductForView] = useState(null);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+
+  const activeFilterCount =
+    selectedCategories.length +
+    selectedColors.length +
+    selectedMaterials.length +
+    selectedRooms.length +
+    (priceRange.min || priceRange.max ? 1 : 0);
 
   return (
     <>
@@ -90,20 +103,16 @@ export default function ProductPanel({
               style={{
                 border: "1px solid var(--grid-border)",
                 color:
-                  selectedCategories.length > 0 ||
-                  selectedProductTypes.length > 0 ||
-                  priceRange.min ||
-                  priceRange.max
+                  activeFilterCount > 0
                     ? "var(--brand-primary)"
                     : "var(--text-secondary)",
               }}
             >
               <Filter size={20} />
-              {(selectedCategories.length > 0 ||
-                selectedProductTypes.length > 0 ||
-                priceRange.min ||
-                priceRange.max) && (
-                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white" />
+              {activeFilterCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">
+                  {activeFilterCount}
+                </span>
               )}
             </button>
           </div>
@@ -142,52 +151,39 @@ export default function ProductPanel({
         </div>
 
         {/* ── Active Filters Display ── */}
-        {(selectedCategories.length > 0 ||
-          selectedProductTypes.length > 0 ||
-          priceRange.min ||
-          priceRange.max) && (
+        {activeFilterCount > 0 && (
           <div className="px-4 pb-3 flex flex-wrap gap-2 items-center">
             <span className="text-[12px] font-medium text-gray-500 mr-1">
               Đang lọc:
             </span>
-            {selectedCategories.map((cat) => (
-              <div
-                key={cat}
-                className="bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-lg text-[12px] font-medium flex items-center gap-1.5"
-              >
-                {cat}
-                <button
-                  onClick={() => {
-                    setSelectedCategories((prev) =>
-                      prev.filter((c) => c !== cat),
-                    );
-                    setCurrentPage(1);
-                  }}
-                  className="hover:bg-green-200 rounded-full p-0.5 transition-colors cursor-pointer"
-                >
-                  <X size={12} />
-                </button>
-              </div>
-            ))}
-            {selectedProductTypes.map((type) => (
-              <div
-                key={type}
-                className="bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-lg text-[12px] font-medium flex items-center gap-1.5"
-              >
-                {type}
-                <button
-                  onClick={() => {
-                    setSelectedProductTypes((prev) =>
-                      prev.filter((t) => t !== type),
-                    );
-                    setCurrentPage(1);
-                  }}
-                  className="hover:bg-green-200 rounded-full p-0.5 transition-colors cursor-pointer"
-                >
-                  <X size={12} />
-                </button>
-              </div>
-            ))}
+            {[
+              { list: selectedCategories, setter: setSelectedCategories, type: "Danh mục", meta: metadata.categories, idKey: "pk_product_category_id", nameKey: "category_name" },
+              { list: selectedColors, setter: setSelectedColors, type: "Màu", meta: metadata.colors, idKey: "pk_product_color_id", nameKey: "color_name" },
+              { list: selectedMaterials, setter: setSelectedMaterials, type: "Chất liệu", meta: metadata.materials, idKey: "pk_product_material_id", nameKey: "material_name" },
+              { list: selectedRooms, setter: setSelectedRooms, type: "Phòng", meta: metadata.rooms, idKey: "pk_product_room_id", nameKey: "room_name" },
+            ].map((group) =>
+              group.list.map((id) => {
+                const item = group.meta.find((m) => m[group.idKey] === id);
+                return (
+                  <div
+                    key={`${group.type}-${id}`}
+                    className="bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-lg text-[12px] font-medium flex items-center gap-1.5"
+                  >
+                    {item ? item[group.nameKey] : id}
+                    <button
+                      onClick={() => {
+                        group.setter((prev) => prev.filter((i) => i !== id));
+                        setCurrentPage(1);
+                      }}
+                      className="hover:bg-green-200 rounded-full p-0.5 transition-colors cursor-pointer"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                );
+              })
+            )}
+
             {(priceRange.min || priceRange.max) && (
               <div className="bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-1 rounded-lg text-[12px] font-medium flex items-center gap-1.5">
                 {priceRange.min ? fmt(priceRange.min) : 0}đ -{" "}
@@ -206,7 +202,9 @@ export default function ProductPanel({
             <button
               onClick={() => {
                 setSelectedCategories([]);
-                setSelectedProductTypes([]);
+                setSelectedColors([]);
+                setSelectedMaterials([]);
+                setSelectedRooms([]);
                 setPriceRange({ min: "", max: "" });
                 setCurrentPage(1);
               }}
@@ -219,7 +217,12 @@ export default function ProductPanel({
 
         {/* ── Product Grid ── */}
         <div className="flex-1 overflow-y-auto px-4 pb-3">
-          {paginatedProducts.length === 0 ? (
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center h-full gap-3">
+               <div className="w-10 h-10 border-4 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
+               <p className="text-sm font-medium text-gray-400">Đang tải sản phẩm...</p>
+            </div>
+          ) : products.length === 0 ? (
             <div
               className="flex flex-col items-center justify-center h-full gap-2"
               style={{ color: "var(--text-placeholder)" }}
@@ -234,59 +237,57 @@ export default function ProductPanel({
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-3">
-              {paginatedProducts.map((product) => {
-                const outOfStock = product.stock <= 0;
-                const lowStock = product.stock > 0 && product.stock <= 5;
+              {products.map((product) => {
+                const stock = product.available_quantity || 0;
+                const outOfStock = stock <= 0 && productTypeTab !== "Hàng custom";
+                const lowStock = stock > 0 && stock <= 5;
 
                 return (
-                  <button
-                    key={product.id}
-                    onClick={() => addToCart(product)}
-                    disabled={outOfStock}
-                    className={`group flex flex-col rounded-lg transition-all duration-200 text-left cursor-pointer relative overflow-hidden ${
+                  <div
+                    key={product.pk_product_id}
+                    onClick={() => !outOfStock && addToCart(product)}
+                    className={`group flex flex-col rounded-lg transition-all duration-200 text-left relative overflow-hidden ${
                       outOfStock
                         ? "opacity-50 cursor-not-allowed grayscale"
-                        : "hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-0.5"
+                        : "hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-0.5 cursor-pointer"
                     }`}
                     style={{ border: "1px solid var(--grid-border)" }}
                   >
                     {/* Stock badge */}
-                    <div
-                      className="absolute top-2 right-2 z-10 text-[10px] font-bold px-2 py-0.5 rounded-md"
-                      style={{
-                        backgroundColor: outOfStock
-                          ? "#FEE2E2"
-                          : lowStock
-                            ? "#FEF3C7"
-                            : "var(--status-focus)",
-                        color: outOfStock
-                          ? "var(--status-error)"
-                          : lowStock
-                            ? "var(--status-pending)"
-                            : "var(--status-success)",
-                      }}
-                    >
-                      {outOfStock ? "Hết hàng" : `Kho: ${product.stock}`}
-                    </div>
-
-                    {/* Discount badge */}
-                    {product.discount > 0 && (
+                    {outOfStock ? (
                       <div
-                        className="absolute top-2 left-2 z-10 text-[10px] font-bold px-2 py-0.5 rounded-md"
-                        style={{
-                          backgroundColor: "#EF4444",
-                          color: "#fff",
-                        }}
+                        className="absolute top-2 right-2 z-10 text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-100 text-red-600"
                       >
-                        -{product.discount}%
+                        Hết hàng
+                      </div>
+                    ) : (
+                      <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 items-end">
+                        {product.is_gift === 1 && (
+                          <div className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-600 border border-emerald-200 shadow-sm">
+                            QUÀ TẶNG
+                          </div>
+                        )}
+                        <div
+                          className="text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm"
+                          style={{
+                            backgroundColor: lowStock
+                                ? "#FEF3C7"
+                                : "var(--status-focus)",
+                            color: lowStock
+                                ? "var(--status-pending)"
+                                : "var(--status-success)",
+                          }}
+                        >
+                          Kho: {stock}
+                        </div>
                       </div>
                     )}
 
                     {/* Image */}
                     <div className="aspect-square overflow-hidden bg-gray-50">
                       <img
-                        src={product.image}
-                        alt={product.name}
+                        src={product.product_img || "/wood_products.png"}
+                        alt={product.product_name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     </div>
@@ -297,50 +298,47 @@ export default function ProductPanel({
                         className="text-[12px] font-semibold line-clamp-2 leading-snug min-h-[2.25rem]"
                         style={{ color: "var(--text-main)" }}
                       >
-                        {product.name}
+                        {product.product_name}
                       </p>
-                      {/* Hiển thị Màu sắc */}
                       <div className="flex flex-col gap-0.5 mt-1">
                         <span
                           className="text-[10px] font-medium truncate"
                           style={{ color: "var(--text-placeholder)" }}
                         >
-                          Màu sắc:{" "}
-                          {product.productType === "Hàng mộc"
-                            ? "Nguyên mộc"
-                            : product.color}
+                          Chất liệu: {product.material_name || "—"}
                         </span>
-                        {product.leadTime > 0 && (
-                          <span className="text-[10px] font-bold text-amber-600 flex items-center gap-1 mt-0.5">
-                            <Clock size={10} /> Hoàn thiện: {product.leadTime} ngày
-                          </span>
+                        <span
+                          className="text-[10px] font-medium truncate"
+                          style={{ color: "var(--text-placeholder)" }}
+                        >
+                          Màu sắc: {product.color_name || "—"}
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        {product.discount_percent > 0 ? (
+                          <div className="flex items-center gap-2">
+                            <p
+                              className="text-[13px] font-bold"
+                              style={{ color: "var(--brand-primary)" }}
+                            >
+                              {fmt(product.display_price)}đ
+                            </p>
+                            <p className="text-[11px] text-gray-400 line-through">
+                              {fmt(product.original_price)}đ
+                            </p>
+                            <span className="text-[10px] font-bold text-red-500 bg-red-50 px-1 rounded">
+                              -{product.discount_percent}%
+                            </span>
+                          </div>
+                        ) : (
+                          <p
+                            className="text-[13px] font-bold"
+                            style={{ color: "var(--brand-primary)" }}
+                          >
+                            {fmt(product.display_price)}đ
+                          </p>
                         )}
                       </div>
-                      {product.discount > 0 ? (
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[11px] line-through text-gray-400">
-                            {fmt(product.price)}đ
-                          </span>
-                          <span
-                            className="text-[13px] font-bold"
-                            style={{ color: "#EF4444" }}
-                          >
-                            {fmt(
-                              Math.round(
-                                product.price * (1 - product.discount / 100),
-                              ),
-                            )}
-                            đ
-                          </span>
-                        </div>
-                      ) : (
-                        <p
-                          className="text-[13px] font-bold"
-                          style={{ color: "var(--brand-primary)" }}
-                        >
-                          {fmt(product.price)}đ
-                        </p>
-                      )}
 
                       {/* Quick View Button */}
                       <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -355,7 +353,7 @@ export default function ProductPanel({
                         </button>
                       </div>
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
@@ -464,93 +462,65 @@ export default function ProductPanel({
                         Màu sắc
                       </p>
                       <p className="text-[13px] font-semibold text-gray-700 mt-0.5">
-                        {selectedProductForView.productType === "Hàng mộc"
-                          ? "Nguyên mộc"
-                          : selectedProductForView.color || "—"}
+                         {selectedProductForView.color_name || "—"}
                       </p>
                     </div>
                     <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                         Kích thước
                       </p>
-                      <p
-                        className="text-[13px] font-semibold text-gray-700 mt-0.5 truncate"
-                        title={(() => {
-                          const match = selectedProductForView.description?.match(
-                            /Kích thước[\s:]([^\.]+)/i,
-                          );
-                          return match ? match[1].trim() : "—";
-                        })()}
-                      >
-                        {(() => {
-                          const match = selectedProductForView.description?.match(
-                            /Kích thước[\s:]([^\.]+)/i,
-                          );
-                          return match ? match[1].trim() : "—";
-                        })()}
+                      <p className="text-[13px] font-semibold text-gray-700 mt-0.5 truncate">
+                        {selectedProductForView.size ? `${selectedProductForView.size.width}x${selectedProductForView.size.height}x${selectedProductForView.size.length} ${selectedProductForView.size.unit}` : "—"}
                       </p>
                     </div>
                   </div>
 
-                  <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                      Danh mục
-                    </p>
-                    <p className="text-[13px] font-semibold text-gray-700 mt-0.5">
-                      {selectedProductForView.category || "—"}
-                    </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        Danh mục
+                      </p>
+                      <p className="text-[13px] font-semibold text-gray-700 mt-0.5">
+                        {selectedProductForView.category_name || "—"}
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        Chất liệu
+                      </p>
+                      <p className="text-[13px] font-semibold text-gray-700 mt-0.5">
+                        {selectedProductForView.material_name || "—"}
+                      </p>
+                    </div>
                   </div>
 
-                  {selectedProductForView.discount > 0 ? (
-                    <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-100 text-left">
-                      <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
-                        Giá niêm yết (Giảm {selectedProductForView.discount}%)
+                  <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-100 text-left">
+                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
+                      Giá bán ({selectedProductForView.sell_type_name})
+                    </p>
+                    <div className="flex items-baseline gap-2 mt-0.5">
+                      <p className="text-[20px] font-black text-emerald-700">
+                        {fmt(selectedProductForView.display_price)}đ
                       </p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[14px] line-through text-emerald-600/60 font-medium">
-                          {fmt(selectedProductForView.price)}đ
-                        </span>
-                        <span className="text-[20px] font-black text-red-600">
-                          {fmt(
-                            Math.round(
-                              selectedProductForView.price *
-                                (1 - selectedProductForView.discount / 100),
-                            ),
-                          )}
-                          đ
-                        </span>
+                      {selectedProductForView.discount_percent > 0 && (
+                        <p className="text-[14px] font-medium text-gray-400 line-through">
+                          {fmt(selectedProductForView.original_price)}đ
+                        </p>
+                      )}
+                    </div>
+                    {selectedProductForView.discount_percent > 0 && (
+                      <div className="inline-block mt-1 px-2 py-0.5 bg-red-100 text-red-600 text-[11px] font-bold rounded">
+                        TIẾT KIỆM {selectedProductForView.discount_percent}% (Coupon: {selectedProductForView.coupon_code})
                       </div>
-                    </div>
-                  ) : (
-                    <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-100 text-left">
-                      <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
-                        Giá niêm yết
-                      </p>
-                      <p className="text-[20px] font-black text-emerald-700 mt-0.5">
-                        {fmt(selectedProductForView.price)}đ
-                      </p>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-100">
                     <Package size={14} className="text-amber-600" />
                     <span className="text-[13px] font-bold text-amber-700">
-                      Tồn kho: {selectedProductForView.stock} sản phẩm
+                      Tồn kho: {selectedProductForView.available_quantity} sản phẩm
                     </span>
                   </div>
-
-                  {selectedProductForView.description && (
-                    <div className="p-4 rounded-lg bg-gray-50 border border-gray-100">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-                        Mô tả sản phẩm
-                      </p>
-                      <p className="text-[13px] text-gray-600 leading-relaxed italic">
-                        "{selectedProductForView.description
-                          .replace(/Kích thước[\s\S]*/i, "")
-                          .trim()}"
-                      </p>
-                    </div>
-                  )}
                 </div>
 
                 <Button
@@ -592,114 +562,65 @@ export default function ProductPanel({
 
             {/* Drawer Content */}
             <div className="flex-1 overflow-y-auto p-5 space-y-6">
-              <div className="space-y-3">
-                <label className="text-[13px] font-semibold text-gray-600 uppercase tracking-wider block">
-                  Danh mục
-                </label>
-                <div className="flex flex-col gap-2">
-                  {CATEGORIES.map((cat) => {
-                    const isActive = selectedCategories.includes(cat);
-                    return (
-                      <label
-                        key={cat}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-[13px] cursor-pointer transition select-none ${
-                          isActive
-                            ? "border-green-500 bg-green-50/50"
-                            : "border-gray-200 hover:border-green-200 hover:bg-gray-50"
-                        }`}
-                      >
-                        <div
-                          className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+              {[
+                { list: selectedCategories, setter: setSelectedCategories, label: "Danh mục", meta: metadata.categories, idKey: "pk_product_category_id", nameKey: "category_name" },
+                { list: selectedColors, setter: setSelectedColors, label: "Màu sắc", meta: metadata.colors, idKey: "pk_product_color_id", nameKey: "color_name" },
+                { list: selectedMaterials, setter: setSelectedMaterials, label: "Chất liệu", meta: metadata.materials, idKey: "pk_product_material_id", nameKey: "material_name" },
+                { list: selectedRooms, setter: setSelectedRooms, label: "Phòng / Khu vực", meta: metadata.rooms, idKey: "pk_product_room_id", nameKey: "room_name" },
+              ].map((group) => (
+                <div key={group.label} className="space-y-3">
+                  <label className="text-[13px] font-semibold text-gray-600 uppercase tracking-wider block">
+                    {group.label}
+                  </label>
+                  <div className="flex flex-col gap-2">
+                    {group.meta.map((item) => {
+                      const id = item[group.idKey];
+                      const name = item[group.nameKey];
+                      const isActive = group.list.includes(id);
+                      return (
+                        <label
+                          key={id}
+                          className={`flex items-center gap-3 px-4 py-2.5 rounded-lg border text-[13px] cursor-pointer transition select-none ${
                             isActive
-                              ? "bg-green-500 border-green-500 text-white"
-                              : "border-gray-300 bg-white"
+                              ? "border-green-500 bg-green-50/50"
+                              : "border-gray-200 hover:border-green-200 hover:bg-gray-50"
                           }`}
                         >
-                          {isActive && (
-                            <CheckCircle2 size={12} strokeWidth={3} />
-                          )}
-                        </div>
-                        <span
-                          className={`flex-1 ${isActive ? "font-medium text-green-700" : "text-gray-600"}`}
-                        >
-                          {cat}
-                        </span>
-                        <input
-                          type="checkbox"
-                          className="hidden"
-                          checked={isActive}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedCategories((prev) => [...prev, cat]);
-                            } else {
-                              setSelectedCategories((prev) =>
-                                prev.filter((c) => c !== cat),
-                              );
-                            }
-                            setCurrentPage(1);
-                          }}
-                        />
-                      </label>
-                    );
-                  })}
+                          <div
+                            className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                              isActive
+                                ? "bg-green-500 border-green-500 text-white"
+                                : "border-gray-300 bg-white"
+                            }`}
+                          >
+                            {isActive && (
+                              <CheckCircle2 size={12} strokeWidth={3} />
+                            )}
+                          </div>
+                          <span
+                            className={`flex-1 ${isActive ? "font-medium text-green-700" : "text-gray-600"}`}
+                          >
+                            {name}
+                          </span>
+                          <input
+                            type="checkbox"
+                            className="hidden"
+                            checked={isActive}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                group.setter((prev) => [...prev, id]);
+                              } else {
+                                group.setter((prev) => prev.filter((i) => i !== id));
+                              }
+                              setCurrentPage(1);
+                            }}
+                          />
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-
-              <div className="space-y-3">
-                <label className="text-[13px] font-semibold text-gray-600 uppercase tracking-wider block">
-                  Loại sản phẩm
-                </label>
-                <div className="flex flex-col gap-2">
-                  {["Bàn", "Ghế", "Tủ", "Giường", "Khác"].map((type) => {
-                    const isActive = selectedProductTypes.includes(type);
-                    return (
-                      <label
-                        key={type}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-[13px] cursor-pointer transition select-none ${
-                          isActive
-                            ? "border-green-500 bg-green-50/50"
-                            : "border-gray-200 hover:border-green-200 hover:bg-gray-50"
-                        }`}
-                      >
-                        <div
-                          className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                            isActive
-                              ? "bg-green-500 border-green-500 text-white"
-                              : "border-gray-300 bg-white"
-                          }`}
-                        >
-                          {isActive && (
-                            <CheckCircle2 size={12} strokeWidth={3} />
-                          )}
-                        </div>
-                        <span
-                          className={`flex-1 ${isActive ? "font-medium text-green-700" : "text-gray-600"}`}
-                        >
-                          {type}
-                        </span>
-                        <input
-                          type="checkbox"
-                          className="hidden"
-                          checked={isActive}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedProductTypes((prev) => [
-                                ...prev,
-                                type,
-                              ]);
-                            } else {
-                              setSelectedProductTypes((prev) =>
-                                prev.filter((t) => t !== type),
-                              );
-                            }
-                            setCurrentPage(1);
-                          }}
-                        />
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
+              ))}
 
               <div className="space-y-3">
                 <label className="text-[13px] font-semibold text-gray-600 uppercase tracking-wider block">
@@ -750,7 +671,9 @@ export default function ProductPanel({
               <button
                 onClick={() => {
                   setSelectedCategories([]);
-                  setSelectedProductTypes([]);
+                  setSelectedColors([]);
+                  setSelectedMaterials([]);
+                  setSelectedRooms([]);
                   setPriceRange({ min: "", max: "" });
                   setCurrentPage(1);
                 }}

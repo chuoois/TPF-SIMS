@@ -17,6 +17,9 @@ const ProductPricing = require("./ProductPricing");
 const ProductRoom = require("./ProductRoom");
 const CustomRequest = require("./CustomRequest");
 const CustomRequestItem = require("./CustomRequestItem");
+const ProductCoupon = require("./ProductCoupon");
+const CouponProduct = require("./CouponProduct");
+
 
 
 
@@ -114,6 +117,10 @@ OrderHistory.belongsTo(Order, { foreignKey: "fk_order_id", as: "order" });
 Product.hasMany(OrderItem, { foreignKey: "fk_product_id", as: "orderItems" });
 OrderItem.belongsTo(Product, { foreignKey: "fk_product_id", as: "product" });
 
+// OrderItem 1:N ProductItem
+OrderItem.hasMany(ProductItem, { foreignKey: "fk_order_item_id", as: "items" });
+ProductItem.belongsTo(OrderItem, { foreignKey: "fk_order_item_id", as: "orderItem" });
+
 // Product 1:N ProductPricing
 Product.hasMany(ProductPricing, { foreignKey: "fk_product_id", as: "pricings" });
 ProductPricing.belongsTo(Product, { foreignKey: "fk_product_id", as: "product" });
@@ -129,6 +136,21 @@ Order.hasOne(CustomRequest, { foreignKey: "fk_order_id", as: "customRequest" });
 // CustomRequest 1:N CustomRequestItem
 CustomRequest.hasMany(CustomRequestItem, { foreignKey: "fk_custom_request_id", as: "items", onDelete: "CASCADE" });
 CustomRequestItem.belongsTo(CustomRequest, { foreignKey: "fk_custom_request_id", as: "request" });
+
+// Product Many:Many ProductCoupon
+Product.belongsToMany(ProductCoupon, {
+  through: CouponProduct,
+  foreignKey: "fk_product_id",
+  otherKey: "fk_coupon_id",
+  as: "coupons",
+});
+ProductCoupon.belongsToMany(Product, {
+  through: CouponProduct,
+  foreignKey: "fk_coupon_id",
+  otherKey: "fk_product_id",
+  as: "products",
+});
+
 
 
 
@@ -152,5 +174,8 @@ module.exports = {
   ProductRoom,
   CustomRequest,
   CustomRequestItem,
+  ProductCoupon,
+  CouponProduct,
 };
+
 
