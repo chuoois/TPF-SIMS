@@ -10,6 +10,10 @@ import {
   Info,
   ChevronRight as ChevronRightIcon,
   AlertTriangle,
+  Clock,
+  Hammer,
+  Package,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { getOrders, STATUS_CONFIG, getWarehouseStatus, updateWarehouseStatus } from "../mock";
@@ -22,71 +26,74 @@ const OrderItemRow = ({ item }) => {
   return (
     <div
       onClick={() => navigate(`/worker/dashboard/${item.id}`)}
-      className="flex flex-col sm:flex-row items-start sm:items-center gap-4 py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50/100 transition-colors px-3 rounded-lg cursor-pointer group"
+      className="flex flex-col md:flex-row items-start md:items-center gap-4 py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50/100 transition-colors px-4 rounded-xl cursor-pointer group"
     >
       <div
-        className="h-16 w-16 rounded-xl overflow-hidden shrink-0 border bg-white"
+        className="h-20 w-20 rounded-2xl overflow-hidden shrink-0 border bg-white shadow-sm"
         style={{ borderColor: "var(--grid-border)" }}
       >
         <img
           src={item.picture}
           alt={item.productName}
-          className="h-full w-full object-cover group-hover:scale-105 transition-transform"
+          className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
       </div>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-1 gap-2">
+      <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex-1">
           <h4
-            className="text-[13px] font-semibold truncate group-hover:text-[var(--brand-primary)] transition-colors"
+            className="text-[15px] font-black mb-2 group-hover:text-[var(--brand-primary)] transition-colors"
             style={{ color: "var(--text-main)" }}
           >
             {item.productName}
           </h4>
-          <span className={`px-2.5 py-1 ${config.color} rounded-full text-[11px] font-bold border flex items-center gap-1 w-fit`}>
-            <StatusIcon size={12} className={(item.status === 'INSPECTION') ? 'animate-pulse' : ''} />
-            {config.label}
-          </span>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-2 gap-x-6 text-[12px]" style={{ color: "var(--text-secondary)" }}>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Kích thước</span>
+              <span className="font-bold text-slate-600">{item.size}</span>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Loại gỗ</span>
+              <span className="font-bold text-slate-600">{item.type}</span>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Màu sắc</span>
+              <span className="font-bold text-slate-600">{item.color}</span>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Số lượng</span>
+              <span className="font-black text-indigo-600">x{item.quantity}</span>
+            </div>
+          </div>
+
+          {(item.startedAt || item.deadline || item.note) && (
+            <div className="mt-3 flex flex-wrap items-center gap-4 border-t border-dashed pt-2 border-slate-100">
+               {item.startedAt && <span className="text-[11px]"><strong className="text-slate-400 uppercase tracking-tighter mr-1">Ngày làm:</strong> <span className="font-bold text-slate-600">{item.startedAt}</span></span>}
+               {item.deadline && <span className="text-[11px]"><strong className="text-slate-400 uppercase tracking-tighter mr-1">Hạn chót:</strong> <span className="font-bold text-slate-600">{item.deadline}</span></span>}
+               {item.note && (
+                  <div className="text-[11px] flex items-center gap-1.5 text-amber-600 bg-amber-50/50 px-2 py-0.5 rounded border border-amber-100">
+                    <Info size={12} className="shrink-0" />
+                    <span className="font-bold truncate max-w-[200px]">{item.note}</span>
+                  </div>
+               )}
+            </div>
+          )}
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-1 gap-x-4 text-[12px] mt-1.5" style={{ color: "var(--text-secondary)" }}>
-          <div className="flex items-center gap-1">
-            <strong className="font-semibold" style={{ color: "var(--text-main)" }}>Kích thước:</strong> {item.size}
+        <div className="flex flex-row md:flex-col items-center md:items-end gap-3 shrink-0 self-stretch justify-between md:justify-center border-t md:border-t-0 md:border-l border-slate-100 pt-3 md:pt-0 md:pl-6">
+          <div className={`px-3 py-1.5 ${config.color} rounded-full text-[11px] font-black border flex items-center gap-2 shadow-sm whitespace-nowrap`}>
+            <StatusIcon size={14} className={(item.status === 'INSPECTION') ? 'animate-pulse' : ''} />
+            <span className="uppercase tracking-wider">{config.label}</span>
           </div>
-          <div className="flex items-center gap-1">
-            <strong className="font-semibold" style={{ color: "var(--text-main)" }}>Loại:</strong> {item.type}
-          </div>
-          <div className="flex items-center gap-1">
-            <strong className="font-semibold" style={{ color: "var(--text-main)" }}>Màu sắc:</strong> {item.color}
-          </div>
-          <div className="flex items-center gap-1">
-            <strong className="font-semibold" style={{ color: "var(--text-main)" }}>Số lượng:</strong> x{item.quantity}
-          </div>
+          
+          <button
+            className="px-4 py-2 text-[11px] font-black uppercase tracking-widest rounded-xl border text-slate-500 bg-white hover:bg-[var(--brand-primary)] hover:text-white hover:border-[var(--brand-primary)] transition-all flex items-center gap-2 shadow-sm"
+          >
+            Chi tiết
+            <ChevronRightIcon size={14} />
+          </button>
         </div>
-
-        {(item.startedAt || item.deadline) && (
-           <div className="mt-2 flex flex-wrap gap-4 text-[11px] font-medium" style={{ color: "var(--text-secondary)" }}>
-             {item.startedAt && <span><strong style={{ color: "var(--text-main)" }}>Ngày làm:</strong> {item.startedAt}</span>}
-             {item.deadline && <span><strong style={{ color: "var(--text-main)" }}>Hạn chót:</strong> {item.deadline}</span>}
-           </div>
-        )}
-
-        {item.note && (
-          <div className="mt-2 text-[11px] flex items-start gap-1.5 text-orange-600 bg-orange-50 px-2 py-1.5 rounded-md border border-orange-100 w-fit max-w-full">
-            <Info size={14} className="shrink-0 mt-0.5" />
-            <span className="truncate">{item.note}</span>
-          </div>
-        )}
-      </div>
-
-      <div className="shrink-0 w-full sm:w-auto mt-2 sm:mt-0 flex justify-end">
-        <button
-          className="px-3 py-1.5 text-[12px] font-bold rounded-lg border text-gray-500 bg-white group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors flex items-center gap-1"
-          style={{ borderColor: "var(--grid-border)" }}
-        >
-          Chi tiết trạng thái
-          <ChevronRightIcon size={14} className="ml-0.5" />
-        </button>
       </div>
     </div>
   );
@@ -186,17 +193,12 @@ export default function WorkerDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between shrink-0">
         <div>
-          <h1
-            className="text-xl font-bold"
-            style={{ color: "var(--text-main)" }}
-          >
-            Công việc đang chờ
+          <h1 className="text-xl font-bold flex items-center gap-2 text-slate-800">
+            <LayoutDashboard className="text-[var(--brand-primary)]" />
+            Công việc đang chờ xử lý
           </h1>
-          <p
-            className="text-[13px] mt-0.5"
-            style={{ color: "var(--text-placeholder)" }}
-          >
-            {filteredOrders.length} đơn hàng cần xử lý
+          <p className="text-[13px] mt-0.5 text-slate-400 font-medium">
+            {filteredOrders.length} đơn hàng đang trong quá trình gia công
           </p>
         </div>
 
@@ -216,21 +218,17 @@ export default function WorkerDashboard() {
 
           {/* Filters */}
           <div
-            className="flex gap-1 bg-white p-1 rounded-lg border shadow-sm shrink-0"
-            style={{ borderColor: "var(--grid-border)" }}
+            className="flex gap-1 bg-white p-1 rounded-xl border shadow-sm shrink-0 border-slate-200"
           >
             {filters.map((f) => (
               <button
                 key={f}
                 onClick={() => setActiveFilter(f)}
-                className={`px-4 py-1.5 rounded-md text-[13px] font-semibold transition-all ${
+                className={`px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all ${
                   activeFilter === f
-                    ? "bg-[var(--bg-main)] text-[var(--text-main)] shadow-sm border"
-                    : "text-[var(--text-secondary)] hover:text-[var(--text-main)]"
+                    ? "bg-slate-100 text-slate-900 border-slate-200 border"
+                    : "text-slate-400 hover:text-slate-600"
                 }`}
-                style={
-                  activeFilter === f ? { borderColor: "var(--grid-border)" } : {}
-                }
               >
                 {f}
               </button>
@@ -239,47 +237,66 @@ export default function WorkerDashboard() {
         </div>
       </div>
 
-      {/* Search + Table Card */}
+      {/* TỔNG HỢP TIẾN ĐỘ (STATS ROW) */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0">
+        <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-4 rounded-2xl shadow-lg shadow-indigo-200 flex items-center justify-between group">
+          <div className="text-white">
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-70">Tổng đơn tại xưởng</p>
+            <h3 className="text-3xl font-black mt-1 leading-none">{orders.length}</h3>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+             <Package size={24} />
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-sky-500 to-blue-600 p-4 rounded-2xl shadow-lg shadow-blue-200 flex items-center justify-between group">
+          <div className="text-white">
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-70">Đang xử lý</p>
+            <h3 className="text-3xl font-black mt-1 leading-none">
+              {orders.filter(o => ["WAITING", "PROCESSING", "INSPECTION", "OWNER_PENDING"].includes(o.status)).length}
+            </h3>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+             <Clock size={24} />
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-4 rounded-2xl shadow-lg shadow-emerald-200 flex items-center justify-between group">
+          <div className="text-white">
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-70">Hoàn thành</p>
+            <h3 className="text-3xl font-black mt-1 leading-none">{orders.filter(o => o.status === 'COMPLETED').length}</h3>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+             <CheckCircle2 size={24} />
+          </div>
+        </div>
+
+
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
+           <div className="relative flex-1">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input 
+                  type="text" 
+                  placeholder="Tìm đơn, khách..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-[13px] font-bold focus:ring-4 focus:ring-indigo-100 outline-none transition-all"
+              />
+           </div>
+           {searchTerm && (
+             <button onClick={() => setSearchTerm("")} className="text-slate-400 hover:text-slate-600 transition-colors">
+               <X size={18} />
+             </button>
+           )}
+        </div>
+      </div>
+
       <div
         className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden"
         style={{
           boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
         }}
       >
-        {/* Search */}
-        <div
-          className="px-4 py-3 border-b shrink-0 flex items-center justify-between gap-4"
-          style={{ borderColor: "var(--grid-border)" }}
-        >
-          <div className="relative max-w-sm w-full">
-            <Search
-              size={15}
-              className="absolute left-3 top-1/2 -translate-y-1/2"
-              style={{ color: "var(--text-placeholder)" }}
-            />
-            <input
-              type="text"
-              placeholder="Tìm mã ĐH, tên KH, sản phẩm..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] focus:outline-none focus:ring-2 transition"
-              style={{
-                border: "1px solid var(--grid-border)",
-                backgroundColor: "var(--bg-main)",
-                color: "var(--text-main)",
-              }}
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer"
-                style={{ color: "var(--text-placeholder)" }}
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
-        </div>
 
         {/* Table Container */}
         <div className="flex-1 overflow-y-auto">
@@ -300,12 +317,11 @@ export default function WorkerDashboard() {
                   "Hạn chót",
                   "Trạng thái",
                   "Số lượng",
-                  "",
                 ].map((h, i) => (
                   <th
                     key={i}
                     className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${
-                      i === 6 ? "text-right" : ""
+                      i === 6 ? "text-right pr-6" : ""
                     }`}
                     style={{ color: "var(--text-placeholder)" }}
                   >
@@ -408,37 +424,36 @@ export default function WorkerDashboard() {
                         </div>
                       </td>
 
-                      <td className="px-4 py-4">
-                        <span
-                          className="text-[12px] font-semibold px-2.5 py-1 bg-gray-100/80 rounded-md border"
-                          style={{
-                            color: "var(--text-main)",
-                            borderColor: "var(--grid-border)",
-                          }}
-                        >
-                          {order.items.length} SP
-                        </span>
-                      </td>
-
-                      <td className="px-4 py-4 text-right">
-                        <button
-                          className={`p-1.5 rounded-full transition-colors inline-flex items-center justify-center ${
-                            isExpanded
-                              ? "bg-blue-100 text-blue-600"
-                              : "text-gray-400 group-hover:bg-gray-200 group-hover:text-gray-700"
-                          }`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleOrder(order.id);
-                          }}
-                        >
-                          <ChevronDown
-                            className={`transition-transform duration-300 ${
-                              isExpanded ? "rotate-180" : ""
+                      <td className="px-4 py-4 text-right pr-6">
+                        <div className="flex items-center justify-end gap-4">
+                          <span
+                            className="text-[12px] font-semibold px-2.5 py-1 bg-gray-100/80 rounded-md border whitespace-nowrap"
+                            style={{
+                              color: "var(--text-main)",
+                              borderColor: "var(--grid-border)",
+                            }}
+                          >
+                            {order.items.length} SP
+                          </span>
+                          <button
+                            className={`p-1.5 rounded-full transition-colors inline-flex items-center justify-center shrink-0 ${
+                              isExpanded
+                                ? "bg-blue-100 text-blue-600"
+                                : "text-gray-400 group-hover:bg-gray-200 group-hover:text-gray-700"
                             }`}
-                            size={18}
-                          />
-                        </button>
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleOrder(order.id);
+                            }}
+                          >
+                            <ChevronDown
+                              className={`transition-transform duration-300 ${
+                                isExpanded ? "rotate-180" : ""
+                              }`}
+                              size={18}
+                            />
+                          </button>
+                        </div>
                       </td>
                     </tr>
 

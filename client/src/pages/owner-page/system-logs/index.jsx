@@ -1,27 +1,12 @@
 import { useState, useMemo, useEffect } from "react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
-import { Search, History, X, ChevronLeft, ChevronRight, User } from "lucide-react";
+import { Search, History, X, ChevronLeft, ChevronRight, User, Filter, Calendar, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const INITIAL_LOGS = [
-  { id: 1, type: "ORDER", action: "Tạo mới đơn hàng", target: "ĐH-20240308-01", user: "Nguyễn Văn A", role: "Sales", time: "2026-03-08T10:15:00", details: "Giá trị: 15,500,000 đ" },
-  { id: 2, type: "INVENTORY", action: "Cập nhật tồn kho", target: "Bàn ăn tròn xoay", user: "Trần Thị B", role: "Thợ", time: "2026-03-08T09:30:00", details: "Tồn: 0 -> 10" },
-  { id: 3, type: "USER", action: "Đăng nhập hệ thống", target: "IP: 192.168.1.5", user: "Lê Hoàng C", role: "Chủ cửa hàng", time: "2026-03-08T08:00:00", details: "Đăng nhập thành công" },
-  { id: 4, type: "ORDER", action: "Chấp nhận báo giá", target: "BG-20240307-05", user: "Nguyễn Văn A", role: "Sales", time: "2026-03-07T16:45:00", details: "Khách hàng xác nhận" },
-  { id: 5, type: "PRODUCT", action: "Sửa thông tin sản phẩm", target: "Ghế đôn sofa L", user: "Trần Thị B", role: "Thợ", time: "2026-03-07T14:20:00", details: "Cập nhật giá bán: 450k -> 480k" },
-  { id: 6, type: "SYSTEM", action: "Sao lưu dữ liệu định kỳ", target: "DB_Backup_0307", user: "Hệ thống", role: "Bot", time: "2026-03-07T00:00:00", details: "Tự động sao lưu thành công" },
-  { id: 7, type: "ORDER", action: "Hủy đơn hàng", target: "ĐH-20240305-12", user: "Lê Hoàng C", role: "Chủ cửa hàng", time: "2026-03-06T11:10:00", details: "Lý do: Khách đổi ý" },
-  { id: 8, type: "USER", action: "Đổi mật khẩu", target: "Tài khoản cá nhân", user: "Nguyễn Văn A", role: "Sales", time: "2026-03-05T09:05:00", details: "Yêu cầu bảo mật" },
-  { id: 9, type: "PRODUCT", action: "Thêm sản phẩm mới", target: "Kệ tivi gỗ sồi", user: "Trần Thị B", role: "Thợ", time: "2026-03-04T15:30:00", details: "Danh mục: Phòng khách" },
-  { id: 10, type: "INVENTORY", action: "Xuất kho sản xuất", target: "Gỗ ván MFC", user: "Trần Thị B", role: "Thợ", time: "2026-03-04T08:20:00", details: "Số lượng: 50 tấm" },
-  { id: 11, type: "ORDER", action: "Gửi báo giá", target: "BG-20240303-02", user: "Nguyễn Văn A", role: "Sales", time: "2026-03-03T14:10:00", details: "Email gửi thành công" },
-  { id: 12, type: "USER", action: "Cập quyền truy cập", target: "Kế toán mới", user: "Lê Hoàng C", role: "Chủ cửa hàng", time: "2026-03-02T10:00:00", details: "Vai trò: ACCOUNTANT" },
-  { id: 13, type: "INVENTORY", action: "Kiểm kho định kỳ", target: "Kho phụ kiện", user: "Trần Thị B", role: "Thợ", time: "2026-03-01T16:00:00", details: "Khớp 100% dữ liệu" },
-  { id: 14, type: "ORDER", action: "Hoàn tất đơn hàng", target: "ĐH-20240228-09", user: "Lê Hoàng C", role: "Chủ cửa hàng", time: "2026-02-28T17:30:00", details: "Đã giao hàng & thanh toán" },
-  { id: 15, type: "SYSTEM", action: "Cập nhật phiên bản phần mềm", target: "v2.1.0", user: "Hệ thống", role: "Bot", time: "2026-02-27T22:00:00", details: "Cải thiện hiệu năng Dashboard" },
-];
+import systemLogService from "@/services/systemLog.service";
+import toast from "react-hot-toast";
 
 const formatDate = (dateString) => {
+  if (!dateString) return "—";
   const d = new Date(dateString);
   return d.toLocaleString("vi-VN", {
     hour: '2-digit', minute: '2-digit',
@@ -29,49 +14,66 @@ const formatDate = (dateString) => {
   });
 };
 
+const LEVEL_COLORS = {
+  INFO: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-100" },
+  WARN: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-100" },
+  ERROR: { bg: "bg-red-50", text: "text-red-700", border: "border-red-100" },
+};
+
 export default function SystemLogs() {
   const [search, setSearch] = useState("");
+  const [level, setLevel] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  
   const [logs, setLogs] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(15);
+  const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState({ page: 1, limit: 15, totalItems: 0, totalPages: 0 });
 
-  useEffect(() => {
-    // Mimic API Fetch
-    setLogs(INITIAL_LOGS);
-  }, []);
-
-  const processedLogs = useMemo(() => {
-    let result = [...logs];
-
-    // Lọc theo Search
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter(log =>
-        log.user.toLowerCase().includes(q) ||
-        log.action.toLowerCase().includes(q) ||
-        log.target.toLowerCase().includes(q) ||
-        log.details.toLowerCase().includes(q)
-      );
+  const fetchLogs = async () => {
+    try {
+      setLoading(true);
+      const params = {
+        search,
+        level: level || undefined,
+        fromDate: dateFrom || undefined,
+        toDate: dateTo || undefined,
+        page: pagination.page,
+        limit: pagination.limit
+      };
+      const response = await systemLogService.getAllLogs(params);
+      setLogs(response.data);
+      setPagination(prev => ({
+        ...prev,
+        totalItems: response.pagination.totalItems,
+        totalPages: response.pagination.totalPages
+      }));
+    } catch (error) {
+      toast.error("Không thể tải nhật ký hệ thống");
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    // Sort mới nhất trước
-    result.sort((a, b) => new Date(b.time) - new Date(a.time));
-
-    return result;
-  }, [logs, search]);
-
-  // Reset page on search change
   useEffect(() => {
-    setCurrentPage(1);
-  }, [search]);
+    fetchLogs();
+  }, [pagination.page, pagination.limit, level, dateFrom, dateTo]);
 
-  // Dữ liệu hiển thị theo trang
-  const paginatedLogs = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return processedLogs.slice(startIndex, startIndex + itemsPerPage);
-  }, [processedLogs, currentPage, itemsPerPage]);
+  const handleSearch = (e) => {
+    if (e.key === 'Enter') {
+      setPagination(prev => ({ ...prev, page: 1 }));
+      fetchLogs();
+    }
+  };
 
-  const totalPages = Math.ceil(processedLogs.length / itemsPerPage);
+  const clearFilters = () => {
+    setSearch("");
+    setLevel("");
+    setDateFrom("");
+    setDateTo("");
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
 
   return (
     <>
@@ -95,9 +97,18 @@ export default function SystemLogs() {
               className="text-[13px] mt-0.5"
               style={{ color: "var(--text-placeholder)" }}
             >
-              {processedLogs.length} bản ghi hoạt động được giám sát trên hệ thống
+              {pagination.totalItems} bản ghi hoạt động được giám sát trên hệ thống
             </p>
           </div>
+          {(search || level || dateFrom || dateTo) && (
+            <Button 
+              variant="ghost" 
+              onClick={clearFilters}
+              className="h-8 px-3 text-[11px] font-bold text-red-500 hover:text-red-600 hover:bg-red-50 gap-1.5"
+            >
+              <X size={14} /> XÓA TẤT CẢ BỘ LỌC
+            </Button>
+          )}
         </div>
 
         {/* Bảng & Filter */}
@@ -108,15 +119,16 @@ export default function SystemLogs() {
           }}
         >
 
-          {/* Search Header - Aligned with Orders */}
+          {/* Search & Filter Header */}
           <div 
-            className="px-4 py-3 shrink-0 flex items-center justify-between gap-4"
+            className="px-4 py-3 shrink-0 flex items-center flex-wrap gap-4"
             style={{ 
               backgroundColor: "var(--grid-header-bg)",
               borderBottom: "1px solid var(--grid-border)"
             }}
           >
-            <div className="relative flex-1 max-w-sm">
+            {/* Search */}
+            <div className="relative w-full max-w-[300px]">
               <Search 
                 size={16} 
                 className="absolute left-3 top-1/2 -translate-y-1/2"
@@ -124,9 +136,10 @@ export default function SystemLogs() {
               />
               <input
                 type="text"
-                placeholder="Tìm user, hành động, đối tượng..."
+                placeholder="Tìm user, hành động, chi tiết..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={handleSearch}
                 className="w-full h-9 pl-10 pr-8 rounded-lg text-[13px] border focus:outline-none focus:ring-1 transition"
                 style={{
                   borderColor: "var(--grid-border)",
@@ -136,12 +149,50 @@ export default function SystemLogs() {
               />
               {search && (
                 <button
-                  onClick={() => setSearch("")}
+                  onClick={() => { setSearch(""); fetchLogs(); }}
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full cursor-pointer"
                 >
                   <X size={14} style={{ color: "var(--text-placeholder)" }} />
                 </button>
               )}
+            </div>
+
+            {/* Level Filter */}
+            <div className="flex items-center gap-2">
+              <Filter size={14} className="text-gray-400" />
+              <select
+                value={level}
+                onChange={(e) => { setLevel(e.target.value); setPagination(prev => ({ ...prev, page: 1 })); }}
+                className="h-9 px-3 rounded-lg text-[12px] border focus:outline-none font-medium cursor-pointer"
+                style={{ borderColor: "var(--grid-border)", color: "var(--text-main)" }}
+              >
+                <option value="">Tất cả mức độ</option>
+                <option value="INFO">Thông tin (INFO)</option>
+                <option value="WARN">Cảnh báo (WARN)</option>
+                <option value="ERROR">Lỗi (ERROR)</option>
+              </select>
+            </div>
+
+            {/* Date Range */}
+            <div className="flex items-center gap-2">
+              <Calendar size={14} className="text-gray-400 ml-2" />
+              <div className="flex items-center gap-1.5">
+                <input 
+                  type="date" 
+                  value={dateFrom} 
+                  onChange={(e) => { setDateFrom(e.target.value); setPagination(prev => ({ ...prev, page: 1 })); }}
+                  className="h-9 px-2 rounded-lg text-[12px] border focus:outline-none font-medium"
+                  style={{ borderColor: "var(--grid-border)", color: "var(--text-main)" }}
+                />
+                <span className="text-gray-400 text-[12px]">—</span>
+                <input 
+                  type="date" 
+                  value={dateTo} 
+                  onChange={(e) => { setDateTo(e.target.value); setPagination(prev => ({ ...prev, page: 1 })); }}
+                  className="h-9 px-2 rounded-lg text-[12px] border focus:outline-none font-medium"
+                  style={{ borderColor: "var(--grid-border)", color: "var(--text-main)" }}
+                />
+              </div>
             </div>
           </div>
 
@@ -164,19 +215,29 @@ export default function SystemLogs() {
                 </tr>
               </thead>
               <tbody className="divide-y" style={{ borderColor: "var(--grid-border)" }}>
-                {paginatedLogs.length > 0 ? (
-                  paginatedLogs.map((log, index) => {
+                {loading ? (
+                  <tr>
+                    <td colSpan={5} className="py-20 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-[13px] text-gray-500 font-medium italic">Đang tải nhật ký...</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : logs.length > 0 ? (
+                  logs.map((log, index) => {
+                    const levelStyle = LEVEL_COLORS[log.level] || LEVEL_COLORS.INFO;
                     return (
                       <tr 
-                        key={log.id} 
+                        key={log.system_log_id} 
                         className="group hover:bg-gray-50/50 transition-colors cursor-default"
                         style={{ borderBottom: "1px solid var(--grid-border)" }}
                       >
                         <td className="px-4 py-4 text-center text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>
-                          {(currentPage - 1) * itemsPerPage + index + 1}
+                          {(pagination.page - 1) * pagination.limit + index + 1}
                         </td>
                         <td className="px-4 py-4 text-[13px] font-semibold" style={{ color: "var(--text-main)" }}>
-                          {formatDate(log.time)}
+                          {formatDate(log.createdate)}
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-3">
@@ -184,19 +245,32 @@ export default function SystemLogs() {
                               <User size={14} className="text-slate-500 group-hover:text-blue-600" />
                             </div>
                             <div>
-                              <p className="text-[13px] font-bold leading-tight" style={{ color: "var(--text-main)" }}>{log.user}</p>
-                              <p className="text-[11px] font-medium" style={{ color: "var(--text-placeholder)" }}>{log.role}</p>
+                              <p className="text-[13px] font-bold leading-tight" style={{ color: "var(--text-main)" }}>
+                                {log.account?.profile?.full_name || "Hệ thống"}
+                              </p>
+                              <p className="text-[11px] font-medium" style={{ color: "var(--text-placeholder)" }}>
+                                {log.account?.role?.role_name || (log.account ? "Chưa rõ vai trò" : "Bot")}
+                              </p>
                             </div>
                           </div>
                         </td>
                         <td className="px-4 py-4">
-                          <div className="flex flex-col">
-                            <span className="text-[13px] font-bold group-hover:text-emerald-700 transition-colors" style={{ color: "var(--text-main)" }}>{log.action}</span>
-                            <span className="text-[11px] font-medium truncate mt-0.5" style={{ color: "var(--text-placeholder)" }}>{log.target}</span>
+                          <div className="flex flex-col gap-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tight ${levelStyle.bg} ${levelStyle.text} border ${levelStyle.border}`}>
+                                {log.level}
+                              </span>
+                              <span className="text-[13px] font-bold group-hover:text-emerald-700 transition-colors" style={{ color: "var(--text-main)" }}>
+                                {log.action}
+                              </span>
+                            </div>
+                            <span className="text-[11px] font-medium truncate" style={{ color: "var(--text-placeholder)" }}>
+                              IP: {log.ip_address || "N/A"}
+                            </span>
                           </div>
                         </td>
                         <td className="px-4 py-4 text-[13px] font-medium italic" style={{ color: "var(--text-secondary)" }}>
-                          "{log.details}"
+                          "{log.detail}"
                         </td>
                       </tr>
                     );
@@ -215,7 +289,7 @@ export default function SystemLogs() {
             </table>
           </div>
 
-          {/* Pagination - Aligned with Orders */}
+          {/* Pagination */}
           <div 
             className="px-5 py-4 flex items-center justify-between shrink-0"
             style={{ 
@@ -229,7 +303,7 @@ export default function SystemLogs() {
             >
               Tổng số bản ghi:{" "}
               <span className="font-bold" style={{ color: "var(--brand-primary)" }}>
-                {processedLogs.length}
+                {pagination.totalItems}
               </span>
             </div>
 
@@ -239,10 +313,9 @@ export default function SystemLogs() {
                   Số bản ghi/trang
                 </span>
                 <select
-                  value={itemsPerPage}
+                  value={pagination.limit}
                   onChange={(e) => {
-                    setItemsPerPage(Number(e.target.value));
-                    setCurrentPage(1);
+                    setPagination(prev => ({ ...prev, limit: Number(e.target.value), page: 1 }));
                   }}
                   className="h-8 px-2 pr-6 rounded-md text-[13px] border cursor-pointer focus:outline-none focus:ring-1 transition appearance-none font-medium"
                   style={{
@@ -254,7 +327,7 @@ export default function SystemLogs() {
                     backgroundPosition: "right 8px center",
                   }}
                 >
-                  {[12, 24, 48, 100].map((size) => (
+                  {[15, 30, 50, 100].map((size) => (
                     <option key={size} value={size}>
                       {size}
                     </option>
@@ -263,25 +336,21 @@ export default function SystemLogs() {
               </div>
 
               <div className="text-[13px] font-medium" style={{ color: "var(--text-secondary)" }}>
-                <span className="font-bold" style={{ color: "var(--text-main)" }}>
-                  {(currentPage - 1) * itemsPerPage + 1} -{" "}
-                  {Math.min(currentPage * itemsPerPage, processedLogs.length)}
-                </span>{" "}
-                bản ghi
+                Trang <span className="font-bold text-gray-900">{pagination.page}</span> / {pagination.totalPages || 1}
               </div>
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
+                  onClick={() => setPagination(p => ({ ...p, page: Math.max(1, p.page - 1) }))}
+                  disabled={pagination.page === 1 || loading}
                   className="flex items-center justify-center h-8 w-8 rounded-lg border text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                   style={{ borderColor: "var(--grid-border)" }}
                 >
                   <ChevronLeft size={16} strokeWidth={2.5} />
                 </button>
                 <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages || totalPages === 0}
+                  onClick={() => setPagination(p => ({ ...p, page: Math.min(pagination.totalPages, p.page + 1) }))}
+                  disabled={pagination.page === pagination.totalPages || pagination.totalPages === 0 || loading}
                   className="flex items-center justify-center h-8 w-8 rounded-lg border text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                   style={{ borderColor: "var(--grid-border)" }}
                 >

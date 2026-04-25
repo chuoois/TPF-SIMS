@@ -22,6 +22,7 @@ import {
   ClipboardEdit,
   Eye,
   Type,
+  Hammer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fmt, WOOD_TYPES, COLORS, inputBase, inputStyle, getNextItemId } from "./mockData";
@@ -132,13 +133,15 @@ export default function OrderItemsPanel({
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{tabs.length} Phiếu đang mở</p>
           </div>
         </div>
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="flex items-center gap-2 px-3.5 h-9 rounded-lg text-[12px] font-black tracking-wider transition-all cursor-pointer uppercase border border-[var(--brand-primary)]/20 hover:bg-[var(--brand-primary)]/5 active:scale-95"
-          style={{ backgroundColor: "var(--brand-primary)", color: "white" }}
-        >
-          <Plus size={14} strokeWidth={3} /> Thêm sản phẩm
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="flex items-center gap-2 px-3.5 h-9 rounded-lg text-[12px] font-black tracking-wider transition-all cursor-pointer uppercase border border-[var(--brand-primary)]/20 hover:bg-[var(--brand-primary)]/5 active:scale-95 shadow-md shadow-emerald-500/10"
+            style={{ backgroundColor: "var(--brand-primary)", color: "white" }}
+          >
+            <Plus size={14} strokeWidth={3} /> Thêm sản phẩm
+          </button>
+        </div>
       </div>
 
       {/* Sub-Tabs Navigation */}

@@ -26,12 +26,10 @@ export default function EmployeeModal({
 }) {
   const [formData, setFormData] = useState({
     name: "",
-    type: "SALES", // "SALES", "SANDER", "PAINTER", "ACCOUNTANT"
-    baseSalary: "",
+    type: "SALES",
     baseRate: "",
     daysWorked: "",
-    productsFinished: "",
-    allowance: ""
+    overtimeHours: ""
   });
 
   // Init form
@@ -41,21 +39,17 @@ export default function EmployeeModal({
         setFormData({
           name: employeeToEdit.name || "",
           type: employeeToEdit.type || "SALES",
-          baseSalary: employeeToEdit.base_salary || "",
           baseRate: employeeToEdit.base_rate || "",
           daysWorked: employeeToEdit.days_worked || "",
-          productsFinished: employeeToEdit.products_finished || "",
-          allowance: employeeToEdit.allowance || ""
+          overtimeHours: employeeToEdit.overtime_hours || ""
         });
       } else {
         setFormData({
           name: "",
           type: "SALES",
-          baseSalary: "",
           baseRate: "",
           daysWorked: "",
-          productsFinished: "",
-          allowance: ""
+          overtimeHours: ""
         });
       }
     }
@@ -78,7 +72,7 @@ export default function EmployeeModal({
       name: formData.name,
       role: empRole,
       type: formData.type,
-      allowance: Number(formData.allowance) || 0,
+      adjustments: employeeToEdit ? employeeToEdit.adjustments : [],
       status: employeeToEdit ? employeeToEdit.status : "Chưa thanh toán",
       month: employeeToEdit ? employeeToEdit.month : getCurrentMonth(),
       payment_date: formData.paymentDate,
@@ -86,9 +80,8 @@ export default function EmployeeModal({
 
     if (["SALES", "ACCOUNTANT", "SANDER", "PAINTER"].includes(formData.type)) {
       employeeData.base_rate = Number(formData.baseRate) || 0;
-      employeeData.days_worked = Number(formData.daysWorked) || 0; 
-      employeeData.products_finished = 0;
-      employeeData.products_log = [];
+      employeeData.days_worked = Number(formData.daysWorked) || 0;
+      employeeData.overtime_hours = Number(formData.overtimeHours) || 0;
     }
 
     onSave(employeeData);
@@ -150,30 +143,26 @@ export default function EmployeeModal({
               {/* SALES, ACCOUNTANT, SANDER & PAINTER – Same daily rate structure */}
               {(["SALES", "ACCOUNTANT", "SANDER", "PAINTER"].includes(formData.type)) && (
                 <>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                       <div className="space-y-1.5">
-                          <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Đơn giá / Ngày (VNĐ)</label>
+                          <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Đơn giá / Ngày</label>
                           <input type="text" value={formatNumber(formData.baseRate)} onChange={e => setFormData({...formData, baseRate: parseNumber(e.target.value)})} required
-                              className={inputClass} placeholder="Ví dụ: 400.000" style={inputStyle} />
+                              className={inputClass} placeholder="400.000" style={inputStyle} />
                       </div>
                       <div className="space-y-1.5">
                           <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Số ngày công</label>
-                          <input type="number" min="0" value={formData.daysWorked} onChange={e => setFormData({...formData, daysWorked: e.target.value})} required
+                          <input type="number" min="0" step="0.5" value={formData.daysWorked} onChange={e => setFormData({...formData, daysWorked: e.target.value})} required
                               className={inputClass} placeholder="26" style={inputStyle} />
+                      </div>
+                      <div className="space-y-1.5">
+                          <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Giờ tăng ca</label>
+                          <input type="number" min="0" step="0.5" value={formData.overtimeHours} onChange={e => setFormData({...formData, overtimeHours: e.target.value})}
+                              className={inputClass} placeholder="0" style={inputStyle} />
                       </div>
                   </div>
                 </>
               )}
             </div>
-
-            <div className="space-y-1.5">
-                <label className="text-[13px] font-bold text-amber-600">Phụ cấp / Thưởng / Hỗ trợ thêm (VNĐ)</label>
-                <input type="text" value={formatNumber(formData.allowance)} onChange={e => setFormData({...formData, allowance: parseNumber(e.target.value)})}
-                    className="w-full h-10 px-3 rounded-xl border text-[13px] focus:outline-none focus:ring-2 transition bg-amber-50/30"
-                    placeholder="Tiền thưởng thêm, phụ cấp điện thoại, xăng xe..."
-                    style={{ borderColor: "var(--grid-border)", color: "var(--text-main)" }} />
-            </div>
-
           </form>
         </div>
 

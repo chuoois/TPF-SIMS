@@ -19,10 +19,11 @@ const CustomRequest = require("./CustomRequest");
 const CustomRequestItem = require("./CustomRequestItem");
 const ProductCoupon = require("./ProductCoupon");
 const CouponProduct = require("./CouponProduct");
-
-
-
-
+// ── Payroll ──────────────────────────────────────────────
+const Employee = require("./Employee");
+const PayrollPeriod = require("./PayrollPeriod");
+const SalaryRecord = require("./SalaryRecord");
+const SalaryAdjustment = require("./SalaryAdjustment");
 
 /**
  * Định nghĩa quan hệ giữa các bảng
@@ -151,8 +152,23 @@ ProductCoupon.belongsToMany(Product, {
   as: "products",
 });
 
+// ── Payroll Associations ────────────────────────────────
 
+// Employee (optional) → UserAccount
+Employee.belongsTo(UserAccount, { foreignKey: "user_account_id", as: "account", constraints: false });
+UserAccount.hasMany(Employee, { foreignKey: "user_account_id", as: "employees", constraints: false });
 
+// PayrollPeriod 1:N SalaryRecord
+PayrollPeriod.hasMany(SalaryRecord, { foreignKey: "fk_period_id", as: "records", onDelete: "CASCADE" });
+SalaryRecord.belongsTo(PayrollPeriod, { foreignKey: "fk_period_id", as: "period" });
+
+// Employee 1:N SalaryRecord
+Employee.hasMany(SalaryRecord, { foreignKey: "fk_employee_id", as: "salaryRecords" });
+SalaryRecord.belongsTo(Employee, { foreignKey: "fk_employee_id", as: "employee" });
+
+// SalaryRecord 1:N SalaryAdjustment
+SalaryRecord.hasMany(SalaryAdjustment, { foreignKey: "fk_record_id", as: "adjustments", onDelete: "CASCADE" });
+SalaryAdjustment.belongsTo(SalaryRecord, { foreignKey: "fk_record_id", as: "record" });
 
 module.exports = {
   sequelize,
@@ -176,6 +192,9 @@ module.exports = {
   CustomRequestItem,
   ProductCoupon,
   CouponProduct,
+  // Payroll
+  Employee,
+  PayrollPeriod,
+  SalaryRecord,
+  SalaryAdjustment,
 };
-
-

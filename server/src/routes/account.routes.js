@@ -232,4 +232,26 @@ router.put("/:id", accountController.updateAccount);
  */
 router.patch("/:id/status", accountController.toggleStatus);
 
+/**
+ * @swagger
+ * /api/account/{id}:
+ *   delete:
+ *     summary: Xóa vĩnh viễn tài khoản
+ *     tags: [Account]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Xóa thành công
+ *       404:
+ *         description: Không tìm thấy tài khoản
+ */
+router.delete("/:id", accountController.deleteAccount);
+
 module.exports = router;

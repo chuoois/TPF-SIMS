@@ -14,6 +14,7 @@ import {
   ChevronRight,
   PanelLeftClose,
   Package,
+  Hammer,
 } from "lucide-react";
 
 const menuItems = [

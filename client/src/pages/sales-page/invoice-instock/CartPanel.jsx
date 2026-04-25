@@ -5,22 +5,7 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 
-// 1. Function tính toán thời gian chờ (backlog)
-const calculateEstimatedDays = (cartItems, totalPending = 20, capacityPerDay = 5) => {
-  const totalNewItems = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
-  const backlogDays = Math.ceil((totalPending + totalNewItems) / capacityPerDay);
-  return backlogDays + 1; // Thêm 1 ngày buffer
-};
 
-// 2. Function cộng thêm ngày vào hôm nay và format ra chuỗi DD/MM/YYYY
-const getEstimatedDateString = (daysToAdd) => {
-  const date = new Date();
-  date.setDate(date.getDate() + daysToAdd);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-};
 import {
   X,
   Plus,
@@ -35,6 +20,7 @@ import {
   Calendar,
   ShieldCheck,
   AlertCircle,
+  Hammer,
 } from "lucide-react";
 import { ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -66,6 +52,7 @@ export default function CartPanel({
   itemCount,
   totalPayable,
   handleCheckout,
+  setShowWorkshopStatus,
 }) {
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const customerSearchRef = useRef(null);
@@ -74,14 +61,7 @@ export default function CartPanel({
   const capacityPerDay = 5; 
   const totalPending = 20;  
 
-  const { estimatedDays, estimatedDateStr } = useMemo(() => {
-    if (!activeTab.cartItems || activeTab.cartItems.length === 0) {
-      return { estimatedDays: 0, estimatedDateStr: "" };
-    }
-    const days = calculateEstimatedDays(activeTab.cartItems, totalPending, capacityPerDay);
-    const dateStr = getEstimatedDateString(days);
-    return { estimatedDays: days, estimatedDateStr: dateStr };
-  }, [activeTab.cartItems]);
+
 
   // Deposit logic
   const suggestedDepositInfo = (() => {
@@ -183,6 +163,13 @@ export default function CartPanel({
           title="Thêm hóa đơn mới"
         >
           <Plus size={14} />
+        </button>
+
+        <button
+          onClick={() => setShowWorkshopStatus(true)}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 ml-auto rounded-lg text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 active:scale-95 shadow-sm"
+        >
+          <Hammer size={12} className="text-indigo-500" /> Check Xưởng
         </button>
 
         {/* Order type switch — pushed to right */}
@@ -568,16 +555,7 @@ export default function CartPanel({
             >
               Giao hàng
             </p>
-            {needsWorkshop && maxLeadTime > 0 && (
-              <div
-                className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-bold ${workshopStats.bg} ${workshopStats.color} ${workshopStats.border}`}
-              >
-                <div
-                  className={`w-1.5 h-1.5 rounded-full animate-pulse ${workshopStats.level === "Quá tải" ? "bg-red-500" : workshopStats.level === "Khá bận" ? "bg-amber-500" : "bg-green-500"}`}
-                />
-                Xưởng {workshopStats.level}
-              </div>
-            )}
+
           </div>
           <div className="flex items-center gap-6">
             <label className="flex items-center gap-2 cursor-pointer">
@@ -668,15 +646,7 @@ export default function CartPanel({
                   ? `Khách hẹn lấy tại cửa hàng ngày ${activeTab.storePickupDate.split("-").reverse().join("/")}`
                   : "Để trống nếu khách lấy ngay tại cửa hàng"}
               </p>
-              {needsWorkshop && estimatedDays > 0 && (
-                <p
-                  className="text-[10px] font-bold flex items-center gap-1 ml-1 mt-1 animate-pulse"
-                  style={{ color: "var(--brand-primary)" }}
-                >
-                  <AlertCircle size={10} />
-                  Xưởng đang kẹt {estimatedDays} ngày. Xong vào: {estimatedDateStr}
-                </p>
-              )}
+
             </div>
           )}
 
@@ -709,15 +679,7 @@ export default function CartPanel({
                   }}
                 />
               </div>
-              {needsWorkshop && estimatedDays > 0 && (
-                <p
-                  className="text-[10px] font-bold flex items-center gap-1 mt-1 animate-pulse w-full col-span-2"
-                  style={{ color: "var(--brand-primary)" }}
-                >
-                  <AlertCircle size={10} />
-                  Xưởng đang kẹt {estimatedDays} ngày. Xong vào: {estimatedDateStr}
-                </p>
-              )}
+
             </div>
           )}
         </div>

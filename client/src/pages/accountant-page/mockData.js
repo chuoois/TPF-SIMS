@@ -549,17 +549,16 @@ const _getCurrentMonth = () => {
 };
 const CURRENT_MONTH = _getCurrentMonth();
 
+export const MOCK_PERIODS = [
+  { period_month: CURRENT_MONTH, status: "DRAFT" }
+];
+
 export const MOCK_EMPLOYEES = [
-  { id: "NV001", name: "Nguyễn Thị Mai", role: "Nhân viên bán hàng", type: "SALES", base_rate: 400000, days_worked: 26, allowance: 1000000, products_finished: 0, products_log: [], status: "Chưa thanh toán", month: CURRENT_MONTH, payment_date: "" },
-  { id: "NV002", name: "Trần Văn Khoa", role: "Nhân viên bán hàng", type: "SALES", base_rate: 350000, days_worked: 24, allowance: 500000, products_finished: 0, products_log: [], status: "Đã thanh toán", month: CURRENT_MONTH, payment_date: "15/03/2024" },
-  { id: "KT001", name: "Lê Thị Hương", role: "Kế toán", type: "ACCOUNTANT", base_rate: 450000, days_worked: 26, allowance: 500000, products_finished: 0, products_log: [], status: "Chưa thanh toán", month: CURRENT_MONTH, payment_date: "" },
-  { id: "NV003", name: "Lê Đình Chinh", role: "Nhân viên giấy ráp", type: "SANDER", base_rate: 400000, days_worked: 22, allowance: 0, products_finished: 0, products_log: [], status: "Chưa thanh toán", month: CURRENT_MONTH, payment_date: "" },
-  { id: "NV004", name: "Phạm Xuân Đạt", role: "Nhân viên giấy ráp", type: "SANDER", base_rate: 400000, days_worked: 25, allowance: 200000, products_finished: 0, products_log: [], status: "Chưa thanh toán", month: CURRENT_MONTH, payment_date: "" },
-  { id: "NV005", name: "Đỗ Hữu Hùng", role: "Thợ sơn", type: "PAINTER", base_rate: 400000, days_worked: 26, allowance: 0, products_finished: 0, products_log: [], status: "Chưa thanh toán", month: CURRENT_MONTH, payment_date: "" },
-  { id: "NV006", name: "Vũ Tấn Tài", role: "Thợ sơn", type: "PAINTER", base_rate: 400000, days_worked: 20, allowance: 500000, products_finished: 0, products_log: [], status: "Đã thanh toán", month: CURRENT_MONTH, payment_date: "20/03/2024" },
-].map(emp => {
-  if (emp.products_log?.length && emp.products_finished === 0) {
-    emp.products_finished = emp.products_log.reduce((s, p) => s + (p.qty || 1), 0);
-  }
-  return emp;
-});
+  { id: "NV001", name: "Nguyễn Thị Mai", role: "Nhân viên bán hàng", type: "SALES", base_rate: 400000, days_worked: 26, overtime_hours: 0, adjustments: [{ id: 1, type: "ALLOWANCE", description: "Phụ cấp trách nhiệm", amount: 1000000 }], status: "Chưa thanh toán", month: CURRENT_MONTH, payment_date: "" },
+  { id: "NV002", name: "Trần Văn Khoa", role: "Nhân viên bán hàng", type: "SALES", base_rate: 350000, days_worked: 24, overtime_hours: 5, adjustments: [{ id: 2, type: "BONUS", description: "Thưởng doanh số", amount: 500000 }], status: "Đã thanh toán", month: CURRENT_MONTH, payment_date: "15/03/2024" },
+  { id: "KT001", name: "Lê Thị Hương", role: "Kế toán", type: "ACCOUNTANT", base_rate: 450000, days_worked: 26, overtime_hours: 0, adjustments: [{ id: 3, type: "ALLOWANCE", description: "Phụ cấp ăn trưa", amount: 500000 }], status: "Chưa thanh toán", month: CURRENT_MONTH, payment_date: "" },
+  { id: "NV003", name: "Lê Đình Chinh", role: "Nhân viên giấy ráp", type: "SANDER", base_rate: 400000, days_worked: 22, overtime_hours: 0, adjustments: [], status: "Chưa thanh toán", month: CURRENT_MONTH, payment_date: "" },
+  { id: "NV004", name: "Phạm Xuân Đạt", role: "Nhân viên giấy ráp", type: "SANDER", base_rate: 400000, days_worked: 25, overtime_hours: 2, adjustments: [{ id: 4, type: "BONUS", description: "Thưởng năng suất", amount: 200000 }], status: "Chưa thanh toán", month: CURRENT_MONTH, payment_date: "" },
+  { id: "NV005", name: "Đỗ Hữu Hùng", role: "Thợ sơn", type: "PAINTER", base_rate: 400000, days_worked: 26, overtime_hours: 0, adjustments: [], status: "Chưa thanh toán", month: CURRENT_MONTH, payment_date: "" },
+  { id: "NV006", name: "Vũ Tấn Tài", role: "Thợ sơn", type: "PAINTER", base_rate: 400000, days_worked: 20, overtime_hours: 0, adjustments: [{ id: 5, type: "ALLOWANCE", description: "Hỗ trợ đi lại", amount: 500000 }], status: "Đã thanh toán", month: CURRENT_MONTH, payment_date: "20/03/2024" },
+].map(emp => ({ ...emp, record_id: `${emp.id}_${emp.month.replace("/", "-")}` }));
