@@ -21,7 +21,6 @@ const PayrollPeriod = sequelize.define(
     period_month: {
       type: DataTypes.STRING(7),
       allowNull: false,
-      unique: true, // Mỗi tháng chỉ có 1 kỳ lương
     },
     status: {
       type: DataTypes.ENUM("DRAFT", "LOCKED"),

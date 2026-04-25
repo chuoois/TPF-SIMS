@@ -19,7 +19,6 @@ const Employee = sequelize.define(
     employee_code: {
       type: DataTypes.STRING(20),
       allowNull: false,
-      unique: true, // "NV001", "KT001"
     },
     full_name: {
       type: DataTypes.STRING(100),

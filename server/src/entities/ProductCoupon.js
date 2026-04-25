@@ -18,7 +18,6 @@ const ProductCoupon = sequelize.define(
     coupon_code: {
       type: DataTypes.STRING(50),
       allowNull: false,
-      unique: true,
     },
     coupon_name: {
       type: DataTypes.STRING(255),
@@ -58,6 +57,13 @@ const ProductCoupon = sequelize.define(
   {
     tableName: "product_coupon",
     timestamps: false,
+    indexes: [
+      {
+        unique: true,
+        fields: ["coupon_code"],
+        name: "unique_coupon_code",
+      },
+    ],
   }
 );
 

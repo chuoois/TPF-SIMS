@@ -21,7 +21,6 @@ const CustomRequest = sequelize.define(
     },
     request_code: {
       type: DataTypes.STRING(50),
-      unique: true,
     },
     total_estimated_price: {
       type: DataTypes.DECIMAL(15, 2),
@@ -55,6 +54,13 @@ const CustomRequest = sequelize.define(
   {
     tableName: "custom_request",
     timestamps: false,
+    indexes: [
+      {
+        unique: true,
+        fields: ["request_code"],
+        name: "unique_request_code"
+      }
+    ]
   }
 );
 
