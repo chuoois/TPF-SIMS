@@ -11,6 +11,9 @@ const systemLogRoutes = require("./routes/systemLog.routes");
 const orderRoutes = require("./routes/order.routes");
 const productRoutes = require("./routes/product.routes");
 const productAttributeRoutes = require("./routes/productAttribute.routes");
+// ── Payroll ───────────────────────────────────────────────
+const employeeRoutes = require("./routes/employee.routes");
+const payrollRoutes = require("./routes/payroll.routes");
 const swaggerUi = require("swagger-ui-express");
 const swaggerJsDoc = require("swagger-jsdoc");
 
@@ -33,6 +36,9 @@ app.use("/api/system-log", systemLogRoutes);
 app.use("/api/order", orderRoutes);
 app.use("/api/product", productRoutes);
 app.use("/api/product-attribute", productAttributeRoutes);
+// ── Payroll ───────────────────────────────────────────────
+app.use("/api/employee", employeeRoutes);
+app.use("/api/payroll", payrollRoutes);
 
 // Swagger Configuration
 const swaggerOptions = {

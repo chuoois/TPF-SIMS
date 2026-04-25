@@ -15,6 +15,11 @@ const OrderItem = require("./OrderItem");
 const OrderHistory = require("./OrderHistory");
 const ProductPricing = require("./ProductPricing");
 const ProductRoom = require("./ProductRoom");
+// ── Payroll ──────────────────────────────────────────────
+const Employee = require("./Employee");
+const PayrollPeriod = require("./PayrollPeriod");
+const SalaryRecord = require("./SalaryRecord");
+const SalaryAdjustment = require("./SalaryAdjustment");
 
 
 
@@ -115,6 +120,24 @@ OrderItem.belongsTo(Product, { foreignKey: "fk_product_id", as: "product" });
 Product.hasMany(ProductPricing, { foreignKey: "fk_product_id", as: "pricings" });
 ProductPricing.belongsTo(Product, { foreignKey: "fk_product_id", as: "product" });
 
+// ── Payroll Associations ────────────────────────────────
+
+// Employee (optional) → UserAccount
+Employee.belongsTo(UserAccount, { foreignKey: "user_account_id", as: "account", constraints: false });
+UserAccount.hasMany(Employee, { foreignKey: "user_account_id", as: "employees", constraints: false });
+
+// PayrollPeriod 1:N SalaryRecord
+PayrollPeriod.hasMany(SalaryRecord, { foreignKey: "fk_period_id", as: "records", onDelete: "CASCADE" });
+SalaryRecord.belongsTo(PayrollPeriod, { foreignKey: "fk_period_id", as: "period" });
+
+// Employee 1:N SalaryRecord
+Employee.hasMany(SalaryRecord, { foreignKey: "fk_employee_id", as: "salaryRecords" });
+SalaryRecord.belongsTo(Employee, { foreignKey: "fk_employee_id", as: "employee" });
+
+// SalaryRecord 1:N SalaryAdjustment
+SalaryRecord.hasMany(SalaryAdjustment, { foreignKey: "fk_record_id", as: "adjustments", onDelete: "CASCADE" });
+SalaryAdjustment.belongsTo(SalaryRecord, { foreignKey: "fk_record_id", as: "record" });
+
 module.exports = {
   sequelize,
   UserRole,
@@ -133,5 +156,10 @@ module.exports = {
   OrderHistory,
   ProductPricing,
   ProductRoom,
+  // Payroll
+  Employee,
+  PayrollPeriod,
+  SalaryRecord,
+  SalaryAdjustment,
 };
 
