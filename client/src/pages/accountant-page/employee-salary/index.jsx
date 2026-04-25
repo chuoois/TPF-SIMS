@@ -5,11 +5,12 @@ import { vi } from "date-fns/locale";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import {
     Search, X, Users, Wallet, Calendar, Hammer, Paintbrush, Plus, Trash2,
-    CheckCircle2, Clock, BriefcaseBusiness, ChevronDown, CalendarPlus, XCircle, FileDown
+    CheckCircle2, Clock, BriefcaseBusiness, CalendarPlus, FileDown
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import EmployeeModal from "./EmployeeModal";
-import AddProductModal from "./AddProductModal";
+import AdjustmentModal from "./AdjustmentModal";
+
 import { cn } from "@/lib/utils"; // Assuming cn utility is available
 import * as XLSX from "xlsx";
 
@@ -20,7 +21,7 @@ import * as XLSX from "xlsx";
 
 const formatCurrency = (n) => n != null ? new Intl.NumberFormat("vi-VN").format(n) + "₫" : "—";
 
-import { MOCK_EMPLOYEES as IMPORTED_MOCK_EMPLOYEES } from "../mockData";
+import { MOCK_EMPLOYEES as IMPORTED_MOCK_EMPLOYEES, MOCK_PERIODS } from "../mockData";
 const MOCK_EMPLOYEES = IMPORTED_MOCK_EMPLOYEES;
 
 const getRoleIcon = (type) => {
@@ -36,16 +37,23 @@ const getRoleIcon = (type) => {
 const calculateTotalSalary = (emp) => {
     let total = 0;
     if (["SALES", "ACCOUNTANT", "SANDER", "PAINTER"].includes(emp.type)) {
-        total = (emp.base_rate * emp.days_worked) + emp.allowance;
+        total = (emp.base_rate * emp.days_worked);
+        if (emp.adjustments) {
+            total += emp.adjustments.reduce((sum, adj) => sum + adj.amount, 0);
+        }
     }
     return total;
 };
 
 export default function AccountantEmployeeSalary() {
     const [employees, setEmployees] = useState(MOCK_EMPLOYEES);
+    const [periods, setPeriods] = useState(MOCK_PERIODS);
     const [search, setSearch] = useState("");
     const [roleFilter, setRoleFilter] = useState("ALL");
     const [monthFilter, setMonthFilter] = useState("ALL");
+
+    const currentPeriodObj = periods.find(p => p.period_month === monthFilter);
+    const isLocked = currentPeriodObj?.status === "LOCKED";
 
     // Get unique months for filter
     const uniqueMonths = useMemo(() => {
@@ -60,11 +68,6 @@ export default function AccountantEmployeeSalary() {
     // Delete
     const [employeeToDelete, setEmployeeToDelete] = useState(null);
 
-    // Add product modal (for painter)
-    const [addProductTarget, setAddProductTarget] = useState(null); // employee object
-
-    // Painter log expand
-    const [expandedPainter, setExpandedPainter] = useState(null);
 
     const [isPeriodModalOpen, setIsPeriodModalOpen] = useState(false);
     
@@ -72,24 +75,38 @@ export default function AccountantEmployeeSalary() {
     const [selectedEmpForPayment, setSelectedEmpForPayment] = useState(null);
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
+    // Adjustment Modal
+    const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
+    const [employeeForAdjustment, setEmployeeForAdjustment] = useState(null);
+
 
     const handleCreatePeriod = (newPeriod) => {
-        // Clone existing unique employees (distinct by name/id) to the new period
-        const uniqueEntries = Array.from(new Map(employees.map(emp => [emp.id, emp])).values());
+        // Lấy danh sách nhân viên duy nhất từ kỳ mới nhất (hoặc tất cả nếu chưa có)
+        const latestMonth = [...new Set(employees.map(e => e.month))]
+            .sort((a, b) => { const [m1,y1]=a.split("/"); const [m2,y2]=b.split("/"); return new Date(y2,m2-1)-new Date(y1,m1-1); })[0];
+        const sourceEntries = employees.filter(e => e.month === latestMonth);
 
-        const newEntries = uniqueEntries.map(emp => ({
+        const newEntries = sourceEntries.map(emp => ({
             ...emp,
+            record_id: `${emp.id}_${newPeriod.replace("/", "-")}`, // khóa duy nhất per kỳ
             month: newPeriod,
             status: "Chưa thanh toán",
             payment_date: "",
-            products_log: [],
-            products_finished: 0,
-            days_worked: emp.base_rate ? 0 : 26,
+            days_worked: 0,
         }));
 
         setEmployees(prev => [...prev, ...newEntries]);
+        setPeriods(prev => [...prev, { period_month: newPeriod, status: "DRAFT" }]);
         setMonthFilter(newPeriod);
         toast.success(`Đã tạo thành công kỳ lương ${newPeriod}`, { icon: "📅" });
+    };
+
+    const handleLockPeriod = () => {
+        if (monthFilter === "ALL" || isLocked) return;
+        if (window.confirm(`Bạn có chắc chắn muốn chốt lương kỳ ${monthFilter}? Sau khi chốt sẽ không thể chỉnh sửa.`)) {
+            setPeriods(prev => prev.map(p => p.period_month === monthFilter ? { ...p, status: "LOCKED" } : p));
+            toast.success(`Đã chốt kỳ lương ${monthFilter}`, { icon: "🔒" });
+        }
     };
 
     const filteredEmployees = useMemo(() => {
@@ -113,10 +130,18 @@ export default function AccountantEmployeeSalary() {
 
     const handleSaveEmployee = (empData) => {
         if (employeeToEdit) {
-            setEmployees(prev => prev.map(e => e.id === empData.id ? empData : e));
+            // Chỉ cập nhật đúng bản ghi của kỳ đang xem (theo record_id)
+            const rid = employeeToEdit.record_id || employeeToEdit.id;
+            setEmployees(prev => prev.map(e =>
+                (e.record_id || e.id) === rid ? { ...empData, record_id: rid } : e
+            ));
             toast.success("Cập nhật thông tin nhân viên thành công!", { style: { fontSize: "14px", fontWeight: "bold" } });
         } else {
-            setEmployees(prev => [empData, ...prev]);
+            const newRecord = {
+                ...empData,
+                record_id: `${empData.id}_${empData.month.replace("/", "-")}`,
+            };
+            setEmployees(prev => [newRecord, ...prev]);
             toast.success("Thêm nhân viên mới thành công!", { style: { fontSize: "14px", fontWeight: "bold" } });
         }
         setIsModalOpen(false);
@@ -125,24 +150,23 @@ export default function AccountantEmployeeSalary() {
 
     const handleDeleteEmployee = () => {
         if (!employeeToDelete) return;
-        setEmployees(prev => prev.filter(e => e.id !== employeeToDelete.id));
-        toast.success(`Đã xóa nhân viên ${employeeToDelete.name}`, { style: { fontSize: "14px", fontWeight: "bold" } });
+        // Chỉ xóa bản ghi của kỳ này, không xóa các kỳ khác
+        const rid = employeeToDelete.record_id || employeeToDelete.id;
+        setEmployees(prev => prev.filter(e => (e.record_id || e.id) !== rid));
+        toast.success(`Đã xóa ${employeeToDelete.name} khỏi kỳ ${employeeToDelete.month}`, { style: { fontSize: "14px", fontWeight: "bold" } });
         setEmployeeToDelete(null);
     };
 
-    const handleToggleStatus = (empId) => {
-        const emp = employees.find(e => e.id === empId);
+    const handleToggleStatus = (recordId) => {
+        const emp = employees.find(e => (e.record_id || e.id) === recordId);
         if (!emp) return;
 
         if (emp.status === "Đã thanh toán") {
-            // If already paid, allow direct toggle back to unpaid (with confirmation?)
-            // or just simple toggle for admin-like correction
             setEmployees(prev => prev.map(e =>
-                e.id === empId ? { ...e, status: "Chưa thanh toán", payment_date: "" } : e
+                (e.record_id || e.id) === recordId ? { ...e, status: "Chưa thanh toán", payment_date: "" } : e
             ));
             toast.success(`🔄 Đã đổi trạng thái về Chưa thanh toán`, { style: { fontSize: "13px" } });
         } else {
-            // If unpaid, trigger confirmation modal
             setSelectedEmpForPayment(emp);
             setIsPaymentModalOpen(true);
         }
@@ -152,9 +176,10 @@ export default function AccountantEmployeeSalary() {
         if (!selectedEmpForPayment) return;
 
         const newPaymentDate = format(new Date(), "dd/MM/yyyy", { locale: vi });
+        const rid = selectedEmpForPayment.record_id || selectedEmpForPayment.id;
 
         setEmployees(prev => prev.map(e =>
-            e.id === selectedEmpForPayment.id
+            (e.record_id || e.id) === rid
                 ? { ...e, status: "Đã thanh toán", payment_date: newPaymentDate }
                 : e
         ));
@@ -167,20 +192,6 @@ export default function AccountantEmployeeSalary() {
         setSelectedEmpForPayment(null);
     };
 
-    // Add product to painter
-    const handleAddProduct = ({ productName, price, qty }) => {
-        setEmployees(prev => prev.map(e => {
-            if (e.id !== addProductTarget?.id) return e;
-            const newLog = [...(e.products_log || []), { productName, price, qty }];
-            const newTotal = newLog.reduce((s, p) => s + (p.qty || 1), 0);
-            return { ...e, products_log: newLog, products_finished: newTotal };
-        }));
-        toast.success(
-            `Đã cộng ${qty} sản phẩm "${productName}" (${formatCurrency(price * qty)}) cho ${addProductTarget?.name}`,
-            { style: { fontSize: "13px" } }
-        );
-        setAddProductTarget(null);
-    };
 
     const handleExportExcel = () => {
         if (filteredEmployees.length === 0) {
@@ -311,9 +322,21 @@ export default function AccountantEmployeeSalary() {
                                 <CalendarPlus size={16} />
                                 Tạo kỳ lương mới
                             </button>
-                            <button onClick={() => { setEmployeeToEdit(null); setIsModalOpen(true); }}
-                                className="h-9 px-3.5 rounded-lg flex items-center gap-1.5 text-[13px] font-bold cursor-pointer hover:opacity-90 transition shrink-0"
-                                style={{ backgroundColor: "var(--brand-primary)", color: "#fff" }}>
+                            {monthFilter !== "ALL" && (
+                                <button onClick={handleLockPeriod} disabled={isLocked}
+                                    className={cn(
+                                        "h-9 px-4 rounded-lg text-white text-[13px] font-bold flex items-center gap-2 transition whitespace-nowrap",
+                                        isLocked ? "bg-gray-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700 cursor-pointer"
+                                    )}>
+                                    {isLocked ? <CheckCircle2 size={16} /> : <span className="text-[16px]">🔒</span>}
+                                    {isLocked ? "Đã chốt lương" : "Chốt lương"}
+                                </button>
+                            )}
+                            <button onClick={() => { setEmployeeToEdit(null); setIsModalOpen(true); }} disabled={isLocked}
+                                className={cn("h-9 px-3.5 rounded-lg flex items-center gap-1.5 text-[13px] font-bold transition shrink-0",
+                                    isLocked ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "cursor-pointer hover:opacity-90"
+                                )}
+                                style={isLocked ? {} : { backgroundColor: "var(--brand-primary)", color: "#fff" }}>
                                 <Plus size={15} strokeWidth={2.5} /> Thêm nhân viên
                             </button>
                             <div className="relative w-full max-w-sm">
@@ -382,18 +405,17 @@ export default function AccountantEmployeeSalary() {
                                     const totalSalary = calculateTotalSalary(emp);
                                     let calcFormula = "";
                                     let specData = "";
-                                    const isPainter = emp.type === "PAINTER";
-                                    const isExpanded = expandedPainter === emp.id;
-
                                     if (["SALES", "ACCOUNTANT", "SANDER", "PAINTER"].includes(emp.type)) {
                                         calcFormula = `${formatCurrency(emp.base_rate)} / ngày`;
-                                        specData = `${emp.days_worked} ngày công`;
+                                        specData = `${emp.days_worked} ngày${emp.overtime_hours > 0 ? ` + ${emp.overtime_hours}h OT` : ''}`;
                                     }
+
+                                    const totalAdjustments = (emp.adjustments || []).reduce((s, a) => s + a.amount, 0);
 
                                     return (
                                         <>
                                             <tr key={emp.id} className="group relative hover:bg-gray-50/50 transition-colors"
-                                                style={{ borderBottom: isExpanded ? "none" : "1px solid var(--grid-border)" }}>
+                                                style={{ borderBottom: "1px solid var(--grid-border)" }}>
 
                                                 <td className="px-4 py-3">
                                                     <span className="text-[12px] font-bold font-mono px-2 py-1 rounded"
@@ -430,9 +452,19 @@ export default function AccountantEmployeeSalary() {
                                                 </td>
 
                                                 <td className="px-4 py-3 text-right">
-                                                    <span className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
-                                                        {emp.allowance > 0 ? `+ ${formatCurrency(emp.allowance)}` : "—"}
-                                                    </span>
+                                                    <div className="flex flex-col items-end gap-1">
+                                                        <span className={cn(
+                                                            "text-[13px] font-bold",
+                                                            totalAdjustments > 0 ? "text-green-600" : totalAdjustments < 0 ? "text-red-600" : "text-gray-400"
+                                                        )}>
+                                                            {totalAdjustments > 0 ? `+${formatCurrency(totalAdjustments)}` : totalAdjustments < 0 ? formatCurrency(totalAdjustments) : "—"}
+                                                        </span>
+                                                        <button 
+                                                            onClick={() => { setEmployeeForAdjustment(emp); setIsAdjustmentModalOpen(true); }}
+                                                            className="text-[11px] text-blue-600 hover:underline cursor-pointer">
+                                                            Chi tiết
+                                                        </button>
+                                                    </div>
                                                 </td>
 
                                                 <td className="px-4 py-3 text-right">
@@ -441,9 +473,11 @@ export default function AccountantEmployeeSalary() {
 
                                                 {/* Clickable status badge */}
                                                 <td className="px-4 py-3 text-center">
-                                                    <button onClick={() => handleToggleStatus(emp.id)}
+                                                    <button onClick={() => !isLocked && handleToggleStatus(emp.record_id || emp.id)}
+                                                        disabled={isLocked}
                                                         className={cn(
-                                                            "inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold rounded-md border cursor-pointer transition hover:opacity-80",
+                                                            "inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold rounded-md border transition",
+                                                            isLocked ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:opacity-80",
                                                             emp.status === "Đã thanh toán"
                                                                 ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
                                                                 : "bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
@@ -462,21 +496,28 @@ export default function AccountantEmployeeSalary() {
                                                 {/* Hover action */}
                                                 <td className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                                     <div className="flex gap-1 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-gray-100">
-                                                        <button onClick={() => { setEmployeeToEdit(emp); setIsModalOpen(true); }}
-                                                            className="h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[12px] font-bold hover:bg-blue-50 cursor-pointer transition"
-                                                            style={{ color: "var(--brand-primary)" }}>
+                                                        <button 
+                                                            onClick={() => !isLocked && (setEmployeeToEdit(emp), setIsModalOpen(true))}
+                                                            disabled={isLocked}
+                                                            className={cn("h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[12px] font-bold transition",
+                                                                isLocked ? "cursor-not-allowed text-gray-400" : "hover:bg-blue-50 cursor-pointer",
+                                                            )}
+                                                            style={isLocked ? {} : { color: "var(--brand-primary)" }}>
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22h6" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
                                                             Sửa
                                                         </button>
-                                                        <button onClick={() => setEmployeeToDelete(emp)}
-                                                            className="h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[12px] font-bold cursor-pointer transition text-red-600 hover:bg-red-50">
+                                                        <button 
+                                                            onClick={() => !isLocked && setEmployeeToDelete(emp)}
+                                                            disabled={isLocked}
+                                                            className={cn("h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[12px] font-bold transition",
+                                                                isLocked ? "cursor-not-allowed text-gray-400" : "cursor-pointer text-red-600 hover:bg-red-50"
+                                                            )}>
                                                             <Trash2 size={14} /> Xóa
                                                         </button>
                                                     </div>
                                                 </td>
                                             </tr>
 
-                                            {/* Painter product log expanded row removed */}
                                         </>
                                     );
                                 })}
@@ -515,12 +556,21 @@ export default function AccountantEmployeeSalary() {
                 employeeToEdit={employeeToEdit}
             />
 
-            {/* Add Product Modal (Painter) */}
-            <AddProductModal
-                isOpen={!!addProductTarget}
-                onClose={() => setAddProductTarget(null)}
-                employee={addProductTarget}
-                onAdd={handleAddProduct}
+            {/* Adjustment Modal */}
+            <AdjustmentModal 
+                isOpen={isAdjustmentModalOpen}
+                onClose={() => { setIsAdjustmentModalOpen(false); setEmployeeForAdjustment(null); }}
+                employee={employeeForAdjustment}
+                isLocked={isLocked}
+                onSave={(newAdjustments) => {
+                    setEmployees(prev => prev.map(e => 
+                        (e.record_id || e.id) === (employeeForAdjustment.record_id || employeeForAdjustment.id) 
+                            ? { ...e, adjustments: newAdjustments } 
+                            : e
+                    ));
+                    setIsAdjustmentModalOpen(false);
+                    setEmployeeForAdjustment(null);
+                }}
             />
 
             {/* Confirm Delete Modal */}
