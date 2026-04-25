@@ -81,11 +81,18 @@ class CustomerController {
    */
   async createCustomer(req, res) {
     try {
-      const customerData = req.body;
+      let { customer_code, ...customerData } = req.body;
       const userId = req.user.userId;
+
+      // Nếu không có mã khách hàng, tự động tạo
+      if (!customer_code) {
+        const count = await CustomerProfile.count();
+        customer_code = `KH${String(count + 1).padStart(4, "0")}`;
+      }
 
       const newCustomer = await CustomerProfile.create({
         ...customerData,
+        customer_code,
         status: 1,
         createby: userId,
       });

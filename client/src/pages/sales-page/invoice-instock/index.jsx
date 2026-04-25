@@ -11,6 +11,7 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
+import useDebounce from "@/hooks/useDebounce";
 import { PrintableInvoice } from "../orders/components/PrintableInvoice";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import AddCustomerModal from "@/pages/sales-page/components/AddCustomerModal";
@@ -97,10 +98,14 @@ export default function InStockInvoicePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [customerSearch, setCustomerSearch] = useState("");
   const [customerResults, setCustomerResults] = useState([]);
+  const [isSearchingCustomers, setIsSearchingCustomers] = useState(false);
   const [productSearch, setProductSearch] = useState("");
   const [products, setProducts] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  
+  const debouncedProductSearch = useDebounce(productSearch, 500);
+  const debouncedCustomerSearch = useDebounce(customerSearch, 300);
 
   const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0];
 
@@ -144,7 +149,7 @@ export default function InStockInvoicePage() {
         }
 
         const params = {
-          search: productSearch,
+          search: debouncedProductSearch,
           category_id: selectedCategories.join(","),
           color_id: selectedColors.join(","),
           material_id: selectedMaterials.join(","),
@@ -169,7 +174,7 @@ export default function InStockInvoicePage() {
     fetchProducts();
   }, [
     productTypeTab,
-    productSearch,
+    debouncedProductSearch,
     selectedCategories,
     selectedColors,
     selectedMaterials,
@@ -181,13 +186,14 @@ export default function InStockInvoicePage() {
   // Fetch customers
   useEffect(() => {
     const fetchCustomers = async () => {
-      if (!customerSearch.trim()) {
+      if (!debouncedCustomerSearch.trim()) {
         setCustomerResults([]);
         return;
       }
+      setIsSearchingCustomers(true);
       try {
         const res = await customerService.getAllCustomers({
-          search: customerSearch,
+          search: debouncedCustomerSearch,
           limit: 10,
         });
         // Map backend customer data to UI structure
@@ -200,11 +206,12 @@ export default function InStockInvoicePage() {
         setCustomerResults(mapped);
       } catch (error) {
         console.error("Failed to fetch customers", error);
+      } finally {
+        setIsSearchingCustomers(false);
       }
     };
-    const timer = setTimeout(fetchCustomers, 300);
-    return () => clearTimeout(timer);
-  }, [customerSearch]);
+    fetchCustomers();
+  }, [debouncedCustomerSearch]);
 
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
 
@@ -506,6 +513,7 @@ export default function InStockInvoicePage() {
           customerSearch={customerSearch}
           setCustomerSearch={setCustomerSearch}
           customerResults={customerResults}
+          isSearchingCustomers={isSearchingCustomers}
           updateActiveTab={updateActiveTab}
           setShowAddCustomer={setShowAddCustomer}
           setShowWorkshopStatus={setShowWorkshopStatus}

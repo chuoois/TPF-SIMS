@@ -42,24 +42,21 @@ export default function CartPanel({
   customerSearch,
   setCustomerSearch,
   customerResults,
+  isSearchingCustomers,
   updateActiveTab,
   setShowAddCustomer,
-  needsWorkshop,
-  maxLeadTime,
-  workshopStats,
-  expectedReadyDate,
+  setShowWorkshopStatus,
   subtotal,
   itemCount,
   totalPayable,
   handleCheckout,
-  setShowWorkshopStatus,
 }) {
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const customerSearchRef = useRef(null);
 
   // 3. Hook tính ngày giao dựa trên logic Xưởng
-  const capacityPerDay = 5; 
-  const totalPending = 20;  
+  const capacityPerDay = 5;
+  const totalPending = 20;
 
 
 
@@ -118,9 +115,8 @@ export default function CartPanel({
           <button
             key={tab.id}
             onClick={() => setActiveTabId(tab.id)}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] whitespace-nowrap transition-all shrink-0 cursor-pointer ${
-              tab.id === activeTabId ? "font-semibold" : "hover:bg-gray-50"
-            }`}
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] whitespace-nowrap transition-all shrink-0 cursor-pointer ${tab.id === activeTabId ? "font-semibold" : "hover:bg-gray-50"
+              }`}
             style={{
               backgroundColor:
                 tab.id === activeTabId ? "var(--status-focus)" : "transparent",
@@ -170,6 +166,13 @@ export default function CartPanel({
           className="flex items-center gap-1.5 px-2.5 py-1.5 ml-auto rounded-lg text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 active:scale-95 shadow-sm"
         >
           <Hammer size={12} className="text-indigo-500" /> Check Xưởng
+        </button>
+
+        <button
+          onClick={() => setShowAddCustomer(true)}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer bg-white border border-slate-200 text-[var(--brand-primary)] hover:bg-emerald-50 active:scale-95 shadow-sm ml-2"
+        >
+          <UserPlus size={12} className="text-[var(--brand-primary)]" /> Thêm khách
         </button>
 
         {/* Order type switch — pushed to right */}
@@ -417,7 +420,7 @@ export default function CartPanel({
                     updateActiveTab({ selectedCustomer: null });
                     setCustomerSearch("");
                   }}
-                  className="cursor-pointer shrink-0 ml-auto"
+                  className="cursor-pointer shrink-0 ml-auto mr-1"
                   style={{ color: "var(--text-placeholder)" }}
                 >
                   <X size={12} />
@@ -442,16 +445,18 @@ export default function CartPanel({
                   className="flex-1 text-[13px] focus:outline-none bg-transparent"
                   style={{ color: "var(--text-main)" }}
                 />
-                <button
-                  onClick={() => setShowAddCustomer(true)}
-                  className="w-6 h-6 rounded-md flex items-center justify-center cursor-pointer transition hover:bg-gray-100 shrink-0"
-                  style={{ color: "var(--brand-primary)" }}
-                  title="Thêm khách hàng mới"
-                >
-                  <UserPlus size={12} />
-                </button>
               </div>
             )}
+
+            {/* Always show Add Customer icon button in the customer area */}
+            <button
+              onClick={() => setShowAddCustomer(true)}
+              className="w-6 h-6 rounded-md flex items-center justify-center cursor-pointer transition hover:bg-gray-100 shrink-0"
+              style={{ color: "var(--brand-primary)" }}
+              title="Thêm khách hàng mới"
+            >
+              <UserPlus size={12} />
+            </button>
 
             {/* Customer search dropdown */}
             {showCustomerDropdown && customerSearch.trim() && (
@@ -459,7 +464,16 @@ export default function CartPanel({
                 className="absolute left-0 bottom-full mb-1 w-full bg-white rounded-lg shadow-lg border overflow-hidden z-30"
                 style={{ borderColor: "var(--grid-border)" }}
               >
-                {customerResults.length > 0 ? (
+                {isSearchingCustomers ? (
+                  <div className="p-4 text-center">
+                    <p
+                      className="text-[12px] animate-pulse"
+                      style={{ color: "var(--brand-primary)" }}
+                    >
+                      Đang tìm kiếm...
+                    </p>
+                  </div>
+                ) : customerResults.length > 0 ? (
                   <div className="max-h-[200px] overflow-y-auto">
                     {customerResults.map((c) => (
                       <button
@@ -707,45 +721,44 @@ export default function CartPanel({
                   </span>
                 )}
               </span>
-            <div className="flex items-center gap-1">
-              <span
-                className="text-[13px]"
-                style={{ color: "var(--text-placeholder)" }}
-              >
-                ₫
-              </span>
-              <input
-                type="text"
-                value={
-                  activeTab.depositAmount
-                    ? fmt(activeTab.depositAmount)
-                    : ""
-                }
-                onChange={(e) => {
-                  const raw = e.target.value.replace(/\D/g, "");
-                  updateActiveTab({
-                    depositAmount: parseInt(raw) || 0,
-                  });
-                }}
-                placeholder="0"
-                className={`w-28 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white ${
-                   activeTab.depositAmount < suggestedDepositInfo.amount ? "border-amber-400 ring-1 ring-amber-400 focus:ring-amber-500" : ""
-                }`}
-                style={{
-                  border: activeTab.depositAmount < suggestedDepositInfo.amount ? "1px solid #fbbf24" : "1px solid var(--grid-border)",
-                  color: "var(--text-main)",
-                }}
-              />
+              <div className="flex items-center gap-1">
+                <span
+                  className="text-[13px]"
+                  style={{ color: "var(--text-placeholder)" }}
+                >
+                  ₫
+                </span>
+                <input
+                  type="text"
+                  value={
+                    activeTab.depositAmount
+                      ? fmt(activeTab.depositAmount)
+                      : ""
+                  }
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, "");
+                    updateActiveTab({
+                      depositAmount: parseInt(raw) || 0,
+                    });
+                  }}
+                  placeholder="0"
+                  className={`w-28 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white ${activeTab.depositAmount < suggestedDepositInfo.amount ? "border-amber-400 ring-1 ring-amber-400 focus:ring-amber-500" : ""
+                    }`}
+                  style={{
+                    border: activeTab.depositAmount < suggestedDepositInfo.amount ? "1px solid #fbbf24" : "1px solid var(--grid-border)",
+                    color: "var(--text-main)",
+                  }}
+                />
+              </div>
             </div>
-          </div>
-          {/* Quy tắc đặt cọc được áp dụng tự động dựa trên giá trị đơn hàng */}
-          {subtotal > 0 && activeTab.depositAmount < suggestedDepositInfo.amount && (
-            <div className="mt-2 text-right">
-              <p className="text-[10px] font-bold text-amber-600 animate-pulse">
-                ⚠️ Mức cọc quy định tối thiểu là {fmt(suggestedDepositInfo.amount)}đ
-              </p>
-            </div>
-          )}
+            {/* Quy tắc đặt cọc được áp dụng tự động dựa trên giá trị đơn hàng */}
+            {subtotal > 0 && activeTab.depositAmount < suggestedDepositInfo.amount && (
+              <div className="mt-2 text-right">
+                <p className="text-[10px] font-bold text-amber-600 animate-pulse">
+                  ⚠️ Mức cọc quy định tối thiểu là {fmt(suggestedDepositInfo.amount)}đ
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
