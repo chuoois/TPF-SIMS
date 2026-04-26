@@ -40,13 +40,13 @@ export default function AdjustmentModal({
   const handleUpdateRow = (id, field, value) => {
     if (isLocked) return;
     setAdjustments(adjustments.map(adj => 
-      adj.id === id ? { ...adj, [field]: value } : adj
+      (adj.adjustment_id || adj.id) === id ? { ...adj, [field]: value } : adj
     ));
   };
 
   const handleDeleteRow = (id) => {
     if (isLocked) return;
-    setAdjustments(adjustments.filter(adj => adj.id !== id));
+    setAdjustments(adjustments.filter(adj => (adj.adjustment_id || adj.id) !== id));
   };
 
   const handleSubmit = (e) => {
@@ -106,13 +106,15 @@ export default function AdjustmentModal({
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        {adjustments.map((adj, index) => (
-                            <div key={adj.id} className="flex items-start gap-3 p-3 bg-white rounded-xl border shadow-sm" style={{ borderColor: "var(--grid-border)" }}>
+                        {adjustments.map((adj, index) => {
+                            const uniqueId = adj.adjustment_id || adj.id;
+                            return (
+                            <div key={uniqueId} className="flex items-start gap-3 p-3 bg-white rounded-xl border shadow-sm" style={{ borderColor: "var(--grid-border)" }}>
                                 <div className="w-1/4">
                                     <select 
                                         disabled={isLocked}
                                         value={adj.type} 
-                                        onChange={e => handleUpdateRow(adj.id, "type", e.target.value)}
+                                        onChange={e => handleUpdateRow(uniqueId, "type", e.target.value)}
                                         className={inputClass} style={inputStyle}>
                                         <option value="BONUS">Thưởng (Cộng)</option>
                                         <option value="ALLOWANCE">Phụ cấp (Cộng)</option>
@@ -124,7 +126,7 @@ export default function AdjustmentModal({
                                         disabled={isLocked}
                                         type="text" 
                                         value={adj.description} 
-                                        onChange={e => handleUpdateRow(adj.id, "description", e.target.value)}
+                                        onChange={e => handleUpdateRow(uniqueId, "description", e.target.value)}
                                         placeholder="Mô tả lý do..." 
                                         className={inputClass} style={inputStyle} 
                                     />
@@ -135,7 +137,7 @@ export default function AdjustmentModal({
                                             disabled={isLocked}
                                             type="text" 
                                             value={formatNumber(Math.abs(adj.amount))} 
-                                            onChange={e => handleUpdateRow(adj.id, "amount", parseNumber(e.target.value))}
+                                            onChange={e => handleUpdateRow(uniqueId, "amount", parseNumber(e.target.value))}
                                             placeholder="Số tiền" 
                                             className={cn(inputClass, "pl-6 font-bold", adj.type === "PENALTY" ? "text-red-600" : "text-green-600")} 
                                             style={inputStyle} 
@@ -146,12 +148,13 @@ export default function AdjustmentModal({
                                     </div>
                                 </div>
                                 {!isLocked && (
-                                    <button onClick={() => handleDeleteRow(adj.id)} className="p-2 mt-0.5 text-red-500 hover:bg-red-50 rounded-lg transition shrink-0 cursor-pointer">
+                                    <button onClick={() => handleDeleteRow(uniqueId)} className="p-2 mt-0.5 text-red-500 hover:bg-red-50 rounded-lg transition shrink-0 cursor-pointer">
                                         <Trash2 size={16} />
                                     </button>
                                 )}
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
 
