@@ -12,7 +12,7 @@ import Coupons from "../pages/owner-page/coupon/index";
 import CouponCreate from "../pages/owner-page/coupon/create-coupon";
 import ProductCategories from "../pages/owner-page/products/management/CategoriesPage";
 import ProductColors from "../pages/owner-page/products/management/ColorsPage";
-import ProductUnits from "../pages/owner-page/products/management/UnitsPage";
+import ProductRooms from "../pages/owner-page/products/management/RoomsPage";
 import ProductMaterials from "../pages/owner-page/products/management/MaterialsPage";
 import ManufacturingOrdersPage from "../pages/owner-page/manufacturing-orders";
 
@@ -53,10 +53,15 @@ export const ownerRoutes = {
       path: "products",
       children: [
         { index: true, element: <Products /> },
-        { path: "categories", element: <ProductCategories /> },
-        { path: "properties/colors", element: <ProductColors /> },
-        { path: "properties/units", element: <ProductUnits /> },
-        { path: "properties/materials", element: <ProductMaterials /> },
+        {
+          path: "properties",
+          children: [
+            { path: "categories", element: <ProductCategories /> },
+            { path: "colors", element: <ProductColors /> },
+            { path: "rooms", element: <ProductRooms /> },
+            { path: "materials", element: <ProductMaterials /> },
+          ],
+        },
       ],
     },
     {
