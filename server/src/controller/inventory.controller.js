@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { sequelize, Product, ProductCategory, ProductColor, ProductMaterial, ProductRoom, ProductItem } = require("../entities");
+const { sequelize, Product, ProductCategory, ProductColor, ProductMaterial, ProductRoom, ProductPricing, ProductItem } = require("../entities");
 
 /**
  * Inventory Controller - Quản lý Kho hàng cho Kế toán
@@ -92,6 +92,8 @@ class InventoryController {
           "product_name",
           "product_img",
           "product_type",
+          "size",
+          "description",
           [stockLiteral, "stock"],
           [availableLiteral, "available"],
           [defectiveLiteral, "defective"],
@@ -132,6 +134,10 @@ class InventoryController {
           materialType: p.material ? p.material.material_name : null,
           color: p.color ? p.color.color_name : null,
           img: p.product_img,
+          length: p.size?.length || null,
+          width: p.size?.width || null,
+          height: p.size?.height || null,
+          details: p.description || null,
           stock: parseInt(p.stock) || 0,
           stockBreakdown: {
             available: parseInt(p.available) || 0,
@@ -166,7 +172,7 @@ class InventoryController {
         if (p.type === "FINISHED" && p.stockBreakdown.available <= p.minStock) {
           counts.LOW_STOCK++;
         }
-        
+
         if (p.importedAt) {
           const daysOld = Math.floor((TODAY - new Date(p.importedAt)) / (1000 * 60 * 60 * 24));
           if (daysOld > LONG_STAY_DAYS) counts.LONG_STAY++;
