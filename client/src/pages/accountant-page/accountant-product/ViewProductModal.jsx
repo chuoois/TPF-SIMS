@@ -6,7 +6,7 @@
  * Updated: 02/04/2026 – Bỏ khái niệm lô, hiển thị đơn vị theo phiếu nhập
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   X,
   Package,
@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import ProcessDefectiveModal from "./ProcessDefectiveModal";
 import { toast } from "react-hot-toast";
+import inventoryService from "@/services/inventory.service";
 
 // ─────────────────────────────────────────────────────────
 // Cấu hình trạng thái đơn vị hàng
@@ -1175,7 +1176,23 @@ export default function ViewProductModal({ product, onClose }) {
   const [lots, setLots] = useState(() =>
     product?.lots ? JSON.parse(JSON.stringify(product.lots)) : [],
   );
+  const [isLoadingLots, setIsLoadingLots] = useState(false);
   const [isProcessingDefective, setIsProcessingDefective] = useState(false);
+
+  useEffect(() => {
+    if (product && !product.lots) {
+      setIsLoadingLots(true);
+      inventoryService.getProductItems(product.id)
+        .then(res => {
+          setLots(res || []);
+        })
+        .catch(err => {
+          console.error("Lỗi khi tải chi tiết đơn vị hàng:", err);
+          toast.error("Không thể tải thông tin đơn vị hàng!");
+        })
+        .finally(() => setIsLoadingLots(false));
+    }
+  }, [product]);
 
   if (!product) return null;
 
@@ -1223,6 +1240,7 @@ export default function ViewProductModal({ product, onClose }) {
       id: "units",
       label: `Chi tiết đơn vị${allUnitCount > 0 ? ` (${allUnitCount} đvị)` : ""}`,
       icon: Boxes,
+      loading: isLoadingLots,
     },
   ];
 

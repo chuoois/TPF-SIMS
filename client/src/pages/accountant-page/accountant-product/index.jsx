@@ -30,7 +30,8 @@ import { PageHelmet } from "@/components/seo/PageHelmet";
 import ViewProductModal from "./ViewProductModal";
 import EditProductModal from "./EditProductModal";
 import { toast } from "react-hot-toast";
-import { ALL_PRODUCTS, CATEGORIES } from "../mockData";
+import { CATEGORIES } from "../mockData";
+import inventoryService from "@/services/inventory.service";
 
 // ─────────────────────────────────────────────────────────
 // MOCK DATA – xem mockData.js ở cùng cấp thư mục
@@ -165,9 +166,15 @@ const getDaysStyle = (days) => {
 
 const LONG_STAY_DAYS = 60; // ngưỡng cảnh báo tồn lâu
 
-// ─────────────────────────────────────────────────────────
 export default function AccountantProductManage() {
-  const [products, setProducts] = useState(ALL_PRODUCTS);
+  const [products, setProducts] = useState([]);
+  const [counts, setCounts] = useState({
+    ALL: 0, FINISHED: 0, RAW: 0, CUSTOM: 0,
+    LOW_STOCK: 0, LONG_STAY: 0, DEFECTIVE: 0
+  });
+  const [loading, setLoading] = useState(false);
+  const [totalItems, setTotalItems] = useState(0);
+
   const [editProduct, setEditProduct] = useState(null);
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [categoryFilter, setCategoryFilter] = useState("Tất cả");
@@ -175,6 +182,31 @@ export default function AccountantProductManage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
   const [viewProduct, setViewProduct] = useState(null);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const res = await inventoryService.getInventoryProducts({
+        page: currentPage,
+        limit: itemsPerPage,
+        search: search.trim(),
+        category: categoryFilter,
+        typeFilter: typeFilter,
+      });
+      setProducts(res.data || []);
+      setCounts(res.counts || {});
+      setTotalItems(res.pagination?.totalItems || 0);
+    } catch (error) {
+      console.error("Lỗi khi tải kho hàng:", error);
+      toast.error("Không thể tải dữ liệu kho hàng!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, [currentPage, itemsPerPage, search, categoryFilter, typeFilter]);
 
   const handleSaveProduct = (updated) => {
     setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
@@ -184,75 +216,10 @@ export default function AccountantProductManage() {
     });
   };
 
-  const filtered = useMemo(() => {
-    let r = products;
-    if (typeFilter === "LOW_STOCK") {
-      r = r.filter(
-        (p) =>
-          p.type === "FINISHED" &&
-          p.minStock != null &&
-          (p.stockBreakdown?.available ?? p.stock) <= p.minStock,
-      );
-    } else if (typeFilter === "LONG_STAY") {
-      r = r.filter((p) => getDaysInStock(p) > LONG_STAY_DAYS);
-    } else if (typeFilter === "DEFECTIVE") {
-      r = r.filter((p) => (p.stockBreakdown?.defective || 0) > 0);
-    } else if (typeFilter !== "ALL") {
-      r = r.filter((p) => p.type === typeFilter);
-    }
-    if (categoryFilter !== "Tất cả")
-      r = r.filter((p) => p.category === categoryFilter);
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      r = r.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.sku.toLowerCase().includes(q) ||
-          p.materialType?.toLowerCase().includes(q),
-      );
-    }
-    return r;
-  }, [typeFilter, categoryFilter, search, products]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [typeFilter, categoryFilter, search]);
-
-  const totalPages = Math.ceil(filtered.length / itemsPerPage) || 1;
-  const paginated = filtered.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
-
-  // counts per type
-  const counts = useMemo(() => {
-    const c = {
-      ALL: products.length,
-      FINISHED: 0,
-      RAW: 0,
-      CUSTOM: 0,
-      LOW_STOCK: 0,
-      LONG_STAY: 0,
-      DEFECTIVE: 0,
-    };
-    products.forEach((p) => {
-      c[p.type] = (c[p.type] || 0) + 1;
-      if (
-        p.type === "FINISHED" &&
-        p.minStock != null &&
-        (p.stockBreakdown?.available ?? p.stock) <= p.minStock
-      ) {
-        c.LOW_STOCK++;
-      }
-      if (getDaysInStock(p) > LONG_STAY_DAYS) {
-        c.LONG_STAY++;
-      }
-      if ((p.stockBreakdown?.defective || 0) > 0) {
-        c.DEFECTIVE++;
-      }
-    });
-    return c;
-  }, [products]);
+  // Đã bỏ logic filter local vì API đã xử lý
+  const paginated = products;
+  const filteredLength = totalItems;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
 
   const TH = ({ children, right, center }) => (
     <th
@@ -286,7 +253,7 @@ export default function AccountantProductManage() {
               className="text-[13px] mt-0.5"
               style={{ color: "var(--text-placeholder)" }}
             >
-              {filtered.length} sản phẩm
+              {totalItems} sản phẩm
               {typeFilter !== "ALL" &&
                 ` · ${TYPE_FILTERS.find((t) => t.value === typeFilter)?.label}`}
             </p>
@@ -732,9 +699,18 @@ export default function AccountantProductManage() {
                     </tr>
                   );
                 })}
-                {paginated.length === 0 && (
+                {loading ? (
                   <tr>
-                    <td colSpan={9} className="py-24 text-center">
+                    <td colSpan={10} className="py-24 text-center">
+                      <div className="flex flex-col items-center justify-center text-gray-500">
+                        <div className="w-8 h-8 border-4 border-gray-200 border-t-[var(--brand-primary)] rounded-full animate-spin mb-4"></div>
+                        <p className="text-sm font-medium">Đang tải dữ liệu...</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : paginated.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="py-24 text-center">
                       <div
                         className="flex flex-col items-center gap-2"
                         style={{ color: "var(--text-placeholder)" }}
@@ -753,13 +729,13 @@ export default function AccountantProductManage() {
                       </div>
                     </td>
                   </tr>
-                )}
+                ) : null}
               </tbody>
             </table>
           </div>
 
           {/* Pagination */}
-          {filtered.length > 0 && (
+          {totalItems > 0 && (
             <div
               className="flex items-center justify-between px-6 py-3 border-t shrink-0"
               style={{
@@ -776,7 +752,7 @@ export default function AccountantProductManage() {
                   className="font-bold"
                   style={{ color: "var(--text-main)" }}
                 >
-                  {filtered.length}
+                  {totalItems}
                 </span>{" "}
                 sản phẩm
               </div>
@@ -820,7 +796,7 @@ export default function AccountantProductManage() {
                     style={{ color: "var(--text-main)" }}
                   >
                     {(currentPage - 1) * itemsPerPage + 1}–
-                    {Math.min(currentPage * itemsPerPage, filtered.length)}
+                    {Math.min(currentPage * itemsPerPage, totalItems)}
                   </span>{" "}
                   sản phẩm
                 </span>

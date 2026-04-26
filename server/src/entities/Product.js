@@ -57,6 +57,11 @@ const Product = sequelize.define(
       type: DataTypes.TINYINT,
       defaultValue: 0, // 1: Quà tặng, 0: Hàng bán bình thường
     },
+    product_type: {
+      type: DataTypes.STRING(20),
+      defaultValue: "FINISHED",
+      comment: "Loại SP: FINISHED, RAW, CUSTOM",
+    },
     warranty_months: {
       type: DataTypes.INTEGER,
     },
