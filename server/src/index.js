@@ -17,6 +17,7 @@ const customRequestRoutes = require("./routes/customRequest.routes");
 const employeeRoutes = require("./routes/employee.routes");
 const payrollRoutes = require("./routes/payroll.routes");
 const notificationRoutes = require("./routes/notification.routes");
+const inventoryRoutes = require("./routes/inventory.routes");
 const swaggerUi = require("swagger-ui-express");
 const swaggerJsDoc = require("swagger-jsdoc");
 
@@ -51,6 +52,7 @@ app.use("/api/custom-request", customRequestRoutes);
 app.use("/api/employee", employeeRoutes);
 app.use("/api/payroll", payrollRoutes);
 app.use("/api/notification", notificationRoutes);
+app.use("/api/inventory", inventoryRoutes);
 
 // ── Swagger ───────────────────────────────────────────────
 const SERVER_URL = process.env.SERVER_URL || "http://localhost:3000";
