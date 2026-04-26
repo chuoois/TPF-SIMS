@@ -119,6 +119,7 @@ class OrderController {
                                 item_status: 1, // 1: Sẵn sàng
                                 fk_order_item_id: null // Quan trọng: Chưa gán cho đơn hàng nào
                             },
+                            order: [["createdate", "ASC"]], // FIFO: Ưu tiên hàng nhập kho cũ nhất
                             limit: quantityNeeded,
                             transaction: t
                         });
