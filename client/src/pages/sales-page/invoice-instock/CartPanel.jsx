@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fmt } from "./mockData";
+import { fmt, PRODUCT_TYPES, DELIVERY_METHODS, calculateSuggestedDeposit, DEFAULT_WARRANTY } from "./mockData";
 
 export default function CartPanel({
   tabs,
@@ -50,54 +50,37 @@ export default function CartPanel({
   itemCount,
   totalPayable,
   handleCheckout,
+  formik,
 }) {
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const customerSearchRef = useRef(null);
 
-  // 3. Hook tính ngày giao dựa trên logic Xưởng
-  const capacityPerDay = 5;
-  const totalPending = 20;
+  // Tính subtotal trực tiếp từ formik để đảm bảo reactivity
+  const currentSubtotal = useMemo(() => {
+    return (formik.values.cartItems || []).reduce(
+      (sum, i) => sum + i.price * i.quantity,
+      0
+    );
+  }, [formik.values.cartItems]);
 
+  // Deposit logic using centralized business rules
+  const suggestedDepositInfo = useMemo(() => {
+    return calculateSuggestedDeposit(currentSubtotal);
+  }, [currentSubtotal]);
 
-
-  // Deposit logic
-  const suggestedDepositInfo = (() => {
-    if (!activeTab.cartItems || activeTab.cartItems.length === 0)
-      return { amount: 0, percentage: 0, reason: "", optional: true };
-
-    // Quy tắc đặt cọc mới cho Hàng mộc & Hàng sẵn:
-    // - Dưới 10 triệu: cọc 10%
-    // - Từ 10 triệu trở lên: cọc 30%
-    const threshold = 10000000;
-    const isHighValue = subtotal >= threshold;
-    const rate = isHighValue ? 0.3 : 0.1;
-
-    let total = subtotal * rate;
-
-    // Làm tròn đến hàng chục nghìn cho đẹp số
-    total = Math.round(total / 10000) * 10000;
-    total = Math.min(total, subtotal);
-
-    const reason = isHighValue
-      ? `Áp dụng cho đơn hàng từ 10 triệu đồng trở lên.`
-      : `Áp dụng cho đơn hàng dưới 10 triệu đồng.`;
-
-    return {
-      amount: total,
-      percentage: Math.round(rate * 100),
-      reason,
-      optional: false,
-    };
-  })();
-
-  const prevDepsRef = useRef({ subtotal, method: activeTab.deliveryMethod, date: activeTab.storePickupDate || activeTab.deliveryDate });
+  // Tự động cập nhật tiền cọc vào Formik - Tối ưu tránh vòng lặp vô hạn
   useEffect(() => {
-    const deps = { subtotal, method: activeTab.deliveryMethod, date: activeTab.storePickupDate || activeTab.deliveryDate };
-    if (JSON.stringify(prevDepsRef.current) !== JSON.stringify(deps)) {
-      updateActiveTab({ depositAmount: suggestedDepositInfo.amount });
-      prevDepsRef.current = deps;
+    if (
+      suggestedDepositInfo.amount >= 0 &&
+      formik.values.depositAmount !== suggestedDepositInfo.amount
+    ) {
+      formik.setFieldValue("depositAmount", suggestedDepositInfo.amount);
     }
-  }, [subtotal, activeTab.deliveryMethod, activeTab.storePickupDate, activeTab.deliveryDate, suggestedDepositInfo.amount]);
+  }, [suggestedDepositInfo.amount, formik.values.depositAmount, formik.setFieldValue]);
+
+
+
+
 
   return (
     <div
@@ -114,6 +97,7 @@ export default function CartPanel({
         {tabs.map((tab, idx) => (
           <button
             key={tab.id}
+            type="button"
             onClick={() => setActiveTabId(tab.id)}
             className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] whitespace-nowrap transition-all shrink-0 cursor-pointer ${tab.id === activeTabId ? "font-semibold" : "hover:bg-gray-50"
               }`}
@@ -154,6 +138,7 @@ export default function CartPanel({
         ))}
         <button
           onClick={addTab}
+          type="button"
           className="w-7 h-7 rounded-lg flex items-center justify-center transition shrink-0 cursor-pointer hover:bg-gray-50"
           style={{ color: "var(--text-placeholder)" }}
           title="Thêm hóa đơn mới"
@@ -163,18 +148,11 @@ export default function CartPanel({
 
         <button
           onClick={() => setShowWorkshopStatus(true)}
+          type="button"
           className="flex items-center gap-1.5 px-2.5 py-1.5 ml-auto rounded-lg text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 active:scale-95 shadow-sm"
         >
           <Hammer size={12} className="text-indigo-500" /> Check Xưởng
         </button>
-
-        <button
-          onClick={() => setShowAddCustomer(true)}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer bg-white border border-slate-200 text-[var(--brand-primary)] hover:bg-emerald-50 active:scale-95 shadow-sm ml-2"
-        >
-          <UserPlus size={12} className="text-[var(--brand-primary)]" /> Thêm khách
-        </button>
-
         {/* Order type switch — pushed to right */}
       </div>
 
@@ -201,7 +179,7 @@ export default function CartPanel({
           >
             {activeTab.cartItems.map((item, idx) => (
               <div
-                key={item.id}
+                key={item.cartItemId}
                 className="flex flex-col px-4 py-3 group hover:bg-gray-50/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
@@ -213,6 +191,22 @@ export default function CartPanel({
                     {idx + 1}
                   </span>
 
+                  {/* Product image */}
+                  <div className="w-12 h-12 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
+                    {item.image ? (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center">
+                        <ShoppingCart size={16} className="text-gray-300" />
+                        <span className="text-[8px] text-gray-400 font-bold uppercase mt-0.5">No Pix</span>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Product info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -222,8 +216,18 @@ export default function CartPanel({
                       >
                         {item.name}
                       </p>
+                      {item.productType === PRODUCT_TYPES.RAW && (
+                        <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-600 text-[10px] font-bold uppercase tracking-tight shrink-0">
+                          Mộc
+                        </span>
+                      )}
+                      {item.productType === PRODUCT_TYPES.INSTOCK && (
+                        <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-[10px] font-bold uppercase tracking-tight shrink-0 border border-blue-100">
+                          Sẵn
+                        </span>
+                      )}
                       {item.isGift && (
-                        <span className="px-1.5 py-0.5 rounded bg-orange-100 text-orange-600 text-[10px] font-bold uppercase tracking-tight">
+                        <span className="px-1.5 py-0.5 rounded bg-orange-100 text-orange-600 text-[10px] font-bold uppercase tracking-tight shrink-0">
                           Quà tặng
                         </span>
                       )}
@@ -247,7 +251,7 @@ export default function CartPanel({
                   {/* Quantity */}
                   <div className="flex items-center gap-0.5 shrink-0">
                     <button
-                      onClick={() => updateQuantity(item.id, -1)}
+                      onClick={() => updateQuantity(item.cartItemId, -1)}
                       className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100"
                       style={{
                         border: "1px solid var(--grid-border)",
@@ -259,7 +263,7 @@ export default function CartPanel({
                     <input
                       type="number"
                       value={item.quantity}
-                      onChange={(e) => setQuantity(item.id, e.target.value)}
+                      onChange={(e) => setQuantity(item.cartItemId, e.target.value)}
                       className="w-10 h-7 text-center text-[13px] font-semibold rounded-lg focus:outline-none focus:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       style={{
                         border: "1px solid var(--grid-border)",
@@ -267,7 +271,8 @@ export default function CartPanel({
                       }}
                     />
                     <button
-                      onClick={() => updateQuantity(item.id, 1)}
+                      type="button"
+                      onClick={() => updateQuantity(item.cartItemId, 1)}
                       className="w-7 h-7 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100"
                       style={{
                         border: "1px solid var(--grid-border)",
@@ -288,7 +293,8 @@ export default function CartPanel({
 
                   {/* Delete */}
                   <button
-                    onClick={() => removeFromCart(item.id)}
+                    type="button"
+                    onClick={() => removeFromCart(item.cartItemId)}
                     className="w-7 h-7 rounded-lg items-center justify-center transition cursor-pointer opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 hidden group-hover:flex shrink-0"
                     style={{ color: "var(--text-placeholder)" }}
                   >
@@ -308,7 +314,7 @@ export default function CartPanel({
                       type="text"
                       placeholder="Ghi chú..."
                       value={item.note || ""}
-                      onChange={(e) => updateItemNote(item.id, e.target.value)}
+                      onChange={(e) => updateItemNote(item.cartItemId, e.target.value)}
                       className="text-[12px] italic focus:outline-none bg-transparent w-full"
                       style={{ color: "var(--text-secondary)" }}
                     />
@@ -322,14 +328,14 @@ export default function CartPanel({
                         className="text-emerald-500 shrink-0"
                       />
                       <span className="text-[11px] font-semibold text-emerald-700">
-                        Bảo hành: {item.warrantyMonths || 12} tháng
+                        Bảo hành: {item.warrantyMonths || DEFAULT_WARRANTY} tháng
                       </span>
                     </div>
                   )}
                 </div>
 
                 {/* === Upload ảnh === */}
-                {item.productType === "Hàng mộc" && (
+                {item.productType === PRODUCT_TYPES.RAW && (
                   <div className="mt-2 pl-11 space-y-2">
                     {/* Dual pricing */}
 
@@ -350,7 +356,8 @@ export default function CartPanel({
                             className="w-full h-full object-cover"
                           />
                           <button
-                            onClick={() => removeItemImage(item.id, imgIdx)}
+                            type="button"
+                            onClick={() => removeItemImage(item.cartItemId, imgIdx)}
                             className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition cursor-pointer shadow"
                           >
                             <X size={10} />
@@ -367,7 +374,7 @@ export default function CartPanel({
                           onChange={(e) => {
                             if (e.target.files?.length) {
                               updateItemImages(
-                                item.id,
+                                item.cartItemId,
                                 Array.from(e.target.files),
                               );
                             }
@@ -398,26 +405,26 @@ export default function CartPanel({
           >
             <User
               size={14}
-              style={{ color: "var(--text-placeholder)" }}
+              style={{ color: formik.errors.selectedCustomer && formik.touched.selectedCustomer ? "var(--status-error)" : "var(--text-placeholder)" }}
               className="shrink-0"
             />
-            {activeTab.selectedCustomer ? (
+            {formik.values.selectedCustomer ? (
               <div className="flex items-center gap-1.5 flex-1 min-w-0">
                 <span
                   className="text-[13px] font-medium truncate"
                   style={{ color: "var(--brand-primary)" }}
                 >
-                  {activeTab.selectedCustomer.name}
+                  {formik.values.selectedCustomer.name}
                 </span>
                 <span
                   className="text-[11px] shrink-0"
                   style={{ color: "var(--text-placeholder)" }}
                 >
-                  {activeTab.selectedCustomer.phone}
+                  {formik.values.selectedCustomer.phone}
                 </span>
                 <button
                   onClick={() => {
-                    updateActiveTab({ selectedCustomer: null });
+                    formik.setFieldValue("selectedCustomer", null);
                     setCustomerSearch("");
                   }}
                   className="cursor-pointer shrink-0 ml-auto mr-1"
@@ -480,7 +487,7 @@ export default function CartPanel({
                         key={c.id}
                         onMouseDown={(e) => {
                           e.preventDefault();
-                          updateActiveTab({ selectedCustomer: c });
+                          formik.setFieldValue("selectedCustomer", c);
                           setCustomerSearch("");
                           setShowCustomerDropdown(false);
                         }}
@@ -547,8 +554,8 @@ export default function CartPanel({
             <input
               type="text"
               placeholder="Ghi chú..."
-              value={activeTab.orderNote}
-              onChange={(e) => updateActiveTab({ orderNote: e.target.value })}
+              value={formik.values.orderNote || ""}
+              onChange={(e) => formik.setFieldValue("orderNote", e.target.value)}
               className="flex-1 text-[13px] focus:outline-none bg-transparent"
               style={{ color: "var(--text-secondary)" }}
             />
@@ -577,10 +584,11 @@ export default function CartPanel({
                 type="radio"
                 name={`deliveryMethod-${activeTab.id}`}
                 value="store"
-                checked={activeTab.deliveryMethod === "store"}
+                checked={formik.values.deliveryMethod === DELIVERY_METHODS.STORE}
                 onChange={() =>
-                  updateActiveTab({
-                    deliveryMethod: "store",
+                  formik.setValues({
+                    ...formik.values,
+                    deliveryMethod: DELIVERY_METHODS.STORE,
                     deliveryDate: "",
                   })
                 }
@@ -598,10 +606,11 @@ export default function CartPanel({
                 type="radio"
                 name={`deliveryMethod-${activeTab.id}`}
                 value="delivery"
-                checked={activeTab.deliveryMethod === "delivery"}
+                checked={formik.values.deliveryMethod === DELIVERY_METHODS.DELIVERY}
                 onChange={() =>
-                  updateActiveTab({
-                    deliveryMethod: "delivery",
+                  formik.setValues({
+                    ...formik.values,
+                    deliveryMethod: DELIVERY_METHODS.DELIVERY,
                     storePickupDate: "",
                   })
                 }
@@ -617,7 +626,7 @@ export default function CartPanel({
           </div>
 
           {/* ── Lấy tại cửa hàng: date picker tùy chọn ── */}
-          {activeTab.deliveryMethod === "store" && (
+          {formik.values.deliveryMethod === DELIVERY_METHODS.STORE && (
             <div
               className="ml-1 pl-4 space-y-2"
               style={{ borderLeft: "2px solid var(--grid-border)" }}
@@ -637,12 +646,10 @@ export default function CartPanel({
                   />
                   <input
                     type="date"
-                    value={activeTab.storePickupDate || ""}
+                    value={formik.values.storePickupDate || ""}
                     min={new Date().toISOString().split("T")[0]}
                     onChange={(e) =>
-                      updateActiveTab({
-                        storePickupDate: e.target.value,
-                      })
+                      formik.setFieldValue("storePickupDate", e.target.value)
                     }
                     className="w-full text-[12.5px] pl-8 pr-2 py-1.5 focus:outline-none focus:ring-1 rounded-lg bg-white"
                     style={{
@@ -656,8 +663,8 @@ export default function CartPanel({
                 className="text-[11px] italic"
                 style={{ color: "var(--text-placeholder)" }}
               >
-                {activeTab.storePickupDate
-                  ? `Khách hẹn lấy tại cửa hàng ngày ${activeTab.storePickupDate.split("-").reverse().join("/")}`
+                {formik.values.storePickupDate
+                  ? `Khách hẹn lấy tại cửa hàng ngày ${formik.values.storePickupDate.split("-").reverse().join("/")}`
                   : "Để trống nếu khách lấy ngay tại cửa hàng"}
               </p>
 
@@ -665,7 +672,7 @@ export default function CartPanel({
           )}
 
           {/* ── Giao tận nơi — date picker ── */}
-          {activeTab.deliveryMethod === "delivery" && (
+          {formik.values.deliveryMethod === DELIVERY_METHODS.DELIVERY && (
             <div className="flex items-center gap-2 mt-1">
               <span
                 className="text-[13px] shrink-0"
@@ -681,19 +688,23 @@ export default function CartPanel({
                 />
                 <input
                   type="date"
-                  value={activeTab.deliveryDate || ""}
+                  value={formik.values.deliveryDate || ""}
                   min={new Date().toISOString().split("T")[0]}
                   onChange={(e) =>
-                    updateActiveTab({ deliveryDate: e.target.value })
+                    formik.setFieldValue("deliveryDate", e.target.value)
                   }
-                  className="w-full text-[13px] pl-8 pr-2 py-1.5 focus:outline-none focus:ring-1 rounded-lg bg-white"
+                  className={`w-full text-[13px] pl-8 pr-2 py-1.5 focus:outline-none focus:ring-1 rounded-lg bg-white ${formik.errors.deliveryDate && formik.touched.deliveryDate ? "border-red-400 ring-1 ring-red-400" : ""}`}
                   style={{
-                    border: "1px solid var(--grid-border)",
+                    border: formik.errors.deliveryDate && formik.touched.deliveryDate ? "1px solid #f87171" : "1px solid var(--grid-border)",
                     color: "var(--text-main)",
                   }}
                 />
               </div>
-
+              {formik.errors.deliveryDate && formik.touched.deliveryDate && (
+                <p className="text-[10px] text-red-500 font-medium ml-2 mt-1 flex items-center gap-1">
+                  <AlertCircle size={10} /> {formik.errors.deliveryDate}
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -714,10 +725,10 @@ export default function CartPanel({
                 style={{ color: "var(--text-secondary)" }}
               >
                 <CreditCard size={12} className="inline mr-1.5" />
-                Tiền đặt cọc
-                {subtotal > 0 && activeTab.depositAmount > 0 && (
+                Tiền đặt cọc (Hệ thống tự tính)
+                {currentSubtotal > 0 && formik.values.depositAmount > 0 && (
                   <span className="ml-2 text-[10px] font-bold text-[var(--brand-primary)] bg-[var(--brand-primary)]/10 px-1.5 py-0.5 rounded">
-                    ({Math.round((activeTab.depositAmount / subtotal) * 100)}%)
+                    ({Math.round((formik.values.depositAmount / currentSubtotal) * 100)}%)
                   </span>
                 )}
               </span>
@@ -730,32 +741,24 @@ export default function CartPanel({
                 </span>
                 <input
                   type="text"
+                  readOnly
                   value={
-                    activeTab.depositAmount
-                      ? fmt(activeTab.depositAmount)
-                      : ""
+                    formik.values.depositAmount
+                      ? fmt(formik.values.depositAmount)
+                      : "0"
                   }
-                  onChange={(e) => {
-                    const raw = e.target.value.replace(/\D/g, "");
-                    updateActiveTab({
-                      depositAmount: parseInt(raw) || 0,
-                    });
-                  }}
-                  placeholder="0"
-                  className={`w-28 text-right text-[13px] font-medium rounded-lg px-2 py-1 focus:outline-none focus:ring-1 bg-white ${activeTab.depositAmount < suggestedDepositInfo.amount ? "border-amber-400 ring-1 ring-amber-400 focus:ring-amber-500" : ""
-                    }`}
+                  className="w-28 text-right text-[13px] font-bold rounded-lg px-2 py-1 focus:outline-none bg-gray-50 border border-gray-200 cursor-not-allowed"
                   style={{
-                    border: activeTab.depositAmount < suggestedDepositInfo.amount ? "1px solid #fbbf24" : "1px solid var(--grid-border)",
-                    color: "var(--text-main)",
+                    color: "var(--brand-primary)",
                   }}
                 />
               </div>
             </div>
-            {/* Quy tắc đặt cọc được áp dụng tự động dựa trên giá trị đơn hàng */}
-            {subtotal > 0 && activeTab.depositAmount < suggestedDepositInfo.amount && (
+            {/* Thông báo về quy tắc đặt cọc */}
+            {currentSubtotal > 0 && (
               <div className="mt-2 text-right">
-                <p className="text-[10px] font-bold text-amber-600 animate-pulse">
-                  ⚠️ Mức cọc quy định tối thiểu là {fmt(suggestedDepositInfo.amount)}đ
+                <p className="text-[10px] font-medium text-gray-500">
+                  {suggestedDepositInfo.reason} (Tự động tính {suggestedDepositInfo.percentage}%)
                 </p>
               </div>
             )}
@@ -779,6 +782,7 @@ export default function CartPanel({
             </p>
           </div>
           <Button
+            type="button"
             className="h-11 px-8 text-sm font-bold text-white rounded-lg transition-all duration-200 active:scale-[0.97] cursor-pointer disabled:opacity-40"
             style={{
               backgroundColor: "var(--brand-primary)",
