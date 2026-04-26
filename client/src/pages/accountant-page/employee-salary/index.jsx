@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import CreatePeriodModal from "./CreatePeriodModal";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -12,8 +12,10 @@ import { toast } from "react-hot-toast";
 import EmployeeModal from "./EmployeeModal";
 import AdjustmentModal from "./AdjustmentModal";
 
-import { cn } from "@/lib/utils"; // Assuming cn utility is available
+import { cn } from "@/lib/utils";
 import * as XLSX from "xlsx";
+import payrollService from "@/services/payroll.service";
+import employeeService from "@/services/employee.service";
 
 /**
  * Accountant Employee Salary
@@ -21,9 +23,6 @@ import * as XLSX from "xlsx";
  */
 
 const formatCurrency = (n) => n != null ? new Intl.NumberFormat("vi-VN").format(n) + "₫" : "—";
-
-import { MOCK_EMPLOYEES as IMPORTED_MOCK_EMPLOYEES, MOCK_PERIODS } from "../mockData";
-const MOCK_EMPLOYEES = IMPORTED_MOCK_EMPLOYEES;
 
 const getRoleIcon = (type) => {
     switch (type) {
@@ -35,32 +34,16 @@ const getRoleIcon = (type) => {
     }
 };
 
-const calculateTotalSalary = (emp) => {
-    let total = 0;
-    if (["SALES", "ACCOUNTANT", "SANDER", "PAINTER"].includes(emp.type)) {
-        total = (emp.base_rate * emp.days_worked);
-        if (emp.adjustments) {
-            total += emp.adjustments.reduce((sum, adj) => sum + adj.amount, 0);
-        }
-    }
-    return total;
-};
-
 export default function AccountantEmployeeSalary() {
-    const [employees, setEmployees] = useState(MOCK_EMPLOYEES);
-    const [periods, setPeriods] = useState(MOCK_PERIODS);
+    const [records, setRecords] = useState([]);
+    const [periods, setPeriods] = useState([]);
     const [search, setSearch] = useState("");
     const [roleFilter, setRoleFilter] = useState("ALL");
-    const [monthFilter, setMonthFilter] = useState("ALL");
+    const [selectedPeriodId, setSelectedPeriodId] = useState("");
+    const [loading, setLoading] = useState(true);
 
-    const currentPeriodObj = periods.find(p => p.period_month === monthFilter);
+    const currentPeriodObj = periods.find(p => p.period_id.toString() === selectedPeriodId);
     const isLocked = currentPeriodObj?.status === "LOCKED";
-
-    // Get unique months for filter
-    const uniqueMonths = useMemo(() => {
-        const months = employees.map(emp => emp.month);
-        return ["ALL", ...new Set(months)];
-    }, [employees]);
 
     // Employee modal
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -68,7 +51,6 @@ export default function AccountantEmployeeSalary() {
 
     // Delete
     const [employeeToDelete, setEmployeeToDelete] = useState(null);
-
 
     const [isPeriodModalOpen, setIsPeriodModalOpen] = useState(false);
     
@@ -82,43 +64,92 @@ export default function AccountantEmployeeSalary() {
     const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
     const [employeeForAdjustment, setEmployeeForAdjustment] = useState(null);
 
+    // Fetch periods on mount
+    useEffect(() => {
+        fetchPeriods();
+    }, []);
 
-    const handleCreatePeriod = (newPeriod) => {
-        // Lấy danh sách nhân viên duy nhất từ kỳ mới nhất (hoặc tất cả nếu chưa có)
-        const latestMonth = [...new Set(employees.map(e => e.month))]
-            .sort((a, b) => { const [m1,y1]=a.split("/"); const [m2,y2]=b.split("/"); return new Date(y2,m2-1)-new Date(y1,m1-1); })[0];
-        const sourceEntries = employees.filter(e => e.month === latestMonth);
-
-        const newEntries = sourceEntries.map(emp => ({
-            ...emp,
-            record_id: `${emp.id}_${newPeriod.replace("/", "-")}`, // khóa duy nhất per kỳ
-            month: newPeriod,
-            status: "Chưa thanh toán",
-            payment_date: "",
-            days_worked: 0,
-        }));
-
-        setEmployees(prev => [...prev, ...newEntries]);
-        setPeriods(prev => [...prev, { period_month: newPeriod, status: "DRAFT" }]);
-        setMonthFilter(newPeriod);
-        toast.success(`Đã tạo thành công kỳ lương ${newPeriod}`, { icon: "📅" });
-    };
-
-    const handleLockPeriod = () => {
-        if (monthFilter === "ALL" || isLocked) return;
-        if (window.confirm(`Bạn có chắc chắn muốn chốt lương kỳ ${monthFilter}? Sau khi chốt sẽ không thể chỉnh sửa.`)) {
-            setPeriods(prev => prev.map(p => p.period_month === monthFilter ? { ...p, status: "LOCKED" } : p));
-            toast.success(`Đã chốt kỳ lương ${monthFilter}`, { icon: "🔒" });
+    const fetchPeriods = async () => {
+        try {
+            const res = await payrollService.getAllPeriods();
+            const data = res.data || [];
+            setPeriods(data);
+            if (data.length > 0 && !selectedPeriodId) {
+                setSelectedPeriodId(data[0].period_id.toString());
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Lỗi khi tải danh sách kỳ lương");
         }
     };
 
-    const filteredEmployees = useMemo(() => {
-        let r = employees;
+    // Fetch records when selectedPeriodId changes
+    useEffect(() => {
+        if (selectedPeriodId) {
+            fetchRecords(selectedPeriodId);
+        } else {
+            setRecords([]);
+        }
+    }, [selectedPeriodId]);
+
+    const fetchRecords = async (periodId) => {
+        setLoading(true);
+        try {
+            const res = await payrollService.getPeriodById(periodId);
+            const rawRecords = res.data.records || [];
+            const mappedRecords = rawRecords.map(r => ({
+                record_id: r.record_id,
+                id: r.employee.employee_code,
+                employee_id: r.employee.employee_id,
+                name: r.employee.full_name,
+                role: r.employee.role_name,
+                type: r.employee.role_type,
+                base_rate: r.base_rate_snapshot,
+                days_worked: Number(r.days_worked),
+                overtime_hours: Number(r.overtime_hours),
+                month: res.data.period_month,
+                status: r.status === "PAID" ? "Đã thanh toán" : "Chưa thanh toán",
+                payment_date: r.payment_date,
+                adjustments: r.adjustments || [],
+                total_salary: r.total_salary
+            }));
+            setRecords(mappedRecords);
+        } catch (error) {
+            console.error(error);
+            toast.error("Lỗi khi tải bản ghi lương");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCreatePeriod = async (newPeriod) => {
+        try {
+            await payrollService.createPeriod({ period_month: newPeriod });
+            toast.success(`Đã tạo thành công kỳ lương ${newPeriod}`, { icon: "📅" });
+            fetchPeriods();
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Lỗi khi tạo kỳ lương");
+        }
+    };
+
+    const handleLockPeriod = async () => {
+        if (!selectedPeriodId || isLocked) return;
+        if (window.confirm(`Bạn có chắc chắn muốn chốt lương kỳ ${currentPeriodObj?.period_month}? Sau khi chốt sẽ không thể chỉnh sửa.`)) {
+            try {
+                await payrollService.lockPeriod(selectedPeriodId);
+                toast.success(`Đã chốt kỳ lương`, { icon: "🔒" });
+                fetchPeriods();
+                fetchRecords(selectedPeriodId);
+            } catch (err) {
+                toast.error(err.response?.data?.message || "Lỗi khi chốt lương");
+            }
+        }
+    };
+
+    const filteredRecords = useMemo(() => {
+        let r = records;
         if (roleFilter !== "ALL") {
             r = r.filter(emp => emp.type === roleFilter);
-        }
-        if (monthFilter !== "ALL") {
-            r = r.filter(emp => emp.month === monthFilter);
         }
         if (search.trim()) {
             const q = search.toLowerCase();
@@ -129,46 +160,60 @@ export default function AccountantEmployeeSalary() {
             );
         }
         return r;
-    }, [employees, search, roleFilter, monthFilter]);
+    }, [records, search, roleFilter]);
 
-    const handleSaveEmployee = (empData) => {
-        if (employeeToEdit) {
-            // Chỉ cập nhật đúng bản ghi của kỳ đang xem (theo record_id)
-            const rid = employeeToEdit.record_id || employeeToEdit.id;
-            setEmployees(prev => prev.map(e =>
-                (e.record_id || e.id) === rid ? { ...empData, record_id: rid } : e
-            ));
-            toast.success("Cập nhật thông tin nhân viên thành công!", { style: { fontSize: "14px", fontWeight: "bold" } });
-        } else {
-            const newRecord = {
-                ...empData,
-                record_id: `${empData.id}_${empData.month.replace("/", "-")}`,
-            };
-            setEmployees(prev => [newRecord, ...prev]);
-            toast.success("Thêm nhân viên mới thành công!", { style: { fontSize: "14px", fontWeight: "bold" } });
+    const handleSaveEmployee = async (empData) => {
+        try {
+            if (employeeToEdit) {
+                // Edit existing record
+                await payrollService.updateRecord(employeeToEdit.record_id, {
+                    days_worked: empData.days_worked
+                });
+                toast.success("Cập nhật ngày công thành công!");
+            } else {
+                // Add new employee globally then to period
+                const res = await employeeService.createEmployee({
+                    employee_code: empData.id,
+                    full_name: empData.name,
+                    role_name: empData.role,
+                    role_type: empData.type,
+                    base_rate: empData.base_rate
+                });
+                await payrollService.addRecordToPeriod(selectedPeriodId, res.data.employee_id);
+                toast.success("Thêm nhân viên mới thành công!");
+            }
+            setIsModalOpen(false);
+            setEmployeeToEdit(null);
+            fetchRecords(selectedPeriodId);
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Lỗi hệ thống");
         }
-        setIsModalOpen(false);
-        setEmployeeToEdit(null);
     };
 
-    const handleDeleteEmployee = () => {
+    const handleDeleteEmployee = async () => {
         if (!employeeToDelete) return;
-        // Chỉ xóa bản ghi của kỳ này, không xóa các kỳ khác
-        const rid = employeeToDelete.record_id || employeeToDelete.id;
-        setEmployees(prev => prev.filter(e => (e.record_id || e.id) !== rid));
-        toast.success(`Đã xóa ${employeeToDelete.name} khỏi kỳ ${employeeToDelete.month}`, { style: { fontSize: "14px", fontWeight: "bold" } });
-        setEmployeeToDelete(null);
+        try {
+            await payrollService.deleteRecord(employeeToDelete.record_id);
+            toast.success(`Đã xóa ${employeeToDelete.name} khỏi kỳ lương`);
+            setEmployeeToDelete(null);
+            fetchRecords(selectedPeriodId);
+        } catch(err) {
+            toast.error(err.response?.data?.message || "Lỗi khi xóa");
+        }
     };
 
-    const handleToggleStatus = (recordId) => {
-        const emp = employees.find(e => (e.record_id || e.id) === recordId);
+    const handleToggleStatus = async (recordId) => {
+        const emp = records.find(e => e.record_id === recordId);
         if (!emp) return;
 
         if (emp.status === "Đã thanh toán") {
-            setEmployees(prev => prev.map(e =>
-                (e.record_id || e.id) === recordId ? { ...e, status: "Chưa thanh toán", payment_date: "" } : e
-            ));
-            toast.success(`🔄 Đã đổi trạng thái về Chưa thanh toán`, { style: { fontSize: "13px" } });
+            try {
+                await payrollService.unpayRecord(recordId);
+                toast.success(`🔄 Đã đổi trạng thái về Chưa thanh toán`);
+                fetchRecords(selectedPeriodId);
+            } catch(err) {
+                toast.error(err.response?.data?.message || "Lỗi khi đổi trạng thái");
+            }
         } else {
             setSelectedEmpForPayment(emp);
             setPaymentBill(null);
@@ -176,46 +221,56 @@ export default function AccountantEmployeeSalary() {
         }
     };
 
-    const handleConfirmPayment = () => {
+    const handleConfirmPayment = async () => {
         if (!selectedEmpForPayment) return;
-        if (!paymentBill) {
-            toast.error("Vui lòng tải lên ảnh bill chuyển khoản trước khi xác nhận!", { style: { fontSize: "14px", fontWeight: "bold" } });
-            return;
+        try {
+            await payrollService.payRecord(selectedEmpForPayment.record_id);
+            toast.success(`✅ Đã xác nhận thanh toán cho ${selectedEmpForPayment.name}`);
+            setIsPaymentModalOpen(false);
+            setSelectedEmpForPayment(null);
+            setPaymentBill(null);
+            fetchRecords(selectedPeriodId);
+        } catch(err) {
+            toast.error(err.response?.data?.message || "Lỗi khi thanh toán");
         }
-
-        const newPaymentDate = format(new Date(), "dd/MM/yyyy", { locale: vi });
-        const rid = selectedEmpForPayment.record_id || selectedEmpForPayment.id;
-
-        setEmployees(prev => prev.map(e =>
-            (e.record_id || e.id) === rid
-                ? { ...e, status: "Đã thanh toán", payment_date: newPaymentDate, payment_bill: paymentBill }
-                : e
-        ));
-
-        toast.success(`✅ Đã xác nhận thanh toán cho ${selectedEmpForPayment.name}`, {
-            style: { fontSize: "14px", fontWeight: "bold" }
-        });
-        
-        setIsPaymentModalOpen(false);
-        setSelectedEmpForPayment(null);
-        setPaymentBill(null);
     };
 
+    const handleSaveAdjustments = async (newAdjustments) => {
+        if (!employeeForAdjustment) return;
+        try {
+            const originalAdjustments = employeeForAdjustment.adjustments || [];
+            const deleted = originalAdjustments.filter(o => !newAdjustments.find(n => n.adjustment_id === o.adjustment_id));
+            const added = newAdjustments.filter(n => !n.adjustment_id);
+            
+            for (const adj of deleted) {
+                await payrollService.deleteAdjustment(adj.adjustment_id);
+            }
+            for (const adj of added) {
+                await payrollService.addAdjustment(employeeForAdjustment.record_id, {
+                    type: adj.type,
+                    description: adj.description,
+                    amount: adj.amount
+                });
+            }
+            toast.success("Cập nhật thưởng/phạt thành công!");
+            setIsAdjustmentModalOpen(false);
+            setEmployeeForAdjustment(null);
+            fetchRecords(selectedPeriodId);
+        } catch(err) {
+            toast.error(err.response?.data?.message || "Lỗi khi cập nhật thưởng/phạt");
+        }
+    };
 
     const handleExportExcel = () => {
-        if (filteredEmployees.length === 0) {
-            toast.error("Không có dữ liệu để xuất!", { style: { fontSize: "14px" } });
+        if (filteredRecords.length === 0) {
+            toast.error("Không có dữ liệu để xuất!");
             return;
         }
 
-        const exportData = filteredEmployees.map(emp => {
-            const totalSalary = calculateTotalSalary(emp);
-            let calcFormula = "";
-            let specData = "";
-            if (["SALES", "ACCOUNTANT", "SANDER", "PAINTER"].includes(emp.type)) {
-                calcFormula = `${formatCurrency(emp.base_rate)} / ngày`;
-                specData = `${emp.days_worked} ngày công`;
-            }
+        const exportData = filteredRecords.map(emp => {
+            let calcFormula = `${formatCurrency(emp.base_rate)} / ngày`;
+            let specData = `${emp.days_worked} ngày công`;
+            const totalAdjustments = emp.adjustments.reduce((s, a) => s + a.amount, 0);
 
             return {
                 "Mã Nhân Viên": emp.id,
@@ -224,8 +279,8 @@ export default function AccountantEmployeeSalary() {
                 "Kỳ Lương": emp.month,
                 "Cách Tính / Đơn Giá": calcFormula,
                 "Thông Số Công": specData,
-                "Phụ Cấp / Thưởng (VND)": emp.allowance,
-                "Tổng Lương (VND)": totalSalary,
+                "Phụ Cấp / Thưởng (VND)": totalAdjustments,
+                "Tổng Lương (VND)": emp.total_salary,
                 "Trạng Thái": emp.status,
                 "Ngày Thanh Toán": emp.payment_date || "-"
             };
@@ -235,38 +290,29 @@ export default function AccountantEmployeeSalary() {
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Bảng Lương");
 
-        // Set column widths
         const wscols = [
-            { wch: 15 }, // Mã NV
-            { wch: 25 }, // Họ Tên
-            { wch: 20 }, // Bộ Phận
-            { wch: 12 }, // Kỳ Lương
-            { wch: 25 }, // Cách Tính
-            { wch: 18 }, // Thông Số
-            { wch: 20 }, // Phụ Cấp
-            { wch: 20 }, // Tổng Lương
-            { wch: 15 }, // Trạng Thái
-            { wch: 15 }  // Ngày TT
+            { wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 12 }, { wch: 25 }, 
+            { wch: 18 }, { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 15 }
         ];
         worksheet["!cols"] = wscols;
 
-        const fileName = `Bang-Luong-Nhan-Vien-${monthFilter === "ALL" ? "Tong-Hop" : monthFilter.replace("/", "-")}-${format(new Date(), "dd-MM-yyyy")}.xlsx`;
+        const fileName = `Bang-Luong-Nhan-Vien-${currentPeriodObj?.period_month?.replace("/", "-") || "Kỳ"}-${format(new Date(), "dd-MM-yyyy")}.xlsx`;
         XLSX.writeFile(workbook, fileName);
         toast.success("Đã xuất file excel thành công!", { icon: "📊" });
     };
 
     // Footer stats
     const totals = useMemo(() => {
-        const all = filteredEmployees;
+        const all = filteredRecords;
         const unpaid = all.filter(e => e.status === "Chưa thanh toán");
         const paid = all.filter(e => e.status === "Đã thanh toán");
         return {
-            total: all.reduce((s, e) => s + calculateTotalSalary(e), 0),
-            unpaid: unpaid.reduce((s, e) => s + calculateTotalSalary(e), 0),
-            paid: paid.reduce((s, e) => s + calculateTotalSalary(e), 0),
+            total: all.reduce((s, e) => s + e.total_salary, 0),
+            unpaid: unpaid.reduce((s, e) => s + e.total_salary, 0),
+            paid: paid.reduce((s, e) => s + e.total_salary, 0),
             count: all.length,
         };
-    }, [filteredEmployees]);
+    }, [filteredRecords]);
 
     const TH = ({ children, right, center }) => (
         <th className={`px-4 py-3 text-[11px] font-bold uppercase tracking-wider ${right ? "text-right" : center ? "text-center" : ""}`}
@@ -290,7 +336,6 @@ export default function AccountantEmployeeSalary() {
                         </p>
                     </div>
 
-                    {/* Summary chips */}
                     <div className="flex items-center gap-3">
                         <div className="px-4 py-2 rounded-xl bg-amber-50 border border-amber-100 text-center min-w-[120px]">
                             <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Tổng quỹ lương</p>
@@ -310,15 +355,8 @@ export default function AccountantEmployeeSalary() {
                                 {formatCurrency(totals.unpaid)}
                             </p>
                         </div>
-                        <div className="w-px h-8 bg-gray-200 mx-1" />
-                        <div className="flex items-center gap-2 text-[13px] font-semibold px-3 py-1.5 rounded-lg"
-                            style={{ backgroundColor: "var(--bg-card, #f5f5f5)", color: "var(--text-secondary)" }}>
-                            <Calendar size={14} />
-                            Kỳ lương: {monthFilter === "ALL" ? "Tất cả" : monthFilter}
-                        </div>
                     </div>
                 </div>
-
 
                 {/* ── Table card ── */}
                 <div className="flex flex-col bg-white rounded-2xl flex-1 overflow-hidden" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
@@ -331,7 +369,7 @@ export default function AccountantEmployeeSalary() {
                                 <CalendarPlus size={16} />
                                 Tạo kỳ lương mới
                             </button>
-                            {monthFilter !== "ALL" && (
+                            {selectedPeriodId && (
                                 <button onClick={handleLockPeriod} disabled={isLocked}
                                     className={cn(
                                         "h-9 px-4 rounded-lg text-white text-[13px] font-bold flex items-center gap-2 transition whitespace-nowrap",
@@ -341,11 +379,11 @@ export default function AccountantEmployeeSalary() {
                                     {isLocked ? "Đã chốt lương" : "Chốt lương"}
                                 </button>
                             )}
-                            <button onClick={() => { setEmployeeToEdit(null); setIsModalOpen(true); }} disabled={isLocked}
+                            <button onClick={() => { setEmployeeToEdit(null); setIsModalOpen(true); }} disabled={isLocked || !selectedPeriodId}
                                 className={cn("h-9 px-3.5 rounded-lg flex items-center gap-1.5 text-[13px] font-bold transition shrink-0",
-                                    isLocked ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "cursor-pointer hover:opacity-90"
+                                    (isLocked || !selectedPeriodId) ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "cursor-pointer hover:opacity-90"
                                 )}
-                                style={isLocked ? {} : { backgroundColor: "var(--brand-primary)", color: "#fff" }}>
+                                style={(isLocked || !selectedPeriodId) ? {} : { backgroundColor: "var(--brand-primary)", color: "#fff" }}>
                                 <Plus size={15} strokeWidth={2.5} /> Thêm nhân viên
                             </button>
                             <div className="relative w-full max-w-sm">
@@ -362,16 +400,11 @@ export default function AccountantEmployeeSalary() {
                             </div>
                         </div>
 
-                        <select value={monthFilter} onChange={e => setMonthFilter(e.target.value)}
-                            className="h-9 px-3 rounded-lg text-[13px] outline-none cursor-pointer shrink-0"
-                            style={{ border: "1px solid var(--grid-border)", color: "var(--text-main)", backgroundColor: "#fff" }}>
-                            <option value="ALL">Tất cả các tháng</option>
-                            {uniqueMonths.filter(m => m !== "ALL").sort((a, b) => {
-                                const [m1, y1] = a.split("/");
-                                const [m2, y2] = b.split("/");
-                                return new Date(y2, m2 - 1) - new Date(y1, m1 - 1);
-                            }).map(m => (
-                                <option key={m} value={m}>Tháng {m}</option>
+                        <select value={selectedPeriodId} onChange={e => setSelectedPeriodId(e.target.value)}
+                            className="h-9 px-3 rounded-lg text-[13px] outline-none cursor-pointer shrink-0 font-bold text-blue-700 bg-blue-50 border-blue-200"
+                            style={{ border: "1px solid var(--grid-border)" }}>
+                            {periods.map(p => (
+                                <option key={p.period_id} value={p.period_id}>Kỳ tháng {p.period_month}</option>
                             ))}
                         </select>
 
@@ -410,138 +443,127 @@ export default function AccountantEmployeeSalary() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredEmployees.map((emp) => {
-                                    const totalSalary = calculateTotalSalary(emp);
-                                    let calcFormula = "";
-                                    let specData = "";
-                                    if (["SALES", "ACCOUNTANT", "SANDER", "PAINTER"].includes(emp.type)) {
-                                        calcFormula = `${formatCurrency(emp.base_rate)} / ngày`;
-                                        specData = `${emp.days_worked} ngày`;
-                                    }
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan={11} className="py-24 text-center">
+                                            <div className="animate-pulse flex flex-col items-center gap-2 text-gray-500">
+                                                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                                <p className="text-sm font-medium mt-2">Đang tải dữ liệu...</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : filteredRecords.map((emp) => {
+                                    let calcFormula = `${formatCurrency(emp.base_rate)} / ngày`;
+                                    let specData = `${emp.days_worked} ngày`;
 
                                     const totalAdjustments = (emp.adjustments || []).reduce((s, a) => s + a.amount, 0);
 
                                     return (
-                                        <>
-                                            <tr key={emp.id} className="group relative hover:bg-gray-50/50 transition-colors"
-                                                style={{ borderBottom: "1px solid var(--grid-border)" }}>
+                                        <tr key={emp.record_id} className="group relative hover:bg-gray-50/50 transition-colors"
+                                            style={{ borderBottom: "1px solid var(--grid-border)" }}>
 
-                                                <td className="px-4 py-3">
-                                                    <span className="text-[12px] font-bold font-mono px-2 py-1 rounded"
-                                                        style={{ backgroundColor: "var(--bg-main)", color: "var(--text-main)", border: "1px solid var(--grid-border)" }}>
-                                                        {emp.id}
+                                            <td className="px-4 py-3">
+                                                <span className="text-[12px] font-bold font-mono px-2 py-1 rounded"
+                                                    style={{ backgroundColor: "var(--bg-main)", color: "var(--text-main)", border: "1px solid var(--grid-border)" }}>
+                                                    {emp.id}
+                                                </span>
+                                            </td>
+
+                                            <td className="px-4 py-3">
+                                                <p className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>{emp.name}</p>
+                                            </td>
+
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center gap-1.5 text-[12px] font-medium" style={{ color: "var(--text-secondary)" }}>
+                                                    {getRoleIcon(emp.type)}
+                                                    {emp.role}
+                                                </div>
+                                            </td>
+
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center gap-1 text-[12px]" style={{ color: "var(--text-placeholder)" }}>
+                                                    <Calendar size={13} /> {emp.month}
+                                                </div>
+                                            </td>
+
+                                            <td className="px-4 py-3 text-right">
+                                                <span className="text-[13px]" style={{ color: "var(--text-secondary)" }}>{calcFormula}</span>
+                                            </td>
+
+                                            <td className="px-4 py-3 text-right">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <span className="text-[13px] font-semibold" style={{ color: "var(--brand-primary)" }}>{specData}</span>
+                                                </div>
+                                            </td>
+
+                                            <td className="px-4 py-3 text-right">
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <span className={cn(
+                                                        "text-[13px] font-bold",
+                                                        totalAdjustments > 0 ? "text-green-600" : totalAdjustments < 0 ? "text-red-600" : "text-gray-400"
+                                                    )}>
+                                                        {totalAdjustments > 0 ? `+${formatCurrency(totalAdjustments)}` : totalAdjustments < 0 ? formatCurrency(totalAdjustments) : "—"}
                                                     </span>
-                                                </td>
-
-                                                <td className="px-4 py-3">
-                                                    <p className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>{emp.name}</p>
-                                                </td>
-
-                                                <td className="px-4 py-3">
-                                                    <div className="flex items-center gap-1.5 text-[12px] font-medium" style={{ color: "var(--text-secondary)" }}>
-                                                        {getRoleIcon(emp.type)}
-                                                        {emp.role}
-                                                    </div>
-                                                </td>
-
-                                                <td className="px-4 py-3">
-                                                    <div className="flex items-center gap-1 text-[12px]" style={{ color: "var(--text-placeholder)" }}>
-                                                        <Calendar size={13} /> {emp.month}
-                                                    </div>
-                                                </td>
-
-                                                <td className="px-4 py-3 text-right">
-                                                    <span className="text-[13px]" style={{ color: "var(--text-secondary)" }}>{calcFormula}</span>
-                                                </td>
-
-                                                <td className="px-4 py-3 text-right">
-                                                    <div className="flex items-center justify-end gap-1">
-                                                        <span className="text-[13px] font-semibold" style={{ color: "var(--brand-primary)" }}>{specData}</span>
-                                                    </div>
-                                                </td>
-
-                                                <td className="px-4 py-3 text-right">
-                                                    <div className="flex flex-col items-end gap-1">
-                                                        <span className={cn(
-                                                            "text-[13px] font-bold",
-                                                            totalAdjustments > 0 ? "text-green-600" : totalAdjustments < 0 ? "text-red-600" : "text-gray-400"
-                                                        )}>
-                                                            {totalAdjustments > 0 ? `+${formatCurrency(totalAdjustments)}` : totalAdjustments < 0 ? formatCurrency(totalAdjustments) : "—"}
-                                                        </span>
-                                                        <button 
-                                                            onClick={() => { setEmployeeForAdjustment(emp); setIsAdjustmentModalOpen(true); }}
-                                                            className="text-[11px] text-blue-600 hover:underline cursor-pointer">
-                                                            Chi tiết
-                                                        </button>
-                                                    </div>
-                                                </td>
-
-                                                <td className="px-4 py-3 text-right">
-                                                    <span className="text-[14px] font-bold text-amber-600">{formatCurrency(totalSalary)}</span>
-                                                </td>
-
-                                                {/* Clickable status badge */}
-                                                <td className="px-4 py-3 text-center">
-                                                    <button onClick={() => !isLocked && handleToggleStatus(emp.record_id || emp.id)}
-                                                        disabled={isLocked}
-                                                        className={cn(
-                                                            "inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold rounded-md border transition",
-                                                            isLocked ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:opacity-80",
-                                                            emp.status === "Đã thanh toán"
-                                                                ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
-                                                                : "bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
-                                                        )}>
-                                                        {emp.status === "Đã thanh toán"
-                                                            ? <CheckCircle2 size={11} />
-                                                            : <Clock size={11} />}
-                                                        {emp.status}
+                                                    <button 
+                                                        onClick={() => { setEmployeeForAdjustment(emp); setIsAdjustmentModalOpen(true); }}
+                                                        className="text-[11px] text-blue-600 hover:underline cursor-pointer">
+                                                        Chi tiết
                                                     </button>
-                                                </td>
+                                                </div>
+                                            </td>
 
-                                                <td className="px-4 py-3 text-center text-[12px] font-medium text-gray-600">
-                                                    <div className="flex items-center justify-center gap-1.5">
-                                                        {emp.payment_date || "-"}
-                                                        {emp.payment_bill && (
-                                                            <button 
-                                                                onClick={() => setViewBillImage(emp.payment_bill)}
-                                                                className="text-blue-500 hover:text-blue-700 transition"
-                                                                title="Xem bill chuyển khoản">
-                                                                <ImageIcon size={14} />
-                                                            </button>
+                                            <td className="px-4 py-3 text-right">
+                                                <span className="text-[14px] font-bold text-amber-600">{formatCurrency(emp.total_salary)}</span>
+                                            </td>
+
+                                            <td className="px-4 py-3 text-center">
+                                                <button onClick={() => !isLocked && handleToggleStatus(emp.record_id)}
+                                                    disabled={isLocked}
+                                                    className={cn(
+                                                        "inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold rounded-md border transition",
+                                                        isLocked ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:opacity-80",
+                                                        emp.status === "Đã thanh toán"
+                                                            ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                                                            : "bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+                                                    )}>
+                                                    {emp.status === "Đã thanh toán" ? <CheckCircle2 size={11} /> : <Clock size={11} />}
+                                                    {emp.status}
+                                                </button>
+                                            </td>
+
+                                            <td className="px-4 py-3 text-center text-[12px] font-medium text-gray-600">
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    {emp.payment_date ? format(new Date(emp.payment_date), "dd/MM/yyyy") : "-"}
+                                                </div>
+                                            </td>
+
+                                            <td className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                                <div className="flex gap-1 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-gray-100">
+                                                    <button 
+                                                        onClick={() => !isLocked && (setEmployeeToEdit(emp), setIsModalOpen(true))}
+                                                        disabled={isLocked}
+                                                        className={cn("h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[12px] font-bold transition",
+                                                            isLocked ? "cursor-not-allowed text-gray-400" : "hover:bg-blue-50 cursor-pointer",
                                                         )}
-                                                    </div>
-                                                </td>
-
-                                                {/* Hover action */}
-                                                <td className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                                    <div className="flex gap-1 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-gray-100">
-                                                        <button 
-                                                            onClick={() => !isLocked && (setEmployeeToEdit(emp), setIsModalOpen(true))}
-                                                            disabled={isLocked}
-                                                            className={cn("h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[12px] font-bold transition",
-                                                                isLocked ? "cursor-not-allowed text-gray-400" : "hover:bg-blue-50 cursor-pointer",
-                                                            )}
-                                                            style={isLocked ? {} : { color: "var(--brand-primary)" }}>
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22h6" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
-                                                            Sửa
-                                                        </button>
-                                                        <button 
-                                                            onClick={() => !isLocked && setEmployeeToDelete(emp)}
-                                                            disabled={isLocked}
-                                                            className={cn("h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[12px] font-bold transition",
-                                                                isLocked ? "cursor-not-allowed text-gray-400" : "cursor-pointer text-red-600 hover:bg-red-50"
-                                                            )}>
-                                                            <Trash2 size={14} /> Xóa
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-
-                                        </>
+                                                        style={isLocked ? {} : { color: "var(--brand-primary)" }}>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22h6" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
+                                                        Sửa
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => !isLocked && setEmployeeToDelete(emp)}
+                                                        disabled={isLocked}
+                                                        className={cn("h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[12px] font-bold transition",
+                                                            isLocked ? "cursor-not-allowed text-gray-400" : "cursor-pointer text-red-600 hover:bg-red-50"
+                                                        )}>
+                                                        <Trash2 size={14} /> Xóa
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
                                     );
                                 })}
 
-                                {filteredEmployees.length === 0 && (
+                                {(!loading && filteredRecords.length === 0) && (
                                     <tr>
                                         <td colSpan={11} className="py-24 text-center">
                                             <div className="flex flex-col items-center gap-2" style={{ color: "var(--text-placeholder)" }}>
@@ -560,14 +582,12 @@ export default function AccountantEmployeeSalary() {
                 </div>
             </div>
 
-            {/* Create Period Modal */}
             <CreatePeriodModal
                 isOpen={isPeriodModalOpen}
                 onClose={() => setIsPeriodModalOpen(false)}
                 onCreate={handleCreatePeriod}
             />
 
-            {/* Employee Add/Edit Modal */}
             <EmployeeModal
                 isOpen={isModalOpen}
                 onClose={() => { setIsModalOpen(false); setEmployeeToEdit(null); }}
@@ -575,24 +595,14 @@ export default function AccountantEmployeeSalary() {
                 employeeToEdit={employeeToEdit}
             />
 
-            {/* Adjustment Modal */}
             <AdjustmentModal 
                 isOpen={isAdjustmentModalOpen}
                 onClose={() => { setIsAdjustmentModalOpen(false); setEmployeeForAdjustment(null); }}
                 employee={employeeForAdjustment}
                 isLocked={isLocked}
-                onSave={(newAdjustments) => {
-                    setEmployees(prev => prev.map(e => 
-                        (e.record_id || e.id) === (employeeForAdjustment.record_id || employeeForAdjustment.id) 
-                            ? { ...e, adjustments: newAdjustments } 
-                            : e
-                    ));
-                    setIsAdjustmentModalOpen(false);
-                    setEmployeeForAdjustment(null);
-                }}
+                onSave={handleSaveAdjustments}
             />
 
-            {/* Confirm Delete Modal */}
             {employeeToDelete && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setEmployeeToDelete(null)}>
                     <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
@@ -600,9 +610,9 @@ export default function AccountantEmployeeSalary() {
                             <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
                                 <Trash2 size={24} className="text-red-600" />
                             </div>
-                            <h2 className="text-xl font-black text-gray-900">Xóa nhân viên?</h2>
+                            <h2 className="text-xl font-black text-gray-900">Xóa bản ghi?</h2>
                             <p className="text-[13px] text-gray-500">
-                                Bạn có chắc chắn muốn xóa nhân viên <span className="font-bold text-gray-900">{employeeToDelete.name}</span> khỏi danh sách lương?
+                                Bạn có chắc chắn muốn xóa bản ghi lương của <span className="font-bold text-gray-900">{employeeToDelete.name}</span> khỏi kỳ này?
                                 Hành động này không thể hoàn tác.
                             </p>
                         </div>
@@ -613,13 +623,13 @@ export default function AccountantEmployeeSalary() {
                             </button>
                             <button onClick={handleDeleteEmployee}
                                 className="h-10 px-5 rounded-xl text-[13px] font-bold bg-red-600 cursor-pointer text-white hover:bg-red-700 transition">
-                                Có, xóa nhân viên
+                                Có, xóa
                             </button>
                         </div>
                     </div>
                 </div>
             )}
-            {/* Confirm Payment Modal */}
+            
             {isPaymentModalOpen && selectedEmpForPayment && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
                     onClick={() => setIsPaymentModalOpen(false)}>
@@ -659,9 +669,7 @@ export default function AccountantEmployeeSalary() {
                                 <div className="flex justify-between items-center text-[12px]">
                                     <span className="text-gray-500">Lương cơ bản / Đơn giá:</span>
                                     <span className="font-semibold text-gray-700">
-                                        {["PAINTER", "SANDER", "SALES", "ACCOUNTANT"].includes(selectedEmpForPayment.type)
-                                            ? formatCurrency(selectedEmpForPayment.base_rate)
-                                            : formatCurrency(selectedEmpForPayment.base_salary)}
+                                        {formatCurrency(selectedEmpForPayment.base_rate)}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center text-[12px]">
@@ -671,47 +679,16 @@ export default function AccountantEmployeeSalary() {
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center text-[12px]">
-                                    <span className="text-gray-500">Phụ cấp:</span>
-                                    <span className="font-semibold text-gray-700">{formatCurrency(selectedEmpForPayment.allowance)}</span>
+                                    <span className="text-gray-500">Phụ cấp/Thưởng:</span>
+                                    <span className="font-semibold text-gray-700">
+                                        {formatCurrency((selectedEmpForPayment.adjustments || []).reduce((s, a) => s + a.amount, 0))}
+                                    </span>
                                 </div>
                                 <div className="pt-2 border-t border-blue-200 flex justify-between items-center">
                                     <span className="text-[13px] font-black text-blue-700 uppercase tracking-wide">Tổng chi trả:</span>
                                     <span className="text-[18px] font-black text-blue-800">
-                                        {formatCurrency(calculateTotalSalary(selectedEmpForPayment))}
+                                        {formatCurrency(selectedEmpForPayment.total_salary)}
                                     </span>
-                                </div>
-                            </div>
-                            
-                            <div className="space-y-1.5 mt-2">
-                                <label className="text-[12px] font-bold text-gray-700 flex items-center gap-1">
-                                    Ảnh bill chuyển khoản <span className="text-red-500">*</span>
-                                </label>
-                                <div className="border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 transition relative overflow-hidden"
-                                    style={{ borderColor: paymentBill ? "var(--brand-primary)" : "var(--grid-border)", minHeight: "100px" }}>
-                                    {paymentBill ? (
-                                        <div className="flex items-center gap-2">
-                                            <ImageIcon size={24} className="text-blue-500" />
-                                            <span className="text-[12px] font-medium text-blue-700 line-clamp-1 max-w-[200px]">bill_chuyen_khoan.jpg</span>
-                                            <button onClick={(e) => { e.stopPropagation(); setPaymentBill(null); }} className="p-1 hover:bg-blue-100 rounded-full text-blue-700 cursor-pointer">
-                                                <X size={14} />
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <UploadCloud size={24} className="text-gray-400 mb-2" />
-                                            <p className="text-[12px] font-medium text-gray-600">Nhấn để tải lên ảnh bill</p>
-                                            <p className="text-[10px] text-gray-400 mt-0.5">Hỗ trợ JPG, PNG</p>
-                                            <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                                                onChange={(e) => {
-                                                    const file = e.target.files[0];
-                                                    if (file) {
-                                                        const reader = new FileReader();
-                                                        reader.onloadend = () => setPaymentBill(reader.result);
-                                                        reader.readAsDataURL(file);
-                                                    }
-                                                }} />
-                                        </>
-                                    )}
                                 </div>
                             </div>
                         </div>
@@ -728,19 +705,6 @@ export default function AccountantEmployeeSalary() {
                                 Xác nhận thanh toán
                             </button>
                         </div>
-                    </div>
-                </div>
-            )}
-            {/* View Bill Modal */}
-            {viewBillImage && (
-                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-                    onClick={() => setViewBillImage(null)}>
-                    <div className="relative max-w-3xl w-full flex flex-col items-center" onClick={e => e.stopPropagation()}>
-                        <button onClick={() => setViewBillImage(null)}
-                            className="absolute -top-10 right-0 p-2 text-white/70 hover:text-white transition cursor-pointer">
-                            <X size={24} />
-                        </button>
-                        <img src={viewBillImage} alt="Bill chuyển khoản" className="max-w-full max-h-[85vh] rounded-lg shadow-2xl object-contain bg-white" />
                     </div>
                 </div>
             )}

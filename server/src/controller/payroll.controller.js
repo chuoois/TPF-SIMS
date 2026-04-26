@@ -244,6 +244,88 @@ class PayrollController {
   // ══════════════════════════════════════════════════════════
 
   /**
+   * POST /api/payroll/periods/:id/records
+   * Thêm một nhân viên vào kỳ lương đã tồn tại (dành cho nhân viên mới vào)
+   */
+  async addRecordToPeriod(req, res) {
+    try {
+      const { id } = req.params; // period_id
+      const { fk_employee_id } = req.body;
+
+      if (!fk_employee_id) {
+        return res.status(400).json({ message: "Vui lòng chọn nhân viên" });
+      }
+
+      const period = await PayrollPeriod.findByPk(id);
+      if (!period) {
+        return res.status(404).json({ message: "Không tìm thấy kỳ lương" });
+      }
+
+      assertPeriodUnlocked(period);
+
+      // Kiểm tra nhân viên đã có trong kỳ này chưa
+      const existing = await SalaryRecord.findOne({
+        where: { fk_period_id: id, fk_employee_id },
+      });
+      if (existing) {
+        return res.status(400).json({ message: "Nhân viên này đã có trong bảng lương của kỳ này" });
+      }
+
+      const employee = await Employee.findByPk(fk_employee_id);
+      if (!employee) {
+        return res.status(404).json({ message: "Không tìm thấy thông tin nhân viên" });
+      }
+
+      const record = await SalaryRecord.create({
+        fk_period_id: id,
+        fk_employee_id,
+        base_rate_snapshot: employee.base_rate,
+        days_worked: 0,
+        overtime_hours: 0,
+        status: "PENDING",
+        createdate: new Date(),
+      });
+
+      return res.status(201).json({
+        message: "Đã thêm nhân viên vào kỳ lương thành công",
+        data: record,
+      });
+    } catch (error) {
+      if (error.status === 403) return res.status(403).json({ message: error.message });
+      console.error("Add record to period error:", error);
+      return res.status(500).json({ message: "Lỗi hệ thống khi thêm nhân viên vào kỳ lương" });
+    }
+  }
+
+  /**
+   * DELETE /api/payroll/records/:id
+   * Xóa 1 bản ghi lương (khi nhân viên không làm ngày nào trong kỳ)
+   */
+  async deleteRecord(req, res) {
+    try {
+      const { id } = req.params; // record_id
+
+      const record = await SalaryRecord.findByPk(id, {
+        include: [{ model: PayrollPeriod, as: "period" }],
+      });
+
+      if (!record) {
+        return res.status(404).json({ message: "Không tìm thấy bản ghi lương" });
+      }
+
+      assertPeriodUnlocked(record.period);
+
+      await record.destroy();
+
+      return res.status(200).json({ message: "Đã xóa bản ghi lương khỏi kỳ này thành công" });
+    } catch (error) {
+      if (error.status === 403) return res.status(403).json({ message: error.message });
+      console.error("Delete record error:", error);
+      return res.status(500).json({ message: "Lỗi hệ thống khi xóa bản ghi lương" });
+    }
+  }
+
+  /**
    * PATCH /api/payroll/records/:id
    * Cập nhật ngày công / OT cho 1 bản ghi lương
    * Body: { days_worked?, overtime_hours? }
