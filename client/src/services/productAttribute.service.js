@@ -10,10 +10,23 @@ import axiosInstance from "@/lib/axios";
 const productAttributeService = {
   /**
    * Lấy tất cả thuộc tính (Danh mục, Màu sắc, Chất liệu, Phòng)
+   * @param {string} search - Từ khóa tìm kiếm chung
    * @returns {Promise<Object>}
    */
-  async getAllAttributes() {
-    const response = await axiosInstance.get("/product-attribute/all");
+  async getAllAttributes(search = "") {
+    const response = await axiosInstance.get("/product-attribute/all", {
+      params: { search },
+    });
+    return response.data;
+  },
+
+  /**
+   * Lấy danh sách thuộc tính phân trang theo loại
+   */
+  async getAttributeList(type, params = { search: "", page: 1, limit: 10 }) {
+    const response = await axiosInstance.get("/product-attribute/all", {
+      params: { ...params, type },
+    });
     return response.data;
   },
 
@@ -46,6 +59,22 @@ const productAttributeService = {
    */
   async syncRoom(name) {
     const response = await axiosInstance.post("/product-attribute/room/sync", { name });
+    return response.data;
+  },
+
+  /**
+   * Xóa thuộc tính
+   */
+  async deleteAttribute(type, id) {
+    const response = await axiosInstance.delete(`/product-attribute/${type}/${id}`);
+    return response.data;
+  },
+
+  /**
+   * Lưu thuộc tính (Thêm mới hoặc Cập nhật)
+   */
+  async saveAttribute(type, data) {
+    const response = await axiosInstance.post(`/product-attribute/${type}/save`, data);
     return response.data;
   },
 };

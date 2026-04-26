@@ -3,11 +3,11 @@ import {
   Plus,
   Pencil,
   X,
-  LayoutGrid,
+  Layout,
+  Settings2,
   Trash2,
   Check,
   Loader2,
-  AlertTriangle,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import productAttributeService from "@/services/productAttribute.service";
@@ -16,11 +16,11 @@ import DataTable from "@/components/control/DataTable";
 import ConfirmModal from "@/components/control/ConfirmModal";
 
 /**
- * CategoriesPage Component
- * Managed products categories page using standardized control components.
+ * RoomsPage Component
+ * Managed products rooms/areas page using standardized interface.
  */
-const CategoriesPage = () => {
-  const [categories, setCategories] = useState([]);
+const RoomsPage = () => {
+  const [rooms, setRooms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [total, setTotal] = useState(0);
@@ -38,18 +38,18 @@ const CategoriesPage = () => {
     item: null,
   });
 
-  const fetchCategories = async () => {
+  const fetchRooms = async () => {
     setIsLoading(true);
     try {
-      const result = await productAttributeService.getAttributeList("category", {
+      const result = await productAttributeService.getAttributeList("room", {
         search: searchTerm,
         page: currentPage,
         limit: itemsPerPage,
       });
-      setCategories(result.data);
+      setRooms(result.data);
       setTotal(result.total);
     } catch (error) {
-      toast.error("Không thể tải danh sách danh mục");
+      toast.error("Không thể tải danh sách phòng/khu vực");
     } finally {
       setIsLoading(false);
     }
@@ -57,15 +57,15 @@ const CategoriesPage = () => {
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      fetchCategories();
+      fetchRooms();
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm, currentPage, itemsPerPage]);
 
-  const handleOpenModal = (mode, category = null) => {
-    setModal({ isOpen: true, mode, data: category });
-    setInputValue(category ? category.category_name : "");
+  const handleOpenModal = (mode, room = null) => {
+    setModal({ isOpen: true, mode, data: room });
+    setInputValue(room ? room.room_name : "");
   };
 
   const closeModal = () => {
@@ -73,9 +73,9 @@ const CategoriesPage = () => {
     setInputValue("");
   };
 
-  const handleSaveCategory = async () => {
+  const handleSaveRoom = async () => {
     if (!inputValue.trim()) {
-      return toast.error("Vui lòng nhập tên danh mục!");
+      return toast.error("Vui lòng nhập tên phòng/khu vực!");
     }
 
     const loadingToast = toast.loading(
@@ -84,21 +84,21 @@ const CategoriesPage = () => {
     try {
       const data = { name: inputValue.trim() };
       if (modal.mode === "edit" && modal.data) {
-        data.id = modal.data.pk_product_category_id;
+        data.id = modal.data.pk_product_room_id;
       }
 
-      await productAttributeService.saveAttribute("category", data);
-      
+      await productAttributeService.saveAttribute("room", data);
+
       toast.success(
         modal.mode === "add"
-          ? "Đã thêm danh mục mới!"
-          : "Đã cập nhật tên danh mục!",
+          ? "Đã thêm phòng/khu vực mới!"
+          : "Đã cập nhật phòng/khu vực!",
         { id: loadingToast },
       );
-      fetchCategories();
+      fetchRooms();
       closeModal();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Lỗi khi lưu danh mục", {
+      toast.error(error.response?.data?.message || "Lỗi khi lưu dữ liệu", {
         id: loadingToast,
       });
     }
@@ -108,18 +108,18 @@ const CategoriesPage = () => {
     setDeleteConfirm({ isOpen: true, item });
   };
 
-  const handleDeleteCategory = async () => {
+  const handleDeleteRoom = async () => {
     const { item } = deleteConfirm;
     if (!item) return;
 
-    const loadingToast = toast.loading("Đang xóa danh mục...");
+    const loadingToast = toast.loading("Đang xóa dữ liệu...");
     try {
-      await productAttributeService.deleteAttribute("category", item.id);
-      toast.success("Đã xóa danh mục thành công", { id: loadingToast });
-      fetchCategories();
+      await productAttributeService.deleteAttribute("room", item.id);
+      toast.success("Đã xóa thành công", { id: loadingToast });
+      fetchRooms();
       setDeleteConfirm({ isOpen: false, item: null });
     } catch (error) {
-      toast.error(error.response?.data?.message || "Lỗi khi xóa danh mục", {
+      toast.error(error.response?.data?.message || "Lỗi khi xóa dữ liệu", {
         id: loadingToast,
       });
     }
@@ -127,11 +127,11 @@ const CategoriesPage = () => {
 
   // Data mapping for DataTable
   const tableData = useMemo(() => {
-    return categories.map((c) => ({
-      id: c.pk_product_category_id,
-      name: c.category_name,
+    return rooms.map((r) => ({
+      id: r.pk_product_room_id,
+      name: r.room_name,
     }));
-  }, [categories]);
+  }, [rooms]);
 
   const columns = [
     {
@@ -141,13 +141,11 @@ const CategoriesPage = () => {
       render: (_, i) => (currentPage - 1) * itemsPerPage + i + 1,
     },
     {
-      header: "Tên danh mục",
+      header: "Tên phòng / Khu vực",
       render: (row) => (
-        <div className="flex items-center gap-2">
-          <LayoutGrid size={14} className="text-[var(--brand-primary)]" />
-          <span className="font-bold text-gray-900 text-[14px]">
-            {row.name}
-          </span>
+        <div className="flex items-center gap-2 font-bold text-gray-700">
+          <Layout size={14} className="text-indigo-600" />
+          {row.name}
         </div>
       ),
     },
@@ -155,7 +153,7 @@ const CategoriesPage = () => {
 
   return (
     <>
-      <PageHelmet title="Quản lý danh mục | TPF-SIMS" />
+      <PageHelmet title="Quản lý phòng/khu vực | TPF-SIMS" />
 
       <div className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 space-y-4 bg-[var(--bg-main)]">
         {/* HEADER */}
@@ -165,24 +163,24 @@ const CategoriesPage = () => {
               className="text-xl font-bold flex items-center gap-2"
               style={{ color: "var(--text-main)" }}
             >
-              <LayoutGrid size={22} style={{ color: "var(--brand-primary)" }} />
-              Quản lý danh mục sản phẩm
+              <Settings2 size={22} style={{ color: "var(--brand-primary)" }} />
+              Quản lý Phòng / Khu vực sản phẩm
             </h1>
             <p className="text-[13px] mt-0.5 text-gray-400">
-              Tổng số {total} nhóm sản phẩm chính hiện có
+              Tổng số {total} loại không gian đang được áp dụng cho sản phẩm
             </p>
           </div>
           <button
             onClick={() => handleOpenModal("add")}
-            className="h-10 px-6 rounded-xl flex items-center gap-2 text-[13px] font-bold transition-all hover:opacity-90 shadow-sm active:scale-95 text-white"
+            className="h-10 px-6 rounded-lg flex items-center gap-2 text-[13px] font-bold transition-all hover:opacity-90 shadow-sm active:scale-95 text-white"
             style={{ backgroundColor: "var(--brand-primary)" }}
           >
-            <Plus size={18} /> Thêm danh mục mới
+            <Plus size={18} /> Thêm không gian mới
           </button>
         </div>
 
         {/* DATA TABLE */}
-        {isLoading && categories.length === 0 ? (
+        {isLoading && rooms.length === 0 ? (
           <div className="flex-1 flex items-center justify-center">
             <Loader2 className="w-8 h-8 animate-spin text-[var(--brand-primary)]" />
           </div>
@@ -195,7 +193,7 @@ const CategoriesPage = () => {
               setSearchTerm(val);
               setCurrentPage(1);
             }}
-            searchPlaceholder="Tìm kiếm tên danh mục..."
+            searchPlaceholder="Tìm kiếm tên phòng, khu vực..."
             selectedIds={selectedIds}
             setSelectedIds={setSelectedIds}
             rowActions={[
@@ -203,15 +201,15 @@ const CategoriesPage = () => {
                 icon: Pencil,
                 label: "Sửa tên",
                 onClick: (row) => {
-                  const original = categories.find(
-                    (c) => c.pk_product_category_id === row.id,
+                  const original = rooms.find(
+                    (r) => r.pk_product_room_id === row.id,
                   );
                   handleOpenModal("edit", original);
                 },
               },
               {
                 icon: Trash2,
-                label: "Xóa danh mục",
+                label: "Xóa",
                 onClick: (row) => handleConfirmDelete(row),
                 className: "text-red-500 hover:bg-red-50",
               },
@@ -238,8 +236,8 @@ const CategoriesPage = () => {
             <div className="px-6 py-4 border-b flex items-center justify-between bg-gray-50/50">
               <h3 className="text-[16px] font-bold text-gray-900">
                 {modal.mode === "add"
-                  ? "Thêm danh mục mới"
-                  : "Sửa tên danh mục"}
+                  ? "Thêm phòng/khu vực mới"
+                  : "Sửa phòng/khu vực"}
               </h3>
               <button
                 onClick={closeModal}
@@ -250,16 +248,16 @@ const CategoriesPage = () => {
             </div>
             <div className="p-6">
               <label className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2 block">
-                Tên danh mục <span className="text-red-500">*</span>
+                Tên phòng / Khu vực <span className="text-red-500">*</span>
               </label>
               <input
                 autoFocus
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="VD: Phòng khách hiện đại..."
+                placeholder="VD: Phòng khách, Phòng ngủ, Sân vườn..."
                 className="w-full h-11 px-4 rounded-lg border border-gray-200 focus:border-[var(--brand-primary)] focus:ring-1 focus:ring-[var(--brand-primary)] outline-none text-[15px] font-medium transition-all"
-                onKeyDown={(e) => e.key === "Enter" && handleSaveCategory()}
+                onKeyDown={(e) => e.key === "Enter" && handleSaveRoom()}
               />
             </div>
             <div className="px-6 py-4 border-t bg-gray-50/50 flex items-center justify-end gap-3">
@@ -270,7 +268,7 @@ const CategoriesPage = () => {
                 Hủy bỏ
               </button>
               <button
-                onClick={handleSaveCategory}
+                onClick={handleSaveRoom}
                 className="px-6 py-2.5 rounded-lg text-[13px] font-bold text-white transition-all shadow-sm flex items-center gap-2 hover:opacity-90 active:scale-95"
                 style={{ backgroundColor: "var(--brand-primary)" }}
               >
@@ -285,15 +283,15 @@ const CategoriesPage = () => {
       {/* CONFIRM DELETE MODAL */}
       <ConfirmModal
         isOpen={deleteConfirm.isOpen}
-        title="Xác nhận xóa danh mục"
-        message={`Bạn có chắc chắn muốn xóa danh mục "${deleteConfirm.item?.name}" không? Thao tác này sẽ ẩn danh mục khỏi các danh sách lựa chọn.`}
+        title="Xác nhận xóa"
+        message={`Bạn có chắc chắn muốn xóa "${deleteConfirm.item?.name}" không? Thao tác này sẽ xóa vĩnh viễn khỏi hệ thống.`}
         onCancel={() => setDeleteConfirm({ isOpen: false, item: null })}
-        onConfirm={handleDeleteCategory}
-        confirmLabel="Xóa danh mục"
+        onConfirm={handleDeleteRoom}
+        confirmLabel="Xóa vĩnh viễn"
         confirmVariant="danger"
       />
     </>
   );
 };
 
-export default CategoriesPage;
+export default RoomsPage;

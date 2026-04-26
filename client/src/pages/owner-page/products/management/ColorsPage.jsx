@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Plus,
   Pencil,
@@ -7,9 +7,11 @@ import {
   Settings2,
   Trash2,
   Check,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
-import { COLORS as INITIAL_COLORS } from "../constants";
+import productAttributeService from "@/services/productAttribute.service";
 import toast from "react-hot-toast";
 import DataTable from "@/components/control/DataTable";
 import ConfirmModal from "@/components/control/ConfirmModal";
@@ -19,15 +21,52 @@ import ConfirmModal from "@/components/control/ConfirmModal";
  * Managed products colors page using standardized control components.
  */
 const ColorsPage = () => {
-  const [colors, setColors] = useState(INITIAL_COLORS);
+  const [colors, setColors] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [total, setTotal] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [selectedIds, setSelectedIds] = useState([]);
-  const [modal, setModal] = useState({ isOpen: false, mode: "add", data: null });
+  const [modal, setModal] = useState({
+    isOpen: false,
+    mode: "add",
+    data: null,
+  });
   const [inputValue, setInputValue] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState({
+    isOpen: false,
+    item: null,
+  });
+
+  const fetchColors = async () => {
+    setIsLoading(true);
+    try {
+      const result = await productAttributeService.getAttributeList("color", {
+        search: searchTerm,
+        page: currentPage,
+        limit: itemsPerPage,
+      });
+      setColors(result.data);
+      setTotal(result.total);
+    } catch (error) {
+      toast.error("Không thể tải danh sách màu sắc");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchColors();
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm, currentPage, itemsPerPage]);
 
   const handleOpenModal = (mode, color = null) => {
     setModal({ isOpen: true, mode, data: color });
-    setInputValue(color || "");
+    setInputValue(color ? color.color_name : "");
   };
 
   const closeModal = () => {
@@ -35,60 +74,70 @@ const ColorsPage = () => {
     setInputValue("");
   };
 
-  const handleSaveColor = () => {
+  const handleSaveColor = async () => {
     if (!inputValue.trim()) {
       return toast.error("Vui lòng nhập tên màu sắc!");
     }
 
-    if (modal.mode === "add") {
-      if (colors.includes(inputValue.trim())) {
-        return toast.error("Màu sắc này đã tồn tại!");
+    const loadingToast = toast.loading(
+      modal.mode === "add" ? "Đang thêm..." : "Đang cập nhật...",
+    );
+    try {
+      const data = { name: inputValue.trim() };
+      if (modal.mode === "edit" && modal.data) {
+        data.id = modal.data.pk_product_color_id;
       }
-      setColors([...colors, inputValue.trim()]);
-      toast.success("Đã thêm màu mới!");
-    } else {
-      if (inputValue.trim() === modal.data) {
-        return closeModal();
-      }
-      setColors(
-        colors.map((c) => (c === modal.data ? inputValue.trim() : c)),
+
+      await productAttributeService.saveAttribute("color", data);
+
+      toast.success(
+        modal.mode === "add" ? "Đã thêm màu mới!" : "Đã cập nhật màu sắc!",
+        { id: loadingToast },
       );
-      toast.success("Đã cập nhật màu sắc!");
+      fetchColors();
+      closeModal();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Lỗi khi lưu màu sắc", {
+        id: loadingToast,
+      });
     }
-    closeModal();
   };
 
-  const handleDelete = (name) => {
-    setColors(colors.filter((c) => c !== name));
-    toast.success(`Đã xóa màu "${name}"!`);
+  const handleConfirmDelete = (item) => {
+    setDeleteConfirm({ isOpen: true, item });
   };
 
-  const handleBulkDelete = () => {
-    setColors(colors.filter((c) => !selectedIds.includes(c)));
-    setSelectedIds([]);
-    toast.success(`Đã xóa ${selectedIds.length} màu sắc đã chọn!`);
+  const handleDeleteColor = async () => {
+    const { item } = deleteConfirm;
+    if (!item) return;
+
+    const loadingToast = toast.loading("Đang xóa màu sắc...");
+    try {
+      await productAttributeService.deleteAttribute("color", item.id);
+      toast.success("Đã xóa màu sắc thành công", { id: loadingToast });
+      fetchColors();
+      setDeleteConfirm({ isOpen: false, item: null });
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Lỗi khi xóa màu sắc", {
+        id: loadingToast,
+      });
+    }
   };
 
-  const filteredColors = useMemo(() => {
-    const q = searchTerm.toLowerCase().trim();
-    if (!q) return colors;
-    return colors.filter((c) => c.toLowerCase().includes(q));
-  }, [colors, searchTerm]);
-
-  // Data mapping for DataTable (since we only have an array of strings)
+  // Data mapping for DataTable
   const tableData = useMemo(() => {
-    return filteredColors.map((c) => ({
-      id: c, // using name as ID for selection logic
-      name: c,
+    return colors.map((c) => ({
+      id: c.pk_product_color_id,
+      name: c.color_name,
     }));
-  }, [filteredColors]);
+  }, [colors]);
 
   const columns = [
     {
       header: "STT",
       headerClassName: "w-[80px] text-center",
       className: "text-center font-medium text-gray-400",
-      render: (_, i) => i + 1,
+      render: (_, i) => (currentPage - 1) * itemsPerPage + i + 1,
     },
     {
       header: "Tên màu sắc",
@@ -117,7 +166,7 @@ const ColorsPage = () => {
               Quản lý bảng màu sắc
             </h1>
             <p className="text-[13px] mt-0.5 text-gray-400">
-              {colors.length} màu sắc đang được sử dụng để hoàn thiện sản phẩm
+              Tổng số {total} màu sắc đang được sử dụng để hoàn thiện sản phẩm
             </p>
           </div>
           <button
@@ -130,42 +179,49 @@ const ColorsPage = () => {
         </div>
 
         {/* DATA TABLE */}
-        <DataTable
-          columns={columns}
-          data={tableData}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          searchPlaceholder="Tìm kiếm tên màu sắc..."
-          selectedIds={selectedIds}
-          setSelectedIds={setSelectedIds}
-          rowActions={[
-            {
-              icon: Pencil,
-              label: "Sửa tên",
-              onClick: (row) => handleOpenModal("edit", row.name),
-            },
-            {
-              icon: Trash2,
-              label: "Xóa",
-              onClick: (row) => handleDelete(row.name),
-              requireConfirm: true,
-              confirmTitle: "Xác nhận xóa màu sắc?",
-              confirmMessage:
-                "Bạn có chắc muốn xóa màu sắc này? Các sản phẩm sử dụng màu này có thể bị ảnh hưởng.",
-              className: "text-red-500 hover:bg-red-50 hover:border-red-100",
-            },
-          ]}
-          bulkActions={[
-            {
-              label: "XÓA HÀNG LOẠT",
-              icon: Trash2,
-              onClick: handleBulkDelete,
-              requireConfirm: true,
-              confirmTitle: "Xóa hàng loạt màu sắc?",
-              confirmMessage: `Bạn có chắc chắn muốn xóa ${selectedIds.length} màu sắc đã chọn không? Hành động này không thể hoàn tác.`,
-            },
-          ]}
-        />
+        {isLoading && colors.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-[var(--brand-primary)]" />
+          </div>
+        ) : (
+          <DataTable
+            columns={columns}
+            data={tableData}
+            searchTerm={searchTerm}
+            setSearchTerm={(val) => {
+              setSearchTerm(val);
+              setCurrentPage(1);
+            }}
+            searchPlaceholder="Tìm kiếm tên màu sắc..."
+            selectedIds={selectedIds}
+            setSelectedIds={setSelectedIds}
+            rowActions={[
+              {
+                icon: Pencil,
+                label: "Sửa tên",
+                onClick: (row) => {
+                  const original = colors.find(
+                    (c) => c.pk_product_color_id === row.id,
+                  );
+                  handleOpenModal("edit", original);
+                },
+              },
+              {
+                icon: Trash2,
+                label: "Xóa màu sắc",
+                onClick: (row) => handleConfirmDelete(row),
+                className: "text-red-500 hover:bg-red-50",
+              },
+            ]}
+            pagination={{
+              total,
+              currentPage,
+              setCurrentPage,
+              itemsPerPage,
+              setItemsPerPage,
+            }}
+          />
+        )}
       </div>
 
       {/* ADD/EDIT MODAL */}
@@ -220,6 +276,17 @@ const ColorsPage = () => {
           </div>
         </div>
       )}
+
+      {/* CONFIRM DELETE MODAL */}
+      <ConfirmModal
+        isOpen={deleteConfirm.isOpen}
+        title="Xác nhận xóa màu sắc"
+        message={`Bạn có chắc chắn muốn xóa màu sắc "${deleteConfirm.item?.name}" không? Thao tác này sẽ ẩn màu sắc khỏi các danh sách lựa chọn.`}
+        onCancel={() => setDeleteConfirm({ isOpen: false, item: null })}
+        onConfirm={handleDeleteColor}
+        confirmLabel="Xóa màu sắc"
+        confirmVariant="danger"
+      />
     </>
   );
 };

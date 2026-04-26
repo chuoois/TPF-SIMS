@@ -41,16 +41,14 @@ const menuItems = [
     text: "Sản phẩm",
     icon: Package,
     path: "/owner/products",
-    subItems: [
-      { text: "Hàng hóa", path: "/owner/products", exactMatch: true },
-      { text: "Danh mục sản phẩm", path: "/owner/products/categories" },
-    ],
+    subItems: [{ text: "Hàng hóa", path: "/owner/products", exactMatch: true }],
     settingsGroup: {
       text: "Thiết lập",
       path: "/owner/products/properties",
       items: [
+        { text: "Danh mục sản phẩm", path: "/owner/products/properties/categories" },
         { text: "Màu sắc", path: "/owner/products/properties/colors" },
-        { text: "Đơn vị", path: "/owner/products/properties/units" },
+        { text: "Phòng / Khu vực", path: "/owner/products/properties/rooms" },
         { text: "Chất liệu", path: "/owner/products/properties/materials" },
       ],
     },

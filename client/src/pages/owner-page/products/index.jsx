@@ -15,7 +15,7 @@ import toast from "react-hot-toast";
 import DataTable from "@/components/control/DataTable";
 import ConfirmModal from "@/components/control/ConfirmModal";
 import ProductModal from "./ProductModal";
-import { CATEGORIES } from "./constants";
+import productAttributeService from "@/services/productAttribute.service";
 
 const INITIAL_PRODUCTS = [
   {
@@ -322,6 +322,26 @@ export default function OwnerProducts() {
   const [statusFilter, setStatusFilter] = useState("Tất cả");
   const [categoryFilter, setCategoryFilter] = useState("Tất cả");
   const [productTypeFilter, setProductTypeFilter] = useState("Tất cả");
+
+  const [metadata, setMetadata] = useState({
+    categories: [],
+    colors: [],
+    materials: [],
+    rooms: [],
+  });
+
+  // Fetch metadata
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      try {
+        const data = await productAttributeService.getAllAttributes();
+        setMetadata(data);
+      } catch (error) {
+        console.error("Failed to fetch metadata", error);
+      }
+    };
+    fetchMetadata();
+  }, []);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -635,6 +655,7 @@ export default function OwnerProducts() {
           closeModal();
           handleConfirmDelete(item);
         }}
+        metadata={metadata}
       />
 
       <div
@@ -856,9 +877,9 @@ export default function OwnerProducts() {
                   }}
                 >
                   <option value="Tất cả">Danh mục sản phẩm</option>
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
+                  {(metadata.categories || []).map((c) => (
+                    <option key={c.category_name} value={c.category_name}>
+                      {c.category_name}
                     </option>
                   ))}
                 </select>

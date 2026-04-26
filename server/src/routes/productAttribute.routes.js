@@ -109,4 +109,55 @@ router.post("/material/sync", productAttributeController.syncMaterial);
  */
 router.post("/room/sync", productAttributeController.syncRoom);
 
+/**
+ * @swagger
+ * /api/product-attribute/{type}/save:
+ *   post:
+ *     summary: Lưu thuộc tính (Thêm mới hoặc Cập nhật)
+ *     tags: [ProductAttributes]
+ *     parameters:
+ *       - in: path
+ *         name: type
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [category, color, material, room]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: integer
+ *               name:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Trả về thuộc tính đã lưu
+ */
+router.post("/:type/save", productAttributeController.saveAttribute);
+
+/**
+ * @swagger
+ * /api/product-attribute/{type}/{id}:
+ *   delete:
+ *     summary: Xóa thuộc tính (Soft Delete)
+ *     tags: [ProductAttributes]
+ *     parameters:
+ *       - in: path
+ *         name: type
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [category, color, material, room]
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ */
+router.delete("/:type/:id", productAttributeController.deleteAttribute);
+
 module.exports = router;

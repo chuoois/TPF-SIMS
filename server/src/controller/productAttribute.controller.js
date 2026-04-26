@@ -1,5 +1,6 @@
 const { ProductCategory, ProductColor, ProductMaterial, ProductRoom } = require("../entities");
 const systemLogController = require("./systemLog.controller");
+const { Op } = require("sequelize");
 
 /**
  * ProductAttributeController
@@ -10,15 +11,85 @@ const systemLogController = require("./systemLog.controller");
  */
 class ProductAttributeController {
     /**
-     * Lấy tất cả thuộc tính sản phẩm trong một lần gọi
+     * Lấy thuộc tính sản phẩm.
+     * Hỗ trợ:
+     * 1. Lấy toàn bộ (mặc định)
+     * 2. Tìm kiếm chung (?search=...)
+     * 3. Phân trang theo loại cụ thể (?type=category&page=1&limit=10&search=...)
      */
     async getAllAttributes(req, res) {
         try {
+            const { type, search, page, limit } = req.query;
+
+            // Nếu có type, thực hiện lấy danh sách phân trang cho loại đó
+            if (type) {
+                const pageNum = parseInt(page) || 1;
+                const limitNum = parseInt(limit) || 10;
+                const offset = (pageNum - 1) * limitNum;
+
+                let model;
+                let searchField;
+
+                switch (type) {
+                    case "category":
+                        model = ProductCategory;
+                        searchField = "category_name";
+                        break;
+                    case "color":
+                        model = ProductColor;
+                        searchField = "color_name";
+                        break;
+                    case "material":
+                        model = ProductMaterial;
+                        searchField = "material_name";
+                        break;
+                    case "room":
+                        model = ProductRoom;
+                        searchField = "room_name";
+                        break;
+                    default:
+                        return res.status(400).json({ message: "Loại thuộc tính không hợp lệ" });
+                }
+
+                const whereClause = { status: 1 };
+                if (search) {
+                    whereClause[searchField] = { [Op.like]: `%${search}%` };
+                }
+
+                const { count, rows } = await model.findAndCountAll({
+                    where: whereClause,
+                    order: [[searchField, "ASC"]],
+                    limit: limitNum,
+                    offset: offset
+                });
+
+                return res.status(200).json({
+                    total: count,
+                    page: pageNum,
+                    totalPages: Math.ceil(count / limitNum),
+                    data: rows
+                });
+            }
+
+            // Trường hợp lấy toàn bộ (có thể search chung)
+            const whereClause = { status: 1 };
+            const catWhere = { ...whereClause };
+            const colorWhere = { ...whereClause };
+            const matWhere = { ...whereClause };
+            const roomWhere = { ...whereClause };
+
+            if (search) {
+                catWhere.category_name = { [Op.like]: `%${search}%` };
+                colorWhere.color_name = { [Op.like]: `%${search}%` };
+                matWhere.material_name = { [Op.like]: `%${search}%` };
+                roomWhere.room_name = { [Op.like]: `%${search}%` };
+            }
+
             const [categories, colors, materials, rooms] = await Promise.all([
-                ProductCategory.findAll({ where: { status: 1 }, order: [["category_name", "ASC"]] }),
-                ProductColor.findAll({ where: { status: 1 }, order: [["color_name", "ASC"]] }),
-                ProductMaterial.findAll({ where: { status: 1 }, order: [["material_name", "ASC"]] }),
-                ProductRoom.findAll({ where: { status: 1 }, order: [["room_name", "ASC"]] })
+                ProductCategory.findAll({ where: catWhere, order: [["category_name", "ASC"]] }),
+                ProductColor.findAll({ where: colorWhere, order: [["color_name", "ASC"]] }),
+                ProductMaterial.findAll({ where: matWhere, order: [["material_name", "ASC"]] }),
+                ProductRoom.findAll({ where: roomWhere, order: [["room_name", "ASC"]] })
             ]);
 
             return res.status(200).json({
@@ -28,7 +99,7 @@ class ProductAttributeController {
                 rooms
             });
         } catch (error) {
-            console.error("Get all attributes error:", error);
+            console.error("Get attributes error:", error);
             return res.status(500).json({ message: "Lỗi hệ thống khi lấy danh sách thuộc tính" });
         }
     }
@@ -158,6 +229,188 @@ class ProductAttributeController {
         } catch (error) {
             console.error("Sync room error:", error);
             return res.status(500).json({ message: "Lỗi hệ thống khi đồng bộ phòng/khu vực" });
+        }
+    }
+    /**
+     * Lưu thuộc tính (Thêm mới hoặc Cập nhật)
+     */
+    async saveAttribute(req, res) {
+        try {
+            const { type } = req.params;
+            const { id, name } = req.body;
+
+            if (!name) return res.status(400).json({ message: "Tên không được để trống" });
+
+            let model;
+            let pkField;
+            let searchField;
+            let typeLabel;
+            let logTypePrefix;
+
+            switch (type) {
+                case "category":
+                    model = ProductCategory;
+                    pkField = "pk_product_category_id";
+                    searchField = "category_name";
+                    typeLabel = "danh mục";
+                    logTypePrefix = "CATEGORY";
+                    break;
+                case "color":
+                    model = ProductColor;
+                    pkField = "pk_product_color_id";
+                    searchField = "color_name";
+                    typeLabel = "màu sắc";
+                    logTypePrefix = "COLOR";
+                    break;
+                case "material":
+                    model = ProductMaterial;
+                    pkField = "pk_product_material_id";
+                    searchField = "material_name";
+                    typeLabel = "chất liệu";
+                    logTypePrefix = "MATERIAL";
+                    break;
+                case "room":
+                    model = ProductRoom;
+                    pkField = "pk_product_room_id";
+                    searchField = "room_name";
+                    typeLabel = "phòng/khu vực";
+                    logTypePrefix = "ROOM";
+                    break;
+                default:
+                    return res.status(400).json({ message: "Loại thuộc tính không hợp lệ" });
+            }
+
+            let result;
+            let isCreated = false;
+
+            if (id) {
+                // Cập nhật theo ID
+                const item = await model.findByPk(id);
+                if (!item) return res.status(404).json({ message: `Không tìm thấy ${typeLabel} để cập nhật` });
+
+                const oldName = item[searchField];
+                await item.update({ [searchField]: name.trim(), status: 1 });
+                result = item;
+
+                await systemLogController.record(
+                    req,
+                    `UPDATE_${logTypePrefix}`,
+                    `Đã cập nhật tên ${typeLabel} từ "${oldName}" thành "${name.trim()}"`,
+                    "INFO"
+                );
+            } else {
+                // Thêm mới hoặc Reactivate cái cũ
+                // Sử dụng BINARY để so sánh chính xác từng dấu tiếng Việt
+                const { sequelize } = model;
+                const existingItem = await model.findOne({
+                    where: sequelize.where(
+                        sequelize.fn("BINARY", sequelize.col(searchField)),
+                        name.trim()
+                    )
+                });
+
+                if (existingItem) {
+                    if (existingItem.status === 0) {
+                        // Nếu bị ẩn thì hiện lại
+                        await existingItem.update({ status: 1 });
+                        result = existingItem;
+                        isCreated = true;
+                        
+                        await systemLogController.record(
+                            req,
+                            `CREATE_${logTypePrefix}`,
+                            `Đã khôi phục ${typeLabel}: ${name.trim()}`,
+                            "INFO"
+                        );
+                    } else {
+                        // Nếu đang hiện rồi thì trả về luôn (không tạo trùng)
+                        result = existingItem;
+                        return res.status(400).json({ message: `${typeLabel} này đã tồn tại trong danh sách` });
+                    }
+                } else {
+                    // Tạo mới hoàn toàn
+                    result = await model.create({
+                        [searchField]: name.trim(),
+                        status: 1
+                    });
+                    isCreated = true;
+
+                    await systemLogController.record(
+                        req,
+                        `CREATE_${logTypePrefix}`,
+                        `Đã tạo mới ${typeLabel}: ${name.trim()}`,
+                        "INFO"
+                    );
+                }
+            }
+
+            return res.status(200).json(result);
+        } catch (error) {
+            console.error("Save attribute error:", error);
+            return res.status(500).json({ message: "Lỗi hệ thống khi lưu thuộc tính" });
+        }
+    }
+
+    /**
+     * Xóa thuộc tính (Soft Delete)
+     */
+    async deleteAttribute(req, res) {
+        try {
+            const { type, id } = req.params;
+            
+            let model;
+            let pkField;
+            let typeLabel;
+            let logType;
+
+            switch (type) {
+                case "category":
+                    model = ProductCategory;
+                    pkField = "pk_product_category_id";
+                    typeLabel = "danh mục";
+                    logType = "DELETE_CATEGORY";
+                    break;
+                case "color":
+                    model = ProductColor;
+                    pkField = "pk_product_color_id";
+                    typeLabel = "màu sắc";
+                    logType = "DELETE_COLOR";
+                    break;
+                case "material":
+                    model = ProductMaterial;
+                    pkField = "pk_product_material_id";
+                    typeLabel = "chất liệu";
+                    logType = "DELETE_MATERIAL";
+                    break;
+                case "room":
+                    model = ProductRoom;
+                    pkField = "pk_product_room_id";
+                    typeLabel = "phòng/khu vực";
+                    logType = "DELETE_ROOM";
+                    break;
+                default:
+                    return res.status(400).json({ message: "Loại thuộc tính không hợp lệ" });
+            }
+
+            const item = await model.findByPk(id);
+            if (!item) {
+                return res.status(404).json({ message: `Không tìm thấy ${typeLabel} yêu cầu` });
+            }
+
+            // Soft delete: chuyển status sang 0
+            await item.update({ status: 0 });
+
+            await systemLogController.record(
+                req,
+                logType,
+                `Đã xóa ${typeLabel}: ${item.category_name || item.color_name || item.material_name || item.room_name}`,
+                "WARNING"
+            );
+
+            return res.status(200).json({ message: `Đã xóa ${typeLabel} thành công` });
+        } catch (error) {
+            console.error("Delete attribute error:", error);
+            return res.status(500).json({ message: "Lỗi hệ thống khi xóa thuộc tính" });
         }
     }
 }

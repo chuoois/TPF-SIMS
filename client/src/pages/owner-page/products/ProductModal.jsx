@@ -186,7 +186,25 @@ export default function ProductModal({
   onSave,
   onDelete,
   onSwitchMode,
+  metadata = {},
 }) {
+  // Extract options from metadata or use defaults
+  const categories = metadata.categories?.length > 0 
+    ? metadata.categories.map(c => c.category_name) 
+    : CATEGORIES;
+  
+  const materials = metadata.materials?.length > 0 
+    ? metadata.materials.map(m => m.material_name) 
+    : WOOD_TYPES;
+
+  const colors = metadata.colors?.length > 0 
+    ? metadata.colors.map(c => c.color_name) 
+    : COLORS;
+
+  const rooms = metadata.rooms?.length > 0 
+    ? metadata.rooms.map(r => r.room_name) 
+    : [];
+
   const [form, setForm] = useState({
     name: "",
     code: "",
@@ -464,7 +482,7 @@ export default function ProductModal({
                     label="Danh mục"
                     value={form.category}
                     onChange={set("category")}
-                    options={CATEGORIES}
+                    options={categories}
                     placeholder="Chọn danh mục"
                   />
                 </div>
@@ -492,14 +510,14 @@ export default function ProductModal({
                     label="Chất liệu"
                     value={form.material}
                     onChange={set("material")}
-                    options={WOOD_TYPES}
+                    options={materials}
                     placeholder="Chọn chất liệu"
                   />
                   <SelectField
                     label="Màu sắc"
                     value={form.color}
                     onChange={set("color")}
-                    options={COLORS}
+                    options={colors}
                     placeholder="Chọn màu"
                   />
                   <SelectField
