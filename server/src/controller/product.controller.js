@@ -160,7 +160,7 @@ class ProductController {
                 where,
                 attributes: [
                     "pk_product_id", "sku", "product_name", "product_img",
-                    "unit", "size", "is_gift",
+                    "unit", "size", "is_gift", "description", "warranty_months",
                     [stockQuantityLiteral, "available_quantity"]
                 ],
                 include: [
@@ -256,6 +256,8 @@ class ProductController {
                     discount_percent,
                     coupon_code: coupon ? coupon.coupon_code : null,
                     sell_type_name,
+                    description: p.description,
+                    warranty_months: p.warranty_months,
                 };
             });
 

@@ -10,6 +10,8 @@
  */
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { useFormik } from "formik";
+import * as Yup from "yup";
 import toast from "react-hot-toast";
 import useDebounce from "@/hooks/useDebounce";
 import { PrintableInvoice } from "../orders/components/PrintableInvoice";
@@ -21,12 +23,29 @@ import ProductPanel from "./ProductPanel";
 import productService from "@/services/product.service";
 import productAttributeService from "@/services/productAttribute.service";
 import customerService from "@/services/customer.service";
+import orderService from "@/services/order.service";
+import { uploadMultipleImages } from "@/services/cloudinary.service";
 import {
   ITEMS_PER_PAGE,
-  SYSTEM_WARRANTY,
   createEmptyTab,
   fmt,
+  PRODUCT_TYPES,
+  DELIVERY_METHODS,
+  DEFAULT_WARRANTY,
 } from "./mockData";
+
+// ===================== VALIDATION SCHEMA =====================
+const orderSchema = Yup.object().shape({
+  selectedCustomer: Yup.object().nullable().required("Vui lòng chọn khách hàng"),
+  deliveryMethod: Yup.string().required(),
+  deliveryDate: Yup.string().when("deliveryMethod", {
+    is: "delivery",
+    then: (schema) => schema.required("Vui lòng chọn ngày giao hàng"),
+    otherwise: (schema) => schema.nullable(),
+  }),
+  depositAmount: Yup.number().min(0, "Số tiền đặt cọc không hợp lệ"),
+  orderNote: Yup.string().nullable(),
+});
 
 // ===================== COMPONENT =====================
 export default function InStockInvoicePage() {
@@ -80,8 +99,8 @@ export default function InStockInvoicePage() {
       storePickupDate: "",
     },
   ]);
-  const [activeTabId, setActiveTabId] = useState(1);
-  const [productTypeTab, setProductTypeTab] = useState("Hàng sẵn"); // 1: Mộc, 2: Sẵn, 3: Quà tặng, 4: Custom
+  const [activeTabId, setActiveTabId] = useState(tabs[0].id);
+  const [productTypeTab, setProductTypeTab] = useState(PRODUCT_TYPES.INSTOCK);
 
   const [metadata, setMetadata] = useState({
     categories: [],
@@ -103,9 +122,22 @@ export default function InStockInvoicePage() {
   const [products, setProducts] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const debouncedProductSearch = useDebounce(productSearch, 500);
   const debouncedCustomerSearch = useDebounce(customerSearch, 300);
+
+  // Khởi động trạng thái loading ngay khi người dùng gõ phím
+  useEffect(() => {
+    if (productSearch !== debouncedProductSearch) {
+      setIsLoading(true);
+    }
+  }, [productSearch, debouncedProductSearch]);
+
+  useEffect(() => {
+    if (customerSearch !== debouncedCustomerSearch) {
+      setIsSearchingCustomers(true);
+    }
+  }, [customerSearch, debouncedCustomerSearch]);
 
   const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0];
 
@@ -117,6 +149,184 @@ export default function InStockInvoicePage() {
     },
     [activeTabId],
   );
+
+  // Ref to track last synced values to prevent infinite loops and expensive stringify
+  const lastSyncedValuesRef = useRef(null);
+
+  // ===================== FORMIK CONFIG =====================
+  const formik = useFormik({
+    initialValues: activeTab,
+    enableReinitialize: false, // Tắt tự động để tránh vòng lặp
+    validationSchema: orderSchema,
+    onSubmit: async (values) => {
+      if (values.cartItems.length === 0) {
+        toast.error("Giỏ hàng trống!");
+        return;
+      }
+
+      const loadingToast = toast.loading("Đang xử lý đơn hàng...");
+
+      try {
+        // Prepare payload for backend
+        const orderData = {
+          fk_customer_id: values.selectedCustomer.id,
+          fulfillment_method:
+            values.deliveryMethod === "store" ? "Lấy tại cửa hàng" : "Giao tận nhà",
+          expected_fulfillment_date:
+            values.deliveryMethod === "store"
+              ? values.storePickupDate || new Date().toISOString().split("T")[0]
+              : values.deliveryDate,
+          note: values.orderNote,
+          deposit_amount: values.depositAmount,
+          address: values.selectedCustomer.address,
+          total_amount: subtotal,
+          order_type: values.cartItems.some((i) => i.productType === PRODUCT_TYPES.RAW)
+            ? 1
+            : 2,
+          items: values.cartItems.map((item) => ({
+            fk_product_id: item.id,
+            item_name: item.name,
+            item_quantity: item.quantity,
+            item_price: item.price,
+            is_finished: item.productType === PRODUCT_TYPES.RAW ? 0 : 1,
+            item_note: item.note,
+            customer_img: item.images || [], // Gửi mảng URL ảnh hàng mộc
+            item_img: item.image, // Lưu ảnh sản phẩm gốc
+          })),
+        };
+
+        const response = await orderService.createOrder(orderData);
+        const createdOrder = response.order;
+
+        // Prepare UI object for printing
+        const newOrder = {
+          code: createdOrder.pk_order_id ? `HD-${createdOrder.pk_order_id}` : ("HD-" + Math.floor(Math.random() * 1000000)),
+          customer: {
+            name: values.selectedCustomer?.name,
+            phone: values.selectedCustomer?.phone || "",
+            address: values.selectedCustomer?.address || "",
+          },
+          type: values.cartItems.some((i) => i.productType === PRODUCT_TYPES.RAW)
+            ? PRODUCT_TYPES.RAW
+            : PRODUCT_TYPES.INSTOCK,
+          salesPerson: "Nhân viên bán hàng",
+          products: values.cartItems.map((item) => ({
+            name: item.name,
+            material: item.category || "Hàng trưng bày",
+            size: "",
+            qty: item.quantity,
+            price: item.price,
+            warranty: item.isGift
+              ? "Không bảo hành"
+              : `${item.warrantyMonths || 12} tháng`,
+            note: item.note || "",
+            images: item.images || [],
+            leadTime: item.leadTime || 0,
+          })),
+          total: totalPayable,
+          subtotal: subtotal,
+          discount: values.discount || 0,
+          deposit: values.depositAmount,
+          deliveryMethod: values.deliveryMethod,
+          deliveryDate:
+            values.deliveryMethod === "store"
+              ? values.storePickupDate || new Date().toISOString().split("T")[0]
+              : values.deliveryDate,
+          storePickupDate:
+            values.deliveryMethod === "store"
+              ? values.storePickupDate || null
+              : null,
+          date: new Date().toISOString(),
+        };
+
+        // Simulation: Update simulated warranties
+        const warranties = JSON.parse(
+          localStorage.getItem("tpf_simulated_warranties") || "[]"
+        );
+
+        const newWarranties = values.cartItems
+          .filter((item) => !item.isGift && item.warrantyMonths)
+          .map((item, idx) => {
+            const startDate = new Date();
+            const endDate = new Date(startDate);
+            endDate.setMonth(endDate.getMonth() + (item.warrantyMonths || 12));
+
+            return {
+              id: `BH-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000000)}`,
+              orderId: newOrder.code,
+              customerName: newOrder.customer.name,
+              phone: newOrder.customer.phone,
+              productCode: item.sku,
+              productName: item.name,
+              serial: `${item.sku}-${Date.now().toString().slice(-4)}${idx}`,
+              startDate: startDate.toISOString(),
+              endDate: endDate.toISOString(),
+              warrantyMonths: item.warrantyMonths || 12,
+              status: "Còn hạn",
+              maintenanceHistory: [],
+              notes: item.warrantyContent || "Bảo hành các lỗi kỹ thuật.",
+            };
+          });
+
+        if (newWarranties.length > 0) {
+          localStorage.setItem(
+            "tpf_simulated_warranties",
+            JSON.stringify([...warranties, ...newWarranties])
+          );
+        }
+
+        toast.success(`Tạo yêu cầu ${newOrder.code} thành công!`, { id: loadingToast });
+        setPrintingOrder(newOrder);
+
+        // Clear active tab after success
+        updateActiveTab({
+          cartItems: [],
+          selectedCustomer: null,
+          orderNote: "",
+          discount: 0,
+          depositAmount: 0,
+          deliveryMethod: "store",
+          deliveryDate: "",
+          storePickupDate: "",
+        });
+      } catch (error) {
+        console.error("Checkout error:", error);
+        toast.error(error.response?.data?.message || error.message || "Lỗi khi tạo đơn hàng", { id: loadingToast });
+      }
+    },
+  });
+
+  // Hiển thị thông báo lỗi validation nếu có
+  useEffect(() => {
+    if (formik.submitCount > 0 && Object.keys(formik.errors).length > 0) {
+      const firstError = Object.values(formik.errors)[0];
+      if (typeof firstError === "string") {
+        toast.error(firstError, { id: "validation-error" });
+      }
+    }
+  }, [formik.submitCount, formik.errors]);
+
+  // Sync Formik when switching tabs
+  useEffect(() => {
+    formik.resetForm({ values: activeTab });
+    lastSyncedValuesRef.current = activeTab;
+  }, [activeTabId]);
+
+  // Optimized sync Formik values back to tabs - ONLY when values actually change
+  useEffect(() => {
+    if (!formik.values || lastSyncedValuesRef.current === formik.values) return;
+
+    // Tránh đồng bộ nếu đây là kết quả của việc resetForm (initialValues)
+    if (JSON.stringify(activeTab) === JSON.stringify(formik.values)) {
+      lastSyncedValuesRef.current = formik.values;
+      return;
+    }
+
+    setTabs((prev) =>
+      prev.map((t) => (t.id === activeTabId ? { ...t, ...formik.values } : t))
+    );
+    lastSyncedValuesRef.current = formik.values;
+  }, [formik.values, activeTabId, activeTab]);
 
   // Fetch metadata
   useEffect(() => {
@@ -139,12 +349,12 @@ export default function InStockInvoicePage() {
         let sell_type = 2; // Default Hàng sẵn
         let is_gift_param = 0;
 
-        if (productTypeTab === "Hàng mộc") {
+        if (productTypeTab === PRODUCT_TYPES.RAW) {
           sell_type = 1;
-        } else if (productTypeTab === "Quà tặng") {
-          sell_type = null; // Quà tặng có thể không lọc theo sell_type (giá)
+        } else if (productTypeTab === PRODUCT_TYPES.GIFT) {
+          sell_type = null;
           is_gift_param = 1;
-        } else if (productTypeTab === "Hàng custom") {
+        } else if (productTypeTab === PRODUCT_TYPES.CUSTOM) {
           sell_type = 4;
         }
 
@@ -233,129 +443,136 @@ export default function InStockInvoicePage() {
   };
 
   const addToCart = (product) => {
-    const cartItemId = product.pk_product_id;
+    // Unique ID = ProductID + Type (để phân biệt cùng 1 sp nhưng bán Mộc hoặc Sẵn)
+    const cartItemId = `${product.pk_product_id}-${productTypeTab}`;
 
-    const existing = activeTab.cartItems.find((i) => i.id === cartItemId);
+    const existing = formik.values.cartItems.find(
+      (i) => i.cartItemId === cartItemId,
+    );
     if (existing) {
       if (existing.quantity >= product.available_quantity) {
         toast.error(`"${product.product_name}" đã hết hàng trong kho`);
         return;
       }
-      updateActiveTab({
-        cartItems: activeTab.cartItems.map((i) =>
-          i.id === cartItemId ? { ...i, quantity: i.quantity + 1 } : i,
+      formik.setFieldValue(
+        "cartItems",
+        formik.values.cartItems.map((i) =>
+          i.cartItemId === cartItemId ? { ...i, quantity: i.quantity + 1 } : i,
         ),
-      });
+      );
     } else {
-      if (product.available_quantity <= 0 && productTypeTab !== "Hàng custom") {
+      if (
+        product.available_quantity <= 0 &&
+        productTypeTab !== PRODUCT_TYPES.CUSTOM
+      ) {
         toast.error(`"${product.product_name}" đã hết hàng`);
         return;
       }
-      const isGift = productTypeTab === "Quà tặng";
-      updateActiveTab({
-        cartItems: [
-          ...activeTab.cartItems,
-          {
-            id: cartItemId,
-            name: product.product_name,
-            price: isGift ? 0 : parseFloat(product.display_price),
-            stock: product.available_quantity,
-            sku: product.sku,
-            quantity: 1,
-            note: "",
-            productType: productTypeTab,
-            images: productTypeTab === "Hàng mộc" ? [] : null,
-            isGift,
-            leadTime: product.leadTime || 0, // Backend should provide this if needed
-            warrantyMonths: product.warrantyMonths || 12,
-            warrantyContent:
-              product.warrantyContent || "Bảo hành các lỗi kỹ thuật.",
-          },
-        ],
-      });
+      const isGift = productTypeTab === PRODUCT_TYPES.GIFT;
+      formik.setFieldValue("cartItems", [
+        ...formik.values.cartItems,
+        {
+          cartItemId, // ID duy nhất trong giỏ
+          id: product.pk_product_id, // ID sản phẩm thực tế
+          name: product.product_name,
+          image: product.product_img,
+          price: isGift ? 0 : parseFloat(product.display_price),
+          stock: product.available_quantity,
+          sku: product.sku,
+          quantity: 1,
+          note: "",
+          productType: productTypeTab,
+          images: productTypeTab === PRODUCT_TYPES.RAW ? [] : null,
+          isGift,
+          leadTime: product.leadTime || 0,
+          warrantyMonths: product.warranty_months || DEFAULT_WARRANTY,
+          warrantyContent:
+            product.warrantyContent || "Bảo hành các lỗi kỹ thuật.",
+        },
+      ]);
     }
   };
 
-  const updateQuantity = (id, delta) => {
-    updateActiveTab({
-      cartItems: activeTab.cartItems
-        .map((i) => {
-          if (i.id !== id) return i;
-          const newQty = i.quantity + delta;
-          if (delta > 0 && newQty > i.stock) {
-            toast.error(`Tồn kho chỉ còn ${i.stock}`);
-            return i;
-          }
-          return { ...i, quantity: Math.max(0, newQty) };
-        })
-        .filter((i) => i.quantity > 0),
-    });
+  const updateQuantity = (cartItemId, delta) => {
+    const newCartItems = formik.values.cartItems
+      .map((i) => {
+        if (i.cartItemId !== cartItemId) return i;
+        const newQty = i.quantity + delta;
+        if (delta > 0 && newQty > i.stock) {
+          toast.error(`Tồn kho chỉ còn ${i.stock}`);
+          return i;
+        }
+        return { ...i, quantity: Math.max(0, newQty) };
+      })
+      .filter((i) => i.quantity > 0);
+
+    formik.setFieldValue("cartItems", newCartItems);
   };
 
-  const removeFromCart = (id) => {
-    updateActiveTab({
-      cartItems: activeTab.cartItems.filter((i) => i.id !== id),
-    });
+  const removeFromCart = (cartItemId) => {
+    formik.setFieldValue(
+      "cartItems",
+      formik.values.cartItems.filter((i) => i.cartItemId !== cartItemId),
+    );
   };
 
-  const setQuantity = (id, qty) => {
+  const setQuantity = (cartItemId, qty) => {
     const val = parseInt(qty) || 0;
-    if (val <= 0) return removeFromCart(id);
-    const item = activeTab.cartItems.find((i) => i.id === id);
+    if (val <= 0) return removeFromCart(cartItemId);
+    const item = formik.values.cartItems.find((i) => i.cartItemId === cartItemId);
     if (item && val > item.stock) {
       toast.error(`Tồn kho chỉ còn ${item.stock}`);
       return;
     }
-    updateActiveTab({
-      cartItems: activeTab.cartItems.map((i) =>
-        i.id === id ? { ...i, quantity: val } : i,
+    formik.setFieldValue(
+      "cartItems",
+      formik.values.cartItems.map((i) =>
+        i.cartItemId === cartItemId ? { ...i, quantity: val } : i,
       ),
-    });
+    );
   };
 
-  const updateItemNote = (id, note) => {
-    updateActiveTab({
-      cartItems: activeTab.cartItems.map((i) =>
-        i.id === id ? { ...i, note } : i,
+  const updateItemNote = (cartItemId, note) => {
+    formik.setFieldValue(
+      "cartItems",
+      formik.values.cartItems.map((i) =>
+        i.cartItemId === cartItemId ? { ...i, note } : i,
       ),
-    });
+    );
   };
 
-  const updateItemPrices = (id, field, value) => {
-    const raw = value.replace(/\D/g, "");
-    const numVal = parseInt(raw) || 0;
-    updateActiveTab({
-      cartItems: activeTab.cartItems.map((i) =>
-        i.id === id
-          ? {
-              ...i,
-              [field]: numVal,
-              // Cập nhật price = discountPrice để tính tổng đúng
-              ...(field === "discountPrice" ? { price: numVal } : {}),
-            }
-          : i,
-      ),
-    });
+  const updateItemImages = async (cartItemId, newFiles) => {
+    const loadingToast = toast.loading("Đang tải ảnh lên...");
+    try {
+      const uploadedResults = await uploadMultipleImages(newFiles);
+      const imageUrls = uploadedResults.map((res) => res.url);
+
+      formik.setFieldValue(
+        "cartItems",
+        formik.values.cartItems.map((i) =>
+          i.cartItemId === cartItemId
+            ? { ...i, images: [...(i.images || []), ...imageUrls] }
+            : i,
+        ),
+      );
+      toast.success("Đã tải ảnh lên thành công", { id: loadingToast });
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Không thể tải ảnh lên. Vui lòng thử lại.", {
+        id: loadingToast,
+      });
+    }
   };
 
-  // Bảo hành do hệ thống cấu hình, không cho sales chỉnh
-
-  const updateItemImages = (id, newImages) => {
-    updateActiveTab({
-      cartItems: activeTab.cartItems.map((i) =>
-        i.id === id ? { ...i, images: [...(i.images || []), ...newImages] } : i,
-      ),
-    });
-  };
-
-  const removeItemImage = (itemId, imgIdx) => {
-    updateActiveTab({
-      cartItems: activeTab.cartItems.map((i) =>
-        i.id === itemId
+  const removeItemImage = (cartItemId, imgIdx) => {
+    formik.setFieldValue(
+      "cartItems",
+      formik.values.cartItems.map((i) =>
+        i.cartItemId === cartItemId
           ? { ...i, images: i.images.filter((_, idx) => idx !== imgIdx) }
           : i,
       ),
-    });
+    );
   };
 
   const subtotal = activeTab.cartItems.reduce(
@@ -383,108 +600,7 @@ export default function InStockInvoicePage() {
   const itemCount = activeTab.cartItems.reduce((sum, i) => sum + i.quantity, 0);
 
   const handleCheckout = () => {
-    if (activeTab.cartItems.length === 0) return;
-
-    if (!activeTab.selectedCustomer) {
-      toast.error("Vui lòng nhập hoặc chọn Khách hàng trước khi thanh toán!");
-      return;
-    }
-
-    // Validate: giao tận nơi nhưng chưa chọn ngày giao
-    if (activeTab.deliveryMethod === "delivery" && !activeTab.deliveryDate) {
-      toast.error("Vui lòng chọn ngày giao hàng!");
-      return;
-    }
-
-    const newOrder = {
-      code: "HD-" + Math.floor(Math.random() * 1000000),
-      customer: {
-        name: activeTab.selectedCustomer?.name,
-        phone: activeTab.selectedCustomer?.phone || "",
-        address: activeTab.selectedCustomer?.address || "",
-      },
-      type: activeTab.cartItems.some((i) => i.productType === "Hàng mộc")
-        ? "Hàng mộc"
-        : "Hàng sẵn",
-      salesPerson: "Nhân viên bán hàng",
-      products: activeTab.cartItems.map((item) => ({
-        name: item.name,
-        material: item.category || "Hàng trưng bày",
-        size: "",
-        qty: item.quantity,
-        price: item.price,
-        warranty: item.isGift
-          ? "Không bảo hành"
-          : `${item.warrantyMonths || 12} tháng`,
-        note: item.note || "",
-        images: item.images || [],
-        leadTime: item.leadTime || 0,
-      })),
-      total: totalPayable,
-      subtotal: subtotal,
-      discount: activeTab.discount,
-      deposit: activeTab.depositAmount,
-      deliveryMethod: activeTab.deliveryMethod,
-      // Hẹn ngày lấy hoặc lấy luôn (Hôm nay)
-      deliveryDate:
-        activeTab.deliveryMethod === "store"
-          ? activeTab.storePickupDate || new Date().toISOString().split("T")[0]
-          : activeTab.deliveryDate,
-      storePickupDate:
-        activeTab.deliveryMethod === "store"
-          ? activeTab.storePickupDate || null
-          : null,
-      date: new Date().toISOString(),
-    };
-
-    const warranties = JSON.parse(
-      localStorage.getItem("tpf_simulated_warranties") || "[]",
-    );
-
-    const newWarranties = activeTab.cartItems
-      .filter((item) => !item.isGift && item.warrantyMonths)
-      .map((item, idx) => {
-        const startDate = new Date();
-        const endDate = new Date(startDate);
-        endDate.setMonth(endDate.getMonth() + (item.warrantyMonths || 12));
-
-        return {
-          id: `BH-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000000)}`,
-          orderId: newOrder.code,
-          customerName: newOrder.customer.name,
-          phone: newOrder.customer.phone,
-          productCode: item.sku,
-          productName: item.name,
-          serial: `${item.sku}-${Date.now().toString().slice(-4)}${idx}`,
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-          warrantyMonths: item.warrantyMonths || 12,
-          status: "Còn hạn",
-          maintenanceHistory: [],
-          notes: item.warrantyContent || "Bảo hành các lỗi kỹ thuật.",
-        };
-      });
-
-    if (newWarranties.length > 0) {
-      localStorage.setItem(
-        "tpf_simulated_warranties",
-        JSON.stringify([...warranties, ...newWarranties]),
-      );
-    }
-
-    toast.success(`Tạo yêu cầu ${newOrder.code} thành công!`);
-    setPrintingOrder(newOrder);
-
-    updateActiveTab({
-      cartItems: [],
-      selectedCustomer: null,
-      orderNote: "",
-      discount: 0,
-      depositAmount: 0,
-      deliveryMethod: "store",
-      deliveryDate: "",
-      storePickupDate: "",
-    });
+    formik.handleSubmit();
   };
 
   // ===================== RENDER =====================
@@ -521,6 +637,7 @@ export default function InStockInvoicePage() {
           itemCount={itemCount}
           totalPayable={totalPayable}
           handleCheckout={handleCheckout}
+          formik={formik}
         />
 
         {/* ═══════════════ RIGHT PANEL – PRODUCTS ═══════════════ */}
@@ -577,9 +694,9 @@ export default function InStockInvoicePage() {
       </div>
 
       {/* ── Workshop Status Quick View Modal ── */}
-      <WorkshopStatusModal 
-        isOpen={showWorkshopStatus} 
-        onClose={() => setShowWorkshopStatus(false)} 
+      <WorkshopStatusModal
+        isOpen={showWorkshopStatus}
+        onClose={() => setShowWorkshopStatus(false)}
       />
     </>
   );

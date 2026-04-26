@@ -20,7 +20,8 @@ import {
   Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fmt, CATEGORIES } from "./mockData";
+import { fmt, PRODUCT_TYPES } from "./mockData";
+import CustomCheckbox from "@/components/control/CustomCheckbox";
 
 export default function ProductPanel({
   productTypeTab,
@@ -73,9 +74,10 @@ export default function ProductPanel({
                 backgroundColor: "var(--bg-main)",
               }}
             >
-              {["Hàng mộc", "Hàng sẵn", "Quà tặng"].map((tab) => (
+              {[PRODUCT_TYPES.RAW, PRODUCT_TYPES.INSTOCK, PRODUCT_TYPES.GIFT].map((tab) => (
                 <button
                   key={tab}
+                  type="button"
                   onClick={() => {
                     setProductTypeTab(tab);
                     setCurrentPage(1);
@@ -171,6 +173,7 @@ export default function ProductPanel({
                   >
                     {item ? item[group.nameKey] : id}
                     <button
+                      type="button"
                       onClick={() => {
                         group.setter((prev) => prev.filter((i) => i !== id));
                         setCurrentPage(1);
@@ -189,6 +192,7 @@ export default function ProductPanel({
                 {priceRange.min ? fmt(priceRange.min) : 0}đ -{" "}
                 {priceRange.max ? fmt(priceRange.max) : "∞"}
                 <button
+                  type="button"
                   onClick={() => {
                     setPriceRange({ min: "", max: "" });
                     setCurrentPage(1);
@@ -200,6 +204,7 @@ export default function ProductPanel({
               </div>
             )}
             <button
+              type="button"
               onClick={() => {
                 setSelectedCategories([]);
                 setSelectedColors([]);
@@ -239,7 +244,7 @@ export default function ProductPanel({
             <div className="grid grid-cols-3 gap-3">
               {products.map((product) => {
                 const stock = product.available_quantity || 0;
-                const outOfStock = stock <= 0 && productTypeTab !== "Hàng custom";
+                const outOfStock = stock <= 0 && productTypeTab !== PRODUCT_TYPES.CUSTOM;
                 const lowStock = stock > 0 && stock <= 5;
 
                 return (
@@ -284,12 +289,19 @@ export default function ProductPanel({
                     )}
 
                     {/* Image */}
-                    <div className="aspect-square overflow-hidden bg-gray-50">
-                      <img
-                        src={product.product_img || "/wood_products.png"}
-                        alt={product.product_name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
+                    <div className="aspect-square overflow-hidden bg-gray-50 flex items-center justify-center">
+                      {product.product_img ? (
+                        <img
+                          src={product.product_img}
+                          alt={product.product_name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center opacity-40">
+                          <Package size={32} className="text-gray-400" />
+                          <span className="text-[10px] font-bold uppercase mt-1">Chưa có ảnh</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Info */}
@@ -343,6 +355,7 @@ export default function ProductPanel({
                       {/* Quick View Button */}
                       <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
+                          type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedProductForView(product);
@@ -367,6 +380,7 @@ export default function ProductPanel({
             style={{ borderColor: "var(--grid-border)" }}
           >
             <button
+              type="button"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
               className="w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer hover:bg-gray-50"
@@ -381,6 +395,7 @@ export default function ProductPanel({
               (page) => (
                 <button
                   key={page}
+                  type="button"
                   onClick={() => setCurrentPage(page)}
                   className="w-8 h-8 rounded-lg text-[12px] font-medium transition cursor-pointer"
                   style={{
@@ -397,6 +412,7 @@ export default function ProductPanel({
               ),
             )}
             <button
+              type="button"
               onClick={() =>
                 setCurrentPage((p) => Math.min(totalPages, p + 1))
               }
@@ -426,6 +442,7 @@ export default function ProductPanel({
                 Chi tiết sản phẩm
               </h3>
               <button
+                type="button"
                 onClick={() => setSelectedProductForView(null)}
                 className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 text-gray-400 hover:text-gray-900 transition cursor-pointer"
               >
@@ -436,12 +453,19 @@ export default function ProductPanel({
             {/* Modal Body */}
             <div className="flex flex-col md:flex-row p-6 gap-6 max-h-[80vh] overflow-y-auto">
               {/* Product Image */}
-              <div className="w-full md:w-1/2 aspect-square rounded-lg overflow-hidden bg-gray-50 border border-gray-100 shadow-inner">
-                <img
-                  src={selectedProductForView.image}
-                  alt={selectedProductForView.name}
-                  className="w-full h-full object-cover"
-                />
+              <div className="w-full md:w-1/2 aspect-square rounded-lg overflow-hidden bg-gray-50 border border-gray-100 shadow-inner flex items-center justify-center">
+                {selectedProductForView.image ? (
+                  <img
+                    src={selectedProductForView.image}
+                    alt={selectedProductForView.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center opacity-40">
+                    <Package size={48} className="text-gray-400" />
+                    <span className="text-[12px] font-bold uppercase mt-2">Sản phẩm chưa có ảnh</span>
+                  </div>
+                )}
               </div>
 
               {/* Product Specs */}
@@ -521,6 +545,22 @@ export default function ProductPanel({
                       Tồn kho: {selectedProductForView.available_quantity} sản phẩm
                     </span>
                   </div>
+
+                  {/* Product Description */}
+                  {selectedProductForView.description && (
+                    <div className="pt-2 border-t border-gray-100">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                        Mô tả sản phẩm
+                      </p>
+                      <div className="text-[13px] text-gray-600 leading-relaxed max-h-[120px] overflow-y-auto pr-1 custom-scrollbar">
+                        {selectedProductForView.description.split('\n').map((line, i) => (
+                          <p key={i} className={line.trim() ? "mb-1" : "h-2"}>
+                            {line}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <Button
@@ -586,28 +626,10 @@ export default function ProductPanel({
                               : "border-gray-200 hover:border-green-200 hover:bg-gray-50"
                           }`}
                         >
-                          <div
-                            className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                              isActive
-                                ? "bg-green-500 border-green-500 text-white"
-                                : "border-gray-300 bg-white"
-                            }`}
-                          >
-                            {isActive && (
-                              <CheckCircle2 size={12} strokeWidth={3} />
-                            )}
-                          </div>
-                          <span
-                            className={`flex-1 ${isActive ? "font-medium text-green-700" : "text-gray-600"}`}
-                          >
-                            {name}
-                          </span>
-                          <input
-                            type="checkbox"
-                            className="hidden"
+                          <CustomCheckbox
                             checked={isActive}
-                            onChange={(e) => {
-                              if (e.target.checked) {
+                            onChange={(checked) => {
+                              if (checked) {
                                 group.setter((prev) => [...prev, id]);
                               } else {
                                 group.setter((prev) => prev.filter((i) => i !== id));
@@ -615,6 +637,11 @@ export default function ProductPanel({
                               setCurrentPage(1);
                             }}
                           />
+                          <span
+                            className={`flex-1 ${isActive ? "font-medium text-green-700" : "text-gray-600"}`}
+                          >
+                            {name}
+                          </span>
                         </label>
                       );
                     })}
