@@ -6,7 +6,7 @@ const sequelize = require("../config/db");
  * Các khoản thưởng / phụ cấp / phạt thủ công gắn vào 1 SalaryRecord.
  * BONUS / ALLOWANCE: amount > 0 (cộng vào lương)
  * PENALTY: amount < 0 (trừ vào lương)
- * Created By: Antigravity
+ * Created By: ThinhBui
  * Created Date: 25/04/2026
  */
 const SalaryAdjustment = sequelize.define(

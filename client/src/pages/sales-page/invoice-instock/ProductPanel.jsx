@@ -261,13 +261,13 @@ export default function ProductPanel({
                     {/* Stock badge */}
                     {outOfStock ? (
                       <div
-                        className="absolute top-2 right-2 z-10 text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-100 text-red-600"
+                        className="absolute top-2 right-2 z-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-100 text-red-600"
                       >
                         Hết hàng
                       </div>
                     ) : (
-                      <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 items-end">
-                        {product.is_gift === 1 && (
+                      <div className="absolute top-2 right-2 z-1 flex flex-col gap-1 items-end">
+                        {(product.is_gift == 1 || product.product_name?.toLowerCase().includes("quà tặng")) && (
                           <div className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-600 border border-emerald-200 shadow-sm">
                             QUÀ TẶNG
                           </div>
@@ -431,7 +431,7 @@ export default function ProductPanel({
 
       {/* ── Product Quick View Modal ── */}
       {selectedProductForView && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm font-sans text-left">
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm font-sans text-left">
           <div
             className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300"
             style={{ border: "1px solid var(--grid-border)" }}

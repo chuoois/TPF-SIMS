@@ -5,7 +5,7 @@ const sequelize = require("../config/db");
  * Model Employee
  * Bảng nhân viên xưởng (thợ sơn, thợ giấy ráp, bán hàng, kế toán...)
  * Tách biệt hoàn toàn với UserAccount – nhân viên không bắt buộc có tài khoản login.
- * Created By: Antigravity
+ * Created By: ThinhBui
  * Created Date: 25/04/2026
  */
 const Employee = sequelize.define(
