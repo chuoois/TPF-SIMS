@@ -1,15 +1,19 @@
 import { useState, useRef, useEffect } from "react";
 import { toast } from "react-hot-toast";
-import { AlertTriangle, Bell, Settings, LogOut } from "lucide-react";
+import { AlertTriangle, Bell, Settings, LogOut, CheckCircle2, XCircle, Info, Clock, Check } from "lucide-react";
 import Logo from "@/assets/tp-logo.svg";
 import { useAuth } from "@/context/AuthContext";
+import { useNotification } from "@/context/NotificationContext";
 import { getWarehouseStatus } from "@/pages/worker-page/mock";
 
 export const NavbarSale = () => {
   const { logout } = useAuth();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotification();
   const [showSettings, setShowSettings] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [warehouseStatus, setWarehouseStatus] = useState({ isOverloaded: false });
   const settingsRef = useRef(null);
+  const notifRef = useRef(null);
 
   // Poll warehouse status (mocking real-time updates)
   useEffect(() => {
@@ -26,6 +30,9 @@ export const NavbarSale = () => {
     const handleClickOutside = (event) => {
       if (settingsRef.current && !settingsRef.current.contains(event.target)) {
         setShowSettings(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setShowNotifications(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -88,12 +95,107 @@ export const NavbarSale = () => {
 
       {/* RIGHT */}
       <div className="relative z-[3] flex items-center gap-1">
-        <button
-          className="relative flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
-          title="Thông báo"
-        >
-          <Bell size={18} />
-        </button>
+        <div className="relative" ref={notifRef}>
+          <button
+            onClick={() => setShowNotifications(!showNotifications)}
+            className={`relative flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 transition-colors cursor-pointer ${showNotifications ? "bg-gray-100 text-green-600" : "text-gray-500 hover:text-gray-700"}`}
+            title="Thông báo"
+          >
+            <Bell size={18} />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-black flex items-center justify-center rounded-full border border-white shadow-sm animate-in zoom-in duration-300">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </button>
+
+          {/* Notifications Dropdown */}
+          {showNotifications && (
+            <div
+              className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+              style={{ boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+            >
+              <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-bold text-gray-800">Thông báo</p>
+                  {unreadCount > 0 && (
+                    <span className="px-1.5 py-0.5 bg-green-100 text-green-700 text-[9px] font-black rounded-full uppercase tracking-tighter">
+                      Mới
+                    </span>
+                  )}
+                </div>
+                <button 
+                  onClick={markAllAsRead}
+                  className="text-[10px] font-black text-green-600 hover:text-green-700 uppercase tracking-widest cursor-pointer"
+                >
+                  Đọc tất cả
+                </button>
+              </div>
+
+              <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                {notifications.length === 0 ? (
+                  <div className="py-12 flex flex-col items-center justify-center text-gray-400 gap-2">
+                    <Bell size={32} className="opacity-20" />
+                    <p className="text-xs font-bold uppercase tracking-widest">Không có thông báo</p>
+                  </div>
+                ) : (
+                  notifications.map((n) => (
+                    <div
+                      key={n.pk_notification_id}
+                      onClick={() => !n.is_read && markAsRead(n.pk_notification_id)}
+                      className={`px-4 py-3 flex gap-3 cursor-pointer transition-colors border-b border-gray-50 last:border-0 hover:bg-gray-50 ${!n.is_read ? 'bg-green-50/30' : ''}`}
+                    >
+                      <div className="mt-1 shrink-0">
+                        {n.type === "SUCCESS" ? (
+                          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                            <CheckCircle2 size={16} />
+                          </div>
+                        ) : n.type === "ERROR" ? (
+                          <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                            <XCircle size={16} />
+                          </div>
+                        ) : n.type === "WARNING" ? (
+                          <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+                            <AlertTriangle size={16} />
+                          </div>
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                            <Info size={16} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 flex flex-col gap-0.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className={`text-[13px] leading-tight ${!n.is_read ? 'font-bold text-gray-900' : 'font-medium text-gray-600'}`}>
+                            {n.title}
+                          </p>
+                          {!n.is_read && <div className="w-2 h-2 bg-green-500 rounded-full shrink-0 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />}
+                        </div>
+                        <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed">
+                          {n.message}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <Clock size={10} className="text-gray-300" />
+                          <span className="text-[9px] font-black text-gray-300 uppercase tracking-tighter">
+                            {new Date(n.createdate).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {notifications.length > 0 && (
+                <div className="p-3 bg-gray-50/50 border-t border-gray-100 text-center">
+                  <button className="text-[10px] font-black text-gray-400 hover:text-gray-600 uppercase tracking-widest transition-colors cursor-pointer">
+                    Xem tất cả lịch sử
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         <div className="relative" ref={settingsRef}>
           <button

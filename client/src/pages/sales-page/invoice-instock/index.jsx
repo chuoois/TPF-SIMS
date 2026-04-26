@@ -275,7 +275,7 @@ export default function InStockInvoicePage() {
           );
         }
 
-        toast.success(`Tạo yêu cầu ${newOrder.code} thành công!`, { id: loadingToast });
+        toast.dismiss(loadingToast);
         setPrintingOrder(newOrder);
 
         // Clear active tab after success
@@ -289,6 +289,9 @@ export default function InStockInvoicePage() {
           deliveryDate: "",
           storePickupDate: "",
         });
+
+        // Refresh products to update stock
+        refreshProducts();
       } catch (error) {
         console.error("Checkout error:", error);
         toast.error(error.response?.data?.message || error.message || "Lỗi khi tạo đơn hàng", { id: loadingToast });
@@ -342,46 +345,43 @@ export default function InStockInvoicePage() {
   }, []);
 
   // Fetch products
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setIsLoading(true);
-      try {
-        let sell_type = 2; // Default Hàng sẵn
-        let is_gift_param = 0;
+  const refreshProducts = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      let sell_type = 2; // Default Hàng sẵn
+      let is_gift_param = 0;
 
-        if (productTypeTab === PRODUCT_TYPES.RAW) {
-          sell_type = 1;
-        } else if (productTypeTab === PRODUCT_TYPES.GIFT) {
-          sell_type = null;
-          is_gift_param = 1;
-        } else if (productTypeTab === PRODUCT_TYPES.CUSTOM) {
-          sell_type = 4;
-        }
-
-        const params = {
-          search: debouncedProductSearch,
-          category_id: selectedCategories.join(","),
-          color_id: selectedColors.join(","),
-          material_id: selectedMaterials.join(","),
-          room_id: selectedRooms.join(","),
-          sell_type: sell_type || undefined,
-          is_gift: is_gift_param,
-          min_price: priceRange.min,
-          max_price: priceRange.max,
-          page: currentPage,
-          limit: ITEMS_PER_PAGE,
-        };
-
-        const res = await productService.getAllProducts(params);
-        setProducts(res.data);
-        setTotalItems(res.pagination.totalItems);
-      } catch (error) {
-        toast.error("Không thể tải danh sách sản phẩm");
-      } finally {
-        setIsLoading(false);
+      if (productTypeTab === PRODUCT_TYPES.RAW) {
+        sell_type = 1;
+      } else if (productTypeTab === PRODUCT_TYPES.GIFT) {
+        sell_type = null;
+        is_gift_param = 1;
+      } else if (productTypeTab === PRODUCT_TYPES.CUSTOM) {
+        sell_type = 4;
       }
-    };
-    fetchProducts();
+
+      const params = {
+        search: debouncedProductSearch,
+        category_id: selectedCategories.join(","),
+        color_id: selectedColors.join(","),
+        material_id: selectedMaterials.join(","),
+        room_id: selectedRooms.join(","),
+        sell_type: sell_type || undefined,
+        is_gift: is_gift_param,
+        min_price: priceRange.min,
+        max_price: priceRange.max,
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+      };
+
+      const res = await productService.getAllProducts(params);
+      setProducts(res.data);
+      setTotalItems(res.pagination.totalItems);
+    } catch (error) {
+      toast.error("Không thể tải danh sách sản phẩm");
+    } finally {
+      setIsLoading(false);
+    }
   }, [
     productTypeTab,
     debouncedProductSearch,
@@ -392,6 +392,10 @@ export default function InStockInvoicePage() {
     priceRange,
     currentPage,
   ]);
+
+  useEffect(() => {
+    refreshProducts();
+  }, [refreshProducts]);
 
   // Fetch customers
   useEffect(() => {

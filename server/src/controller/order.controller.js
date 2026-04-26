@@ -2,9 +2,10 @@ const { Op } = require("sequelize");
 const {
     sequelize, Order, OrderItem, OrderHistory, Product,
     ProductPricing, ProductItem, ProductMaterial, ProductColor,
-    CustomerProfile
+    CustomerProfile, UserAccount, UserRole
 } = require("../entities");
 const systemLogController = require("./systemLog.controller");
+const { sendNotification } = require("../sockets/socketManager");
 
 /**
  * Order Controller - Chỉ bao gồm API Tạo đơn hàng (createOrder)
@@ -118,6 +119,7 @@ class OrderController {
                                 item_status: 1, // 1: Sẵn sàng
                                 fk_order_item_id: null // Quan trọng: Chưa gán cho đơn hàng nào
                             },
+                            order: [["createdate", "ASC"]], // FIFO: Ưu tiên hàng nhập kho cũ nhất
                             limit: quantityNeeded,
                             transaction: t
                         });
@@ -153,6 +155,42 @@ class OrderController {
 
             // Ghi log hệ thống
             await systemLogController.record(req, "CREATE_ORDER", `Tạo đơn hàng #${newOrder.pk_order_id}`, "INFO", userId);
+
+            // 6. Gửi thông báo real-time
+            await sendNotification({
+                userId: userId, // Thông báo cho người tạo
+                title: "Tạo đơn hàng thành công",
+                message: `Đơn hàng #${newOrder.pk_order_id} của khách ${customer.full_name} đã được tạo.`,
+                type: "SUCCESS",
+                link: `/orders/${newOrder.pk_order_id}`,
+                createBy: userId
+            });
+
+            // Gửi cho chủ cửa hàng (Admin/Owner)
+            const admins = await UserAccount.findAll({
+                include: [{
+                    model: UserRole,
+                    as: "role",
+                    where: {
+                        role_code: { [Op.in]: ["ADMIN", "OWNER"] }
+                    }
+                }],
+                where: { status: 1 }
+            });
+
+            for (const admin of admins) {
+                // Không gửi thêm nếu admin chính là người tạo (đã nhận thông báo SUCCESS ở trên)
+                if (String(admin.user_account_id) !== String(userId)) {
+                    await sendNotification({
+                        userId: admin.user_account_id,
+                        title: "Thông báo đơn hàng mới",
+                        message: `Sales ${req.user.email} vừa tạo đơn hàng #${newOrder.pk_order_id} cho khách ${customer.full_name}.`,
+                        type: "INFO",
+                        link: `/orders/${newOrder.pk_order_id}`,
+                        createBy: userId
+                    });
+                }
+            }
 
             return res.status(201).json({
                 message: "Tạo đơn hàng thành công",

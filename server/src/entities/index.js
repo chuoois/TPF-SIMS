@@ -24,6 +24,7 @@ const Employee = require("./Employee");
 const PayrollPeriod = require("./PayrollPeriod");
 const SalaryRecord = require("./SalaryRecord");
 const SalaryAdjustment = require("./SalaryAdjustment");
+const Notification = require("./Notification");
 
 /**
  * Định nghĩa quan hệ giữa các bảng
@@ -170,6 +171,10 @@ SalaryRecord.belongsTo(Employee, { foreignKey: "fk_employee_id", as: "employee" 
 SalaryRecord.hasMany(SalaryAdjustment, { foreignKey: "fk_record_id", as: "adjustments", onDelete: "CASCADE" });
 SalaryAdjustment.belongsTo(SalaryRecord, { foreignKey: "fk_record_id", as: "record" });
 
+// UserAccount 1:N Notification
+UserAccount.hasMany(Notification, { foreignKey: "fk_user_id", as: "notifications", onDelete: "CASCADE" });
+Notification.belongsTo(UserAccount, { foreignKey: "fk_user_id", as: "recipient" });
+
 module.exports = {
   sequelize,
   UserRole,
@@ -197,4 +202,5 @@ module.exports = {
   PayrollPeriod,
   SalaryRecord,
   SalaryAdjustment,
+  Notification,
 };

@@ -4,7 +4,7 @@ import axiosInstance from "@/lib/axios";
  * SystemLog Service
  * Dịch vụ xử lý các yêu cầu liên quan đến nhật ký hệ thống
  * 
- * Created By: Antigravity
+ * Created By: ThinhBui
  * Created Date: 24/04/2026
  */
 const systemLogService = {

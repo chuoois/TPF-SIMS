@@ -89,6 +89,7 @@ class AuthController {
       return res.status(200).json({
         message: "Đăng nhập thành công",
         user: {
+          user_account_id: user.user_account_id,
           email: user.email,
           role: user.role?.role_code,
           fullName: user.profile?.full_name || "Người dùng",
@@ -273,6 +274,7 @@ class AuthController {
 
       return res.status(200).json({
         user: {
+          user_account_id: user.user_account_id,
           email: user.email,
           role: user.role?.role_code,
           fullName: user.profile?.full_name || "Người dùng",

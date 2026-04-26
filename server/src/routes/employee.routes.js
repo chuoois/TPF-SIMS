@@ -12,7 +12,7 @@ const { verifyAccessToken, verifyRole } = require("../middleware/auth.middleware
 
 /**
  * Employee Routes
- * Created By: Antigravity
+ * Created By: ThinhBui
  * Created Date: 25/04/2026
  */
 

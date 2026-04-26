@@ -2,8 +2,10 @@ require("dotenv").config();
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+const http = require("http");
 const sequelize = require("./config/db");
 require("./entities");
+const { initSocket } = require("./sockets/socketManager");
 const authRoutes = require("./routes/auth.routes");
 const customerRoutes = require("./routes/customer.routes");
 const accountRoutes = require("./routes/account.routes");
@@ -14,6 +16,7 @@ const productAttributeRoutes = require("./routes/productAttribute.routes");
 const customRequestRoutes = require("./routes/customRequest.routes");
 const employeeRoutes = require("./routes/employee.routes");
 const payrollRoutes = require("./routes/payroll.routes");
+const notificationRoutes = require("./routes/notification.routes");
 const swaggerUi = require("swagger-ui-express");
 const swaggerJsDoc = require("swagger-jsdoc");
 
@@ -47,6 +50,7 @@ app.use("/api/product-attribute", productAttributeRoutes);
 app.use("/api/custom-request", customRequestRoutes);
 app.use("/api/employee", employeeRoutes);
 app.use("/api/payroll", payrollRoutes);
+app.use("/api/notification", notificationRoutes);
 
 // ── Swagger ───────────────────────────────────────────────
 const SERVER_URL = process.env.SERVER_URL || "http://localhost:3000";
@@ -81,9 +85,13 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
+// ── HTTP & Socket ─────────────────────────────────────────
+const server = http.createServer(app);
+initSocket(server);
+
 // ── Start ─────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, "0.0.0.0", () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running at ${SERVER_URL}`);
   console.log(`Swagger docs available at ${SERVER_URL}/api-docs`);
 });

@@ -30,30 +30,60 @@ class ProductController {
             const offset = (page - 1) * limit;
 
             // === WHERE conditions cho bảng Product ===
-            const where = { product_status: 1 }; // Chỉ lấy sản phẩm đang hoạt động
+            const andConditions = [{ product_status: 1 }];
 
-            if (is_gift !== undefined) {
-                where.is_gift = is_gift == "true" || is_gift == 1 ? 1 : 0;
+            // Xử lý logic lọc quà tặng
+            const isGiftQuery = (is_gift === "true" || is_gift === "1" || is_gift === 1);
+            if (isGiftQuery) {
+                // Tab quà tặng: lấy những gì được đánh dấu là quà tặng HOẶC có chữ "Quà tặng" trong tên
+                andConditions.push({
+                    [Op.or]: [
+                        { is_gift: 1 },
+                        { product_name: { [Op.like]: "%Quà tặng%" } }
+                    ]
+                });
+            } else {
+                // Các tab khác: tuyệt đối không lấy quà tặng
+                andConditions.push({ is_gift: { [Op.or]: [0, null] } });
+                andConditions.push({ product_name: { [Op.notLike]: "%Quà tặng%" } });
             }
 
             // Lọc theo FK - hỗ trợ nhiều giá trị (vd: category_id=1,2,3)
             if (category_id) {
                 const ids = String(category_id).split(",").map(Number).filter(n => !isNaN(n));
-                where.fk_category_id = ids.length === 1 ? ids[0] : { [Op.in]: ids };
+                andConditions.push({ fk_category_id: ids.length === 1 ? ids[0] : { [Op.in]: ids } });
             }
             if (color_id) {
                 const ids = String(color_id).split(",").map(Number).filter(n => !isNaN(n));
-                where.fk_color_id = ids.length === 1 ? ids[0] : { [Op.in]: ids };
+                andConditions.push({ fk_color_id: ids.length === 1 ? ids[0] : { [Op.in]: ids } });
             }
             if (material_id) {
                 const ids = String(material_id).split(",").map(Number).filter(n => !isNaN(n));
-                where.fk_material_id = ids.length === 1 ? ids[0] : { [Op.in]: ids };
+                andConditions.push({ fk_material_id: ids.length === 1 ? ids[0] : { [Op.in]: ids } });
             }
             if (room_id) {
                 const ids = String(room_id).split(",").map(Number).filter(n => !isNaN(n));
-                where.fk_room_id = ids.length === 1 ? ids[0] : { [Op.in]: ids };
+                andConditions.push({ fk_room_id: ids.length === 1 ? ids[0] : { [Op.in]: ids } });
             }
-            // === Pricing include (điều chỉnh theo sell_type) ===
+
+            // === Search: tìm kiếm trên Product + các bảng join ===
+            if (search) {
+                const searchTerm = `%${search}%`;
+                andConditions.push({
+                    [Op.or]: [
+                        { product_name: { [Op.like]: searchTerm } },
+                        { sku: { [Op.like]: searchTerm } },
+                        { "$category.category_name$": { [Op.like]: searchTerm } },
+                        { "$color.color_name$": { [Op.like]: searchTerm } },
+                        { "$material.material_name$": { [Op.like]: searchTerm } },
+                        { "$room.room_name$": { [Op.like]: searchTerm } },
+                    ]
+                });
+            }
+
+            const where = { [Op.and]: andConditions };
+
+            // === Pricing include (điều chỉnh theo sell_type và is_gift) ===
             const pricingInclude = {
                 model: ProductPricing,
                 as: "pricings",
@@ -61,10 +91,10 @@ class ProductController {
                 required: false
             };
 
-            // sell_type: 1-Hàng mộc, 2-Hàng sẵn, 3-Quà tặng, 4-Hàng custom
-            if (sell_type) {
+            // Nếu không phải là quà tặng, mới áp dụng các bộ lọc về giá
+            if (!isGiftQuery) {
                 if (sell_type == 1) {
-                    // Hàng mộc: có giá mộc > 0
+                    // Hàng mộc: bắt buộc có giá mộc > 0
                     pricingInclude.required = true;
                     pricingInclude.where.raw_price = { [Op.gt]: 0 };
                     
@@ -76,8 +106,8 @@ class ProductController {
                             pricingInclude.where.raw_price = { [Op.lte]: parseFloat(max_price) };
                         }
                     }
-                } else if (sell_type == 2 || sell_type == 3 || sell_type == 4) {
-                    // Hàng sẵn/Quà tặng/Custom: có giá hoàn thiện > 0
+                } else if (sell_type == 2 || sell_type == 4) {
+                    // Hàng sẵn/Custom: bắt buộc có giá hoàn thiện > 0
                     pricingInclude.required = true;
                     pricingInclude.where.final_price = { [Op.gt]: 0 };
 
@@ -89,13 +119,13 @@ class ProductController {
                             pricingInclude.where.final_price = { [Op.lte]: parseFloat(max_price) };
                         }
                     }
+                } else if (min_price || max_price) {
+                    // Nếu không có sell_type nhưng có lọc giá, mặc định lọc theo final_price
+                    pricingInclude.required = true;
+                    pricingInclude.where.final_price = {};
+                    if (min_price) pricingInclude.where.final_price[Op.gte] = parseFloat(min_price);
+                    if (max_price) pricingInclude.where.final_price[Op.lte] = parseFloat(max_price);
                 }
-            } else if (min_price || max_price) {
-                // Nếu không có sell_type nhưng có lọc giá, mặc định lọc theo final_price
-                pricingInclude.required = true;
-                pricingInclude.where.final_price = {};
-                if (min_price) pricingInclude.where.final_price[Op.gte] = parseFloat(min_price);
-                if (max_price) pricingInclude.where.final_price[Op.lte] = parseFloat(max_price);
             }
 
             // === Include các bảng liên quan ===
@@ -119,20 +149,6 @@ class ProductController {
                 as: "room",
                 attributes: ["pk_product_room_id", "room_name"]
             };
-
-            // === Search: tìm kiếm trên Product + các bảng join ===
-            if (search) {
-                const searchTerm = `%${search}%`;
-                // Sử dụng $alias.field$ để search trên bảng join
-                where[Op.or] = [
-                    { product_name: { [Op.like]: searchTerm } },
-                    { sku: { [Op.like]: searchTerm } },
-                    { "$category.category_name$": { [Op.like]: searchTerm } },
-                    { "$color.color_name$": { [Op.like]: searchTerm } },
-                    { "$material.material_name$": { [Op.like]: searchTerm } },
-                    { "$room.room_name$": { [Op.like]: searchTerm } },
-                ];
-            }
 
             // === Subquery tính số lượng có thể bán ===
             // Chỉ đếm ProductItem có item_status = 1 (Sẵn sàng) VÀ chưa được gán cho đơn hàng nào
@@ -211,23 +227,27 @@ class ProductController {
                 let original_price = 0;
                 let sell_type_name = "";
 
-                if (p.is_gift) {
+                // Xác định sản phẩm thực sự là quà tặng (dựa trên flag DB hoặc tên)
+                const isActuallyGift = p.is_gift == 1 || p.product_name?.toLowerCase().includes("quà tặng");
+
+                if (isActuallyGift) {
                     original_price = 0;
                     sell_type_name = "Quà tặng";
-                } else if (sell_type == 1) {
-                    original_price = pricing ? pricing.raw_price : 0;
-                    sell_type_name = "Hàng mộc";
-                } else if (sell_type == 2) {
-                    original_price = pricing ? pricing.final_price : 0;
-                    sell_type_name = "Hàng sẵn";
-                } else if (sell_type == 3) {
-                    original_price = pricing ? pricing.final_price : 0;
-                    sell_type_name = "Quà tặng";
-                } else if (sell_type == 4) {
-                    original_price = pricing ? pricing.final_price : 0;
-                    sell_type_name = "Hàng custom";
                 } else {
-                    original_price = pricing ? pricing.final_price : 0;
+                    if (sell_type == 1) {
+                        original_price = pricing ? pricing.raw_price : 0;
+                        sell_type_name = "Hàng mộc";
+                    } else if (sell_type == 2) {
+                        original_price = pricing ? pricing.final_price : 0;
+                        sell_type_name = "Hàng sẵn";
+                    } else if (sell_type == 4) {
+                        original_price = pricing ? pricing.final_price : 0;
+                        sell_type_name = "Hàng custom";
+                    } else {
+                        // Mặc định nếu không có sell_type cụ thể
+                        original_price = pricing ? (pricing.final_price || pricing.raw_price) : 0;
+                        sell_type_name = "Sản phẩm";
+                    }
                 }
 
                 // Tính toán giá sau giảm
