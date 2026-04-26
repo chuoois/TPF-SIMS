@@ -197,7 +197,7 @@ class OrderController {
                 order: newOrder
             });
         } catch (error) {
-            await t.rollback();
+            if (t && !t.finished) await t.rollback();
             console.error("Create order error:", error);
             return res.status(400).json({ message: error.message || "Lỗi hệ thống khi tạo đơn hàng" });
         }

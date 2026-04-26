@@ -8,7 +8,7 @@ const NotificationContext = createContext();
 /**
  * Notification Context
  * Quản lý danh sách thông báo toàn cục
- * Created By: Antigravity
+ * Created By: ThinhBui
  * Created Date: 26/04/2026
  */
 export const NotificationProvider = ({ children }) => {

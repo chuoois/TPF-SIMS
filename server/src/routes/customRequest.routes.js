@@ -54,6 +54,21 @@ router.get("/", CustomRequestController.getAllRequests);
  *             properties:
  *               fk_customer_id:
  *                 type: integer
+ *               fulfillment_method:
+ *                 type: string
+ *               expected_fulfillment_date:
+ *                 type: string
+ *                 format: date-time
+ *               deposit_amount:
+ *                 type: number
+ *               address:
+ *                 type: string
+ *               total_amount:
+ *                 type: number
+ *               order_status:
+ *                 type: integer
+ *               order_type:
+ *                 type: integer
  *               note:
  *                 type: string
  *               items:
@@ -62,6 +77,8 @@ router.get("/", CustomRequestController.getAllRequests);
  *                   type: object
  *                   properties:
  *                     item_name:
+ *                       type: string
+ *                     item_img:
  *                       type: string
  *                     item_quantity:
  *                       type: integer
@@ -76,6 +93,9 @@ router.get("/", CustomRequestController.getAllRequests);
  *                       type: number
  *                     item_note:
  *                       type: string
+ *                     is_finished:
+ *                       type: integer
+ *                       description: "0: Mộc, 1: Sơn"
  *                     customer_img:
  *                       type: array
  *                       items:
