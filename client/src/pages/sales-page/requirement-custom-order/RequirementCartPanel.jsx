@@ -197,7 +197,10 @@ export default function RequirementCartPanel({
                         className="text-[11px]"
                         style={{ color: "var(--text-placeholder)" }}
                       >
-                        {item.woodType} | {item.size}
+                        {item.woodType} |{" "}
+                        {typeof item.size === "object"
+                          ? `${item.size.length}x${item.size.width}x${item.size.height} ${item.size.unit || "cm"}${item.size.note ? ` (${item.size.note})` : ""}`
+                          : item.size}
                       </span>
                       {formik.values.mode === "DIRECT_ORDER" && (
                         <span

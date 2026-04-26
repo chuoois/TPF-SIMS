@@ -21,12 +21,18 @@ import { X, Package } from "lucide-react";
 import { createEmptyTab, generateOrderCode, fmt } from "./mockData";
 import customerService from "@/services/customer.service";
 import orderService from "@/services/order.service";
+import customRequestService from "@/services/customRequest.service";
 
 // ===================== VALIDATION SCHEMA =====================
 const orderSchema = Yup.object().shape({
   selectedCustomer: Yup.object().nullable().required("Vui lòng chọn khách hàng"),
   orderNote: Yup.string().nullable(),
-  depositAmount: Yup.number().min(0, "Số tiền đặt cọc không hợp lệ"),
+  depositAmount: Yup.number()
+    .min(0, "Số tiền đặt cọc không được âm")
+    .required("Vui lòng nhập số tiền cọc"),
+  cartItems: Yup.array()
+    .min(1, "Danh sách yêu cầu không được để trống")
+    .required("Danh sách yêu cầu không được để trống"),
 });
 
 export default function CustomOrderRequirementsPage() {
@@ -71,28 +77,33 @@ export default function CustomOrderRequirementsPage() {
       const loadingToast = toast.loading("Đang lưu yêu cầu thiết kế...");
 
       try {
-        // Prepare payload for backend
-        const orderData = {
+        // Prepare payload for backend - Custom Request structure
+        const requestData = {
           fk_customer_id: values.selectedCustomer.id,
-          fulfillment_method: "Theo thỏa thuận",
-          expected_fulfillment_date: new Date().toISOString().split("T")[0], // Default for custom
+          fulfillment_method: null,
+          expected_fulfillment_date: null,
           note: values.orderNote,
           deposit_amount: values.depositAmount,
           address: values.selectedCustomer.address || "",
           total_amount: subtotal,
-          order_type: 4, // Đặt riêng
+          order_status: 1, // Pending
+          order_type: 3,   // 3: Đặt riêng (Theo mapping mới)
           items: values.cartItems.map((item) => ({
             item_name: item.productName,
+            item_img: item.images?.[0] || "",
             item_quantity: item.quantity,
             item_price: item.expectedPrice || 0,
+            item_material: item.woodType,
+            item_color: item.color,
+            item_size: item.size,
+            item_note: item.note,
             is_finished: 0,
-            item_note: `Gỗ: ${item.woodType}, Màu: ${item.color}, Kích thước: ${item.size}. Ghi chú: ${item.note}`,
             customer_img: item.images || [],
           })),
         };
 
-        const response = await orderService.createOrder(orderData);
-        toast.success(`Đã lưu yêu cầu thiết kế ${response.order?.pk_order_id ? "HD-" + response.order.pk_order_id : generateOrderCode()} thành công!`, { id: loadingToast });
+        const response = await customRequestService.createRequest(requestData);
+        toast.dismiss(loadingToast);
 
         // Clear active tab after success
         if (tabs.length <= 1) {
@@ -103,11 +114,27 @@ export default function CustomOrderRequirementsPage() {
           closeTab(activeTabId, { stopPropagation: () => {} });
         }
       } catch (error) {
-        console.error("Create custom order error:", error);
-        toast.error(error.response?.data?.message || error.message || "Lỗi khi tạo yêu cầu", { id: loadingToast });
+        console.error("Create custom request error:", error);
+        toast.error(
+          error.response?.data?.message || error.message || "Lỗi khi ghi nhận yêu cầu",
+          { id: loadingToast }
+        );
       }
     },
   });
+
+  // Show validation errors as toasts when submitting
+  useEffect(() => {
+    if (formik.submitCount > 0 && !formik.isValid) {
+      const firstError = Object.values(formik.errors)[0];
+      if (typeof firstError === "string") {
+        toast.error(firstError);
+      } else if (Array.isArray(firstError)) {
+        // Handle array of errors (like cartItems)
+        toast.error(typeof firstError[0] === 'string' ? firstError[0] : "Dữ liệu không hợp lệ");
+      }
+    }
+  }, [formik.submitCount]);
 
   // Fetch customers
   useEffect(() => {
@@ -318,7 +345,12 @@ export default function CustomOrderRequirementsPage() {
                     <div className="flex-1">
                        <h4 className="text-xl font-bold text-gray-900">{viewingItem.productName}</h4>
                        <p className="text-sm text-gray-500 mt-1">{viewingItem.woodType} | {viewingItem.color}</p>
-                       <p className="text-sm text-gray-500 mt-0.5">Kích thước: {viewingItem.size}</p>
+                       <p className="text-sm text-gray-500 mt-0.5">
+                         Kích thước:{" "}
+                         {typeof viewingItem.size === "object"
+                           ? `${viewingItem.size.length}x${viewingItem.size.width}x${viewingItem.size.height} ${viewingItem.size.unit || "cm"}${viewingItem.size.note ? ` (${viewingItem.size.note})` : ""}`
+                           : viewingItem.size}
+                       </p>
                        <p className="text-lg font-bold text-green-600 mt-2">{fmt(viewingItem.expectedPrice || 0)}đ</p>
                     </div>
                  </div>

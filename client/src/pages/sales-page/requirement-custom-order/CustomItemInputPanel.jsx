@@ -21,8 +21,17 @@ import {
   FileText,
   ShieldCheck,
 } from "lucide-react";
+import * as Yup from "yup";
+import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { fmt, WOOD_TYPES, COLORS, inputBase, inputStyle, getNextItemId } from "./mockData";
+
+// ===================== ITEM VALIDATION SCHEMA =====================
+const itemSchema = Yup.object().shape({
+  productName: Yup.string().trim().required("Tên sản phẩm không được để trống"),
+  woodType: Yup.string().required("Vui lòng chọn hoặc nhập chất liệu"),
+  quantity: Yup.number().min(1, "Số lượng phải ít nhất là 1").required(),
+});
 
 export default function CustomItemInputPanel({
   activeTab,
@@ -37,6 +46,7 @@ export default function CustomItemInputPanel({
     length: "",
     width: "",
     height: "",
+    sizeNote: "",
     color: "",
     expectedPrice: "",
     quantity: 1,
@@ -44,6 +54,7 @@ export default function CustomItemInputPanel({
     images: [],
   });
 
+  const [errors, setErrors] = useState({});
   const [showWoodDropdown, setShowWoodDropdown] = useState(false);
   const [showColorDropdown, setShowColorDropdown] = useState(false);
 
@@ -59,8 +70,17 @@ export default function CustomItemInputPanel({
     }
   }, [editingItemId]);
 
-  const updateNewItem = (field, value) =>
+  const updateNewItem = (field, value) => {
     setNewItem((prev) => ({ ...prev, [field]: value }));
+    // Clear error when typing
+    if (errors[field]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
 
   // Auto-suggest deposit when price is entered (for the first item or when deposit is 0)
   useEffect(() => {
@@ -77,42 +97,57 @@ export default function CustomItemInputPanel({
       length: "",
       width: "",
       height: "",
+      sizeNote: "",
       color: "",
       expectedPrice: "",
       quantity: 1,
       note: "",
       images: [],
     });
+    setErrors({});
     setEditingItemId(null);
   };
 
-  const saveItem = () => {
-    if (!newItem.productName.trim()) return;
+  const saveItem = async () => {
+    try {
+      await itemSchema.validate(newItem, { abortEarly: false });
 
-    const sizeStr = [
-      newItem.length ? `D${newItem.length}` : "",
-      newItem.width ? `R${newItem.width}` : "",
-      newItem.height ? `C${newItem.height}` : "",
-    ]
-      .filter(Boolean)
-      .join(" ");
+      const sizeObj = {
+        unit: "cm",
+        width: Number(newItem.width) || 0,
+        height: Number(newItem.height) || 0,
+        length: Number(newItem.length) || 0,
+        note: newItem.sizeNote || "",
+      };
 
-    const itemToSave = { ...newItem, size: sizeStr };
+      const itemToSave = { ...newItem, item_size: sizeObj, size: sizeObj };
 
-    if (editingItemId) {
-      formik.setFieldValue(
-        "cartItems",
-        formik.values.cartItems.map((i) =>
-          i.id === editingItemId ? { ...itemToSave, id: editingItemId } : i
-        )
-      );
-    } else {
-      formik.setFieldValue("cartItems", [
-        ...formik.values.cartItems,
-        { id: getNextItemId(), ...itemToSave },
-      ]);
+      if (editingItemId) {
+        formik.setFieldValue(
+          "cartItems",
+          formik.values.cartItems.map((i) =>
+            i.id === editingItemId ? { ...itemToSave, id: editingItemId } : i
+          )
+        );
+        toast.success("Đã cập nhật sản phẩm");
+      } else {
+        formik.setFieldValue("cartItems", [
+          ...formik.values.cartItems,
+          { id: getNextItemId(), ...itemToSave },
+        ]);
+        toast.success("Đã thêm vào danh sách");
+      }
+      resetForm();
+    } catch (err) {
+      if (err instanceof Yup.ValidationError) {
+        const newErrors = {};
+        err.inner.forEach((e) => {
+          newErrors[e.path] = e.message;
+        });
+        setErrors(newErrors);
+        toast.error(err.inner[0].message);
+      }
     }
-    resetForm();
   };
 
   return (
@@ -187,9 +222,10 @@ export default function CustomItemInputPanel({
               placeholder="VD: Bàn ăn gỗ Sồi..."
               value={newItem.productName}
               onChange={(e) => updateNewItem("productName", e.target.value)}
-                  className={`${inputBase} !py-2`}
-                  style={inputStyle}
-                />
+              className={`${inputBase} !py-2 ${errors.productName ? "border-red-500 bg-red-50" : ""}`}
+              style={inputStyle}
+            />
+            {errors.productName && <p className="text-[10px] text-red-500 font-bold ml-1">{errors.productName}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -205,9 +241,10 @@ export default function CustomItemInputPanel({
                   onFocus={() => setShowWoodDropdown(true)}
                   onBlur={() => setTimeout(() => setShowWoodDropdown(false), 200)}
                   onChange={(e) => { updateNewItem("woodType", e.target.value); setShowWoodDropdown(true); }}
-                  className={`${inputBase} !py-2`}
+                  className={`${inputBase} !py-2 ${errors.woodType ? "border-red-500 bg-red-50" : ""}`}
                   style={inputStyle}
                 />
+                {errors.woodType && <p className="text-[10px] text-red-500 font-bold ml-1 mt-1">{errors.woodType}</p>}
                 {showWoodDropdown && (
                   <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow-xl z-50 max-h-40 overflow-y-auto border-[var(--grid-border)]">
                     {WOOD_TYPES.filter(w => w.toLowerCase().includes(newItem.woodType.toLowerCase())).map(w => (
@@ -270,18 +307,20 @@ export default function CustomItemInputPanel({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-2">
-              <ClipboardEdit size={12} /> Ghi chú chi tiết
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1">
+              <FileText size={10} /> Ghi chú kích thước (VD: Tay 30, chân 40...)
             </label>
-            <textarea
-              placeholder="Yêu cầu riêng về mẫu mã, phụ kiện..."
-              value={newItem.note}
-              onChange={(e) => updateNewItem("note", e.target.value)}
-              className={`${inputBase} min-h-[60px] resize-none bg-white !py-2`}
+            <input
+              type="text"
+              placeholder="Nhập ghi chú riêng về kích thước..."
+              value={newItem.sizeNote}
+              onChange={(e) => updateNewItem("sizeNote", e.target.value)}
+              className={`${inputBase} bg-white !py-2`}
               style={{ ...inputStyle, backgroundColor: "white" }}
             />
           </div>
-        </div>
+
+          </div>
 
         {/* Section: Price & Deposit */}
         <div className="space-y-3">

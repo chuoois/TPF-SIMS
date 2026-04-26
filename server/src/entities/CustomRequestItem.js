@@ -19,7 +19,14 @@ const CustomRequestItem = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    fk_product_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     item_name: {
+      type: DataTypes.STRING(255),
+    },
+    item_img: {
       type: DataTypes.STRING(255),
     },
     item_quantity: {
@@ -30,7 +37,7 @@ const CustomRequestItem = sequelize.define(
       type: DataTypes.STRING(100),
     },
     item_size: {
-      type: DataTypes.JSON, // { length, width, height }
+      type: DataTypes.JSON, // { length, width, height } hoặc string tùy nhu cầu
     },
     item_color: {
       type: DataTypes.STRING(100),
@@ -44,6 +51,10 @@ const CustomRequestItem = sequelize.define(
     },
     design_img: {
       type: DataTypes.JSON, // Mảng ảnh thiết kế từ chủ shop/kỹ thuật
+    },
+    is_finished: {
+      type: DataTypes.TINYINT,
+      defaultValue: 0, // 0: Mộc, 1: Sơn
     },
     item_note: {
       type: DataTypes.TEXT,

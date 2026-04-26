@@ -39,7 +39,7 @@ router.use(verifyAccessToken);
  *                 example: 1
  *               fulfillment_method:
  *                 type: string
- *                 description: "Phương thức giao hàng (VD: Tại kho, Giao tận nhà)"
+ *                 description: "Phương thức giao hàng (VD: Lấy tại cửa hàng, Giao tận nhà)"
  *                 example: "Giao tận nhà"
  *               expected_fulfillment_date:
  *                 type: string

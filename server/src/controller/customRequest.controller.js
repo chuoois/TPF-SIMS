@@ -1,5 +1,7 @@
-const { sequelize, CustomRequest, CustomRequestItem, CustomerProfile, UserAccount } = require("../entities");
+const { Op } = require("sequelize");
+const { sequelize, CustomRequest, CustomRequestItem, CustomerProfile, UserAccount, UserRole } = require("../entities");
 const systemLogController = require("./systemLog.controller");
+const { sendNotification } = require("../sockets/socketManager");
 
 /**
  * CustomRequest Controller - Quản lý phiếu yêu cầu đặt hàng riêng
@@ -13,14 +15,25 @@ class CustomRequestController {
     async createRequest(req, res) {
         const t = await sequelize.transaction();
         try {
-            const { fk_customer_id, note, items } = req.body;
+            const { 
+                fk_customer_id, fulfillment_method, expected_fulfillment_date, 
+                note, deposit_amount, address, total_amount, 
+                order_status, order_type, items 
+            } = req.body;
             const userId = req.user.userId;
 
             // 1. Tạo Header
             const newRequest = await CustomRequest.create({
                 fk_customer_id,
-                request_code: "YC-" + Date.now(), // Có thể cải tiến logic tạo mã
-                status: 1, // Pending
+                request_code: "YC-" + Date.now(),
+                fulfillment_method,
+                expected_fulfillment_date,
+                deposit_amount,
+                address,
+                total_amount,
+                total_estimated_price: total_amount, // Đồng bộ với total_amount
+                status: order_status || 1, 
+                order_type: order_type || 1,
                 note,
                 createby: userId
             }, { transaction: t });
@@ -38,13 +51,48 @@ class CustomRequestController {
             await t.commit();
 
             await systemLogController.record(req, "CREATE_CUSTOM_REQUEST", `Tạo yêu cầu đặt riêng mới ID: ${newRequest.pk_custom_request_id}`, "INFO", userId);
+            
+            // 3. Gửi thông báo real-time
+            await sendNotification({
+                userId: userId,
+                title: "Ghi nhận yêu cầu thành công",
+                message: `Yêu cầu đặt riêng ${newRequest.request_code} đã được tạo thành công.`,
+                type: "SUCCESS",
+                link: `/custom-requirements/${newRequest.pk_custom_request_id}`,
+                createBy: userId
+            });
+
+            // Gửi cho Admin/Owner
+            const admins = await UserAccount.findAll({
+                include: [{
+                    model: UserRole,
+                    as: "role",
+                    where: {
+                        role_code: { [Op.in]: ["ADMIN", "OWNER"] }
+                    }
+                }],
+                where: { status: 1 }
+            });
+
+            for (const admin of admins) {
+                if (String(admin.user_account_id) !== String(userId)) {
+                    await sendNotification({
+                        userId: admin.user_account_id,
+                        title: "Yêu cầu đặt riêng mới",
+                        message: `Sales ${req.user.email} vừa tạo yêu cầu đặt riêng mới ${newRequest.request_code}.`,
+                        type: "INFO",
+                        link: `/custom-requirements/${newRequest.pk_custom_request_id}`,
+                        createBy: userId
+                    });
+                }
+            }
 
             return res.status(201).json({
                 message: "Tạo yêu cầu đặt riêng thành công",
                 data: newRequest
             });
         } catch (error) {
-            await t.rollback();
+            if (t && !t.finished) await t.rollback();
             console.error("Create custom request error:", error);
             return res.status(500).json({ message: "Lỗi hệ thống khi tạo yêu cầu" });
         }
@@ -133,6 +181,16 @@ class CustomRequestController {
             });
 
             await systemLogController.record(req, "UPDATE_CUSTOM_REQUEST_STATUS", `Cập nhật trạng thái yêu cầu ID: ${id} sang ${status}`, "INFO", userId);
+
+            // Thông báo cho nhân viên/admin khác
+            await sendNotification({
+                userId: null, // Gửi chung hoặc lọc theo phân quyền
+                title: "Cập nhật yêu cầu đặt riêng",
+                message: `Yêu cầu ${request.request_code} đã được cập nhật trạng thái mới.`,
+                type: "INFO",
+                link: `/custom-requirements/${id}`,
+                createBy: userId
+            });
 
             return res.status(200).json({ message: "Cập nhật thành công", data: request });
         } catch (error) {
