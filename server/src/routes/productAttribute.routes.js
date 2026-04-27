@@ -17,8 +17,32 @@ router.use(verifyAccessToken);
  * @swagger
  * /api/product-attribute/all:
  *   get:
- *     summary: Lấy tất cả danh mục, màu sắc, chất liệu
+ *     summary: Lấy danh sách thuộc tính (Hỗ trợ phân trang hoặc lấy tất cả)
  *     tags: [ProductAttributes]
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [category, color, material, room]
+ *         description: Loại thuộc tính cần lấy (Nếu bỏ trống sẽ lấy tất cả các loại)
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Từ khóa tìm kiếm theo tên
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Số trang (Dùng khi có type)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Số lượng bản ghi mỗi trang (Dùng khi có type)
  *     responses:
  *       200:
  *         description: Danh sách các thuộc tính
