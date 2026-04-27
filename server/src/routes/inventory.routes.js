@@ -64,4 +64,64 @@ router.get("/product", InventoryController.getInventoryProducts);
  */
 router.get("/product/:id/items", InventoryController.getProductItems);
 
+/**
+ * @swagger
+ * /api/inventory/item/{itemSerial}/status:
+ *   patch:
+ *     summary: Cập nhật trạng thái một đơn vị sản phẩm (báo lỗi/bỏ báo lỗi)
+ *     tags: [Inventory]
+ *     parameters:
+ *       - in: path
+ *         name: itemSerial
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [AVAILABLE, DEFECTIVE, PENDING_DELIVERY, PROCESSING]
+ *               note:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Cập nhật thành công
+ */
+router.patch("/item/:itemSerial/status", InventoryController.updateItemStatus);
+
+/**
+ * @swagger
+ * /api/inventory/defective/process:
+ *   post:
+ *     summary: Xử lý hàng lỗi (trả NCC, thanh lý, xuất hủy)
+ *     tags: [Inventory]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               unitIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               processType:
+ *                 type: string
+ *                 enum: [RETURN, SCRAP, WRITE_OFF]
+ *               scrapPrice:
+ *                 type: number
+ *               note:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Xử lý thành công
+ */
+router.post("/defective/process", InventoryController.processDefectiveItems);
+
 module.exports = router;

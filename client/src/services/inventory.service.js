@@ -26,6 +26,26 @@ const inventoryService = {
     const response = await axiosInstance.get(`/inventory/product/${productId}/items`);
     return response.data;
   },
+
+  /**
+   * Cập nhật trạng thái một đơn vị sản phẩm (báo lỗi / bỏ báo lỗi)
+   * @param {string} itemSerial - Mã serial của item
+   * @param {string} status - AVAILABLE | DEFECTIVE | PENDING_DELIVERY | PROCESSING
+   * @param {string} [note] - Ghi chú
+   */
+  async updateItemStatus(itemSerial, status, note = "") {
+    const response = await axiosInstance.patch(`/inventory/item/${encodeURIComponent(itemSerial)}/status`, { status, note });
+    return response.data;
+  },
+
+  /**
+   * Xử lý hàng lỗi: RETURN, SCRAP, WRITE_OFF
+   * @param {Object} data - { unitIds, processType, scrapPrice, note }
+   */
+  async processDefectiveItems(data) {
+    const response = await axiosInstance.post("/inventory/defective/process", data);
+    return response.data;
+  },
 };
 
 export default inventoryService;
