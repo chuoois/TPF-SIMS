@@ -218,6 +218,96 @@ class InventoryController {
   }
 
   /**
+   * Cập nhật trạng thái từng đơn vị sản phẩm (Báo lỗi / Bỏ báo lỗi)
+   */
+  async updateItemStatus(req, res) {
+    try {
+      const { itemSerial } = req.params;
+      const { status, note } = req.body;
+
+      // status nhận: "AVAILABLE" | "DEFECTIVE"
+      const statusMap = {
+        AVAILABLE: 1,
+        DEFECTIVE: 3,
+        PENDING_DELIVERY: 2,
+        PROCESSING: 4,
+      };
+
+      const dbStatus = statusMap[status];
+      if (dbStatus === undefined) {
+        return res.status(400).json({ message: "Trạng thái không hợp lệ" });
+      }
+
+      const item = await ProductItem.findOne({ where: { item_serial: itemSerial } });
+      if (!item) {
+        return res.status(404).json({ message: "Không tìm thấy đơn vị sản phẩm" });
+      }
+
+      await item.update({
+        item_status: dbStatus,
+        note: note || item.note,
+        modifiedate: new Date(),
+      });
+
+      return res.status(200).json({ message: "Cập nhật trạng thái thành công", item });
+    } catch (error) {
+      console.error("Update item status error:", error);
+      return res.status(500).json({ message: "Lỗi hệ thống khi cập nhật trạng thái đơn vị" });
+    }
+  }
+
+  /**
+   * Xử lý hàng lỗi: RETURN (trả NCC), SCRAP (thanh lý), WRITE_OFF (xuất hủy)
+   * Tất cả đều xóa item khỏi kho (đặt status = 0 - Đã xử lý)
+   */
+  async processDefectiveItems(req, res) {
+    try {
+      const { unitIds, processType, scrapPrice, note } = req.body;
+      if (!unitIds || unitIds.length === 0) {
+        return res.status(400).json({ message: "Danh sách đơn vị cần xử lý không được rỗng" });
+      }
+
+      const validTypes = ["RETURN", "SCRAP", "WRITE_OFF"];
+      if (!validTypes.includes(processType)) {
+        return res.status(400).json({ message: "Phương thức xử lý không hợp lệ" });
+      }
+
+      // Tìm các item theo item_serial
+      const items = await ProductItem.findAll({
+        where: { item_serial: unitIds },
+      });
+
+      if (items.length === 0) {
+        return res.status(404).json({ message: "Không tìm thấy các đơn vị sản phẩm cần xử lý" });
+      }
+
+      // Cập nhật: đặt item_status = 0 (Đã xử lý/xuất kho) và ghi note
+      const processNote = [
+        `[${processType}]`,
+        processType === "SCRAP" && scrapPrice ? `Giá thanh lý: ${scrapPrice}đ` : null,
+        note || null,
+      ].filter(Boolean).join(" – ");
+
+      for (const item of items) {
+        await item.update({
+          item_status: 0, // 0: Đã xử lý/xuất khỏi kho
+          note: processNote,
+          modifiedate: new Date(),
+        });
+      }
+
+      return res.status(200).json({
+        message: `Đã xử lý ${items.length} đơn vị hàng lỗi thành công`,
+        processType,
+        count: items.length,
+      });
+    } catch (error) {
+      console.error("Process defective items error:", error);
+      return res.status(500).json({ message: "Lỗi hệ thống khi xử lý hàng lỗi" });
+    }
+  }
+
+  /**
    * Lấy chi tiết từng đơn vị sản phẩm (ProductItem) của một sản phẩm
    */
   async getProductItems(req, res) {
