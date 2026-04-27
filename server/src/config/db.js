@@ -16,6 +16,7 @@ const sequelize = new Sequelize(
     dialect: "mysql",
     logging: false,
     dialectOptions: {
+      connectTimeout: 60000,
       ssl: {
         rejectUnauthorized: false, // Required for Aiven MySQL
       },

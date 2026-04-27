@@ -6,7 +6,7 @@
  * Updated: 02/04/2026 – Bỏ khái niệm lô, hiển thị đơn vị theo phiếu nhập
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   X,
   Package,
@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import ProcessDefectiveModal from "./ProcessDefectiveModal";
 import { toast } from "react-hot-toast";
+import inventoryService from "@/services/inventory.service";
 
 // ─────────────────────────────────────────────────────────
 // Cấu hình trạng thái đơn vị hàng
@@ -239,8 +240,8 @@ function BundleItemsTable({ items }) {
 
 
 
-// ── Receipt Group Card ────────────────────────────────────
-function ReceiptGroupCard({ receiptId, units, index, onChangeStatus }) {
+// ── Receipt Group Card ─────────────────────────────────
+function ReceiptGroupCard({ receiptId, units, index, onChangeStatus, updatingSerial }) {
   const [collapsed, setCollapsed] = useState(false);
 
   // Chỉ hiển thị các đơn vị còn trong kho (bỏ SOLD)
@@ -524,7 +525,9 @@ function ReceiptGroupCard({ receiptId, units, index, onChangeStatus }) {
                       </td>
                       {/* Hành động */}
                       <td className="px-4 py-2.5 text-center">
-                        {unit.status !== "DEFECTIVE" && onChangeStatus && (
+                        {updatingSerial === unit.unitId ? (
+                          <span className="text-[10px] text-gray-400 italic">Đang xử lý...</span>
+                        ) : unit.status !== "DEFECTIVE" && onChangeStatus ? (
                           <button
                             onClick={(e) => { e.stopPropagation(); onChangeStatus(unit.lotId, unit.unitId, "DEFECTIVE"); }}
                             className="text-[10px] font-bold text-red-600 hover:text-red-700 hover:underline cursor-pointer"
@@ -532,8 +535,7 @@ function ReceiptGroupCard({ receiptId, units, index, onChangeStatus }) {
                           >
                             Báo lỗi
                           </button>
-                        )}
-                        {unit.status === "DEFECTIVE" && onChangeStatus && (
+                        ) : unit.status === "DEFECTIVE" && onChangeStatus ? (
                           <button
                             onClick={(e) => { e.stopPropagation(); onChangeStatus(unit.lotId, unit.unitId, "AVAILABLE"); }}
                             className="text-[10px] font-bold text-green-600 hover:text-green-700 hover:underline cursor-pointer"
@@ -541,7 +543,7 @@ function ReceiptGroupCard({ receiptId, units, index, onChangeStatus }) {
                           >
                             Bỏ báo lỗi
                           </button>
-                        )}
+                        ) : null}
                       </td>
                     </tr>
                   );
@@ -555,8 +557,8 @@ function ReceiptGroupCard({ receiptId, units, index, onChangeStatus }) {
   );
 }
 
-// ── Tab 2: Unit Detail by Receipt ─────────────────────────
-function UnitDetailTab({ product, lots, onChangeStatus }) {
+// ── Tab 2: Unit Detail by Receipt ───────────────────────────
+function UnitDetailTab({ product, lots, onChangeStatus, updatingSerial }) {
   // Chỉ lấy các unit còn trong kho
   const allUnits = [];
   (lots || []).forEach((lot) => {
@@ -750,6 +752,7 @@ function UnitDetailTab({ product, lots, onChangeStatus }) {
             units={units}
             index={idx}
             onChangeStatus={onChangeStatus}
+            updatingSerial={updatingSerial}
           />
         ))}
       </div>
@@ -1175,7 +1178,24 @@ export default function ViewProductModal({ product, onClose }) {
   const [lots, setLots] = useState(() =>
     product?.lots ? JSON.parse(JSON.stringify(product.lots)) : [],
   );
+  const [isLoadingLots, setIsLoadingLots] = useState(false);
   const [isProcessingDefective, setIsProcessingDefective] = useState(false);
+  const [updatingSerial, setUpdatingSerial] = useState(null); // serial đang được update
+
+  useEffect(() => {
+    if (product && !product.lots) {
+      setIsLoadingLots(true);
+      inventoryService.getProductItems(product.id)
+        .then(res => {
+          setLots(res || []);
+        })
+        .catch(err => {
+          console.error("Lỗi khi tải chi tiết đơn vị hàng:", err);
+          toast.error("Không thể tải thông tin đơn vị hàng!");
+        })
+        .finally(() => setIsLoadingLots(false));
+    }
+  }, [product]);
 
   if (!product) return null;
 
@@ -1190,25 +1210,50 @@ export default function ViewProductModal({ product, onClose }) {
     return total + (lot.units ? lot.units.filter(u => u.status === "DEFECTIVE").length : 0);
   }, 0) + (product.units ? product.units.filter(u => u.status === "DEFECTIVE").length : 0) || (product.stockBreakdown?.defective || 0);
 
-  const handleProcessDefective = (data) => {
-    toast.success(`Đã xử lý ${data.unitIds.length} đơn vị hàng lỗi thành công!`, { style: { fontSize: "14px" } });
-    setIsProcessingDefective(false);
-    onClose(); // In a real app we might just refresh data
+  const reloadLots = () => {
+    setIsLoadingLots(true);
+    inventoryService.getProductItems(product.id)
+      .then(res => setLots(res || []))
+      .catch(() => toast.error("Không thể tải lại danh sách đơn vị!"))
+      .finally(() => setIsLoadingLots(false));
   };
 
-  // Cập nhật trạng thái đơn vị
-  const handleChangeUnitStatus = (lotId, unitId, newStatus) => {
-    setLots((prev) =>
-      prev.map((lot) => {
-        if (lot.lotId !== lotId) return lot;
-        return {
-          ...lot,
-          units: lot.units.map((u) =>
-            u.unitId === unitId ? { ...u, status: newStatus } : u,
-          ),
-        };
-      }),
-    );
+  const handleProcessDefective = async (data) => {
+    try {
+      await inventoryService.processDefectiveItems(data);
+      toast.success(`Đã xử lý ${data.unitIds.length} đơn vị hàng lỗi!`, { style: { fontSize: "14px" } });
+      setIsProcessingDefective(false);
+      reloadLots(); // reload lại danh sách đơn vị sau khi xử lý
+    } catch (error) {
+      toast.error("Xử lý thất bại, vui lòng thử lại!");
+    }
+  };
+
+  // Cập nhật trạng thái đơn vị – gọi API thật
+  const handleChangeUnitStatus = async (lotId, unitId, newStatus) => {
+    setUpdatingSerial(unitId);
+    try {
+      await inventoryService.updateItemStatus(unitId, newStatus);
+      setLots((prev) =>
+        prev.map((lot) => {
+          if (lot.lotId !== lotId) return lot;
+          return {
+            ...lot,
+            units: lot.units.map((u) =>
+              u.unitId === unitId ? { ...u, status: newStatus } : u,
+            ),
+          };
+        }),
+      );
+      toast.success(
+        newStatus === "DEFECTIVE" ? "Báo lỗi thành công!" : "Khôi phục trạng thái thành công!",
+        { style: { fontSize: "14px" } }
+      );
+    } catch (error) {
+      toast.error("Cập nhật thất bại! Vui lòng thử lại.");
+    } finally {
+      setUpdatingSerial(null);
+    }
   };
 
   // Tính tổng units
@@ -1223,6 +1268,7 @@ export default function ViewProductModal({ product, onClose }) {
       id: "units",
       label: `Chi tiết đơn vị${allUnitCount > 0 ? ` (${allUnitCount} đvị)` : ""}`,
       icon: Boxes,
+      loading: isLoadingLots,
     },
   ];
 
@@ -1367,7 +1413,7 @@ export default function ViewProductModal({ product, onClose }) {
               }}
             />
           ) : (
-            <UnitDetailTab product={product} lots={lots} onChangeStatus={handleChangeUnitStatus} />
+            <UnitDetailTab product={product} lots={lots} onChangeStatus={handleChangeUnitStatus} updatingSerial={updatingSerial} />
           )}
         </div>
 
@@ -1410,7 +1456,7 @@ export default function ViewProductModal({ product, onClose }) {
 
       {isProcessingDefective && (
         <ProcessDefectiveModal
-          product={product}
+          product={{ ...product, lots }}
           onClose={() => setIsProcessingDefective(false)}
           onProcess={handleProcessDefective}
         />

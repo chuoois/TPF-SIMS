@@ -112,6 +112,40 @@ router.post("/periods", allowedRoles, payrollController.createPeriod);
  */
 router.post("/periods/:id/lock", allowedRoles, payrollController.lockPeriod);
 
+/**
+ * @swagger
+ * /api/payroll/periods/{id}/records:
+ *   post:
+ *     summary: Thêm một nhân viên vào kỳ lương đã tồn tại
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [fk_employee_id]
+ *             properties:
+ *               fk_employee_id:
+ *                 type: integer
+ *                 example: 1
+ *     responses:
+ *       201:
+ *         description: Thêm thành công
+ *       400:
+ *         description: Nhân viên đã tồn tại trong kỳ
+ *       403:
+ *         description: Kỳ lương đã chốt
+ */
+router.post("/periods/:id/records", allowedRoles, payrollController.addRecordToPeriod);
+
 // ──────────────────────────────────────────────────────────
 // SALARY RECORD
 // ──────────────────────────────────────────────────────────
@@ -152,6 +186,27 @@ router.post("/periods/:id/lock", allowedRoles, payrollController.lockPeriod);
  *         description: Không tìm thấy bản ghi
  */
 router.patch("/records/:id", allowedRoles, payrollController.updateRecord);
+
+/**
+ * @swagger
+ * /api/payroll/records/{id}:
+ *   delete:
+ *     summary: Xóa bản ghi lương khỏi kỳ lương
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Xóa thành công
+ *       403:
+ *         description: Kỳ lương đã chốt
+ */
+router.delete("/records/:id", allowedRoles, payrollController.deleteRecord);
 
 /**
  * @swagger

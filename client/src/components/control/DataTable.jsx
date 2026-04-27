@@ -361,7 +361,7 @@ const DataTable = ({
       <div className="flex-1 overflow-y-auto">
         <table className="w-full text-left relative">
           <thead
-            className="sticky top-0 z-10"
+            className="sticky top-0 z-2"
             style={{
               backgroundColor: "var(--grid-header-bg)",
               borderBottom: "1px solid var(--grid-border)",

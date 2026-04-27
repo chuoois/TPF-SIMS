@@ -9,7 +9,7 @@ const getCurrentMonth = () => {
 };
 
 const formatNumber = (num) => {
-  if (!num) return "";
+  if (num == null || num === "") return "";
   return new Intl.NumberFormat("vi-VN").format(num);
 };
 
@@ -17,6 +17,8 @@ const parseNumber = (str) => {
   if (!str) return "";
   return str.toString().replace(/\D/g, "");
 };
+
+import { cn } from "@/lib/utils";
 
 export default function EmployeeModal({ 
   isOpen, 
@@ -113,7 +115,8 @@ export default function EmployeeModal({
             <div className="space-y-1.5">
                 <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Họ và tên nhân viên <span className="text-red-500">*</span></label>
                 <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required
-                    className="w-full h-10 px-3 rounded-xl border text-[13px] focus:outline-none focus:ring-2 transition bg-gray-50/50"
+                    disabled={!!employeeToEdit}
+                    className={cn("w-full h-10 px-3 rounded-xl border text-[13px] focus:outline-none focus:ring-2 transition bg-gray-50/50", employeeToEdit && "opacity-60 cursor-not-allowed")}
                     placeholder="Nhập tên nhân viên..."
                     style={{ borderColor: "var(--grid-border)", color: "var(--text-main)" }} />
             </div>
@@ -121,7 +124,8 @@ export default function EmployeeModal({
             <div className="space-y-1.5">
                 <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Bộ phận <span className="text-red-500">*</span></label>
                 <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}
-                    className="w-full h-10 px-3 rounded-xl border text-[13px] focus:outline-none focus:ring-2 transition bg-gray-50/50 outline-none"
+                    disabled={!!employeeToEdit}
+                    className={cn("w-full h-10 px-3 rounded-xl border text-[13px] focus:outline-none focus:ring-2 transition bg-gray-50/50 outline-none", employeeToEdit && "opacity-60 cursor-not-allowed")}
                     style={{ borderColor: "var(--grid-border)", color: "var(--text-main)" }}>
                     <option value="SALES">Nhân viên bán hàng</option>
                     <option value="ACCOUNTANT">Kế toán</option>
@@ -143,7 +147,8 @@ export default function EmployeeModal({
                       <div className="space-y-1.5">
                           <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Đơn giá / Ngày</label>
                           <input type="text" value={formatNumber(formData.baseRate)} onChange={e => setFormData({...formData, baseRate: parseNumber(e.target.value)})} required
-                              className={inputClass} placeholder="400.000" style={inputStyle} />
+                              disabled={!!employeeToEdit}
+                              className={cn(inputClass, employeeToEdit && "opacity-60 cursor-not-allowed")} placeholder="400.000" style={inputStyle} />
                       </div>
                       <div className="space-y-1.5">
                           <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Số ngày công</label>

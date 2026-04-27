@@ -11,7 +11,6 @@ import toast from "react-hot-toast";
 import { 
   Plus,
   Pencil,
-  NotebookPen,
   X,
   Search,
   Users,
@@ -311,7 +310,6 @@ export default function SalesCustomerManage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [customerOrders, setCustomerOrders] = useState([]);
-  const [isNoteOpen, setIsNoteOpen] = useState(false);
   const [currentCustomer, setCurrentCustomer] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
@@ -328,7 +326,6 @@ export default function SalesCustomerManage() {
     address: "",
     note: "",
   });
-  const [noteText, setNoteText] = useState("");
   const [formErrors, setFormErrors] = useState({});
 
 
@@ -406,12 +403,6 @@ export default function SalesCustomerManage() {
     setIsHistoryOpen(true);
   };
 
-  const handleOpenNote = (c) => {
-    setCurrentCustomer(c);
-    setNoteText(c.note || "");
-    setIsNoteOpen(true);
-  };
-
   const handleSubmitForm = (e) => {
     e.preventDefault();
     const errors = {};
@@ -442,17 +433,6 @@ export default function SalesCustomerManage() {
     }
     setIsFormOpen(false);
     setCurrentCustomer(null);
-  };
-
-  const handleSaveNote = () => {
-    if (!noteText.trim()) return;
-    setCustomers((prev) =>
-      prev.map((c) =>
-        c.id === currentCustomer.id ? { ...c, note: noteText } : c,
-      ),
-    );
-    toast.success("Ghi chú đã được cập nhật");
-    setIsNoteOpen(false);
   };
 
   const handleDelete = () => {
@@ -563,11 +543,6 @@ export default function SalesCustomerManage() {
       icon: Pencil,
       label: "Sửa thông tin",
       onClick: (c) => handleOpenEdit(c),
-    },
-    {
-      icon: NotebookPen,
-      label: "Ghi chú nhanh",
-      onClick: (c) => handleOpenNote(c),
     },
     {
       icon: Trash2,
@@ -960,106 +935,6 @@ export default function SalesCustomerManage() {
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ MODAL: NOTE ═══ */}
-      {isNoteOpen && currentCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
-            onClick={() => setIsNoteOpen(false)}
-          />
-          <div
-            className="relative bg-white rounded-lg w-full max-w-md overflow-hidden animate-in zoom-in-95"
-            style={{ boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
-          >
-            <div
-              className="flex items-center justify-between px-5 py-4 border-b"
-              style={{ borderColor: "var(--grid-border)" }}
-            >
-              <div>
-                <h2
-                  className="text-[15px] font-bold flex items-center gap-2"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  <NotebookPen
-                    size={15}
-                    style={{ color: "var(--status-pending)" }}
-                  />{" "}
-                  Ghi chú đặc biệt
-                </h2>
-                <p
-                  className="text-[12px] mt-0.5"
-                  style={{ color: "var(--text-placeholder)" }}
-                >
-                  {currentCustomer.name} – {currentCustomer.code}
-                </p>
-              </div>
-              <button
-                onClick={() => setIsNoteOpen(false)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100"
-                style={{ color: "var(--text-placeholder)" }}
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <div className="p-5 space-y-4">
-              <div>
-                <label
-                  className={labelClass}
-                  style={{ color: "var(--text-placeholder)" }}
-                >
-                  Nội dung ghi chú{" "}
-                  <span style={{ color: "var(--status-error)" }}>*</span>
-                </label>
-                <textarea
-                  value={noteText}
-                  onChange={(e) => setNoteText(e.target.value)}
-                  rows={4}
-                  placeholder="VD: Giao trước 16h, sơn màu kem..."
-                  className="w-full text-[13px] rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 transition resize-none bg-transparent"
-                  style={inputStyle}
-                />
-              </div>
-              <div
-                className="rounded-lg p-3"
-                style={{
-                  backgroundColor: "#FFF7ED",
-                  border: "1px solid #FED7AA",
-                }}
-              >
-                <p
-                  className="text-[12px]"
-                  style={{ color: "var(--status-pending)" }}
-                >
-                  💡 Ghi chú dành cho yêu cầu đặc biệt: ngày giao, màu sơn, vị
-                  trí lắp đặt...
-                </p>
-              </div>
-              <div
-                className="flex justify-end gap-2.5 pt-3 border-t"
-                style={{ borderColor: "var(--grid-border)" }}
-              >
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsNoteOpen(false)}
-                  className="rounded-lg cursor-pointer text-[13px]"
-                >
-                  Hủy
-                </Button>
-                <Button
-                  onClick={handleSaveNote}
-                  disabled={!noteText.trim()}
-                  className="rounded-lg text-[13px] font-bold text-white cursor-pointer disabled:opacity-40"
-                  style={{ backgroundColor: "var(--status-pending)" }}
-                >
-                  Lưu ghi chú
-                </Button>
-              </div>
-            </div>
           </div>
         </div>
       )}

@@ -13,6 +13,11 @@ export const WOOD_TYPES = [
   "Gỗ hương",
 ];
 
+export const DELIVERY_METHODS = {
+  STORE: "store",
+  DELIVERY: "delivery",
+};
+
 export const COLORS = [
   "Tự nhiên",
   "Nâu đậm",
@@ -65,20 +70,41 @@ export const createEmptyTab = () => ({
   customerName: "",
   customerPhone: "",
   expectedQuote: "",
-  deposit: "",
-  deliveryInfo: {
-    address: "",
-    district: "",
-    ward: "",
-    shippingNote: "",
-  },
+  depositAmount: 0,
+  discount: 0,
+  deliveryMethod: DELIVERY_METHODS.STORE,
+  deliveryDate: "",
+  storePickupDate: "",
 });
+
+/**
+ * Calculate deposit based on business rules for custom orders
+ * Usually higher than in-stock (e.g. 40-50%)
+ */
+export const calculateSuggestedDeposit = (subtotal) => {
+  if (!subtotal || subtotal <= 0) {
+    return { amount: 0, percentage: 0, reason: "", rate: 0 };
+  }
+
+  const rate = 0.5;
+  let amount = Math.round((subtotal * rate) / 10000) * 10000;
+  amount = Math.min(amount, subtotal);
+
+  return {
+    amount,
+    percentage: Math.round(rate * 100),
+    rate,
+    reason: "Đơn hàng đặt làm riêng (Yêu cầu cọc 50% để nhập phôi gỗ)",
+  };
+};
 
 export const getNextItemId = () => `custom-${++itemIdCounter}`;
 
 // ===================== SHARED INPUT STYLE =====================
 export const inputBase =
-  "w-full text-[13px] rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all bg-white border border-gray-200 hover:border-gray-300";
+  "w-full text-[13px] rounded-lg px-4 py-3 focus:outline-none transition-all border";
 export const inputStyle = {
   color: "var(--text-main)",
+  borderColor: "var(--grid-border)",
+  backgroundColor: "var(--bg-main)",
 };
