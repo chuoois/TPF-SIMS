@@ -7,7 +7,7 @@ import { useNotification } from "@/context/NotificationContext";
 import { getWarehouseStatus } from "@/pages/worker-page/mock";
 
 export const NavbarSale = () => {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotification();
   const [showSettings, setShowSettings] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -48,12 +48,19 @@ export const NavbarSale = () => {
     }
   };
 
+  const roleMap = {
+    OWNER: "Chủ cửa hàng",
+    SALES: "Nhân viên bán hàng",
+    WORKER: "Nhân viên sản xuất",
+    ACCOUNTANT: "Kế toán",
+  };
+
   return (
     <nav
       className="fixed top-0 left-0 right-0 h-12 z-[4] flex items-center justify-between px-3 bg-white border-b"
       style={{ borderColor: "var(--grid-border)" }}
     >
-      {/* Background decorative */}
+      {/* ... (background decorative blocks remain same) ... */}
       <div
         className="absolute top-0 -left-3 w-[250px] h-full bg-no-repeat bg-left bg-contain pointer-events-none z-[1]"
         style={{
@@ -95,6 +102,7 @@ export const NavbarSale = () => {
 
       {/* RIGHT */}
       <div className="relative z-[3] flex items-center gap-1">
+        {/* ... (Notifications block remains same) ... */}
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => setShowNotifications(!showNotifications)}
@@ -200,49 +208,82 @@ export const NavbarSale = () => {
         <div className="relative" ref={settingsRef}>
           <button
             onClick={() => setShowSettings(!showSettings)}
-            className={`relative flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 transition-colors cursor-pointer ${showSettings ? "bg-gray-100 text-green-600" : "text-gray-500 hover:text-gray-700"}`}
-            title="Cài đặt"
+            className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-all duration-200 cursor-pointer border ${
+              showSettings
+                ? "bg-gray-100 border-gray-200"
+                : "border-transparent hover:bg-gray-50 hover:border-gray-100"
+            }`}
           >
-            <Settings size={18} />
+            <div className="w-7 h-7 rounded-full overflow-hidden border border-gray-200 shadow-sm shrink-0">
+              <img
+                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+                  user?.fullName || "User",
+                )}&background=0D8ABC&color=fff&bold=true`}
+                alt="Avatar"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="hidden md:flex flex-col items-start leading-none">
+              <span className="text-[12px] font-bold text-gray-800">
+                {user?.fullName || "Quản trị viên"}
+              </span>
+              <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mt-0.5">
+                {roleMap[user?.role] || "Thành viên"}
+              </span>
+            </div>
+            <Settings
+              size={14}
+              className={`text-gray-400 transition-transform duration-300 ${
+                showSettings ? "rotate-90 text-[var(--brand-primary)]" : ""
+              }`}
+            />
           </button>
 
-          {/* Settings Dropdown */}
+          {/* Profile/Settings Dropdown */}
           {showSettings && (
             <div
-              className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
-              style={{ boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)" }}
+              className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+              style={{
+                boxShadow:
+                  "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+              }}
             >
-              <div className="px-4 py-2 border-b border-gray-100">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Cài đặt hệ thống</p>
+              <div className="px-4 py-3 border-b border-gray-50 bg-gray-50/30">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                  Tài khoản của tôi
+                </p>
+                <p className="text-sm font-bold text-gray-800 truncate">
+                  {user?.full_name}
+                </p>
+                <p className="text-[11px] text-gray-500 truncate">
+                  {user?.email || "owner@tpf-sims.com"}
+                </p>
               </div>
-              
-              <button
-                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-600 transition-colors cursor-pointer"
-              >
-                <Settings size={16} />
-                <span>Cấu hình hồ sơ</span>
-              </button>
 
-              <div className="border-t border-gray-100 my-1"></div>
+              <div className="px-1.5 py-1.5">
+                <button className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] font-medium text-gray-700 rounded-lg hover:bg-gray-50 hover:text-[var(--brand-primary)] transition-all cursor-pointer">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                    <Settings size={16} />
+                  </div>
+                  <span>Cấu hình hồ sơ</span>
+                </button>
+              </div>
 
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-              >
-                <LogOut size={16} />
-                <span>Đăng xuất</span>
-              </button>
+              <div className="border-t border-gray-100 mx-1.5 my-1"></div>
+
+              <div className="px-1.5">
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] font-bold text-red-600 rounded-lg hover:bg-red-50 transition-all cursor-pointer group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-600 group-hover:bg-red-100 transition-colors">
+                    <LogOut size={16} />
+                  </div>
+                  <span>Đăng xuất hệ thống</span>
+                </button>
+              </div>
             </div>
           )}
-        </div>
-
-        {/* Avatar */}
-        <div className="w-8 h-8 rounded-full overflow-hidden cursor-pointer ml-1 shrink-0 border border-gray-100">
-          <img
-            src="https://i.pravatar.cc/100"
-            alt="Avatar"
-            className="w-full h-full object-cover"
-          />
         </div>
       </div>
     </nav>
