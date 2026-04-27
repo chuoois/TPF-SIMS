@@ -13,6 +13,11 @@ export const WOOD_TYPES = [
   "Gỗ hương",
 ];
 
+export const DELIVERY_METHODS = {
+  STORE: "store",
+  DELIVERY: "delivery",
+};
+
 export const COLORS = [
   "Tự nhiên",
   "Nâu đậm",
@@ -67,7 +72,7 @@ export const createEmptyTab = () => ({
   expectedQuote: "",
   depositAmount: 0,
   discount: 0,
-  deliveryMethod: "store",
+  deliveryMethod: DELIVERY_METHODS.STORE,
   deliveryDate: "",
   storePickupDate: "",
 });

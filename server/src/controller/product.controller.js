@@ -97,7 +97,7 @@ class ProductController {
                     // Hàng mộc: bắt buộc có giá mộc > 0
                     pricingInclude.required = true;
                     pricingInclude.where.raw_price = { [Op.gt]: 0 };
-                    
+
                     if (min_price) pricingInclude.where.raw_price[Op.gte] = parseFloat(min_price);
                     if (max_price) {
                         if (typeof pricingInclude.where.raw_price === 'object') {
@@ -378,7 +378,7 @@ class ProductController {
 
             let original_final_price = pricing ? pricing.final_price : 0;
             let original_raw_price = pricing ? pricing.raw_price : 0;
-            
+
             let discount_percent = 0;
             let display_final_price = original_final_price;
             let display_raw_price = original_raw_price;
