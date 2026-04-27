@@ -23,7 +23,7 @@ import {
   Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fmt, calculateSuggestedDeposit } from "./mockData";
+import { fmt, calculateSuggestedDeposit, DELIVERY_METHODS } from "./mockData";
 
 export default function RequirementCartPanel({
   tabs,
@@ -472,6 +472,160 @@ export default function RequirementCartPanel({
           </div>
 
         </div>
+        
+        {/* Delivery Method */}
+        {formik.values.mode === "DIRECT_ORDER" && (
+          <div
+            className="px-4 py-3 space-y-3 border-t"
+            style={{
+              borderColor: "var(--grid-border)",
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <p
+                className="text-[12px] font-semibold uppercase tracking-wider"
+                style={{ color: "var(--text-placeholder)" }}
+              >
+                Giao hàng
+              </p>
+            </div>
+            <div className="flex items-center gap-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name={`deliveryMethod-${activeTabId}`}
+                  value={DELIVERY_METHODS.STORE}
+                  checked={formik.values.deliveryMethod === DELIVERY_METHODS.STORE}
+                  onChange={() =>
+                    formik.setValues({
+                      ...formik.values,
+                      deliveryMethod: DELIVERY_METHODS.STORE,
+                      deliveryDate: "",
+                    })
+                  }
+                  className="w-3.5 h-3.5 text-green-600 focus:ring-green-500"
+                />
+                <span
+                  className="text-[13px]"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  Lấy tại cửa hàng
+                </span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name={`deliveryMethod-${activeTabId}`}
+                  value={DELIVERY_METHODS.DELIVERY}
+                  checked={formik.values.deliveryMethod === DELIVERY_METHODS.DELIVERY}
+                  onChange={() =>
+                    formik.setValues({
+                      ...formik.values,
+                      deliveryMethod: DELIVERY_METHODS.DELIVERY,
+                      storePickupDate: "",
+                    })
+                  }
+                  className="w-3.5 h-3.5 text-green-600 focus:ring-green-500"
+                />
+                <span
+                  className="text-[13px]"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  Giao tận nơi
+                </span>
+              </label>
+            </div>
+
+            {/* ── Lấy tại cửa hàng: date picker tùy chọn ── */}
+            {formik.values.deliveryMethod === DELIVERY_METHODS.STORE && (
+              <div
+                className="ml-1 pl-4 space-y-2"
+                style={{ borderLeft: "2px solid var(--grid-border)" }}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className="text-[12.5px] shrink-0"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    Ngày hẹn lấy:
+                  </span>
+                  <div className="relative flex-1">
+                    <Calendar
+                      size={14}
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2"
+                      style={{ color: "var(--text-placeholder)" }}
+                    />
+                    <input
+                      type="date"
+                      value={formik.values.storePickupDate || ""}
+                      min={new Date().toISOString().split("T")[0]}
+                      onChange={(e) =>
+                        formik.setFieldValue("storePickupDate", e.target.value)
+                      }
+                      className="w-full text-[12.5px] pl-8 pr-2 py-1.5 focus:outline-none focus:ring-1 rounded-lg bg-white"
+                      style={{
+                        border: "1px solid var(--grid-border)",
+                        color: "var(--text-main)",
+                      }}
+                    />
+                  </div>
+                </div>
+                <p
+                  className="text-[11px] italic"
+                  style={{ color: "var(--text-placeholder)" }}
+                >
+                  {formik.values.storePickupDate
+                    ? `Khách hẹn lấy tại cửa hàng ngày ${formik.values.storePickupDate.split("-").reverse().join("/")}`
+                    : "Để trống nếu khách lấy ngay tại cửa hàng"}
+                </p>
+              </div>
+            )}
+
+            {/* ── Giao tận nơi — date picker ── */}
+            {formik.values.deliveryMethod === DELIVERY_METHODS.DELIVERY && (
+              <div className="flex items-center gap-2 mt-1">
+                <span
+                  className="text-[13px] shrink-0"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  Giao vào ngày:
+                </span>
+                <div className="relative flex-1">
+                  <Calendar
+                    size={14}
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2"
+                    style={{ color: "var(--text-placeholder)" }}
+                  />
+                  <input
+                    type="date"
+                    value={formik.values.deliveryDate || ""}
+                    min={new Date().toISOString().split("T")[0]}
+                    onChange={(e) =>
+                      formik.setFieldValue("deliveryDate", e.target.value)
+                    }
+                    className={`w-full text-[13px] pl-8 pr-2 py-1.5 focus:outline-none focus:ring-1 rounded-lg bg-white ${
+                      formik.errors.deliveryDate && formik.touched.deliveryDate
+                        ? "border-red-400 ring-1 ring-red-400"
+                        : ""
+                    }`}
+                    style={{
+                      border:
+                        formik.errors.deliveryDate && formik.touched.deliveryDate
+                          ? "1px solid #f87171"
+                          : "1px solid var(--grid-border)",
+                      color: "var(--text-main)",
+                    }}
+                  />
+                </div>
+                {formik.errors.deliveryDate && formik.touched.deliveryDate && (
+                  <p className="text-[10px] text-red-500 font-medium ml-2 mt-1 flex items-center gap-1">
+                    <AlertCircle size={10} /> {formik.errors.deliveryDate}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
 
 

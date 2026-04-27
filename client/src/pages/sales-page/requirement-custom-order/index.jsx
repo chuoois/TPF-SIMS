@@ -18,7 +18,7 @@ import RequirementCartPanel from "./RequirementCartPanel";
 import CustomItemInputPanel from "./CustomItemInputPanel";
 import { Button } from "@/components/ui/button";
 import { X, Package } from "lucide-react";
-import { createEmptyTab, generateOrderCode, fmt } from "./mockData";
+import { createEmptyTab, generateOrderCode, fmt, DELIVERY_METHODS } from "./mockData";
 import customerService from "@/services/customer.service";
 import orderService from "@/services/order.service";
 import customRequestService from "@/services/customRequest.service";
@@ -33,6 +33,17 @@ const orderSchema = Yup.object().shape({
   cartItems: Yup.array()
     .min(1, "Danh sách yêu cầu không được để trống")
     .required("Danh sách yêu cầu không được để trống"),
+  deliveryMethod: Yup.string().when("mode", {
+    is: "DIRECT_ORDER",
+    then: (schema) => schema.required(),
+    otherwise: (schema) => schema.nullable(),
+  }),
+  deliveryDate: Yup.string().when(["mode", "deliveryMethod"], {
+    is: (mode, deliveryMethod) =>
+      mode === "DIRECT_ORDER" && deliveryMethod === DELIVERY_METHODS.DELIVERY,
+    then: (schema) => schema.required("Vui lòng chọn ngày giao hàng"),
+    otherwise: (schema) => schema.nullable(),
+  }),
 });
 
 export default function CustomOrderRequirementsPage() {
@@ -80,8 +91,18 @@ export default function CustomOrderRequirementsPage() {
         // Prepare payload for backend - Custom Request structure
         const requestData = {
           fk_customer_id: values.selectedCustomer.id,
-          fulfillment_method: null,
-          expected_fulfillment_date: null,
+          fulfillment_method:
+            values.mode === "DIRECT_ORDER"
+              ? values.deliveryMethod === DELIVERY_METHODS.STORE
+                ? "Lấy tại cửa hàng"
+                : "Giao tận nhà"
+              : null,
+          expected_fulfillment_date:
+            values.mode === "DIRECT_ORDER"
+              ? values.deliveryMethod === DELIVERY_METHODS.STORE
+                ? values.storePickupDate || new Date().toISOString().split("T")[0]
+                : values.deliveryDate
+              : null,
           note: values.orderNote,
           deposit_amount: values.depositAmount,
           address: values.selectedCustomer.address || "",
