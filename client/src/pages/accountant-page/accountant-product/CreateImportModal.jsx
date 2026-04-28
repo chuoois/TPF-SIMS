@@ -167,6 +167,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
 
     // Section 2 – Yêu cầu & lines
     const [lines, setLines] = useState([]);
+    const [activeRequestId, setActiveRequestId] = useState(null);
     const [activeDropdown, setActiveDropdown] = useState({ id: null, field: null });
 
     // Yêu cầu nhập hàng data & state
@@ -182,7 +183,8 @@ export default function CreateImportModal({ onClose, onSaved }) {
             id: r.id,
             requestCode: r.id,
             date: r.createdAt ? r.createdAt.substring(0, 10) : "",
-            createdBy: r.createdBy || "Chủ xưởng",
+            createdBy: r.workshopName || r.supplierName || r.createdBy || "Chủ xưởng",
+            supplier: r.workshopName || r.supplierName || r.createdBy || "Chủ xưởng",
             note: r.note || "Yêu cầu từ xưởng",
             status: r.status === "Mới tạo" ? "PENDING" : r.status,
             items: (r.items || []).map((it, idx) => ({
@@ -248,11 +250,18 @@ export default function CreateImportModal({ onClose, onSaved }) {
 
     const removeLine = (id) => {
         setLines(prev => {
-            const line = prev.find(l => l._id === id);
-            if (line?.imagePreviews) {
-                line.imagePreviews.forEach(p => URL.revokeObjectURL(p));
+            const lineToRemove = prev.find(l => l._id === id);
+            const newList = prev.filter(l => l._id !== id);
+            
+            if (newList.length === 0) {
+                setActiveRequestId(null);
+                setSupplier("");
             }
-            return prev.filter(l => l._id !== id);
+
+            if (lineToRemove?.imagePreviews) {
+                lineToRemove.imagePreviews.forEach(p => URL.revokeObjectURL(p));
+            }
+            return newList;
         });
     };
 
@@ -290,11 +299,38 @@ export default function CreateImportModal({ onClose, onSaved }) {
     const grandTotal = lines.reduce((s, l) => s + lineTotal(l), 0);
 
     // ── Gắn Request (Thêm các mặt hàng đã tick chọn) ───
+    const handleSelectAllInRequest = (req, checked) => {
+        const newSelected = { ...selectedRequestItems };
+        req.items.forEach(item => {
+            const itemKey = `${req.id}_${item.id}`;
+            newSelected[itemKey] = checked ? item : undefined;
+        });
+        setSelectedRequestItems(newSelected);
+    };
+
     const handleAddSelectedItems = () => {
-        const selectedItems = Object.values(selectedRequestItems).filter(item => item !== undefined);
-        if (selectedItems.length === 0) {
+        const selectedItemsEntries = Object.entries(selectedRequestItems).filter(([k, v]) => v !== undefined);
+        if (selectedItemsEntries.length === 0) {
             toast.error("Vui lòng chọn ít nhất 1 mặt hàng!");
             return;
+        }
+
+        const reqId = selectedItemsEntries[0][0].split('_')[0];
+        
+        if (activeRequestId && activeRequestId !== reqId) {
+            toast.error("Mỗi phiếu nhập chỉ áp dụng cho 01 yêu cầu duy nhất để đảm bảo chính xác thông tin xưởng.");
+            return;
+        }
+
+        const selectedItems = selectedItemsEntries.map(([k, v]) => v);
+
+        // Tự động gán xưởng và khóa yêu cầu
+        if (!activeRequestId) {
+            setActiveRequestId(reqId);
+            const request = mergedRequests.find(r => r.id === reqId);
+            if (request) {
+                setSupplier(request.supplier || request.createdBy || "Xưởng hệ thống");
+            }
         }
 
         const newLines = selectedItems.map(p => {
@@ -309,7 +345,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
                 newBundle.color = p.color || "";
                 newBundle.productType = p.productType || "FINISHED";
                 newBundle.bundleQty = qtyToImport;
-                newBundle.bundlePrice = p.estimatedPrice || "";
+                newBundle.bundlePrice = "";
                 newBundle.items = (p.items || []).map(it => ({ ...it, _id: Math.random(), productNote: "" }));
                 if (qtyToImport > 0 && newBundle.bundleCode) {
                     newBundle.unitIds = generateBundleUnitIds({ ...newBundle, bundleCode: newBundle.bundleCode }, qtyToImport);
@@ -325,7 +361,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
                 newLine.color = p.color || "";
                 newLine.productType = p.productType || "FINISHED";
                 newLine.qty = qtyToImport;
-                newLine.importPrice = p.estimatedPrice || "";
+                newLine.importPrice = "";
                 newLine.details = p.details || "";
                 if (qtyToImport > 0 && newLine.productCode) {
                     newLine.unitIds = generateUnitIds(newLine, qtyToImport);
@@ -343,8 +379,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
     // ── Submit ─────────────────────────────────────────
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!supplier.trim()) { toast.error("Vui lòng nhập tên xưởng cung cấp"); return; }
-        if (!SUPPLIERS.includes(supplier.trim())) { toast.error("Xưởng cung cấp không hợp lệ"); return; }
+        if (!supplier.trim()) { toast.error("Vui lòng chọn mặt hàng từ yêu cầu để xác định xưởng nhập"); return; }
         if (!importDate) { toast.error("Vui lòng chọn ngày nhập"); return; }
 
         for (const l of lines) {
@@ -392,69 +427,50 @@ export default function CreateImportModal({ onClose, onSaved }) {
                     <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
 
                         {/* ── KHU VỰC 1 ── */}
-                        <div className="p-4 rounded-xl space-y-3" style={{ backgroundColor: "var(--bg-main)", border: "1px solid var(--grid-border)" }}>
-                            <p className="text-[11px] font-bold uppercase tracking-widest flex items-center gap-2" style={{ color: "var(--brand-primary)" }}>
-                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-[10px] font-black" style={{ backgroundColor: "var(--brand-primary)" }}>1</span>
-                                Thông tin chứng từ
-                            </p>
+                        <div className="p-4 rounded-xl space-y-4" style={{ backgroundColor: "var(--bg-main)", border: "1px solid var(--grid-border)" }}>
+                            <div className="flex items-center justify-between">
+                                <p className="text-[11px] font-bold uppercase tracking-widest flex items-center gap-2" style={{ color: "var(--brand-primary)" }}>
+                                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-[10px] font-black" style={{ backgroundColor: "var(--brand-primary)" }}>1</span>
+                                    Xác nhận nhập hàng
+                                </p>
+                                {supplier && (
+                                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 border border-purple-100 shadow-sm animate-in fade-in slide-in-from-right-2 duration-300">
+                                        <Building2 size={12} className="text-purple-600" />
+                                        <span className="text-[12px] font-bold text-purple-700">{supplier}</span>
+                                    </div>
+                                )}
+                            </div>
 
-                            <div className="grid grid-cols-2 gap-3">
-                                {/* Supplier dropdown */}
-                                <div className="relative">
-                                    <label className={lbl} style={lblS}><Building2 size={11} className="inline mr-1" />Tên xưởng *</label>
-                                    <input value={supplier}
-                                        onChange={(e) => { setSupplier(e.target.value); setActiveDropdown({ id: "supplier", field: "supplier" }); }}
-                                        onFocus={() => setActiveDropdown({ id: "supplier", field: "supplier" })}
-                                        onBlur={() => setTimeout(() => setActiveDropdown({ id: null, field: null }), 200)}
-                                        placeholder="VD: Xưởng Hà Linh..." className={inp} style={inpS} />
-                                    {activeDropdown.id === "supplier" && activeDropdown.field === "supplier" && (
-                                        <div className="absolute z-50 left-0 right-0 top-[100%] mt-1 max-h-40 overflow-y-auto bg-white rounded-xl shadow-lg border" style={{ borderColor: "var(--grid-border)" }}>
-                                            {SUPPLIERS.filter(s => s.toLowerCase().includes(supplier.toLowerCase())).length > 0
-                                                ? SUPPLIERS.filter(s => s.toLowerCase().includes(supplier.toLowerCase())).map(s => (
-                                                    <div key={s} className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b last:border-0 text-[13px]"
-                                                        onMouseDown={(e) => { e.preventDefault(); setSupplier(s); setActiveDropdown({ id: null, field: null }); }}>
-                                                        {s}
-                                                    </div>
-                                                ))
-                                                : <div className="p-3 text-[12px] text-gray-500 text-center">Không tìm thấy xưởng</div>}
-                                        </div>
-                                    )}
-                                </div>
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className={lbl} style={lblS}><Calendar size={11} className="inline mr-1" />Ngày nhập *</label>
+                                    <label className={lbl} style={lblS}><Calendar size={11} className="inline mr-1" />Ngày ghi nhận nhập *</label>
                                     <input type="date" value={importDate} onChange={(e) => setImportDate(e.target.value)} className={inp} style={inpS} />
                                 </div>
-                            </div>
 
-                            <div>
-                                <label className={lbl} style={lblS}><AlignLeft size={11} className="inline mr-1" />Ghi chú về đơn</label>
-                                <textarea value={note} onChange={(e) => setNote(e.target.value)}
-                                    placeholder="Ghi chú thêm thông tin về đơn nhập (tùy chọn)..."
-                                    className="w-full p-2.5 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-purple-300 transition resize-none"
-                                    style={{ ...inpS, minHeight: "60px" }} />
-                            </div>
-
-                            {/* Invoice upload */}
-                            <div>
-                                <label className={lbl} style={lblS}><FileImage size={11} className="inline mr-1" />Ảnh hóa đơn</label>
-                                <div onClick={() => fileRef.current?.click()}
-                                    className="cursor-pointer rounded-xl border-2 border-dashed flex items-center justify-center transition hover:border-purple-400 min-h-[80px]"
-                                    style={{ borderColor: invoicePreview ? "var(--brand-primary)" : "var(--grid-border)", backgroundColor: invoicePreview ? "transparent" : "var(--bg-main)" }}>
-                                    {invoicePreview
-                                        ? <img src={invoicePreview} alt="HĐ" className="max-h-24 rounded-lg object-contain" />
-                                        : <div className="flex flex-col items-center gap-1 py-3" style={{ color: "var(--text-placeholder)" }}>
-                                            <Upload size={22} strokeWidth={1.5} />
-                                            <p className="text-[12px]">Nhấp để tải ảnh hóa đơn lên</p>
-                                        </div>}
-                                    {invoicePreview && (
-                                        <button type="button" onClick={(e) => { e.stopPropagation(); setInvoiceFile(null); setInvoicePreview(null); }}
-                                            className="absolute top-2 right-2 bg-red-50 text-red-500 rounded-full p-1 hover:bg-red-100">
-                                            <X size={12} />
-                                        </button>
-                                    )}
+                                {/* Giấy tờ bằng chứng (Invoice upload) */}
+                                <div>
+                                    <label className={lbl} style={lblS}><FileImage size={11} className="inline mr-1" />Giấy tờ bằng chứng *</label>
+                                    <div onClick={() => fileRef.current?.click()}
+                                        className="relative cursor-pointer rounded-lg border-2 border-dashed flex items-center justify-center transition hover:border-purple-400 min-h-[36px]"
+                                        style={{ borderColor: invoicePreview ? "var(--brand-primary)" : "var(--grid-border)", backgroundColor: invoicePreview ? "transparent" : "#fff" }}>
+                                        {invoicePreview
+                                            ? <div className="flex items-center gap-2 py-1 px-2">
+                                                <img src={invoicePreview} alt="HĐ" className="h-6 w-6 rounded object-cover" />
+                                                <span className="text-[11px] font-medium text-purple-600 truncate max-w-[120px]">{invoiceFile?.name}</span>
+                                            </div>
+                                            : <div className="flex items-center gap-2 py-1" style={{ color: "var(--text-placeholder)" }}>
+                                                <Upload size={14} />
+                                                <p className="text-[11px]">Tải ảnh bằng chứng</p>
+                                            </div>}
+                                        {invoicePreview && (
+                                            <button type="button" onClick={(e) => { e.stopPropagation(); setInvoiceFile(null); setInvoicePreview(null); }}
+                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 shadow-sm">
+                                                <X size={10} />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
                                 </div>
-                                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
-                                {invoiceFile && <p className="text-[11px] mt-1 font-medium" style={{ color: "var(--brand-primary)" }}>✓ {invoiceFile.name}</p>}
                             </div>
                         </div>
 
@@ -487,8 +503,9 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                         .filter(r => (r.requestCode || "").toLowerCase().includes(requestSearchTerm.toLowerCase()) || (r.note || "").toLowerCase().includes(requestSearchTerm.toLowerCase()))
                                         .map(req => {
                                         const isExpanded = expandedRequests[req.id];
+                                        const isDisabled = activeRequestId && activeRequestId !== req.id;
                                         return (
-                                        <div key={req.id} className="border rounded-xl bg-white overflow-hidden transition-all shadow-sm shrink-0" style={{ borderColor: "var(--grid-border)" }}>
+                                        <div key={req.id} className={`border rounded-xl bg-white overflow-hidden transition-all shadow-sm shrink-0 ${isDisabled ? "opacity-40 grayscale pointer-events-none" : ""}`} style={{ borderColor: "var(--grid-border)" }}>
                                             <div 
                                                 className="px-4 py-3 cursor-pointer hover:bg-purple-50 flex items-center justify-between"
                                                 onClick={() => setExpandedRequests(p => ({...p, [req.id]: !p[req.id]}))}
@@ -508,6 +525,18 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                             
                                             {isExpanded && (
                                                 <div className="border-t bg-gray-50 p-3" style={{ borderColor: "var(--grid-border)" }}>
+                                                    <div className="flex items-center justify-between mb-3 px-1">
+                                                        <label className="flex items-center gap-2 cursor-pointer group">
+                                                            <input 
+                                                                type="checkbox" 
+                                                                className="w-3.5 h-3.5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                                                checked={req.items.every(item => !!selectedRequestItems[`${req.id}_${item.id}`])}
+                                                                onChange={(e) => handleSelectAllInRequest(req, e.target.checked)}
+                                                            />
+                                                            <span className="text-[11px] font-bold text-gray-500 group-hover:text-purple-600 transition-colors uppercase tracking-tight">Chọn tất cả {req.items.length} mặt hàng</span>
+                                                        </label>
+                                                        <span className="text-[11px] text-gray-400 italic">Đang chọn {req.items.filter(item => !!selectedRequestItems[`${req.id}_${item.id}`]).length} mặt hàng</span>
+                                                    </div>
                                                     <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto custom-scrollbar pr-1">
                                                         {req.items.map(item => {
                                                             const itemKey = `${req.id}_${item.id}`;
