@@ -11,24 +11,24 @@ import ProtectedRoute from "./ProtectedRoute";
 export const router = createBrowserRouter([
   authRoutes,
   // Protected Routes
-  {
-    element: <ProtectedRoute allowedRoles={["OWNER"]} />,
-    children: [ownerRoutes],
-  },
-  {
-    element: <ProtectedRoute allowedRoles={["ACCOUNTANT", "OWNER"]} />,
-    children: [accountantRoutes],
-  },
-  {
-    element: <ProtectedRoute allowedRoles={["WORKER", "OWNER"]} />,
-    children: [workerRoutes],
-  },
-  {
-    element: <ProtectedRoute allowedRoles={["SALES", "OWNER"]} />,
-    children: [salesRoutes],
-  },
+  // {
+  //   element: <ProtectedRoute allowedRoles={["OWNER"]} />,
+  //   children: [ownerRoutes],
+  // },
+  // {
+  //   element: <ProtectedRoute allowedRoles={["ACCOUNTANT", "OWNER"]} />,
+  //   children: [accountantRoutes],
+  // },
+  // {
+  //   element: <ProtectedRoute allowedRoles={["WORKER", "OWNER"]} />,
+  //   children: [workerRoutes],
+  // },
+  // {
+  //   element: <ProtectedRoute allowedRoles={["SALES", "OWNER"]} />,
+  //   children: [salesRoutes],
+  // },
   // test
-  // ownerRoutes, accountantRoutes, workerRoutes, salesRoutes,
+  ownerRoutes, accountantRoutes, workerRoutes, salesRoutes,
   { path: "/404", element: <NotFoundPage /> },
   { path: "/403", element: <NoPermissionPage /> },
   { path: "*", element: <Navigate to="/404" replace /> },
