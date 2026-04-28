@@ -93,6 +93,7 @@ export default function InStockInvoicePage() {
       selectedCustomer: null,
       orderNote: "",
       discount: 0,
+      isFullPayment: false,
       depositAmount: 0,
       deliveryMethod: "store",
       deliveryDate: "",
@@ -164,9 +165,31 @@ export default function InStockInvoicePage() {
         return;
       }
 
-      const loadingToast = toast.loading("Đang xử lý đơn hàng...");
+      const loadingToast = toast.loading("Đang xử lý thanh toán...");
 
       try {
+        // Upload any pending files in cart items
+        const finalCartItems = await Promise.all(
+          values.cartItems.map(async (item) => {
+            if (item.images && item.images.length > 0) {
+              const filesToUpload = item.images.filter(img => typeof img !== 'string');
+              const existingUrls = item.images.filter(img => typeof img === 'string');
+
+              let newUrls = [];
+              if (filesToUpload.length > 0) {
+                const uploadedResults = await uploadMultipleImages(filesToUpload);
+                newUrls = uploadedResults.map((res) => res.url);
+              }
+
+              return {
+                ...item,
+                images: [...existingUrls, ...newUrls]
+              };
+            }
+            return item;
+          })
+        );
+
         // Prepare payload for backend
         const orderData = {
           fk_customer_id: values.selectedCustomer.id,
@@ -180,10 +203,10 @@ export default function InStockInvoicePage() {
           deposit_amount: values.depositAmount,
           address: values.selectedCustomer.address,
           total_amount: subtotal,
-          order_type: values.cartItems.some((i) => i.productType === PRODUCT_TYPES.RAW)
+          order_type: finalCartItems.some((i) => i.productType === PRODUCT_TYPES.RAW)
             ? 1
             : 2,
-          items: values.cartItems.map((item) => ({
+          items: finalCartItems.map((item) => ({
             fk_product_id: item.id,
             item_name: item.name,
             item_quantity: item.quantity,
@@ -206,11 +229,11 @@ export default function InStockInvoicePage() {
             phone: values.selectedCustomer?.phone || "",
             address: values.selectedCustomer?.address || "",
           },
-          type: values.cartItems.some((i) => i.productType === PRODUCT_TYPES.RAW)
+          type: finalCartItems.some((i) => i.productType === PRODUCT_TYPES.RAW)
             ? PRODUCT_TYPES.RAW
             : PRODUCT_TYPES.INSTOCK,
           salesPerson: "Nhân viên bán hàng",
-          products: values.cartItems.map((item) => ({
+          products: finalCartItems.map((item) => ({
             name: item.name,
             material: item.category || "Hàng trưng bày",
             size: "",
@@ -244,7 +267,7 @@ export default function InStockInvoicePage() {
           localStorage.getItem("tpf_simulated_warranties") || "[]"
         );
 
-        const newWarranties = values.cartItems
+        const newWarranties = finalCartItems
           .filter((item) => !item.isGift && item.warrantyMonths)
           .map((item, idx) => {
             const startDate = new Date();
@@ -275,26 +298,21 @@ export default function InStockInvoicePage() {
           );
         }
 
-        toast.dismiss(loadingToast);
         setPrintingOrder(newOrder);
 
         // Clear active tab after success
-        updateActiveTab({
-          cartItems: [],
-          selectedCustomer: null,
-          orderNote: "",
-          discount: 0,
-          depositAmount: 0,
-          deliveryMethod: "store",
-          deliveryDate: "",
-          storePickupDate: "",
-        });
+        const freshTab = { ...createEmptyTab(), id: activeTabId };
+        updateActiveTab(freshTab);
+        formik.resetForm({ values: freshTab });
 
         // Refresh products to update stock
         refreshProducts();
+
+        toast.dismiss(loadingToast);
       } catch (error) {
+        toast.dismiss(loadingToast);
         console.error("Checkout error:", error);
-        toast.error(error.response?.data?.message || error.message || "Lỗi khi tạo đơn hàng", { id: loadingToast });
+        toast.error(error.response?.data?.message || error.message || "Lỗi khi tạo đơn hàng");
       }
     },
   });
@@ -545,27 +563,15 @@ export default function InStockInvoicePage() {
     );
   };
 
-  const updateItemImages = async (cartItemId, newFiles) => {
-    const loadingToast = toast.loading("Đang tải ảnh lên...");
-    try {
-      const uploadedResults = await uploadMultipleImages(newFiles);
-      const imageUrls = uploadedResults.map((res) => res.url);
-
-      formik.setFieldValue(
-        "cartItems",
-        formik.values.cartItems.map((i) =>
-          i.cartItemId === cartItemId
-            ? { ...i, images: [...(i.images || []), ...imageUrls] }
-            : i,
-        ),
-      );
-      toast.success("Đã tải ảnh lên thành công", { id: loadingToast });
-    } catch (error) {
-      console.error("Upload error:", error);
-      toast.error("Không thể tải ảnh lên. Vui lòng thử lại.", {
-        id: loadingToast,
-      });
-    }
+  const updateItemImages = (cartItemId, newFiles) => {
+    formik.setFieldValue(
+      "cartItems",
+      formik.values.cartItems.map((i) =>
+        i.cartItemId === cartItemId
+          ? { ...i, images: [...(i.images || []), ...newFiles] }
+          : i,
+      ),
+    );
   };
 
   const removeItemImage = (cartItemId, imgIdx) => {

@@ -24,7 +24,9 @@ import {
 import * as Yup from "yup";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
-import { fmt, WOOD_TYPES, COLORS, inputBase, inputStyle, getNextItemId } from "./mockData";
+import { fmt, inputBase, inputStyle, getNextItemId } from "./mockData";
+import productAttributeService from "@/services/productAttribute.service";
+import { uploadMultipleImages } from "@/services/cloudinary.service";
 
 // ===================== ITEM VALIDATION SCHEMA =====================
 const itemSchema = Yup.object().shape({
@@ -57,6 +59,22 @@ export default function CustomItemInputPanel({
   const [errors, setErrors] = useState({});
   const [showWoodDropdown, setShowWoodDropdown] = useState(false);
   const [showColorDropdown, setShowColorDropdown] = useState(false);
+  
+  const [materialOptions, setMaterialOptions] = useState([]);
+  const [colorOptions, setColorOptions] = useState([]);
+
+  useEffect(() => {
+    const fetchAttributes = async () => {
+      try {
+        const res = await productAttributeService.getAllAttributes();
+        setMaterialOptions(res.materials?.map((m) => m.material_name) || []);
+        setColorOptions(res.colors?.map((c) => c.color_name) || []);
+      } catch (error) {
+        console.error("Failed to fetch product attributes:", error);
+      }
+    };
+    fetchAttributes();
+  }, []);
 
   // Load editing item into form
   useEffect(() => {
@@ -111,6 +129,26 @@ export default function CustomItemInputPanel({
   const saveItem = async () => {
     try {
       await itemSchema.validate(newItem, { abortEarly: false });
+
+      // Sync material if new
+      if (newItem.woodType && !materialOptions.some(m => m.toLowerCase() === newItem.woodType.toLowerCase())) {
+        try {
+          await productAttributeService.syncMaterial(newItem.woodType);
+          setMaterialOptions(prev => [...prev, newItem.woodType]);
+        } catch (e) {
+          console.error("Failed to sync new material", e);
+        }
+      }
+
+      // Sync color if new
+      if (newItem.color && !colorOptions.some(c => c.toLowerCase() === newItem.color.toLowerCase())) {
+        try {
+          await productAttributeService.syncColor(newItem.color);
+          setColorOptions(prev => [...prev, newItem.color]);
+        } catch (e) {
+          console.error("Failed to sync new color", e);
+        }
+      }
 
       const sizeObj = {
         unit: "cm",
@@ -247,7 +285,7 @@ export default function CustomItemInputPanel({
                 {errors.woodType && <p className="text-[10px] text-red-500 font-bold ml-1 mt-1">{errors.woodType}</p>}
                 {showWoodDropdown && (
                   <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow-xl z-50 max-h-40 overflow-y-auto border-[var(--grid-border)]">
-                    {WOOD_TYPES.filter(w => w.toLowerCase().includes(newItem.woodType.toLowerCase())).map(w => (
+                    {materialOptions.filter(w => w.toLowerCase().includes(newItem.woodType.toLowerCase())).map(w => (
                       <div key={w} onMouseDown={() => updateNewItem("woodType", w)} className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer">{w}</div>
                     ))}
                   </div>
@@ -271,7 +309,7 @@ export default function CustomItemInputPanel({
                 />
                 {showColorDropdown && (
                   <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow-xl z-50 max-h-40 overflow-y-auto border-[var(--grid-border)]">
-                    {COLORS.filter(c => c.toLowerCase().includes(newItem.color.toLowerCase())).map(c => (
+                    {colorOptions.filter(c => c.toLowerCase().includes(newItem.color.toLowerCase())).map(c => (
                       <div key={c} onMouseDown={() => updateNewItem("color", c)} className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer">{c}</div>
                     ))}
                   </div>
@@ -415,7 +453,7 @@ export default function CustomItemInputPanel({
           <div className="flex flex-wrap gap-2">
             {newItem.images.map((img, i) => (
               <div key={i} className="relative w-14 h-14 rounded-lg border border-gray-200 overflow-hidden group">
-                <img src={img} className="w-full h-full object-cover" />
+                <img src={typeof img === "string" ? img : URL.createObjectURL(img)} className="w-full h-full object-cover" />
                 <button onClick={() => updateNewItem("images", newItem.images.filter((_, idx) => idx !== i))} className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white">
                   <X size={14} />
                 </button>
@@ -425,11 +463,9 @@ export default function CustomItemInputPanel({
               <ImagePlus size={20} className="text-gray-300" />
               <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => {
                 const files = Array.from(e.target.files || []);
-                files.forEach(f => {
-                  const reader = new FileReader();
-                  reader.onload = (ev) => updateNewItem("images", [...newItem.images, ev.target.result]);
-                  reader.readAsDataURL(f);
-                });
+                if (files.length > 0) {
+                  updateNewItem("images", [...newItem.images, ...files]);
+                }
                 e.target.value = "";
               }} />
             </label>

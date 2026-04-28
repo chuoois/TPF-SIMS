@@ -23,6 +23,8 @@ import customerService from "@/services/customer.service";
 import orderService from "@/services/order.service";
 import customRequestService from "@/services/customRequest.service";
 
+import { uploadMultipleImages } from "@/services/cloudinary.service";
+
 // ===================== VALIDATION SCHEMA =====================
 const orderSchema = Yup.object().shape({
   selectedCustomer: Yup.object().nullable().required("Vui lòng chọn khách hàng"),
@@ -88,43 +90,112 @@ export default function CustomOrderRequirementsPage() {
       const loadingToast = toast.loading("Đang lưu yêu cầu thiết kế...");
 
       try {
-        // Prepare payload for backend - Custom Request structure
-        const requestData = {
-          fk_customer_id: values.selectedCustomer.id,
-          fulfillment_method:
-            values.mode === "DIRECT_ORDER"
-              ? values.deliveryMethod === DELIVERY_METHODS.STORE
-                ? "Lấy tại cửa hàng"
-                : "Giao tận nhà"
-              : null,
-          expected_fulfillment_date:
-            values.mode === "DIRECT_ORDER"
-              ? values.deliveryMethod === DELIVERY_METHODS.STORE
-                ? values.storePickupDate || new Date().toISOString().split("T")[0]
-                : values.deliveryDate
-              : null,
-          note: values.orderNote,
-          deposit_amount: values.depositAmount,
-          address: values.selectedCustomer.address || "",
-          total_amount: subtotal,
-          order_status: 1, // Pending
-          order_type: 3,   // 3: Đặt riêng (Theo mapping mới)
-          items: values.cartItems.map((item) => ({
-            item_name: item.productName,
-            item_img: item.images?.[0] || "",
-            item_quantity: item.quantity,
-            item_price: item.expectedPrice || 0,
-            item_material: item.woodType,
-            item_color: item.color,
-            item_size: item.size,
-            item_note: item.note,
-            is_finished: 0,
-            customer_img: item.images || [],
-          })),
-        };
+        // Upload any pending files in cart items
+        const finalCartItems = await Promise.all(
+          values.cartItems.map(async (item) => {
+            if (item.images && item.images.length > 0) {
+              const filesToUpload = item.images.filter(img => typeof img !== 'string');
+              const existingUrls = item.images.filter(img => typeof img === 'string');
 
-        const response = await customRequestService.createRequest(requestData);
-        toast.dismiss(loadingToast);
+              let newUrls = [];
+              if (filesToUpload.length > 0) {
+                const uploadedResults = await uploadMultipleImages(filesToUpload);
+                newUrls = uploadedResults.map((res) => res.url);
+              }
+              
+              return {
+                ...item,
+                images: [...existingUrls, ...newUrls]
+              };
+            }
+            return item;
+          })
+        );
+
+        if (values.mode === "DIRECT_ORDER") {
+          const requestData = {
+            fk_customer_id: values.selectedCustomer.id,
+            fulfillment_method: values.deliveryMethod === DELIVERY_METHODS.STORE ? "Lấy tại cửa hàng" : "Giao tận nhà",
+            expected_fulfillment_date: values.deliveryMethod === DELIVERY_METHODS.STORE
+              ? values.storePickupDate || new Date().toISOString().split("T")[0]
+              : values.deliveryDate,
+            note: values.orderNote,
+            deposit_amount: values.depositAmount,
+            address: values.selectedCustomer.address || "",
+            total_amount: subtotal,
+            order_status: 1,
+            order_type: 3,
+            items: finalCartItems.map((item) => ({
+              item_name: item.productName,
+              item_img: item.images?.[0] || "",
+              item_quantity: item.quantity,
+              item_price: item.expectedPrice || 0,
+              item_material: item.woodType,
+              item_color: item.color,
+              item_size: item.size,
+              item_note: item.note,
+              is_finished: 0,
+              customer_img: item.images || [],
+            })),
+          };
+          
+          const reqRes = await customRequestService.createRequest(requestData);
+          const customRequestCode = reqRes.data?.request_code || "Không xác định";
+
+          const orderData = {
+            fk_customer_id: values.selectedCustomer.id,
+            fulfillment_method: values.deliveryMethod === DELIVERY_METHODS.STORE ? "Lấy tại cửa hàng" : "Giao tận nhà",
+            expected_fulfillment_date: values.deliveryMethod === DELIVERY_METHODS.STORE
+              ? values.storePickupDate || new Date().toISOString().split("T")[0]
+              : values.deliveryDate,
+            note: values.orderNote ? `${values.orderNote}\n(Từ Yêu cầu: ${customRequestCode})` : `Tạo từ Yêu cầu: ${customRequestCode}`,
+            deposit_amount: values.depositAmount,
+            address: values.selectedCustomer.address || "",
+            total_amount: subtotal,
+            order_status: 1,
+            order_type: 3,
+            items: finalCartItems.map((item) => ({
+              item_name: item.productName,
+              item_img: item.images?.[0] || "",
+              item_quantity: item.quantity,
+              item_price: item.expectedPrice || 0,
+              item_material: item.woodType,
+              item_color: item.color,
+              item_size: item.size,
+              item_note: item.note,
+              is_finished: 0,
+              customer_img: item.images || [],
+            })),
+          };
+          await orderService.createOrder(orderData);
+          toast.dismiss(loadingToast);
+        } else {
+          const requestData = {
+            fk_customer_id: values.selectedCustomer.id,
+            fulfillment_method: null,
+            expected_fulfillment_date: null,
+            note: values.orderNote,
+            deposit_amount: values.depositAmount,
+            address: values.selectedCustomer.address || "",
+            total_amount: subtotal,
+            order_status: 1,
+            order_type: 3,
+            items: finalCartItems.map((item) => ({
+              item_name: item.productName,
+              item_img: item.images?.[0] || "",
+              item_quantity: item.quantity,
+              item_price: item.expectedPrice || 0,
+              item_material: item.woodType,
+              item_color: item.color,
+              item_size: item.size,
+              item_note: item.note,
+              is_finished: 0,
+              customer_img: item.images || [],
+            })),
+          };
+          await customRequestService.createRequest(requestData);
+          toast.dismiss(loadingToast);
+        }
 
         // Clear active tab after success
         if (tabs.length <= 1) {
@@ -358,7 +429,7 @@ export default function CustomOrderRequirementsPage() {
                  <div className="flex gap-4">
                     <div className="w-32 h-32 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0">
                        {viewingItem.images?.length > 0 ? (
-                         <img src={viewingItem.images[0]} className="w-full h-full object-cover" />
+                         <img src={typeof viewingItem.images[0] === "string" ? viewingItem.images[0] : URL.createObjectURL(viewingItem.images[0])} className="w-full h-full object-cover" />
                        ) : (
                          <div className="w-full h-full flex items-center justify-center text-gray-300"><Package size={40} /></div>
                        )}

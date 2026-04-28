@@ -37,6 +37,7 @@ export const createEmptyTab = () => ({
   selectedCustomer: null,
   orderNote: "",
   discount: 0,
+  isFullPayment: false,
   depositAmount: 0,
   deliveryMethod: DELIVERY_METHODS.STORE,
   deliveryDate: "",
