@@ -102,7 +102,7 @@ export default function CustomOrderRequirementsPage() {
                 const uploadedResults = await uploadMultipleImages(filesToUpload);
                 newUrls = uploadedResults.map((res) => res.url);
               }
-              
+
               return {
                 ...item,
                 images: [...existingUrls, ...newUrls]
@@ -123,7 +123,7 @@ export default function CustomOrderRequirementsPage() {
             deposit_amount: values.depositAmount,
             address: values.selectedCustomer.address || "",
             total_amount: subtotal,
-            order_status: 1,
+            order_status: 2, // 2: Đã tạo đơn (Status for custom request header)
             order_type: 3,
             items: finalCartItems.map((item) => ({
               item_name: item.productName,
@@ -138,7 +138,7 @@ export default function CustomOrderRequirementsPage() {
               customer_img: item.images || [],
             })),
           };
-          
+
           const reqRes = await customRequestService.createRequest(requestData);
           const customRequestCode = reqRes.data?.request_code || "Không xác định";
 
@@ -203,7 +203,7 @@ export default function CustomOrderRequirementsPage() {
           setTabs([freshTab]);
           formik.resetForm({ values: freshTab });
         } else {
-          closeTab(activeTabId, { stopPropagation: () => {} });
+          closeTab(activeTabId, { stopPropagation: () => { } });
         }
       } catch (error) {
         console.error("Create custom request error:", error);
@@ -420,48 +420,48 @@ export default function CustomOrderRequirementsPage() {
       {/* Viewing Item Overlay */}
       {viewingItem && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
-           <div className="bg-white rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl p-6 text-left">
-              <div className="flex justify-between items-center mb-6">
-                 <h3 className="text-lg font-bold text-gray-900">Chi tiết yêu cầu</h3>
-                 <button onClick={() => setViewingItem(null)} className="p-2 hover:bg-gray-100 rounded-full transition cursor-pointer">
-                    <X size={20} />
-                 </button>
+          <div className="bg-white rounded-2xl w-full max-w-xl overflow-hidden p-6 text-left border border-gray-200">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold text-gray-900">Chi tiết yêu cầu</h3>
+              <button onClick={() => setViewingItem(null)} className="p-2 hover:bg-gray-100 rounded-full transition cursor-pointer">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex gap-4">
+                <div className="w-32 h-32 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0">
+                  {viewingItem.images?.length > 0 ? (
+                    <img src={typeof viewingItem.images[0] === "string" ? viewingItem.images[0] : URL.createObjectURL(viewingItem.images[0])} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-300"><Package size={40} /></div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-xl font-bold text-gray-900">{viewingItem.productName}</h4>
+                  <p className="text-sm text-gray-500 mt-1">{viewingItem.woodType} | {viewingItem.color}</p>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    Kích thước:{" "}
+                    {typeof viewingItem.size === "object"
+                      ? `${viewingItem.size.length}x${viewingItem.size.width}x${viewingItem.size.height} ${viewingItem.size.unit || "cm"}`
+                      : viewingItem.size}
+                  </p>
+                  <p className="text-lg font-bold text-green-600 mt-2">{fmt(viewingItem.expectedPrice || 0)}đ</p>
+                </div>
               </div>
-              
-              <div className="space-y-4">
-                 <div className="flex gap-4">
-                    <div className="w-32 h-32 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0">
-                       {viewingItem.images?.length > 0 ? (
-                         <img src={typeof viewingItem.images[0] === "string" ? viewingItem.images[0] : URL.createObjectURL(viewingItem.images[0])} className="w-full h-full object-cover" />
-                       ) : (
-                         <div className="w-full h-full flex items-center justify-center text-gray-300"><Package size={40} /></div>
-                       )}
-                    </div>
-                    <div className="flex-1">
-                       <h4 className="text-xl font-bold text-gray-900">{viewingItem.productName}</h4>
-                       <p className="text-sm text-gray-500 mt-1">{viewingItem.woodType} | {viewingItem.color}</p>
-                       <p className="text-sm text-gray-500 mt-0.5">
-                         Kích thước:{" "}
-                         {typeof viewingItem.size === "object"
-                           ? `${viewingItem.size.length}x${viewingItem.size.width}x${viewingItem.size.height} ${viewingItem.size.unit || "cm"}${viewingItem.size.note ? ` (${viewingItem.size.note})` : ""}`
-                           : viewingItem.size}
-                       </p>
-                       <p className="text-lg font-bold text-green-600 mt-2">{fmt(viewingItem.expectedPrice || 0)}đ</p>
-                    </div>
-                 </div>
-                 
-                 {viewingItem.note && (
-                    <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
-                       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Mô tả kỹ thuật</p>
-                       <p className="text-sm text-gray-700 leading-relaxed italic">"{viewingItem.note}"</p>
-                    </div>
-                 )}
-              </div>
-              
-              <Button onClick={() => setViewingItem(null)} className="w-full mt-8 h-12 rounded-xl font-bold">
-                 Đóng
-              </Button>
-           </div>
+
+              {viewingItem.note && (
+                <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Mô tả kỹ thuật</p>
+                  <p className="text-sm text-gray-700 leading-relaxed italic">"{viewingItem.note}"</p>
+                </div>
+              )}
+            </div>
+
+            <Button onClick={() => setViewingItem(null)} className="w-full mt-8 h-12 rounded-xl font-bold">
+              Đóng
+            </Button>
+          </div>
         </div>
       )}
     </>

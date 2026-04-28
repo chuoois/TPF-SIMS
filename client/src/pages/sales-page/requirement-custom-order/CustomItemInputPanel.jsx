@@ -48,7 +48,6 @@ export default function CustomItemInputPanel({
     length: "",
     width: "",
     height: "",
-    sizeNote: "",
     color: "",
     expectedPrice: "",
     quantity: 1,
@@ -108,7 +107,6 @@ export default function CustomItemInputPanel({
       length: "",
       width: "",
       height: "",
-      sizeNote: "",
       color: "",
       expectedPrice: "",
       quantity: 1,
@@ -148,7 +146,6 @@ export default function CustomItemInputPanel({
         width: Number(newItem.width) || 0,
         height: Number(newItem.height) || 0,
         length: Number(newItem.length) || 0,
-        note: newItem.sizeNote || "",
       };
 
       const itemToSave = { ...newItem, item_size: sizeObj, size: sizeObj };
@@ -183,8 +180,7 @@ export default function CustomItemInputPanel({
 
   return (
     <div
-      className="flex flex-col w-[44%] bg-white rounded-lg overflow-hidden shadow-sm"
-      style={{ border: "1px solid var(--grid-border)" }}
+      className="flex flex-col w-[44%] bg-white rounded-lg overflow-hidden border border-[var(--grid-border)]"
     >
       {/* ── Header ── */}
       <div className="flex flex-col gap-2 px-3 pt-3 pb-2 border-b" style={{ borderColor: "var(--grid-border)" }}>
@@ -277,7 +273,7 @@ export default function CustomItemInputPanel({
                 />
                 {errors.woodType && <p className="text-[10px] text-red-500 font-bold ml-1 mt-1">{errors.woodType}</p>}
                 {showWoodDropdown && (
-                  <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow-xl z-50 max-h-40 overflow-y-auto border-[var(--grid-border)]">
+                  <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg z-50 max-h-40 overflow-y-auto border-[var(--grid-border)]">
                     {materialOptions.filter(w => w.toLowerCase().includes(newItem.woodType.toLowerCase())).map(w => (
                       <div key={w} onMouseDown={() => updateNewItem("woodType", w)} className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer">{w}</div>
                     ))}
@@ -301,7 +297,7 @@ export default function CustomItemInputPanel({
                   style={inputStyle}
                 />
                 {showColorDropdown && (
-                  <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg shadow-xl z-50 max-h-40 overflow-y-auto border-[var(--grid-border)]">
+                  <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg z-50 max-h-40 overflow-y-auto border-[var(--grid-border)]">
                     {colorOptions.filter(c => c.toLowerCase().includes(newItem.color.toLowerCase())).map(c => (
                       <div key={c} onMouseDown={() => updateNewItem("color", c)} className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer">{c}</div>
                     ))}
@@ -339,18 +335,16 @@ export default function CustomItemInputPanel({
 
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1">
-              <FileText size={10} /> Ghi chú kích thước (VD: Tay 30, chân 40...)
+              <ClipboardEdit size={10} /> Ghi chú sản xuất (Yêu cầu riêng)
             </label>
-            <input
-              type="text"
-              placeholder="Nhập ghi chú riêng về kích thước..."
-              value={newItem.sizeNote}
-              onChange={(e) => updateNewItem("sizeNote", e.target.value)}
-              className={`${inputBase} bg-white !py-2`}
+            <textarea
+              placeholder="Nhập các yêu cầu sản xuất đặc biệt khác..."
+              value={newItem.note}
+              onChange={(e) => updateNewItem("note", e.target.value)}
+              className={`${inputBase} bg-white !py-2 min-h-[60px] resize-none`}
               style={{ ...inputStyle, backgroundColor: "white" }}
             />
           </div>
-
         </div>
 
         {/* Section: Price & Deposit */}
@@ -445,7 +439,7 @@ export default function CustomItemInputPanel({
         <Button
           onClick={saveItem}
           disabled={!newItem.productName.trim()}
-          className="w-full h-12 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-500/10"
+          className="w-full h-12 rounded-xl font-bold flex items-center justify-center gap-2 border border-green-200"
         >
           {editingItemId ? <CheckCircle2 size={18} /> : <Plus size={18} />}
           {editingItemId ? "Cập nhật sản phẩm" : "Thêm vào danh sách"}

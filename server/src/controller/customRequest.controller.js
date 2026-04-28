@@ -103,21 +103,66 @@ class CustomRequestController {
      */
     async getAllRequests(req, res) {
         try {
-            const { status, customer_id, page = 1, limit = 10 } = req.query;
+            const { status, customer_id, search, dateFrom, dateTo, page = 1, limit = 10 } = req.query;
             const offset = (page - 1) * limit;
 
             const where = {};
-            if (status) where.status = status;
+            
+            // Handle status (could be 0, 1, 2, 3 or '0','1','2','3')
+            if (status !== undefined && status !== "" && status !== "Tất cả") {
+                where.status = status;
+            }
+            
             if (customer_id) where.fk_customer_id = customer_id;
+
+            // Search by code or customer info
+            if (search) {
+                where[Op.or] = [
+                    { request_code: { [Op.like]: `%${search}%` } },
+                    { "$customer.full_name$": { [Op.like]: `%${search}%` } },
+                    { "$customer.phone_number$": { [Op.like]: `%${search}%` } }
+                ];
+            }
+
+            // Refined Date filtering
+            if (dateFrom || dateTo) {
+                const dateCond = {};
+                if (dateFrom) dateCond[Op.gte] = `${dateFrom} 00:00:00`;
+                if (dateTo) dateCond[Op.lte] = `${dateTo} 23:59:59`;
+                where.createdate = dateCond;
+            }
 
             const { count, rows } = await CustomRequest.findAndCountAll({
                 where,
                 include: [
-                    { model: CustomerProfile, as: "customer", attributes: ["full_name", "phone_number"] }
+                    { 
+                        model: CustomerProfile, 
+                        as: "customer", 
+                        attributes: ["full_name", "phone_number"] 
+                    }
                 ],
                 order: [["createdate", "DESC"]],
                 limit: parseInt(limit),
-                offset: parseInt(offset)
+                offset: parseInt(offset),
+                subQuery: false
+            });
+
+            // Also get counts for each status for the filter bar
+            const statusCounts = await CustomRequest.findAll({
+                attributes: [
+                    "status",
+                    [sequelize.fn("COUNT", sequelize.col("pk_custom_request_id")), "count"]
+                ],
+                group: ["status"],
+                raw: true
+            });
+
+            // Convert to a more usable format for frontend
+            const countsMap = {
+                all: count,
+            };
+            statusCounts.forEach(sc => {
+                countsMap[sc.status] = parseInt(sc.count);
             });
 
             return res.status(200).json({
@@ -126,7 +171,8 @@ class CustomRequestController {
                     totalItems: count,
                     totalPages: Math.ceil(count / limit),
                     currentPage: parseInt(page)
-                }
+                },
+                statusCounts: countsMap
             });
         } catch (error) {
             console.error("Get all requests error:", error);

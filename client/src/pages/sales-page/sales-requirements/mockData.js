@@ -144,6 +144,18 @@ export const MOCK_REQUIREMENTS = [
   },
 ];
 
+export const STATUS_MAP = {
+  1: "Đang xử lý",
+  2: "Đã tạo đơn",
+  3: "Đơn đã hủy",
+};
+
+export const REVERSE_STATUS_MAP = {
+  "Đang xử lý": 1,
+  "Đã tạo đơn": 2,
+  "Đơn đã hủy": 3,
+};
+
 export const STATUS_CONFIG = {
   "Đang xử lý": {
     bg: "#FEF3C7",

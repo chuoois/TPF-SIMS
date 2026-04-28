@@ -101,93 +101,60 @@ export const NavbarSale = () => {
       </div>
 
       {/* RIGHT */}
-      <div className="relative z-[3] flex items-center gap-1">
-        {/* ... (Notifications block remains same) ... */}
+      <div className="relative z-[3] flex items-center gap-1.5">
+        {/* Notifications */}
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className={`relative flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 transition-colors cursor-pointer ${showNotifications ? "bg-gray-100 text-green-600" : "text-gray-500 hover:text-gray-700"}`}
+            className={`flex items-center justify-center w-9 h-9 rounded-full transition-all cursor-pointer ${
+              showNotifications ? "bg-[var(--status-focus)] text-[var(--brand-primary)]" : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+            }`}
             title="Thông báo"
           >
-            <Bell size={18} />
+            <Bell size={19} />
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-black flex items-center justify-center rounded-full border border-white shadow-sm animate-in zoom-in duration-300">
-                {unreadCount > 9 ? "9+" : unreadCount}
+              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 bg-red-500 rounded-full border border-white text-[9px] font-bold text-white flex items-center justify-center">
+                {unreadCount > 99 ? "99+" : unreadCount}
               </span>
             )}
           </button>
 
           {/* Notifications Dropdown */}
           {showNotifications && (
-            <div
-              className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200"
-              style={{ boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
-            >
-              <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-gray-800">Thông báo</p>
-                  {unreadCount > 0 && (
-                    <span className="px-1.5 py-0.5 bg-green-100 text-green-700 text-[9px] font-black rounded-full uppercase tracking-tighter">
-                      Mới
-                    </span>
-                  )}
-                </div>
+            <div className="absolute right-0 mt-2 w-80 bg-white border border-[var(--grid-border)] rounded-lg overflow-hidden z-50">
+              <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                <p className="text-[13px] font-bold text-[var(--text-main)]">Thông báo</p>
                 <button 
                   onClick={markAllAsRead}
-                  className="text-[10px] font-black text-green-600 hover:text-green-700 uppercase tracking-widest cursor-pointer"
+                  className="text-[11px] font-medium text-[var(--brand-primary)] hover:underline cursor-pointer"
                 >
-                  Đọc tất cả
+                  Đã đọc tất cả
                 </button>
               </div>
 
-              <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+              <div className="max-h-[320px] overflow-y-auto custom-scrollbar">
                 {notifications.length === 0 ? (
-                  <div className="py-12 flex flex-col items-center justify-center text-gray-400 gap-2">
-                    <Bell size={32} className="opacity-20" />
-                    <p className="text-xs font-bold uppercase tracking-widest">Không có thông báo</p>
+                  <div className="py-10 flex flex-col items-center justify-center text-gray-400 gap-2">
+                    <Bell size={20} className="opacity-30" />
+                    <p className="text-[11px]">Không có thông báo mới</p>
                   </div>
                 ) : (
                   notifications.map((n) => (
                     <div
                       key={n.pk_notification_id}
                       onClick={() => !n.is_read && markAsRead(n.pk_notification_id)}
-                      className={`px-4 py-3 flex gap-3 cursor-pointer transition-colors border-b border-gray-50 last:border-0 hover:bg-gray-50 ${!n.is_read ? 'bg-green-50/30' : ''}`}
+                      className={`px-4 py-3 flex gap-3 cursor-pointer transition-colors border-b border-gray-50 last:border-0 hover:bg-gray-50 ${!n.is_read ? 'bg-gray-50/50' : ''}`}
                     >
-                      <div className="mt-1 shrink-0">
-                        {n.type === "SUCCESS" ? (
-                          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                            <CheckCircle2 size={16} />
-                          </div>
-                        ) : n.type === "ERROR" ? (
-                          <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600">
-                            <XCircle size={16} />
-                          </div>
-                        ) : n.type === "WARNING" ? (
-                          <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
-                            <AlertTriangle size={16} />
-                          </div>
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                            <Info size={16} />
-                          </div>
-                        )}
+                      <div className="shrink-0 mt-0.5">
+                        {n.type === "SUCCESS" ? <Check size={14} className="text-green-500" /> : <Info size={14} className="text-blue-500" />}
                       </div>
-                      <div className="flex-1 flex flex-col gap-0.5">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className={`text-[13px] leading-tight ${!n.is_read ? 'font-bold text-gray-900' : 'font-medium text-gray-600'}`}>
-                            {n.title}
-                          </p>
-                          {!n.is_read && <div className="w-2 h-2 bg-green-500 rounded-full shrink-0 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />}
-                        </div>
-                        <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed">
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-[13px] leading-tight truncate ${!n.is_read ? 'font-bold text-[var(--text-main)]' : 'font-medium text-[var(--text-secondary)]'}`}>
+                          {n.title}
+                        </p>
+                        <p className="text-[11px] text-[var(--text-placeholder)] line-clamp-1 mt-0.5">
                           {n.message}
                         </p>
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <Clock size={10} className="text-gray-300" />
-                          <span className="text-[9px] font-black text-gray-300 uppercase tracking-tighter">
-                            {new Date(n.createdate).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
                       </div>
                     </div>
                   ))
@@ -195,91 +162,70 @@ export const NavbarSale = () => {
               </div>
 
               {notifications.length > 0 && (
-                <div className="p-3 bg-gray-50/50 border-t border-gray-100 text-center">
-                  <button className="text-[10px] font-black text-gray-400 hover:text-gray-600 uppercase tracking-widest transition-colors cursor-pointer">
-                    Xem tất cả lịch sử
-                  </button>
-                </div>
+                <button className="w-full py-2.5 text-[11px] font-medium text-[var(--text-placeholder)] hover:bg-gray-50 border-t border-gray-100 transition-colors cursor-pointer">
+                  Xem tất cả thông báo
+                </button>
               )}
             </div>
           )}
         </div>
 
+        {/* Divider */}
+        <div className="h-4 w-[1px] bg-gray-200 mx-1"></div>
+
+        {/* User Settings */}
         <div className="relative" ref={settingsRef}>
           <button
             onClick={() => setShowSettings(!showSettings)}
-            className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-all duration-200 cursor-pointer border ${
-              showSettings
-                ? "bg-gray-100 border-gray-200"
-                : "border-transparent hover:bg-gray-50 hover:border-gray-100"
+            className={`flex items-center gap-2.5 p-1 rounded-full transition-all cursor-pointer ${
+              showSettings ? "bg-gray-100" : "hover:bg-gray-50"
             }`}
           >
-            <div className="w-7 h-7 rounded-full overflow-hidden border border-gray-200 shadow-sm shrink-0">
+            <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white ring-1 ring-gray-100">
               <img
                 src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-                  user?.fullName || "User",
-                )}&background=0D8ABC&color=fff&bold=true`}
+                  user?.fullName || "U",
+                )}&background=34B057&color=fff&bold=true`}
                 alt="Avatar"
                 className="w-full h-full object-cover"
               />
             </div>
-            <div className="hidden md:flex flex-col items-start leading-none">
-              <span className="text-[12px] font-bold text-gray-800">
-                {user?.fullName || "Quản trị viên"}
-              </span>
-              <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mt-0.5">
+            <div className="hidden lg:flex flex-col items-start pr-1">
+              <p className="text-[13px] font-bold text-[var(--text-main)] leading-none">
+                {user?.fullName || "Người dùng"}
+              </p>
+              <p className="text-[10px] font-medium text-[var(--text-placeholder)] uppercase tracking-wider mt-1">
                 {roleMap[user?.role] || "Thành viên"}
-              </span>
+              </p>
             </div>
-            <Settings
-              size={14}
-              className={`text-gray-400 transition-transform duration-300 ${
-                showSettings ? "rotate-90 text-[var(--brand-primary)]" : ""
-              }`}
-            />
           </button>
 
-          {/* Profile/Settings Dropdown */}
+          {/* Profile Dropdown */}
           {showSettings && (
-            <div
-              className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
-              style={{
-                boxShadow:
-                  "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-              }}
-            >
-              <div className="px-4 py-3 border-b border-gray-50 bg-gray-50/30">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
-                  Tài khoản của tôi
+            <div className="absolute right-0 mt-2 w-56 bg-white border border-[var(--grid-border)] rounded-lg py-1 z-50">
+              <div className="px-4 py-3 border-b border-gray-100">
+                <p className="text-[13px] font-bold text-[var(--text-main)] truncate">
+                  {user?.fullName}
                 </p>
-                <p className="text-sm font-bold text-gray-800 truncate">
-                  {user?.full_name}
-                </p>
-                <p className="text-[11px] text-gray-500 truncate">
-                  {user?.email || "owner@tpf-sims.com"}
+                <p className="text-[11px] text-[var(--text-placeholder)] truncate mt-0.5">
+                  {user?.email || "user@tpf-sims.com"}
                 </p>
               </div>
 
-              <div className="px-1.5 py-1.5">
-                <button className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] font-medium text-gray-700 rounded-lg hover:bg-gray-50 hover:text-[var(--brand-primary)] transition-all cursor-pointer">
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
-                    <Settings size={16} />
-                  </div>
-                  <span>Cấu hình hồ sơ</span>
+              <div className="py-1">
+                <button className="w-full flex items-center gap-3 px-4 py-2 text-[13px] font-medium text-[var(--text-secondary)] hover:bg-gray-50 hover:text-[var(--brand-primary)] transition-colors cursor-pointer">
+                  <Settings size={16} />
+                  <span>Cài đặt hệ thống</span>
                 </button>
-              </div>
+                
+                <div className="h-[1px] bg-gray-100 my-1"></div>
 
-              <div className="border-t border-gray-100 mx-1.5 my-1"></div>
-
-              <div className="px-1.5">
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] font-bold text-red-600 rounded-lg hover:bg-red-50 transition-all cursor-pointer group"
+                  className="w-full flex items-center gap-3 px-4 py-2 text-[13px] font-medium text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-600 group-hover:bg-red-100 transition-colors">
-                    <LogOut size={16} />
-                  </div>
-                  <span>Đăng xuất hệ thống</span>
+                  <LogOut size={16} />
+                  <span>Đăng xuất</span>
                 </button>
               </div>
             </div>
