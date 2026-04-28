@@ -76,12 +76,14 @@ const TYPE_FILTERS = [
     icon: Clock,
     activeStyle: { bg: "#FFF7ED", text: "#9A3412", border: "#FDBA74" },
   },
+/* 
   {
     value: "DEFECTIVE",
     label: "Hàng chờ xử lý",
     icon: AlertTriangle,
     activeStyle: { bg: "#FEF2F2", text: "#DC2626", border: "#FECACA" },
   },
+  */
 ];
 
 const TYPE_BADGE = {
@@ -629,7 +631,7 @@ export default function AccountantProductManage() {
                                     </span>
                                   </div>
                                 )}
-                              {p.stockBreakdown.defective > 0 && (
+{/* p.stockBreakdown.defective > 0 && (
                                 <div className="flex justify-between items-center text-[11px] leading-tight mt-0.5">
                                   <span className="text-red-500 font-semibold flex items-center gap-1">
                                     <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>{" "}
@@ -639,7 +641,7 @@ export default function AccountantProductManage() {
                                     {p.stockBreakdown.defective}
                                   </span>
                                 </div>
-                              )}
+                              )*/ }
                               {p.stockBreakdown.delivering > 0 && (
                                 <div className="flex justify-between items-center text-[11px] leading-tight mt-0.5">
                                   <span className="text-blue-600 font-semibold flex items-center gap-1">
@@ -829,6 +831,7 @@ export default function AccountantProductManage() {
         <ViewProductModal
           product={viewProduct}
           onClose={() => setViewProduct(null)}
+          onRefreshInventory={fetchProducts}
         />
       )}
       {editProduct && (

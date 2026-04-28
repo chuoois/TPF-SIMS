@@ -47,9 +47,11 @@ class InventoryController {
       }
 
       // Literal for counting items
+      // Chỉ đếm item còn trong kho (loại trừ status=0: đã xử lý/xuất kho)
       const stockLiteral = sequelize.literal(`(
         SELECT COUNT(*) FROM product_item
         WHERE product_item.fk_product_id = Product.pk_product_id
+        AND product_item.item_status != 0
       )`);
 
       const availableLiteral = sequelize.literal(`(
@@ -78,10 +80,11 @@ class InventoryController {
         AND product_item.item_status = 4
       )`);
 
-      // Earliest import date
+      // Ngày nhập kho sớm nhất (chỉ lấy item còn trong kho)
       const importedAtLiteral = sequelize.literal(`(
         SELECT MIN(createdate) FROM product_item
         WHERE product_item.fk_product_id = Product.pk_product_id
+        AND product_item.item_status != 0
       )`);
 
       const queryOptions = {
@@ -314,7 +317,10 @@ class InventoryController {
     try {
       const { id } = req.params;
       const items = await ProductItem.findAll({
-        where: { fk_product_id: id },
+        where: {
+          fk_product_id: id,
+          item_status: { [Op.ne]: 0 }, // Loại trừ item đã xử lý/xuất kho
+        },
         order: [["createdate", "DESC"]],
       });
 

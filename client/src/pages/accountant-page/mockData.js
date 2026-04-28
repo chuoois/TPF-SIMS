@@ -316,7 +316,8 @@ export const MOCK_IMPORT_REQUESTS = [
     id: "REQ001",
     requestCode: "YC-2604-01",
     date: "2026-04-15",
-    createdBy: "Chủ cửa hàng (Tuấn Anh)",
+    createdBy: "Xưởng Minh Đức",
+    supplier: "Xưởng Minh Đức",
     note: "Nhập bổ sung nội thất sồi Nga",
     status: "PENDING",
     items: [
@@ -352,7 +353,8 @@ export const MOCK_IMPORT_REQUESTS = [
     id: "REQ002",
     requestCode: "YC-2604-02",
     date: "2026-04-16",
-    createdBy: "Chủ cửa hàng (Tuấn Anh)",
+    createdBy: "Xưởng Tiến Phát",
+    supplier: "Xưởng Tiến Phát",
     note: "Nhập gấp bộ phòng ăn cho khách sỉ",
     status: "PENDING",
     items: [

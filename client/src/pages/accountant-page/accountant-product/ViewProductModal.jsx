@@ -69,7 +69,7 @@ const IN_STOCK_STATUSES = [
   "AVAILABLE",
   "PROCESSING",
   "PENDING_DELIVERY",
-  "DEFECTIVE",
+  // "DEFECTIVE",
 ];
 
 // ── Helpers ──────────────────────────────────────────────
@@ -359,12 +359,14 @@ function ReceiptGroupCard({ receiptId, units, index, onChangeStatus, updatingSer
                 count: stats.delivering,
                 ...UNIT_STATUS_CONFIG.PENDING_DELIVERY,
               },
+/* 
               {
                 key: "defective",
                 label: "Hàng lỗi",
                 count: stats.defective,
                 ...UNIT_STATUS_CONFIG.DEFECTIVE,
               },
+*/
             ]
               .filter((s) => s.count > 0)
               .map((s) => (
@@ -426,20 +428,8 @@ function ReceiptGroupCard({ receiptId, units, index, onChangeStatus, updatingSer
                   >
                     Trạng thái
                   </th>
-                  <th
-                    className="px-4 py-2 text-left text-[9px] font-bold uppercase tracking-wider"
-                    style={{ color: "#6D28D9" }}
-                  >
-                    <span className="flex items-center gap-1">
-                      <ClipboardList size={9} /> Phiếu nhập
-                    </span>
-                  </th>
-                  <th
-                    className="px-4 py-2 text-center text-[9px] font-bold uppercase tracking-wider"
-                    style={{ color: "#6D28D9" }}
-                  >
-                    Hành động
-                  </th>
+
+
                 </tr>
               </thead>
               <tbody>
@@ -510,41 +500,8 @@ function ReceiptGroupCard({ receiptId, units, index, onChangeStatus, updatingSer
                           {cfg.label}
                         </span>
                       </td>
-                      {/* Phiếu nhập */}
-                      <td className="px-4 py-2.5">
-                        <span
-                          className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-md"
-                          style={{
-                            backgroundColor: "#F5F3FF",
-                            color: "#7C3AED",
-                            border: "1px solid #DDD6FE",
-                          }}
-                        >
-                          {unit.importReceiptId || receiptId || "—"}
-                        </span>
-                      </td>
-                      {/* Hành động */}
-                      <td className="px-4 py-2.5 text-center">
-                        {updatingSerial === unit.unitId ? (
-                          <span className="text-[10px] text-gray-400 italic">Đang xử lý...</span>
-                        ) : unit.status !== "DEFECTIVE" && onChangeStatus ? (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); onChangeStatus(unit.lotId, unit.unitId, "DEFECTIVE"); }}
-                            className="text-[10px] font-bold text-red-600 hover:text-red-700 hover:underline cursor-pointer"
-                            title="Báo lỗi khi kiểm kho"
-                          >
-                            Báo lỗi
-                          </button>
-                        ) : unit.status === "DEFECTIVE" && onChangeStatus ? (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); onChangeStatus(unit.lotId, unit.unitId, "AVAILABLE"); }}
-                            className="text-[10px] font-bold text-green-600 hover:text-green-700 hover:underline cursor-pointer"
-                            title="Hoàn tác trạng thái"
-                          >
-                            Bỏ báo lỗi
-                          </button>
-                        ) : null}
-                      </td>
+
+
                     </tr>
                   );
                 })}
@@ -1173,7 +1130,7 @@ function GeneralInfoTab({ product }) {
 }
 
 // ─────────────────────────────────────────────────────────
-export default function ViewProductModal({ product, onClose }) {
+export default function ViewProductModal({ product, onClose, onRefreshInventory }) {
   const [activeTab, setActiveTab] = useState("info");
   const [lots, setLots] = useState(() =>
     product?.lots ? JSON.parse(JSON.stringify(product.lots)) : [],
@@ -1224,6 +1181,7 @@ export default function ViewProductModal({ product, onClose }) {
       toast.success(`Đã xử lý ${data.unitIds.length} đơn vị hàng lỗi!`, { style: { fontSize: "14px" } });
       setIsProcessingDefective(false);
       reloadLots(); // reload lại danh sách đơn vị sau khi xử lý
+      if (onRefreshInventory) onRefreshInventory(); // Refresh lại bảng tồn kho bên ngoài
     } catch (error) {
       toast.error("Xử lý thất bại, vui lòng thử lại!");
     }
@@ -1249,6 +1207,7 @@ export default function ViewProductModal({ product, onClose }) {
         newStatus === "DEFECTIVE" ? "Báo lỗi thành công!" : "Khôi phục trạng thái thành công!",
         { style: { fontSize: "14px" } }
       );
+      if (onRefreshInventory) onRefreshInventory(); // Refresh lại bảng tồn kho bên ngoài
     } catch (error) {
       toast.error("Cập nhật thất bại! Vui lòng thử lại.");
     } finally {
