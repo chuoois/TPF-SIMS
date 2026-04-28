@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import CustomCheckbox from "@/components/control/CustomCheckbox";
 import { fmt, PRODUCT_TYPES, DELIVERY_METHODS, calculateSuggestedDeposit, DEFAULT_WARRANTY } from "./mockData";
 
 export default function CartPanel({
@@ -70,13 +71,25 @@ export default function CartPanel({
 
   // Tự động cập nhật tiền cọc vào Formik - Tối ưu tránh vòng lặp vô hạn
   useEffect(() => {
-    if (
-      suggestedDepositInfo.amount >= 0 &&
-      formik.values.depositAmount !== suggestedDepositInfo.amount
-    ) {
-      formik.setFieldValue("depositAmount", suggestedDepositInfo.amount);
+    if (formik.values.isFullPayment) {
+      if (formik.values.depositAmount !== currentSubtotal) {
+        formik.setFieldValue("depositAmount", currentSubtotal);
+      }
+    } else {
+      if (
+        suggestedDepositInfo.amount >= 0 &&
+        formik.values.depositAmount !== suggestedDepositInfo.amount
+      ) {
+        formik.setFieldValue("depositAmount", suggestedDepositInfo.amount);
+      }
     }
-  }, [suggestedDepositInfo.amount, formik.values.depositAmount, formik.setFieldValue]);
+  }, [
+    suggestedDepositInfo.amount,
+    formik.values.depositAmount,
+    formik.values.isFullPayment,
+    currentSubtotal,
+    formik.setFieldValue,
+  ]);
 
 
 
@@ -725,40 +738,66 @@ export default function CartPanel({
                 style={{ color: "var(--text-secondary)" }}
               >
                 <CreditCard size={12} className="inline mr-1.5" />
-                Tiền đặt cọc (Hệ thống tự tính)
-                {currentSubtotal > 0 && formik.values.depositAmount > 0 && (
+                {formik.values.isFullPayment ? "Khách thanh toán" : "Tiền đặt cọc"}
+                {currentSubtotal > 0 && formik.values.depositAmount > 0 && !formik.values.isFullPayment && (
                   <span className="ml-2 text-[10px] font-bold text-[var(--brand-primary)] bg-[var(--brand-primary)]/10 px-1.5 py-0.5 rounded">
                     ({Math.round((formik.values.depositAmount / currentSubtotal) * 100)}%)
                   </span>
                 )}
               </span>
-              <div className="flex items-center gap-1">
-                <span
-                  className="text-[13px]"
-                  style={{ color: "var(--text-placeholder)" }}
-                >
-                  ₫
-                </span>
-                <input
-                  type="text"
-                  readOnly
-                  value={
-                    formik.values.depositAmount
-                      ? fmt(formik.values.depositAmount)
-                      : "0"
+              <div className="flex items-center gap-3">
+                <div
+                  className="flex items-center gap-1.5 cursor-pointer"
+                  onClick={() =>
+                    formik.setFieldValue(
+                      "isFullPayment",
+                      !formik.values.isFullPayment
+                    )
                   }
-                  className="w-28 text-right text-[13px] font-bold rounded-lg px-2 py-1 focus:outline-none bg-gray-50 border border-gray-200 cursor-not-allowed"
-                  style={{
-                    color: "var(--brand-primary)",
-                  }}
-                />
+                >
+                  <CustomCheckbox
+                    checked={formik.values.isFullPayment || false}
+                    onChange={(val) =>
+                      formik.setFieldValue("isFullPayment", val)
+                    }
+                  />
+                  <span className="text-[12px] font-medium" style={{ color: "var(--text-main)" }}>Trả đủ</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span
+                    className="text-[13px]"
+                    style={{ color: "var(--text-placeholder)" }}
+                  >
+                    ₫
+                  </span>
+                  <input
+                    type="text"
+                    readOnly
+                    value={
+                      formik.values.depositAmount
+                        ? fmt(formik.values.depositAmount)
+                        : "0"
+                    }
+                    className="w-28 text-right text-[13px] font-bold rounded-lg px-2 py-1 focus:outline-none bg-gray-50 border border-gray-200 cursor-not-allowed"
+                    style={{
+                      color: "var(--brand-primary)",
+                    }}
+                  />
+                </div>
               </div>
             </div>
             {/* Thông báo về quy tắc đặt cọc */}
-            {currentSubtotal > 0 && (
+            {currentSubtotal > 0 && !formik.values.isFullPayment && (
               <div className="mt-2 text-right">
                 <p className="text-[10px] font-medium text-gray-500">
                   {suggestedDepositInfo.reason} (Tự động tính {suggestedDepositInfo.percentage}%)
+                </p>
+              </div>
+            )}
+            {currentSubtotal > 0 && formik.values.isFullPayment && (
+              <div className="mt-2 text-right">
+                <p className="text-[10px] font-medium text-green-600">
+                  Khách hàng thanh toán toàn bộ giá trị đơn hàng
                 </p>
               </div>
             )}
@@ -772,7 +811,7 @@ export default function CartPanel({
               className="text-xs uppercase tracking-wider font-medium"
               style={{ color: "var(--text-placeholder)" }}
             >
-              Tổng thanh toán
+              Còn lại cần thu
             </p>
             <p
               className="text-xl font-bold tracking-tight"
@@ -791,10 +830,10 @@ export default function CartPanel({
                   ? "0 4px 14px rgba(52, 176, 87, 0.25)"
                   : "none",
             }}
-            disabled={activeTab.cartItems.length === 0}
+            disabled={activeTab.cartItems.length === 0 || formik.isSubmitting}
             onClick={handleCheckout}
           >
-            Thanh toán
+            {formik.isSubmitting ? "Đang xử lý..." : "Thanh toán"}
           </Button>
         </div>
       </div>

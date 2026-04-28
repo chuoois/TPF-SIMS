@@ -23,16 +23,8 @@ const CustomCheckbox = ({ checked, onChange, disabled }) => {
         }
         ${disabled ? "opacity-50 cursor-not-allowed" : ""}
       `}
-      style={checked ? { boxShadow: "0 2px 8px rgba(52, 176, 87, 0.4)" } : {}}
     >
-      <div
-        className={`
-          transition-all duration-200 transform
-          ${checked ? "scale-100 opacity-100" : "scale-0 opacity-0"}
-        `}
-      >
-        <Check size={14} strokeWidth={4} className="text-white" />
-      </div>
+      {checked && <Check size={14} strokeWidth={4} className="text-white" />}
     </button>
   );
 };

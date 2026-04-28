@@ -28,7 +28,9 @@ export const uploadImage = async (file) => {
         });
 
         if (!res.ok) {
-            throw new Error("Upload failed");
+            const errBody = await res.text();
+            console.error("Cloudinary response error:", errBody);
+            throw new Error(`Upload failed: ${res.status} - ${errBody}`);
         }
 
         const data = await res.json();

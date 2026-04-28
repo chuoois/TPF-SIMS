@@ -166,11 +166,10 @@ export default function RequirementCartPanel({
                     {idx + 1}
                   </span>
 
-                  {/* Icon instead of image if no image */}
                   <div className="w-12 h-12 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
                     {item.images && item.images.length > 0 ? (
                       <img
-                        src={item.images[0]}
+                        src={typeof item.images[0] === "string" ? item.images[0] : URL.createObjectURL(item.images[0])}
                         alt={item.productName}
                         className="w-full h-full object-cover"
                       />
@@ -641,10 +640,12 @@ export default function RequirementCartPanel({
             type="button"
             className="h-11 px-8 text-sm font-bold text-white rounded-lg transition-all active:scale-95 cursor-pointer disabled:opacity-40"
             style={{ backgroundColor: "var(--brand-primary)" }}
-            disabled={formik.values.cartItems.length === 0}
+            disabled={formik.values.cartItems.length === 0 || formik.isSubmitting}
             onClick={handleCheckout}
           >
-            {formik.values.mode === "DIRECT_ORDER" ? "Tạo đơn hàng ngay" : "Lưu yêu cầu thiết kế"}
+            {formik.isSubmitting 
+              ? "Đang xử lý..." 
+              : (formik.values.mode === "DIRECT_ORDER" ? "Tạo đơn hàng ngay" : "Lưu yêu cầu thiết kế")}
           </Button>
         </div>
       </div>
