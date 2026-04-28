@@ -40,6 +40,11 @@ const payrollService = {
     return response.data;
   },
 
+  async incrementDaysWorked(id) {
+    const response = await axiosInstance.patch(`/payroll/records/${id}/increment-day`);
+    return response.data;
+  },
+
   async deleteRecord(id) {
     const response = await axiosInstance.delete(`/payroll/records/${id}`);
     return response.data;

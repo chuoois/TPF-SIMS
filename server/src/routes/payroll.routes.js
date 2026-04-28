@@ -189,6 +189,26 @@ router.patch("/records/:id", allowedRoles, payrollController.updateRecord);
 
 /**
  * @swagger
+ * /api/payroll/records/{id}/increment-day:
+ *   patch:
+ *     summary: Điểm danh nhanh (cộng 1 ngày công)
+ *     tags: [Payroll]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Điểm danh thành công
+ */
+router.patch("/records/:id/increment-day", allowedRoles, payrollController.incrementDaysWorked);
+
+
+/**
+ * @swagger
  * /api/payroll/records/{id}:
  *   delete:
  *     summary: Xóa bản ghi lương khỏi kỳ lương
