@@ -59,7 +59,7 @@ export default function CustomItemInputPanel({
   const [errors, setErrors] = useState({});
   const [showWoodDropdown, setShowWoodDropdown] = useState(false);
   const [showColorDropdown, setShowColorDropdown] = useState(false);
-  
+
   const [materialOptions, setMaterialOptions] = useState([]);
   const [colorOptions, setColorOptions] = useState([]);
 
@@ -100,13 +100,6 @@ export default function CustomItemInputPanel({
     }
   };
 
-  // Auto-suggest deposit when price is entered (for the first item or when deposit is 0)
-  useEffect(() => {
-    if (newItem.expectedPrice > 0 && formik.values.depositAmount === 0) {
-      const suggested = Math.round((newItem.expectedPrice * newItem.quantity * 0.5) / 10000) * 10000;
-      formik.setFieldValue("depositAmount", suggested);
-    }
-  }, [newItem.expectedPrice, newItem.quantity]);
 
   const resetForm = () => {
     setNewItem({
@@ -358,7 +351,7 @@ export default function CustomItemInputPanel({
             />
           </div>
 
-          </div>
+        </div>
 
         {/* Section: Price & Deposit */}
         <div className="space-y-3">
@@ -372,24 +365,21 @@ export default function CustomItemInputPanel({
                   const newQty = Math.max(1, newItem.quantity - 1);
                   updateNewItem("quantity", newQty);
                   if (newItem.expectedPrice > 0) {
-                    const suggested = Math.round((newItem.expectedPrice * newQty * 0.5) / 10000) * 10000;
-                    formik.setFieldValue("depositAmount", suggested);
+                    // Removed incorrect local deposit calculation
                   }
                 }} className="w-12 h-full flex items-center justify-center hover:bg-gray-50 border-r" style={{ borderColor: "var(--grid-border)" }}><Minus size={14} /></button>
                 <input type="number" value={newItem.quantity} onChange={(e) => {
                   const newQty = parseInt(e.target.value) || 1;
                   updateNewItem("quantity", newQty);
                   if (newItem.expectedPrice > 0) {
-                    const suggested = Math.round((newItem.expectedPrice * newQty * 0.5) / 10000) * 10000;
-                    formik.setFieldValue("depositAmount", suggested);
+                    // Removed incorrect local deposit calculation
                   }
                 }} className="flex-1 text-center font-bold focus:outline-none bg-transparent" />
                 <button onClick={() => {
                   const newQty = newItem.quantity + 1;
                   updateNewItem("quantity", newQty);
                   if (newItem.expectedPrice > 0) {
-                    const suggested = Math.round((newItem.expectedPrice * newQty * 0.5) / 10000) * 10000;
-                    formik.setFieldValue("depositAmount", suggested);
+                    // Removed incorrect local deposit calculation
                   }
                 }} className="w-12 h-full flex items-center justify-center hover:bg-gray-50 border-l" style={{ borderColor: "var(--grid-border)" }}><Plus size={14} /></button>
               </div>
@@ -403,15 +393,13 @@ export default function CustomItemInputPanel({
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="VD: 5,000,000"
+                    placeholder="Nhập đơn giá..."
                     value={newItem.expectedPrice ? fmt(newItem.expectedPrice) : ""}
                     onChange={(e) => {
                       const val = e.target.value.replace(/\D/g, "");
                       const price = val ? Number(val) : 0;
                       updateNewItem("expectedPrice", price);
-                      // Auto-sync deposit to 50%
-                      const suggested = Math.round((price * newItem.quantity * 0.5) / 10000) * 10000;
-                      formik.setFieldValue("depositAmount", suggested);
+                      // Removed incorrect local deposit calculation
                     }}
                     className={`${inputBase} font-bold !py-2`}
                     style={inputStyle}
@@ -422,27 +410,6 @@ export default function CustomItemInputPanel({
             )}
           </div>
 
-          {formik.values.mode === "DIRECT_ORDER" && newItem.expectedPrice > 0 && (
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-2">
-                <ShieldCheck size={12} className="text-orange-500" /> Tiền đặt cọc (50%)
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Số tiền cọc..."
-                  value={fmt(formik.values.depositAmount)}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, "");
-                    formik.setFieldValue("depositAmount", Number(val));
-                  }}
-                  className={`${inputBase} font-bold text-orange-600 !py-2`}
-                  style={{ ...inputStyle, borderColor: "var(--status-warning-border)", backgroundColor: "var(--status-warning-bg)" }}
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">đ</span>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Section: Photos */}

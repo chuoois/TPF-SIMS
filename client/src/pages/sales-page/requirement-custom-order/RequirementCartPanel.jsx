@@ -23,6 +23,7 @@ import {
   Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import CustomCheckbox from "@/components/control/CustomCheckbox";
 import { fmt, calculateSuggestedDeposit, DELIVERY_METHODS } from "./mockData";
 
 export default function RequirementCartPanel({
@@ -57,12 +58,19 @@ export default function RequirementCartPanel({
     return calculateSuggestedDeposit(subtotal);
   }, [subtotal]);
 
-  // Sync deposit automatically if needed
+  // Tự động cập nhật tiền cọc vào Formik - Lấy nguyên logic bên invoice-instock
   useEffect(() => {
-    if (subtotal > 0 && formik.values.depositAmount === 0) {
-      formik.setFieldValue("depositAmount", suggestedDepositInfo.amount);
+    if (formik.values.isFullPayment) {
+      if (formik.values.depositAmount !== subtotal) {
+        formik.setFieldValue("depositAmount", subtotal);
+      }
+    } else {
+      const suggested = Math.round(subtotal * 0.5);
+      if (formik.values.depositAmount !== suggested) {
+        formik.setFieldValue("depositAmount", suggested);
+      }
     }
-  }, [subtotal]);
+  }, [formik.values.depositAmount, formik.values.isFullPayment, subtotal, formik.setFieldValue]);
 
   return (
     <div
@@ -81,9 +89,8 @@ export default function RequirementCartPanel({
             key={tab.id}
             type="button"
             onClick={() => setActiveTabId(tab.id)}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] whitespace-nowrap transition-all shrink-0 cursor-pointer ${
-              tab.id === activeTabId ? "font-semibold" : "hover:bg-gray-50"
-            }`}
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] whitespace-nowrap transition-all shrink-0 cursor-pointer ${tab.id === activeTabId ? "font-semibold" : "hover:bg-gray-50"
+              }`}
             style={{
               backgroundColor:
                 tab.id === activeTabId ? "var(--status-focus)" : "transparent",
@@ -167,15 +174,7 @@ export default function RequirementCartPanel({
                   </span>
 
                   <div className="w-12 h-12 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
-                    {item.images && item.images.length > 0 ? (
-                      <img
-                        src={typeof item.images[0] === "string" ? item.images[0] : URL.createObjectURL(item.images[0])}
-                        alt={item.productName}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <Package size={20} className="text-gray-300" />
-                    )}
+                    <Package size={20} className="text-gray-300" />
                   </div>
 
                   {/* Product info */}
@@ -471,7 +470,7 @@ export default function RequirementCartPanel({
           </div>
 
         </div>
-        
+
         {/* Delivery Method */}
         {formik.values.mode === "DIRECT_ORDER" && (
           <div
@@ -602,11 +601,10 @@ export default function RequirementCartPanel({
                     onChange={(e) =>
                       formik.setFieldValue("deliveryDate", e.target.value)
                     }
-                    className={`w-full text-[13px] pl-8 pr-2 py-1.5 focus:outline-none focus:ring-1 rounded-lg bg-white ${
-                      formik.errors.deliveryDate && formik.touched.deliveryDate
-                        ? "border-red-400 ring-1 ring-red-400"
-                        : ""
-                    }`}
+                    className={`w-full text-[13px] pl-8 pr-2 py-1.5 focus:outline-none focus:ring-1 rounded-lg bg-white ${formik.errors.deliveryDate && formik.touched.deliveryDate
+                      ? "border-red-400 ring-1 ring-red-400"
+                      : ""
+                      }`}
                     style={{
                       border:
                         formik.errors.deliveryDate && formik.touched.deliveryDate
@@ -628,11 +626,83 @@ export default function RequirementCartPanel({
 
 
 
+        {/* Summary (Deposit section) - Synced with invoice-instock */}
+        {formik.values.mode === "DIRECT_ORDER" && (
+          <div
+            className="px-4 py-3 space-y-2 border-t"
+            style={{
+              borderColor: "var(--grid-border)",
+              backgroundColor: "var(--grid-header-bg)",
+            }}
+          >
+            <div className="flex flex-col">
+              <div className="flex justify-between text-[13px] items-center">
+                <span
+                  className="font-medium flex items-center"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  <CreditCard size={12} className="inline mr-1.5" />
+                  {formik.values.isFullPayment ? "Khách thanh toán" : "Tiền đặt cọc"}
+                  {subtotal > 0 && formik.values.depositAmount > 0 && !formik.values.isFullPayment && (
+                    <span className="ml-2 text-[10px] font-bold text-[var(--brand-primary)] bg-[var(--brand-primary)]/10 px-1.5 py-0.5 rounded">
+                      ({Math.round((formik.values.depositAmount / subtotal) * 100)}%)
+                    </span>
+                  )}
+                </span>
+                <div className="flex items-center gap-3">
+                  <div
+                    className="flex items-center gap-1.5 cursor-pointer"
+                    onClick={() =>
+                      formik.setFieldValue(
+                        "isFullPayment",
+                        !formik.values.isFullPayment
+                      )
+                    }
+                  >
+                    <CustomCheckbox
+                      checked={formik.values.isFullPayment || false}
+                      onChange={(val) =>
+                        formik.setFieldValue("isFullPayment", val)
+                      }
+                    />
+                    <span className="text-[12px] font-medium" style={{ color: "var(--text-main)" }}>Trả đủ</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span
+                      className="text-[13px]"
+                      style={{ color: "var(--text-placeholder)" }}
+                    >
+                      ₫
+                    </span>
+                    <input
+                      type="text"
+                      readOnly
+                      value={formik.values.depositAmount ? fmt(formik.values.depositAmount) : "0"}
+                      className="w-32 text-right text-[13px] font-bold rounded-lg px-2 py-1 focus:outline-none bg-gray-50 border border-gray-200 cursor-not-allowed"
+                      style={{
+                        color: "var(--brand-primary)",
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {!formik.values.isFullPayment && subtotal > 0 && (
+                <div className="mt-1 flex justify-end">
+                  <p className="text-[10px] font-medium text-gray-500 italic">
+                    {suggestedDepositInfo.reason}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Checkout bar */}
         <div className={`flex items-center ${formik.values.mode === "DIRECT_ORDER" ? "justify-between" : "justify-end"} px-4 py-3 border-t`} style={{ borderColor: "var(--grid-border)" }}>
           {formik.values.mode === "DIRECT_ORDER" && (
             <div>
-              <p className="text-xs uppercase tracking-wider font-medium text-gray-400">Ước tính thanh toán</p>
+              <p className="text-xs uppercase tracking-wider font-medium text-gray-400">Còn lại cần thu</p>
               <p className="text-xl font-bold tracking-tight" style={{ color: "var(--brand-primary)" }}>{fmt(totalPayable)}đ</p>
             </div>
           )}
@@ -643,8 +713,8 @@ export default function RequirementCartPanel({
             disabled={formik.values.cartItems.length === 0 || formik.isSubmitting}
             onClick={handleCheckout}
           >
-            {formik.isSubmitting 
-              ? "Đang xử lý..." 
+            {formik.isSubmitting
+              ? "Đang xử lý..."
               : (formik.values.mode === "DIRECT_ORDER" ? "Tạo đơn hàng ngay" : "Lưu yêu cầu thiết kế")}
           </Button>
         </div>
