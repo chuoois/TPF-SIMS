@@ -74,10 +74,7 @@ export default function RequirementCartPanel({
 
   return (
     <div
-      className="flex flex-col w-[56%] bg-white rounded-lg overflow-hidden"
-      style={{
-        boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
-      }}
+      className="flex flex-col w-[56%] bg-white rounded-lg overflow-hidden border border-[var(--grid-border)]"
     >
       {/* ── Tab Bar ── */}
       <div
@@ -376,7 +373,7 @@ export default function RequirementCartPanel({
             {/* Customer search dropdown */}
             {showCustomerDropdown && customerSearch.trim() && (
               <div
-                className="absolute left-0 bottom-full mb-1 w-full bg-white rounded-lg shadow-lg border overflow-hidden z-30"
+                className="absolute left-0 bottom-full mb-1 w-full bg-white rounded-lg border overflow-hidden z-30"
                 style={{ borderColor: "var(--grid-border)" }}
               >
                 {isSearchingCustomers ? (

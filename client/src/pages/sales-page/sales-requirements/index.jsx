@@ -11,7 +11,8 @@ import {
 import DataTable from "@/components/control/DataTable";
 import ConfirmModal from "@/components/control/ConfirmModal";
 import RequirementDetailModal, { ImageViewer } from "./RequirementDetailModal";
-import { MOCK_REQUIREMENTS, STATUS_CONFIG } from "./mockData";
+import { STATUS_CONFIG, STATUS_MAP, REVERSE_STATUS_MAP } from "./mockData";
+import customRequestService from "@/services/customRequest.service";
 
 // ===================== MAIN COMPONENT =====================
 export default function SalesRequirements() {
@@ -19,7 +20,11 @@ export default function SalesRequirements() {
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [requirements, setRequirements] = useState(MOCK_REQUIREMENTS);
+  const [requirements, setRequirements] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [totalItems, setTotalItems] = useState(0);
+  const [statusCountsFromApi, setStatusCountsFromApi] = useState({});
+  const [selectedReq, setSelectedReq] = useState(null);
   const [selectedReqId, setSelectedReqId] = useState(null);
   const [enlargedImg, setEnlargedImg] = useState(null);
 
@@ -64,7 +69,7 @@ export default function SalesRequirements() {
         <div className="flex items-center gap-2 text-slate-600">
           <Calendar size={14} className="text-slate-300" />
           <span className="font-medium">
-            {r.createdDate?.split("-").reverse().join("/")}
+            {r.createdDate?.split("T")[0].split("-").reverse().join("/")}
           </span>
         </div>
       ),
@@ -97,7 +102,112 @@ export default function SalesRequirements() {
     },
   ];
 
-  // Row actions (hover buttons)
+  const statusFilter = searchParams.get("status") || "Tất cả";
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(15);
+
+  const fetchRequirements = async () => {
+    setLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        limit: itemsPerPage,
+        status: statusFilter !== "Tất cả" ? REVERSE_STATUS_MAP[statusFilter] : undefined,
+        search: searchTerm.trim() || undefined,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+      };
+      const response = await customRequestService.getAllRequests(params);
+      
+      const mapped = response.data.map((r) => ({
+        id: r.pk_custom_request_id,
+        code: r.request_code,
+        customer: r.customer?.full_name || "Khách lẻ",
+        phone: r.customer?.phone_number || "",
+        createdDate: r.createdate,
+        status: STATUS_MAP[r.status] || "Đang xử lý",
+        address: r.address,
+        notes: r.note,
+        totalAmount: r.total_amount,
+      }));
+
+      setRequirements(mapped);
+      setTotalItems(response.pagination.totalItems);
+      setStatusCountsFromApi(response.statusCounts || {});
+    } catch (error) {
+      console.error("Fetch error:", error);
+      toast.error("Không thể tải danh sách yêu cầu");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRequirements();
+  }, [currentPage, itemsPerPage, statusFilter, searchTerm, dateFrom, dateTo]);
+
+  const handleViewDetail = async (id) => {
+    try {
+      const response = await customRequestService.getRequestById(id);
+      const r = response.data;
+      
+      // Map detail data
+      const detailedReq = {
+        id: r.pk_custom_request_id,
+        code: r.request_code,
+        customer: r.customer?.full_name || "Khách lẻ",
+        phone: r.customer?.phone_number || "",
+        address: r.address,
+        createdDate: r.createdate,
+        status: STATUS_MAP[r.status],
+        notes: r.note,
+        estimatedPrice: r.total_estimated_price,
+        totalAmount: r.total_amount,
+        depositAmount: r.deposit_amount,
+        deliveryMethod: r.fulfillment_method,
+        deliveryDate: r.expected_fulfillment_date,
+        items: (r.items || []).map((item) => ({
+          id: item.pk_custom_request_item_id,
+          name: item.item_name,
+          material: item.item_material,
+          color: item.item_color,
+          qty: item.item_quantity,
+          specs: {
+            dimensions: item.item_size
+              ? `${item.item_size.length}x${item.item_size.width}x${item.item_size.height} ${item.item_size.unit || "cm"}`
+              : "",
+            note: item.item_note,
+          },
+          customerImages: item.customer_img || [],
+          designImages: item.design_img || [],
+          quotedPrice: item.item_price,
+        })),
+      };
+      
+      setSelectedReq(detailedReq);
+      setSelectedReqId(r.pk_custom_request_id);
+    } catch (error) {
+      console.error("Detail error:", error);
+      toast.error("Không thể tải chi tiết yêu cầu");
+    }
+  };
+
+  const handleCancelSubmit = async (target = cancelTarget) => {
+    if (!target) return;
+    try {
+      await customRequestService.updateStatus(target.id, { 
+        status: REVERSE_STATUS_MAP["Đơn đã hủy"] 
+      });
+      toast.success(`Đã hủy yêu cầu ${target.code} thành công`);
+      fetchRequirements();
+      setCancelTarget(null);
+      setSelectedReqId(null);
+      setSelectedReq(null);
+    } catch (error) {
+      toast.error("Lỗi khi hủy yêu cầu");
+    }
+  };
+
   const rowActions = [
     {
       label: "Hủy yêu cầu",
@@ -119,80 +229,23 @@ export default function SalesRequirements() {
       icon: Eye,
       className:
         "bg-white border-slate-100 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-100",
-      onClick: (r) => setSelectedReqId(r.id),
+      onClick: (r) => handleViewDetail(r.id),
     },
   ];
-
-  const handleCancelSubmit = (target = cancelTarget) => {
-    if (!target) return;
-    setRequirements((prev) =>
-      prev.map((r) =>
-        r.id === target.id ? { ...r, status: "Đơn đã hủy" } : r,
-      ),
-    );
-    toast.success(`Đã hủy yêu cầu ${target.code} thành công`);
-    setCancelTarget(null);
-    setSelectedReqId(null);
-  };
-
-  const statusFilter = searchParams.get("status") || "Tất cả";
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(15);
 
   const updateParams = (newParams) => {
     const current = Object.fromEntries(searchParams.entries());
     setSearchParams({ ...current, ...newParams });
   };
 
-  const filtered = useMemo(() => {
-    let result = requirements;
-
-    if (statusFilter !== "Tất cả") {
-      result = result.filter((r) => r.status === statusFilter);
-    }
-
-    if (searchTerm.trim()) {
-      const q = searchTerm.toLowerCase();
-      result = result.filter(
-        (r) =>
-          r.customer.toLowerCase().includes(q) ||
-          r.phone.includes(q) ||
-          r.code.toLowerCase().includes(q),
-      );
-    }
-
-    if (dateFrom) {
-      const from = new Date(dateFrom);
-      from.setHours(0, 0, 0, 0);
-      result = result.filter((r) => new Date(r.createdDate) >= from);
-    }
-
-    if (dateTo) {
-      const to = new Date(dateTo);
-      to.setHours(23, 59, 59, 999);
-      result = result.filter((r) => new Date(r.createdDate) <= to);
-    }
-
-    return result.sort(
-      (a, b) => new Date(b.createdDate) - new Date(a.createdDate),
-    );
-  }, [requirements, statusFilter, searchTerm, dateFrom, dateTo]);
-
   const statusCounts = useMemo(() => {
-    const counts = { "Tất cả": requirements.length };
-    Object.keys(STATUS_CONFIG).forEach((s) => {
-      counts[s] = requirements.filter((r) => r.status === s).length;
+    const counts = { "Tất cả": totalItems };
+    Object.keys(STATUS_CONFIG).forEach((label) => {
+      const numericStatus = REVERSE_STATUS_MAP[label];
+      counts[label] = statusCountsFromApi[numericStatus] || 0;
     });
     return counts;
-  }, [requirements]);
-
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const paginatedRequirements = filtered.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
-
-  const selectedReq = requirements.find((r) => r.id === selectedReqId);
+  }, [statusCountsFromApi, totalItems]);
 
   const hasActiveFilters =
     statusFilter !== "Tất cả" || searchTerm || dateFrom || dateTo;
@@ -229,19 +282,12 @@ export default function SalesRequirements() {
               className="text-[13px] mt-0.5"
               style={{ color: "var(--text-placeholder)" }}
             >
-              {filtered.length} yêu cầu ({statusFilter.toLowerCase()})
+              {totalItems} yêu cầu ({statusFilter.toLowerCase()})
             </p>
-          </div>
-
-          {/* Optional: Add a placeholder for tabs if needed in future, currently empty to match spacing */}
-          <div className="flex p-1 rounded-lg invisible">
-            <button className="px-4 py-1.5 rounded-lg text-[13px] font-semibold">
-              Placeholder
-            </button>
           </div>
         </div>
 
-        {/* Status Bar (Mirroring Owner Style) */}
+        {/* Status Bar */}
         <div className="flex items-center gap-2 shrink-0 flex-wrap py-1">
           {["Tất cả", ...Object.keys(STATUS_CONFIG)].map((s) => {
             const isActive = statusFilter === s;
@@ -290,8 +336,9 @@ export default function SalesRequirements() {
         {/* DataTable Section */}
         <DataTable
           columns={columns}
-          data={paginatedRequirements}
-          onRowClick={(r) => setSelectedReqId(r.id)}
+          data={requirements}
+          isLoading={loading}
+          onRowClick={(r) => handleViewDetail(r.id)}
           rowStyle={(item) => ({
             backgroundColor:
               item.status === "Đang xử lý"
@@ -320,7 +367,6 @@ export default function SalesRequirements() {
               icon: AlertCircle,
               className: "text-red-600 hover:bg-red-50",
               showIf: (selectedRows) => {
-                // Only show if at least one selected item is "Đang xử lý"
                 return selectedRows.some((r) => r.status === "Đang xử lý");
               },
               requireConfirm: true,
@@ -331,27 +377,32 @@ export default function SalesRequirements() {
                 ).length;
                 return `Bạn có chắc chắn muốn hủy ${cancelableCount} yêu cầu 'Đang xử lý' trong danh sách chọn? Hành động này không thể hoàn tác.`;
               },
-              onClick: (selectedRows) => {
+              onClick: async (selectedRows) => {
                 const cancelableIds = selectedRows
                   .filter((r) => r.status === "Đang xử lý")
                   .map((r) => r.id);
 
-                setRequirements((prev) =>
-                  prev.map((r) =>
-                    cancelableIds.includes(r.id)
-                      ? { ...r, status: "Đơn đã hủy" }
-                      : r,
-                  ),
-                );
-                setSelectedIds([]);
-                toast.success(
-                  `Đã hủy ${cancelableIds.length} yêu cầu thành công`,
-                );
+                try {
+                  await Promise.all(
+                    cancelableIds.map((id) =>
+                      customRequestService.updateStatus(id, {
+                        status: REVERSE_STATUS_MAP["Đơn đã hủy"],
+                      }),
+                    ),
+                  );
+                  setSelectedIds([]);
+                  fetchRequirements();
+                  toast.success(
+                    `Đã hủy ${cancelableIds.length} yêu cầu thành công`,
+                  );
+                } catch (error) {
+                  toast.error("Lỗi khi hủy hàng loạt");
+                }
               },
             },
           ]}
           pagination={{
-            total: filtered.length,
+            total: totalItems,
             currentPage: currentPage,
             setCurrentPage: setCurrentPage,
             itemsPerPage: itemsPerPage,
@@ -362,7 +413,10 @@ export default function SalesRequirements() {
         {/* Modal */}
         <RequirementDetailModal
           req={selectedReq}
-          onClose={() => setSelectedReqId(null)}
+          onClose={() => {
+            setSelectedReq(null);
+            setSelectedReqId(null);
+          }}
           onEnlarge={(src) => setEnlargedImg(src)}
           onOpenCancel={(r) => setCancelTarget(r)}
         />
