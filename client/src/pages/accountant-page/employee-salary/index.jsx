@@ -203,6 +203,11 @@ export default function AccountantEmployeeSalary() {
     };
 
     const handleToggleStatus = async (recordId) => {
+        if (!isLocked) {
+            toast.error("Bạn phải chốt kỳ lương trước khi thực hiện thanh toán!");
+            return;
+        }
+
         const emp = records.find(e => e.record_id === recordId);
         if (!emp) return;
 
@@ -218,6 +223,17 @@ export default function AccountantEmployeeSalary() {
             setSelectedEmpForPayment(emp);
             setPaymentBill(null);
             setIsPaymentModalOpen(true);
+        }
+    };
+
+    const handleQuickAttendance = async (emp) => {
+        if (isLocked) return;
+        try {
+            await payrollService.incrementDaysWorked(emp.record_id);
+            toast.success(`Đã thêm 1 ngày công cho ${emp.name}`, { icon: "✅" });
+            fetchRecords(selectedPeriodId);
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Lỗi khi điểm danh");
         }
     };
 
@@ -489,7 +505,6 @@ export default function AccountantEmployeeSalary() {
                                             <td className="px-4 py-3 text-right">
                                                 <span className="text-[13px]" style={{ color: "var(--text-secondary)" }}>{calcFormula}</span>
                                             </td>
-
                                             <td className="px-4 py-3 text-right">
                                                 <div className="flex items-center justify-end gap-1">
                                                     <span className="text-[13px] font-semibold" style={{ color: "var(--brand-primary)" }}>{specData}</span>
@@ -497,6 +512,7 @@ export default function AccountantEmployeeSalary() {
                                             </td>
 
                                             <td className="px-4 py-3 text-right">
+
                                                 <div className="flex flex-col items-end gap-1">
                                                     <span className={cn(
                                                         "text-[13px] font-bold",
@@ -517,14 +533,13 @@ export default function AccountantEmployeeSalary() {
                                             </td>
 
                                             <td className="px-4 py-3 text-center">
-                                                <button onClick={() => !isLocked && handleToggleStatus(emp.record_id)}
-                                                    disabled={isLocked}
+                                                <button onClick={() => handleToggleStatus(emp.record_id)}
                                                     className={cn(
-                                                        "inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold rounded-md border transition",
-                                                        isLocked ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:opacity-80",
+                                                        "inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold rounded-md border transition cursor-pointer hover:opacity-80",
                                                         emp.status === "Đã thanh toán"
                                                             ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
-                                                            : "bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+                                                            : "bg-red-50 text-red-600 border-red-200 hover:bg-red-100",
+                                                        !isLocked && "opacity-60 cursor-not-allowed"
                                                     )}>
                                                     {emp.status === "Đã thanh toán" ? <CheckCircle2 size={11} /> : <Clock size={11} />}
                                                     {emp.status}
@@ -539,6 +554,17 @@ export default function AccountantEmployeeSalary() {
 
                                             <td className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                                 <div className="flex gap-1 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-gray-100">
+                                                    <button 
+                                                        onClick={() => handleQuickAttendance(emp)}
+                                                        disabled={isLocked}
+                                                        title="Điểm danh nhanh (+1 ngày)"
+                                                        className={cn("h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[12px] font-bold transition",
+                                                            isLocked ? "cursor-not-allowed text-gray-400" : "hover:bg-green-50 text-green-600 cursor-pointer",
+                                                        )}>
+                                                        <CalendarPlus size={14} />
+                                                        Điểm danh
+                                                    </button>
+                                                    <div className="w-[1px] h-4 bg-gray-200 self-center mx-0.5" />
                                                     <button 
                                                         onClick={() => !isLocked && (setEmployeeToEdit(emp), setIsModalOpen(true))}
                                                         disabled={isLocked}
@@ -559,6 +585,7 @@ export default function AccountantEmployeeSalary() {
                                                     </button>
                                                 </div>
                                             </td>
+
                                         </tr>
                                     );
                                 })}

@@ -30,6 +30,14 @@ const assertPeriodUnlocked = (period) => {
   }
 };
 
+const assertPeriodLocked = (period) => {
+  if (period?.status !== "LOCKED") {
+    const err = new Error("Kỳ lương chưa được chốt, không thể thực hiện thanh toán.");
+    err.status = 403;
+    throw err;
+  }
+};
+
 class PayrollController {
 
   // ══════════════════════════════════════════════════════════
@@ -371,6 +379,45 @@ class PayrollController {
   }
 
   /**
+   * PATCH /api/payroll/records/:id/increment-day
+   * Điểm danh nhanh: cộng 1 ngày công
+   */
+  async incrementDaysWorked(req, res) {
+    try {
+      const { id } = req.params;
+
+      const record = await SalaryRecord.findByPk(id, {
+        include: [{ model: PayrollPeriod, as: "period" }],
+      });
+
+      if (!record) {
+        return res.status(404).json({ message: "Không tìm thấy bản ghi lương" });
+      }
+
+      // Guard: không cho sửa nếu kỳ đã LOCK
+      assertPeriodUnlocked(record.period);
+
+      const newDays = (parseFloat(record.days_worked) || 0) + 1;
+
+      await record.update({
+        days_worked: newDays,
+        modifiedate: new Date(),
+      });
+
+      return res.status(200).json({
+        message: "Điểm danh thành công (+1 ngày công)",
+        data: { record_id: id, days_worked: newDays },
+      });
+    } catch (error) {
+      if (error.status === 403) {
+        return res.status(403).json({ message: error.message });
+      }
+      console.error("Increment days error:", error);
+      return res.status(500).json({ message: "Lỗi hệ thống khi điểm danh" });
+    }
+  }
+
+  /**
    * PATCH /api/payroll/records/:id/pay
    * Xác nhận đã thanh toán lương cho 1 nhân viên
    */
@@ -390,8 +437,8 @@ class PayrollController {
         return res.status(404).json({ message: "Không tìm thấy bản ghi lương" });
       }
 
-      // Guard: không cho xác nhận thanh toán nếu kỳ đã LOCK
-      assertPeriodUnlocked(record.period);
+      // Guard: yêu cầu kỳ lương phải LOCKED mới được thanh toán
+      assertPeriodLocked(record.period);
 
       if (record.status === "PAID") {
         return res.status(400).json({ message: "Bản ghi này đã được thanh toán trước đó" });
@@ -434,7 +481,9 @@ class PayrollController {
         return res.status(404).json({ message: "Không tìm thấy bản ghi lương" });
       }
 
-      assertPeriodUnlocked(record.period);
+      // Guard: yêu cầu kỳ lương phải LOCKED
+      assertPeriodLocked(record.period);
+
 
       await record.update({
         status: "PENDING",
