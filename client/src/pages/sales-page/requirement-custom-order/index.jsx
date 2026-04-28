@@ -127,7 +127,7 @@ export default function CustomOrderRequirementsPage() {
             order_type: 3,
             items: finalCartItems.map((item) => ({
               item_name: item.productName,
-              item_img: item.images?.[0] || "",
+              item_img: "",
               item_quantity: item.quantity,
               item_price: item.expectedPrice || 0,
               item_material: item.woodType,
@@ -156,7 +156,7 @@ export default function CustomOrderRequirementsPage() {
             order_type: 3,
             items: finalCartItems.map((item) => ({
               item_name: item.productName,
-              item_img: item.images?.[0] || "",
+              item_img: "",
               item_quantity: item.quantity,
               item_price: item.expectedPrice || 0,
               item_material: item.woodType,
@@ -182,7 +182,7 @@ export default function CustomOrderRequirementsPage() {
             order_type: 3,
             items: finalCartItems.map((item) => ({
               item_name: item.productName,
-              item_img: item.images?.[0] || "",
+              item_img: "",
               item_quantity: item.quantity,
               item_price: item.expectedPrice || 0,
               item_material: item.woodType,
@@ -344,7 +344,10 @@ export default function CustomOrderRequirementsPage() {
     (sum, i) => sum + (Number(i.expectedPrice) || 0) * i.quantity,
     0
   );
-  const totalPayable = Math.max(0, subtotal - (formik.values.discount || 0));
+  const totalPayable = Math.max(
+    0,
+    subtotal - (formik.values.discount || 0) - (formik.values.depositAmount || 0)
+  );
 
   const handleCheckout = () => {
     formik.handleSubmit();

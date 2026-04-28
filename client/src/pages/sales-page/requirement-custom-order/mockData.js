@@ -75,6 +75,7 @@ export const createEmptyTab = () => ({
   deliveryMethod: DELIVERY_METHODS.STORE,
   deliveryDate: "",
   storePickupDate: "",
+  isFullPayment: false,
 });
 
 /**
@@ -87,7 +88,7 @@ export const calculateSuggestedDeposit = (subtotal) => {
   }
 
   const rate = 0.5;
-  let amount = Math.round((subtotal * rate) / 10000) * 10000;
+  let amount = Math.round(subtotal * rate);
   amount = Math.min(amount, subtotal);
 
   return {
