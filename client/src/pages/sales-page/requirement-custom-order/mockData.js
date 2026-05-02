@@ -1,9 +1,3 @@
-/**
- * Mock Data & Constants — CustomOrderRequirementsPage
- *
- * ⚠️  Khi tích hợp backend, thay thế MOCK_CUSTOMERS bằng API service calls.
- */
-
 export const WOOD_TYPES = [
   "Gỗ sồi",
   "Gỗ óc chó",
@@ -25,19 +19,6 @@ export const COLORS = [
   "Đen",
   "Trắng ngà",
   "Ghi xám",
-];
-
-export const MOCK_CUSTOMERS = [
-  { id: 1, name: "Nguyễn Văn Hoàng", phone: "0901234567" },
-  { id: 2, name: "Trần Thị Mai", phone: "0912345678" },
-  { id: 3, name: "Lê Minh Tuấn", phone: "0923456789" },
-  { id: 4, name: "Phạm Thị Lan", phone: "0934567890" },
-  { id: 5, name: "Võ Đức Anh", phone: "0945678901" },
-  { id: 6, name: "Đặng Thùy Linh", phone: "0956789012" },
-  { id: 7, name: "Bùi Tuấn Anh", phone: "0967890123" },
-  { id: 8, name: "Hoàng Nguyệt Ánh", phone: "0978901234" },
-  { id: 9, name: "Đinh Quang Hiếu", phone: "0989012345" },
-  { id: 10, name: "Vũ Phương Thảo", phone: "0990123456" },
 ];
 
 // ===================== HELPERS =====================
@@ -63,7 +44,6 @@ let itemIdCounter = 0;
 
 export const createEmptyTab = () => ({
   id: ++tabIdCounter,
-  mode: "REQUIREMENT", // REQUIREMENT or DIRECT_ORDER
   cartItems: [],
   orderNote: "",
   selectedCustomer: null,

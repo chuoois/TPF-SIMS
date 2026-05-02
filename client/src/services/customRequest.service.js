@@ -48,6 +48,16 @@ const customRequestService = {
     const response = await axiosInstance.patch(`/custom-request/${id}/status`, updateData);
     return response.data;
   },
+  /**
+   * Cập nhật thông tin chi tiết của phiếu yêu cầu (Owner/Admin)
+   * @param {number|string} id
+   * @param {Object} data
+   * @returns {Promise}
+   */
+  async updateRequest(id, data) {
+    const response = await axiosInstance.put(`/custom-request/${id}`, data);
+    return response.data;
+  },
 };
 
 export default customRequestService;

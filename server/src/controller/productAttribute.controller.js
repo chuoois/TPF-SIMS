@@ -63,11 +63,19 @@ class ProductAttributeController {
                     offset: offset
                 });
 
+                const responseKey = 
+                    type === "category" ? "categories" :
+                    type === "color" ? "colors" :
+                    type === "material" ? "materials" :
+                    type === "room" ? "rooms" : "data";
+
                 return res.status(200).json({
-                    total: count,
-                    page: pageNum,
-                    totalPages: Math.ceil(count / limitNum),
-                    data: rows
+                    [responseKey]: rows,
+                    pagination: {
+                        totalItems: count,
+                        totalPages: Math.ceil(count / limitNum),
+                        currentPage: pageNum
+                    }
                 });
             }
 
@@ -86,17 +94,23 @@ class ProductAttributeController {
             }
 
             const [categories, colors, materials, rooms] = await Promise.all([
-                ProductCategory.findAll({ where: catWhere, order: [["category_name", "ASC"]] }),
-                ProductColor.findAll({ where: colorWhere, order: [["color_name", "ASC"]] }),
-                ProductMaterial.findAll({ where: matWhere, order: [["material_name", "ASC"]] }),
-                ProductRoom.findAll({ where: roomWhere, order: [["room_name", "ASC"]] })
+                ProductCategory.findAndCountAll({ where: catWhere, order: [["category_name", "ASC"]] }),
+                ProductColor.findAndCountAll({ where: colorWhere, order: [["color_name", "ASC"]] }),
+                ProductMaterial.findAndCountAll({ where: matWhere, order: [["material_name", "ASC"]] }),
+                ProductRoom.findAndCountAll({ where: roomWhere, order: [["room_name", "ASC"]] })
             ]);
 
             return res.status(200).json({
-                categories,
-                colors,
-                materials,
-                rooms
+                categories: categories.rows,
+                colors: colors.rows,
+                materials: materials.rows,
+                rooms: rooms.rows,
+                counts: {
+                    categories: categories.count,
+                    colors: colors.count,
+                    materials: materials.count,
+                    rooms: rooms.count
+                }
             });
         } catch (error) {
             console.error("Get attributes error:", error);

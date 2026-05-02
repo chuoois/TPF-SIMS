@@ -49,7 +49,7 @@ const Order = sequelize.define(
     },
     order_type: {
       type: DataTypes.TINYINT,
-      defaultValue: 1, // 1: Đơn hàng mộc (Raw Order), 2: Đơn hàng sẵn (Stock Order), 3: Đơn hàng custom (Custom Order)
+      defaultValue: 2, // 1: Đơn hàng mộc (Raw Order), 2: Đơn hàng sẵn (Stock Order), 3: Đơn hàng custom (Custom Order)
     },
     status: {
       type: DataTypes.TINYINT,

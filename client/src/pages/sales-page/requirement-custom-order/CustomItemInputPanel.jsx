@@ -202,37 +202,6 @@ export default function CustomItemInputPanel({
           )}
         </div>
 
-        {/* Mode Toggle Tabs (Exactly matched with InStock ProductPanel) */}
-        <div
-          className="flex-1 flex rounded-lg overflow-hidden"
-          style={{
-            border: "1px solid var(--grid-border)",
-            backgroundColor: "var(--bg-main)",
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => formik.setFieldValue("mode", "REQUIREMENT")}
-            className="flex-1 py-2.5 text-[13px] font-semibold transition-all cursor-pointer whitespace-nowrap"
-            style={{
-              backgroundColor: formik.values.mode !== "DIRECT_ORDER" ? "var(--brand-primary)" : "transparent",
-              color: formik.values.mode !== "DIRECT_ORDER" ? "#fff" : "var(--text-secondary)",
-            }}
-          >
-            Ghi nhận yêu cầu
-          </button>
-          <button
-            type="button"
-            onClick={() => formik.setFieldValue("mode", "DIRECT_ORDER")}
-            className="flex-1 py-2.5 text-[13px] font-semibold transition-all cursor-pointer whitespace-nowrap"
-            style={{
-              backgroundColor: formik.values.mode === "DIRECT_ORDER" ? "var(--brand-primary)" : "transparent",
-              color: formik.values.mode === "DIRECT_ORDER" ? "#fff" : "var(--text-secondary)",
-            }}
-          >
-            Tạo đơn ngay
-          </button>
-        </div>
       </div>
 
       {/* ── Form Content ── */}
@@ -349,7 +318,7 @@ export default function CustomItemInputPanel({
 
         {/* Section: Price & Deposit */}
         <div className="space-y-3">
-          <div className={`grid ${formik.values.mode === "DIRECT_ORDER" ? "grid-cols-2" : "grid-cols-1"} gap-4`}>
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-2">
                 <PackageCheck size={12} /> Số lượng
@@ -358,52 +327,18 @@ export default function CustomItemInputPanel({
                 <button onClick={() => {
                   const newQty = Math.max(1, newItem.quantity - 1);
                   updateNewItem("quantity", newQty);
-                  if (newItem.expectedPrice > 0) {
-                    // Removed incorrect local deposit calculation
-                  }
                 }} className="w-12 h-full flex items-center justify-center hover:bg-gray-50 border-r" style={{ borderColor: "var(--grid-border)" }}><Minus size={14} /></button>
                 <input type="number" value={newItem.quantity} onChange={(e) => {
                   const newQty = parseInt(e.target.value) || 1;
                   updateNewItem("quantity", newQty);
-                  if (newItem.expectedPrice > 0) {
-                    // Removed incorrect local deposit calculation
-                  }
                 }} className="flex-1 text-center font-bold focus:outline-none bg-transparent" />
                 <button onClick={() => {
                   const newQty = newItem.quantity + 1;
                   updateNewItem("quantity", newQty);
-                  if (newItem.expectedPrice > 0) {
-                    // Removed incorrect local deposit calculation
-                  }
                 }} className="w-12 h-full flex items-center justify-center hover:bg-gray-50 border-l" style={{ borderColor: "var(--grid-border)" }}><Plus size={14} /></button>
               </div>
             </div>
-
-            {formik.values.mode === "DIRECT_ORDER" && (
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-2">
-                  <CreditCard size={12} /> Đơn giá
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Nhập đơn giá..."
-                    value={newItem.expectedPrice ? fmt(newItem.expectedPrice) : ""}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, "");
-                      const price = val ? Number(val) : 0;
-                      updateNewItem("expectedPrice", price);
-                      // Removed incorrect local deposit calculation
-                    }}
-                    className={`${inputBase} font-bold !py-2`}
-                    style={inputStyle}
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">đ</span>
-                </div>
-              </div>
-            )}
           </div>
-
         </div>
 
         {/* Section: Photos */}

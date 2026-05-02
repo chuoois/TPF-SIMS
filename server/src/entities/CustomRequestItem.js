@@ -23,6 +23,10 @@ const CustomRequestItem = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    fk_supplier_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     item_name: {
       type: DataTypes.STRING(255),
     },
@@ -62,6 +66,10 @@ const CustomRequestItem = sequelize.define(
     item_warranty: {
       type: DataTypes.INTEGER,
       comment: "Thời gian bảo hành (tháng)",
+    },
+    expected_supplier_date: {
+      type: DataTypes.DATE,
+      comment: "Ngày xưởng dự kiến giao hàng",
     },
     createdate: {
       type: DataTypes.DATE,

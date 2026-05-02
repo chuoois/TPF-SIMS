@@ -63,7 +63,11 @@ const DataTable = ({
   },
 
   // Extra Toolbar Content (e.g. specialized filters)
-  extraFilters = null
+  extraFilters = null,
+
+  // Loading states for SWR
+  isLoading = false,
+  isRefreshing = false
 }) => {
   const [activeConfirmAction, setActiveConfirmAction] = useState(null);
   const [localExpanded, setLocalExpanded] = useState([]); // Default for uncontrolled
@@ -206,6 +210,13 @@ const DataTable = ({
           height: "64px",
         }}
       >
+        {/* Refreshing Indicator */}
+        {isRefreshing && (
+          <div className="absolute top-0 left-0 right-0 z-[100]">
+            <div className="h-[2px] bg-indigo-500 animate-[loading_1.5s_infinite] origin-left"></div>
+          </div>
+        )}
+
         <ConfirmModal
           isOpen={!!activeConfirmAction}
           title={activeConfirmAction?.confirmTitle || "Xác nhận hành động?"}
@@ -441,6 +452,17 @@ const DataTable = ({
                   </React.Fragment>
                 );
               })
+            ) : isLoading ? (
+              // Loading Skeleton
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i} className="animate-pulse">
+                  {enhancedColumns.map((_, j) => (
+                    <td key={j} className="px-4 py-4">
+                      <div className="h-4 bg-slate-100 rounded-md w-full"></div>
+                    </td>
+                  ))}
+                </tr>
+              ))
             ) : (
               <tr>
                 <td colSpan={enhancedColumns.length} className="py-24 text-center">

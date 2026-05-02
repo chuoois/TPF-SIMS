@@ -25,6 +25,7 @@ const PayrollPeriod = require("./PayrollPeriod");
 const SalaryRecord = require("./SalaryRecord");
 const SalaryAdjustment = require("./SalaryAdjustment");
 const Notification = require("./Notification");
+const Supplier = require("./Supplier");
 
 /**
  * Định nghĩa quan hệ giữa các bảng
@@ -139,6 +140,10 @@ Order.hasOne(CustomRequest, { foreignKey: "fk_order_id", as: "customRequest" });
 CustomRequest.hasMany(CustomRequestItem, { foreignKey: "fk_custom_request_id", as: "items", onDelete: "CASCADE" });
 CustomRequestItem.belongsTo(CustomRequest, { foreignKey: "fk_custom_request_id", as: "request" });
 
+// CustomRequestItem 1:N Supplier
+CustomRequestItem.belongsTo(Supplier, { foreignKey: "fk_supplier_id", as: "supplier" });
+Supplier.hasMany(CustomRequestItem, { foreignKey: "fk_supplier_id", as: "customItems" });
+
 // Product Many:Many ProductCoupon
 Product.belongsToMany(ProductCoupon, {
   through: CouponProduct,
@@ -203,4 +208,5 @@ module.exports = {
   SalaryRecord,
   SalaryAdjustment,
   Notification,
+  Supplier,
 };
