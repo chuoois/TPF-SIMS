@@ -243,15 +243,6 @@ export default function RequirementCartPanel({
                     </button>
                   </div>
 
-                  {/* Subtotal */}
-                  {formik.values.mode === "DIRECT_ORDER" && (
-                    <span
-                      className="text-[13px] font-bold w-24 text-right shrink-0"
-                      style={{ color: "var(--brand-primary)" }}
-                    >
-                      {fmt((item.expectedPrice || 0) * item.quantity)}đ
-                    </span>
-                  )}
 
                   {/* Actions */}
                   <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
@@ -468,241 +459,12 @@ export default function RequirementCartPanel({
 
         </div>
 
-        {/* Delivery Method */}
-        {formik.values.mode === "DIRECT_ORDER" && (
-          <div
-            className="px-4 py-3 space-y-3 border-t"
-            style={{
-              borderColor: "var(--grid-border)",
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <p
-                className="text-[12px] font-semibold uppercase tracking-wider"
-                style={{ color: "var(--text-placeholder)" }}
-              >
-                Giao hàng
-              </p>
-            </div>
-            <div className="flex items-center gap-6">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name={`deliveryMethod-${activeTabId}`}
-                  value={DELIVERY_METHODS.STORE}
-                  checked={formik.values.deliveryMethod === DELIVERY_METHODS.STORE}
-                  onChange={() =>
-                    formik.setValues({
-                      ...formik.values,
-                      deliveryMethod: DELIVERY_METHODS.STORE,
-                      deliveryDate: "",
-                    })
-                  }
-                  className="w-3.5 h-3.5 text-green-600 focus:ring-green-500"
-                />
-                <span
-                  className="text-[13px]"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  Lấy tại cửa hàng
-                </span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name={`deliveryMethod-${activeTabId}`}
-                  value={DELIVERY_METHODS.DELIVERY}
-                  checked={formik.values.deliveryMethod === DELIVERY_METHODS.DELIVERY}
-                  onChange={() =>
-                    formik.setValues({
-                      ...formik.values,
-                      deliveryMethod: DELIVERY_METHODS.DELIVERY,
-                      storePickupDate: "",
-                    })
-                  }
-                  className="w-3.5 h-3.5 text-green-600 focus:ring-green-500"
-                />
-                <span
-                  className="text-[13px]"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  Giao tận nơi
-                </span>
-              </label>
-            </div>
-
-            {/* ── Lấy tại cửa hàng: date picker tùy chọn ── */}
-            {formik.values.deliveryMethod === DELIVERY_METHODS.STORE && (
-              <div
-                className="ml-1 pl-4 space-y-2"
-                style={{ borderLeft: "2px solid var(--grid-border)" }}
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    className="text-[12.5px] shrink-0"
-                    style={{ color: "var(--text-secondary)" }}
-                  >
-                    Ngày hẹn lấy:
-                  </span>
-                  <div className="relative flex-1">
-                    <Calendar
-                      size={14}
-                      className="absolute left-2.5 top-1/2 -translate-y-1/2"
-                      style={{ color: "var(--text-placeholder)" }}
-                    />
-                    <input
-                      type="date"
-                      value={formik.values.storePickupDate || ""}
-                      min={new Date().toISOString().split("T")[0]}
-                      onChange={(e) =>
-                        formik.setFieldValue("storePickupDate", e.target.value)
-                      }
-                      className="w-full text-[12.5px] pl-8 pr-2 py-1.5 focus:outline-none focus:ring-1 rounded-lg bg-white"
-                      style={{
-                        border: "1px solid var(--grid-border)",
-                        color: "var(--text-main)",
-                      }}
-                    />
-                  </div>
-                </div>
-                <p
-                  className="text-[11px] italic"
-                  style={{ color: "var(--text-placeholder)" }}
-                >
-                  {formik.values.storePickupDate
-                    ? `Khách hẹn lấy tại cửa hàng ngày ${formik.values.storePickupDate.split("-").reverse().join("/")}`
-                    : "Để trống nếu khách lấy ngay tại cửa hàng"}
-                </p>
-              </div>
-            )}
-
-            {/* ── Giao tận nơi — date picker ── */}
-            {formik.values.deliveryMethod === DELIVERY_METHODS.DELIVERY && (
-              <div className="flex items-center gap-2 mt-1">
-                <span
-                  className="text-[13px] shrink-0"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  Giao vào ngày:
-                </span>
-                <div className="relative flex-1">
-                  <Calendar
-                    size={14}
-                    className="absolute left-2.5 top-1/2 -translate-y-1/2"
-                    style={{ color: "var(--text-placeholder)" }}
-                  />
-                  <input
-                    type="date"
-                    value={formik.values.deliveryDate || ""}
-                    min={new Date().toISOString().split("T")[0]}
-                    onChange={(e) =>
-                      formik.setFieldValue("deliveryDate", e.target.value)
-                    }
-                    className={`w-full text-[13px] pl-8 pr-2 py-1.5 focus:outline-none focus:ring-1 rounded-lg bg-white ${formik.errors.deliveryDate && formik.touched.deliveryDate
-                      ? "border-red-400 ring-1 ring-red-400"
-                      : ""
-                      }`}
-                    style={{
-                      border:
-                        formik.errors.deliveryDate && formik.touched.deliveryDate
-                          ? "1px solid #f87171"
-                          : "1px solid var(--grid-border)",
-                      color: "var(--text-main)",
-                    }}
-                  />
-                </div>
-                {formik.errors.deliveryDate && formik.touched.deliveryDate && (
-                  <p className="text-[10px] text-red-500 font-medium ml-2 mt-1 flex items-center gap-1">
-                    <AlertCircle size={10} /> {formik.errors.deliveryDate}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-        )}
 
 
 
-        {/* Summary (Deposit section) - Synced with invoice-instock */}
-        {formik.values.mode === "DIRECT_ORDER" && (
-          <div
-            className="px-4 py-3 space-y-2 border-t"
-            style={{
-              borderColor: "var(--grid-border)",
-              backgroundColor: "var(--grid-header-bg)",
-            }}
-          >
-            <div className="flex flex-col">
-              <div className="flex justify-between text-[13px] items-center">
-                <span
-                  className="font-medium flex items-center"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  <CreditCard size={12} className="inline mr-1.5" />
-                  {formik.values.isFullPayment ? "Khách thanh toán" : "Tiền đặt cọc"}
-                  {subtotal > 0 && formik.values.depositAmount > 0 && !formik.values.isFullPayment && (
-                    <span className="ml-2 text-[10px] font-bold text-[var(--brand-primary)] bg-[var(--brand-primary)]/10 px-1.5 py-0.5 rounded">
-                      ({Math.round((formik.values.depositAmount / subtotal) * 100)}%)
-                    </span>
-                  )}
-                </span>
-                <div className="flex items-center gap-3">
-                  <div
-                    className="flex items-center gap-1.5 cursor-pointer"
-                    onClick={() =>
-                      formik.setFieldValue(
-                        "isFullPayment",
-                        !formik.values.isFullPayment
-                      )
-                    }
-                  >
-                    <CustomCheckbox
-                      checked={formik.values.isFullPayment || false}
-                      onChange={(val) =>
-                        formik.setFieldValue("isFullPayment", val)
-                      }
-                    />
-                    <span className="text-[12px] font-medium" style={{ color: "var(--text-main)" }}>Trả đủ</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span
-                      className="text-[13px]"
-                      style={{ color: "var(--text-placeholder)" }}
-                    >
-                      ₫
-                    </span>
-                    <input
-                      type="text"
-                      readOnly
-                      value={formik.values.depositAmount ? fmt(formik.values.depositAmount) : "0"}
-                      className="w-32 text-right text-[13px] font-bold rounded-lg px-2 py-1 focus:outline-none bg-gray-50 border border-gray-200 cursor-not-allowed"
-                      style={{
-                        color: "var(--brand-primary)",
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {!formik.values.isFullPayment && subtotal > 0 && (
-                <div className="mt-1 flex justify-end">
-                  <p className="text-[10px] font-medium text-gray-500 italic">
-                    {suggestedDepositInfo.reason}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* Checkout bar */}
-        <div className={`flex items-center ${formik.values.mode === "DIRECT_ORDER" ? "justify-between" : "justify-end"} px-4 py-3 border-t`} style={{ borderColor: "var(--grid-border)" }}>
-          {formik.values.mode === "DIRECT_ORDER" && (
-            <div>
-              <p className="text-xs uppercase tracking-wider font-medium text-gray-400">Còn lại cần thu</p>
-              <p className="text-xl font-bold tracking-tight" style={{ color: "var(--brand-primary)" }}>{fmt(totalPayable)}đ</p>
-            </div>
-          )}
+        <div className="flex items-center justify-end px-4 py-3 border-t" style={{ borderColor: "var(--grid-border)" }}>
           <Button
             type="button"
             className="h-11 px-8 text-sm font-bold text-white rounded-lg transition-all active:scale-95 cursor-pointer disabled:opacity-40"
@@ -712,7 +474,7 @@ export default function RequirementCartPanel({
           >
             {formik.isSubmitting
               ? "Đang xử lý..."
-              : (formik.values.mode === "DIRECT_ORDER" ? "Tạo đơn hàng ngay" : "Lưu yêu cầu thiết kế")}
+              : "Lưu yêu cầu thiết kế"}
           </Button>
         </div>
       </div>

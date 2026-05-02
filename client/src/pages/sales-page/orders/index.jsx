@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useCallback } from "react";
+import useCachedFetch from "@/hooks/useCachedFetch";
 import {
   Package,
   Clock,
@@ -49,21 +51,20 @@ const STATUS_CONFIG = {
 
 const getStatusColor = (status) => STATUS_CONFIG[status] || { bg: "#F3F4F6", text: "#374151", border: "#D1D5DB", icon: Clock };
 
+import orderService from "@/services/order.service";
+
 export default function SalesOrders() {
   const navigate = useNavigate();
   const printRef = useRef(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get("tab") || "Hàng sẵn";
-  const [printingOrders, setPrintingOrders] = useState([]); // Array of order objects to print
-  const statusFilter = searchParams.get("status") || "Tất cả";
-
-  const [orders, setOrders] = useState(() => {
-    const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
-    const uniqueInitial = INITIAL_ORDERS.filter(io => !saved.find(so => so.id === io.id));
-    return [...saved, ...uniqueInitial];
-  });
-
-  // Load production data to compute sub-statuses for "Đang gia công" orders
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [itemsPerPage, setItemsPerPage] = useState(15);
+  const [detailId, setDetailId] = useState(null);
+  const [printingOrders, setPrintingOrders] = useState([]);
   const [productions, setProductions] = useState(() => {
     try {
       const saved = localStorage.getItem("tpf_simulated_productions");
@@ -77,6 +78,40 @@ export default function SalesOrders() {
     localStorage.setItem("tpf_simulated_productions", JSON.stringify(INITIAL_PRODUCTIONS));
     return INITIAL_PRODUCTIONS;
   });
+
+  const activeTab = searchParams.get("tab") || "Hàng sẵn";
+  const statusFilter = searchParams.get("status") || "Tất cả";
+
+  const fetchFn = useCallback(async () => {
+    const response = await orderService.getAllOrders({
+      type: activeTab !== "Tất cả" ? activeTab : undefined,
+      status: statusFilter !== "Tất cả" ? statusFilter : undefined,
+      search: searchTerm || undefined,
+    });
+    
+    // For local simulation compatibility, we merge API data with initial mock data
+    // if the API is empty or just for testing purposes.
+    // In a real app, we'd just return response.data.
+    const freshOrders = response.data || [];
+    
+    return {
+      items: freshOrders,
+      total: response.pagination?.totalItems || freshOrders.length
+    };
+  }, [activeTab, statusFilter, searchTerm]);
+
+  const { 
+    data: cachedData, 
+    isLoading, 
+    isRefreshing, 
+    refresh 
+  } = useCachedFetch(
+    `sales_orders_${activeTab}_${statusFilter}_${searchTerm}`,
+    fetchFn,
+    { ttl: 1000 * 60 * 5 }
+  );
+
+  const orders = cachedData?.items || INITIAL_ORDERS;
 
   // Sync with localStorage updates (for when actions happen in popup)
   useEffect(() => {
@@ -118,13 +153,6 @@ export default function SalesOrders() {
     return map;
   }, [productions]);
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedIds, setSelectedIds] = useState([]);
-  const [itemsPerPage, setItemsPerPage] = useState(15);
-  const [detailId, setDetailId] = useState(null);
 
   const updateParams = (newParams) => {
     const current = Object.fromEntries(searchParams.entries());
@@ -349,7 +377,12 @@ export default function SalesOrders() {
   return (
     <>
       <PageHelmet title="Quản lý đơn hàng | TPF-SIMS" />
-      <div className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 gap-4" style={{ backgroundColor: "var(--bg-main)" }}>
+      <div className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 gap-4 relative" style={{ backgroundColor: "var(--bg-main)" }}>
+        {(isLoading || isRefreshing) && (
+          <div className="fixed top-0 left-0 right-0 z-[9999]">
+            <div className="h-[2px] bg-indigo-500 animate-[loading_1.5s_infinite] origin-left"></div>
+          </div>
+        )}
         <div className="flex items-center justify-between shrink-0">
           <div>
             <h1 className="text-xl font-bold flex items-center gap-2" style={{ color: "var(--text-main)" }}>
@@ -398,6 +431,8 @@ export default function SalesOrders() {
         clearAllFilters={() => { updateParams({ status: "Tất cả" }); setDateFrom(""); setDateTo(""); setSearchTerm(""); }}
         selectedIds={selectedIds}
         setSelectedIds={setSelectedIds}
+        isLoading={isLoading}
+        isRefreshing={isRefreshing}
 
         rowActions={[
           {

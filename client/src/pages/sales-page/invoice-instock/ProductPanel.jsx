@@ -23,6 +23,100 @@ import { Button } from "@/components/ui/button";
 import { fmt, PRODUCT_TYPES } from "./mockData";
 import CustomCheckbox from "@/components/control/CustomCheckbox";
 
+// Helper component for paginated filter sections
+function FilterSection({ group, setCurrentPage }) {
+  const [search, setSearch] = useState("");
+  const [localPage, setLocalPage] = useState(1);
+  const itemsPerPage = 6;
+
+  const filteredItems = group.meta.filter(item => 
+    item[group.nameKey]?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const currentItems = filteredItems.slice((localPage - 1) * itemsPerPage, localPage * itemsPerPage);
+
+  return (
+    <div className="space-y-3 p-3 rounded-xl bg-gray-50/50 border border-gray-100">
+      <div className="flex items-center justify-between">
+        <label className="text-[12px] font-bold text-gray-500 uppercase tracking-wider">
+          {group.label}
+        </label>
+        {filteredItems.length > itemsPerPage && (
+          <div className="flex items-center gap-1">
+            <button 
+              disabled={localPage === 1}
+              onClick={() => setLocalPage(p => p - 1)}
+              className="p-1 rounded bg-white border border-gray-200 disabled:opacity-30 cursor-pointer"
+            >
+              <ChevronLeft size={12} />
+            </button>
+            <span className="text-[10px] font-bold text-gray-400">{localPage}/{totalPages}</span>
+            <button 
+              disabled={localPage === totalPages}
+              onClick={() => setLocalPage(p => p + 1)}
+              className="p-1 rounded bg-white border border-gray-200 disabled:opacity-30 cursor-pointer"
+            >
+              <ChevronRight size={12} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="relative">
+        <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input 
+          type="text"
+          placeholder={`Tìm ${group.label.toLowerCase()}...`}
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setLocalPage(1);
+          }}
+          className="w-full pl-8 pr-2 py-1.5 bg-white border border-gray-200 rounded-lg text-[12px] focus:ring-1 focus:ring-green-500 outline-none"
+        />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        {currentItems.length > 0 ? (
+          currentItems.map((item) => {
+            const id = item[group.idKey];
+            const name = item[group.nameKey];
+            const isActive = group.list.includes(id);
+            return (
+              <label
+                key={id}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border text-[12px] cursor-pointer transition select-none ${
+                  isActive
+                    ? "border-green-500 bg-green-50 shadow-sm"
+                    : "border-transparent bg-white hover:border-green-200"
+                }`}
+              >
+                <CustomCheckbox
+                  checked={isActive}
+                  onChange={(checked) => {
+                    if (checked) {
+                      group.setter((prev) => [...prev, id]);
+                    } else {
+                      group.setter((prev) => prev.filter((i) => i !== id));
+                    }
+                    setCurrentPage(1);
+                  }}
+                />
+                <span className={`flex-1 truncate ${isActive ? "font-bold text-green-700" : "text-gray-600"}`}>
+                  {name}
+                </span>
+              </label>
+            );
+          })
+        ) : (
+          <p className="text-center py-4 text-[11px] text-gray-400 italic">Không tìm thấy kết quả</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ProductPanel({
   productTypeTab,
   setProductTypeTab,
@@ -45,6 +139,7 @@ export default function ProductPanel({
   products,
   addToCart,
   isLoading,
+  isRefreshing,
 }) {
   const [selectedProductForView, setSelectedProductForView] = useState(null);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
@@ -221,7 +316,7 @@ export default function ProductPanel({
         )}
 
         {/* ── Product Grid ── */}
-        <div className="flex-1 overflow-y-auto px-4 pb-3">
+        <div className="flex-1 overflow-y-auto px-4 pb-3 relative">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center h-full gap-3">
                <div className="w-10 h-10 border-4 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
@@ -608,45 +703,11 @@ export default function ProductPanel({
                 { list: selectedMaterials, setter: setSelectedMaterials, label: "Chất liệu", meta: metadata.materials, idKey: "pk_product_material_id", nameKey: "material_name" },
                 { list: selectedRooms, setter: setSelectedRooms, label: "Phòng / Khu vực", meta: metadata.rooms, idKey: "pk_product_room_id", nameKey: "room_name" },
               ].map((group) => (
-                <div key={group.label} className="space-y-3">
-                  <label className="text-[13px] font-semibold text-gray-600 uppercase tracking-wider block">
-                    {group.label}
-                  </label>
-                  <div className="flex flex-col gap-2">
-                    {group.meta.map((item) => {
-                      const id = item[group.idKey];
-                      const name = item[group.nameKey];
-                      const isActive = group.list.includes(id);
-                      return (
-                        <label
-                          key={id}
-                          className={`flex items-center gap-3 px-4 py-2.5 rounded-lg border text-[13px] cursor-pointer transition select-none ${
-                            isActive
-                              ? "border-green-500 bg-green-50/50"
-                              : "border-gray-200 hover:border-green-200 hover:bg-gray-50"
-                          }`}
-                        >
-                          <CustomCheckbox
-                            checked={isActive}
-                            onChange={(checked) => {
-                              if (checked) {
-                                group.setter((prev) => [...prev, id]);
-                              } else {
-                                group.setter((prev) => prev.filter((i) => i !== id));
-                              }
-                              setCurrentPage(1);
-                            }}
-                          />
-                          <span
-                            className={`flex-1 ${isActive ? "font-medium text-green-700" : "text-gray-600"}`}
-                          >
-                            {name}
-                          </span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
+                <FilterSection
+                  key={group.label}
+                  group={group}
+                  setCurrentPage={setCurrentPage}
+                />
               ))}
 
               <div className="space-y-3">

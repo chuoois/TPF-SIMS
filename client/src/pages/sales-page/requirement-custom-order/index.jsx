@@ -24,6 +24,7 @@ import orderService from "@/services/order.service";
 import customRequestService from "@/services/customRequest.service";
 
 import { uploadMultipleImages } from "@/services/cloudinary.service";
+import useCachedFetch from "@/hooks/useCachedFetch";
 
 // ===================== VALIDATION SCHEMA =====================
 const orderSchema = Yup.object().shape({
@@ -35,17 +36,8 @@ const orderSchema = Yup.object().shape({
   cartItems: Yup.array()
     .min(1, "Danh sách yêu cầu không được để trống")
     .required("Danh sách yêu cầu không được để trống"),
-  deliveryMethod: Yup.string().when("mode", {
-    is: "DIRECT_ORDER",
-    then: (schema) => schema.required(),
-    otherwise: (schema) => schema.nullable(),
-  }),
-  deliveryDate: Yup.string().when(["mode", "deliveryMethod"], {
-    is: (mode, deliveryMethod) =>
-      mode === "DIRECT_ORDER" && deliveryMethod === DELIVERY_METHODS.DELIVERY,
-    then: (schema) => schema.required("Vui lòng chọn ngày giao hàng"),
-    otherwise: (schema) => schema.nullable(),
-  }),
+  deliveryMethod: Yup.string().nullable(),
+  deliveryDate: Yup.string().nullable(),
 });
 
 export default function CustomOrderRequirementsPage() {
@@ -68,8 +60,6 @@ export default function CustomOrderRequirementsPage() {
   const [viewingItem, setViewingItem] = useState(null);
   const [editingItemId, setEditingItemId] = useState(null);
   const [customerSearch, setCustomerSearch] = useState("");
-  const [isSearchingCustomers, setIsSearchingCustomers] = useState(false);
-  const [customerResults, setCustomerResults] = useState([]);
 
   const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0] || createEmptyTab();
 
@@ -112,90 +102,32 @@ export default function CustomOrderRequirementsPage() {
           })
         );
 
-        if (values.mode === "DIRECT_ORDER") {
-          const requestData = {
-            fk_customer_id: values.selectedCustomer.id,
-            fulfillment_method: values.deliveryMethod === DELIVERY_METHODS.STORE ? "Lấy tại cửa hàng" : "Giao tận nhà",
-            expected_fulfillment_date: values.deliveryMethod === DELIVERY_METHODS.STORE
-              ? values.storePickupDate || new Date().toISOString().split("T")[0]
-              : values.deliveryDate,
-            note: values.orderNote,
-            deposit_amount: values.depositAmount,
-            address: values.selectedCustomer.address || "",
-            total_amount: subtotal,
-            order_status: 2, // 2: Đã tạo đơn (Status for custom request header)
-            order_type: 3,
-            items: finalCartItems.map((item) => ({
-              item_name: item.productName,
-              item_img: "",
-              item_quantity: item.quantity,
-              item_price: item.expectedPrice || 0,
-              item_material: item.woodType,
-              item_color: item.color,
-              item_size: item.size,
-              item_note: item.note,
-              is_finished: 0,
-              customer_img: item.images || [],
-            })),
-          };
+        const requestData = {
+          fk_customer_id: values.selectedCustomer.id,
+          fulfillment_method: null,
+          expected_fulfillment_date: null,
+          note: values.orderNote,
+          deposit_amount: values.depositAmount,
+          address: values.selectedCustomer.address || "",
+          total_amount: subtotal,
+          order_status: 1,
+          order_type: 3,
+          items: finalCartItems.map((item) => ({
+            item_name: item.productName,
+            item_img: "",
+            item_quantity: item.quantity,
+            item_price: item.expectedPrice || 0,
+            item_material: item.woodType,
+            item_color: item.color,
+            item_size: item.size,
+            item_note: item.note,
+            is_finished: 0,
+            customer_img: item.images || [],
+          })),
+        };
 
-          const reqRes = await customRequestService.createRequest(requestData);
-          const customRequestCode = reqRes.data?.request_code || "Không xác định";
-
-          const orderData = {
-            fk_customer_id: values.selectedCustomer.id,
-            fulfillment_method: values.deliveryMethod === DELIVERY_METHODS.STORE ? "Lấy tại cửa hàng" : "Giao tận nhà",
-            expected_fulfillment_date: values.deliveryMethod === DELIVERY_METHODS.STORE
-              ? values.storePickupDate || new Date().toISOString().split("T")[0]
-              : values.deliveryDate,
-            note: values.orderNote ? `${values.orderNote}\n(Từ Yêu cầu: ${customRequestCode})` : `Tạo từ Yêu cầu: ${customRequestCode}`,
-            deposit_amount: values.depositAmount,
-            address: values.selectedCustomer.address || "",
-            total_amount: subtotal,
-            order_status: 1,
-            order_type: 3,
-            items: finalCartItems.map((item) => ({
-              item_name: item.productName,
-              item_img: "",
-              item_quantity: item.quantity,
-              item_price: item.expectedPrice || 0,
-              item_material: item.woodType,
-              item_color: item.color,
-              item_size: item.size,
-              item_note: item.note,
-              is_finished: 0,
-              customer_img: item.images || [],
-            })),
-          };
-          await orderService.createOrder(orderData);
-          toast.dismiss(loadingToast);
-        } else {
-          const requestData = {
-            fk_customer_id: values.selectedCustomer.id,
-            fulfillment_method: null,
-            expected_fulfillment_date: null,
-            note: values.orderNote,
-            deposit_amount: values.depositAmount,
-            address: values.selectedCustomer.address || "",
-            total_amount: subtotal,
-            order_status: 1,
-            order_type: 3,
-            items: finalCartItems.map((item) => ({
-              item_name: item.productName,
-              item_img: "",
-              item_quantity: item.quantity,
-              item_price: item.expectedPrice || 0,
-              item_material: item.woodType,
-              item_color: item.color,
-              item_size: item.size,
-              item_note: item.note,
-              is_finished: 0,
-              customer_img: item.images || [],
-            })),
-          };
-          await customRequestService.createRequest(requestData);
-          toast.dismiss(loadingToast);
-        }
+        await customRequestService.createRequest(requestData);
+        toast.dismiss(loadingToast);
 
         // Clear active tab after success
         if (tabs.length <= 1) {
@@ -228,34 +160,37 @@ export default function CustomOrderRequirementsPage() {
     }
   }, [formik.submitCount]);
 
-  // Fetch customers
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      if (!debouncedCustomerSearch.trim()) {
-        setCustomerResults([]);
-        return;
-      }
-      setIsSearchingCustomers(true);
-      try {
-        const res = await customerService.getAllCustomers({
-          search: debouncedCustomerSearch,
-          limit: 10,
-        });
-        const mapped = res.data.map((c) => ({
-          id: c.pk_customer_id,
-          name: c.full_name,
-          phone: c.phone_number,
-          address: c.address || "",
-        }));
-        setCustomerResults(mapped);
-      } catch (error) {
-        console.error("Failed to fetch customers", error);
-      } finally {
-        setIsSearchingCustomers(false);
-      }
+  // Fetch customers via useCachedFetch
+  const fetchCustomersFn = useCallback(async () => {
+    if (!debouncedCustomerSearch.trim()) return { items: [], total: 0 };
+    
+    const res = await customerService.getAllCustomers({
+      search: debouncedCustomerSearch,
+      limit: 10,
+    });
+    
+    return {
+      items: res.data.map((c) => ({
+        id: c.pk_customer_id,
+        name: c.full_name,
+        phone: c.phone_number,
+        address: c.address || "",
+      })),
+      total: res.pagination?.totalItems || res.data.length
     };
-    fetchCustomers();
   }, [debouncedCustomerSearch]);
+
+  const { 
+    data: cachedCustomerData, 
+    isLoading: isSearchingCustomers,
+    isRefreshing: isRefreshingCustomers
+  } = useCachedFetch(
+    `custom_order_customers_${debouncedCustomerSearch}`,
+    fetchCustomersFn,
+    { enabled: !!debouncedCustomerSearch.trim(), ttl: 1000 * 60 * 5 }
+  );
+
+  const customerResults = cachedCustomerData?.items || [];
 
   // Sync Formik when switching tabs
   useEffect(() => {
@@ -358,9 +293,14 @@ export default function CustomOrderRequirementsPage() {
       <PageHelmet title="Yêu cầu đặt riêng - TPF-SIMS" />
 
       <div
-        className="flex h-full gap-4 -m-4 p-4"
+        className="flex h-full gap-4 -m-4 p-4 relative"
         style={{ backgroundColor: "var(--bg-main)" }}
       >
+        {(isSearchingCustomers || isRefreshingCustomers || formik.isSubmitting) && (
+          <div className="fixed top-0 left-0 right-0 z-[9999]">
+            <div className="h-[2px] bg-indigo-500 animate-[loading_1.5s_infinite] origin-left"></div>
+          </div>
+        )}
         {/* LEFT PANEL – CART & ORDER INFO */}
         <RequirementCartPanel
           tabs={tabs}

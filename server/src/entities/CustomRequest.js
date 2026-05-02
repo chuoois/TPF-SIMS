@@ -49,7 +49,7 @@ const CustomRequest = sequelize.define(
     },
     order_type: {
       type: DataTypes.TINYINT,
-      defaultValue: 3, // 3: Đặt riêng
+      defaultValue: 3, // 3: Đặt riêng (Custom Order)
     },
     note: {
       type: DataTypes.TEXT,

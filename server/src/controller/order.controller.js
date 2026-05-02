@@ -110,7 +110,8 @@ class OrderController {
                     }, { transaction: t });
 
                     // 4. GIỮ CHỖ (ALLOCATION) - Chỉ lấy ProductItem "Sẵn sàng" và "Chưa có chủ"
-                    if ((order_type == 1 || order_type == 2) && item.fk_product_id) {
+                    // Áp dụng cho: Đơn mộc (1), Đơn sẵn (2)
+                    if ([1, 2].includes(Number(order_type)) && item.fk_product_id) {
                         const quantityNeeded = item.item_quantity || 1;
 
                         const availableItems = await ProductItem.findAll({

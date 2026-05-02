@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { sequelize, CustomRequest, CustomRequestItem, CustomerProfile, UserAccount, UserRole } = require("../entities");
+const { sequelize, CustomRequest, CustomRequestItem, CustomerProfile, UserAccount, UserRole, Supplier } = require("../entities");
 const systemLogController = require("./systemLog.controller");
 const { sendNotification } = require("../sockets/socketManager");
 
@@ -15,10 +15,10 @@ class CustomRequestController {
     async createRequest(req, res) {
         const t = await sequelize.transaction();
         try {
-            const { 
-                fk_customer_id, fulfillment_method, expected_fulfillment_date, 
-                note, deposit_amount, address, total_amount, 
-                order_status, order_type, items 
+            const {
+                fk_customer_id, fulfillment_method, expected_fulfillment_date,
+                note, deposit_amount, address, total_amount,
+                order_status, order_type, items
             } = req.body;
             const userId = req.user.userId;
 
@@ -32,8 +32,8 @@ class CustomRequestController {
                 address,
                 total_amount,
                 total_estimated_price: total_amount, // Đồng bộ với total_amount
-                status: order_status || 1, 
-                order_type: order_type || 1,
+                status: order_status || 1,
+                order_type: order_type || 3,
                 note,
                 createby: userId
             }, { transaction: t });
@@ -51,7 +51,7 @@ class CustomRequestController {
             await t.commit();
 
             await systemLogController.record(req, "CREATE_CUSTOM_REQUEST", `Tạo yêu cầu đặt riêng mới ID: ${newRequest.pk_custom_request_id}`, "INFO", userId);
-            
+
             // 3. Gửi thông báo real-time
             await sendNotification({
                 userId: userId,
@@ -63,7 +63,7 @@ class CustomRequestController {
             });
 
             // Gửi cho Admin/Owner
-            const admins = await UserAccount.findAll({
+            const recipients = await UserAccount.findAll({
                 include: [{
                     model: UserRole,
                     as: "role",
@@ -74,10 +74,10 @@ class CustomRequestController {
                 where: { status: 1 }
             });
 
-            for (const admin of admins) {
-                if (String(admin.user_account_id) !== String(userId)) {
+            for (const recipient of recipients) {
+                if (String(recipient.user_account_id) !== String(userId)) {
                     await sendNotification({
-                        userId: admin.user_account_id,
+                        userId: recipient.user_account_id,
                         title: "Yêu cầu đặt riêng mới",
                         message: `Sales ${req.user.email} vừa tạo yêu cầu đặt riêng mới ${newRequest.request_code}.`,
                         type: "INFO",
@@ -107,12 +107,12 @@ class CustomRequestController {
             const offset = (page - 1) * limit;
 
             const where = {};
-            
+
             // Handle status (could be 0, 1, 2, 3 or '0','1','2','3')
             if (status !== undefined && status !== "" && status !== "Tất cả") {
                 where.status = status;
             }
-            
+
             if (customer_id) where.fk_customer_id = customer_id;
 
             // Search by code or customer info
@@ -120,7 +120,8 @@ class CustomRequestController {
                 where[Op.or] = [
                     { request_code: { [Op.like]: `%${search}%` } },
                     { "$customer.full_name$": { [Op.like]: `%${search}%` } },
-                    { "$customer.phone_number$": { [Op.like]: `%${search}%` } }
+                    { "$customer.phone_number$": { [Op.like]: `%${search}%` } },
+                    { "$items.supplier.supplier_name$": { [Op.like]: `%${search}%` } }
                 ];
             }
 
@@ -135,10 +136,15 @@ class CustomRequestController {
             const { count, rows } = await CustomRequest.findAndCountAll({
                 where,
                 include: [
-                    { 
-                        model: CustomerProfile, 
-                        as: "customer", 
-                        attributes: ["full_name", "phone_number"] 
+                    {
+                        model: CustomerProfile,
+                        as: "customer",
+                        attributes: ["full_name", "phone_number"]
+                    },
+                    {
+                        model: CustomRequestItem,
+                        as: "items",
+                        include: [{ model: Supplier, as: "supplier", attributes: ["supplier_name"] }]
                     }
                 ],
                 order: [["createdate", "DESC"]],
@@ -189,7 +195,11 @@ class CustomRequestController {
             const request = await CustomRequest.findByPk(id, {
                 include: [
                     { model: CustomerProfile, as: "customer" },
-                    { model: CustomRequestItem, as: "items" }
+                    {
+                        model: CustomRequestItem,
+                        as: "items",
+                        include: [{ model: Supplier, as: "supplier", attributes: ["supplier_name"] }]
+                    }
                 ]
             });
 
@@ -228,20 +238,119 @@ class CustomRequestController {
 
             await systemLogController.record(req, "UPDATE_CUSTOM_REQUEST_STATUS", `Cập nhật trạng thái yêu cầu ID: ${id} sang ${status}`, "INFO", userId);
 
-            // Thông báo cho nhân viên/admin khác
-            await sendNotification({
-                userId: null, // Gửi chung hoặc lọc theo phân quyền
-                title: "Cập nhật yêu cầu đặt riêng",
-                message: `Yêu cầu ${request.request_code} đã được cập nhật trạng thái mới.`,
-                type: "INFO",
-                link: `/custom-requirements/${id}`,
-                createBy: userId
+            // Thông báo cho người tạo yêu cầu (Sales) và các bên liên quan
+            if (request.createby) {
+                await sendNotification({
+                    userId: request.createby,
+                    title: "Cập nhật yêu cầu đặt riêng",
+                    message: `Yêu cầu ${request.request_code} đã được cập nhật trạng thái mới.`,
+                    type: "INFO",
+                    link: `/custom-requirements/${id}`,
+                    createBy: userId
+                });
+            }
+
+            // Đồng thời gửi cho Admin/Owner để theo dõi
+            const managers = await UserAccount.findAll({
+                include: [{
+                    model: UserRole,
+                    as: "role",
+                    where: {
+                        role_code: { [Op.in]: ["ADMIN", "OWNER"] }
+                    }
+                }],
+                where: { status: 1 }
             });
+
+            for (const mgr of managers) {
+                if (String(mgr.user_account_id) !== String(userId) && String(mgr.user_account_id) !== String(request.createby)) {
+                    await sendNotification({
+                        userId: mgr.user_account_id,
+                        title: "Cập nhật yêu cầu đặt riêng",
+                        message: `Yêu cầu ${request.request_code} vừa được cập nhật trạng thái.`,
+                        type: "INFO",
+                        link: `/custom-requirements/${id}`,
+                        createBy: userId
+                    });
+                }
+            }
 
             return res.status(200).json({ message: "Cập nhật thành công", data: request });
         } catch (error) {
             console.error("Update request status error:", error);
             return res.status(500).json({ message: "Lỗi hệ thống khi cập nhật trạng thái" });
+        }
+    }
+
+    /**
+     * Cập nhật thông tin chi tiết của yêu cầu (Dành cho Owner/Admin)
+     */
+    async updateRequest(req, res) {
+        const t = await sequelize.transaction();
+        try {
+            const { id } = req.params;
+            const { 
+                deposit_amount, total_amount, expected_fulfillment_date, 
+                fulfillment_method, note, items 
+            } = req.body;
+            const userId = req.user.userId;
+
+            const request = await CustomRequest.findByPk(id);
+            if (!request) {
+                return res.status(404).json({ message: "Không tìm thấy yêu cầu" });
+            }
+
+            // Cho phép cập nhật khi đang chờ tiếp nhận (status 1 - Sales) hoặc đã tiếp nhận (status 2 - Owner)
+            if (request.status !== 1 && request.status !== 2) {
+                return res.status(400).json({ message: "Yêu cầu ở trạng thái này không thể cập nhật chi tiết" });
+            }
+
+            // 1. Cập nhật Header
+            await request.update({
+                deposit_amount: deposit_amount !== undefined ? deposit_amount : request.deposit_amount,
+                total_amount: total_amount !== undefined ? total_amount : request.total_amount,
+                total_estimated_price: total_amount !== undefined ? total_amount : request.total_estimated_price,
+                expected_fulfillment_date: expected_fulfillment_date || request.expected_fulfillment_date,
+                fulfillment_method: fulfillment_method || request.fulfillment_method,
+                note: note || request.note,
+                modifieby: userId,
+                modifiedate: new Date()
+            }, { transaction: t });
+
+            // 2. Cập nhật Items (Chỉ cập nhật supplier và workshop date)
+            if (items && items.length > 0) {
+                for (const item of items) {
+                    await CustomRequestItem.update({
+                        item_material: item.item_material,
+                        item_color: item.item_color,
+                        item_quantity: item.item_quantity,
+                        item_price: item.item_price,
+                        item_note: item.item_note,
+                        item_size: item.item_size,
+                        fk_supplier_id: item.fk_supplier_id,
+                        expected_supplier_date: item.expected_supplier_date,
+                        design_img: item.design_img !== undefined ? item.design_img : undefined,
+                        modifieby: userId,
+                        modifiedate: new Date()
+                    }, {
+                        where: { 
+                            pk_custom_request_item_id: item.id,
+                            fk_custom_request_id: id
+                        },
+                        transaction: t
+                    });
+                }
+            }
+
+            await t.commit();
+
+            await systemLogController.record(req, "UPDATE_CUSTOM_REQUEST", `Cập nhật thông tin yêu cầu ID: ${id}`, "INFO", userId);
+
+            return res.status(200).json({ message: "Cập nhật yêu cầu thành công", data: request });
+        } catch (error) {
+            if (t && !t.finished) await t.rollback();
+            console.error("Update custom request error:", error);
+            return res.status(500).json({ message: "Lỗi hệ thống khi cập nhật yêu cầu" });
         }
     }
 }

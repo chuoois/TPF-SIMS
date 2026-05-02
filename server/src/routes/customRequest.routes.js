@@ -159,4 +159,22 @@ router.get("/:id", CustomRequestController.getRequestById);
  */
 router.patch("/:id/status", CustomRequestController.updateStatus);
 
+/**
+ * @swagger
+ * /api/custom-request/{id}:
+ *   put:
+ *     summary: Cập nhật thông tin chi tiết yêu cầu (Owner/Admin)
+ *     tags: [CustomRequest]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Cập nhật thành công
+ */
+router.put("/:id", CustomRequestController.updateRequest);
+
 module.exports = router;

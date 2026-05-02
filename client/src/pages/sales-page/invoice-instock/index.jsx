@@ -20,6 +20,7 @@ import AddCustomerModal from "@/pages/sales-page/components/AddCustomerModal";
 import WorkshopStatusModal from "@/pages/sales-page/components/WorkshopStatusModal";
 import CartPanel from "./CartPanel";
 import ProductPanel from "./ProductPanel";
+import useCachedFetch from "@/hooks/useCachedFetch";
 import productService from "@/services/product.service";
 import productAttributeService from "@/services/productAttribute.service";
 import customerService from "@/services/customer.service";
@@ -120,19 +121,10 @@ export default function InStockInvoicePage() {
   const [customerResults, setCustomerResults] = useState([]);
   const [isSearchingCustomers, setIsSearchingCustomers] = useState(false);
   const [productSearch, setProductSearch] = useState("");
-  const [products, setProducts] = useState([]);
-  const [totalItems, setTotalItems] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
 
   const debouncedProductSearch = useDebounce(productSearch, 500);
   const debouncedCustomerSearch = useDebounce(customerSearch, 300);
 
-  // Khởi động trạng thái loading ngay khi người dùng gõ phím
-  useEffect(() => {
-    if (productSearch !== debouncedProductSearch) {
-      setIsLoading(true);
-    }
-  }, [productSearch, debouncedProductSearch]);
 
   useEffect(() => {
     if (customerSearch !== debouncedCustomerSearch) {
@@ -362,44 +354,39 @@ export default function InStockInvoicePage() {
     fetchMetadata();
   }, []);
 
-  // Fetch products
-  const refreshProducts = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      let sell_type = 2; // Default Hàng sẵn
-      let is_gift_param = 0;
+  // Fetch products via useCachedFetch
+  const fetchFn = useCallback(async () => {
+    let sell_type = 2; // Default Hàng sẵn
+    let is_gift_param = 0;
 
-      if (productTypeTab === PRODUCT_TYPES.RAW) {
-        sell_type = 1;
-      } else if (productTypeTab === PRODUCT_TYPES.GIFT) {
-        sell_type = null;
-        is_gift_param = 1;
-      } else if (productTypeTab === PRODUCT_TYPES.CUSTOM) {
-        sell_type = 4;
-      }
-
-      const params = {
-        search: debouncedProductSearch,
-        category_id: selectedCategories.join(","),
-        color_id: selectedColors.join(","),
-        material_id: selectedMaterials.join(","),
-        room_id: selectedRooms.join(","),
-        sell_type: sell_type || undefined,
-        is_gift: is_gift_param,
-        min_price: priceRange.min,
-        max_price: priceRange.max,
-        page: currentPage,
-        limit: ITEMS_PER_PAGE,
-      };
-
-      const res = await productService.getAllProducts(params);
-      setProducts(res.data);
-      setTotalItems(res.pagination.totalItems);
-    } catch (error) {
-      toast.error("Không thể tải danh sách sản phẩm");
-    } finally {
-      setIsLoading(false);
+    if (productTypeTab === PRODUCT_TYPES.RAW) {
+      sell_type = 1;
+    } else if (productTypeTab === PRODUCT_TYPES.GIFT) {
+      sell_type = null;
+      is_gift_param = 1;
+    } else if (productTypeTab === PRODUCT_TYPES.CUSTOM) {
+      sell_type = 4;
     }
+
+    const params = {
+      search: debouncedProductSearch,
+      category_id: selectedCategories.join(","),
+      color_id: selectedColors.join(","),
+      material_id: selectedMaterials.join(","),
+      room_id: selectedRooms.join(","),
+      sell_type: sell_type || undefined,
+      is_gift: is_gift_param,
+      min_price: priceRange.min,
+      max_price: priceRange.max,
+      page: currentPage,
+      limit: ITEMS_PER_PAGE,
+    };
+
+    const res = await productService.getAllProducts(params);
+    return {
+      items: res.data,
+      total: res.pagination.totalItems
+    };
   }, [
     productTypeTab,
     debouncedProductSearch,
@@ -411,9 +398,14 @@ export default function InStockInvoicePage() {
     currentPage,
   ]);
 
-  useEffect(() => {
-    refreshProducts();
-  }, [refreshProducts]);
+  const { data: cachedData, isLoading, isRefreshing, refresh: refreshProducts } = useCachedFetch(
+    `instock_products_${productTypeTab}_${currentPage}_${debouncedProductSearch}_${selectedCategories.join(",")}_${selectedColors.join(",")}_${selectedMaterials.join(",")}_${selectedRooms.join(",")}_${priceRange.min}_${priceRange.max}`,
+    fetchFn,
+    { ttl: 1000 * 60 * 5 }
+  );
+
+  const products = cachedData?.items || [];
+  const totalItems = cachedData?.total || 0;
 
   // Fetch customers
   useEffect(() => {
@@ -619,9 +611,14 @@ export default function InStockInvoicePage() {
       <PageHelmet title="Bán hàng có sẵn - TPF-SIMS" />
 
       <div
-        className="flex h-full gap-4 -m-4 p-4"
+        className="flex h-full gap-4 -m-4 p-4 relative"
         style={{ backgroundColor: "var(--bg-main)" }}
       >
+        {(isLoading || isRefreshing) && (
+          <div className="fixed top-0 left-0 right-0 z-[9999]">
+            <div className="h-[2px] bg-indigo-500 animate-[loading_1.5s_infinite] origin-left"></div>
+          </div>
+        )}
         {/* ═══════════════ LEFT PANEL – CART ═══════════════ */}
         <CartPanel
           tabs={tabs}
@@ -673,6 +670,7 @@ export default function InStockInvoicePage() {
           products={products}
           addToCart={addToCart}
           isLoading={isLoading}
+          isRefreshing={isRefreshing}
         />
       </div>
 

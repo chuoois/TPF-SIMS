@@ -649,7 +649,7 @@ export default function CartPanel({
                   className="text-[12.5px] shrink-0"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  Ngày hẹn lấy:
+                  Ngày giao dự kiến:
                 </span>
                 <div className="relative flex-1">
                   <Calendar
@@ -691,7 +691,7 @@ export default function CartPanel({
                 className="text-[13px] shrink-0"
                 style={{ color: "var(--text-secondary)" }}
               >
-                Giao vào ngày:
+                Ngày giao dự kiến:
               </span>
               <div className="relative flex-1">
                 <Calendar
