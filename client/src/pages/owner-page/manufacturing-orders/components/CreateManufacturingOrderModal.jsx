@@ -7,7 +7,7 @@
 import { useState, useMemo, useEffect } from "react";
 import {
   X, Check, ChevronLeft, ChevronRight,
-  FileStack, Package, Search,
+  FileStack, Package, Search, Building2,
   CheckSquare, Square, Users, Layers,
   TreePine, Palette, Ruler, Plus, Minus,
   ShoppingCart, LayoutGrid, ListTodo,
@@ -137,6 +137,22 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
   const [showWoodDropdown, setShowWoodDropdown] = useState(false);
   const [showColorDropdown, setShowColorDropdown] = useState(false);
 
+  const handleSwitchTab = (tab) => {
+    if (tab === activeTab) return;
+    
+    // Nếu đang chọn bên này mà chuyển sang bên kia, xóa sạch lựa chọn cũ để tránh lặp/lẫn dữ liệu
+    if (tab === "catalog" && selectedProductKeys.size > 0) {
+      setSelectedProductKeys(new Set());
+      toast("Đã xóa các lựa chọn theo Nhà cung cấp");
+    } else if (tab === "orders" && selectedCatCount > 0) {
+      setSelectedCatalogProducts({});
+      setCustomItems([]);
+      toast("Đã xóa các lựa chọn theo Sản phẩm");
+    }
+    
+    setActiveTab(tab);
+  };
+
   // ── Eligible orders ──
   const eligibleOrders = useMemo(() =>
     (orders || []).filter((o) => ELIGIBLE_TYPES.includes(o.type) && ELIGIBLE_STATUSES.includes(o.status)),
@@ -164,34 +180,68 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
   }, [catalogProducts, catSearch]);
 
   // ── Suppliers filter ──
-  const filteredSuppliers = useMemo(() => {
+  const filteredSuppliersForStep1 = useMemo(() => {
     const q = suppSearch.toLowerCase().trim();
-    if (!q) return INITIAL_SUPPLIERS;
-    return INITIAL_SUPPLIERS.filter(s =>
+    const base = INITIAL_SUPPLIERS.map(s => {
+      // Nhóm sản phẩm từ catalog cho từng NCC (Mock logic)
+      // Trong thực tế, dữ liệu này sẽ được trả về từ API theo cấu trúc NCC -> SP
+      const products = (catalogProducts || []).filter((_, idx) => {
+        if (s.id === "NCC001") return idx % 3 === 0;
+        if (s.id === "NCC002") return idx % 3 === 1;
+        return idx % 3 === 2;
+      });
+      return {
+        ...s,
+        products: products
+      };
+    });
+
+    if (!q) return base;
+    return base.filter(s =>
       s.name.toLowerCase().includes(q) ||
       s.code.toLowerCase().includes(q) ||
-      s.contactPerson.toLowerCase().includes(q) ||
-      (s.specialty && s.specialty.toLowerCase().includes(q))
+      (s.phone && s.phone.includes(q))
     );
-  }, [suppSearch]);
+  }, [catalogProducts, suppSearch]);
 
   // ── Toggle selection ──
-  const toggleProduct = (order, pIdx) => {
-    const key = `${order.id}-${pIdx}`;
+  const toggleProduct = (supplier, product) => {
+    const key = `${supplier.id}-${product.id}`;
     setSelectedProductKeys(prev => {
       const next = new Set(prev);
+      
+      // Ràng buộc: Một yêu cầu nhập hàng chỉ gửi cho 1 NCC duy nhất
+      // Nếu chọn sản phẩm của NCC khác, xóa các lựa chọn của NCC trước đó
+      const existingKeys = Array.from(next);
+      if (existingKeys.length > 0) {
+        const firstKeySupplierId = existingKeys[0].split('-')[0];
+        if (firstKeySupplierId !== supplier.id) {
+          next.clear();
+        }
+      }
+
       if (next.has(key)) next.delete(key);
       else next.add(key);
       return next;
     });
   };
 
-  const toggleOrder = (order) => {
-    const pKeys = (order.products || []).map((_, idx) => `${order.id}-${idx}`);
-    const allSelected = pKeys.every(k => selectedProductKeys.has(k));
+  const toggleSupplierRow = (supplier) => {
+    const pKeys = (supplier.products || []).map(p => `${supplier.id}-${p.id}`);
+    const allSelected = pKeys.length > 0 && pKeys.every(k => selectedProductKeys.has(k));
 
     setSelectedProductKeys(prev => {
       const next = new Set(prev);
+      
+      // Xóa NCC khác nếu có
+      const existingKeys = Array.from(next);
+      if (existingKeys.length > 0) {
+        const firstKeySupplierId = existingKeys[0].split('-')[0];
+        if (firstKeySupplierId !== supplier.id) {
+          next.clear();
+        }
+      }
+
       if (allSelected) {
         pKeys.forEach(k => next.delete(k));
       } else {
@@ -201,32 +251,23 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
     });
   };
 
-  const toggleAll = () => {
-    const allEligibleKeys = [];
-    filteredOrders.forEach(o => {
-      (o.products || []).forEach((_, idx) => allEligibleKeys.push(`${o.id}-${idx}`));
-    });
-
-    const isAllSelected = allEligibleKeys.length > 0 && allEligibleKeys.every(k => selectedProductKeys.has(k));
-
-    if (isAllSelected) {
-      setSelectedProductKeys(new Set());
-    } else {
-      setSelectedProductKeys(new Set(allEligibleKeys));
-    }
+  const toggleAllSuppliers = () => {
+    // Với logic mới (1 NCC/phiếu), toggle all có lẽ không nên áp dụng cho toàn bộ danh sách NCC
+    // mà chỉ nên áp dụng cho NCC đang được mở rộng. 
+    // Tuy nhiên để giữ tính nhất quán, ta có thể để người dùng chọn NCC nào thì NCC đó được chọn tất cả SP.
+    toast.error("Vui lòng chọn sản phẩm theo từng nhà cung cấp");
   };
 
-  const selectedOrders = useMemo(() => {
-    // Return orders that have AT LEAST one product selected
-    const orderIds = new Set();
+  const selectedSuppliersFromStep1 = useMemo(() => {
+    const supplierIds = new Set();
     selectedProductKeys.forEach(key => {
       const lastDash = key.lastIndexOf("-");
       if (lastDash !== -1) {
-        orderIds.add(key.substring(0, lastDash));
+        supplierIds.add(key.substring(0, lastDash));
       }
     });
-    return eligibleOrders.filter(o => orderIds.has(o.id));
-  }, [eligibleOrders, selectedProductKeys]);
+    return INITIAL_SUPPLIERS.filter(s => supplierIds.has(s.id));
+  }, [selectedProductKeys]);
 
 
   const toggleCatalogProduct = (p, delta) => {
@@ -244,80 +285,74 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
 
   // ── DataTable Preparation ──
 
-  // 1. Orders Tab
-  const orderColumns = [
+  // 1. Suppliers Tab (New Version of Orders Tab)
+  const supplierColumnsStep1 = [
     {
-      header: "Mã Đơn",
+      header: "Mã NCC",
       key: "code",
-      render: (o) => (
+      render: (s) => (
         <span className="text-[13px] font-mono font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-800">
-          {o.code}
+          {s.code}
         </span>
       )
     },
     {
-      header: "Khách Hàng",
-      render: (o) => {
-        const customerName = o.customerName || o.customer?.name || "";
-        return (
-          <div className="flex items-center gap-1 font-semibold text-slate-700">
-            <Users size={12} className="text-slate-400" />
-            {customerName || "—"}
-          </div>
-        );
-      }
+      header: "Tên Nhà Cung Cấp",
+      render: (s) => (
+        <div className="flex items-center gap-1 font-semibold text-slate-700">
+          <Building2 size={12} className="text-slate-400" />
+          {s.name}
+        </div>
+      )
     },
     {
-      header: "Loại",
-      render: (o) => {
-        const tb = TYPE_BADGE[o.type] || {};
-        return (
-          <span className="text-[11px] font-bold px-2 py-0.5 rounded-md" style={{ background: tb.bg, color: tb.text, border: `1px solid ${tb.border}` }}>
-            {o.type}
-          </span>
-        );
-      }
+      header: "Số Sản Phẩm Cung Cấp",
+      render: (s) => (
+        <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-100">
+          {s.products?.length || 0} loại
+        </span>
+      )
     },
     {
       header: "Tỉ Lệ Chọn",
       className: "text-center",
-      render: (o) => {
-        const pKeys = (o.products || []).map((_, idx) => `${o.id}-${idx}`);
-        const selectedInOrder = pKeys.filter(k => selectedProductKeys.has(k));
-        const isFully = pKeys.length > 0 && selectedInOrder.length === pKeys.length;
+      render: (s) => {
+        const pKeys = (s.products || []).map(p => `${s.id}-${p.id}`);
+        const selectedInRow = pKeys.filter(k => selectedProductKeys.has(k));
         return (
-          <span className={`font-bold ${selectedInOrder.length > 0 ? 'text-[var(--brand-primary)]' : 'text-[var(--text-placeholder)]'}`}>
-            {selectedInOrder.length}/{o.products?.length || 0} SP
+          <span className={`font-bold ${selectedInRow.length > 0 ? 'text-[var(--brand-primary)]' : 'text-[var(--text-placeholder)]'}`}>
+            {selectedInRow.length}/{s.products?.length || 0} SP
           </span>
         );
       }
     },
     {
-      header: "Tổng SL",
+      header: "Tổng Số Sản Phẩm",
       className: "text-right",
-      render: (o) => (
+      render: (s) => (
         <div className="flex flex-col items-end">
-          <span className="text-[14px] font-black" style={{ color: "var(--text-main)" }}>{o.products?.reduce((s, p) => s + (p.qty || p.quantity || 1), 0) || 0}</span>
+          <span className="text-[14px] font-black" style={{ color: "var(--text-main)" }}>
+            {s.products?.length || 0}
+          </span>
           <span className="text-[11px]" style={{ color: "var(--text-placeholder)" }}>chiếc</span>
         </div>
       )
     }
   ];
 
-  const orderDataForTable = useMemo(() => {
-    return filteredOrders.map(o => ({
-      ...o,
-      id: o.id // DataTable needs id
+  const supplierDataForStep1 = useMemo(() => {
+    return filteredSuppliersForStep1.map(s => ({
+      ...s,
+      id: s.id
     }));
-  }, [filteredOrders]);
+  }, [filteredSuppliersForStep1]);
 
-  const selectedOrderIds = useMemo(() => {
-    // Only rows where ALL products are selected are considered "selected" in DataTable main checkbox context
-    return filteredOrders.filter(o => {
-      const pKeys = (o.products || []).map((_, idx) => `${o.id}-${idx}`);
+  const selectedSupplierRowIds = useMemo(() => {
+    return filteredSuppliersForStep1.filter(s => {
+      const pKeys = (s.products || []).map(p => `${s.id}-${p.id}`);
       return pKeys.length > 0 && pKeys.every(k => selectedProductKeys.has(k));
-    }).map(o => o.id);
-  }, [filteredOrders, selectedProductKeys]);
+    }).map(s => s.id);
+  }, [filteredSuppliersForStep1, selectedProductKeys]);
 
   // 2. Catalog Tab
   const catalogColumns = [
@@ -442,25 +477,25 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
     return INITIAL_SUPPLIERS.filter(s =>
       s.name.toLowerCase().includes(q) ||
       s.code.toLowerCase().includes(q) ||
-      s.contactPerson.toLowerCase().includes(q) ||
+      s.contactPerson?.toLowerCase().includes(q) ||
       (s.specialty && s.specialty.toLowerCase().includes(q))
     );
   }, [suppSearch]);
 
 
-  // ── Build items from selected orders (carry ALL product fields as-is) ──
+  // ── Build items from selected suppliers (carry ALL product fields as-is) ──
   const buildItems = () => {
     const items = [];
-    // 1. From orders
-    selectedOrders.forEach(order => {
-      (order.products || []).forEach((p, idx) => {
-        if (!selectedProductKeys.has(`${order.id}-${idx}`)) return;
+    // 1. From Suppliers Step 1
+    filteredSuppliersForStep1.forEach(supplier => {
+      (supplier.products || []).forEach(p => {
+        if (!selectedProductKeys.has(`${supplier.id}-${p.id}`)) return;
 
         items.push({
           id: Math.random().toString(36).substr(2, 9),
           productName: p.name || p.productName || "",
           material: p.material || p.woodType || "",
-          size: p.size || p.specs || "",
+          size: p.size || p.specs || p.dimensions || "",
           color: p.color || "",
           finish: p.finish || "",
           qty: p.qty || p.quantity || 1,
@@ -472,12 +507,11 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
           image: p.image || p.img || "",
           customerSampleImage: p.customerSampleImage || "",
           images: p.images || [],
-          sourceOrders: [order.code],
-          customerDeadline: order.deliveryDate || order.deadline || "",
+          sourceOrders: [supplier.name],
           sourceOrderDetails: {
-            [order.code]: {
-              customerName: order.customerName || order.customer?.name || "",
-              type: order.type || "",
+            [supplier.name]: {
+              customerName: supplier.name,
+              type: "Nhà cung cấp",
             }
           },
         });
@@ -589,13 +623,17 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
       toast.error("Vui lòng chọn ít nhất 1 sản phẩm!");
       return;
     }
-    const noProducts = selectedOrders.filter(o => !o.products?.length);
-    if (noProducts.length > 0) {
-      toast("Lưu ý: " + noProducts.length + " đơn chưa có chi tiết sản phẩm.", {
-        icon: <AlertTriangle size={18} className="text-amber-500" />
-      });
+
+    // Logic: Nếu đang ở tab NCC và có sản phẩm được chọn
+    // Thì NCC đó đã được xác định, đi thẳng tới bước 3
+    if (activeTab === "orders" && selectedSuppliersFromStep1.length > 0) {
+      setSelectedSupplier(selectedSuppliersFromStep1[0]);
+      setStep(3);
+      return;
     }
-    setStep(2); // Goes to Supplier step
+
+    // Nếu chọn từ Catalog (Sản phẩm), vẫn yêu cầu chọn NCC ở bước 2
+    setStep(2);
   };
 
   const goToStep3 = () => {
@@ -706,12 +744,14 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
               <p className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
                 {step === 1 ? (
                   activeTab === "orders"
-                    ? `Bước 1/3 — Đã chọn ${selectedOrders.length} đơn (${selectedProductKeys.size} SP)`
+                    ? `Bước 1/2 — Đã chọn ${selectedSuppliersFromStep1.length} NCC (${selectedProductKeys.size} SP)`
                     : `Bước 1/3 — Đã chọn ${selectedCatCount} loại SP (${totalSelectedFromCatalog} chiếc)`
                 ) : step === 2 ? (
                   "Bước 2/3 — Chọn nhà cung cấp gia công"
                 ) : (
-                  "Bước 3/3 — Hẹn ngày giao & Hoàn tất phiếu"
+                  activeTab === "orders"
+                    ? "Bước 2/2 — Hẹn ngày giao & Hoàn tất phiếu"
+                    : "Bước 3/3 — Hẹn ngày giao & Hoàn tất phiếu"
                 )}
               </p>
             </div>
@@ -719,21 +759,37 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
 
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold"
-                style={{ background: step >= 1 ? "var(--brand-primary)" : "var(--grid-border)", color: "#fff" }}>1</div>
-              <span className="text-[11px] font-semibold hidden sm:block" style={{ color: step === 1 ? "var(--text-main)" : "var(--text-placeholder)" }}>Chọn SP</span>
+              {activeTab === "orders" ? (
+                <>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold"
+                    style={{ background: step >= 1 ? "var(--brand-primary)" : "var(--grid-border)", color: "#fff" }}>1</div>
+                  <span className="text-[11px] font-semibold hidden sm:block" style={{ color: step === 1 ? "var(--text-main)" : "var(--text-placeholder)" }}>Chọn SP & NCC</span>
 
-              <div className="w-4 h-[2px] rounded" style={{ background: step >= 2 ? "var(--brand-primary)" : "var(--grid-border)" }} />
+                  <div className="w-4 h-[2px] rounded" style={{ background: step >= 3 ? "var(--brand-primary)" : "var(--grid-border)" }} />
 
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold"
-                style={{ background: step >= 2 ? "var(--brand-primary)" : "var(--grid-border)", color: step >= 2 ? "#fff" : "var(--text-placeholder)" }}>2</div>
-              <span className="text-[11px] font-semibold hidden sm:block" style={{ color: step === 2 ? "var(--text-main)" : "var(--text-placeholder)" }}>Nhà cung cấp</span>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold"
+                    style={{ background: step >= 3 ? "var(--brand-primary)" : "var(--grid-border)", color: step >= 3 ? "#fff" : "var(--text-placeholder)" }}>2</div>
+                  <span className="text-[11px] font-semibold hidden sm:block" style={{ color: step === 3 ? "var(--text-main)" : "var(--text-placeholder)" }}>Hẹn giao</span>
+                </>
+              ) : (
+                <>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold"
+                    style={{ background: step >= 1 ? "var(--brand-primary)" : "var(--grid-border)", color: "#fff" }}>1</div>
+                  <span className="text-[11px] font-semibold hidden sm:block" style={{ color: step === 1 ? "var(--text-main)" : "var(--text-placeholder)" }}>Chọn SP</span>
 
-              <div className="w-4 h-[2px] rounded" style={{ background: step >= 3 ? "var(--brand-primary)" : "var(--grid-border)" }} />
+                  <div className="w-4 h-[2px] rounded" style={{ background: step >= 2 ? "var(--brand-primary)" : "var(--grid-border)" }} />
 
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold"
-                style={{ background: step >= 3 ? "var(--brand-primary)" : "var(--grid-border)", color: step >= 3 ? "#fff" : "var(--text-placeholder)" }}>3</div>
-              <span className="text-[11px] font-semibold hidden sm:block" style={{ color: step === 3 ? "var(--text-main)" : "var(--text-placeholder)" }}>Hẹn giao</span>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold"
+                    style={{ background: step >= 2 ? "var(--brand-primary)" : "var(--grid-border)", color: step >= 2 ? "#fff" : "var(--text-placeholder)" }}>2</div>
+                  <span className="text-[11px] font-semibold hidden sm:block" style={{ color: step === 2 ? "var(--text-main)" : "var(--text-placeholder)" }}>Nhà cung cấp</span>
+
+                  <div className="w-4 h-[2px] rounded" style={{ background: step >= 3 ? "var(--brand-primary)" : "var(--grid-border)" }} />
+
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold"
+                    style={{ background: step >= 3 ? "var(--brand-primary)" : "var(--grid-border)", color: step >= 3 ? "#fff" : "var(--text-placeholder)" }}>3</div>
+                  <span className="text-[11px] font-semibold hidden sm:block" style={{ color: step === 3 ? "var(--text-main)" : "var(--text-placeholder)" }}>Hẹn giao</span>
+                </>
+              )}
             </div>
             <button
               onClick={onClose}
@@ -752,15 +808,15 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
             <div className="px-5 pt-3 shrink-0">
               <div className="flex p-1 rounded-xl bg-gray-100" style={{ border: "1px solid var(--grid-border)" }}>
                 <button
-                  onClick={() => setActiveTab("orders")}
+                  onClick={() => handleSwitchTab("orders")}
                   className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[13px] font-bold border ${activeTab === 'orders' ? 'bg-white border-[var(--brand-primary)] text-[var(--brand-primary)]' : 'bg-gray-50 border-transparent text-gray-500'}`}
                 >
-                  <ListTodo size={16} />
-                  Chọn từ đơn hàng
-                  {selectedOrders.length > 0 && <span className="bg-[var(--brand-primary)] text-white px-1.5 rounded-full text-[10px] ml-1">{selectedOrders.length}</span>}
+                  <Building2 size={16} />
+                  Chọn từ nhà cung cấp
+                  {selectedSuppliersFromStep1.length > 0 && <span className="bg-[var(--brand-primary)] text-white px-1.5 rounded-full text-[10px] ml-1">{selectedSuppliersFromStep1.length}</span>}
                 </button>
                 <button
-                  onClick={() => setActiveTab("catalog")}
+                  onClick={() => handleSwitchTab("catalog")}
                   className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[13px] font-bold border ${activeTab === 'catalog' ? 'bg-white border-[var(--brand-primary)] text-[var(--brand-primary)]' : 'bg-gray-50 border-transparent text-gray-500'}`}
                 >
                   <LayoutGrid size={16} />
@@ -773,31 +829,24 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
             <div className="flex-1 overflow-hidden flex flex-col p-5 pt-4">
               {activeTab === "orders" ? (
                 <DataTable
-                  columns={orderColumns}
-                  data={orderDataForTable}
-                  searchTerm={search}
-                  setSearchTerm={setSearch}
-                  searchPlaceholder="Mã đơn, tên khách, tên sản phẩm..."
-                  selectedIds={selectedOrderIds}
+                  columns={supplierColumnsStep1}
+                  data={supplierDataForStep1}
+                  searchTerm={suppSearch}
+                  setSearchTerm={setSuppSearch}
+                  searchPlaceholder="Mã NCC, tên nhà cung cấp, SĐT..."
+                  selectedIds={selectedSupplierRowIds}
                   setSelectedIds={() => { }} // dummy, we handle selection specifically
-                  onSelectOne={(id) => toggleOrder(eligibleOrders.find(o => o.id === id))}
-                  onSelectAll={(checked) => {
-                    const allKeys = [];
-                    filteredOrders.forEach(o => {
-                      (o.products || []).forEach((_, idx) => allKeys.push(`${o.id}-${idx}`));
-                    });
-                    if (!checked) setSelectedProductKeys(new Set());
-                    else setSelectedProductKeys(new Set(allKeys));
-                  }}
-                  renderDetail={(o) => (
+                  onSelectOne={(id) => toggleSupplierRow(filteredSuppliersForStep1.find(s => s.id === id))}
+                  onSelectAll={(checked) => toggleAllSuppliers()}
+                  renderDetail={(s) => (
                     <div className="flex flex-col gap-2 p-2 bg-slate-50/50 rounded-xl">
-                      {o.products?.map((p, pIdx) => {
-                        const key = `${o.id}-${pIdx}`;
+                      {s.products?.map((p, pIdx) => {
+                        const key = `${s.id}-${p.id}`;
                         const isPSelected = selectedProductKeys.has(key);
                         return (
                           <div
                             key={key}
-                            onClick={() => toggleProduct(o, pIdx)}
+                            onClick={() => toggleProduct(s, p)}
                             className="flex items-center gap-3 p-2.5 rounded-lg border border-transparent cursor-pointer"
                             style={{
                               background: isPSelected ? "white" : "transparent",
@@ -868,10 +917,13 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
               <button
                 onClick={goToStep2}
                 disabled={selectedProductKeys.size === 0 && selectedCatCount === 0}
-                className="flex items-center gap-2 px-8 py-2.5 rounded-lg text-[13px] font-bold text-white disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="flex items-center gap-2 px-8 py-2.5 rounded-lg text-[13px] font-bold text-white disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all"
                 style={{ background: "var(--brand-primary)" }}
               >
-                Tiếp tục chọn NCC <ChevronRight size={16} />
+                {(activeTab === "orders" && selectedSuppliersFromStep1.length > 0)
+                  ? "Tiếp tục hẹn giao"
+                  : "Tiếp tục chọn NCC"} 
+                <ChevronRight size={16} />
               </button>
             </div>
           </>
@@ -1222,7 +1274,13 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
             {/* Footer Step 3 */}
             <div className="px-5 py-4 border-t shrink-0 flex items-center justify-end gap-3 bg-white" style={{ borderColor: "var(--grid-border)" }}>
               <button
-                onClick={() => setStep(2)}
+                onClick={() => {
+                  if (activeTab === "orders" && selectedSuppliersFromStep1.length > 0) {
+                    setStep(1);
+                  } else {
+                    setStep(2);
+                  }
+                }}
                 className="flex items-center justify-center gap-1.5 px-8 py-2.5 rounded-lg text-[13px] font-bold cursor-pointer border"
                 style={{ borderColor: "var(--grid-border)", color: "var(--text-secondary)" }}
               >
