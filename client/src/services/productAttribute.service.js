@@ -66,7 +66,19 @@ const productAttributeService = {
    * Xóa thuộc tính
    */
   async deleteAttribute(type, id) {
-    const response = await axiosInstance.delete(`/product-attribute/${type}/${id}`);
+    const response = await axiosInstance.delete(`/product-attribute/${type}`, {
+      data: { id },
+    });
+    return response.data;
+  },
+
+  /**
+   * Xóa nhiều thuộc tính
+   */
+  async deleteMultipleAttributes(type, ids) {
+    const response = await axiosInstance.delete(`/product-attribute/${type}`, {
+      data: { ids },
+    });
     return response.data;
   },
 

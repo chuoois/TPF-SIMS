@@ -35,7 +35,6 @@ const INITIAL_PRODUCTS = [
     stock: 2,
     isPriced: true,
     warrantyMonths: 120,
-    leadTime: 0,
     img: "https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=600",
     description:
       "Sập thờ trạm khắc tỉ mỉ tinh xảo, chất liệu gỗ mít lõi liền khối chọn lọc.",
@@ -78,7 +77,6 @@ const INITIAL_PRODUCTS = [
     isPriced: true,
     warrantyMonths: 36,
     img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=600",
-    leadTime: 7,
     description:
       "Hàng mộc sẵn tại kho, có thể lấy ngay hoặc sơn hoàn thiện trong 7 ngày.",
     lots: [
@@ -108,7 +106,6 @@ const INITIAL_PRODUCTS = [
     isPriced: true,
     warrantyMonths: 60,
     img: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=600",
-    leadTime: 30,
     description:
       "Hàng đặt theo yêu cầu của Anh Hùng (Thanh Hóa). Đục tay sắc nét.",
     lots: [
@@ -531,15 +528,6 @@ export default function OwnerProducts() {
               <ShieldCheck size={10} /> BH: {item.warrantyMonths || 12}T
             </span>
           )}
-        </div>
-      ),
-    },
-    {
-      header: "Hoàn thiện",
-      render: (item) => (
-        <div className="flex items-center gap-1 font-bold text-[var(--status-pending)] bg-[var(--status-pending)]/10 px-2 py-0.5 rounded-md border border-[var(--status-pending)]/20 w-fit">
-          <Clock size={12} className="text-[var(--status-pending)]" />
-          {item.leadTime || 0} n
         </div>
       ),
     },
