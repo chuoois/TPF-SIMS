@@ -46,7 +46,7 @@ export const Navbar = () => {
   }, []);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 h-12 z-[100] flex items-center justify-between px-3 bg-white border-b border-gray-100 transition-colors duration-300 shadow-sm">
+    <nav className="fixed top-0 left-0 right-0 h-12 z-[20] flex items-center justify-between px-3 bg-white border-b border-gray-100 transition-colors duration-300 shadow-sm">
       {/* Background decorative */}
       <div
         className="absolute top-0 -left-3 w-[250px] h-full bg-no-repeat bg-left bg-contain pointer-events-none z-[1] opacity-50"
