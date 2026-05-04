@@ -462,6 +462,55 @@ export const DASHBOARD_LONG_STAY = [
   { id: "P012", name: "Ghế chạm hoa văn (mộc)", sku: "GHV-HM-45x45x95-raw", category: "Phòng ăn", type: "RAW", stock: 20, importedAt: "2025-10-01", importPrice: 3500000 },
 ];
 
+// ── accountant-home/index.jsx – Tổng quan tài chính ──────
+// Đơn hàng đã hoàn thành (doanh thu)
+export const COMPLETED_ORDERS = [
+  { id: "DH001", code: "HD260102-001", customer: "Nguyễn Văn A", total_amount: 55000000, month: "01/2026", date: "02/01/2026" },
+  { id: "DH002", code: "HD260115-002", customer: "Lê Thị B",     total_amount: 48000000, month: "01/2026", date: "15/01/2026" },
+  { id: "DH003", code: "HD260120-003", customer: "Phạm Văn C",   total_amount: 32000000, month: "01/2026", date: "20/01/2026" },
+  { id: "DH004", code: "HD260205-001", customer: "Trần Minh D",  total_amount: 65000000, month: "02/2026", date: "05/02/2026" },
+  { id: "DH005", code: "HD260218-002", customer: "Hoàng Lan E",  total_amount: 28000000, month: "02/2026", date: "18/02/2026" },
+  { id: "DH006", code: "HD260310-001", customer: "Vũ Đức F",     total_amount: 90000000, month: "03/2026", date: "10/03/2026" },
+  { id: "DH007", code: "HD260315-002", customer: "Đỗ Thị G",     total_amount: 42000000, month: "03/2026", date: "15/03/2026" },
+  { id: "DH008", code: "HD260322-003", customer: "Ngô Xuân H",   total_amount: 15000000, month: "03/2026", date: "22/03/2026" },
+];
+
+// Chi phí nhập hàng theo tháng (tổng hợp từ INIT_IMPORTS)
+export const IMPORT_COSTS_BY_MONTH = [
+  { month: "01/2026", total: 243000000, items: ["NK-0101", "NK-0110", "NK-0120"] },
+  { month: "02/2026", total: 315000000, items: ["NK-0201", "NK-0215", "NK-0228"] },
+  { month: "03/2026", total: 822000000, items: ["NK-0703-001","NK-0703-002","NK-0603-001","NK-0503-001","NK-0403-001","NK-0303-001","NK-0203-001","NK-0103-001"] },
+];
+
+// Lương nhân viên theo tháng
+export const SALARY_COSTS_BY_MONTH = [
+  { month: "01/2026", total: 68500000 },
+  { month: "02/2026", total: 71200000 },
+  { month: "03/2026", total: 57400000 },
+];
+
+// Dòng tiền – tiền đặt cọc
+export const CASH_FLOW_DEPOSITS = [
+  // Cọc nhập hàng từ xưởng
+  { id: "CF001", date: "02/01/2026", month: "01/2026", type: "IMPORT_DEPOSIT", label: "Đặt cọc nhập hàng – Xưởng Minh Phát", amount: 50000000 },
+  { id: "CF002", date: "12/02/2026", month: "02/2026", type: "IMPORT_DEPOSIT", label: "Đặt cọc nhập hàng – Xưởng Tiến Phát", amount: 80000000 },
+  { id: "CF003", date: "05/03/2026", month: "03/2026", type: "IMPORT_DEPOSIT", label: "Đặt cọc nhập hàng – Xưởng An Bình",  amount: 60000000 },
+  // Cọc của khách hàng
+  { id: "CF004", date: "10/03/2026", month: "03/2026", type: "CUSTOMER_DEPOSIT", label: "Đặt cọc đơn HD260310-001 – Vũ Đức F", amount: 30000000 },
+  { id: "CF005", date: "15/03/2026", month: "03/2026", type: "CUSTOMER_DEPOSIT", label: "Đặt cọc đơn HD260315-002 – Đỗ Thị G",  amount: 15000000 },
+  { id: "CF006", date: "20/02/2026", month: "02/2026", type: "CUSTOMER_DEPOSIT", label: "Đặt cọc đơn HD260218-002 – Hoàng Lan E", amount: 10000000 },
+  // Hoàn trả cọc khách
+  { id: "CF007", date: "25/02/2026", month: "02/2026", type: "REFUND_DEPOSIT", label: "Hoàn cọc đơn HD260210-001 – khách đổi mẫu", amount: -8000000 },
+  { id: "CF008", date: "18/03/2026", month: "03/2026", type: "REFUND_DEPOSIT", label: "Hoàn cọc đơn HD260301-002 – khách hủy lý do cá nhân", amount: -5000000 },
+];
+
+// Doanh thu bất thường – thu cọc từ đơn khách hủy do lỗi khách
+export const ABNORMAL_REVENUE = [
+  { id: "AB001", date: "20/01/2026", month: "01/2026", order_code: "HD260105-X01", customer: "Bùi Văn K", deposit_kept: 5000000, reason: "Khách hủy đơn sau 30 ngày, mất cọc theo hợp đồng" },
+  { id: "AB002", date: "14/02/2026", month: "02/2026", order_code: "HD260110-X02", customer: "Nguyễn Thị L", deposit_kept: 8000000, reason: "Khách hủy đơn khi hàng đã về xưởng" },
+  { id: "AB003", date: "28/03/2026", month: "03/2026", order_code: "HD260301-002", customer: "Trần Công M",  deposit_kept: 12000000, reason: "Khách hủy đơn sau khi xưởng đã gia công 50%" },
+];
+
 // ── accountant-home/index.jsx ─────────────────────────────
 export const HOME_MOCK_DATA = {
   customerDebt: {

@@ -1,408 +1,422 @@
 /**
- * Component AccountantHome
- * Tổng quan Tài chính cho Kế toán - Hiển thị Công nợ và Lương
- *
- * Updated Date: 17/03/2026
+ * AccountantHome – Tổng quan Tài chính
+ * Doanh thu / Chi phí / Lợi nhuận / Dòng tiền / Doanh thu bất thường / Lợi nhuận cuối
  */
 
-import { Link } from "react-router-dom";
+import { useState } from "react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
-import { 
-    Users, 
-    ChevronRight, 
-    Truck, 
-    Wallet, 
-    CheckCircle2, 
-    Clock, 
-    Hammer, 
-    Paintbrush 
+import {
+  TrendingUp, TrendingDown, DollarSign, ArrowDownUp,
+  AlertCircle, Star, ChevronDown, ChevronRight,
+  ArrowUpRight, ArrowDownRight, Minus,
 } from "lucide-react";
+import {
+  COMPLETED_ORDERS,
+  IMPORT_COSTS_BY_MONTH,
+  SALARY_COSTS_BY_MONTH,
+  CASH_FLOW_DEPOSITS,
+  ABNORMAL_REVENUE,
+} from "../mockData";
 
-// ===================== STATIC DATA =====================
-import { MOCK_DEBTS, INITIAL_SUPPLIERS, MOCK_EMPLOYEES } from "../mockData";
-
-const calculateTotalSalary = (emp) => {
-    let total = 0;
-    if (["SALES", "ACCOUNTANT", "SANDER", "PAINTER"].includes(emp.type)) {
-        total = (emp.base_rate * emp.days_worked) + emp.allowance;
-    }
-    return total;
+// ── Helpers ──────────────────────────────────────────────
+const fmt = (n) => new Intl.NumberFormat("vi-VN").format(n) + "₫";
+const fmtM = (n) => {
+  if (Math.abs(n) >= 1_000_000_000) return (n / 1_000_000_000).toFixed(2) + " Tỷ";
+  if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(1) + " Tr";
+  return fmt(n);
 };
 
-// ===================== HELPERS =====================
-const formatCurrency = (value) => {
-  if (value >= 1000000) return `${(value / 1000000).toFixed(1)} Tr`;
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(value);
+const ALL_MONTHS = ["01/2026", "02/2026", "03/2026"];
+
+// Tính toán theo tháng
+function buildMonthData(month) {
+  const revenue = COMPLETED_ORDERS
+    .filter((o) => o.month === month)
+    .reduce((s, o) => s + o.total_amount, 0);
+
+  const importCost = (IMPORT_COSTS_BY_MONTH.find((m) => m.month === month) || {}).total || 0;
+  const salaryCost = (SALARY_COSTS_BY_MONTH.find((m) => m.month === month) || {}).total || 0;
+  const totalCost = importCost + salaryCost;
+  const profit = revenue - totalCost;
+
+  const cashIn = CASH_FLOW_DEPOSITS
+    .filter((c) => c.month === month && c.amount > 0)
+    .reduce((s, c) => s + c.amount, 0);
+  const cashOut = CASH_FLOW_DEPOSITS
+    .filter((c) => c.month === month && c.amount < 0)
+    .reduce((s, c) => s + Math.abs(c.amount), 0);
+
+  const abnormal = ABNORMAL_REVENUE
+    .filter((a) => a.month === month)
+    .reduce((s, a) => s + a.deposit_kept, 0);
+
+  const finalProfit = profit + abnormal;
+
+  return { month, revenue, importCost, salaryCost, totalCost, profit, cashIn, cashOut, abnormal, finalProfit };
+}
+
+// ── Section Card ─────────────────────────────────────────
+function Section({ icon: Icon, iconColor, borderColor, title, subtitle, badge, children, defaultOpen = true }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="bg-white rounded-2xl overflow-hidden" style={{ border: `1px solid ${borderColor}`, boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+      <button
+        className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50/60 transition-colors"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: borderColor + "33" }}>
+            <Icon size={18} style={{ color: iconColor }} />
+          </div>
+          <div>
+            <p className="text-[15px] font-bold text-gray-800">{title}</p>
+            {subtitle && <p className="text-[12px] text-gray-400 mt-0.5">{subtitle}</p>}
+          </div>
+          {badge && (
+            <span className="ml-2 text-[12px] font-black px-2.5 py-0.5 rounded-full" style={{ backgroundColor: borderColor + "22", color: iconColor }}>
+              {badge}
+            </span>
+          )}
+        </div>
+        {open ? <ChevronDown size={16} className="text-gray-400" /> : <ChevronRight size={16} className="text-gray-400" />}
+      </button>
+      {open && <div style={{ borderTop: `1px solid ${borderColor}` }}>{children}</div>}
+    </div>
+  );
+}
+
+// ── KPI pill ─────────────────────────────────────────────
+function KpiRow({ items }) {
+  return (
+    <div className="grid gap-4 p-5" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0,1fr))` }}>
+      {items.map((k) => (
+        <div key={k.label}>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-0.5">{k.label}</p>
+          <p className="text-[18px] font-black leading-tight" style={{ color: k.color }}>{k.value}</p>
+          {k.sub && <p className="text-[11px] text-gray-400 mt-0.5">{k.sub}</p>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Mini table ───────────────────────────────────────────
+function MiniTable({ heads, rows }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-[13px]">
+        <thead>
+          <tr style={{ backgroundColor: "var(--grid-header-bg)", borderBottom: "1px solid var(--grid-border)" }}>
+            {heads.map((h, i) => (
+              <th key={i} className={`px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider ${h.right ? "text-right" : "text-left"}`}
+                style={{ color: "var(--text-placeholder)" }}>{h.label}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, i) => (
+            <tr key={i} style={{ borderBottom: "1px solid var(--grid-border)" }} className="hover:bg-gray-50/50 transition-colors">
+              {row}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ── Profit summary bar ───────────────────────────────────
+function ProfitBar({ label, value, color, icon: Icon }) {
+  return (
+    <div className="flex items-center justify-between py-3 px-5" style={{ borderBottom: "1px solid var(--grid-border)" }}>
+      <span className="flex items-center gap-2 text-[13px] font-semibold text-gray-600">
+        <Icon size={14} style={{ color }} />
+        {label}
+      </span>
+      <span className="text-[15px] font-black" style={{ color }}>{fmtM(value)}</span>
+    </div>
+  );
+}
+
+// ── DEPOSIT TYPE badge ────────────────────────────────────
+const DEPOSIT_META = {
+  IMPORT_DEPOSIT:   { label: "Cọc nhập hàng", bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" },
+  CUSTOMER_DEPOSIT: { label: "Cọc khách mua", bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" },
+  REFUND_DEPOSIT:   { label: "Hoàn cọc KH",   bg: "#FEF2F2", text: "#DC2626", border: "#FECACA" },
 };
 
-const getStatusColor = (status) => {
-  switch (status) {
-    case "Hoàn thành":
-      return { bg: "var(--status-focus)", text: "var(--status-success)" };
-    case "Chờ xử lý":
-      return { bg: "#FFF7ED", text: "var(--status-pending)" };
-    case "Đang giao":
-      return { bg: "#EFF6FF", text: "var(--palette-dark-blue)" };
-    case "Hủy":
-      return { bg: "#FEF2F2", text: "var(--status-error)" };
-    default:
-      return { bg: "var(--bg-main)", text: "var(--text-secondary)" };
-  }
-};
-
-// ===================== COMPONENT =====================
+// ══════════════════════════════════════════════════════════
 export default function AccountantHome() {
-    // 1. Tính toán Công nợ khách hàng
-    const customerDebtList = MOCK_DEBTS.map(d => {
-        const paid = d.payment_history?.reduce((sum, p) => sum + p.amount, 0) || d.deposit_amount || 0;
-        return {
-            ...d,
-            paid,
-            remaining: Math.max(0, d.total_amount - paid),
-        };
-    });
-    const remainingDebtOrders = customerDebtList.filter(d => d.remaining > 0);
-    
-    const customerDebt = {
-        totalOrders: customerDebtList.length,
-        remainingDebtOrders: remainingDebtOrders.length,
-        totalRemainingDebt: remainingDebtOrders.reduce((sum, d) => sum + d.remaining, 0),
-        settledOrders: customerDebtList.length - remainingDebtOrders.length,
-        recentDebts: customerDebtList.slice(0, 3).map(d => ({
-            code: d.order_code,
-            customer: d.customer_name,
-            total: d.total_amount,
-            paid: d.paid,
-            date: d.order_date
-        }))
-    };
+  const [selectedMonth, setSelectedMonth] = useState("03/2026");
 
-    // 2. Tính toán Công nợ nhà cung cấp
-    const debtSuppliers = INITIAL_SUPPLIERS.filter(s => s.debt > 0);
-    const supplierDebt = {
-        totalSuppliers: INITIAL_SUPPLIERS.length,
-        debtSuppliers: debtSuppliers.length,
-        totalRemainingDebt: debtSuppliers.reduce((sum, s) => sum + s.debt, 0),
-        settledSuppliers: INITIAL_SUPPLIERS.length - debtSuppliers.length,
-        recentSuppliers: INITIAL_SUPPLIERS.slice(0, 4)
-    };
+  const md = buildMonthData(selectedMonth);
+  const monthOrders = COMPLETED_ORDERS.filter((o) => o.month === selectedMonth);
+  const monthCashFlows = CASH_FLOW_DEPOSITS.filter((c) => c.month === selectedMonth);
+  const monthAbnormal = ABNORMAL_REVENUE.filter((a) => a.month === selectedMonth);
 
-    // 3. Tính toán Lương nhân viên
-    const employeeSalary = {
-        totalEmployees: MOCK_EMPLOYEES.length,
-        unpaidCount: MOCK_EMPLOYEES.filter(e => e.status === "Chưa thanh toán").length,
-        paidCount: MOCK_EMPLOYEES.filter(e => e.status === "Đã thanh toán").length,
-        totalFund: MOCK_EMPLOYEES.reduce((sum, e) => sum + calculateTotalSalary(e), 0),
-        recentSalaries: MOCK_EMPLOYEES.slice(0, 6).map(emp => {
-            let calc = "";
-            if (["SALES", "ACCOUNTANT", "SANDER", "PAINTER"].includes(emp.type)) {
-                calc = `${new Intl.NumberFormat("vi-VN").format(emp.base_rate)}₫ × ${emp.days_worked} ngày`;
-            }
-            return {
-                ...emp,
-                calc,
-                total: calculateTotalSalary(emp)
-            };
-        })
-    };
+  // Summary cards top
+  const summaryCards = [
+    { label: "Doanh thu", value: fmtM(md.revenue), color: "#15803D", bg: "#F0FDF4", border: "#BBF7D0", icon: TrendingUp },
+    { label: "Chi phí",   value: fmtM(md.totalCost), color: "#DC2626", bg: "#FEF2F2", border: "#FECACA", icon: TrendingDown },
+    { label: "Lợi nhuận", value: fmtM(md.profit),    color: md.profit >= 0 ? "#1D4ED8" : "#DC2626", bg: "#EFF6FF", border: "#BFDBFE", icon: DollarSign },
+    { label: "Lợi nhuận cuối", value: fmtM(md.finalProfit), color: md.finalProfit >= 0 ? "#7C3AED" : "#DC2626", bg: "#F5F3FF", border: "#DDD6FE", icon: Star },
+  ];
 
-    return (
-        <>
-            <PageHelmet title="Tổng quan tài chính - TPF-SIMS" />
+  return (
+    <>
+      <PageHelmet title="Tổng quan tài chính - TPF-SIMS" />
+      <div className="flex flex-col -m-6 p-6 gap-6 overflow-y-auto" style={{ backgroundColor: "var(--bg-main)", minHeight: "calc(100vh - 64px)" }}>
 
-            <div
-                className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 overflow-y-auto"
-                style={{ backgroundColor: "var(--bg-main)" }}
-            >
-                {/* Header */}
-                <div className="mb-6 shrink-0">
-                    <h1 className="text-xl font-bold" style={{ color: "var(--text-main)" }}>
-                        Tổng quan tài chính
-                    </h1>
-                    <p className="text-[13px] mt-0.5" style={{ color: "var(--text-placeholder)" }}>
-                        Theo dõi công nợ khách hàng, nhà cung cấp và lương nhân viên.
-                    </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    {/* Customer Debt Summary */}
-                    <div className="bg-white rounded-2xl p-5 border border-red-100 shadow-sm">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-500">
-                                <Users size={20} />
-                            </div>
-                            <h3 className="text-[15px] font-bold text-gray-800">Công nợ khách hàng</h3>
-                        </div>
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-end">
-                                <span className="text-[12px] text-gray-500 font-medium">Tổng dư nợ:</span>
-                                <span className="text-[16px] font-black text-red-600">
-                                    {new Intl.NumberFormat("vi-VN").format(customerDebt.totalRemainingDebt)}₫
-                                </span>
-                            </div>
-                            <div className="flex justify-between text-[13px]">
-                                <span className="text-gray-400">Đơn đang nợ:</span>
-                                <span className="font-bold text-gray-700">{customerDebt.remainingDebtOrders} đơn</span>
-                            </div>
-                            <Link to="/accountant/customer-debt" className="block text-center mt-2 py-2 text-[12px] font-bold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition">
-                                Chi tiết công nợ khách
-                            </Link>
-                        </div>
-                    </div>
-
-                    {/* Supplier Debt Summary */}
-                    <div className="bg-white rounded-2xl p-5 border border-amber-100 shadow-sm">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500">
-                                <Truck size={20} />
-                            </div>
-                            <h3 className="text-[15px] font-bold text-gray-800">Công nợ thu mua</h3>
-                        </div>
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-end">
-                                <span className="text-[12px] text-gray-500 font-medium">Tổng tiền nợ:</span>
-                                <span className="text-[16px] font-black text-amber-600">
-                                    {new Intl.NumberFormat("vi-VN").format(supplierDebt.totalRemainingDebt)}₫
-                                </span>
-                            </div>
-                            <div className="flex justify-between text-[13px]">
-                                <span className="text-gray-400">Nhà cung cấp nợ:</span>
-                                <span className="font-bold text-gray-700">{supplierDebt.debtSuppliers} NCC</span>
-                            </div>
-                            <Link to="/accountant/supplier-debt" className="block text-center mt-2 py-2 text-[12px] font-bold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition">
-                                Chi tiết công nợ xưởng
-                            </Link>
-                        </div>
-                    </div>
-
-                    {/* Employee Salary Summary */}
-                    <div className="bg-white rounded-2xl p-5 border border-blue-100 shadow-sm">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
-                                <Wallet size={20} />
-                            </div>
-                            <h3 className="text-[15px] font-bold text-gray-800">Lương nhân viên</h3>
-                        </div>
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-end">
-                                <span className="text-[12px] text-gray-500 font-medium">Quỹ lương tháng:</span>
-                                <span className="text-[16px] font-black text-blue-600">
-                                    {new Intl.NumberFormat("vi-VN").format(employeeSalary.totalFund)}₫
-                                </span>
-                            </div>
-                            <div className="flex justify-between text-[13px]">
-                                <span className="text-gray-400">Đã thanh toán:</span>
-                                <span className="font-bold text-green-600">{employeeSalary.paidCount} NV</span>
-                            </div>
-                            <Link to="/accountant/employee-salary" className="block text-center mt-2 py-2 text-[12px] font-bold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition">
-                                Chi tiết bảng lương
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-
-        {/* ─────────────────────────────────────────
-          4.  CÔNG NỢ KHÁCH HÀNG
-        ───────────────────────────────────────── */}
-
-        <div
-          className="bg-white rounded-2xl shrink-0 mb-6"
-          style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
-        >
-          {/* Header */}
-          <div className="p-5 border-b flex items-center justify-between" style={{ borderColor: "var(--grid-border)" }}>
-            <h3 className="text-[15px] font-bold flex items-center gap-2" style={{ color: "var(--text-main)" }}>
-              <Users size={18} className="text-blue-500" />
-              Công nợ khách hàng
-            </h3>
-            <Link to="/accountant/customer-debt" className="flex items-center gap-1 text-[13px] font-semibold" style={{ color: "var(--brand-primary)" }}>
-              Xem tất cả <ChevronRight size={14} />
-            </Link>
+        {/* Header */}
+        <div className="flex items-start justify-between shrink-0">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">Tổng quan tài chính</h1>
+            <p className="text-[13px] text-gray-400 mt-0.5">Doanh thu · Chi phí · Lợi nhuận · Dòng tiền · Doanh thu bất thường</p>
           </div>
-
-          {/* KPI row */}
-          <div className="grid grid-cols-3 gap-4 p-5 border-b" style={{ borderColor: "var(--grid-border)" }}>
-            {[
-              { label: "Tổng đơn hàng", value: customerDebt.totalOrders.toString(), color: "text-gray-800", sub: "nợ + đã tất toán" },
-              { label: "Còn nợ", value: `${customerDebt.remainingDebtOrders} đơn`, color: "text-amber-600", sub: new Intl.NumberFormat("vi-VN").format(customerDebt.totalRemainingDebt) + "₫" },
-              { label: "Đã tất toán", value: `${customerDebt.settledOrders} đơn`, color: "text-green-600", sub: "Toàn bộ số tiền đã thu" },
-            ].map(kpi => (
-              <div key={kpi.label} className="flex flex-col gap-0.5">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">{kpi.label}</p>
-                <p className={`text-xl font-black ${kpi.color}`}>{kpi.value}</p>
-                <p className="text-[11px] text-gray-400 font-medium">{kpi.sub}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Mini table: top 3 debt orders */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-[13px]">
-              <thead style={{ backgroundColor: "var(--grid-header-bg)", borderBottom: "1px solid var(--grid-border)" }}>
-                <tr>
-                  {["Mã đơn", "Khách hàng", "Tổng tiền", "Đã thu", "Còn nợ", "Ngày đặt"].map((h, i) => (
-                    <th key={i} className={`px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider ${i >= 2 && i <= 4 ? "text-right" : ""}`} style={{ color: "var(--text-placeholder)" }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {customerDebt.recentDebts.map((row, idx) => {
-                  const remaining = row.total - row.paid;
-                  return (
-                    <tr key={idx} className="hover:bg-gray-50/60 transition-colors" style={{ borderBottom: "1px solid var(--grid-border)" }}>
-                      <td className="px-4 py-2.5"><span className="font-mono text-[11px] font-bold bg-gray-100 text-gray-600 border border-gray-200 px-1.5 py-0.5 rounded">{row.code}</span></td>
-                      <td className="px-4 py-2.5 font-semibold text-gray-800">{row.customer}</td>
-                      <td className="px-4 py-2.5 text-right text-gray-600">{new Intl.NumberFormat("vi-VN").format(row.total)}₫</td>
-                      <td className="px-4 py-2.5 text-right text-gray-500">{new Intl.NumberFormat("vi-VN").format(row.paid)}₫</td>
-                      <td className="px-4 py-2.5 text-right font-bold text-amber-600">{new Intl.NumberFormat("vi-VN").format(remaining)}₫</td>
-                      <td className="px-4 py-2.5 text-gray-400 text-[12px]">{row.date}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          {/* Month selector */}
+          <div className="flex items-center gap-2 bg-white border rounded-xl px-3 py-2 shadow-sm" style={{ borderColor: "var(--grid-border)" }}>
+            <span className="text-[12px] font-semibold text-gray-500">Tháng:</span>
+            <div className="flex gap-1">
+              {ALL_MONTHS.map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setSelectedMonth(m)}
+                  className="px-3 py-1 rounded-lg text-[12px] font-bold transition-colors"
+                  style={selectedMonth === m
+                    ? { backgroundColor: "#1D4ED8", color: "#fff" }
+                    : { backgroundColor: "#F3F4F6", color: "#6B7280" }}
+                >{m}</button>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* ─────────────────────────────────────────
-          5.  CÔNG NỢ THU MUA (nhà cung cấp)
-        ───────────────────────────────────────── */}
-        <div
-          className="bg-white rounded-2xl shrink-0 mb-6"
-          style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
-        >
-          <div className="p-5 border-b flex items-center justify-between" style={{ borderColor: "var(--grid-border)" }}>
-            <h3 className="text-[15px] font-bold flex items-center gap-2" style={{ color: "var(--text-main)" }}>
-              <Truck size={18} className="text-green-600" />
-              Công nợ thu mua
-            </h3>
-            <Link to="/accountant/supplier-debt" className="flex items-center gap-1 text-[13px] font-semibold" style={{ color: "var(--brand-primary)" }}>
-              Xem tất cả <ChevronRight size={14} />
-            </Link>
-          </div>
+        {/* Top KPI cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
+          {summaryCards.map(({ label, value, color, bg, border, icon: Icon }) => (
+            <div key={label} className="bg-white rounded-2xl p-4 flex items-center gap-3 shadow-sm" style={{ border: `1px solid ${border}` }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: bg }}>
+                <Icon size={18} style={{ color }} />
+              </div>
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">{label}</p>
+                <p className="text-[17px] font-black leading-tight" style={{ color }}>{value}</p>
+              </div>
+            </div>
+          ))}
+        </div>
 
-          {/* KPI row */}
-          <div className="grid grid-cols-3 gap-4 p-5 border-b" style={{ borderColor: "var(--grid-border)" }}>
+        {/* ── 1. DOANH THU ─────────────────────────────── */}
+        <Section
+          icon={TrendingUp} iconColor="#15803D" borderColor="#BBF7D0"
+          title="Doanh thu (Đầu vào)"
+          subtitle="Ghi nhận từ các đơn hàng đã hoàn thành"
+          badge={`${monthOrders.length} đơn`}
+        >
+          <KpiRow items={[
+            { label: "Số đơn hoàn thành", value: monthOrders.length, color: "#374151", sub: `Tháng ${selectedMonth}` },
+            { label: "Tổng doanh thu",    value: fmtM(md.revenue),   color: "#15803D", sub: "Tính từ tổng giá trị đơn" },
+          ]} />
+          <MiniTable
+            heads={[{ label: "Mã đơn" }, { label: "Khách hàng" }, { label: "Ngày HT" }, { label: "Giá trị", right: true }]}
+            rows={monthOrders.map((o) => (
+              <>
+                <td className="px-4 py-2.5"><span className="font-mono text-[11px] font-bold bg-gray-100 text-gray-600 border border-gray-200 px-1.5 py-0.5 rounded">{o.code}</span></td>
+                <td className="px-4 py-2.5 font-semibold text-gray-800">{o.customer}</td>
+                <td className="px-4 py-2.5 text-gray-500 text-[12px]">{o.date}</td>
+                <td className="px-4 py-2.5 text-right font-black text-green-700">{fmtM(o.total_amount)}</td>
+              </>
+            ))}
+          />
+          <div className="flex justify-end px-5 py-3 bg-green-50/60">
+            <span className="text-[12px] font-bold text-green-700 uppercase tracking-wider mr-4">Tổng doanh thu</span>
+            <span className="text-[15px] font-black text-green-700">{fmt(md.revenue)}</span>
+          </div>
+        </Section>
+
+        {/* ── 2. CHI PHÍ ───────────────────────────────── */}
+        <Section
+          icon={TrendingDown} iconColor="#DC2626" borderColor="#FECACA"
+          title="Chi phí (Đầu ra)"
+          subtitle="Lương nhân viên + Chi phí nhập hàng"
+          badge={fmtM(md.totalCost)}
+        >
+          <KpiRow items={[
+            { label: "Lương nhân viên",  value: fmtM(md.salaryCost),  color: "#D97706", sub: "Chi trả kỳ này" },
+            { label: "Chi phí nhập hàng", value: fmtM(md.importCost), color: "#DC2626", sub: "Tổng phiếu nhập" },
+            { label: "Tổng chi phí",     value: fmtM(md.totalCost),   color: "#7F1D1D", sub: "Lương + Nhập hàng" },
+          ]} />
+          <div style={{ borderTop: "1px solid #FECACA" }}>
             {[
-              { label: "Nhà cung cấp", value: supplierDebt.totalSuppliers.toString(), color: "text-gray-800", sub: "đang theo dõi" },
-              { label: "Đang có nợ", value: `${supplierDebt.debtSuppliers} NCC`, color: "text-red-600", sub: new Intl.NumberFormat("vi-VN").format(supplierDebt.totalRemainingDebt) + "₫" },
-              { label: "Đã tất toán", value: `${supplierDebt.settledSuppliers} NCC`, color: "text-green-600", sub: "Không còn dư nợ" },
-            ].map(kpi => (
-              <div key={kpi.label} className="flex flex-col gap-0.5">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">{kpi.label}</p>
-                <p className={`text-xl font-black ${kpi.color}`}>{kpi.value}</p>
-                <p className="text-[11px] text-gray-400 font-medium">{kpi.sub}</p>
+              { label: "Chi phí lương nhân viên", value: md.salaryCost, color: "#D97706" },
+              { label: "Chi phí nhập hàng sản phẩm", value: md.importCost, color: "#DC2626" },
+            ].map((r) => (
+              <div key={r.label} className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid #FEE2E2" }}>
+                <span className="text-[13px] text-gray-600 font-medium">{r.label}</span>
+                <span className="text-[14px] font-black" style={{ color: r.color }}>{fmt(r.value)}</span>
               </div>
             ))}
+            <div className="flex items-center justify-between px-5 py-3 bg-red-50/60">
+              <span className="text-[13px] font-black uppercase tracking-wider text-red-700">Tổng chi phí</span>
+              <span className="text-[16px] font-black text-red-700">{fmt(md.totalCost)}</span>
+            </div>
           </div>
+        </Section>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-[13px]">
-              <thead style={{ backgroundColor: "var(--grid-header-bg)", borderBottom: "1px solid var(--grid-border)" }}>
-                <tr>
-                  {["Mã NCC", "Nhà cung cấp", "Tổng nhập hàng", "Đã thanh toán", "Còn nợ"].map((h, i) => (
-                    <th key={i} className={`px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider ${i >= 2 ? "text-right" : ""}`} style={{ color: "var(--text-placeholder)" }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {supplierDebt.recentSuppliers.map((row, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50/60 transition-colors" style={{ borderBottom: "1px solid var(--grid-border)" }}>
-                    <td className="px-4 py-2.5"><span className="font-mono text-[11px] font-bold bg-gray-100 text-gray-600 border border-gray-200 px-1.5 py-0.5 rounded">{row.code}</span></td>
-                    <td className="px-4 py-2.5 font-semibold text-gray-800">{row.name}</td>
-                    <td className="px-4 py-2.5 text-right text-gray-600">{new Intl.NumberFormat("vi-VN").format(row.totalImport)}₫</td>
-                    <td className="px-4 py-2.5 text-right text-green-600 font-semibold">{new Intl.NumberFormat("vi-VN").format(row.totalImport - row.debt)}₫</td>
-                    <td className="px-4 py-2.5 text-right">
-                      {row.debt > 0
-                        ? <span className="font-black text-red-600">{new Intl.NumberFormat("vi-VN").format(row.debt)}₫</span>
-                        : <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">Đã tất toán</span>
-                      }
-                    </td>
-                  </tr>
+        {/* ── 3. LỢI NHUẬN ─────────────────────────────── */}
+        <Section
+          icon={DollarSign} iconColor="#1D4ED8" borderColor="#BFDBFE"
+          title={`Lợi nhuận – Tháng ${selectedMonth}`}
+          subtitle="Doanh thu – Chi phí"
+        >
+          <div style={{ padding: "0" }}>
+            <ProfitBar label="Doanh thu" value={md.revenue} color="#15803D" icon={ArrowUpRight} />
+            <ProfitBar label="Chi phí"   value={-md.totalCost} color="#DC2626" icon={ArrowDownRight} />
+            <div className="flex items-center justify-between py-4 px-5 bg-blue-50/60">
+              <span className="flex items-center gap-2 text-[14px] font-black text-blue-800 uppercase tracking-wide">
+                <Minus size={14} />Lợi nhuận tháng
+              </span>
+              <span className="text-[20px] font-black" style={{ color: md.profit >= 0 ? "#1D4ED8" : "#DC2626" }}>
+                {md.profit >= 0 ? "+" : ""}{fmtM(md.profit)}
+              </span>
+            </div>
+          </div>
+        </Section>
+
+        {/* ── 4. DÒNG TIỀN ─────────────────────────────── */}
+        <Section
+          icon={ArrowDownUp} iconColor="#7C3AED" borderColor="#DDD6FE"
+          title="Dòng tiền"
+          subtitle="Tiền đặt cọc nhập hàng, cọc khách mua và hoàn trả cọc"
+          badge={`${monthCashFlows.length} giao dịch`}
+        >
+          <KpiRow items={[
+            { label: "Tiền cọc vào",  value: fmtM(md.cashIn),  color: "#15803D", sub: "Cọc nhập hàng + cọc KH" },
+            { label: "Hoàn trả cọc", value: fmtM(md.cashOut), color: "#DC2626", sub: "Hoàn cọc cho khách" },
+            { label: "Dòng tiền ròng", value: fmtM(md.cashIn - md.cashOut), color: "#7C3AED", sub: "Vào – Hoàn trả" },
+          ]} />
+          <MiniTable
+            heads={[
+              { label: "Ngày" }, { label: "Loại" }, { label: "Nội dung" }, { label: "Số tiền", right: true },
+            ]}
+            rows={monthCashFlows.map((c) => {
+              const meta = DEPOSIT_META[c.type];
+              return (
+                <>
+                  <td className="px-4 py-2.5 text-[12px] text-gray-500">{c.date}</td>
+                  <td className="px-4 py-2.5">
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                      style={{ backgroundColor: meta.bg, color: meta.text, border: `1px solid ${meta.border}` }}>
+                      {meta.label}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-gray-700 text-[13px]">{c.label}</td>
+                  <td className="px-4 py-2.5 text-right font-black" style={{ color: c.amount >= 0 ? "#15803D" : "#DC2626" }}>
+                    {c.amount >= 0 ? "+" : ""}{fmtM(c.amount)}
+                  </td>
+                </>
+              );
+            })}
+          />
+        </Section>
+
+        {/* ── 5. DOANH THU BẤT THƯỜNG ──────────────────── */}
+        <Section
+          icon={AlertCircle} iconColor="#D97706" borderColor="#FDE68A"
+          title="Doanh thu bất thường"
+          subtitle="Thu cọc từ đơn bị hủy do lỗi phía khách hàng"
+          badge={monthAbnormal.length > 0 ? `${monthAbnormal.length} trường hợp` : "Không có"}
+          defaultOpen={monthAbnormal.length > 0}
+        >
+          {monthAbnormal.length === 0 ? (
+            <div className="px-5 py-6 text-center text-[13px] text-gray-400">Không có doanh thu bất thường trong tháng {selectedMonth}</div>
+          ) : (
+            <>
+              <MiniTable
+                heads={[
+                  { label: "Mã đơn hủy" }, { label: "Khách hàng" }, { label: "Ngày" }, { label: "Lý do" }, { label: "Tiền cọc thu", right: true },
+                ]}
+                rows={monthAbnormal.map((a) => (
+                  <>
+                    <td className="px-4 py-2.5"><span className="font-mono text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded">{a.order_code}</span></td>
+                    <td className="px-4 py-2.5 font-semibold text-gray-800">{a.customer}</td>
+                    <td className="px-4 py-2.5 text-[12px] text-gray-500">{a.date}</td>
+                    <td className="px-4 py-2.5 text-[12px] text-gray-500 max-w-[240px]">{a.reason}</td>
+                    <td className="px-4 py-2.5 text-right font-black text-amber-600">{fmtM(a.deposit_kept)}</td>
+                  </>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* ─────────────────────────────────────────
-          6.  LƯƠNG NHÂN VIÊN
-        ───────────────────────────────────────── */}
-        <div
-          className="bg-white rounded-2xl shrink-0 mb-6"
-          style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)" }}
-        >
-          <div className="p-5 border-b flex items-center justify-between" style={{ borderColor: "var(--grid-border)" }}>
-            <h3 className="text-[15px] font-bold flex items-center gap-2" style={{ color: "var(--text-main)" }}>
-              <Wallet size={18} className="text-amber-500" />
-              Lương nhân viên – Tháng {employeeSalary.recentSalaries[0]?.month || "hiện tại"}
-            </h3>
-            <Link to="/accountant/employee-salary" className="flex items-center gap-1 text-[13px] font-semibold" style={{ color: "var(--brand-primary)" }}>
-              Xem tất cả <ChevronRight size={14} />
-            </Link>
-          </div>
-
-          {/* KPI row */}
-          <div className="grid grid-cols-4 gap-4 p-5 border-b" style={{ borderColor: "var(--grid-border)" }}>
-            {[
-              { label: "Tổng nhân viên", value: employeeSalary.totalEmployees.toString(),  color: "text-gray-800", sub: "nhân sự" },
-              { label: "Chưa thanh toán", value: `${employeeSalary.unpaidCount} NV`, color: "text-red-600", sub: "Cần chi trả kỳ này" },
-              { label: "Đã thanh toán", value: `${employeeSalary.paidCount} NV`, color: "text-green-600", sub: "Đã tất toán" },
-              { label: "Tổng quỹ lương", value: new Intl.NumberFormat("vi-VN").format(employeeSalary.totalFund) + "₫", color: "text-amber-600", sub: `Tháng ${employeeSalary.recentSalaries[0]?.month || ""}` },
-            ].map(kpi => (
-              <div key={kpi.label} className="flex flex-col gap-0.5">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">{kpi.label}</p>
-                <p className={`text-[17px] font-black leading-tight ${kpi.color}`}>{kpi.value}</p>
-                <p className="text-[11px] text-gray-400 font-medium">{kpi.sub}</p>
+              />
+              <div className="flex justify-end px-5 py-3 bg-amber-50/60">
+                <span className="text-[12px] font-bold text-amber-700 uppercase tracking-wider mr-4">Tổng doanh thu bất thường</span>
+                <span className="text-[15px] font-black text-amber-700">{fmt(md.abnormal)}</span>
               </div>
-            ))}
-          </div>
+            </>
+          )}
+        </Section>
 
+        {/* ── 6. LỢI NHUẬN CUỐI ────────────────────────── */}
+        <Section
+          icon={Star} iconColor="#7C3AED" borderColor="#DDD6FE"
+          title="Lợi nhuận cuối cùng"
+          subtitle="Lợi nhuận + Doanh thu bất thường"
+        >
+          <div>
+            <ProfitBar label="Lợi nhuận tháng" value={md.profit} color={md.profit >= 0 ? "#1D4ED8" : "#DC2626"} icon={DollarSign} />
+            <ProfitBar label="Doanh thu bất thường" value={md.abnormal} color="#D97706" icon={AlertCircle} />
+            <div className="flex items-center justify-between py-5 px-5 bg-violet-50/80">
+              <div>
+                <p className="text-[12px] font-bold uppercase tracking-wider text-violet-500 mb-0.5">Lợi nhuận cuối cùng</p>
+                <p className="text-[12px] text-gray-400">= Lợi nhuận + Doanh thu bất thường</p>
+              </div>
+              <span className="text-[26px] font-black" style={{ color: md.finalProfit >= 0 ? "#7C3AED" : "#DC2626" }}>
+                {md.finalProfit >= 0 ? "+" : ""}{fmtM(md.finalProfit)}
+              </span>
+            </div>
+          </div>
+        </Section>
+
+        {/* All-months summary table */}
+        <div className="bg-white rounded-2xl overflow-hidden shrink-0" style={{ border: "1px solid var(--grid-border)", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+          <div className="px-5 py-4 border-b" style={{ borderColor: "var(--grid-border)" }}>
+            <p className="text-[15px] font-bold text-gray-800">So sánh các tháng</p>
+            <p className="text-[12px] text-gray-400 mt-0.5">Tổng hợp doanh thu, chi phí và lợi nhuận</p>
+          </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-[13px]">
-              <thead style={{ backgroundColor: "var(--grid-header-bg)", borderBottom: "1px solid var(--grid-border)" }}>
-                <tr>
-                  {["Mã NV", "Họ tên", "Bộ phận", "Cách tính", "Tổng lương", "Trạng thái"].map((h, i) => (
-                    <th key={i} className={`px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider ${i === 4 ? "text-right" : i === 5 ? "text-center" : ""}`} style={{ color: "var(--text-placeholder)" }}>{h}</th>
+            <table className="w-full text-[13px]">
+              <thead>
+                <tr style={{ backgroundColor: "var(--grid-header-bg)", borderBottom: "1px solid var(--grid-border)" }}>
+                  {["Tháng","Doanh thu","Chi phí lương","Chi phí nhập","Tổng chi phí","Lợi nhuận","DT bất thường","Lợi nhuận cuối"].map((h, i) => (
+                    <th key={i} className={`px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider ${i === 0 ? "text-left" : "text-right"}`}
+                      style={{ color: "var(--text-placeholder)" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {employeeSalary.recentSalaries.map((emp, idx) => {
-                  const isPaid = emp.status === "Đã thanh toán";
-                  const RoleIcon = emp.type === "SALES" ? Users : emp.type === "SANDER" ? Hammer : Paintbrush;
-                  const roleColor = emp.type === "SALES" ? "text-blue-600" : emp.type === "SANDER" ? "text-amber-600" : "text-green-600";
+                {ALL_MONTHS.map((m) => {
+                  const d = buildMonthData(m);
+                  const isSelected = m === selectedMonth;
                   return (
-                    <tr key={idx} className="hover:bg-gray-50/60 transition-colors" style={{ borderBottom: "1px solid var(--grid-border)" }}>
-                      <td className="px-4 py-2.5"><span className="font-mono text-[11px] font-bold bg-gray-100 text-gray-600 border border-gray-200 px-1.5 py-0.5 rounded">{emp.id}</span></td>
-                      <td className="px-4 py-2.5 font-semibold text-gray-800">{emp.name}</td>
-                      <td className="px-4 py-2.5">
-                        <span className={`flex items-center gap-1 text-[12px] font-medium ${roleColor}`}>
-                          <RoleIcon size={13} />{emp.role}
-                        </span>
+                    <tr key={m}
+                      onClick={() => setSelectedMonth(m)}
+                      className="cursor-pointer hover:bg-violet-50/40 transition-colors"
+                      style={{ borderBottom: "1px solid var(--grid-border)", backgroundColor: isSelected ? "#F5F3FF" : undefined }}
+                    >
+                      <td className="px-4 py-3 font-bold text-gray-800">{m}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-green-700">{fmtM(d.revenue)}</td>
+                      <td className="px-4 py-3 text-right text-amber-600">{fmtM(d.salaryCost)}</td>
+                      <td className="px-4 py-3 text-right text-red-600">{fmtM(d.importCost)}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-red-700">{fmtM(d.totalCost)}</td>
+                      <td className="px-4 py-3 text-right font-bold" style={{ color: d.profit >= 0 ? "#1D4ED8" : "#DC2626" }}>
+                        {d.profit >= 0 ? "+" : ""}{fmtM(d.profit)}
                       </td>
-                      <td className="px-4 py-2.5 text-[12px] text-gray-500">{emp.calc}</td>
-                      <td className="px-4 py-2.5 text-right font-black text-amber-600">{new Intl.NumberFormat("vi-VN").format(emp.total)}₫</td>
-                      <td className="px-4 py-2.5 text-center">
-                        <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border ${isPaid ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-600 border-red-200"}`}>
-                          {isPaid ? <CheckCircle2 size={11} /> : <Clock size={11} />}
-                          {emp.status}
-                        </span>
+                      <td className="px-4 py-3 text-right text-amber-600">{d.abnormal > 0 ? fmtM(d.abnormal) : "—"}</td>
+                      <td className="px-4 py-3 text-right font-black" style={{ color: d.finalProfit >= 0 ? "#7C3AED" : "#DC2626" }}>
+                        {d.finalProfit >= 0 ? "+" : ""}{fmtM(d.finalProfit)}
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
-              <tfoot style={{ backgroundColor: "var(--grid-header-bg)", borderTop: "1px solid var(--grid-border)" }}>
-                <tr>
-                  <td colSpan={4} className="px-4 py-3 text-right text-[12px] font-black uppercase tracking-wider text-gray-500">Tổng quỹ lương</td>
-                  <td className="px-4 py-3 text-right text-[15px] font-black text-amber-600">{new Intl.NumberFormat("vi-VN").format(employeeSalary.totalFund)}₫</td>
-                  <td />
-                </tr>
-              </tfoot>
             </table>
           </div>
         </div>
