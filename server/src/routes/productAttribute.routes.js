@@ -165,9 +165,9 @@ router.post("/:type/save", productAttributeController.saveAttribute);
 
 /**
  * @swagger
- * /api/product-attribute/{type}/{id}:
+ * /api/product-attribute/{type}:
  *   delete:
- *     summary: Xóa thuộc tính (Soft Delete)
+ *     summary: Xóa thuộc tính (một hoặc nhiều) qua Request Body
  *     tags: [ProductAttributes]
  *     parameters:
  *       - in: path
@@ -176,12 +176,23 @@ router.post("/:type/save", productAttributeController.saveAttribute);
  *         schema:
  *           type: string
  *           enum: [category, color, material, room]
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: integer
+ *               ids:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *     responses:
+ *       200:
+ *         description: Xóa thành công
  */
-router.delete("/:type/:id", productAttributeController.deleteAttribute);
+router.delete("/:type", productAttributeController.deleteAttribute);
 
 module.exports = router;
