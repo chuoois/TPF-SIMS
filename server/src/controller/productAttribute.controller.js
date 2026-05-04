@@ -370,10 +370,12 @@ class ProductAttributeController {
      */
     async deleteAttribute(req, res) {
         try {
-            const { type, id } = req.params;
+            const { type } = req.params;
+            const { id, ids } = req.body;
             
             let model;
             let pkField;
+            let searchField;
             let typeLabel;
             let logType;
 
@@ -381,24 +383,28 @@ class ProductAttributeController {
                 case "category":
                     model = ProductCategory;
                     pkField = "pk_product_category_id";
+                    searchField = "category_name";
                     typeLabel = "danh mục";
                     logType = "DELETE_CATEGORY";
                     break;
                 case "color":
                     model = ProductColor;
                     pkField = "pk_product_color_id";
+                    searchField = "color_name";
                     typeLabel = "màu sắc";
                     logType = "DELETE_COLOR";
                     break;
                 case "material":
                     model = ProductMaterial;
                     pkField = "pk_product_material_id";
+                    searchField = "material_name";
                     typeLabel = "chất liệu";
                     logType = "DELETE_MATERIAL";
                     break;
                 case "room":
                     model = ProductRoom;
                     pkField = "pk_product_room_id";
+                    searchField = "room_name";
                     typeLabel = "phòng/khu vực";
                     logType = "DELETE_ROOM";
                     break;
@@ -406,22 +412,36 @@ class ProductAttributeController {
                     return res.status(400).json({ message: "Loại thuộc tính không hợp lệ" });
             }
 
-            const item = await model.findByPk(id);
-            if (!item) {
+            // Ưu tiên ids (mảng), nếu không có thì lấy id (đơn lẻ)
+            const targetIds = Array.isArray(ids) && ids.length
+                ? ids.map(value => Number(value)).filter(Number.isInteger)
+                : (id ? [Number(id)].filter(Number.isInteger) : []);
+
+            if (!targetIds.length) {
+                return res.status(400).json({ message: "Yêu cầu cung cấp id hoặc ids để xóa" });
+            }
+
+            const items = await model.findAll({ where: { [pkField]: targetIds } });
+            if (!items.length) {
                 return res.status(404).json({ message: `Không tìm thấy ${typeLabel} yêu cầu` });
             }
 
-            // Soft delete: chuyển status sang 0
-            await item.update({ status: 0 });
+            await model.destroy({ where: { [pkField]: targetIds } });
+
+            const itemNames = items.map(item => item[searchField]).join(", ");
+            const deletedCount = items.length;
 
             await systemLogController.record(
                 req,
                 logType,
-                `Đã xóa ${typeLabel}: ${item.category_name || item.color_name || item.material_name || item.room_name}`,
+                `Đã xóa ${typeLabel}${deletedCount > 1 ? "s" : ""}: ${itemNames}`,
                 "WARNING"
             );
 
-            return res.status(200).json({ message: `Đã xóa ${typeLabel} thành công` });
+            return res.status(200).json({
+                message: `Đã xóa ${deletedCount} ${typeLabel} thành công`,
+                deletedIds: items.map(item => item[pkField])
+            });
         } catch (error) {
             console.error("Delete attribute error:", error);
             return res.status(500).json({ message: "Lỗi hệ thống khi xóa thuộc tính" });
