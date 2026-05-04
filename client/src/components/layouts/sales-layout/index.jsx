@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { NavbarSale } from "./NavbarSale";
+import { Navbar } from "@/components/layouts/common/Navbar";
 import { SidebarSales } from "./SidebarSales";
 
 /**
@@ -12,7 +12,7 @@ export const SalesLayout = () => {
   return (
     <div className="flex flex-col h-screen">
       {/* Header */}
-      <NavbarSale />
+      <Navbar />
 
       <div className="flex flex-1 overflow-hidden pt-12">
         {/* Sidebar */}

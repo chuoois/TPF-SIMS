@@ -251,7 +251,11 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
     });
   };
 
-  const toggleAllSuppliers = () => {
+  const toggleAllSuppliers = (checked) => {
+    if (checked === false) {
+      setSelectedProductKeys(new Set());
+      return;
+    }
     // Với logic mới (1 NCC/phiếu), toggle all có lẽ không nên áp dụng cho toàn bộ danh sách NCC
     // mà chỉ nên áp dụng cho NCC đang được mở rộng. 
     // Tuy nhiên để giữ tính nhất quán, ta có thể để người dùng chọn NCC nào thì NCC đó được chọn tất cả SP.
@@ -597,16 +601,21 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
     return groups;
   }, [items, step]);
 
-  // Initialize dates for each group when transitioning to Step 3 (Manual - defaulted to tomorrow)
+  // Initialize dates for each group when transitioning to Step 3 (Read-only display)
   useEffect(() => {
     if (step === 3) {
       setOrderDates(prev => {
         const next = { ...prev };
         Object.entries(groupedItems).forEach(([code, group]) => {
           if (!next[code]) {
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            next[code] = tomorrow.toISOString().split('T')[0];
+            // Use group deadline if available, else default to tomorrow
+            if (group.deadline) {
+              next[code] = new Date(group.deadline).toISOString().split('T')[0];
+            } else {
+              const tomorrow = new Date();
+              tomorrow.setDate(tomorrow.getDate() + 1);
+              next[code] = tomorrow.toISOString().split('T')[0];
+            }
           }
         });
         return next;
@@ -835,9 +844,13 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                   setSearchTerm={setSuppSearch}
                   searchPlaceholder="Mã NCC, tên nhà cung cấp, SĐT..."
                   selectedIds={selectedSupplierRowIds}
-                  setSelectedIds={() => { }} // dummy, we handle selection specifically
+                  setSelectedIds={(ids) => {
+                    if (ids?.length === 0) setSelectedProductKeys(new Set());
+                  }}
                   onSelectOne={(id) => toggleSupplierRow(filteredSuppliersForStep1.find(s => s.id === id))}
-                  onSelectAll={(checked) => toggleAllSuppliers()}
+                  onSelectAll={(checked) => toggleAllSuppliers(checked)}
+                  hideSelectionToolbar={true}
+                  selectionMode="single"
                   renderDetail={(s) => (
                     <div className="flex flex-col gap-2 p-2 bg-slate-50/50 rounded-xl">
                       {s.products?.map((p, pIdx) => {
@@ -1136,6 +1149,8 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                 searchPlaceholder="Tìm tên xưởng, mã NCC, người liên hệ..."
                 selectedIds={selectedSupplier ? [selectedSupplier.id] : []}
                 setSelectedIds={() => { }} // Enable checkbox column
+                selectionMode="single"
+                hideSelectionToolbar={true}
                 onSelectOne={(id) => {
                   const s = INITIAL_SUPPLIERS.find(it => it.id === id);
                   setSelectedSupplier(s);
@@ -1204,14 +1219,11 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                               )}
                             </div>
 
-                            <div className="relative">
-                              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                              <input
-                                type="date"
-                                className="w-full pl-10 pr-4 py-2.5 rounded-xl border-2 border-white focus:border-[var(--brand-primary)] outline-none transition-all text-[14px] font-bold uppercase text-gray-800"
-                                value={pickedDate}
-                                onChange={(e) => setOrderDates(prev => ({ ...prev, [code]: e.target.value }))}
-                              />
+                            <div className="flex items-center gap-2 py-3 px-4 rounded-xl bg-white border-2 border-gray-100 text-gray-800 shadow-sm">
+                              <Calendar className="text-[var(--brand-primary)]" size={18} />
+                              <span className="text-[15px] font-black uppercase">
+                                {pickedDate ? new Date(pickedDate).toLocaleDateString("vi-VN") : "Chưa xác định"}
+                              </span>
                             </div>
                           </div>
 
@@ -1263,7 +1275,7 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                         <span className="text-[11px] font-black uppercase">Hướng dẫn</span>
                       </div>
                       <p className="text-[12px] text-gray-500 leading-relaxed italic">
-                        Anh hãy nhìn hạn giao khách của từng đơn rồi tự điền ngày mong muốn xưởng trả hàng. Hệ thống không còn tự động tính toán để anh linh hoạt nhất.
+                        Ngày hẹn xưởng đã được hệ thống ghi nhận từ bước trước hoặc tính toán dựa trên hạn khách giao. Anh vui lòng kiểm tra lại trước khi hoàn tất.
                       </p>
                     </div>
                   </div>

@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { NavbarWorker } from "./NavbarWorker";
+import { Navbar } from "@/components/layouts/common/Navbar";
 import { SidebarWorker } from "./SidebarWorker";
 
 /**
@@ -11,7 +11,7 @@ export const WorkerLayout = () => {
   return (
     <div className="flex flex-col h-screen">
       {/* Header */}
-      <NavbarWorker />
+      <Navbar />
 
       <div className="flex flex-1 overflow-hidden pt-12">
         {/* Sidebar */}

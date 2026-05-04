@@ -1,12 +1,12 @@
 import { Outlet } from "react-router-dom";
-import { NavbarSale } from "@/components/layouts/sales-layout/NavbarSale";
+import { Navbar } from "@/components/layouts/common/Navbar";
 import { SidebarOwner } from "./SidebarOwner";
 
 export default function OwnerLayout() {
   return (
     <div className="flex flex-col h-screen">
       {/* Header */}
-      <NavbarSale />
+      <Navbar />
 
       <div className="flex flex-1 overflow-hidden pt-12">
         {/* Sidebar */}

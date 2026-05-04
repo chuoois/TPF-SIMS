@@ -5,7 +5,7 @@ import { Check } from "lucide-react";
  * CustomCheckbox Component
  * Focused on the brand identity with custom styling and animations.
  */
-const CustomCheckbox = ({ checked, onChange, disabled }) => {
+const CustomCheckbox = ({ checked, onChange, disabled, circular = false }) => {
   return (
     <button
       type="button"
@@ -15,7 +15,8 @@ const CustomCheckbox = ({ checked, onChange, disabled }) => {
       }}
       disabled={disabled}
       className={`
-        relative w-5 h-5 rounded-md border-2 flex items-center justify-center cursor-pointer outline-none
+        relative w-5 h-5 border-2 flex items-center justify-center cursor-pointer outline-none transition-all
+        ${circular ? "rounded-full" : "rounded-md"}
         ${
           checked
             ? "bg-[var(--brand-primary)] border-[var(--brand-primary)]"
@@ -24,7 +25,11 @@ const CustomCheckbox = ({ checked, onChange, disabled }) => {
         ${disabled ? "opacity-50 cursor-not-allowed" : ""}
       `}
     >
-      {checked && <Check size={14} strokeWidth={4} className="text-white" />}
+      {checked && (
+        circular 
+          ? <div className="w-2 h-2 rounded-full bg-white animate-in zoom-in-50 duration-200" />
+          : <Check size={14} strokeWidth={4} className="text-white animate-in zoom-in-50 duration-200" />
+      )}
     </button>
   );
 };

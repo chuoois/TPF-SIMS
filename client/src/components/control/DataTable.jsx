@@ -65,6 +65,10 @@ const DataTable = ({
   // Extra Toolbar Content (e.g. specialized filters)
   extraFilters = null,
 
+  // Selection visibility
+  hideSelectionToolbar = false,
+  selectionMode = "multiple", // "multiple" | "single"
+
   // Loading states for SWR
   isLoading = false,
   isRefreshing = false
@@ -135,14 +139,14 @@ const DataTable = ({
   // 2. Inject Checkbox Column if selection is enabled
   if (setSelectedIds) {
     enhancedColumns.unshift({
-      header: (
+      header: selectionMode === "multiple" ? (
         <div className="flex items-center justify-center">
           <CustomCheckbox
             checked={data.length > 0 && selectedIds.length === data.length}
             onChange={handleSelectAll}
           />
         </div>
-      ),
+      ) : null,
       headerClassName: "w-[50px] text-center",
       render: (item) => (
         <div className="flex items-center justify-center">
@@ -239,7 +243,7 @@ const DataTable = ({
           onCancel={() => setActiveConfirmAction(null)}
         />
 
-        {setSelectedIds && selectedIds.length > 0 ? (
+        {setSelectedIds && selectedIds.length > 0 && !hideSelectionToolbar ? (
           <div className="flex items-center justify-start gap-4 w-full animate-in fade-in slide-in-from-left-2 duration-300">
             <span
               className="text-[12px] font-bold px-4 py-1.5 border flex items-center gap-2 rounded-lg"
