@@ -230,24 +230,6 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                 {totalQty} chiếc
               </span>
             </div>
-            <div className="w-px h-4 bg-gray-200" />
-            <div className="flex items-center gap-1.5 text-[12px]">
-              <span style={{ color: "var(--text-placeholder)" }}>
-                Tổng tiền:
-              </span>
-              <span className="font-bold text-indigo-700">
-                {fmt(order.totalAmount)}
-              </span>
-            </div>
-            <div className="w-px h-4 bg-gray-200" />
-            <div className="flex items-center gap-1.5 text-[12px]">
-              <span style={{ color: "var(--text-placeholder)" }}>
-                Đã cọc:
-              </span>
-              <span className="font-bold text-emerald-700">
-                {fmt(order.deposit)}
-              </span>
-            </div>
             {/* Removed expectedDate summary */}
           </div>
 
@@ -634,7 +616,7 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
               </div>
               <div>
                 <span className="label">Tổng tiền hàng: </span>
-                <span className="value">{fmt(order.totalAmount)}</span>
+                <span className="value">{fmt(order.totalImportAmount || order.totalAmount)}</span>
               </div>
               <div>
                 <span className="label">Tiền cọc nhập: </span>
@@ -741,7 +723,7 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
               </div>
               <div style={{ borderLeft: '1px solid #ccc' }}>
                 <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#666' }}>Tổng tiền hàng</div>
-                <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{fmt(order.totalAmount)}</div>
+                <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{fmt(order.totalImportAmount || order.totalAmount)}</div>
               </div>
               <div style={{ borderLeft: '1px solid #ccc' }}>
                 <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#666' }}>Tiền cọc nhập hàng</div>
