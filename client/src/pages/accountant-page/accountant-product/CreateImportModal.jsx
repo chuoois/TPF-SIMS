@@ -315,7 +315,14 @@ export default function CreateImportModal({ onClose, onSaved }) {
             return;
         }
 
-        const reqId = selectedItemsEntries[0][0].split('_')[0];
+        const selectedReqIds = [...new Set(selectedItemsEntries.map(([k]) => k.split('_')[0]))];
+        
+        if (selectedReqIds.length > 1) {
+            toast.error("Chỉ được chọn mặt hàng từ cùng 1 yêu cầu trong mỗi lần thêm!");
+            return;
+        }
+
+        const reqId = selectedReqIds[0];
         
         if (activeRequestId && activeRequestId !== reqId) {
             toast.error("Mỗi phiếu nhập chỉ áp dụng cho 01 yêu cầu duy nhất để đảm bảo chính xác thông tin xưởng.");
@@ -345,7 +352,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
                 newBundle.color = p.color || "";
                 newBundle.productType = p.productType || "FINISHED";
                 newBundle.bundleQty = qtyToImport;
-                newBundle.bundlePrice = "";
+                newBundle.bundlePrice = p.estimatedPrice || "";
                 newBundle.items = (p.items || []).map(it => ({ ...it, _id: Math.random(), productNote: "" }));
                 if (qtyToImport > 0 && newBundle.bundleCode) {
                     newBundle.unitIds = generateBundleUnitIds({ ...newBundle, bundleCode: newBundle.bundleCode }, qtyToImport);
@@ -361,7 +368,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
                 newLine.color = p.color || "";
                 newLine.productType = p.productType || "FINISHED";
                 newLine.qty = qtyToImport;
-                newLine.importPrice = "";
+                newLine.importPrice = p.estimatedPrice || "";
                 newLine.details = p.details || "";
                 if (qtyToImport > 0 && newLine.productCode) {
                     newLine.unitIds = generateUnitIds(newLine, qtyToImport);
@@ -410,13 +417,18 @@ export default function CreateImportModal({ onClose, onSaved }) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="w-full max-w-3xl bg-white rounded-lg shadow-2xl flex flex-col overflow-hidden" style={{ maxHeight: "80vh" }}>
+            <div className="w-full bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden" style={{ maxWidth: "1100px", maxHeight: "90vh" }}>
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b shrink-0" style={{ borderColor: "var(--grid-border)" }}>
-                    <div>
-                        <h2 className="text-[16px] font-bold" style={{ color: "var(--text-main)" }}>Tạo Phiếu Nhập Kho</h2>
-                        <p className="text-[11px] mt-0.5" style={{ color: "var(--text-placeholder)" }}>Nhập từ hóa đơn giấy</p>
+                <div className="flex items-center justify-between px-6 py-4 border-b shrink-0" style={{ borderColor: "var(--grid-border)", background: "linear-gradient(135deg,#F5F3FF 0%,#fff 100%)" }}>
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "var(--brand-primary)" }}>
+                            <Package size={18} className="text-white" />
+                        </div>
+                        <div>
+                            <h2 className="text-[16px] font-bold" style={{ color: "var(--text-main)" }}>Tạo Phiếu Nhập Kho</h2>
+                            <p className="text-[11px] mt-0.5" style={{ color: "var(--text-placeholder)" }}>Chọn mặt hàng từ yêu cầu · Điều chỉnh số lượng · Giá lấy tự động từ yêu cầu</p>
+                        </div>
                     </div>
                     <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition" style={{ color: "var(--text-secondary)" }}>
                         <X size={18} />
@@ -424,243 +436,245 @@ export default function CreateImportModal({ onClose, onSaved }) {
                 </div>
 
                 <form onSubmit={handleSubmit} className="flex flex-col overflow-hidden flex-1">
-                    <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
 
-                        {/* ── KHU VỰC 1 ── */}
-                        <div className="p-4 rounded-xl space-y-4" style={{ backgroundColor: "var(--bg-main)", border: "1px solid var(--grid-border)" }}>
-                            <div className="flex items-center justify-between">
-                                <p className="text-[11px] font-bold uppercase tracking-widest flex items-center gap-2" style={{ color: "var(--brand-primary)" }}>
-                                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-[10px] font-black" style={{ backgroundColor: "var(--brand-primary)" }}>1</span>
-                                    Xác nhận nhập hàng
-                                </p>
-                                {supplier && (
-                                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 border border-purple-100 shadow-sm animate-in fade-in slide-in-from-right-2 duration-300">
-                                        <Building2 size={12} className="text-purple-600" />
-                                        <span className="text-[12px] font-bold text-purple-700">{supplier}</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className={lbl} style={lblS}><Calendar size={11} className="inline mr-1" />Ngày ghi nhận nhập *</label>
-                                    <input type="date" value={importDate} onChange={(e) => setImportDate(e.target.value)} className={inp} style={inpS} />
-                                </div>
-
-                                {/* Giấy tờ bằng chứng (Invoice upload) */}
-                                <div>
-                                    <label className={lbl} style={lblS}><FileImage size={11} className="inline mr-1" />Giấy tờ bằng chứng *</label>
-                                    <div onClick={() => fileRef.current?.click()}
-                                        className="relative cursor-pointer rounded-lg border-2 border-dashed flex items-center justify-center transition hover:border-purple-400 min-h-[36px]"
-                                        style={{ borderColor: invoicePreview ? "var(--brand-primary)" : "var(--grid-border)", backgroundColor: invoicePreview ? "transparent" : "#fff" }}>
-                                        {invoicePreview
-                                            ? <div className="flex items-center gap-2 py-1 px-2">
-                                                <img src={invoicePreview} alt="HĐ" className="h-6 w-6 rounded object-cover" />
-                                                <span className="text-[11px] font-medium text-purple-600 truncate max-w-[120px]">{invoiceFile?.name}</span>
-                                            </div>
-                                            : <div className="flex items-center gap-2 py-1" style={{ color: "var(--text-placeholder)" }}>
-                                                <Upload size={14} />
-                                                <p className="text-[11px]">Tải ảnh bằng chứng</p>
-                                            </div>}
-                                        {invoicePreview && (
-                                            <button type="button" onClick={(e) => { e.stopPropagation(); setInvoiceFile(null); setInvoicePreview(null); }}
-                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 shadow-sm">
-                                                <X size={10} />
-                                            </button>
-                                        )}
-                                    </div>
-                                    <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
-                                </div>
-                            </div>
+                    {/* ── Info bar (ngày + chứng từ + xưởng) ── */}
+                    <div className="px-6 py-3 border-b shrink-0 flex items-center gap-4 flex-wrap" style={{ borderColor: "var(--grid-border)", backgroundColor: "var(--bg-main)" }}>
+                        {/* Ngày */}
+                        <div className="flex items-center gap-2">
+                            <Calendar size={14} className="text-gray-400 shrink-0" />
+                            <label className="text-[12px] font-bold text-gray-500 whitespace-nowrap">Ngày nhập:</label>
+                            <input type="date" value={importDate} onChange={(e) => setImportDate(e.target.value)}
+                                className="h-8 px-3 rounded-lg text-[13px] border focus:outline-none focus:ring-2 focus:ring-purple-300 transition"
+                                style={{ borderColor: "var(--grid-border)", backgroundColor: "#fff" }} />
                         </div>
+                        {/* Xưởng (auto) */}
+                        {supplier && (
+                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-50 border border-purple-200 shadow-sm">
+                                <Building2 size={13} className="text-purple-600 shrink-0" />
+                                <span className="text-[13px] font-bold text-purple-700">{supplier}</span>
+                                <span className="text-[10px] text-purple-400 font-medium">(tự động từ YC)</span>
+                            </div>
+                        )}
+                        {/* Chứng từ */}
+                        <div className="flex items-center gap-2 ml-auto">
+                            <FileImage size={14} className="text-gray-400 shrink-0" />
+                            <label className="text-[12px] font-bold text-gray-500 whitespace-nowrap">Chứng từ:</label>
+                            <div onClick={() => fileRef.current?.click()}
+                                className="relative cursor-pointer rounded-lg border-2 border-dashed flex items-center justify-center transition hover:border-purple-400 h-8 px-3 min-w-[140px]"
+                                style={{ borderColor: invoicePreview ? "var(--brand-primary)" : "var(--grid-border)", backgroundColor: "#fff" }}>
+                                {invoicePreview
+                                    ? <div className="flex items-center gap-2">
+                                        <img src={invoicePreview} alt="HĐ" className="h-5 w-5 rounded object-cover" />
+                                        <span className="text-[11px] font-medium text-purple-600 truncate max-w-[100px]">{invoiceFile?.name}</span>
+                                        <button type="button" onClick={(e) => { e.stopPropagation(); setInvoiceFile(null); setInvoicePreview(null); }}
+                                            className="text-red-400 hover:text-red-600 transition"><X size={12} /></button>
+                                    </div>
+                                    : <div className="flex items-center gap-1.5 text-gray-400">
+                                        <Upload size={13} /><span className="text-[11px]">Tải ảnh bằng chứng</span>
+                                    </div>}
+                            </div>
+                            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+                        </div>
+                    </div>
 
-                        {/* ── KHU VỰC 2 ── */}
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-4 mb-2">
-                                <p className="text-[11px] font-bold uppercase tracking-widest flex items-center gap-2 whitespace-nowrap" style={{ color: "var(--brand-primary)" }}>
-                                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-[10px] font-black" style={{ backgroundColor: "var(--brand-primary)" }}>2</span>
-                                    CHỌN TỪ YÊU CẦU NHẬP
-                                </p>
+                    {/* ── 2-column body ── */}
+                    <div className="flex flex-1 overflow-hidden">
+
+                        {/* ── LEFT: Chọn từ yêu cầu ── */}
+                        <div className="flex flex-col border-r shrink-0" style={{ width: "420px", borderColor: "var(--grid-border)" }}>
+                            {/* Header left */}
+                            <div className="px-4 py-3 border-b shrink-0 flex items-center gap-2" style={{ borderColor: "var(--grid-border)", backgroundColor: "#F9F9FF" }}>
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-[10px] font-black" style={{ backgroundColor: "var(--brand-primary)" }}>1</span>
+                                <p className="text-[12px] font-bold uppercase tracking-widest" style={{ color: "var(--brand-primary)" }}>Chọn từ yêu cầu nhập</p>
                             </div>
 
-                            {/* Thanh tìm kiếm yêu cầu */}
-                            <div className="relative">
-                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                <input 
-                                    type="text" 
-                                    placeholder="Tìm theo mã yêu cầu hoặc ghi chú..." 
-                                    value={requestSearchTerm}
-                                    onChange={e => setRequestSearchTerm(e.target.value)}
-                                    className="w-full text-[13px] h-9 pl-9 pr-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-purple-300 transition"
-                                    style={{ borderColor: "var(--grid-border)" }}
-                                />
+                            {/* Search */}
+                            <div className="px-4 pt-3 pb-2 shrink-0">
+                                <div className="relative">
+                                    <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                    <input type="text" placeholder="Tìm mã yêu cầu hoặc ghi chú..."
+                                        value={requestSearchTerm} onChange={e => setRequestSearchTerm(e.target.value)}
+                                        className="w-full text-[13px] h-9 pl-8 pr-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-purple-300 transition"
+                                        style={{ borderColor: "var(--grid-border)" }} />
+                                </div>
                             </div>
 
-                            <div className="flex flex-col gap-3">
-                                <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
-                                    {mergedRequests
-                                        .filter(r => r.status === "PENDING" || r.status === "Chờ xử lý" || r.status === "Chờ sản xuất" || r.status === "Đang gia công")
-                                        .filter(r => (r.requestCode || "").toLowerCase().includes(requestSearchTerm.toLowerCase()) || (r.note || "").toLowerCase().includes(requestSearchTerm.toLowerCase()))
-                                        .map(req => {
+                            {/* Request list */}
+                            <div className="flex-1 overflow-y-auto px-4 pb-3 space-y-2 custom-scrollbar">
+                                {mergedRequests
+                                    .filter(r => r.status === "PENDING" || r.status === "Chờ xử lý" || r.status === "Chờ sản xuất" || r.status === "Đang gia công")
+                                    .filter(r => (r.requestCode || "").toLowerCase().includes(requestSearchTerm.toLowerCase()) || (r.note || "").toLowerCase().includes(requestSearchTerm.toLowerCase()))
+                                    .map(req => {
                                         const isExpanded = expandedRequests[req.id];
                                         const isDisabled = activeRequestId && activeRequestId !== req.id;
+                                        const selectedCount = req.items.filter(item => !!selectedRequestItems[`${req.id}_${item.id}`]).length;
                                         return (
-                                        <div key={req.id} className={`border rounded-xl bg-white overflow-hidden transition-all shadow-sm shrink-0 ${isDisabled ? "opacity-40 grayscale pointer-events-none" : ""}`} style={{ borderColor: "var(--grid-border)" }}>
-                                            <div 
-                                                className="px-4 py-3 cursor-pointer hover:bg-purple-50 flex items-center justify-between"
-                                                onClick={() => setExpandedRequests(p => ({...p, [req.id]: !p[req.id]}))}
-                                            >
-                                                <div className="flex flex-col gap-0.5">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-bold text-[13px] text-purple-700">{req.requestCode}</span>
-                                                        <span className="text-[11px] font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">{req.date}</span>
+                                            <div key={req.id} className={`border rounded-xl bg-white overflow-hidden transition-all shadow-sm ${isDisabled ? "opacity-35 grayscale pointer-events-none" : ""}`} style={{ borderColor: isExpanded ? "#7C3AED" : "var(--grid-border)" }}>
+                                                {/* Request header */}
+                                                <div className="px-4 py-3 cursor-pointer hover:bg-purple-50/50 flex items-center justify-between"
+                                                    onClick={() => setExpandedRequests(p => ({ ...p, [req.id]: !p[req.id] }))}>
+                                                    <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-bold text-[13px] text-purple-700">{req.requestCode}</span>
+                                                            <span className="text-[11px] font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">{req.date}</span>
+                                                            {req.supplier && <span className="text-[11px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 truncate max-w-[100px]">{req.supplier}</span>}
+                                                        </div>
+                                                        <span className="text-[12px] text-gray-500 truncate">{req.note}</span>
                                                     </div>
-                                                    <span className="text-[12px] text-gray-600 font-medium line-clamp-1">{req.note}</span>
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="text-[11px] text-gray-500 font-medium">({req.items?.length || 0} SP)</div>
-                                                    <ChevronDown size={16} className={`text-gray-400 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                                                </div>
-                                            </div>
-                                            
-                                            {isExpanded && (
-                                                <div className="border-t bg-gray-50 p-3" style={{ borderColor: "var(--grid-border)" }}>
-                                                    <div className="flex items-center justify-between mb-3 px-1">
-                                                        <label className="flex items-center gap-2 cursor-pointer group">
-                                                            <input 
-                                                                type="checkbox" 
-                                                                className="w-3.5 h-3.5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                                                                checked={req.items.every(item => !!selectedRequestItems[`${req.id}_${item.id}`])}
-                                                                onChange={(e) => handleSelectAllInRequest(req, e.target.checked)}
-                                                            />
-                                                            <span className="text-[11px] font-bold text-gray-500 group-hover:text-purple-600 transition-colors uppercase tracking-tight">Chọn tất cả {req.items.length} mặt hàng</span>
-                                                        </label>
-                                                        <span className="text-[11px] text-gray-400 italic">Đang chọn {req.items.filter(item => !!selectedRequestItems[`${req.id}_${item.id}`]).length} mặt hàng</span>
+                                                    <div className="flex items-center gap-2 shrink-0 ml-2">
+                                                        {selectedCount > 0 && <span className="text-[10px] font-black bg-purple-600 text-white px-1.5 py-0.5 rounded-full">{selectedCount}</span>}
+                                                        <span className="text-[11px] text-gray-400">({req.items?.length || 0})</span>
+                                                        <ChevronDown size={15} className={`text-gray-400 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
                                                     </div>
-                                                    <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto custom-scrollbar pr-1">
-                                                        {req.items.map(item => {
-                                                            const itemKey = `${req.id}_${item.id}`;
-                                                            const isChecked = !!selectedRequestItems[itemKey];
-                                                            return (
-                                                                <label key={item.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-white border cursor-pointer hover:border-purple-300 transition-colors" style={{ borderColor: isChecked ? "#c084fc" : "var(--grid-border)" }}>
-                                                                    <div className="shrink-0 flex items-center justify-center">
-                                                                        <input 
-                                                                            type="checkbox" 
-                                                                            className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500 cursor-pointer"
+                                                </div>
+
+                                                {isExpanded && (
+                                                    <div className="border-t" style={{ borderColor: "#EDE9FE", backgroundColor: "#FAFAFF" }}>
+                                                        {/* Select all */}
+                                                        <div className="px-4 py-2 flex items-center justify-between border-b" style={{ borderColor: "#EDE9FE" }}>
+                                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                                <input type="checkbox" className="w-3.5 h-3.5 rounded text-purple-600 border-gray-300 focus:ring-purple-500"
+                                                                    checked={req.items.every(item => !!selectedRequestItems[`${req.id}_${item.id}`])}
+                                                                    onChange={(e) => handleSelectAllInRequest(req, e.target.checked)} />
+                                                                <span className="text-[11px] font-bold text-gray-600 uppercase tracking-tight">Chọn tất cả ({req.items.length})</span>
+                                                            </label>
+                                                        </div>
+                                                        {/* Items */}
+                                                        <div className="flex flex-col divide-y" style={{ divideColor: "#EDE9FE" }}>
+                                                            {req.items.map(item => {
+                                                                const itemKey = `${req.id}_${item.id}`;
+                                                                const isChecked = !!selectedRequestItems[itemKey];
+                                                                return (
+                                                                    <label key={item.id} className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors ${isChecked ? "bg-purple-50/70" : "hover:bg-gray-50/80"}`}>
+                                                                        <input type="checkbox" className="w-4 h-4 mt-0.5 text-purple-600 rounded border-gray-300 focus:ring-purple-500 cursor-pointer shrink-0"
                                                                             checked={isChecked}
-                                                                            onChange={(e) => {
-                                                                                setSelectedRequestItems(p => ({...p, [itemKey]: e.target.checked ? item : undefined}))
-                                                                            }}
-                                                                        />
-                                                                    </div>
-                                                                    <div className="flex-1 flex justify-between items-center text-[13px]">
-                                                                        <div className="flex flex-col">
-                                                                            <span className="font-bold text-gray-800">{item.productName}</span>
-                                                                            <div className="text-[11px] text-gray-500 flex gap-1.5 mt-0.5">
-                                                                                {item.materialType && <span className="bg-gray-100 px-1.5 rounded">{item.materialType}</span>}
-                                                                                {item.color && <span className="bg-gray-100 px-1.5 rounded">{item.color}</span>}
-                                                                                {item.details && <span className="text-gray-400 max-w-[150px] truncate italic">({item.details})</span>}
+                                                                            onChange={(e) => setSelectedRequestItems(p => ({ ...p, [itemKey]: e.target.checked ? item : undefined }))} />
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <div className="text-[13px] font-bold text-gray-800 leading-tight">{item.productName || item.bundleName}</div>
+                                                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                                                {item.materialType && <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-medium">{item.materialType}</span>}
+                                                                                {item.color && <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-medium">{item.color}</span>}
+                                                                                {item.category && <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-medium border border-blue-100">{item.category}</span>}
+                                                                            </div>
+                                                                            {item.details && <div className="text-[11px] text-gray-400 mt-0.5 italic truncate">{item.details}</div>}
+                                                                            {item.estimatedPrice > 0 && (
+                                                                                <div className="text-[11px] text-green-700 font-bold mt-1">
+                                                                                    💰 Giá YC: {new Intl.NumberFormat("vi-VN").format(item.estimatedPrice)}₫
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                        <div className="shrink-0 flex flex-col items-end gap-1">
+                                                                            <div className="flex items-center gap-1 bg-purple-50 px-2 py-1 rounded-md border border-purple-100">
+                                                                                <span className="text-[10px] text-purple-500 font-medium">SL:</span>
+                                                                                <span className="font-black text-[14px] text-purple-700">{item.requestedQty}</span>
                                                                             </div>
                                                                         </div>
-                                                                        <div className="shrink-0 flex items-center gap-1.5 bg-purple-50 px-2 py-1 rounded-md border border-purple-100">
-                                                                            <span className="text-[11px] text-purple-600 font-medium">SL:</span>
-                                                                            <span className="font-black text-[14px] text-purple-700">{item.requestedQty}</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </label>
-                                                            );
-                                                        })}
+                                                                    </label>
+                                                                );
+                                                            })}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )
-                                })}
+                                                )}
+                                            </div>
+                                        );
+                                    })}
                                 {mergedRequests.filter(r => r.status === "PENDING" || r.status === "Chờ xử lý" || r.status === "Chờ sản xuất" || r.status === "Đang gia công")
-                                        .filter(r => (r.requestCode || "").toLowerCase().includes(requestSearchTerm.toLowerCase()) || (r.note || "").toLowerCase().includes(requestSearchTerm.toLowerCase())).length === 0 && (
-                                    <div className="p-6 text-center text-gray-400 border border-dashed rounded-xl text-[12px] bg-gray-50/50">
+                                    .filter(r => (r.requestCode || "").toLowerCase().includes(requestSearchTerm.toLowerCase()) || (r.note || "").toLowerCase().includes(requestSearchTerm.toLowerCase())).length === 0 && (
+                                    <div className="p-8 text-center text-gray-400 border border-dashed rounded-xl text-[12px] bg-gray-50/50 mt-2">
                                         Không tìm thấy yêu cầu nào phù hợp.
                                     </div>
                                 )}
-                                </div>
-                                <div className="flex justify-between items-center mt-1 border-t pt-3" style={{ borderColor: "var(--grid-border)" }}>
-                                    <span className="text-[11px] text-gray-500 italic">
-                                        Đã chọn {Object.values(selectedRequestItems).filter(i => i !== undefined).length} mặt hàng
-                                    </span>
-                                    <button 
-                                        type="button"
-                                        onClick={handleAddSelectedItems}
-                                        disabled={Object.values(selectedRequestItems).filter(i => i !== undefined).length === 0}
-                                        className="h-9 px-5 rounded-lg text-[13px] font-bold border transition-all flex items-center gap-2 shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        style={{ borderColor: "var(--brand-primary)", backgroundColor: "var(--brand-primary)", color: "#fff" }}
-                                    >
-                                        <Plus size={16} strokeWidth={2.5} /> Thêm vào phiếu nhập ({Object.values(selectedRequestItems).filter(i => i !== undefined).length})
-                                    </button>
-                                </div>
                             </div>
 
-                            {lines.length === 0 ? (
-                                <div className="p-8 text-center border-2 border-dashed rounded-xl" style={{ borderColor: "var(--grid-border)" }}>
-                                    <Package size={30} className="mx-auto mb-2 text-gray-300" />
-                                    <p className="text-[13px] text-gray-500 font-medium">Bạn chưa chọn Yêu cầu nhập hàng nào.</p>
+                            {/* ── Add button – luôn hiện, không bị khuất ── */}
+                            <div className="px-4 py-3 border-t shrink-0" style={{ borderColor: "var(--grid-border)", backgroundColor: "#F9F9FF" }}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-[11px] text-gray-500 italic">
+                                        Đã chọn <strong className="text-purple-700">{Object.values(selectedRequestItems).filter(i => i !== undefined).length}</strong> mặt hàng
+                                    </span>
                                 </div>
-                            ) : null}
-
-                            {lines.map((line, idx) =>
-                                line.isBundle
-                                    ? <BundleRow key={line._id} bundle={line} idx={idx}
-                                        onUpdate={(f, v) => updateLine(line._id, f, v)}
-                                        onRemove={() => removeLine(line._id)}
-                                        onAddItem={() => addBundleItem(line._id)}
-                                        onRemoveItem={(iid) => removeBundleItem(line._id, iid)}
-                                        onUpdateItem={(iid, f, v) => updateBundleItem(line._id, iid, f, v)}
-                                        onFileChange={(e) => handleLineFile(line._id, e)}
-                                        onRemoveImage={(idx) => removeLineImage(line._id, idx)}
-                                        canRemove={true}
-                                        lineTotal={lineTotal(line)}
-                                        activeDropdown={activeDropdown}
-                                        setActiveDropdown={setActiveDropdown}
-                                        inp={inp} inpS={inpS} lbl={lbl} lblS={lblS}
-                                        fmtCurrency={fmtCurrency} formatNumber={formatNumber} parseNumber={parseNumber}
-                                    />
-                                    : <SingleRow key={line._id} line={line} idx={idx}
-                                        onUpdate={(f, v) => updateLine(line._id, f, v)}
-                                        onRemove={() => removeLine(line._id)}
-                                        onFileChange={(e) => handleLineFile(line._id, e)}
-                                        onRemoveImage={(idx) => removeLineImage(line._id, idx)}
-                                        canRemove={true}
-                                        lineTotal={lineTotal(line)}
-                                        activeDropdown={activeDropdown}
-                                        setActiveDropdown={setActiveDropdown}
-                                        inp={inp} inpS={inpS} lbl={lbl} lblS={lblS}
-                                        fmtCurrency={fmtCurrency} formatNumber={formatNumber} parseNumber={parseNumber}
-                                    />
-                            )}
+                                <button type="button" onClick={handleAddSelectedItems}
+                                    disabled={Object.values(selectedRequestItems).filter(i => i !== undefined).length === 0}
+                                    className="w-full h-10 rounded-xl text-[13px] font-bold border transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    style={{ borderColor: "var(--brand-primary)", backgroundColor: "var(--brand-primary)", color: "#fff" }}>
+                                    <Plus size={16} strokeWidth={2.5} />
+                                    Thêm vào phiếu nhập ({Object.values(selectedRequestItems).filter(i => i !== undefined).length})
+                                </button>
+                            </div>
                         </div>
 
-                        {/* Grand total */}
-                        {grandTotal > 0 && (
-                            <div className="flex justify-end p-6 border-t" style={{ borderColor: "var(--grid-border)" }}>
-                                <div className="px-5 py-3 rounded-xl text-right" style={{ backgroundColor: "#F5F3FF", border: "1px solid #DDD6FE" }}>
-                                    <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#7C3AED" }}>Tổng giá trị phiếu nhập</p>
-                                    <p className="text-[22px] font-black" style={{ color: "#5B21B6" }}>{fmtCurrency(grandTotal)}</p>
+                        {/* ── RIGHT: Phiếu nhập ── */}
+                        <div className="flex flex-col flex-1 overflow-hidden">
+                            {/* Header right */}
+                            <div className="px-5 py-3 border-b shrink-0 flex items-center justify-between" style={{ borderColor: "var(--grid-border)", backgroundColor: "#F9FFF9" }}>
+                                <div className="flex items-center gap-2">
+                                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-[10px] font-black bg-green-600">2</span>
+                                    <p className="text-[12px] font-bold uppercase tracking-widest text-green-700">Phiếu nhập ({lines.length} mặt hàng)</p>
                                 </div>
+                                {grandTotal > 0 && (
+                                    <div className="px-3 py-1 rounded-lg text-right" style={{ backgroundColor: "#F5F3FF", border: "1px solid #DDD6FE" }}>
+                                        <span className="text-[10px] font-bold uppercase text-violet-500">Tổng</span>
+                                        <span className="text-[15px] font-black text-violet-700 ml-2">{new Intl.NumberFormat("vi-VN").format(grandTotal)}₫</span>
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </div>
 
-                    {/* Footer */}
-                    <div className="px-6 py-4 border-t shrink-0 flex items-center justify-end gap-3" style={{ borderColor: "var(--grid-border)", backgroundColor: "var(--bg-main)" }}>
-                        <button type="button" onClick={onClose}
-                            className="flex-1 h-10 rounded-xl text-[13px] font-bold border cursor-pointer hover:bg-gray-50 transition"
-                            style={{ borderColor: "var(--grid-border)", color: "var(--text-secondary)" }}>
-                            Hủy
-                        </button>
-                        <button type="submit"
-                            className="flex-1 h-10 rounded-xl text-[13px] font-bold cursor-pointer hover:opacity-90 transition"
-                            style={{ backgroundColor: "var(--brand-primary)", color: "#fff" }}>
-                            Lưu Phiếu Nhập
-                        </button>
+                            {/* Lines list */}
+                            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 custom-scrollbar">
+                                {lines.length === 0 ? (
+                                    <div className="h-full flex flex-col items-center justify-center text-center">
+                                        <Package size={40} className="mb-3 text-gray-200" />
+                                        <p className="text-[14px] font-semibold text-gray-400">Chưa có mặt hàng nào</p>
+                                        <p className="text-[12px] text-gray-300 mt-1">Chọn từ yêu cầu bên trái và nhấn "Thêm vào phiếu nhập"</p>
+                                    </div>
+                                ) : null}
+
+                                {lines.map((line, idx) =>
+                                    line.isBundle
+                                        ? <BundleRow key={line._id} bundle={line} idx={idx}
+                                            onUpdate={(f, v) => updateLine(line._id, f, v)}
+                                            onRemove={() => removeLine(line._id)}
+                                            onAddItem={() => addBundleItem(line._id)}
+                                            onRemoveItem={(iid) => removeBundleItem(line._id, iid)}
+                                            onUpdateItem={(iid, f, v) => updateBundleItem(line._id, iid, f, v)}
+                                            onFileChange={(e) => handleLineFile(line._id, e)}
+                                            onRemoveImage={(idx) => removeLineImage(line._id, idx)}
+                                            canRemove={true}
+                                            lineTotal={lineTotal(line)}
+                                            activeDropdown={activeDropdown}
+                                            setActiveDropdown={setActiveDropdown}
+                                            inp={inp} inpS={inpS} lbl={lbl} lblS={lblS}
+                                            fmtCurrency={fmtCurrency} formatNumber={formatNumber} parseNumber={parseNumber}
+                                        />
+                                        : <SingleRow key={line._id} line={line} idx={idx}
+                                            onUpdate={(f, v) => updateLine(line._id, f, v)}
+                                            onRemove={() => removeLine(line._id)}
+                                            onFileChange={(e) => handleLineFile(line._id, e)}
+                                            onRemoveImage={(idx) => removeLineImage(line._id, idx)}
+                                            canRemove={true}
+                                            lineTotal={lineTotal(line)}
+                                            activeDropdown={activeDropdown}
+                                            setActiveDropdown={setActiveDropdown}
+                                            inp={inp} inpS={inpS} lbl={lbl} lblS={lblS}
+                                            fmtCurrency={fmtCurrency} formatNumber={formatNumber} parseNumber={parseNumber}
+                                        />
+                                )}
+                            </div>
+
+                            {/* Footer */}
+                            <div className="px-5 py-4 border-t shrink-0 flex items-center justify-end gap-3" style={{ borderColor: "var(--grid-border)", backgroundColor: "var(--bg-main)" }}>
+                                <button type="button" onClick={onClose}
+                                    className="h-10 px-6 rounded-xl text-[13px] font-bold border cursor-pointer hover:bg-gray-50 transition"
+                                    style={{ borderColor: "var(--grid-border)", color: "var(--text-secondary)" }}>
+                                    Hủy
+                                </button>
+                                <button type="submit"
+                                    className="h-10 px-8 rounded-xl text-[13px] font-bold cursor-pointer hover:opacity-90 transition shadow-sm"
+                                    style={{ backgroundColor: "var(--brand-primary)", color: "#fff" }}>
+                                    Lưu Phiếu Nhập
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -706,11 +720,11 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveImage,
                 <div className="grid grid-cols-3 gap-4 border-t pt-4" style={{ borderColor: "var(--grid-border)" }}>
                     <div>
                         <label className={lbl} style={lblS}>Số lượng nhập</label>
-                        <input type="number" value={line.qty} readOnly className={`${inp} bg-gray-50 text-gray-500 cursor-not-allowed`} style={inpS} />
+                        <input type="number" value={line.qty} onChange={(e) => onUpdate("qty", parseNumber(e.target.value))} className={inp} style={{ ...inpS, borderColor: "#7C3AED" }} />
                     </div>
                     <div>
-                        <label className={lbl} style={lblS}>Giá gốc nhập (₫) *</label>
-                        <input type="text" value={formatNumber(line.importPrice)} onChange={(e) => onUpdate("importPrice", parseNumber(e.target.value))} placeholder="0" className={inp} style={inpS} />
+                        <label className={lbl} style={lblS}>Giá gốc nhập (₫) - từ YC *</label>
+                        <input type="text" value={formatNumber(line.importPrice)} readOnly className={`${inp} bg-gray-50 text-gray-500 cursor-not-allowed`} style={inpS} />
                     </div>
                     <div>
                         <label className={lbl} style={lblS}><AlignLeft size={11} className="inline mr-1" />Ghi chú</label>
@@ -830,15 +844,14 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                 <div className="grid gap-3 grid-cols-2 mt-2">
                     <div>
                         <label className={lbl} style={lblS}>Số bộ nhập</label>
-                        <input type="number" value={bundle.bundleQty} readOnly
-                            className={`${inp} bg-gray-50 text-gray-500 cursor-not-allowed`} style={inpS} />
+                        <input type="number" value={bundle.bundleQty} onChange={(e) => onUpdate("bundleQty", parseNumber(e.target.value))}
+                            className={inp} style={{ ...inpS, borderColor: "#7C3AED" }} />
                     </div>
                     <div>
-                        <label className={lbl} style={{ ...lblS }}><span className="text-purple-600">Giá cả bộ (₫) — theo HĐ *</span></label>
-                        <input type="text" value={formatNumber(bundle.bundlePrice)}
-                            onChange={(e) => onUpdate("bundlePrice", parseNumber(e.target.value))}
-                            placeholder="Nhập đúng theo HĐ xưởng..." className={inp}
-                            style={{ ...inpS, borderColor: "#7C3AED", boxShadow: "0 0 0 1px #EDE9FE" }} />
+                        <label className={lbl} style={{ ...lblS }}><span className="text-purple-600">Giá cả bộ (₫) — theo YC *</span></label>
+                        <input type="text" value={formatNumber(bundle.bundlePrice)} readOnly
+                            className={`${inp} bg-gray-50 text-gray-500 cursor-not-allowed`}
+                            style={inpS} />
                     </div>
                 </div>
 

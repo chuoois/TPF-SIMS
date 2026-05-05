@@ -463,27 +463,60 @@ export const DASHBOARD_LONG_STAY = [
 ];
 
 // ── accountant-home/index.jsx – Tổng quan tài chính ──────
-// Đơn hàng đã hoàn thành (doanh thu)
+// Đơn hàng đã hoàn thành (doanh thu) – 6 tháng
 export const COMPLETED_ORDERS = [
-  { id: "DH001", code: "HD260102-001", customer: "Nguyễn Văn A", total_amount: 55000000, month: "01/2026", date: "02/01/2026" },
-  { id: "DH002", code: "HD260115-002", customer: "Lê Thị B",     total_amount: 48000000, month: "01/2026", date: "15/01/2026" },
-  { id: "DH003", code: "HD260120-003", customer: "Phạm Văn C",   total_amount: 32000000, month: "01/2026", date: "20/01/2026" },
-  { id: "DH004", code: "HD260205-001", customer: "Trần Minh D",  total_amount: 65000000, month: "02/2026", date: "05/02/2026" },
-  { id: "DH005", code: "HD260218-002", customer: "Hoàng Lan E",  total_amount: 28000000, month: "02/2026", date: "18/02/2026" },
-  { id: "DH006", code: "HD260310-001", customer: "Vũ Đức F",     total_amount: 90000000, month: "03/2026", date: "10/03/2026" },
-  { id: "DH007", code: "HD260315-002", customer: "Đỗ Thị G",     total_amount: 42000000, month: "03/2026", date: "15/03/2026" },
-  { id: "DH008", code: "HD260322-003", customer: "Ngô Xuân H",   total_amount: 15000000, month: "03/2026", date: "22/03/2026" },
+  // Tháng 10/2025
+  { id: "DH-1001", code: "HD251002-001", customer: "Công ty Nội thất Minh Đại",   total_amount: 125000000, month: "10/2025", date: "02/10/2025" },
+  { id: "DH-1002", code: "HD251010-002", customer: "Nguyễn Hữu Toàn",             total_amount:  48000000, month: "10/2025", date: "10/10/2025" },
+  { id: "DH-1003", code: "HD251018-003", customer: "Trần Thị Hoa",                total_amount:  35000000, month: "10/2025", date: "18/10/2025" },
+  { id: "DH-1004", code: "HD251025-004", customer: "KS Mường Thanh Hà Nội",       total_amount: 220000000, month: "10/2025", date: "25/10/2025" },
+  // Tháng 11/2025
+  { id: "DH-1101", code: "HD251105-001", customer: "Lê Văn Sơn",                  total_amount:  62000000, month: "11/2025", date: "05/11/2025" },
+  { id: "DH-1102", code: "HD251112-002", customer: "Phạm Thị Ngọc",               total_amount:  29000000, month: "11/2025", date: "12/11/2025" },
+  { id: "DH-1103", code: "HD251120-003", customer: "Showroom Đồ Gỗ Đức Hưng",    total_amount:  98000000, month: "11/2025", date: "20/11/2025" },
+  { id: "DH-1104", code: "HD251128-004", customer: "Hoàng Văn Bình",              total_amount:  44000000, month: "11/2025", date: "28/11/2025" },
+  // Tháng 12/2025
+  { id: "DH-1201", code: "HD251203-001", customer: "Cty TNHH Thiên Phú",          total_amount: 185000000, month: "12/2025", date: "03/12/2025" },
+  { id: "DH-1202", code: "HD251210-002", customer: "Đặng Minh Quân",              total_amount:  55000000, month: "12/2025", date: "10/12/2025" },
+  { id: "DH-1203", code: "HD251215-003", customer: "Vũ Thị Lan Anh",             total_amount:  40000000, month: "12/2025", date: "15/12/2025" },
+  { id: "DH-1204", code: "HD251222-004", customer: "Resort Sao Biển Phú Quốc",    total_amount: 310000000, month: "12/2025", date: "22/12/2025" },
+  { id: "DH-1205", code: "HD251228-005", customer: "Bùi Anh Tuấn",               total_amount:  78000000, month: "12/2025", date: "28/12/2025" },
+  // Tháng 01/2026
+  { id: "DH-0101", code: "HD260102-001", customer: "Nguyễn Văn A",               total_amount:  55000000, month: "01/2026", date: "02/01/2026" },
+  { id: "DH-0102", code: "HD260108-002", customer: "Cty CP Đầu tư Đại Việt",     total_amount: 142000000, month: "01/2026", date: "08/01/2026" },
+  { id: "DH-0103", code: "HD260115-003", customer: "Lê Thị B",                   total_amount:  48000000, month: "01/2026", date: "15/01/2026" },
+  { id: "DH-0104", code: "HD260120-004", customer: "Phạm Văn C",                 total_amount:  32000000, month: "01/2026", date: "20/01/2026" },
+  { id: "DH-0105", code: "HD260125-005", customer: "Nguyễn Thị Dung",            total_amount:  67000000, month: "01/2026", date: "25/01/2026" },
+  // Tháng 02/2026
+  { id: "DH-0201", code: "HD260205-001", customer: "Trần Minh D",                total_amount:  65000000, month: "02/2026", date: "05/02/2026" },
+  { id: "DH-0202", code: "HD260210-002", customer: "Lê Hoàng Nam",               total_amount:  89000000, month: "02/2026", date: "10/02/2026" },
+  { id: "DH-0203", code: "HD260214-003", customer: "Phòng khám Đa khoa Thắng Lợi",total_amount: 175000000, month: "02/2026", date: "14/02/2026" },
+  { id: "DH-0204", code: "HD260218-004", customer: "Hoàng Lan E",                total_amount:  28000000, month: "02/2026", date: "18/02/2026" },
+  { id: "DH-0205", code: "HD260224-005", customer: "Trịnh Xuân Mạnh",            total_amount:  52000000, month: "02/2026", date: "24/02/2026" },
+  // Tháng 03/2026
+  { id: "DH-0301", code: "HD260305-001", customer: "Cty Nội thất Hòa Phát",      total_amount: 138000000, month: "03/2026", date: "05/03/2026" },
+  { id: "DH-0302", code: "HD260310-002", customer: "Vũ Đức F",                   total_amount:  90000000, month: "03/2026", date: "10/03/2026" },
+  { id: "DH-0303", code: "HD260312-003", customer: "Khách sạn Hoàng Gia",        total_amount: 260000000, month: "03/2026", date: "12/03/2026" },
+  { id: "DH-0304", code: "HD260315-004", customer: "Đỗ Thị G",                   total_amount:  42000000, month: "03/2026", date: "15/03/2026" },
+  { id: "DH-0305", code: "HD260322-005", customer: "Ngô Xuân H",                 total_amount:  15000000, month: "03/2026", date: "22/03/2026" },
+  { id: "DH-0306", code: "HD260328-006", customer: "Phan Văn Tú",                total_amount:  73000000, month: "03/2026", date: "28/03/2026" },
 ];
 
-// Chi phí nhập hàng theo tháng (tổng hợp từ INIT_IMPORTS)
+// Chi phí nhập hàng theo tháng
 export const IMPORT_COSTS_BY_MONTH = [
-  { month: "01/2026", total: 243000000, items: ["NK-0101", "NK-0110", "NK-0120"] },
-  { month: "02/2026", total: 315000000, items: ["NK-0201", "NK-0215", "NK-0228"] },
-  { month: "03/2026", total: 822000000, items: ["NK-0703-001","NK-0703-002","NK-0603-001","NK-0503-001","NK-0403-001","NK-0303-001","NK-0203-001","NK-0103-001"] },
+  { month: "10/2025", total: 385000000 },
+  { month: "11/2025", total: 198000000 },
+  { month: "12/2025", total: 560000000 },
+  { month: "01/2026", total: 243000000 },
+  { month: "02/2026", total: 315000000 },
+  { month: "03/2026", total: 822000000 },
 ];
 
 // Lương nhân viên theo tháng
 export const SALARY_COSTS_BY_MONTH = [
+  { month: "10/2025", total: 62000000 },
+  { month: "11/2025", total: 65500000 },
+  { month: "12/2025", total: 74800000 },
   { month: "01/2026", total: 68500000 },
   { month: "02/2026", total: 71200000 },
   { month: "03/2026", total: 57400000 },
@@ -491,24 +524,55 @@ export const SALARY_COSTS_BY_MONTH = [
 
 // Dòng tiền – tiền đặt cọc
 export const CASH_FLOW_DEPOSITS = [
-  // Cọc nhập hàng từ xưởng
-  { id: "CF001", date: "02/01/2026", month: "01/2026", type: "IMPORT_DEPOSIT", label: "Đặt cọc nhập hàng – Xưởng Minh Phát", amount: 50000000 },
-  { id: "CF002", date: "12/02/2026", month: "02/2026", type: "IMPORT_DEPOSIT", label: "Đặt cọc nhập hàng – Xưởng Tiến Phát", amount: 80000000 },
-  { id: "CF003", date: "05/03/2026", month: "03/2026", type: "IMPORT_DEPOSIT", label: "Đặt cọc nhập hàng – Xưởng An Bình",  amount: 60000000 },
-  // Cọc của khách hàng
-  { id: "CF004", date: "10/03/2026", month: "03/2026", type: "CUSTOMER_DEPOSIT", label: "Đặt cọc đơn HD260310-001 – Vũ Đức F", amount: 30000000 },
-  { id: "CF005", date: "15/03/2026", month: "03/2026", type: "CUSTOMER_DEPOSIT", label: "Đặt cọc đơn HD260315-002 – Đỗ Thị G",  amount: 15000000 },
-  { id: "CF006", date: "20/02/2026", month: "02/2026", type: "CUSTOMER_DEPOSIT", label: "Đặt cọc đơn HD260218-002 – Hoàng Lan E", amount: 10000000 },
-  // Hoàn trả cọc khách
-  { id: "CF007", date: "25/02/2026", month: "02/2026", type: "REFUND_DEPOSIT", label: "Hoàn cọc đơn HD260210-001 – khách đổi mẫu", amount: -8000000 },
-  { id: "CF008", date: "18/03/2026", month: "03/2026", type: "REFUND_DEPOSIT", label: "Hoàn cọc đơn HD260301-002 – khách hủy lý do cá nhân", amount: -5000000 },
+  // ── Tháng 10/2025 ──
+  { id: "CF-1001", date: "01/10/2025", month: "10/2025", type: "IMPORT_DEPOSIT",   label: "Đặt cọc nhập hàng – Xưởng Minh Phát (Lô gỗ hương)",          amount: 120000000 },
+  { id: "CF-1002", date: "05/10/2025", month: "10/2025", type: "CUSTOMER_DEPOSIT", label: "Cọc đơn HD251002-001 – Cty Nội thất Minh Đại",                amount:  60000000 },
+  { id: "CF-1003", date: "15/10/2025", month: "10/2025", type: "CUSTOMER_DEPOSIT", label: "Cọc đơn HD251025-004 – KS Mường Thanh",                       amount: 100000000 },
+  { id: "CF-1004", date: "20/10/2025", month: "10/2025", type: "IMPORT_DEPOSIT",   label: "Đặt cọc nhập hàng – Xưởng Đại Thành (Lô gỗ gụ)",             amount:  80000000 },
+  { id: "CF-1005", date: "28/10/2025", month: "10/2025", type: "REFUND_DEPOSIT",   label: "Hoàn cọc đơn HD251001-X01 – Khách đổi sang mẫu khác",        amount:  -12000000 },
+  // ── Tháng 11/2025 ──
+  { id: "CF-1101", date: "03/11/2025", month: "11/2025", type: "CUSTOMER_DEPOSIT", label: "Cọc đơn HD251105-001 – Lê Văn Sơn",                          amount:  25000000 },
+  { id: "CF-1102", date: "08/11/2025", month: "11/2025", type: "IMPORT_DEPOSIT",   label: "Đặt cọc nhập hàng – Xưởng Tiến Phát (Sồi Nga)",             amount:  60000000 },
+  { id: "CF-1103", date: "15/11/2025", month: "11/2025", type: "CUSTOMER_DEPOSIT", label: "Cọc đơn HD251120-003 – Showroom Đức Hưng",                   amount:  45000000 },
+  { id: "CF-1104", date: "25/11/2025", month: "11/2025", type: "REFUND_DEPOSIT",   label: "Hoàn cọc đơn HD251105-X02 – Khách hủy do tài chính",         amount:   -8000000 },
+  // ── Tháng 12/2025 ──
+  { id: "CF-1201", date: "01/12/2025", month: "12/2025", type: "IMPORT_DEPOSIT",   label: "Đặt cọc nhập hàng – Xưởng An Bình (Gỗ hương lô lớn)",       amount: 180000000 },
+  { id: "CF-1202", date: "05/12/2025", month: "12/2025", type: "CUSTOMER_DEPOSIT", label: "Cọc đơn HD251203-001 – Cty TNHH Thiên Phú",                  amount:  90000000 },
+  { id: "CF-1203", date: "10/12/2025", month: "12/2025", type: "CUSTOMER_DEPOSIT", label: "Cọc đơn HD251222-004 – Resort Sao Biển Phú Quốc",             amount: 150000000 },
+  { id: "CF-1204", date: "15/12/2025", month: "12/2025", type: "IMPORT_DEPOSIT",   label: "Đặt cọc nhập hàng – Xưởng Minh Đức (Gỗ gõ đỏ)",            amount:  90000000 },
+  { id: "CF-1205", date: "20/12/2025", month: "12/2025", type: "REFUND_DEPOSIT",   label: "Hoàn cọc đơn HD251201-X03 – Khách hủy sau khi xưởng GC 30%", amount:  -15000000 },
+  { id: "CF-1206", date: "28/12/2025", month: "12/2025", type: "CUSTOMER_DEPOSIT", label: "Cọc đơn HD251228-005 – Bùi Anh Tuấn",                        amount:  35000000 },
+  // ── Tháng 01/2026 ──
+  { id: "CF-0101", date: "02/01/2026", month: "01/2026", type: "IMPORT_DEPOSIT",   label: "Đặt cọc nhập hàng – Xưởng Minh Phát (Lô gỗ hương Q1)",      amount:  50000000 },
+  { id: "CF-0102", date: "08/01/2026", month: "01/2026", type: "CUSTOMER_DEPOSIT", label: "Cọc đơn HD260108-002 – Cty CP Đầu tư Đại Việt",              amount:  70000000 },
+  { id: "CF-0103", date: "15/01/2026", month: "01/2026", type: "CUSTOMER_DEPOSIT", label: "Cọc đơn HD260115-003 – Lê Thị B",                            amount:  20000000 },
+  { id: "CF-0104", date: "20/01/2026", month: "01/2026", type: "REFUND_DEPOSIT",   label: "Hoàn cọc đơn HD260101-X01 – Bùi Văn K (hủy sau 30 ngày)",   amount:   -5000000 },
+  { id: "CF-0105", date: "25/01/2026", month: "01/2026", type: "CUSTOMER_DEPOSIT", label: "Cọc đơn HD260125-005 – Nguyễn Thị Dung",                     amount:  30000000 },
+  // ── Tháng 02/2026 ──
+  { id: "CF-0201", date: "05/02/2026", month: "02/2026", type: "IMPORT_DEPOSIT",   label: "Đặt cọc nhập hàng – Xưởng Tiến Phát (Bộ sập thờ)",          amount:  80000000 },
+  { id: "CF-0202", date: "10/02/2026", month: "02/2026", type: "CUSTOMER_DEPOSIT", label: "Cọc đơn HD260210-002 – Lê Hoàng Nam",                        amount:  40000000 },
+  { id: "CF-0203", date: "14/02/2026", month: "02/2026", type: "CUSTOMER_DEPOSIT", label: "Cọc đơn HD260214-003 – Phòng khám Thắng Lợi",                amount:  85000000 },
+  { id: "CF-0204", date: "20/02/2026", month: "02/2026", type: "CUSTOMER_DEPOSIT", label: "Cọc đơn HD260218-004 – Hoàng Lan E",                         amount:  10000000 },
+  { id: "CF-0205", date: "25/02/2026", month: "02/2026", type: "REFUND_DEPOSIT",   label: "Hoàn cọc đơn HD260210-X01 – Khách đổi mẫu",                  amount:   -8000000 },
+  // ── Tháng 03/2026 ──
+  { id: "CF-0301", date: "03/03/2026", month: "03/2026", type: "IMPORT_DEPOSIT",   label: "Đặt cọc nhập hàng – Xưởng An Bình (Gỗ sồi Nga lô Q1)",      amount:  60000000 },
+  { id: "CF-0302", date: "05/03/2026", month: "03/2026", type: "CUSTOMER_DEPOSIT", label: "Cọc đơn HD260305-001 – Cty Nội thất Hòa Phát",               amount:  65000000 },
+  { id: "CF-0303", date: "10/03/2026", month: "03/2026", type: "CUSTOMER_DEPOSIT", label: "Cọc đơn HD260310-002 – Vũ Đức F",                            amount:  30000000 },
+  { id: "CF-0304", date: "12/03/2026", month: "03/2026", type: "CUSTOMER_DEPOSIT", label: "Cọc đơn HD260312-003 – KS Hoàng Gia",                        amount: 120000000 },
+  { id: "CF-0305", date: "15/03/2026", month: "03/2026", type: "CUSTOMER_DEPOSIT", label: "Cọc đơn HD260315-004 – Đỗ Thị G",                            amount:  15000000 },
+  { id: "CF-0306", date: "18/03/2026", month: "03/2026", type: "REFUND_DEPOSIT",   label: "Hoàn cọc đơn HD260301-002 – Khách hủy lý do cá nhân",        amount:   -5000000 },
+  { id: "CF-0307", date: "20/03/2026", month: "03/2026", type: "IMPORT_DEPOSIT",   label: "Đặt cọc nhập hàng – Xưởng Minh Phát (Hoành phi câu đối)",    amount:  40000000 },
 ];
 
 // Doanh thu bất thường – thu cọc từ đơn khách hủy do lỗi khách
 export const ABNORMAL_REVENUE = [
-  { id: "AB001", date: "20/01/2026", month: "01/2026", order_code: "HD260105-X01", customer: "Bùi Văn K", deposit_kept: 5000000, reason: "Khách hủy đơn sau 30 ngày, mất cọc theo hợp đồng" },
-  { id: "AB002", date: "14/02/2026", month: "02/2026", order_code: "HD260110-X02", customer: "Nguyễn Thị L", deposit_kept: 8000000, reason: "Khách hủy đơn khi hàng đã về xưởng" },
-  { id: "AB003", date: "28/03/2026", month: "03/2026", order_code: "HD260301-002", customer: "Trần Công M",  deposit_kept: 12000000, reason: "Khách hủy đơn sau khi xưởng đã gia công 50%" },
+  { id: "AB-1001", date: "28/10/2025", month: "10/2025", order_code: "HD251001-X01", customer: "Cao Văn Hải",       deposit_kept:  12000000, reason: "Khách hủy đơn sau khi xưởng đã xuất kho nguyên liệu" },
+  { id: "AB-1101", date: "25/11/2025", month: "11/2025", order_code: "HD251105-X02", customer: "Mai Thị Thanh",     deposit_kept:   8000000, reason: "Khách hủy đơn sau 30 ngày, mất cọc theo điều khoản hợp đồng" },
+  { id: "AB-1201", date: "20/12/2025", month: "12/2025", order_code: "HD251201-X03", customer: "Đinh Công Tuấn",    deposit_kept:  15000000, reason: "Khách hủy đơn sau khi xưởng đã gia công 30% – thu 50% cọc" },
+  { id: "AB-0101", date: "20/01/2026", month: "01/2026", order_code: "HD260101-X01", customer: "Bùi Văn K",        deposit_kept:   5000000, reason: "Khách hủy đơn sau 30 ngày, mất cọc theo hợp đồng" },
+  { id: "AB-0201", date: "14/02/2026", month: "02/2026", order_code: "HD260110-X02", customer: "Nguyễn Thị L",     deposit_kept:   8000000, reason: "Khách hủy đơn khi hàng đã về xưởng" },
+  { id: "AB-0301", date: "18/03/2026", month: "03/2026", order_code: "HD260301-002", customer: "Trần Công M",       deposit_kept:  12000000, reason: "Khách hủy đơn sau khi xưởng đã gia công 50%" },
+  { id: "AB-0302", date: "25/03/2026", month: "03/2026", order_code: "HD260315-X03", customer: "Nguyễn Bá Thắng",  deposit_kept:   6000000, reason: "Khách hủy do thay đổi thiết kế nội thất toàn bộ" },
 ];
 
 // ── accountant-home/index.jsx ─────────────────────────────

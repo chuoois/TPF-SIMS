@@ -1,14 +1,15 @@
 /**
  * AccountantHome – Tổng quan Tài chính
- * Doanh thu / Chi phí / Lợi nhuận / Dòng tiền / Doanh thu bất thường / Lợi nhuận cuối
+ * Doanh thu / Chi phí / Lợi nhuận / Dòng tiền / Doanh thu bất thường
+ * Lợi nhuận = Doanh thu - Chi phí + Doanh thu bất thường
  */
 
 import { useState } from "react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import {
   TrendingUp, TrendingDown, DollarSign, ArrowDownUp,
-  AlertCircle, Star, ChevronDown, ChevronRight,
-  ArrowUpRight, ArrowDownRight, Minus,
+  AlertCircle, ChevronDown, ChevronRight,
+  ArrowUpRight, ArrowDownRight, Plus,
 } from "lucide-react";
 import {
   COMPLETED_ORDERS,
@@ -26,7 +27,7 @@ const fmtM = (n) => {
   return fmt(n);
 };
 
-const ALL_MONTHS = ["01/2026", "02/2026", "03/2026"];
+const ALL_MONTHS = ["10/2025", "11/2025", "12/2025", "01/2026", "02/2026", "03/2026"];
 
 // Tính toán theo tháng
 function buildMonthData(month) {
@@ -37,22 +38,30 @@ function buildMonthData(month) {
   const importCost = (IMPORT_COSTS_BY_MONTH.find((m) => m.month === month) || {}).total || 0;
   const salaryCost = (SALARY_COSTS_BY_MONTH.find((m) => m.month === month) || {}).total || 0;
   const totalCost = importCost + salaryCost;
-  const profit = revenue - totalCost;
-
-  const cashIn = CASH_FLOW_DEPOSITS
-    .filter((c) => c.month === month && c.amount > 0)
+  // Cọc khách hàng trả vào (tiền về)
+  const customerIn = CASH_FLOW_DEPOSITS
+    .filter((c) => c.month === month && c.type === "CUSTOMER_DEPOSIT")
     .reduce((s, c) => s + c.amount, 0);
-  const cashOut = CASH_FLOW_DEPOSITS
-    .filter((c) => c.month === month && c.amount < 0)
+  // Cọc cửa hàng đặt cho xưởng (tiền ra)
+  const importOut = CASH_FLOW_DEPOSITS
+    .filter((c) => c.month === month && c.type === "IMPORT_DEPOSIT")
+    .reduce((s, c) => s + c.amount, 0);
+  // Hoàn trả cọc cho khách (tiền ra)
+  const refundOut = CASH_FLOW_DEPOSITS
+    .filter((c) => c.month === month && c.type === "REFUND_DEPOSIT")
     .reduce((s, c) => s + Math.abs(c.amount), 0);
+
+  // Dòng tiền ròng = cọc khách vào - cọc xưởng ra - hoàn cọc khách
+  const netCash = customerIn - importOut - refundOut;
 
   const abnormal = ABNORMAL_REVENUE
     .filter((a) => a.month === month)
     .reduce((s, a) => s + a.deposit_kept, 0);
 
-  const finalProfit = profit + abnormal;
+  // Lợi nhuận = Doanh thu - Chi phí + Doanh thu bất thường
+  const profit = revenue - totalCost + abnormal;
 
-  return { month, revenue, importCost, salaryCost, totalCost, profit, cashIn, cashOut, abnormal, finalProfit };
+  return { month, revenue, importCost, salaryCost, totalCost, profit, customerIn, importOut, refundOut, netCash, abnormal };
 }
 
 // ── Section Card ─────────────────────────────────────────
@@ -148,6 +157,11 @@ const DEPOSIT_META = {
 // ══════════════════════════════════════════════════════════
 export default function AccountantHome() {
   const [selectedMonth, setSelectedMonth] = useState("03/2026");
+  const [yearGroup, setYearGroup] = useState("2026");
+  const monthsByYear = {
+    "2025": ALL_MONTHS.filter(m => m.endsWith("2025")),
+    "2026": ALL_MONTHS.filter(m => m.endsWith("2026")),
+  };
 
   const md = buildMonthData(selectedMonth);
   const monthOrders = COMPLETED_ORDERS.filter((o) => o.month === selectedMonth);
@@ -156,10 +170,10 @@ export default function AccountantHome() {
 
   // Summary cards top
   const summaryCards = [
-    { label: "Doanh thu", value: fmtM(md.revenue), color: "#15803D", bg: "#F0FDF4", border: "#BBF7D0", icon: TrendingUp },
-    { label: "Chi phí",   value: fmtM(md.totalCost), color: "#DC2626", bg: "#FEF2F2", border: "#FECACA", icon: TrendingDown },
-    { label: "Lợi nhuận", value: fmtM(md.profit),    color: md.profit >= 0 ? "#1D4ED8" : "#DC2626", bg: "#EFF6FF", border: "#BFDBFE", icon: DollarSign },
-    { label: "Lợi nhuận cuối", value: fmtM(md.finalProfit), color: md.finalProfit >= 0 ? "#7C3AED" : "#DC2626", bg: "#F5F3FF", border: "#DDD6FE", icon: Star },
+    { label: "Doanh thu",    value: fmtM(md.revenue),   color: "#15803D", bg: "#F0FDF4", border: "#BBF7D0", icon: TrendingUp },
+    { label: "Chi phí",      value: fmtM(md.totalCost), color: "#DC2626", bg: "#FEF2F2", border: "#FECACA", icon: TrendingDown },
+    { label: "DT bất thường",value: fmtM(md.abnormal),  color: "#D97706", bg: "#FFFBEB", border: "#FDE68A", icon: AlertCircle },
+    { label: "Lợi nhuận",    value: fmtM(md.profit),    color: md.profit >= 0 ? "#7C3AED" : "#DC2626", bg: "#F5F3FF", border: "#DDD6FE", icon: DollarSign },
   ];
 
   return (
@@ -174,18 +188,27 @@ export default function AccountantHome() {
             <p className="text-[13px] text-gray-400 mt-0.5">Doanh thu · Chi phí · Lợi nhuận · Dòng tiền · Doanh thu bất thường</p>
           </div>
           {/* Month selector */}
-          <div className="flex items-center gap-2 bg-white border rounded-xl px-3 py-2 shadow-sm" style={{ borderColor: "var(--grid-border)" }}>
-            <span className="text-[12px] font-semibold text-gray-500">Tháng:</span>
-            <div className="flex gap-1">
-              {ALL_MONTHS.map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setSelectedMonth(m)}
-                  className="px-3 py-1 rounded-lg text-[12px] font-bold transition-colors"
+          <div className="flex flex-col gap-1.5 bg-white border rounded-xl px-3 py-2.5 shadow-sm" style={{ borderColor: "var(--grid-border)" }}>
+            {/* Year tabs */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mr-1">Năm:</span>
+              {Object.keys(monthsByYear).map(y => (
+                <button key={y} onClick={() => setYearGroup(y)}
+                  className="px-2.5 py-0.5 rounded-md text-[11px] font-bold transition-colors"
+                  style={yearGroup === y ? { backgroundColor: "#1D4ED8", color: "#fff" } : { backgroundColor: "#F3F4F6", color: "#6B7280" }}
+                >{y}</button>
+              ))}
+            </div>
+            {/* Month buttons */}
+            <div className="flex items-center gap-1">
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mr-1">T:</span>
+              {(monthsByYear[yearGroup] || []).map((m) => (
+                <button key={m} onClick={() => { setSelectedMonth(m); }}
+                  className="px-2.5 py-1 rounded-lg text-[12px] font-bold transition-colors"
                   style={selectedMonth === m
                     ? { backgroundColor: "#1D4ED8", color: "#fff" }
                     : { backgroundColor: "#F3F4F6", color: "#6B7280" }}
-                >{m}</button>
+                >{m.split("/")[0]}</button>
               ))}
             </div>
           </div>
@@ -265,18 +288,20 @@ export default function AccountantHome() {
 
         {/* ── 3. LỢI NHUẬN ─────────────────────────────── */}
         <Section
-          icon={DollarSign} iconColor="#1D4ED8" borderColor="#BFDBFE"
+          icon={DollarSign} iconColor="#7C3AED" borderColor="#DDD6FE"
           title={`Lợi nhuận – Tháng ${selectedMonth}`}
-          subtitle="Doanh thu – Chi phí"
+          subtitle="Doanh thu – Chi phí + Doanh thu bất thường"
         >
           <div style={{ padding: "0" }}>
             <ProfitBar label="Doanh thu" value={md.revenue} color="#15803D" icon={ArrowUpRight} />
             <ProfitBar label="Chi phí"   value={-md.totalCost} color="#DC2626" icon={ArrowDownRight} />
-            <div className="flex items-center justify-between py-4 px-5 bg-blue-50/60">
-              <span className="flex items-center gap-2 text-[14px] font-black text-blue-800 uppercase tracking-wide">
-                <Minus size={14} />Lợi nhuận tháng
-              </span>
-              <span className="text-[20px] font-black" style={{ color: md.profit >= 0 ? "#1D4ED8" : "#DC2626" }}>
+            <ProfitBar label="Doanh thu bất thường" value={md.abnormal} color="#D97706" icon={Plus} />
+            <div className="flex items-center justify-between py-5 px-5 bg-violet-50/80">
+              <div>
+                <p className="text-[12px] font-bold uppercase tracking-wider text-violet-500 mb-0.5">Lợi nhuận tháng</p>
+                <p className="text-[12px] text-gray-400">= Doanh thu − Chi phí + DT bất thường</p>
+              </div>
+              <span className="text-[26px] font-black" style={{ color: md.profit >= 0 ? "#7C3AED" : "#DC2626" }}>
                 {md.profit >= 0 ? "+" : ""}{fmtM(md.profit)}
               </span>
             </div>
@@ -291,9 +316,10 @@ export default function AccountantHome() {
           badge={`${monthCashFlows.length} giao dịch`}
         >
           <KpiRow items={[
-            { label: "Tiền cọc vào",  value: fmtM(md.cashIn),  color: "#15803D", sub: "Cọc nhập hàng + cọc KH" },
-            { label: "Hoàn trả cọc", value: fmtM(md.cashOut), color: "#DC2626", sub: "Hoàn cọc cho khách" },
-            { label: "Dòng tiền ròng", value: fmtM(md.cashIn - md.cashOut), color: "#7C3AED", sub: "Vào – Hoàn trả" },
+            { label: "Cọc khách vào",   value: fmtM(md.customerIn), color: "#15803D", sub: "Khách đặt cọc đơn hàng" },
+            { label: "Cọc cửa hàng → xưởng", value: fmtM(md.importOut), color: "#DC2626", sub: "Cọc trả trước cho xưởng" },
+            { label: "Hoàn cọc khách",  value: fmtM(md.refundOut), color: "#EF4444", sub: "Trả lại cọc cho khách" },
+            { label: "Dòng tiền ròng",  value: fmtM(md.netCash),   color: md.netCash >= 0 ? "#7C3AED" : "#DC2626", sub: "Cọc KH − Cọc xưởng − Hoàn" },
           ]} />
           <MiniTable
             heads={[
@@ -301,6 +327,9 @@ export default function AccountantHome() {
             ]}
             rows={monthCashFlows.map((c) => {
               const meta = DEPOSIT_META[c.type];
+              // Cọc xưởng và hoàn cọc khách → hiển thị âm (tiền ra)
+              const isOut = c.type === "IMPORT_DEPOSIT" || c.type === "REFUND_DEPOSIT";
+              const displayAmt = isOut ? -Math.abs(c.amount) : Math.abs(c.amount);
               return (
                 <>
                   <td className="px-4 py-2.5 text-[12px] text-gray-500">{c.date}</td>
@@ -311,8 +340,8 @@ export default function AccountantHome() {
                     </span>
                   </td>
                   <td className="px-4 py-2.5 text-gray-700 text-[13px]">{c.label}</td>
-                  <td className="px-4 py-2.5 text-right font-black" style={{ color: c.amount >= 0 ? "#15803D" : "#DC2626" }}>
-                    {c.amount >= 0 ? "+" : ""}{fmtM(c.amount)}
+                  <td className="px-4 py-2.5 text-right font-black" style={{ color: displayAmt >= 0 ? "#15803D" : "#DC2626" }}>
+                    {displayAmt >= 0 ? "+" : ""}{fmtM(displayAmt)}
                   </td>
                 </>
               );
@@ -354,67 +383,85 @@ export default function AccountantHome() {
           )}
         </Section>
 
-        {/* ── 6. LỢI NHUẬN CUỐI ────────────────────────── */}
-        <Section
-          icon={Star} iconColor="#7C3AED" borderColor="#DDD6FE"
-          title="Lợi nhuận cuối cùng"
-          subtitle="Lợi nhuận + Doanh thu bất thường"
-        >
-          <div>
-            <ProfitBar label="Lợi nhuận tháng" value={md.profit} color={md.profit >= 0 ? "#1D4ED8" : "#DC2626"} icon={DollarSign} />
-            <ProfitBar label="Doanh thu bất thường" value={md.abnormal} color="#D97706" icon={AlertCircle} />
-            <div className="flex items-center justify-between py-5 px-5 bg-violet-50/80">
-              <div>
-                <p className="text-[12px] font-bold uppercase tracking-wider text-violet-500 mb-0.5">Lợi nhuận cuối cùng</p>
-                <p className="text-[12px] text-gray-400">= Lợi nhuận + Doanh thu bất thường</p>
-              </div>
-              <span className="text-[26px] font-black" style={{ color: md.finalProfit >= 0 ? "#7C3AED" : "#DC2626" }}>
-                {md.finalProfit >= 0 ? "+" : ""}{fmtM(md.finalProfit)}
-              </span>
-            </div>
-          </div>
-        </Section>
 
-        {/* All-months summary table */}
+
         <div className="bg-white rounded-2xl overflow-hidden shrink-0" style={{ border: "1px solid var(--grid-border)", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-          <div className="px-5 py-4 border-b" style={{ borderColor: "var(--grid-border)" }}>
-            <p className="text-[15px] font-bold text-gray-800">So sánh các tháng</p>
-            <p className="text-[12px] text-gray-400 mt-0.5">Tổng hợp doanh thu, chi phí và lợi nhuận</p>
+          <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: "var(--grid-border)" }}>
+            <div>
+              <p className="text-[15px] font-bold text-gray-800">So sánh các tháng</p>
+              <p className="text-[12px] text-gray-400 mt-0.5">Tổng hợp doanh thu, chi phí và lợi nhuận – 6 tháng gần nhất</p>
+            </div>
+            <span className="text-[12px] font-bold px-3 py-1 rounded-full bg-violet-50 text-violet-700 border border-violet-200">
+              {ALL_MONTHS.length} tháng
+            </span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-[13px]">
               <thead>
                 <tr style={{ backgroundColor: "var(--grid-header-bg)", borderBottom: "1px solid var(--grid-border)" }}>
-                  {["Tháng","Doanh thu","Chi phí lương","Chi phí nhập","Tổng chi phí","Lợi nhuận","DT bất thường","Lợi nhuận cuối"].map((h, i) => (
+                  {["Tháng","Doanh thu","Chi phí lương","Chi phí nhập","Tổng chi phí","DT bất thường","Lợi nhuận"].map((h, i) => (
                     <th key={i} className={`px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider ${i === 0 ? "text-left" : "text-right"}`}
                       style={{ color: "var(--text-placeholder)" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {ALL_MONTHS.map((m) => {
-                  const d = buildMonthData(m);
-                  const isSelected = m === selectedMonth;
-                  return (
-                    <tr key={m}
-                      onClick={() => setSelectedMonth(m)}
-                      className="cursor-pointer hover:bg-violet-50/40 transition-colors"
-                      style={{ borderBottom: "1px solid var(--grid-border)", backgroundColor: isSelected ? "#F5F3FF" : undefined }}
-                    >
-                      <td className="px-4 py-3 font-bold text-gray-800">{m}</td>
-                      <td className="px-4 py-3 text-right font-semibold text-green-700">{fmtM(d.revenue)}</td>
-                      <td className="px-4 py-3 text-right text-amber-600">{fmtM(d.salaryCost)}</td>
-                      <td className="px-4 py-3 text-right text-red-600">{fmtM(d.importCost)}</td>
-                      <td className="px-4 py-3 text-right font-semibold text-red-700">{fmtM(d.totalCost)}</td>
-                      <td className="px-4 py-3 text-right font-bold" style={{ color: d.profit >= 0 ? "#1D4ED8" : "#DC2626" }}>
-                        {d.profit >= 0 ? "+" : ""}{fmtM(d.profit)}
+                {["2025","2026"].map(year => {
+                  const months = ALL_MONTHS.filter(m => m.endsWith(year));
+                  const yearData = months.map(m => buildMonthData(m));
+                  const yRevenue   = yearData.reduce((s, d) => s + d.revenue, 0);
+                  const ySalary    = yearData.reduce((s, d) => s + d.salaryCost, 0);
+                  const yImport    = yearData.reduce((s, d) => s + d.importCost, 0);
+                  const yTotalCost = yearData.reduce((s, d) => s + d.totalCost, 0);
+                  const yAbnormal  = yearData.reduce((s, d) => s + d.abnormal, 0);
+                  const yProfit    = yearData.reduce((s, d) => s + d.profit, 0);
+                  return [
+                    // Year group header row
+                    <tr key={`year-${year}`} style={{ backgroundColor: "#F8FAFC", borderBottom: "2px solid var(--grid-border)" }}>
+                      <td colSpan={7} className="px-4 py-2">
+                        <span className="text-[11px] font-black uppercase tracking-widest text-gray-500">
+                          📅 Năm {year} — {months.length} tháng
+                        </span>
                       </td>
-                      <td className="px-4 py-3 text-right text-amber-600">{d.abnormal > 0 ? fmtM(d.abnormal) : "—"}</td>
-                      <td className="px-4 py-3 text-right font-black" style={{ color: d.finalProfit >= 0 ? "#7C3AED" : "#DC2626" }}>
-                        {d.finalProfit >= 0 ? "+" : ""}{fmtM(d.finalProfit)}
+                    </tr>,
+                    // Month rows
+                    ...months.map((m) => {
+                      const d = buildMonthData(m);
+                      const isSelected = m === selectedMonth;
+                      return (
+                        <tr key={m}
+                          onClick={() => { setSelectedMonth(m); setYearGroup(year); }}
+                          className="cursor-pointer hover:bg-violet-50/40 transition-colors"
+                          style={{ borderBottom: "1px solid var(--grid-border)", backgroundColor: isSelected ? "#F5F3FF" : undefined }}
+                        >
+                          <td className="px-4 py-3 font-bold text-gray-800 flex items-center gap-2">
+                            {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-violet-500 inline-block" />}
+                            {m}
+                          </td>
+                          <td className="px-4 py-3 text-right font-semibold text-green-700">{fmtM(d.revenue)}</td>
+                          <td className="px-4 py-3 text-right text-amber-600">{fmtM(d.salaryCost)}</td>
+                          <td className="px-4 py-3 text-right text-red-600">{fmtM(d.importCost)}</td>
+                          <td className="px-4 py-3 text-right font-semibold text-red-700">{fmtM(d.totalCost)}</td>
+                          <td className="px-4 py-3 text-right text-amber-600">{d.abnormal > 0 ? fmtM(d.abnormal) : "—"}</td>
+                          <td className="px-4 py-3 text-right font-black" style={{ color: d.profit >= 0 ? "#7C3AED" : "#DC2626" }}>
+                            {d.profit >= 0 ? "+" : ""}{fmtM(d.profit)}
+                          </td>
+                        </tr>
+                      );
+                    }),
+                    // Year subtotal row
+                    <tr key={`subtotal-${year}`} style={{ backgroundColor: "#F0FDF4", borderBottom: "2px solid #BBF7D0" }}>
+                      <td className="px-4 py-2.5 text-[12px] font-black text-green-800 uppercase tracking-wider">∑ Tổng {year}</td>
+                      <td className="px-4 py-2.5 text-right text-[13px] font-black text-green-700">{fmtM(yRevenue)}</td>
+                      <td className="px-4 py-2.5 text-right text-[13px] font-bold text-amber-600">{fmtM(ySalary)}</td>
+                      <td className="px-4 py-2.5 text-right text-[13px] font-bold text-red-600">{fmtM(yImport)}</td>
+                      <td className="px-4 py-2.5 text-right text-[13px] font-black text-red-700">{fmtM(yTotalCost)}</td>
+                      <td className="px-4 py-2.5 text-right text-[13px] font-bold text-amber-600">{yAbnormal > 0 ? fmtM(yAbnormal) : "—"}</td>
+                      <td className="px-4 py-2.5 text-right text-[14px] font-black" style={{ color: yProfit >= 0 ? "#15803D" : "#DC2626" }}>
+                        {yProfit >= 0 ? "+" : ""}{fmtM(yProfit)}
                       </td>
                     </tr>
-                  );
+                  ];
                 })}
               </tbody>
             </table>
