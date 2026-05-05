@@ -9,8 +9,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  TrendingUp,
-  Wallet,
   Building2,
   FileEdit,
   Activity,
@@ -32,16 +30,14 @@ import {
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   BarChart,
   Bar,
   Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
 } from "recharts";
 import { cn } from "@/lib/utils";
 
@@ -49,32 +45,10 @@ import { cn } from "@/lib/utils";
 const currentOwnerName = "Võ Cường";
 
 const STATS = {
-  revenueToday: 16500000,
-  revenueGrowth: 12.5,
   newRequirements: 4,
-  debtCustomer: 45000000,
-  debtSupplier: 28500000,
-  deliveriesToday: 2,
 };
 
-const REVENUE_DATA_7_DAYS = [
-  { date: "02/03", total: 12000000 },
-  { date: "03/03", total: 18500000 },
-  { date: "04/03", total: 14200000 },
-  { date: "05/03", total: 22000000 },
-  { date: "06/03", total: 19800000 },
-  { date: "07/03", total: 26500000 },
-  { date: "08/03", total: 15500000 },
-];
 
-const REVENUE_DATA_30_DAYS = Array.from({ length: 30 }, (_, i) => {
-  const d = new Date(2026, 2, 8);
-  d.setDate(d.getDate() - (29 - i));
-  return {
-    date: `${d.getDate().toString().padStart(2, "0")}/${(d.getMonth() + 1).toString().padStart(2, "0")}`,
-    total: Math.floor(Math.random() * 20000000) + 10000000,
-  };
-});
 
 const TOP_PRODUCTS = [
   { name: "Sofa Góc Da L", qty: 24, revenue: 120000000 },
@@ -111,32 +85,7 @@ const fmtShort = (val) => {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-/** Compact KPI card used in financial row */
-function KpiCard({ label, value, sub, icon: Icon, color, linkTo }) {
-  const inner = (
-    <div className={cn(
-      "group bg-white rounded-2xl border border-slate-100 p-5 flex flex-col gap-4 h-full transition-all duration-200",
-      "hover:shadow-md hover:border-indigo-100",
-      linkTo && "cursor-pointer"
-    )}>
-      <div className="flex items-center justify-between">
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-50 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-          <Icon size={18} />
-        </div>
-        {linkTo && <ChevronRight size={14} className="text-slate-300" />}
-      </div>
-      <div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">{label}</p>
-        <p className="text-[20px] font-black text-slate-900 tracking-tight leading-none">{value}</p>
-        {sub && <p className="text-[11px] text-slate-400 mt-2 font-medium">{sub}</p>}
-      </div>
-    </div>
-  );
 
-  return linkTo ? (
-    <Link to={linkTo} className="block h-full">{inner}</Link>
-  ) : inner;
-}
 
 /** Alert badge for hotspot cards */
 function AlertCard({ label, count, icon: Icon, to, urgent = false }) {
@@ -225,7 +174,7 @@ function ActivityRow({ activity }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function OwnerDashboard() {
-  const [revenueFilter, setRevenueFilter] = useState("7_days");
+
 
   const [productions] = useState(() => {
     try {
@@ -248,12 +197,10 @@ export default function OwnerDashboard() {
       received: productions.filter((p) => p.status === "Tiếp nhận" || p.status === "Đang đánh giấy ráp" || p.status === "Đang sơn").length,
       hoan_thanh: productions.filter((p) => p.status === "Hoàn thành" || p.status === "COMPLETED").length,
     };
-    const totalContractValue = 85500000;
-    const estimatedProfit = totalContractValue * 0.42;
-    return { pendingWarranty, itemsToApprove, stageSummary, estimatedProfit, totalContractValue };
+    return { pendingWarranty, itemsToApprove, stageSummary };
   }, [productions, warrantyRequests]);
 
-  const currentRevenueData = revenueFilter === "7_days" ? REVENUE_DATA_7_DAYS : REVENUE_DATA_30_DAYS;
+
 
   const PIPELINE_DATA = [
     { name: "Tiếp nhận sản xuất", value: dynamicStats.stageSummary.received, icon: Package, link: "/owner/manufacturing-orders" },
@@ -278,17 +225,7 @@ export default function OwnerDashboard() {
             </h1>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 px-4 rounded-xl font-semibold text-[12px] border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
-              asChild
-            >
-              <Link to="/owner/reports">
-                <BarChart2 size={14} className="mr-1.5" />
-                Báo cáo chi tiết
-              </Link>
-            </Button>
+
           </div>
         </div>
 
@@ -318,89 +255,13 @@ export default function OwnerDashboard() {
           </div>
         </section>
 
-        <section>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">
-            <KpiCard
-              label="Doanh thu hôm nay"
-              value={fmtShort(dynamicStats.totalContractValue)}
-              sub={fmt(dynamicStats.totalContractValue)}
-              icon={TrendingUp}
-              color="#2563eb"
-              linkTo="/owner/reports?type=sales"
-            />
-           
-            <KpiCard
-              label="Phải thu (Khách hàng)"
-              value={fmtShort(STATS.debtCustomer)}
-              sub={fmt(STATS.debtCustomer)}
-              icon={Building2}
-              color="#6366f1"
-              linkTo="/owner/reports?type=debt_customer"
-            />
-            <KpiCard
-              label="Phải trả (Nhà cung cấp)"
-              value={fmtShort(STATS.debtSupplier)}
-              sub={fmt(STATS.debtSupplier)}
-              icon={Building2}
-              color="#e11d48"
-              linkTo="/owner/reports?type=debt_supplier"
-            />
-          </div>
-        </section>
+
 
         {/* ── SECTION 3: Charts & Pipeline ── */}
         <section>
           <SectionLabel icon={Activity} text="Biến động & Tiến độ" />
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mt-3">
+          <div className="grid grid-cols-1 gap-4 mt-3">
 
-            {/* Revenue chart */}
-            <div className="xl:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-50">
-                <div>
-                  <p className="text-[13px] font-black text-slate-800 uppercase tracking-tight">Biến động doanh thu</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Cập nhật từ đơn hàng thực tế</p>
-                </div>
-                <div className="flex bg-slate-100 rounded-xl p-1 gap-1">
-                  {[
-                    { val: "7_days", label: "7 ngày" },
-                    { val: "30_days", label: "30 ngày" },
-                  ].map((opt) => (
-                    <button
-                      key={opt.val}
-                      onClick={() => setRevenueFilter(opt.val)}
-                      className={cn(
-                        "px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all",
-                        revenueFilter === opt.val
-                          ? "bg-white text-slate-900 shadow-sm"
-                          : "text-slate-500 hover:text-slate-700"
-                      )}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="p-6 flex-1 min-h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={currentRevenueData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#4f46e5" stopOpacity={0.1} />
-                        <stop offset="100%" stopColor="#4f46e5" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="6 6" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8", fontWeight: 700 }} dy={8} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#94a3b8", fontWeight: 700 }} tickFormatter={(v) => `${v / 1e6}M`} width={36} />
-                    <RechartsTooltip
-                      formatter={(v) => [fmt(v), "Doanh thu"]}
-                      contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 8px 24px rgba(0,0,0,0.10)", fontSize: 12, fontWeight: 800, padding: "10px 16px" }}
-                    />
-                    <Area type="monotone" dataKey="total" stroke="#4f46e5" strokeWidth={2} fill="url(#revGrad)" activeDot={{ r: 4, fill: "#4f46e5", stroke: "#fff", strokeWidth: 2 }} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
 
             {/* Pipeline */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col overflow-hidden">

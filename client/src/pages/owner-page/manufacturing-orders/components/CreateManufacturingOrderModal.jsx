@@ -118,6 +118,10 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
   const [suppSearch, setSuppSearch] = useState("");
   const [orderDates, setOrderDates] = useState({}); // { sourceCode: dateString }
   const [previewImage, setPreviewImage] = useState(null);
+  const [itemConfigs, setItemConfigs] = useState({}); // { itemId: { price, expectedDate } }
+  const [deposit, setDeposit] = useState(0);
+
+  const fmt = (v) => new Intl.NumberFormat("vi-VN").format(v || 0) + " ₫";
 
   // ── Manual Item Entry State ──
   const [showCustomForm, setShowCustomForm] = useState(false);
@@ -189,6 +193,16 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
         if (s.id === "NCC001") return idx % 3 === 0;
         if (s.id === "NCC002") return idx % 3 === 1;
         return idx % 3 === 2;
+      }).map((p, pIdx) => {
+        // Mock: thêm ngày hẹn giao (7-21 ngày kể từ hôm nay)
+        const daysOffset = 7 + ((pIdx * 3 + (s.id === "NCC001" ? 0 : s.id === "NCC002" ? 5 : 10)) % 15);
+        const d = new Date();
+        d.setDate(d.getDate() + daysOffset);
+        return {
+          ...p,
+          deliveryDate: p.deliveryDate || d.toISOString().split("T")[0],
+          importPrice: p.importPrice || p.price || 0,
+        };
       });
       return {
         ...s,
@@ -495,6 +509,30 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
       (supplier.products || []).forEach(p => {
         if (!selectedProductKeys.has(`${supplier.id}-${p.id}`)) return;
 
+        // Cross-reference: tìm đơn khách hàng chứa sản phẩm này
+        let sourceKey = supplier.code || supplier.id;
+        let sourceDetail = {
+          customerName: supplier.name,
+          type: "Hàng nhập xưởng",
+        };
+
+        const matchedOrder = eligibleOrders.find(order =>
+          (order.products || []).some(op => {
+            const opName = (op.name || op.productName || "").toLowerCase().trim();
+            const pName = (p.name || p.productName || "").toLowerCase().trim();
+            return (opName && pName && opName === pName) || (op.id && p.id && op.id === p.id);
+          })
+        );
+
+        if (matchedOrder) {
+          sourceKey = matchedOrder.code || matchedOrder.id;
+          sourceDetail = {
+            customerName: matchedOrder.customerName || matchedOrder.customer?.name || "Khách lẻ",
+            type: "Hàng khách đặt",
+            deadline: matchedOrder.deliveryDate,
+          };
+        }
+
         items.push({
           id: Math.random().toString(36).substr(2, 9),
           productName: p.name || p.productName || "",
@@ -511,12 +549,11 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
           image: p.image || p.img || "",
           customerSampleImage: p.customerSampleImage || "",
           images: p.images || [],
-          sourceOrders: [supplier.name],
+          importPrice: p.importPrice || p.price || 0,
+          deliveryDate: p.deliveryDate || matchedOrder?.deliveryDate || "",
+          sourceOrders: [sourceKey],
           sourceOrderDetails: {
-            [supplier.name]: {
-              customerName: supplier.name,
-              type: "Nhà cung cấp",
-            }
+            [sourceKey]: sourceDetail,
           },
         });
       });
@@ -537,6 +574,8 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
         unit: p.unit || "Cái",
         note: "Sản phẩm nhập thêm (từ danh mục)",
         image: p.img || p.image || "",
+        importPrice: p.importPrice || p.price || 0,
+        deliveryDate: p.deliveryDate || "",
         sourceOrders: ["DANH-MUC"],
         sourceOrderDetails: {
           "DANH-MUC": {
@@ -608,7 +647,6 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
         const next = { ...prev };
         Object.entries(groupedItems).forEach(([code, group]) => {
           if (!next[code]) {
-            // Use group deadline if available, else default to tomorrow
             if (group.deadline) {
               next[code] = new Date(group.deadline).toISOString().split('T')[0];
             } else {
@@ -620,8 +658,30 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
         });
         return next;
       });
+
+      // Initialize per-item configs
+      setItemConfigs(prev => {
+        const next = { ...prev };
+        items.forEach(it => {
+          if (!next[it.id]) {
+            const src = it.sourceOrders?.[0] || "KHAC";
+            const groupDeadline = groupedItems[src]?.deadline;
+            const defaultDate = groupDeadline
+              ? new Date(groupDeadline).toISOString().split('T')[0]
+              : new Date(Date.now() + 86400000).toISOString().split('T')[0];
+            next[it.id] = { price: 0, expectedDate: defaultDate };
+          }
+        });
+        return next;
+      });
     }
-  }, [step, groupedItems]);
+  }, [step, groupedItems, items]);
+
+  const totalImportAmount = useMemo(() => {
+    return items.reduce((sum, item) => {
+      return sum + Number(item.importPrice || 0) * (item.qty || 1);
+    }, 0);
+  }, [items]);
 
   const totalQty = items.reduce((s, i) => s + (i.qty || 0), 0);
   const totalSelectedFromOrders = selectedProductKeys.size;
@@ -696,12 +756,13 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
       note: note.trim(),
       supplierId: selectedSupplier?.id,
       supplierName: selectedSupplier?.name,
-      // Store the range/summary in the main order for list view
-      expectedDate: Object.values(orderDates).sort()[0] || "", // Earliest as primary
+      expectedDate: Object.values(orderDates).sort()[0] || "",
       orderDates: orderDates,
       orderIds: Array.from(allSourceOrders),
       sourceOrderDetails: allSourceOrderDetails,
       items: finalItems,
+      totalImportAmount,
+      deposit,
     };
     const existing = JSON.parse(localStorage.getItem("tpf_manufacturing_orders") || "[]");
     localStorage.setItem("tpf_manufacturing_orders", JSON.stringify([newOrder, ...existing]));
@@ -1192,54 +1253,48 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
           <>
             <div className="flex-1 overflow-hidden flex flex-col p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
-                {/* Left: Product Summary */}
+                {/* Left: Product list with per-item date & price */}
                 <div className="flex flex-col h-full overflow-hidden">
                   <h3 className="text-[13px] font-black uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
                     <Package size={16} className="text-[var(--brand-primary)]" />
-                    Chia nhóm theo đơn gốc để hẹn ngày
+                    Danh sách sản phẩm — Hẹn ngày & Giá nhập
                   </h3>
-                  <div className="flex-1 overflow-y-auto space-y-6 pr-2 custom-scrollbar">
-                    {Object.entries(groupedItems).map(([code, group]) => {
-                      const pickedDate = orderDates[code] || "";
-
+                  <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                    {items.map((item) => {
                       return (
-                        <div key={code} className="space-y-3">
-                          {/* Group Header & Date Picker */}
-                          <div className="p-4 rounded-2xl border-2 border-gray-100 bg-gray-50/50 transition-all hover:bg-white hover:border-gray-200">
-                            <div className="flex items-start justify-between mb-3">
-                              <div>
-                                <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">{code === "DANH-MUC" || code === "MO-TAO" ? "Nhập bổ sung" : `Đơn gốc: ${code}`}</p>
-                                <p className="text-[14px] font-bold text-gray-800">{group.name}</p>
-                              </div>
-                              {group.deadline && (
-                                <div className="text-right">
-                                  <p className="text-[10px] font-bold text-gray-400 uppercase">Hạn khách giao</p>
-                                  <p className="text-[12px] font-black text-rose-600">{new Date(group.deadline).toLocaleDateString("vi-VN")}</p>
-                                </div>
-                              )}
+                        <div key={item.id} className="p-4 rounded-2xl border border-gray-100 bg-white shadow-sm space-y-3">
+                          {/* Product info row */}
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg overflow-hidden border bg-gray-50 shrink-0">
+                              <img src={item.image || "https://placehold.co/40"} alt="" className="w-full h-full object-cover" />
                             </div>
-
-                            <div className="flex items-center gap-2 py-3 px-4 rounded-xl bg-white border-2 border-gray-100 text-gray-800 shadow-sm">
-                              <Calendar className="text-[var(--brand-primary)]" size={18} />
-                              <span className="text-[15px] font-black uppercase">
-                                {pickedDate ? new Date(pickedDate).toLocaleDateString("vi-VN") : "Chưa xác định"}
-                              </span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[12px] font-black uppercase tracking-tight text-gray-800 truncate">{item.productName}</p>
+                              <p className="text-[10px] text-gray-500 font-bold">{item.material} • {getDisplaySize(item)}</p>
                             </div>
+                            <div className="shrink-0 text-[14px] font-black text-[var(--brand-primary)]">×{item.qty}</div>
                           </div>
-
-                          {/* Items in this group */}
-                          <div className="grid grid-cols-1 gap-2 pl-4">
-                            {group.items.map((item, idx) => (
-                              <div key={idx} className="flex items-center gap-3 p-2 rounded-xl border border-white bg-white/40">
-                                <div className="w-8 h-8 rounded-lg overflow-hidden border bg-white shrink-0">
-                                  <img src={item.image || "https://placehold.co/40"} alt="" className="w-full h-full object-cover" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-[11px] font-bold truncate leading-tight uppercase tracking-tight text-gray-600">{item.productName}</p>
-                                </div>
-                                <div className="shrink-0 text-[12px] font-black text-gray-400">×{item.qty}</div>
+                          {/* Date & Price row (read-only) */}
+                          <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-50">
+                            <div>
+                              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Ngày hẹn giao</label>
+                              <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-100 bg-gray-50/50">
+                                <Calendar size={14} className="text-gray-400" />
+                                <span className="text-[13px] font-black text-gray-700">
+                                  {item.deliveryDate
+                                    ? new Date(item.deliveryDate).toLocaleDateString("vi-VN")
+                                    : "Chưa xác định"}
+                                </span>
                               </div>
-                            ))}
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Giá nhập</label>
+                              <div className="px-3 py-2 rounded-lg border border-indigo-100 bg-indigo-50/30">
+                                <span className="text-[13px] font-black text-indigo-700">
+                                  {item.importPrice ? fmt(item.importPrice) : "—"}
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       );
@@ -1247,9 +1302,8 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                   </div>
                 </div>
 
-                {/* Right: Date & Supplier Summary */}
+                {/* Right: Supplier Summary, Deposit, Total */}
                 <div className="space-y-6">
-
                   <div className="p-5 rounded-2xl border-2 border-dashed border-gray-100 bg-gray-50/30 relative">
                     <div className="flex items-start gap-4">
                       <div className="flex-1 min-w-0">
@@ -1260,6 +1314,30 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                     </div>
 
                     <div className="mt-6 pt-5 border-t border-dashed border-gray-200">
+                      {/* Tổng tiền nhập */}
+                      <div className="p-4 rounded-xl bg-indigo-50/50 border border-indigo-100 mb-4">
+                        <label className="block text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Tổng tiền nhập hàng</label>
+                        <p className="text-[20px] font-black text-indigo-700">{fmt(totalImportAmount)}</p>
+                      </div>
+
+                      {/* Tiền cọc */}
+                      <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-100 mb-4">
+                        <label className="block text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">Tiền cọc nhập hàng</label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            className="w-full pr-8 py-1 text-[18px] font-black text-emerald-700 bg-transparent outline-none border-none"
+                            value={deposit ? new Intl.NumberFormat("vi-VN").format(deposit) : ""}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/\./g, "").replace(/\D/g, "");
+                              setDeposit(val ? parseInt(val, 10) : 0);
+                            }}
+                            placeholder="0"
+                          />
+                          <span className="absolute right-0 top-1/2 -translate-y-1/2 text-emerald-600 font-bold text-[14px]">₫</span>
+                        </div>
+                      </div>
+
                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Ghi chú chung cho xưởng</label>
                       <textarea
                         placeholder="Yêu cầu chung cho cả chuyến hàng này..."
@@ -1275,7 +1353,7 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                         <span className="text-[11px] font-black uppercase">Hướng dẫn</span>
                       </div>
                       <p className="text-[12px] text-gray-500 leading-relaxed italic">
-                        Ngày hẹn xưởng đã được hệ thống ghi nhận từ bước trước hoặc tính toán dựa trên hạn khách giao. Anh vui lòng kiểm tra lại trước khi hoàn tất.
+                        Nhập giá nhập và chọn ngày hẹn giao cho từng sản phẩm. Tiền cọc là số tiền đặt trước cho xưởng.
                       </p>
                     </div>
                   </div>
