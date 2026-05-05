@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,8 @@ import toast from "react-hot-toast";
 import DataTable from "@/components/control/DataTable";
 import ConfirmModal from "@/components/control/ConfirmModal";
 import accountService from "@/services/account.service";
+import useCachedFetch from "@/hooks/useCachedFetch";
+import useDebounce from "@/hooks/useDebounce";
 
 const STATUS_MAP = {
   1: { label: "Hoạt động", bg: "#ECFDF5", text: "#047857", border: "#A7F3D0" },
@@ -72,16 +74,14 @@ const ModalContainer = ({
 export default function OwnerEmployees() {
   const [activeTab, setActiveTab] = useState("Tất cả"); // Role filter
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 400);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
-  const [accounts, setAccounts] = useState([]);
   const [roles, setRoles] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 15,
-    totalItems: 0,
   });
 
   const [showAddEditModal, setShowAddEditModal] = useState(false);
@@ -104,43 +104,35 @@ export default function OwnerEmployees() {
     }
   };
 
-  const fetchAccounts = async () => {
-    try {
-      setLoading(true);
-      const params = {
-        search,
-        page: pagination.page,
-        limit: pagination.limit,
-        fromDate: dateFrom,
-        toDate: dateTo,
-        role_id: activeTab === "Tất cả" ? undefined : activeTab,
-      };
-      const response = await accountService.getAllAccounts(params);
-      setAccounts(response.data);
-      setPagination((prev) => ({
-        ...prev,
-        totalItems: response.pagination.totalItems,
-      }));
-    } catch (error) {
-      toast.error("Không thể tải danh sách tài khoản");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchFn = useCallback(async () => {
+    const params = {
+      search: debouncedSearch || undefined,
+      page: pagination.page,
+      limit: pagination.limit,
+      fromDate: dateFrom || undefined,
+      toDate: dateTo || undefined,
+      role_id: activeTab === "Tất cả" ? undefined : activeTab,
+    };
+    const response = await accountService.getAllAccounts(params);
+    return {
+      items: response.data,
+      total: response.pagination.totalItems,
+    };
+  }, [debouncedSearch, pagination.page, pagination.limit, dateFrom, dateTo, activeTab]);
+
+  const cacheKey = `employees_${debouncedSearch}_${activeTab}_${dateFrom}_${dateTo}_${pagination.page}_${pagination.limit}`;
+  const { data: cachedData, isLoading, isRefreshing, refresh } = useCachedFetch(
+    cacheKey,
+    fetchFn,
+    { ttl: 1000 * 60 * 5 }
+  );
+
+  const accounts = cachedData?.items || [];
+  const totalItems = cachedData?.total || 0;
 
   useEffect(() => {
     fetchRoles();
   }, []);
-
-  useEffect(() => {
-    fetchAccounts();
-  }, [pagination.page, pagination.limit, activeTab]);
-
-  const handleSearch = () => {
-    setPagination((prev) => ({ ...prev, page: 1 }));
-    fetchAccounts();
-  };
 
   const handleSaveAccount = async (formData) => {
     try {
@@ -155,7 +147,7 @@ export default function OwnerEmployees() {
         toast.success("Tạo tài khoản thành công");
       }
       setShowAddEditModal(false);
-      fetchAccounts();
+      refresh();
     } catch (error) {
       toast.error(error.response?.data?.message || "Lỗi khi lưu tài khoản");
     }
@@ -169,7 +161,7 @@ export default function OwnerEmployees() {
       );
       toast.success("Đã cập nhật trạng thái");
       setShowStatusModal(false);
-      fetchAccounts();
+      refresh();
     } catch (error) {
       toast.error(
         error.response?.data?.message || "Lỗi khi cập nhật trạng thái",
@@ -189,7 +181,7 @@ export default function OwnerEmployees() {
       toast.success("Đã xóa tài khoản thành công");
       setShowDeleteConfirm(false);
       setAccountToDelete(null);
-      fetchAccounts();
+      refresh();
     } catch (error) {
       toast.error("Lỗi khi xóa tài khoản");
     }
@@ -202,7 +194,7 @@ export default function OwnerEmployees() {
       );
       toast.success(`Đã xóa ${selectedIds.length} tài khoản`);
       setSelectedIds([]);
-      fetchAccounts();
+      refresh();
     } catch (error) {
       toast.error("Lỗi khi xóa hàng loạt");
     }
@@ -250,6 +242,13 @@ export default function OwnerEmployees() {
     <>
       <PageHelmet title="Quản lý tài khoản | TPF-SIMS" />
 
+      {/* Global Loading Bar */}
+      {(isLoading || isRefreshing) && (
+        <div className="fixed top-0 left-0 right-0 z-[9999]">
+          <div className="h-[2px] bg-indigo-500 animate-[loading_1.5s_infinite] origin-left"></div>
+        </div>
+      )}
+
       <div
         className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 space-y-4"
         style={{ backgroundColor: "var(--bg-main)" }}
@@ -267,7 +266,7 @@ export default function OwnerEmployees() {
               className="text-[13px] mt-1 font-medium italic"
               style={{ color: "var(--text-placeholder)" }}
             >
-              {pagination.totalItems} nhân viên (
+              {totalItems} nhân viên (
               {activeTab === "Tất cả"
                 ? "tất cả vai trò"
                 : displayRoles
@@ -291,6 +290,8 @@ export default function OwnerEmployees() {
 
         <DataTable
           data={processedAccounts}
+          isLoading={isLoading}
+          isRefreshing={isRefreshing}
           searchTerm={search}
           setSearchTerm={setSearch}
           searchPlaceholder="Tìm email, tên nhân viên..."
@@ -439,7 +440,7 @@ export default function OwnerEmployees() {
             },
           ]}
           pagination={{
-            total: pagination.totalItems,
+            total: totalItems,
             currentPage: pagination.page,
             setCurrentPage: (p) =>
               setPagination((prev) => ({ ...prev, page: p })),

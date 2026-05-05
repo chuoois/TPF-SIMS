@@ -171,8 +171,22 @@ class CustomRequestController {
                 countsMap[sc.status] = parseInt(sc.count);
             });
 
+            const isOwner = req.user.roleCode === "OWNER" || req.user.roleCode === "ADMIN";
+
+            // Security: Remove item_cost_price if not owner/admin
+            const filteredRows = rows.map(row => {
+                const plainRow = row.get({ plain: true });
+                if (!isOwner && plainRow.items) {
+                    plainRow.items = plainRow.items.map(item => {
+                        const { item_cost_price, ...rest } = item;
+                        return rest;
+                    });
+                }
+                return plainRow;
+            });
+
             return res.status(200).json({
-                data: rows,
+                data: filteredRows,
                 pagination: {
                     totalItems: count,
                     totalPages: Math.ceil(count / limit),
@@ -207,7 +221,18 @@ class CustomRequestController {
                 return res.status(404).json({ message: "Không tìm thấy yêu cầu" });
             }
 
-            return res.status(200).json({ data: request });
+            const isOwner = req.user.roleCode === "OWNER" || req.user.roleCode === "ADMIN";
+            const plainRequest = request.get({ plain: true });
+
+            // Security: Remove item_cost_price if not owner/admin
+            if (!isOwner && plainRequest.items) {
+                plainRequest.items = plainRequest.items.map(item => {
+                    const { item_cost_price, ...rest } = item;
+                    return rest;
+                });
+            }
+
+            return res.status(200).json({ data: plainRequest });
         } catch (error) {
             console.error("Get request detail error:", error);
             return res.status(500).json({ message: "Lỗi hệ thống khi lấy chi tiết yêu cầu" });
@@ -305,6 +330,8 @@ class CustomRequestController {
                 return res.status(400).json({ message: "Yêu cầu ở trạng thái này không thể cập nhật chi tiết" });
             }
 
+            const isOwner = req.user.roleCode === "OWNER" || req.user.roleCode === "ADMIN";
+
             // 1. Cập nhật Header
             await request.update({
                 deposit_amount: deposit_amount !== undefined ? deposit_amount : request.deposit_amount,
@@ -320,7 +347,7 @@ class CustomRequestController {
             // 2. Cập nhật Items (Chỉ cập nhật supplier và workshop date)
             if (items && items.length > 0) {
                 for (const item of items) {
-                    await CustomRequestItem.update({
+                    const updateItemData = {
                         item_material: item.item_material,
                         item_color: item.item_color,
                         item_quantity: item.item_quantity,
@@ -332,7 +359,13 @@ class CustomRequestController {
                         design_img: item.design_img !== undefined ? item.design_img : undefined,
                         modifieby: userId,
                         modifiedate: new Date()
-                    }, {
+                    };
+
+                    if (isOwner && item.item_cost_price !== undefined) {
+                        updateItemData.item_cost_price = item.item_cost_price;
+                    }
+
+                    await CustomRequestItem.update(updateItemData, {
                         where: { 
                             pk_custom_request_item_id: item.id,
                             fk_custom_request_id: id
