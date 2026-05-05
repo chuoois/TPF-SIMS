@@ -107,6 +107,7 @@ export default function RequirementsListing({ userRole = 'sales' }) {
           color: item.item_color,
           qty: item.item_quantity,
           price: item.item_price,
+          item_cost_price: item.item_cost_price || item.cost_price,
           specs: {
             length: item.item_size?.length,
             width: item.item_size?.width,

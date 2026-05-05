@@ -56,23 +56,60 @@ class CustomerController {
   }
 
   /**
-   * Lấy chi tiết một khách hàng (nếu chưa xóa)
+   * Lấy chi tiết một khách hàng (nếu chưa xóa) bao gồm lịch sử đơn hàng
    */
   async getCustomerById(req, res) {
     try {
       const { id } = req.params;
+      const { page = 1, limit = 5 } = req.query; // Mặc định 5 đơn hàng mỗi trang
+      const offset = (parseInt(page) - 1) * parseInt(limit);
+
+      const { Order, OrderItem } = require("../entities");
+      
+      // 1. Lấy thông tin khách hàng
       const customer = await CustomerProfile.findOne({
         where: { pk_customer_id: id, status: 1 },
       });
 
       if (!customer) {
-        return res.status(404).json({ message: "Không tìm thấy khách hàng hoặc khách hàng đã bị xóa" });
+        return res
+          .status(404)
+          .json({ message: "Không tìm thấy khách hàng hoặc khách hàng đã bị xóa" });
       }
 
-      return res.status(200).json(customer);
+      // 2. Lấy danh sách đơn hàng có phân trang
+      const { count, rows: orders } = await Order.findAndCountAll({
+        where: { fk_customer_id: id, status: 1 },
+        include: [
+          {
+            model: OrderItem,
+            as: "items",
+            where: { status: 1 },
+            required: false,
+          },
+        ],
+        order: [["createdate", "DESC"]],
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        distinct: true, // Tránh đếm sai khi có include N:M hoặc 1:N
+      });
+
+      // 3. Trả về dữ liệu gộp bao gồm thông tin phân trang
+      return res.status(200).json({
+        ...customer.toJSON(),
+        orders: orders,
+        pagination: {
+          totalItems: count,
+          totalPages: Math.ceil(count / limit),
+          currentPage: parseInt(page),
+          limit: parseInt(limit),
+        }
+      });
     } catch (error) {
       console.error("Get customer by id error:", error);
-      return res.status(500).json({ message: "Lỗi hệ thống khi lấy thông tin khách hàng" });
+      return res
+        .status(500)
+        .json({ message: "Lỗi hệ thống khi lấy thông tin khách hàng" });
     }
   }
 

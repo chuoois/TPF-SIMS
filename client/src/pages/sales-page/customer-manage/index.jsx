@@ -1,295 +1,50 @@
 /**
  * Component SalesCustomerManage
- * Quản lý khách hàng — CRUD với static data + Phân trang
+ * Quản lý khách hàng — SWR Caching & API Integration
  *
  * Created By: DNC
  * Created Date: 24/02/2026
+ * Updated By: Antigravity
+ * Updated Date: 04/05/2026
  */
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import toast from "react-hot-toast";
-import { 
+import {
   Plus,
   Pencil,
   X,
   Search,
-  Users,
   User,
   Trash2,
   Phone,
   Mail,
-  MapPin,
-  Calendar,
-  CheckCircle2,
-  AlertCircle,
   UserPlus,
-  ChevronLeft,
-  ChevronRight,
-  ShoppingCart, 
-  Package, 
   ChevronDown,
   Eye,
-  Tag
+  MapPin,
+  Calendar,
+  ShoppingCart,
+  Package
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
 import DataTable from "@/components/control/DataTable";
 import ConfirmModal from "@/components/control/ConfirmModal";
-import { INITIAL_ORDERS, MOCK_ORDERS_DETAILED } from "../orders/mockData";
+import { INITIAL_ORDERS } from "../orders/mockData";
+import useCachedFetch from "@/hooks/useCachedFetch";
+import useDebounce from "@/hooks/useDebounce";
+import customerService from "@/services/customer.service";
 
-// ===================== STATIC DATA =====================
-const INITIAL_CUSTOMERS = [
-  {
-    id: "KH001",
-    code: "KH-0001",
-    name: "Nguyễn Văn Hoàng",
-    phone: "0901234567",
-    email: "hoang@gmail.com",
-    gender: "Nam",
-    dob: "1990-05-15",
-    address: "123 Nguyễn Huệ, Q.1, TP.HCM",
-    note: "Khách VIP, thích gỗ óc chó",
-    createdAt: "2026-01-15",
-  },
-  {
-    id: "KH002",
-    code: "KH-0002",
-    name: "Trần Thị Mai",
-    phone: "0912345678",
-    email: "mai.tran@gmail.com",
-    gender: "Nữ",
-    dob: "1985-08-22",
-    address: "456 Lê Lợi, Q.3, TP.HCM",
-    note: "",
-    createdAt: "2026-01-20",
-  },
-  {
-    id: "KH003",
-    code: "KH-0003",
-    name: "Lê Minh Tuấn",
-    phone: "0923456789",
-    email: "",
-    gender: "Nam",
-    dob: "",
-    address: "789 Trần Hưng Đạo, Q.5, TP.HCM",
-    note: "Cần giao trước 16h",
-    createdAt: "2026-02-01",
-  },
-  {
-    id: "KH004",
-    code: "KH-0004",
-    name: "Phạm Thị Lan",
-    phone: "0934567890",
-    email: "lan.pham@company.vn",
-    gender: "Nữ",
-    dob: "1992-12-03",
-    address: "12 Pasteur, Q.1, TP.HCM",
-    note: "",
-    createdAt: "2026-02-10",
-  },
-  {
-    id: "KH005",
-    code: "KH-0005",
-    name: "Võ Đức Anh",
-    phone: "0945678901",
-    email: "",
-    gender: "Nam",
-    dob: "1988-03-18",
-    address: "",
-    note: "Mua sỉ, cần chiết khấu",
-    createdAt: "2026-02-15",
-  },
-  {
-    id: "KH006",
-    code: "KH-0006",
-    name: "Đặng Thùy Linh",
-    phone: "0956789012",
-    email: "linh.dang@gmail.com",
-    gender: "Nữ",
-    dob: "",
-    address: "34 Hai Bà Trưng, Q.1, TP.HCM",
-    note: "",
-    createdAt: "2026-02-20",
-  },
-  {
-    id: "KH007",
-    code: "KH-0007",
-    name: "Bùi Tuấn Anh",
-    phone: "0967890123",
-    email: "tuananh.bui@gmail.com",
-    gender: "Nam",
-    dob: "1995-11-20",
-    address: "55 Điện Biên Phủ, Q.Bình Thạnh, TP.HCM",
-    note: "",
-    createdAt: "2026-02-22",
-  },
-  {
-    id: "KH008",
-    code: "KH-0008",
-    name: "Hoàng Nguyệt Ánh",
-    phone: "0978901234",
-    email: "anh.hoang@yahoo.com",
-    gender: "Nữ",
-    dob: "1982-04-10",
-    address: "89 Lê Duẩn, Q.1, TP.HCM",
-    note: "Chỉ nhận hàng vào thứ 7",
-    createdAt: "2026-02-25",
-  },
-  {
-    id: "KH009",
-    code: "KH-0009",
-    name: "Đinh Quang Hiếu",
-    phone: "0989012345",
-    email: "quanghieu.dinh@outlook.com",
-    gender: "Nam",
-    dob: "1978-01-05",
-    address: "23 Võ Văn Tần, Q.3, TP.HCM",
-    note: "",
-    createdAt: "2026-03-01",
-  },
-  {
-    id: "KH010",
-    code: "KH-0010",
-    name: "Vũ Phương Thảo",
-    phone: "0990123456",
-    email: "thao.vu@gmail.com",
-    gender: "Nữ",
-    dob: "1998-09-30",
-    address: "102 Nguyễn Đình Chiểu, Q.3, TP.HCM",
-    note: "Cần xuất hóa đơn đỏ",
-    createdAt: "2026-03-02",
-  },
-  {
-    id: "KH011",
-    code: "KH-0011",
-    name: "Lê Văn Minh",
-    phone: "0909111222",
-    email: "minh.le@gmail.com",
-    gender: "Nam",
-    dob: "1993-07-12",
-    address: "15/4 Phan Xích Long, Q.Phú Nhuận, TP.HCM",
-    note: "",
-    createdAt: "2026-03-05",
-  },
-  {
-    id: "KH012",
-    code: "KH-0012",
-    name: "Ngô Mỹ Hạnh",
-    phone: "0918222333",
-    email: "myhanh.ngo@gmail.com",
-    gender: "Nữ",
-    dob: "1987-11-25",
-    address: "77 Cách Mạng Tháng 8, Q.1, TP.HCM",
-    note: "Khách quen từ 2024",
-    createdAt: "2026-03-06",
-  },
-  {
-    id: "KH013",
-    code: "KH-0013",
-    name: "Lý Gia Kiệt",
-    phone: "0933444555",
-    email: "kietly@yahoo.com",
-    gender: "Nam",
-    dob: "2000-01-01",
-    address: "88 Trần Não, TP. Thủ Đức",
-    note: "",
-    createdAt: "2026-03-08",
-  },
-  {
-    id: "KH014",
-    code: "KH-0014",
-    name: "Trịnh Công Sơn",
-    phone: "0988555666",
-    email: "son.trinh@gmail.com",
-    gender: "Nam",
-    dob: "1980-04-30",
-    address: "123 Cao Thắng, Q.3, TP.HCM",
-    note: "Giao hàng sau giờ hành chính",
-    createdAt: "2026-03-10",
-  },
-  {
-    id: "KH015",
-    code: "KH-0015",
-    name: "Đào Kim Chi",
-    phone: "0966777888",
-    email: "kimchi.dao@gmail.com",
-    gender: "Nữ",
-    dob: "1994-10-10",
-    address: "55 Nam Kỳ Khởi Nghĩa, Q.1, TP.HCM",
-    note: "",
-    createdAt: "2026-03-12",
-  },
-  {
-    id: "KH016",
-    code: "KH-0016",
-    name: "Hồ Bảo Long",
-    phone: "0944888999",
-    email: "long.ho@outlook.com",
-    gender: "Nam",
-    dob: "1989-02-14",
-    address: "99 Cộng Hòa, Q.Tân Bình, TP.HCM",
-    note: "",
-    createdAt: "2026-03-15",
-  },
-  {
-    id: "KH017",
-    code: "KH-0017",
-    name: "Phan Tuyết Nhi",
-    phone: "0901999000",
-    email: "nhi.phan@gmail.com",
-    gender: "Nữ",
-    dob: "1997-12-25",
-    address: "22 Nguyễn Trãi, Q.5, TP.HCM",
-    note: "Cần tư vấn thêm về sofa",
-    createdAt: "2026-03-18",
-  },
-  {
-    id: "KH018",
-    code: "KH-0018",
-    name: "Đỗ Minh Khôi",
-    phone: "0911000111",
-    email: "",
-    gender: "Nam",
-    dob: "1991-06-30",
-    address: "44 Thảo Điền, TP. Thủ Đức",
-    note: "",
-    createdAt: "2026-03-20",
-  },
-  {
-    id: "KH019",
-    code: "KH-0019",
-    name: "Nguyễn Thảo Nguyên",
-    phone: "0922111222",
-    email: "nguyen.ng@gmail.com",
-    gender: "Nữ",
-    dob: "1996-03-08",
-    address: "66 Nguyễn Thị Minh Khai, Q.1, TP.HCM",
-    note: "",
-    createdAt: "2026-03-22",
-  },
-  {
-    id: "KH020",
-    code: "KH-0020",
-    name: "Dương Quốc Trung",
-    phone: "0933222333",
-    email: "trung.duong@gmail.com",
-    gender: "Nam",
-    dob: "1983-09-02",
-    address: "77 Xô Viết Nghệ Tĩnh, Q.Bình Thạnh, TP.HCM",
-    note: "Khách sỉ nội thất",
-    createdAt: "2026-03-25",
-  }
-];
-
-
-
+// ===================== CONFIG =====================
 const GENDER_OPTIONS = ["Nam", "Nữ", "Khác"];
+const GENDER_MAP = { "Nam": 1, "Nữ": 2, "Khác": 3 };
+const REVERSE_GENDER_MAP = { 1: "Nam", 2: "Nữ", 3: "Khác" };
 
 // ===================== HELPERS =====================
 const formatDate = (d) => (d ? new Date(d).toLocaleDateString("vi-VN") : "—");
 
-const inputBase =
-  "w-full text-[13px] rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 transition bg-transparent";
 const inputIconBase =
   "w-full text-[13px] rounded-lg pl-10 pr-3 py-2.5 focus:outline-none focus:ring-2 transition bg-transparent";
 const inputStyle = {
@@ -301,10 +56,10 @@ const labelClass =
 
 // ===================== COMPONENT =====================
 export default function SalesCustomerManage() {
-  const [customers, setCustomers] = useState(INITIAL_CUSTOMERS);
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(15);
+  const debouncedSearch = useDebounce(searchTerm, 400);
+  const [genderFilter, setGenderFilter] = useState("Tất cả");
+  const [pagination, setPagination] = useState({ page: 1, limit: 15 });
 
   // Modal states
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -312,14 +67,14 @@ export default function SalesCustomerManage() {
   const [customerOrders, setCustomerOrders] = useState([]);
   const [currentCustomer, setCurrentCustomer] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
-  const [genderFilter, setGenderFilter] = useState("Tất cả");
+  const [historyPagination, setHistoryPagination] = useState({ page: 1, limit: 5 });
+  const [historyTotal, setHistoryTotal] = useState(0);
 
   // Form state
   const [form, setForm] = useState({
-    name: "",
-    phone: "",
+    full_name: "",
+    phone_number: "",
     email: "",
     gender: "",
     dob: "",
@@ -328,47 +83,38 @@ export default function SalesCustomerManage() {
   });
   const [formErrors, setFormErrors] = useState({});
 
+  // ===================== SWR FETCHING =====================
+  const fetchFn = useCallback(async () => {
+    const genderValue = genderFilter === "Tất cả" ? undefined : GENDER_MAP[genderFilter];
+    const params = {
+      search: debouncedSearch || undefined,
+      gender: genderValue,
+      page: pagination.page,
+      limit: pagination.limit
+    };
+    const response = await customerService.getAllCustomers(params);
+    return {
+      items: response.data,
+      total: response.pagination.totalItems,
+    };
+  }, [debouncedSearch, genderFilter, pagination.page, pagination.limit]);
 
-  // Filtered customers
-  const filtered = useMemo(() => {
-    let result = customers;
-    
-    // Search
-    if (searchTerm.trim()) {
-      const q = searchTerm.toLowerCase();
-      result = result.filter(
-        (c) =>
-          c.name.toLowerCase().includes(q) ||
-          c.phone.includes(q) ||
-          c.code.toLowerCase().includes(q),
-      );
-    }
-
-    // Gender Filter
-    if (genderFilter !== "Tất cả") {
-      result = result.filter(c => c.gender === genderFilter);
-    }
-
-    return result;
-  }, [searchTerm, customers, genderFilter]);
-
-  // Reset trang về 1 khi tìm kiếm
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm]);
-
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const paginatedCustomers = filtered.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+  const cacheKey = `customers_${debouncedSearch}_${genderFilter}_${pagination.page}_${pagination.limit}`;
+  const { data: cachedData, isLoading, isRefreshing, refresh } = useCachedFetch(
+    cacheKey,
+    fetchFn,
+    { ttl: 1000 * 60 * 5 }
   );
 
-  // Handlers
+  const customers = cachedData?.items || [];
+  const totalItems = cachedData?.total || 0;
+
+  // ===================== HANDLERS =====================
   const handleOpenCreate = () => {
     setCurrentCustomer(null);
     setForm({
-      name: "",
-      phone: "",
+      full_name: "",
+      phone_number: "",
       email: "",
       gender: "",
       dob: "",
@@ -382,11 +128,11 @@ export default function SalesCustomerManage() {
   const handleOpenEdit = (c) => {
     setCurrentCustomer(c);
     setForm({
-      name: c.name,
-      phone: c.phone,
+      full_name: c.full_name,
+      phone_number: c.phone_number,
       email: c.email || "",
-      gender: c.gender || "",
-      dob: c.dob || "",
+      gender: c.gender ? REVERSE_GENDER_MAP[c.gender] : "",
+      dob: c.dob ? new Date(c.dob).toISOString().split("T")[0] : "",
       address: c.address || "",
       note: c.note || "",
     });
@@ -394,52 +140,81 @@ export default function SalesCustomerManage() {
     setIsFormOpen(true);
   };
 
-  const handleOpenHistory = (c) => {
-    setCurrentCustomer(c);
-    const matched = INITIAL_ORDERS
-      .filter(o => o.customerName === c.name || o.phone === c.phone)
-      .sort((a, b) => new Date(b.date) - new Date(a.date));
-    setCustomerOrders(matched);
-    setIsHistoryOpen(true);
+  const handleOpenHistory = async (c, page = 1) => {
+    try {
+      const detail = await customerService.getCustomerById(c.pk_customer_id, { page, limit: historyPagination.limit });
+      setCurrentCustomer(detail);
+      setCustomerOrders(detail.orders || []);
+      setHistoryTotal(detail.pagination?.totalItems || 0);
+      setHistoryPagination(prev => ({ ...prev, page }));
+      setIsHistoryOpen(true);
+    } catch (error) {
+      toast.error("Không thể tải lịch sử khách hàng");
+      console.error(error);
+    }
   };
 
-  const handleSubmitForm = (e) => {
+  const handleSubmitForm = async (e) => {
     e.preventDefault();
     const errors = {};
-    if (!form.name.trim()) errors.name = "Vui lòng nhập họ tên";
-    if (!form.phone.trim()) errors.phone = "Vui lòng nhập SĐT";
+    if (!form.full_name.trim()) errors.full_name = "Vui lòng nhập họ tên";
+    if (!form.phone_number.trim()) errors.phone_number = "Vui lòng nhập SĐT";
+
+    if (form.dob) {
+      const selectedDate = new Date(form.dob);
+      const today = new Date();
+      if (selectedDate > today) {
+        errors.dob = "Ngày sinh không thể ở tương lai";
+      }
+    }
+
     if (Object.keys(errors).length) {
       setFormErrors(errors);
       return;
     }
 
-    if (currentCustomer) {
-      setCustomers((prev) =>
-        prev.map((c) => (c.id === currentCustomer.id ? { ...c, ...form } : c)),
-      );
-      toast.success("Cập nhật hồ sơ thành công");
-    } else {
-      const newId = `KH${String(customers.length + 1).padStart(3, "0")}`;
-      setCustomers((prev) => [
-        ...prev,
-        {
-          id: newId,
-          code: `KH-${String(customers.length + 1).padStart(4, "0")}`,
-          ...form,
-          createdAt: new Date().toISOString().split("T")[0],
-        },
-      ]);
-      toast.success("Tạo hồ sơ khách hàng thành công");
+    try {
+      const submitData = {
+        ...form,
+        gender: GENDER_MAP[form.gender] || 0
+      };
+
+      if (currentCustomer) {
+        await customerService.updateCustomer(currentCustomer.pk_customer_id, submitData);
+        toast.success("Cập nhật hồ sơ thành công");
+      } else {
+        await customerService.createCustomer(submitData);
+        toast.success("Tạo hồ sơ khách hàng thành công");
+      }
+      setIsFormOpen(false);
+      setCurrentCustomer(null);
+      refresh();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Lỗi khi xử lý thông tin khách hàng");
     }
-    setIsFormOpen(false);
-    setCurrentCustomer(null);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteConfirm) return;
-    setCustomers((prev) => prev.filter((c) => c.id !== deleteConfirm.id));
-    toast.success("Xóa khách hàng thành công");
-    setDeleteConfirm(null);
+    try {
+      await customerService.deleteCustomer(deleteConfirm.pk_customer_id);
+      toast.success("Xóa khách hàng thành công");
+      setDeleteConfirm(null);
+      refresh();
+    } catch (error) {
+      toast.error("Lỗi khi xóa khách hàng");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await Promise.all(selectedIds.map(id => customerService.deleteCustomer(id)));
+      toast.success(`Đã xóa ${selectedIds.length} khách hàng thành công`);
+      setSelectedIds([]);
+      refresh();
+    } catch (error) {
+      toast.error("Lỗi khi xóa hàng loạt");
+    }
   };
 
   const updateForm = (field, value) => {
@@ -448,13 +223,17 @@ export default function SalesCustomerManage() {
   };
 
   // ===================== DATATABLE CONFIG =====================
+  const processedCustomers = useMemo(() => {
+    return customers.map(c => ({ ...c, id: c.pk_customer_id }));
+  }, [customers]);
+
   const columns = [
     {
       header: "STT",
       headerClassName: "w-[60px]",
       render: (_, idx) => (
         <span className="text-[12px] font-medium text-[var(--text-placeholder)]">
-          {(currentPage - 1) * itemsPerPage + idx + 1}
+          {(pagination.page - 1) * pagination.limit + idx + 1}
         </span>
       ),
     },
@@ -469,14 +248,14 @@ export default function SalesCustomerManage() {
               color: "var(--brand-primary)",
             }}
           >
-            {c.name.charAt(0).toUpperCase()}
+            {c.full_name.charAt(0).toUpperCase()}
           </div>
           <div>
             <p className="text-[13px] font-semibold text-[var(--text-main)]">
-              {c.name}
+              {c.full_name}
             </p>
             <p className="text-[10px] font-mono tracking-wide text-[var(--text-placeholder)]">
-              {c.code}
+              {c.customer_code}
             </p>
           </div>
         </div>
@@ -487,7 +266,7 @@ export default function SalesCustomerManage() {
       render: (c) => (
         <div>
           <p className="text-[13px] font-medium text-[var(--text-main)]">
-            {c.phone}
+            {c.phone_number}
           </p>
           <p className="text-[11px] text-[var(--text-placeholder)]">
             {c.email || "—"}
@@ -527,7 +306,7 @@ export default function SalesCustomerManage() {
       header: "Ngày tạo",
       render: (c) => (
         <span className="text-[12px] text-[var(--text-placeholder)]">
-          {formatDate(c.createdAt)}
+          {formatDate(c.createdate)}
         </span>
       ),
     },
@@ -536,12 +315,12 @@ export default function SalesCustomerManage() {
   const rowActions = [
     {
       icon: Eye,
-      label: "Chi tiết & Lịch sử",
+      label: "Xem chi tiết",
       onClick: (c) => handleOpenHistory(c),
     },
     {
       icon: Pencil,
-      label: "Sửa thông tin",
+      label: "Chỉnh sửa",
       onClick: (c) => handleOpenEdit(c),
     },
     {
@@ -557,6 +336,12 @@ export default function SalesCustomerManage() {
     <>
       <PageHelmet title="Quản lý khách hàng - TPF-SIMS" />
 
+      {/* Global Loading Bar */}
+      {(isLoading || isRefreshing) && (
+        <div className="fixed top-0 left-0 right-0 z-[9999]">
+          <div className="h-[2px] bg-[var(--brand-primary)] animate-[loading_1.5s_infinite] origin-left"></div>
+        </div>
+      )}
 
       <div
         className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 space-y-4"
@@ -575,7 +360,7 @@ export default function SalesCustomerManage() {
               className="text-[13px] mt-0.5"
               style={{ color: "var(--text-placeholder)" }}
             >
-              {filtered.length} khách hàng
+              {totalItems} khách hàng
             </p>
           </div>
           <Button
@@ -590,33 +375,34 @@ export default function SalesCustomerManage() {
         {/* DataTable Wrapper */}
         <DataTable
           columns={columns}
-          data={paginatedCustomers}
+          data={processedCustomers}
+          isLoading={isLoading}
+          isRefreshing={isRefreshing}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           searchPlaceholder="Tìm tên, SĐT, mã KH..."
           rowActions={rowActions}
-          onRowClick={(c) => handleOpenEdit(c)}
+          onRowClick={(c) => handleOpenHistory(c)}
           selectedIds={selectedIds}
           setSelectedIds={setSelectedIds}
           bulkActions={[
             {
               label: "Xóa hàng loạt",
               icon: Trash2,
-              onClick: () => {
-                setCustomers(prev => prev.filter(c => !selectedIds.includes(c.id)));
-                setSelectedIds([]);
-                toast.success(`Đã xóa ${selectedIds.length} khách hàng thành công`);
-              },
+              onClick: handleBulkDelete,
               requireConfirm: true,
               confirmTitle: "Xác nhận xóa hàng loạt?",
-              confirmMessage: `Bạn có chắc chắn muốn xóa ${selectedIds.length} khách hàng đã chọn?`,
+              confirmMessage: (ids) => `Bạn có chắc chắn muốn xóa ${selectedIds.length} khách hàng đã chọn?`,
             }
           ]}
           extraFilters={
             <div className="relative flex items-center">
               <select
                 value={genderFilter}
-                onChange={(e) => setGenderFilter(e.target.value)}
+                onChange={(e) => {
+                  setGenderFilter(e.target.value);
+                  setPagination(p => ({ ...p, page: 1 }));
+                }}
                 className="h-10 px-3 pr-9 rounded-lg text-[13px] font-medium outline-none cursor-pointer focus:ring-2 transition appearance-none"
                 style={{
                   border:
@@ -654,11 +440,11 @@ export default function SalesCustomerManage() {
             </div>
           }
           pagination={{
-            total: filtered.length,
-            currentPage,
-            setCurrentPage,
-            itemsPerPage,
-            setItemsPerPage,
+            total: totalItems,
+            currentPage: pagination.page,
+            setCurrentPage: (p) => setPagination(prev => ({ ...prev, page: p })),
+            itemsPerPage: pagination.limit,
+            setItemsPerPage: (l) => setPagination(prev => ({ ...prev, limit: l, page: 1 })),
           }}
         />
       </div>
@@ -727,24 +513,24 @@ export default function SalesCustomerManage() {
                   <input
                     type="text"
                     placeholder="Nhập họ tên"
-                    value={form.name}
-                    onChange={(e) => updateForm("name", e.target.value)}
+                    value={form.full_name}
+                    onChange={(e) => updateForm("full_name", e.target.value)}
                     className={inputIconBase}
                     style={{
                       ...inputStyle,
-                      borderColor: formErrors.name
+                      borderColor: formErrors.full_name
                         ? "var(--status-error)"
                         : "var(--grid-border)",
                     }}
                     autoFocus
                   />
                 </div>
-                {formErrors.name && (
+                {formErrors.full_name && (
                   <p
                     className="text-[11px] mt-1"
                     style={{ color: "var(--status-error)" }}
                   >
-                    {formErrors.name}
+                    {formErrors.full_name}
                   </p>
                 )}
               </div>
@@ -768,23 +554,23 @@ export default function SalesCustomerManage() {
                     <input
                       type="tel"
                       placeholder="0xxx xxx xxx"
-                      value={form.phone}
-                      onChange={(e) => updateForm("phone", e.target.value)}
+                      value={form.phone_number}
+                      onChange={(e) => updateForm("phone_number", e.target.value)}
                       className={inputIconBase}
                       style={{
                         ...inputStyle,
-                        borderColor: formErrors.phone
+                        borderColor: formErrors.phone_number
                           ? "var(--status-error)"
                           : "var(--grid-border)",
                       }}
                     />
                   </div>
-                  {formErrors.phone && (
+                  {formErrors.phone_number && (
                     <p
                       className="text-[11px] mt-1"
                       style={{ color: "var(--status-error)" }}
                     >
-                      {formErrors.phone}
+                      {formErrors.phone_number}
                     </p>
                   )}
                 </div>
@@ -822,29 +608,19 @@ export default function SalesCustomerManage() {
                   >
                     Giới tính
                   </label>
-                  <div className="flex gap-1.5">
+                  <select
+                    value={form.gender}
+                    onChange={(e) => updateForm("gender", e.target.value)}
+                    className="w-full text-[13px] rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 transition bg-transparent cursor-pointer"
+                    style={inputStyle}
+                  >
+                    <option value="">Chọn giới tính</option>
                     {GENDER_OPTIONS.map((g) => (
-                      <button
-                        key={g}
-                        type="button"
-                        onClick={() => updateForm("gender", g)}
-                        className="flex-1 text-[13px] rounded-lg py-2 transition font-medium cursor-pointer"
-                        style={{
-                          border: `1px solid ${form.gender === g ? "var(--brand-primary)" : "var(--grid-border)"}`,
-                          backgroundColor:
-                            form.gender === g
-                              ? "var(--status-focus)"
-                              : "transparent",
-                          color:
-                            form.gender === g
-                              ? "var(--brand-primary)"
-                              : "var(--text-secondary)",
-                        }}
-                      >
+                      <option key={g} value={g}>
                         {g}
-                      </button>
+                      </option>
                     ))}
-                  </div>
+                  </select>
                 </div>
                 <div>
                   <label
@@ -853,20 +629,26 @@ export default function SalesCustomerManage() {
                   >
                     Ngày sinh
                   </label>
-                  <div className="relative">
-                    <Calendar
-                      size={14}
-                      className="absolute left-3 top-1/2 -translate-y-1/2"
-                      style={{ color: "var(--text-placeholder)" }}
-                    />
-                    <input
-                      type="date"
-                      value={form.dob}
-                      onChange={(e) => updateForm("dob", e.target.value)}
-                      className={inputIconBase}
-                      style={inputStyle}
-                    />
-                  </div>
+                  <input
+                    type="date"
+                    value={form.dob}
+                    onChange={(e) => updateForm("dob", e.target.value)}
+                    className="w-full text-[13px] rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 transition bg-transparent"
+                    style={{
+                      ...inputStyle,
+                      borderColor: formErrors.dob
+                        ? "var(--status-error)"
+                        : "var(--grid-border)",
+                    }}
+                  />
+                  {formErrors.dob && (
+                    <p
+                      className="text-[11px] mt-1"
+                      style={{ color: "var(--status-error)" }}
+                    >
+                      {formErrors.dob}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -881,15 +663,15 @@ export default function SalesCustomerManage() {
                 <div className="relative">
                   <MapPin
                     size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2"
+                    className="absolute left-3 top-2.5"
                     style={{ color: "var(--text-placeholder)" }}
                   />
-                  <input
-                    type="text"
-                    placeholder="Số nhà, đường, quận/huyện"
+                  <textarea
+                    placeholder="Số nhà, tên đường, phường/xã..."
+                    rows={2}
                     value={form.address}
                     onChange={(e) => updateForm("address", e.target.value)}
-                    className={inputIconBase}
+                    className="w-full text-[13px] rounded-lg pl-10 pr-3 py-2.5 focus:outline-none focus:ring-2 transition bg-transparent resize-none"
                     style={inputStyle}
                   />
                 </div>
@@ -904,34 +686,31 @@ export default function SalesCustomerManage() {
                   Ghi chú
                 </label>
                 <textarea
-                  placeholder="Ghi chú về khách hàng..."
+                  placeholder="Đặc điểm nhận dạng, sở thích khách hàng..."
+                  rows={2}
                   value={form.note}
                   onChange={(e) => updateForm("note", e.target.value)}
-                  rows={2}
-                  className="w-full text-[13px] rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 transition resize-none bg-transparent"
+                  className="w-full text-[13px] rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 transition bg-transparent resize-none"
                   style={inputStyle}
                 />
               </div>
 
-              {/* Actions */}
-              <div
-                className="flex justify-end gap-2.5 pt-3 border-t"
-                style={{ borderColor: "var(--grid-border)" }}
-              >
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3 pt-2">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   onClick={() => setIsFormOpen(false)}
-                  className="rounded-lg cursor-pointer text-[13px]"
+                  className="flex-1 h-11 text-[13px] font-bold rounded-xl"
                 >
                   Hủy
                 </Button>
                 <Button
                   type="submit"
-                  className="rounded-lg text-[13px] font-bold text-white min-w-[120px] cursor-pointer"
+                  className="flex-1 h-11 text-[13px] font-bold text-white rounded-xl shadow-md transition-all active:scale-[0.98]"
                   style={{ backgroundColor: "var(--brand-primary)" }}
                 >
-                  {currentCustomer ? "Cập nhật" : "Thêm khách hàng"}
+                  {currentCustomer ? "Cập nhật hồ sơ" : "Tạo khách hàng"}
                 </Button>
               </div>
             </form>
@@ -939,151 +718,222 @@ export default function SalesCustomerManage() {
         </div>
       )}
 
-      {/* ═══ MODAL: DELETE ═══ */}
       {/* ═══ MODAL: HISTORY ═══ */}
-      {isHistoryOpen && currentCustomer && (
+      {isHistoryOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
             onClick={() => setIsHistoryOpen(false)}
           />
           <div
-            className="relative bg-white rounded-lg w-full max-w-2xl overflow-hidden animate-in zoom-in-95"
-            style={{ boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
+            className="relative bg-white rounded-xl w-full max-w-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300"
+            style={{ boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" }}
           >
-            <div
-              className="flex items-center justify-between px-5 py-4 border-b"
-              style={{ borderColor: "var(--grid-border)" }}
-            >
-              <div>
-                <h2
-                  className="text-[15px] font-bold flex items-center gap-2"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  <ShoppingCart
-                    size={16}
-                    style={{ color: "var(--brand-primary)" }}
-                  />{" "}
-                  Lịch sử mua hàng
-                </h2>
-                <p
-                  className="text-[12px] mt-0.5"
-                  style={{ color: "var(--text-placeholder)" }}
-                >
-                  Khách hàng: <strong style={{ color: "var(--text-main)" }}>{currentCustomer.name}</strong> – {currentCustomer.code}
-                </p>
+            {/* Header */}
+            <div className="px-6 py-5 border-b bg-[var(--grid-header-bg)] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div>
+                  <h2 className="text-[16px] font-bold text-[var(--text-main)]">
+                    Chi tiết khách hàng
+                  </h2>
+                  <p className="text-[11px] font-medium text-[var(--text-placeholder)] uppercase tracking-wider">
+                    {currentCustomer?.customer_code} — {currentCustomer?.full_name}
+                  </p>
+                </div>
               </div>
               <button
                 onClick={() => setIsHistoryOpen(false)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center transition cursor-pointer hover:bg-gray-100"
-                style={{ color: "var(--text-placeholder)" }}
+                className="p-2 hover:bg-[var(--grid-border)] rounded-lg transition text-[var(--text-placeholder)] cursor-pointer"
               >
-                <X size={16} />
+                <X size={20} />
               </button>
             </div>
-            
-            <div className="p-5 max-h-[60vh] overflow-y-auto">
-              {customerOrders.length > 0 ? (
-                <div className="space-y-3">
-                  {customerOrders.map(order => {
-                    const isExpanded = expandedOrderId === (order.id + order.code);
-                    const detail = MOCK_ORDERS_DETAILED[order.id];
-                    const products = detail?.products || [];
-                    const fmtCurrency = (n) => n != null ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n) : "—";
 
-                    return (
-                      <div key={order.id + order.code} className="border rounded-xl overflow-hidden transition-all" style={{ borderColor: isExpanded ? "var(--brand-primary)" : "var(--grid-border)" }}>
-                        {/* Order header — clickable */}
-                        <div
-                          className="p-4 cursor-pointer transition-colors hover:bg-gray-50"
-                          onClick={() => setExpandedOrderId(isExpanded ? null : order.id + order.code)}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-[13px] font-mono" style={{ color: "var(--brand-primary)" }}>{order.code}</span>
-                              <span className="text-[11px] px-1.5 py-0.5 rounded-md font-medium" style={{
-                                backgroundColor: order.type === "Hàng sẵn" ? "#EFF6FF" : "#F5F3FF",
-                                color: order.type === "Hàng sẵn" ? "#1D4ED8" : "#7C3AED"
-                              }}>{order.type}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ 
-                                backgroundColor: order.status === "Giao hàng thành công" ? "#dcfce7" : order.status === "Đã hủy" ? "#fee2e2" : order.status === "Chờ duyệt hủy" ? "#fef3c7" : "#EFF6FF",
-                                color: order.status === "Giao hàng thành công" ? "#166534" : order.status === "Đã hủy" ? "#991b1b" : order.status === "Chờ duyệt hủy" ? "#92400e" : "#1D4ED8"
-                              }}>
-                                {order.status}
-                              </span>
-                              <ChevronDown size={14} className="transition-transform" style={{ color: "var(--text-placeholder)", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)" }} />
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between mt-2">
-                            <div className="flex gap-2 items-center text-[12px]" style={{ color: "var(--text-placeholder)" }}>
-                              <Calendar size={13} />
-                              <span>{new Date(order.date).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" })}</span>
-                            </div>
-                            <span className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>
-                              {new Intl.NumberFormat("vi-VN").format(order.total)}đ
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Expanded product detail */}
-                        {isExpanded && (
-                          <div style={{ borderTop: "1px solid var(--grid-border)", backgroundColor: "#FAFAFA" }}>
-                            {products.length > 0 ? (
-                              <>
-                                {/* Table header */}
-                                <div className="grid grid-cols-[1fr_40px_80px_90px] gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--text-placeholder)", borderBottom: "1px solid var(--grid-border)" }}>
-                                  <span>Sản phẩm</span>
-                                  <span className="text-center">SL</span>
-                                  <span className="text-right">Đơn giá</span>
-                                  <span className="text-right">Thành tiền</span>
-                                </div>
-                                {/* Rows */}
-                                {products.map((p, i) => (
-                                  <div key={i} className="grid grid-cols-[1fr_40px_80px_90px] gap-2 px-4 py-2.5 items-center" style={{ borderBottom: i < products.length - 1 ? "1px solid var(--grid-border)" : "none" }}>
-                                    <div className="min-w-0">
-                                      <p className="text-[12px] font-semibold truncate" style={{ color: "var(--text-main)" }}>{p.name}</p>
-                                      {p.material && <p className="text-[10px] truncate" style={{ color: "var(--text-placeholder)" }}>{p.material}</p>}
-                                    </div>
-                                    <p className="text-[12px] text-center font-medium" style={{ color: "var(--text-secondary)" }}>{p.qty}</p>
-                                    <p className="text-[11px] text-right font-medium" style={{ color: "var(--text-secondary)" }}>{p.price ? fmtCurrency(p.price) : "—"}</p>
-                                    <p className="text-[12px] text-right font-bold" style={{ color: "var(--text-main)" }}>{p.price ? fmtCurrency(p.price * p.qty) : "—"}</p>
-                                  </div>
-                                ))}
-                              </>
-                            ) : (
-                              <div className="px-4 py-4 text-center">
-                                <p className="text-[12px]" style={{ color: "var(--text-placeholder)" }}>Chưa có dữ liệu chi tiết sản phẩm</p>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-10">
-                  <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <ShoppingCart size={20} style={{ color: "var(--text-placeholder)" }} />
+            <div className="p-6 overflow-y-auto max-h-[75vh] custom-scrollbar space-y-6">
+              {/* Profile Overview */}
+              <div className="grid grid-cols-2 gap-6 bg-[var(--grid-header-bg)] p-4 rounded-xl border border-[var(--grid-border)]">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Phone size={14} className="text-[var(--text-placeholder)] mt-1 shrink-0" />
+                    <div>
+                      <p className="text-[10px] font-bold text-[var(--text-placeholder)] uppercase mb-0.5">Số điện thoại</p>
+                      <p className="text-[13px] font-semibold text-[var(--text-main)]">{currentCustomer?.phone_number}</p>
+                    </div>
                   </div>
-                  <p className="text-[13px] font-medium" style={{ color: "var(--text-main)" }}>Chưa có đơn hàng nào</p>
-                  <p className="text-[12px] mt-1" style={{ color: "var(--text-placeholder)" }}>Khách hàng này chưa thực hiện giao dịch nào.</p>
+                  <div className="flex items-start gap-3">
+                    <Mail size={14} className="text-[var(--text-placeholder)] mt-1 shrink-0" />
+                    <div>
+                      <p className="text-[10px] font-bold text-[var(--text-placeholder)] uppercase mb-0.5">Email</p>
+                      <p className="text-[13px] font-semibold text-[var(--text-main)]">{currentCustomer?.email || "—"}</p>
+                    </div>
+                  </div>
                 </div>
-              )}
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <MapPin size={14} className="text-[var(--text-placeholder)] mt-1 shrink-0" />
+                    <div>
+                      <p className="text-[10px] font-bold text-[var(--text-placeholder)] uppercase mb-0.5">Địa chỉ</p>
+                      <p className="text-[13px] font-semibold text-[var(--text-main)] leading-relaxed">{currentCustomer?.address || "—"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Calendar size={14} className="text-[var(--text-placeholder)] mt-1 shrink-0" />
+                    <div>
+                      <p className="text-[10px] font-bold text-[var(--text-placeholder)] uppercase mb-0.5">Ngày sinh</p>
+                      <p className="text-[13px] font-semibold text-[var(--text-main)]">{formatDate(currentCustomer?.dob)}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Order History */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-[var(--grid-border)] pb-2">
+                  <h3 className="text-[14px] font-bold text-[var(--text-main)] flex items-center gap-2">
+                    <ShoppingCart size={16} className="text-[var(--brand-primary)]" />
+                    Lịch sử mua hàng
+                  </h3>
+                  <span className="px-2 py-0.5 bg-[var(--bg-main)] rounded-full text-[10px] font-bold text-[var(--text-secondary)]">
+                    {historyTotal} Đơn hàng
+                  </span>
+                </div>
+
+                {customerOrders.length > 0 ? (
+                  <>
+                    <div className="space-y-4">
+                      {customerOrders.map((order) => {
+                        const total = parseFloat(order.total_amount) || 0;
+                        const paid = parseFloat(order.deposit_amount) || 0;
+                        const balance = total - paid;
+                        
+                        return (
+                          <div 
+                            key={order.pk_order_id}
+                            className="border border-[var(--grid-border)] rounded-xl overflow-hidden bg-white shadow-sm"
+                          >
+                            {/* Order Header */}
+                            <div className="p-3 bg-[var(--grid-header-bg)] border-b flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[12px] font-bold text-[var(--text-main)]">#{order.pk_order_id}</span>
+                                <span className="text-[11px] text-[var(--text-placeholder)] font-medium">{formatDate(order.createdate)}</span>
+                              </div>
+                              <span className={cn(
+                                "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
+                                order.order_status === 5 ? "bg-[var(--status-focus)] text-[var(--status-success)]" : "bg-amber-50 text-amber-600"
+                              )}>
+                                {order.order_status === 1 ? "Chờ xử lý" : 
+                                 order.order_status === 5 ? "Hoàn thành" : "Đang xử lý"}
+                              </span>
+                            </div>
+
+                            {/* Items List */}
+                            <div className="p-3 space-y-2 border-b border-[var(--bg-main)]">
+                              {order.items?.map((item, idx) => (
+                                <div key={idx} className="flex justify-between items-center text-[12px]">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand-primary)]" />
+                                    <span className="text-[var(--text-secondary)] font-medium">{item.item_name}</span>
+                                    <span className="text-[var(--text-placeholder)]">x{item.item_quantity}</span>
+                                  </div>
+                                  <span className="text-[var(--text-main)] font-semibold">{parseFloat(item.item_price).toLocaleString()}đ</span>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Payment Summary */}
+                            <div className="p-3 bg-[var(--status-focus)] grid grid-cols-3 gap-2 text-center divide-x divide-[var(--grid-border)]">
+                              <div>
+                                <p className="text-[10px] font-bold text-[var(--text-placeholder)] uppercase mb-0.5">Tổng cộng</p>
+                                <p className="text-[13px] font-bold text-[var(--text-main)]">{total.toLocaleString()}đ</p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] font-bold text-emerald-500 uppercase mb-0.5">Đã thanh toán</p>
+                                <p className="text-[13px] font-bold text-emerald-600">{paid.toLocaleString()}đ</p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] font-bold text-red-500 uppercase mb-0.5">Còn lại</p>
+                                <p className="text-[13px] font-bold text-red-600">{balance.toLocaleString()}đ</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Pagination for History */}
+                    {historyTotal > historyPagination.limit && (
+                      <div className="flex items-center justify-between pt-4">
+                        <p className="text-[11px] text-[var(--text-placeholder)] font-medium">
+                          Hiển thị {(historyPagination.page - 1) * historyPagination.limit + 1} - {Math.min(historyPagination.page * historyPagination.limit, historyTotal)} / {historyTotal} đơn hàng
+                        </p>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={historyPagination.page === 1}
+                            onClick={() => handleOpenHistory(currentCustomer, historyPagination.page - 1)}
+                            className="h-8 px-2 text-[11px]"
+                          >
+                            Trước
+                          </Button>
+                          <div className="flex items-center gap-1 px-2">
+                            {Array.from({ length: Math.ceil(historyTotal / historyPagination.limit) }).map((_, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => handleOpenHistory(currentCustomer, idx + 1)}
+                                className={cn(
+                                  "w-6 h-6 rounded flex items-center justify-center text-[11px] font-bold transition",
+                                  historyPagination.page === idx + 1 
+                                    ? "bg-[var(--brand-primary)] text-white" 
+                                    : "text-[var(--text-placeholder)] hover:bg-[var(--bg-main)]"
+                                )}
+                              >
+                                {idx + 1}
+                              </button>
+                            ))}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={historyPagination.page >= Math.ceil(historyTotal / historyPagination.limit)}
+                            onClick={() => handleOpenHistory(currentCustomer, historyPagination.page + 1)}
+                            className="h-8 px-2 text-[11px]"
+                          >
+                            Sau
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="py-12 flex flex-col items-center justify-center text-[var(--text-placeholder)] bg-[var(--bg-main)] rounded-2xl border-2 border-dashed border-[var(--grid-border)]">
+                    <ShoppingCart size={40} className="mb-3 opacity-20" />
+                    <p className="text-[13px] font-medium">Khách hàng chưa có đơn hàng nào.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-4 bg-[var(--grid-header-bg)] border-t flex justify-end">
+              <Button
+                onClick={() => setIsHistoryOpen(false)}
+                className="px-6 h-10 rounded-xl text-white font-bold text-[13px] hover:opacity-90 transition-all active:scale-[0.98] shadow-sm"
+                style={{ backgroundColor: "var(--brand-primary)" }}
+              >
+                Đóng
+              </Button>
             </div>
           </div>
         </div>
       )}
 
+      {/* Confirm Deletion */}
       <ConfirmModal
         isOpen={!!deleteConfirm}
-        title="Xác nhận xóa khách hàng"
-        message={`Bạn có chắc chắn muốn xóa khách hàng "${deleteConfirm?.name}"? Hành động này không thể hoàn tác.`}
-        confirmText="Xóa khách hàng"
-        onCancel={() => setDeleteConfirm(null)}
+        title="Xác nhận xóa?"
+        message={`Bạn có chắc chắn muốn xóa hồ sơ khách hàng "${deleteConfirm?.full_name}"?`}
         onConfirm={handleDelete}
+        onCancel={() => setDeleteConfirm(null)}
       />
     </>
   );

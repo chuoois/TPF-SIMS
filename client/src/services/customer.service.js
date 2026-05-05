@@ -19,12 +19,13 @@ const customerService = {
   },
 
   /**
-   * Lấy chi tiết khách hàng theo ID
+   * Lấy chi tiết khách hàng theo ID (có phân trang đơn hàng)
    * @param {number|string} id 
+   * @param {Object} params - { page, limit }
    * @returns {Promise}
    */
-  async getCustomerById(id) {
-    const response = await axiosInstance.get(`/customer/customers/${id}`);
+  async getCustomerById(id, params = {}) {
+    const response = await axiosInstance.get(`/customer/customers/${id}`, { params });
     return response.data;
   },
 
