@@ -28,7 +28,7 @@ router.get("/customers", CustomerController.getAllCustomers);
  * @swagger
  * /api/sale/customers/{id}:
  *   get:
- *     summary: Get customer by ID
+ *     summary: Get customer by ID with paginated orders
  *     tags: [Customer]
  *     parameters:
  *       - in: path
@@ -36,9 +36,19 @@ router.get("/customers", CustomerController.getAllCustomers);
  *         required: true
  *         schema:
  *           type: integer
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 5
  *     responses:
  *       200:
- *         description: Customer details
+ *         description: Customer details with paginated orders
  */
 router.get("/customers/:id", CustomerController.getCustomerById);
 

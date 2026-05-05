@@ -50,6 +50,10 @@ const CustomRequestItem = sequelize.define(
       type: DataTypes.DECIMAL(15, 2),
       defaultValue: 0,
     },
+    item_cost_price: {
+      type: DataTypes.DECIMAL(15, 2),
+      defaultValue: 0,
+    },
     customer_img: {
       type: DataTypes.JSON, // Mảng ảnh mẫu từ khách cho từng món
     },

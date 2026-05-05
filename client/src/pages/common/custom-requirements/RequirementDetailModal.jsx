@@ -67,6 +67,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
   const [deliveryDate, setDeliveryDate] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState("");
   const [notes, setNotes] = useState("");
+  const [totalCostPrice, setTotalCostPrice] = useState(0);
 
   // Dropdown options
   const [materialOptions, setMaterialOptions] = useState([]);
@@ -135,6 +136,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
       setDeliveryDate(req.deliveryDate ? req.deliveryDate.split("T")[0] : "");
       setDeliveryMethod(req.deliveryMethod || "");
       setNotes(req.notes || "");
+      // totalCostPrice sẽ được tính tự động từ items bên dưới
 
       setItemSpecs(
         req.items.map((item) => ({
@@ -143,7 +145,8 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
           material: item.material || "",
           color: item.color || "",
           quantity: item.qty || item.quantity || 1,
-          price: Math.round(Number(item.quotedPrice || item.price || 0)),
+          price: Math.round(Number(item.item_price || item.price || item.quotedPrice || 0)),
+          costPrice: Math.round(Number(item.item_cost_price || item.cost_price || item.costPrice || 0)),
           length: item.specs?.length || "",
           width: item.specs?.width || "",
           height: item.specs?.height || "",
@@ -178,6 +181,13 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
       setDepositAmount(suggested.amount);
     }
   }, [totalAmount, isFullPayment, canEdit]);
+
+  // Tự động tính tổng giá nhập (Owner only)
+  useEffect(() => {
+    if (userRole !== 'owner') return;
+    const newTotalCost = itemSpecs.reduce((sum, item) => sum + (Number(item.costPrice) || 0) * (Number(item.quantity) || 1), 0);
+    setTotalCostPrice(newTotalCost);
+  }, [itemSpecs, userRole]);
 
   const handleUpdateItemSpec = (index, field, value) => {
     if (!canEdit) return;
@@ -217,6 +227,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
           item_color: spec.color,
           item_quantity: spec.quantity,
           item_price: spec.price,
+          item_cost_price: userRole === 'owner' ? Number(spec.costPrice) : undefined,
           item_note: spec.note,
           fk_supplier_id: spec.fk_supplier_id || null,
           expected_supplier_date: spec.expectedWorkshopDate || null,
@@ -416,11 +427,39 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                       <div className="flex-1 space-y-5">
                         <div className="border-b border-gray-50 pb-4">
                           <h4 className="text-[17px] font-bold text-gray-900 mb-4">{spec.name}</h4>
-                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                            <EditableSpecItem label="Chất liệu" value={spec.material} readOnly={!canEdit} onFocus={() => canEdit && setActiveDropdown({ index, type: 'material' })} onBlur={() => setTimeout(() => setActiveDropdown({ index: null, type: null }), 200)} onChange={(v) => handleUpdateItemSpec(index, "material", v)} options={activeDropdown.index === index && activeDropdown.type === 'material' ? materialOptions : null} onSelect={(v) => handleUpdateItemSpec(index, "material", v)} />
-                            <EditableSpecItem label="Màu sắc" value={spec.color} readOnly={!canEdit} onFocus={() => canEdit && setActiveDropdown({ index, type: 'color' })} onBlur={() => setTimeout(() => setActiveDropdown({ index: null, type: null }), 200)} onChange={(v) => handleUpdateItemSpec(index, "color", v)} options={activeDropdown.index === index && activeDropdown.type === 'color' ? colorOptions : null} onSelect={(v) => handleUpdateItemSpec(index, "color", v)} />
-                            <div><p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Số lượng</p><div className="text-[14px] font-bold text-gray-700">{spec.quantity}</div></div>
-                            <EditableSpecItem label="Đơn giá (đ)" value={spec.price === 0 ? "" : spec.price.toLocaleString("vi-VN")} readOnly={!canEditProduction} onChange={(v) => handleUpdateItemSpec(index, "price", Number(v.replace(/\D/g, "")))} />
+                          <div className="flex flex-col gap-4">
+                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                              <EditableSpecItem label="Chất liệu" value={spec.material} readOnly={!canEdit} onFocus={() => canEdit && setActiveDropdown({ index, type: 'material' })} onBlur={() => setTimeout(() => setActiveDropdown({ index: null, type: null }), 200)} onChange={(v) => handleUpdateItemSpec(index, "material", v)} options={activeDropdown.index === index && activeDropdown.type === 'material' ? materialOptions : null} onSelect={(v) => handleUpdateItemSpec(index, "material", v)} />
+                              <EditableSpecItem label="Màu sắc" value={spec.color} readOnly={!canEdit} onFocus={() => canEdit && setActiveDropdown({ index, type: 'color' })} onBlur={() => setTimeout(() => setActiveDropdown({ index: null, type: null }), 200)} onChange={(v) => handleUpdateItemSpec(index, "color", v)} options={activeDropdown.index === index && activeDropdown.type === 'color' ? colorOptions : null} onSelect={(v) => handleUpdateItemSpec(index, "color", v)} />
+                              <div><p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Số lượng</p><div className="text-[14px] font-bold text-gray-700">{spec.quantity}</div></div>
+                            </div>
+                            
+                            <div className="p-3.5 rounded-xl bg-gray-50/50 border border-gray-100 grid grid-cols-2 gap-6">
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-[#34B057] uppercase block">Đơn giá bán (đ)</label>
+                                <input 
+                                  type="text" 
+                                  readOnly={!canEditProduction} 
+                                  value={spec.price === 0 ? "" : spec.price.toLocaleString("vi-VN")} 
+                                  onChange={(e) => handleUpdateItemSpec(index, "price", Number(e.target.value.replace(/\D/g, "")))} 
+                                  className={`w-full bg-transparent border-none focus:ring-0 text-[16px] font-black text-[#34B057] p-0 ${canEditProduction ? 'border-b border-[#34B057]/10' : ''}`} 
+                                  placeholder="0"
+                                />
+                              </div>
+                              {userRole === 'owner' && (
+                                <div className="space-y-1 border-l border-gray-200 pl-6">
+                                  <label className="text-[10px] font-bold text-amber-600 uppercase block">Giá vốn / Nhập (đ)</label>
+                                  <input 
+                                    type="text" 
+                                    readOnly={!canEditProduction} 
+                                    value={spec.costPrice === 0 ? "" : spec.costPrice.toLocaleString("vi-VN")} 
+                                    onChange={(e) => handleUpdateItemSpec(index, "costPrice", Number(e.target.value.replace(/\D/g, "")))} 
+                                    className={`w-full bg-transparent border-none focus:ring-0 text-[16px] font-black text-amber-600 p-0 ${canEditProduction ? 'border-b border-amber-100' : ''}`} 
+                                    placeholder="0"
+                                  />
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
 
