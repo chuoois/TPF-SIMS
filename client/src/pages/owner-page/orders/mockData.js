@@ -88,8 +88,8 @@ export const INITIAL_ORDERS = [
     deposit: 13500000,
     fulfillmentType: "Giao tận nơi",
     products: [
-      { name: "Bộ bàn ghế ăn 6 chỗ", material: "Gỗ sồi", size: "D180 R90 C75", color: "Nâu đậm", finish: "Sơn PU bóng mờ", qty: 1, unit: "Bộ", note: "Bo góc tròn, chân tiện tròn kiểu cổ điển", image: "https://noithatzito.com/wp-content/uploads/2021/04/bo-ban-an-go-soi-nga-6-ghe.jpg" },
-      { name: "Tủ rượu cánh kính", material: "Gỗ sồi", size: "D120 R40 C200", color: "Nâu đậm", finish: "Sơn PU bóng mờ", qty: 2, unit: "Chiếc", note: "Kính cường lực 8mm, bản lề giảm chấn Blum", image: "https://noithatminhkhoi.com/upload/images/tu-quan-ao-go-soi-nga-4-canh-dep.jpg" }
+      { name: "Bộ bàn ghế ăn 6 chỗ", material: "Gỗ sồi", size: "D180 R90 C75", color: "Nâu đậm", finish: "Sơn PU bóng mờ", qty: 1, unit: "Bộ", note: "Bo góc tròn, chân tiện tròn kiểu cổ điển", image: "https://noithatzito.com/wp-content/uploads/2021/04/bo-ban-an-go-soi-nga-6-ghe.jpg", importPrice: 32000000 },
+      { name: "Tủ rượu cánh kính", material: "Gỗ sồi", size: "D120 R40 C200", color: "Nâu đậm", finish: "Sơn PU bóng mờ", qty: 2, unit: "Chiếc", note: "Kính cường lực 8mm, bản lề giảm chấn Blum", image: "https://noithatminhkhoi.com/upload/images/tu-quan-ao-go-soi-nga-4-canh-dep.jpg", importPrice: 8500000 }
     ]
   },
   {
@@ -106,8 +106,8 @@ export const INITIAL_ORDERS = [
     deposit: 13500000,
     fulfillmentType: "Giao tận nơi",
     products: [
-      { name: "Sập thờ tứ linh", material: "Gỗ mít", size: "D197 R107 C87", color: "Tự nhiên", finish: "Đánh vecni bóng", qty: 1, unit: "Chiếc", note: "Đục chạm tứ linh: Long - Lân - Quy - Phụng, chân quỳ", image: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg" },
-      { name: "Kệ thờ treo tường", material: "Gỗ mít", size: "D107 R47 C57", color: "Tự nhiên", finish: "Đánh vecni bóng", qty: 2, unit: "Chiếc", note: "Chạm hoa sen, đục thủng 2 bên", image: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg" }
+      { name: "Sập thờ tứ linh", material: "Gỗ mít", size: "D197 R107 C87", color: "Tự nhiên", finish: "Đánh vecni bóng", qty: 1, unit: "Chiếc", note: "Đục chạm tứ linh: Long - Lân - Quy - Phụng, chân quỳ", image: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg", importPrice: 42000000 },
+      { name: "Kệ thờ treo tường", material: "Gỗ mít", size: "D107 R47 C57", color: "Tự nhiên", finish: "Đánh vecni bóng", qty: 2, unit: "Chiếc", note: "Chạm hoa sen, đục thủng 2 bên", image: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg", importPrice: 2500000 }
     ]
   },
   {
@@ -199,8 +199,10 @@ export const INITIAL_ORDERS = [
     deposit: 25500000,
     fulfillmentType: "Giao tận nơi",
     products: [
-      { name: "Bàn giám đốc chữ L", material: "Gỗ óc chó", size: "D200 R90 C75 + D140 R60", color: "Nâu óc chó", finish: "Sơn PU 7 lớp bóng mờ 40%", qty: 1, unit: "Chiếc", note: "Hộc tủ 3 ngăn bên phải, lỗ luồn dây điện mặt bàn, chân sắt sơn tĩnh điện đen", image: "https://noithatzito.com/wp-content/uploads/2021/04/bo-ban-an-go-soi-nga-6-ghe.jpg" },
-      { name: "Tủ hồ sơ 4 cánh", material: "Gỗ óc chó", size: "D160 R45 C200", color: "Nâu óc chó", finish: "Sơn PU bóng mờ", qty: 1, unit: "Chiếc", note: "Khóa âm, bản lề giảm chấn, ngăn trên cánh kính" }
+      { name: "Bàn giám đốc chữ L", material: "Gỗ óc chó", size: "D200 R90 C75 + D140 R60", color: "Nâu óc chó", finish: "Sơn PU 7 lớp bóng mờ 40%", qty: 1, unit: "Chiếc", note: "Hộc tủ 3 ngăn bên phải, lỗ luồn dây điện mặt bàn, chân sắt sơn tĩnh điện đen", image: "https://noithatzito.com/wp-content/uploads/2021/04/bo-ban-an-go-soi-nga-6-ghe.jpg", importPrice: 55000000 },
+      { name: "Tủ hồ sơ 4 cánh", material: "Gỗ óc chó", size: "D160 R45 C200", color: "Nâu óc chó", finish: "Sơn PU bóng mờ", qty: 1, unit: "Chiếc", note: "Khóa âm, bản lề giảm chấn, ngăn trên cánh kính", importPrice: 15000000 },
+      { id: "SP001", name: "Sập thờ Mai Điều chân 20", material: "Gỗ Mít", size: "197x107x108", color: "Cánh gián", qty: 1, unit: "Chiếc", importPrice: 8500000, image: "https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=600" },
+      { id: "SP004", name: "Bộ Ghế Âu Á Chương Cuốn Thư", material: "Gỗ Hương", size: "Tay 10 - 6 món", color: "Cánh gián", qty: 1, unit: "Bộ", importPrice: 18000000, image: "https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?q=80&w=600" }
     ]
   },
   {
@@ -219,7 +221,9 @@ export const INITIAL_ORDERS = [
     products: [
       { name: "Giường ngủ đầu bọc nệm", material: "Gỗ tần bì", size: "D200 R180 C35 (đầu giường C120)", color: "Trắng ngà", finish: "Sơn PU trắng bóng mờ", qty: 1, unit: "Chiếc", note: "Đầu giường bọc nệm da Ý màu ghi, có hộc kéo 2 bên, dát phản" },
       { name: "Tab đầu giường", material: "Gỗ tần bì", size: "D50 R40 C55", color: "Trắng ngà", finish: "Sơn PU trắng bóng mờ", qty: 2, unit: "Chiếc", note: "2 ngăn kéo, tay nắm đồng vàng" },
-      { name: "Tủ quần áo 6 cánh", material: "Gỗ tần bì", size: "D300 R60 C240", color: "Trắng ngà", finish: "Sơn PU trắng bóng mờ", qty: 1, unit: "Chiếc", note: "3 khoang, 2 cánh kính, thanh treo inox, ngăn kéo bên dưới, bản lề Blum" }
+      { name: "Tủ quần áo 6 cánh", material: "Gỗ tần bì", size: "D300 R60 C240", color: "Trắng ngà", finish: "Sơn PU trắng bóng mờ", qty: 1, unit: "Chiếc", note: "3 khoang, 2 cánh kính, thanh treo inox, ngăn kéo bên dưới, bản lề Blum" },
+      { id: "SP002", name: "Tủ áo gỗ Xoan Đào (3 cánh)", material: "Gỗ xoan đào", size: "160x200x55", color: "Để mộc", qty: 1, unit: "Chiếc", importPrice: 4500000, image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=600" },
+      { id: "SP005", name: "Đế kê tượng gỗ Hương", material: "Gỗ Hương", size: "30x30x20", color: "Cánh gián", qty: 1, unit: "Cái", importPrice: 1200000, image: "https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=600" }
     ]
   },
   {

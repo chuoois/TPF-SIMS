@@ -6,7 +6,7 @@ import Products from "../pages/owner-page/products";
 import OwnerRequirements from "../pages/owner-page/customer-requirements";
 import Suppliers from "../pages/owner-page/suppliers";
 import Employees from "../pages/owner-page/employees";
-import Reports from "../pages/owner-page/reports";
+
 import SystemLogs from "../pages/owner-page/system-logs";
 import Coupons from "../pages/owner-page/coupon/index";
 import CouponCreate from "../pages/owner-page/coupon/create-coupon";
@@ -72,10 +72,7 @@ export const ownerRoutes = {
       path: "employees",
       element: <Employees />,
     },
-    {
-      path: "reports",
-      element: <Reports />,
-    },
+
     {
       path: "system-logs",
       element: <SystemLogs />,

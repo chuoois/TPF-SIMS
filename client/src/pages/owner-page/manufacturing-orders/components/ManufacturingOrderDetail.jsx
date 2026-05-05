@@ -17,18 +17,31 @@ import {
   Clock,
 } from "lucide-react";
 
-
-
 const formatDate = (iso) =>
-  iso ? new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—";
+  iso
+    ? new Date(iso).toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+    : "—";
 
 const formatDateTime = (iso) =>
   iso
     ? new Date(iso).toLocaleString("vi-VN", {
-      day: "2-digit", month: "2-digit", year: "numeric",
-      hour: "2-digit", minute: "2-digit",
-    })
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
     : "—";
+
+const fmt = (n) =>
+  new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(n || 0);
 
 // Helper: get display size
 const getDisplaySize = (item) => {
@@ -37,7 +50,9 @@ const getDisplaySize = (item) => {
     item.length ? `Dài ${item.length}cm` : "",
     item.width ? `Rộng ${item.width}cm` : "",
     item.height ? `Cao ${item.height}cm` : "",
-  ].filter(Boolean).join(" × ");
+  ]
+    .filter(Boolean)
+    .join(" × ");
   return parts || "";
 };
 
@@ -95,7 +110,10 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
     `);
     win.document.close();
     win.focus();
-    setTimeout(() => { win.print(); win.close(); }, 400);
+    setTimeout(() => {
+      win.print();
+      win.close();
+    }, 400);
   };
 
   const totalQty = order.items?.reduce((s, i) => s + (i.qty || 0), 0) || 0;
@@ -104,7 +122,9 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
         className="relative flex flex-col rounded-lg overflow-hidden"
@@ -118,17 +138,31 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
         {/* ── Header ── */}
         <div
           className="flex items-center justify-between px-6 py-4 shrink-0"
-          style={{ borderBottom: "1px solid var(--grid-border)", background: "var(--grid-header-bg)" }}
+          style={{
+            borderBottom: "1px solid var(--grid-border)",
+            background: "var(--grid-header-bg)",
+          }}
         >
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "var(--status-focus)" }}>
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{ background: "var(--status-focus)" }}
+            >
               <FileStack size={18} style={{ color: "var(--brand-primary)" }} />
             </div>
             <div>
-              <h2 className="text-[16px] font-bold" style={{ color: "var(--text-main)" }}>
+              <h2
+                className="text-[16px] font-bold"
+                style={{ color: "var(--text-main)" }}
+              >
                 Chi tiết yêu cầu nhập hàng
               </h2>
-              <p className="text-[12px] font-mono" style={{ color: "var(--text-secondary)" }}>{order.id}</p>
+              <p
+                className="text-[12px] font-mono"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                {order.id}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -152,56 +186,93 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
 
         {/* ── Scrollable body ── */}
         <div className="flex-1 overflow-y-auto p-6">
-
           {/* Compact Summary Bar */}
           <div className="flex items-center gap-4 mb-6 px-4 py-3 rounded-xl border border-dashed border-gray-200 bg-gray-50/50">
             <div className="flex items-center gap-1.5 text-[12px]">
-              <Calendar size={14} style={{ color: "var(--text-placeholder)" }} />
-              <span style={{ color: "var(--text-placeholder)" }}>Ngày tạo:</span>
-              <span className="font-bold" style={{ color: "var(--text-main)" }}>{formatDateTime(order.createdAt)}</span>
+              <Calendar
+                size={14}
+                style={{ color: "var(--text-placeholder)" }}
+              />
+              <span style={{ color: "var(--text-placeholder)" }}>
+                Ngày tạo:
+              </span>
+              <span className="font-bold" style={{ color: "var(--text-main)" }}>
+                {formatDateTime(order.createdAt)}
+              </span>
             </div>
             <div className="w-px h-4 bg-gray-200" />
             <div className="flex items-center gap-1.5 text-[12px]">
               <User size={14} style={{ color: "var(--text-placeholder)" }} />
-              <span style={{ color: "var(--text-placeholder)" }}>Người tạo:</span>
-              <span className="font-bold" style={{ color: "var(--text-main)" }}>{order.createdBy || "Chủ xưởng"}</span>
+              <span style={{ color: "var(--text-placeholder)" }}>
+                Người tạo:
+              </span>
+              <span className="font-bold" style={{ color: "var(--text-main)" }}>
+                {order.createdBy || "Chủ xưởng"}
+              </span>
             </div>
             <div className="w-px h-4 bg-gray-200" />
             <div className="flex items-center gap-1.5 text-[12px]">
               <Users size={14} style={{ color: "var(--text-placeholder)" }} />
-              <span style={{ color: "var(--text-placeholder)" }}>Nhà cung cấp:</span>
-              <span className="font-bold" style={{ color: "var(--text-main)" }}>{order.supplierName || "—"}</span>
+              <span style={{ color: "var(--text-placeholder)" }}>
+                Nhà cung cấp:
+              </span>
+              <span className="font-bold" style={{ color: "var(--text-main)" }}>
+                {order.supplierName || "—"}
+              </span>
             </div>
             <div className="w-px h-4 bg-gray-200" />
             <div className="flex items-center gap-1.5 text-[12px]">
               <Package size={14} style={{ color: "var(--text-placeholder)" }} />
-              <span style={{ color: "var(--text-placeholder)" }}>Tổng cộng:</span>
-              <span className="font-bold text-[var(--brand-primary)]">{totalQty} chiếc</span>
+              <span style={{ color: "var(--text-placeholder)" }}>
+                Tổng cộng:
+              </span>
+              <span className="font-bold text-[var(--brand-primary)]">
+                {totalQty} chiếc
+              </span>
             </div>
-            {order.expectedDate && (
-              <>
-                <div className="w-px h-4 bg-gray-200" />
-                <div className="flex items-center gap-1.5 text-[12px]">
-                  <Clock size={14} style={{ color: "var(--text-placeholder)" }} />
-                  <span style={{ color: "var(--text-placeholder)" }}>Hẹn sớm nhất:</span>
-                  <span className="font-bold text-rose-600">
-                    {new Date(order.expectedDate).toLocaleDateString("vi-VN")}
-                  </span>
-                </div>
-              </>
-            )}
+            <div className="w-px h-4 bg-gray-200" />
+            <div className="flex items-center gap-1.5 text-[12px]">
+              <span style={{ color: "var(--text-placeholder)" }}>
+                Tổng tiền:
+              </span>
+              <span className="font-bold text-indigo-700">
+                {fmt(order.totalAmount)}
+              </span>
+            </div>
+            <div className="w-px h-4 bg-gray-200" />
+            <div className="flex items-center gap-1.5 text-[12px]">
+              <span style={{ color: "var(--text-placeholder)" }}>
+                Đã cọc:
+              </span>
+              <span className="font-bold text-emerald-700">
+                {fmt(order.deposit)}
+              </span>
+            </div>
+            {/* Removed expectedDate summary */}
           </div>
 
           {/* Ghi chú tổng */}
           {order.note && (
-            <div className="mb-6 p-4 rounded-xl text-[13px] leading-relaxed" style={{ background: "#FFFBEB", border: "1px solid #FDE68A", color: "#92400E" }}>
-              <span className="font-bold inline-flex items-center gap-1.5 mb-1"><Calendar size={14} /> Ghi chú từ chủ xưởng:</span>
+            <div
+              className="mb-6 p-4 rounded-xl text-[13px] leading-relaxed"
+              style={{
+                background: "#FFFBEB",
+                border: "1px solid #FDE68A",
+                color: "#92400E",
+              }}
+            >
+              <span className="font-bold inline-flex items-center gap-1.5 mb-1">
+                <Calendar size={14} /> Ghi chú từ chủ xưởng:
+              </span>
               <p>{order.note}</p>
             </div>
           )}
 
           {/* ════════ Danh sách sản phẩm — ĐẦY ĐỦ thông tin ════════ */}
-          <p className="text-[11px] font-bold uppercase tracking-wide mb-3" style={{ color: "var(--text-placeholder)" }}>
+          <p
+            className="text-[11px] font-bold uppercase tracking-wide mb-3"
+            style={{ color: "var(--text-placeholder)" }}
+          >
             Danh sách sản phẩm cần nhập ({order.items?.length || 0})
           </p>
           <div className="flex flex-col gap-3">
@@ -212,8 +283,13 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                 ...(item.images || []),
               ];
               const sizeDisplay = getDisplaySize(item);
-              const colorFinish = [item.color, item.finish].filter(Boolean).join(" / ");
-              const srcDetail = item.sourceOrders?.[0] ? (item.sourceOrderDetails?.[item.sourceOrders[0]] || order.sourceOrderDetails?.[item.sourceOrders[0]]) : null;
+              const colorFinish = [item.color, item.finish]
+                .filter(Boolean)
+                .join(" / ");
+              const srcDetail = item.sourceOrders?.[0]
+                ? item.sourceOrderDetails?.[item.sourceOrders[0]] ||
+                  order.sourceOrderDetails?.[item.sourceOrders[0]]
+                : null;
 
               return (
                 <div
@@ -222,25 +298,44 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                   style={{ border: "1px solid var(--grid-border)" }}
                 >
                   {/* Header: STT + Tên SP + SL */}
-                  <div className="flex items-center justify-between px-4 py-2.5" style={{ background: "var(--grid-header-bg)", borderBottom: "1px solid var(--grid-border)" }}>
+                  <div
+                    className="flex items-center justify-between px-4 py-2.5"
+                    style={{
+                      background: "var(--grid-header-bg)",
+                      borderBottom: "1px solid var(--grid-border)",
+                    }}
+                  >
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-black w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "var(--brand-primary)", color: "#fff" }}>
+                      <span
+                        className="text-[11px] font-black w-6 h-6 rounded-lg flex items-center justify-center"
+                        style={{
+                          background: "var(--brand-primary)",
+                          color: "#fff",
+                        }}
+                      >
                         {idx + 1}
                       </span>
-                      <span className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>
+                      <span
+                        className="text-[13px] font-bold"
+                        style={{ color: "var(--text-main)" }}
+                      >
                         {item.productName}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
-                      {(item.expectedDate || order.expectedDate) && (
-                        <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-rose-50 border border-rose-100 text-rose-600">
-                            <Clock size={12} />
-                            <span className="text-[11px] font-black uppercase">Đến: {new Date(item.expectedDate || order.expectedDate).toLocaleDateString("vi-VN")}</span>
-                        </div>
-                      )}
                       <div className="flex items-center gap-1">
-                        <span className="text-[16px] font-black" style={{ color: "var(--brand-primary)" }}>×{item.qty}</span>
-                        <span className="text-[11px]" style={{ color: "var(--text-placeholder)" }}>{item.unit || "Cái"}</span>
+                        <span
+                          className="text-[16px] font-black"
+                          style={{ color: "var(--brand-primary)" }}
+                        >
+                          ×{item.qty}
+                        </span>
+                        <span
+                          className="text-[11px]"
+                          style={{ color: "var(--text-placeholder)" }}
+                        >
+                          {item.unit || "Cái"}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -257,11 +352,21 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                             style={{ borderColor: "var(--grid-border)" }}
                             onClick={() => setPreviewImage(img)}
                           >
-                            <img src={img} alt="" className="w-full h-full object-cover" />
+                            <img
+                              src={img}
+                              alt=""
+                              className="w-full h-full object-cover"
+                            />
                           </div>
                         ))}
                         {allImages.length > 3 && (
-                          <div className="w-16 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold" style={{ background: "#F3F4F6", color: "var(--text-placeholder)" }}>
+                          <div
+                            className="w-16 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold"
+                            style={{
+                              background: "#F3F4F6",
+                              color: "var(--text-placeholder)",
+                            }}
+                          >
                             +{allImages.length - 3} ảnh
                           </div>
                         )}
@@ -273,61 +378,173 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                       <div className="grid grid-cols-2 gap-x-6 gap-y-2">
                         {/* Chất liệu */}
                         <div className="flex items-start gap-2">
-                          <span className="text-[11px] font-bold uppercase tracking-wide shrink-0 w-[80px]" style={{ color: "var(--text-placeholder)" }}>Chất liệu</span>
-                          <span className="text-[13px] font-semibold" style={{ color: item.material ? "var(--text-main)" : "var(--text-placeholder)" }}>
+                          <span
+                            className="text-[11px] font-bold uppercase tracking-wide shrink-0 w-[80px]"
+                            style={{ color: "var(--text-placeholder)" }}
+                          >
+                            Chất liệu
+                          </span>
+                          <span
+                            className="text-[13px] font-semibold"
+                            style={{
+                              color: item.material
+                                ? "var(--text-main)"
+                                : "var(--text-placeholder)",
+                            }}
+                          >
                             {item.material || "—"}
                           </span>
                         </div>
 
                         {/* Kích thước */}
                         <div className="flex items-start gap-2">
-                          <span className="text-[11px] font-bold uppercase tracking-wide shrink-0 w-[80px]" style={{ color: "var(--text-placeholder)" }}>Kích thước</span>
-                          <span className="text-[13px] font-semibold" style={{ color: sizeDisplay ? "var(--text-main)" : "var(--text-placeholder)" }}>
+                          <span
+                            className="text-[11px] font-bold uppercase tracking-wide shrink-0 w-[80px]"
+                            style={{ color: "var(--text-placeholder)" }}
+                          >
+                            Kích thước
+                          </span>
+                          <span
+                            className="text-[13px] font-semibold"
+                            style={{
+                              color: sizeDisplay
+                                ? "var(--text-main)"
+                                : "var(--text-placeholder)",
+                            }}
+                          >
                             {sizeDisplay || "—"}
                           </span>
                         </div>
 
                         {/* Màu sắc */}
                         <div className="flex items-start gap-2">
-                          <span className="text-[11px] font-bold uppercase tracking-wide shrink-0 w-[80px]" style={{ color: "var(--text-placeholder)" }}>Màu sắc</span>
-                          <span className="text-[13px] font-semibold" style={{ color: item.color ? "var(--text-main)" : "var(--text-placeholder)" }}>
+                          <span
+                            className="text-[11px] font-bold uppercase tracking-wide shrink-0 w-[80px]"
+                            style={{ color: "var(--text-placeholder)" }}
+                          >
+                            Màu sắc
+                          </span>
+                          <span
+                            className="text-[13px] font-semibold"
+                            style={{
+                              color: item.color
+                                ? "var(--text-main)"
+                                : "var(--text-placeholder)",
+                            }}
+                          >
                             {item.color || "—"}
                           </span>
                         </div>
 
                         {/* Hoàn thiện */}
                         <div className="flex items-start gap-2">
-                          <span className="text-[11px] font-bold uppercase tracking-wide shrink-0 w-[80px]" style={{ color: "var(--text-placeholder)" }}>Hoàn thiện</span>
-                          <span className="text-[13px] font-semibold" style={{ color: item.finish ? "var(--text-main)" : "var(--text-placeholder)" }}>
+                          <span
+                            className="text-[11px] font-bold uppercase tracking-wide shrink-0 w-[80px]"
+                            style={{ color: "var(--text-placeholder)" }}
+                          >
+                            Hoàn thiện
+                          </span>
+                          <span
+                            className="text-[13px] font-semibold"
+                            style={{
+                              color: item.finish
+                                ? "var(--text-main)"
+                                : "var(--text-placeholder)",
+                            }}
+                          >
                             {item.finish || "—"}
+                          </span>
+                        </div>
+
+                        {/* Tài chính từng SP */}
+                        <div className="flex items-start gap-2">
+                          <span
+                            className="text-[11px] font-bold uppercase tracking-wide shrink-0 w-[80px]"
+                            style={{ color: "var(--text-placeholder)" }}
+                          >
+                            Giá nhập
+                          </span>
+                          <div className="flex flex-col">
+                            <span className="text-[13px] font-bold text-indigo-700">
+                              {fmt(item.importPrice)}
+                            </span>
+                            <span className="text-[10px] text-gray-400">
+                              Thành tiền: {fmt(item.importPrice * item.qty)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Hẹn giao */}
+                        <div className="flex items-start gap-2">
+                          <span
+                            className="text-[11px] font-bold uppercase tracking-wide shrink-0 w-[80px]"
+                            style={{ color: "var(--text-placeholder)" }}
+                          >
+                            Hẹn giao
+                          </span>
+                          <span
+                            className="text-[13px] font-bold text-rose-600"
+                          >
+                            {new Date(item.expectedDate || order.expectedDate).toLocaleDateString("vi-VN")}
                           </span>
                         </div>
 
                         {/* Nguồn đơn */}
                         <div className="flex items-start gap-2 col-span-2">
-                          <span className="text-[11px] font-bold uppercase tracking-wide shrink-0 w-[80px]" style={{ color: "var(--text-placeholder)" }}>Nguồn đơn</span>
+                          <span
+                            className="text-[11px] font-bold uppercase tracking-wide shrink-0 w-[80px]"
+                            style={{ color: "var(--text-placeholder)" }}
+                          >
+                            Nguồn đơn
+                          </span>
                           <div className="flex items-center gap-2 flex-wrap">
-                            {item.sourceOrders?.map(src => {
-                              const detail = item.sourceOrderDetails?.[src] || order.sourceOrderDetails?.[src];
+                            {item.sourceOrders?.map((src) => {
+                              const detail =
+                                item.sourceOrderDetails?.[src] ||
+                                order.sourceOrderDetails?.[src];
                               return (
-                                <div key={src} className="flex items-center gap-1.5">
-                                  <span className="text-[11px] font-bold px-1.5 py-0.5 rounded" style={{
-                                    background: src === "DANH-MUC" ? "var(--status-focus)" : "#F3F4F6",
-                                    color: src === "DANH-MUC" ? "var(--brand-primary)" : "var(--text-main)",
-                                    border: "1px solid var(--grid-border)"
-                                  }}>
+                                <div
+                                  key={src}
+                                  className="flex items-center gap-1.5"
+                                >
+                                  <span
+                                    className="text-[11px] font-bold px-1.5 py-0.5 rounded"
+                                    style={{
+                                      background:
+                                        src === "DANH-MUC"
+                                          ? "var(--status-focus)"
+                                          : "#F3F4F6",
+                                      color:
+                                        src === "DANH-MUC"
+                                          ? "var(--brand-primary)"
+                                          : "var(--text-main)",
+                                      border: "1px solid var(--grid-border)",
+                                    }}
+                                  >
                                     {src === "DANH-MUC" ? "Hàng có sẵn" : src}
                                   </span>
                                   {detail?.customerName && (
-                                    <span className="text-[12px] font-semibold" style={{ color: "var(--text-main)" }}>
+                                    <span
+                                      className="text-[12px] font-semibold"
+                                      style={{ color: "var(--text-main)" }}
+                                    >
                                       {detail.customerName}
                                     </span>
                                   )}
                                   {detail?.type && (
-                                    <span className="text-[11px] px-1 py-0.5 rounded font-medium" style={{
-                                      background: detail.type === "Hàng khách đặt" ? "#FEF3C7" : "#EFF6FF",
-                                      color: detail.type === "Hàng khách đặt" ? "#B45309" : "#1D4ED8",
-                                    }}>
+                                    <span
+                                      className="text-[11px] px-1 py-0.5 rounded font-medium"
+                                      style={{
+                                        background:
+                                          detail.type === "Hàng khách đặt"
+                                            ? "#FEF3C7"
+                                            : "#EFF6FF",
+                                        color:
+                                          detail.type === "Hàng khách đặt"
+                                            ? "#B45309"
+                                            : "#1D4ED8",
+                                      }}
+                                    >
                                       {detail.type}
                                     </span>
                                   )}
@@ -340,8 +557,16 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
 
                       {/* Ghi chú kỹ thuật */}
                       {item.note && (
-                        <div className="mt-3 px-3 py-2 rounded-lg text-[13px] leading-relaxed" style={{ background: "#FFFBEB", border: "1px solid #FDE68A", color: "#92400E" }}>
-                          <span className="font-bold">Ghi chú KT: </span>{item.note}
+                        <div
+                          className="mt-3 px-3 py-2 rounded-lg text-[13px] leading-relaxed"
+                          style={{
+                            background: "#FFFBEB",
+                            border: "1px solid #FDE68A",
+                            color: "#92400E",
+                          }}
+                        >
+                          <span className="font-bold">Ghi chú KT: </span>
+                          {item.note}
                         </div>
                       )}
                     </div>
@@ -350,11 +575,30 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
               );
             })}
 
-            {/* Total */}
-            <div className="flex items-center justify-end gap-4 px-4 py-3 rounded-xl" style={{ background: "var(--status-focus)", border: "2px solid var(--grid-border)" }}>
-              <span className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Tổng cộng:</span>
-              <span className="text-[18px] font-black" style={{ color: "var(--brand-primary)" }}>{totalQty}</span>
-              <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>chiếc</span>
+            {/* Total Section */}
+            <div
+              className="flex items-center justify-end gap-8 px-6 py-4 rounded-xl"
+              style={{
+                background: "var(--status-focus)",
+                border: "2px solid var(--grid-border)",
+              }}
+            >
+              <div className="flex flex-col items-end gap-1">
+                <span className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Tổng số lượng</span>
+                <p className="text-[18px] font-black text-[var(--brand-primary)]">
+                  {totalQty} <span className="text-[12px] font-medium text-gray-400">chiếc</span>
+                </p>
+              </div>
+              <div className="w-px h-8 bg-gray-200" />
+              <div className="flex flex-col items-end gap-1">
+                <span className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Tổng tiền nhập</span>
+                <p className="text-[18px] font-black text-indigo-700">{fmt(order.totalImportAmount || order.totalAmount)}</p>
+              </div>
+              <div className="w-px h-8 bg-gray-200" />
+              <div className="flex flex-col items-end gap-1">
+                <span className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Tiền cọc nhập hàng</span>
+                <p className="text-[18px] font-black text-emerald-700">{fmt(order.deposit)}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -365,13 +609,37 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
             <div className="print-header">
               <div className="company">TPF - Xưởng Gỗ Mỹ Nghệ</div>
               <h1>Phiếu Yêu cầu Nhập hàng</h1>
-              <div className="meta">Mã phiếu: <strong>{order.id}</strong> &nbsp;|&nbsp; Ngày in: {formatDate(new Date().toISOString())}</div>
+              <div className="meta">
+                Mã phiếu: <strong>{order.id}</strong> &nbsp;|&nbsp; Ngày in:{" "}
+                {formatDate(new Date().toISOString())}
+              </div>
             </div>
 
             <div className="info-grid">
-              <div><span className="label">Ngày tạo: </span><span className="value">{formatDateTime(order.createdAt)}</span></div>
-              <div><span className="label">Người tạo: </span><span className="value">{order.createdBy || "Chủ xưởng"}</span></div>
-              <div><span className="label">Tổng số lượng: </span><span className="value">{totalQty} sản phẩm</span></div>
+              <div>
+                <span className="label">Ngày tạo: </span>
+                <span className="value">{formatDateTime(order.createdAt)}</span>
+              </div>
+              <div>
+                <span className="label">Người tạo: </span>
+                <span className="value">{order.createdBy || "Chủ xưởng"}</span>
+              </div>
+              <div>
+                <span className="label">Nhà cung cấp: </span>
+                <span className="value">{order.supplierName || "—"}</span>
+              </div>
+              <div>
+                <span className="label">Tổng số lượng: </span>
+                <span className="value">{totalQty} sản phẩm</span>
+              </div>
+              <div>
+                <span className="label">Tổng tiền hàng: </span>
+                <span className="value">{fmt(order.totalAmount)}</span>
+              </div>
+              <div>
+                <span className="label">Tiền cọc nhập: </span>
+                <span className="value">{fmt(order.deposit)}</span>
+              </div>
             </div>
 
             {order.note && (
@@ -382,7 +650,9 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
             )}
 
             {/* Sản phẩm — mỗi SP 1 card riêng, hiện ĐẦY ĐỦ */}
-            <div className="section-title">Chi tiết sản phẩm yêu cầu nhập kho</div>
+            <div className="section-title">
+              Chi tiết sản phẩm yêu cầu nhập kho
+            </div>
             {order.items?.map((item, idx) => {
               const sizeDisplay = getDisplaySize(item);
               const allImages = [
@@ -394,16 +664,28 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
               return (
                 <div key={idx} className="product-card">
                   <div className="product-card-header">
-                    <span>{idx + 1}. {item.productName}</span>
-                    <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                        {(item.expectedDate || order.expectedDate) && <span style={{ color: "red", fontSize: "11px" }}>Hạn: {new Date(item.expectedDate || order.expectedDate).toLocaleDateString("vi-VN")}</span>}
-                        <span>SL: {item.qty} {item.unit || "Cái"}</span>
+                    <span>
+                      {idx + 1}. {item.productName}
+                    </span>
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "10px",
+                        alignItems: "center",
+                      }}
+                    >
+                      {/* Removed print expectedDate display */}
+                      <span>
+                        SL: {item.qty} {item.unit || "Cái"}
+                      </span>
                     </div>
                   </div>
                   <div className="product-card-body">
                     <div className="detail-row">
                       <span className="detail-label">Chất liệu:</span>
-                      <span className="detail-value">{item.material || "—"}</span>
+                      <span className="detail-value">
+                        {item.material || "—"}
+                      </span>
                     </div>
                     <div className="detail-row">
                       <span className="detail-label">Kích thước:</span>
@@ -417,6 +699,20 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                       <span className="detail-label">Hoàn thiện:</span>
                       <span className="detail-value">{item.finish || "—"}</span>
                     </div>
+                    <div className="detail-row" style={{ marginTop: '4px', paddingTop: '4px', borderTop: '1px dashed #eee' }}>
+                      <span className="detail-label">Giá nhập:</span>
+                      <span className="detail-value">
+                        {fmt(item.importPrice)} &nbsp; 
+                        <span style={{ fontSize: '11px', color: '#666', fontWeight: 'normal' }}>
+                          (Thành tiền: {fmt(item.importPrice * item.qty)})
+                        </span>
+                        {(item.expectedDate || order.expectedDate) && (
+                          <div style={{ fontSize: '12px', color: '#dc2626', fontWeight: 'bold', marginTop: '2px' }}>
+                            Ngày hẹn giao: {new Date(item.expectedDate || order.expectedDate).toLocaleDateString("vi-VN")}
+                          </div>
+                        )}
+                      </span>
+                    </div>
                     {item.note && (
                       <div className="detail-note">
                         <strong>Ghi chú KT:</strong> {item.note}
@@ -427,18 +723,51 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
               );
             })}
 
-            {/* Tổng */}
-            <div style={{ textAlign: "right", fontSize: 14, fontWeight: "bold", margin: "12px 0", padding: "8px 12px", background: "#f5f5f5", border: "1px solid #ccc" }}>
-              Tổng cộng: {totalQty} sản phẩm
+            {/* Tổng tài chính Print */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr",
+                background: "#f5f5f5",
+                border: "1px solid #ccc",
+                marginTop: "12px",
+                padding: "10px",
+                textAlign: "center"
+              }}
+            >
+              <div>
+                <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#666' }}>Tổng số lượng</div>
+                <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{totalQty} sản phẩm</div>
+              </div>
+              <div style={{ borderLeft: '1px solid #ccc' }}>
+                <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#666' }}>Tổng tiền hàng</div>
+                <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{fmt(order.totalAmount)}</div>
+              </div>
+              <div style={{ borderLeft: '1px solid #ccc' }}>
+                <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#666' }}>Tiền cọc nhập hàng</div>
+                <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{fmt(order.deposit)}</div>
+              </div>
             </div>
 
             <div className="signatures">
-              <div className="sig-box"><div className="sig-title">Người lập phiếu</div>(Ký, ghi rõ họ tên)</div>
-              <div className="sig-box"><div className="sig-title">Quản đốc xưởng</div>(Ký, ghi rõ họ tên)</div>
-              <div className="sig-box"><div className="sig-title">Kế toán xác nhận</div>(Ký, ghi rõ họ tên)</div>
+              <div className="sig-box">
+                <div className="sig-title">Người lập phiếu</div>(Ký, ghi rõ họ
+                tên)
+              </div>
+              <div className="sig-box">
+                <div className="sig-title">Quản đốc xưởng</div>(Ký, ghi rõ họ
+                tên)
+              </div>
+              <div className="sig-box">
+                <div className="sig-title">Kế toán xác nhận</div>(Ký, ghi rõ họ
+                tên)
+              </div>
             </div>
 
-            <div className="footer-note">Phiếu được tạo tự động bởi hệ thống TPF-SIMS &bull; {formatDateTime(new Date().toISOString())}</div>
+            <div className="footer-note">
+              Phiếu được tạo tự động bởi hệ thống TPF-SIMS &bull;{" "}
+              {formatDateTime(new Date().toISOString())}
+            </div>
           </div>
         </div>
       </div>
@@ -450,7 +779,11 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
           style={{ backgroundColor: "rgba(0,0,0,0.8)" }}
           onClick={() => setPreviewImage(null)}
         >
-          <img src={previewImage} alt="Preview" className="max-w-full max-h-full rounded-xl shadow-2xl" />
+          <img
+            src={previewImage}
+            alt="Preview"
+            className="max-w-full max-h-full rounded-xl shadow-2xl"
+          />
           <button
             onClick={() => setPreviewImage(null)}
             className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 cursor-pointer transition"
