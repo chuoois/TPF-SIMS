@@ -19,9 +19,9 @@ const orderService = {
   },
 
   /**
-   * Lấy danh sách đơn hàng
-   * @param {Object} params - { search, status, type, page, limit }
-   * @returns {Promise}
+   * Lấy danh sách đơn hàng (Server-side filter + pagination)
+   * @param {Object} params - { order_type, order_status, search, dateFrom, dateTo, page, limit }
+   * @returns {Promise<{data: Array, pagination: Object, statusCounts: Object, typeCounts: Object}>}
    */
   async getAllOrders(params = {}) {
     const response = await axiosInstance.get("/order", { params });
@@ -35,6 +35,22 @@ const orderService = {
    */
   async getOrderDetail(id) {
     const response = await axiosInstance.get(`/order/${id}`);
+    return response.data;
+  },
+  
+  /**
+   * Cập nhật trạng thái đơn hàng
+   * @param {number|string} id 
+   * @param {number} status 
+   * @param {string} note 
+   * @returns {Promise}
+   */
+  async updateOrderStatus(id, status, note, extraData = {}) {
+    const response = await axiosInstance.patch(`/order/${id}/status`, { 
+      order_status: status, 
+      note,
+      ...extraData
+    });
     return response.data;
   },
 };

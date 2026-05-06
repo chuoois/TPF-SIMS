@@ -15,6 +15,61 @@ router.use(verifyAccessToken);
 /**
  * @swagger
  * /api/order:
+ *   get:
+ *     summary: Lấy danh sách đơn hàng (Lọc, Tìm kiếm, Phân trang)
+ *     description: |
+ *       Trả về danh sách đơn hàng kèm thông tin khách hàng, sản phẩm và nhân viên bán hàng.
+ *       Hỗ trợ lọc theo loại đơn, trạng thái, khoảng ngày; tìm kiếm theo tên KH, SĐT, mã đơn.
+ *     tags: [Order]
+ *     parameters:
+ *       - in: query
+ *         name: order_type
+ *         schema:
+ *           type: integer
+ *         description: "Loại đơn hàng (1: Mộc, 2: Sẵn, 3: Custom)"
+ *       - in: query
+ *         name: order_status
+ *         schema:
+ *           type: integer
+ *         description: "Trạng thái (0: Hủy, 1: Chờ XN, 2: Đã XN, 3: Đang xử lý, 4: Chờ giao, 5: Hoàn thành)"
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: "Tìm theo tên KH, SĐT, mã đơn hàng"
+ *       - in: query
+ *         name: dateFrom
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: "Ngày bắt đầu (YYYY-MM-DD)"
+ *       - in: query
+ *         name: dateTo
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: "Ngày kết thúc (YYYY-MM-DD)"
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Lấy danh sách thành công
+ *       500:
+ *         description: Lỗi hệ thống
+ */
+router.get("/", OrderController.getAllOrders);
+
+/**
+ * @swagger
+ * /api/order:
  *   post:
  *     summary: Tạo mới đơn hàng (Bán hàng tại quầy/Online)
  *     description: |
@@ -130,5 +185,59 @@ router.use(verifyAccessToken);
  *         description: Lỗi hệ thống
  */
 router.post("/", OrderController.createOrder);
+
+/**
+ * @swagger
+ * /api/order/{id}:
+ *   get:
+ *     summary: Lấy chi tiết đơn hàng (kèm sản phẩm, lịch sử, và tiến độ gia công)
+ *     description: |
+ *       Trả về thông tin chi tiết của một đơn hàng bao gồm:
+ *       - Thông tin khách hàng.
+ *       - Danh sách sản phẩm trong đơn (`items`) kèm theo tiến độ gia công chi tiết (`productionTasks`).
+ *       - Lịch sử thay đổi trạng thái đơn hàng (`histories`).
+ *     tags: [Order]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Trả về chi tiết đơn hàng thành công
+ *       404:
+ *         description: Không tìm thấy đơn hàng
+ */
+router.get("/:id", OrderController.getOrderById);
+
+/**
+ * @swagger
+ * /api/order/{id}/status:
+ *   patch:
+ *     summary: Cập nhật trạng thái đơn hàng
+ *     tags: [Order]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               order_status:
+ *                 type: integer
+ *               note:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Thành công
+ */
+router.patch("/:id/status", OrderController.updateOrderStatus);
 
 module.exports = router;

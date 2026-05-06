@@ -26,6 +26,7 @@ const SalaryRecord = require("./SalaryRecord");
 const SalaryAdjustment = require("./SalaryAdjustment");
 const Notification = require("./Notification");
 const Supplier = require("./Supplier");
+const ProductionTask = require("./ProductionTask");
 
 /**
  * Định nghĩa quan hệ giữa các bảng
@@ -116,6 +117,10 @@ OrderItem.belongsTo(Order, { foreignKey: "fk_order_id", as: "order" });
 Order.hasMany(OrderHistory, { foreignKey: "fk_order_id", as: "histories", onDelete: "CASCADE" });
 OrderHistory.belongsTo(Order, { foreignKey: "fk_order_id", as: "order" });
 
+// OrderHistory 1:N UserAccount (Changer)
+OrderHistory.belongsTo(UserAccount, { foreignKey: "changed_by", as: "changer" });
+UserAccount.hasMany(OrderHistory, { foreignKey: "changed_by", as: "historyChanges" });
+
 // Product 1:N OrderItem
 Product.hasMany(OrderItem, { foreignKey: "fk_product_id", as: "orderItems" });
 OrderItem.belongsTo(Product, { foreignKey: "fk_product_id", as: "product" });
@@ -123,6 +128,14 @@ OrderItem.belongsTo(Product, { foreignKey: "fk_product_id", as: "product" });
 // OrderItem 1:N ProductItem
 OrderItem.hasMany(ProductItem, { foreignKey: "fk_order_item_id", as: "items" });
 ProductItem.belongsTo(OrderItem, { foreignKey: "fk_order_item_id", as: "orderItem" });
+
+// OrderItem 1:N ProductionTask
+OrderItem.hasMany(ProductionTask, { foreignKey: "fk_order_item_id", as: "productionTasks", onDelete: "CASCADE" });
+ProductionTask.belongsTo(OrderItem, { foreignKey: "fk_order_item_id", as: "orderItem" });
+
+// UserAccount 1:N ProductionTask (Worker assignment)
+UserAccount.hasMany(ProductionTask, { foreignKey: "fk_worker_id", as: "tasks" });
+ProductionTask.belongsTo(UserAccount, { foreignKey: "fk_worker_id", as: "worker" });
 
 // Product 1:N ProductPricing
 Product.hasMany(ProductPricing, { foreignKey: "fk_product_id", as: "pricings" });
@@ -209,4 +222,5 @@ module.exports = {
   SalaryAdjustment,
   Notification,
   Supplier,
+  ProductionTask,
 };

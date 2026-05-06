@@ -2,7 +2,7 @@ const { Op } = require("sequelize");
 const {
     sequelize, Order, OrderItem, OrderHistory, Product,
     ProductPricing, ProductItem, ProductMaterial, ProductColor,
-    CustomerProfile, UserAccount, UserRole
+    CustomerProfile, UserAccount, UserProfile, UserRole, ProductionTask
 } = require("../entities");
 const systemLogController = require("./systemLog.controller");
 const { sendNotification } = require("../sockets/socketManager");
@@ -14,6 +14,125 @@ const { sendNotification } = require("../sockets/socketManager");
  * 2. OrderItem kế thừa thông tin Material, Color, Size, Warranty từ Product master data.
  */
 class OrderController {
+    /**
+     * API Lấy danh sách đơn hàng (Lọc, Tìm kiếm, Phân trang)
+     * Query params:
+     *   - order_type: 1 | 2 | 3 (Mộc / Sẵn / Custom)
+     *   - order_status: 0-5
+     *   - search: tìm theo tên KH, SĐT, mã đơn hàng
+     *   - dateFrom, dateTo: khoảng ngày tạo đơn
+     *   - page, limit: phân trang
+     */
+    async getAllOrders(req, res) {
+        try {
+            const {
+                order_type, order_status, search,
+                dateFrom, dateTo,
+                page = 1, limit = 10
+            } = req.query;
+            const offset = (page - 1) * limit;
+
+            const where = { status: 1 }; // Chỉ lấy đơn hàng active (không bị soft-delete)
+
+            // ── Filter theo loại đơn hàng ──
+            if (order_type !== undefined && order_type !== "" && order_type !== "Tất cả") {
+                where.order_type = order_type;
+            }
+
+            // ── Filter theo trạng thái đơn hàng ──
+            if (order_status !== undefined && order_status !== "" && order_status !== "Tất cả") {
+                where.order_status = order_status;
+            }
+
+            // ── Filter theo khoảng ngày tạo ──
+            if (dateFrom || dateTo) {
+                const dateCond = {};
+                if (dateFrom) dateCond[Op.gte] = `${dateFrom} 00:00:00`;
+                if (dateTo) dateCond[Op.lte] = `${dateTo} 23:59:59`;
+                where.createdate = dateCond;
+            }
+
+            // ── Tìm kiếm theo tên KH, SĐT, mã đơn hàng ──
+            if (search) {
+                where[Op.or] = [
+                    { pk_order_id: !isNaN(search) ? search : null },
+                    { "$customer.full_name$": { [Op.like]: `%${search}%` } },
+                    { "$customer.phone_number$": { [Op.like]: `%${search}%` } },
+                ];
+            }
+
+            const { count, rows } = await Order.findAndCountAll({
+                where,
+                attributes: ["pk_order_id", "createdate", "expected_fulfillment_date", "total_amount", "order_status", "order_type"],
+                include: [
+                    {
+                        model: CustomerProfile,
+                        as: "customer",
+                        attributes: ["full_name", "phone_number"]
+                    }
+                ],
+                order: [["createdate", "DESC"]],
+                limit: parseInt(limit),
+                offset: parseInt(offset),
+                distinct: true,
+                subQuery: false
+            });
+
+            // ── Đếm số lượng theo từng trạng thái (cho filter bar) ──
+            // Nếu đang filter theo order_type → chỉ đếm trong loại đơn đó
+            const statusCountWhere = { status: 1 };
+            if (order_type !== undefined && order_type !== "" && order_type !== "Tất cả") {
+                statusCountWhere.order_type = order_type;
+            }
+
+            const statusCounts = await Order.findAll({
+                attributes: [
+                    "order_status",
+                    [sequelize.fn("COUNT", sequelize.col("pk_order_id")), "count"]
+                ],
+                where: statusCountWhere,
+                group: ["order_status"],
+                raw: true
+            });
+
+            const statusCountsMap = { all: 0 };
+            statusCounts.forEach(sc => {
+                statusCountsMap[sc.order_status] = parseInt(sc.count);
+                statusCountsMap.all += parseInt(sc.count);
+            });
+
+            // ── Đếm số lượng theo từng loại đơn hàng (cho filter bar) ──
+            const typeCounts = await Order.findAll({
+                attributes: [
+                    "order_type",
+                    [sequelize.fn("COUNT", sequelize.col("pk_order_id")), "count"]
+                ],
+                where: { status: 1 },
+                group: ["order_type"],
+                raw: true
+            });
+
+            const typeCountsMap = {};
+            typeCounts.forEach(tc => {
+                typeCountsMap[tc.order_type] = parseInt(tc.count);
+            });
+
+            return res.status(200).json({
+                data: rows,
+                pagination: {
+                    totalItems: count,
+                    totalPages: Math.ceil(count / limit),
+                    currentPage: parseInt(page)
+                },
+                statusCounts: statusCountsMap,
+                typeCounts: typeCountsMap
+            });
+        } catch (error) {
+            console.error("Get all orders error:", error);
+            return res.status(500).json({ message: "Lỗi hệ thống khi lấy danh sách đơn hàng" });
+        }
+    }
+
     /**
      * API Tạo mới đơn hàng
      */
@@ -48,6 +167,7 @@ class OrderController {
                 expected_fulfillment_date,
                 note,
                 deposit_amount,
+                received_amount: deposit_amount || 0,
                 address: finalAddress,
                 total_amount,
                 order_status: currentStatus,
@@ -80,7 +200,7 @@ class OrderController {
                     // Xác định trạng thái Sơn/Mộc dựa trên loại đơn hàng nếu item không truyền
                     let final_is_finished = item.is_finished;
                     if (final_is_finished === undefined || final_is_finished === null) {
-                        final_is_finished = (order_type == 1) ? 0 : 1;
+                        final_is_finished = ([1, 3].includes(Number(order_type))) ? 0 : 1;
                     }
 
                     // Tự động lấy giá từ Pricing nếu request không gửi giá cụ thể
@@ -201,6 +321,164 @@ class OrderController {
             if (t && !t.finished) await t.rollback();
             console.error("Create order error:", error);
             return res.status(400).json({ message: error.message || "Lỗi hệ thống khi tạo đơn hàng" });
+        }
+    }
+
+    /**
+     * API Lấy chi tiết đơn hàng theo ID
+     */
+    async getOrderById(req, res) {
+        try {
+            const { id } = req.params;
+            const order = await Order.findOne({
+                where: { pk_order_id: id, status: 1 },
+                include: [
+                    {
+                        model: CustomerProfile,
+                        as: "customer",
+                        attributes: ["pk_customer_id", "full_name", "phone_number", "address", "email"]
+                    },
+                    {
+                        model: OrderItem,
+                        as: "items",
+                        attributes: [
+                            "pk_order_item_id", "fk_product_id", "item_name", "item_img",
+                            "item_quantity", "item_price", "item_material", "item_color",
+                            "item_size", "item_warranty", "item_note", "is_finished",
+                            "customer_img", "design_img"
+                        ],
+                        include: [{
+                            model: ProductionTask,
+                            as: "productionTasks",
+                            attributes: ["pk_production_task_id", "status", "is_pending_approval", "note", "finished_image"]
+                        }]
+                    },
+                    {
+                        model: OrderHistory,
+                        as: "histories",
+                        include: [{
+                            model: UserAccount,
+                            as: "changer",
+                            attributes: ["user_account_id"],
+                            include: [{
+                                model: UserProfile,
+                                as: "profile",
+                                attributes: ["full_name"]
+                            }]
+                        }],
+                        attributes: ["pk_order_history_id", "action", "new_status", "note", "createdate"]
+                    },
+                    {
+                        model: UserAccount,
+                        as: "account",
+                        attributes: ["user_account_id", "email"],
+                        include: [{
+                            model: UserProfile,
+                            as: "profile",
+                            attributes: ["full_name"]
+                        }]
+                    }
+                ],
+                order: [
+                    [{ model: OrderHistory, as: "histories" }, "createdate", "DESC"]
+                ]
+            });
+
+            if (!order) {
+                return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+            }
+
+            return res.status(200).json({ data: order });
+        } catch (error) {
+            console.error("Get order detail error:", error);
+            return res.status(500).json({ message: "Lỗi hệ thống khi lấy chi tiết đơn hàng" });
+        }
+    }
+
+    /**
+     * API Cập nhật trạng thái đơn hàng
+     * Body: { order_status, note }
+     */
+    async updateOrderStatus(req, res) {
+        const t = await sequelize.transaction();
+        try {
+            const { id } = req.params;
+            const { order_status, note, deliveryImage, receivedAmount } = req.body;
+            const userId = req.user.userId;
+
+            const order = await Order.findOne({
+                where: { pk_order_id: id, status: 1 }
+            });
+
+            if (!order) {
+                return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+            }
+
+            const oldStatus = order.order_status;
+
+            // Cập nhật đơn hàng
+            const updateData = {
+                order_status,
+                modifiedate: new Date(),
+                modifieby: userId
+            };
+
+            if (deliveryImage) updateData.delivery_image = deliveryImage;
+            if (receivedAmount !== undefined) {
+                const amount = parseFloat(receivedAmount);
+                updateData.received_amount = (parseFloat(order.received_amount) || 0) + amount;
+            }
+
+            // Nếu đơn hàng bị hủy (status = 0), giải phóng ProductItem
+            if (Number(order_status) === 0) {
+                const orderItems = await OrderItem.findAll({
+                    where: { fk_order_id: id }
+                });
+
+                const orderItemIds = orderItems.map(i => i.pk_order_item_id);
+
+                if (orderItemIds.length > 0) {
+                    await ProductItem.update(
+                        {
+                            item_status: 1,          // Trả về "Sẵn sàng"
+                            fk_order_item_id: null,  // Bỏ gán đơn hàng
+                            modifieby: userId,
+                            modifiedate: new Date(),
+                        },
+                        {
+                            where: { fk_order_item_id: { [Op.in]: orderItemIds } },
+                            transaction: t
+                        }
+                    );
+                }
+            }
+
+            await order.update(updateData, { transaction: t });
+
+            // Ghi lịch sử
+            await OrderHistory.create({
+                fk_order_id: id,
+                action: "CẬP_NHẬT_ĐƠN",
+                old_status: oldStatus,
+                new_status: order_status,
+                changed_by: userId,
+                note: note || `Chuyển trạng thái từ ${oldStatus} sang ${order_status}`,
+                createby: userId,
+            }, { transaction: t });
+
+            await t.commit();
+
+            // Ghi log hệ thống
+            await systemLogController.record(req, "UPDATE_ORDER_STATUS", `Cập nhật đơn hàng #${id} sang trạng thái ${order_status}`, "INFO", userId);
+
+            return res.status(200).json({
+                message: "Cập nhật trạng thái thành công",
+                data: order
+            });
+        } catch (error) {
+            if (t && !t.finished) await t.rollback();
+            console.error("Update order status error:", error);
+            return res.status(500).json({ message: "Lỗi hệ thống khi cập nhật trạng thái đơn hàng" });
         }
     }
 }

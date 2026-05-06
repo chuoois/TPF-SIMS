@@ -195,15 +195,22 @@ export default function InStockInvoicePage() {
           deposit_amount: values.depositAmount,
           address: values.selectedCustomer.address,
           total_amount: subtotal,
-          order_type: finalCartItems.some((i) => i.productType === PRODUCT_TYPES.RAW)
-            ? 1
-            : 2,
+          order_type: finalCartItems.some((i) => i.productType === PRODUCT_TYPES.CUSTOM)
+            ? 3
+            : finalCartItems.some((i) => i.productType === PRODUCT_TYPES.RAW)
+              ? 1
+              : 2,
+          order_status: finalCartItems.some((i) => i.productType === PRODUCT_TYPES.CUSTOM)
+            ? 1 // Chờ sản xuất
+            : finalCartItems.some((i) => i.productType === PRODUCT_TYPES.RAW)
+              ? 2 // Chờ xử lý
+              : 4, // Chờ giao hàng (Hàng sẵn)
           items: finalCartItems.map((item) => ({
             fk_product_id: item.id,
             item_name: item.name,
             item_quantity: item.quantity,
             item_price: item.price,
-            is_finished: item.productType === PRODUCT_TYPES.RAW ? 0 : 1,
+            is_finished: (item.productType === PRODUCT_TYPES.RAW || item.productType === PRODUCT_TYPES.CUSTOM) ? 0 : 1,
             item_note: item.note,
             customer_img: item.images || [], // Gửi mảng URL ảnh hàng mộc
             item_img: item.image, // Lưu ảnh sản phẩm gốc
@@ -597,7 +604,7 @@ export default function InStockInvoicePage() {
 
   const totalPayable = Math.max(
     0,
-    subtotal - activeTab.discount - activeTab.depositAmount,
+    subtotal - (formik.values.discount || 0) - (formik.values.depositAmount || 0),
   );
   const itemCount = activeTab.cartItems.reduce((sum, i) => sum + i.quantity, 0);
 

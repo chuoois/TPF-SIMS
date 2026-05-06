@@ -46,13 +46,6 @@ const Product = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    unit: {
-      type: DataTypes.STRING(50),
-    },
-    stock_quantity: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-    },
     is_gift: {
       type: DataTypes.TINYINT,
       defaultValue: 0, // 1: Quà tặng, 0: Hàng bán bình thường
