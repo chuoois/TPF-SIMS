@@ -462,7 +462,7 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                             className="text-[11px] font-bold uppercase tracking-wide shrink-0 w-[80px]"
                             style={{ color: "var(--text-placeholder)" }}
                           >
-                            Hẹn giao
+                            Ngày giao
                           </span>
                           <span
                             className="text-[13px] font-bold text-rose-600"
@@ -656,7 +656,6 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                         alignItems: "center",
                       }}
                     >
-                      {/* Removed print expectedDate display */}
                       <span>
                         SL: {item.qty} {item.unit || "Cái"}
                       </span>
@@ -688,13 +687,16 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                         <span style={{ fontSize: '11px', color: '#666', fontWeight: 'normal' }}>
                           (Thành tiền: {fmt(item.importPrice * item.qty)})
                         </span>
-                        {(item.expectedDate || order.expectedDate) && (
-                          <div style={{ fontSize: '12px', color: '#dc2626', fontWeight: 'bold', marginTop: '2px' }}>
-                            Ngày hẹn giao: {new Date(item.expectedDate || order.expectedDate).toLocaleDateString("vi-VN")}
-                          </div>
-                        )}
                       </span>
                     </div>
+                    {(item.expectedDate || order.expectedDate) && (
+                      <div className="detail-row" style={{ marginTop: '4px' }}>
+                        <span className="detail-label">Ngày giao:</span>
+                        <span className="detail-value" style={{ color: '#dc2626', fontWeight: 'bold' }}>
+                          {new Date(item.expectedDate || order.expectedDate).toLocaleDateString("vi-VN")}
+                        </span>
+                      </div>
+                    )}
                     {item.note && (
                       <div className="detail-note">
                         <strong>Ghi chú KT:</strong> {item.note}
