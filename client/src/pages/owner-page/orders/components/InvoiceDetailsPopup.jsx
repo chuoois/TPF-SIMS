@@ -57,10 +57,10 @@ const CustomerInfoCard = ({ o }) => (
       <div
         className="w-11 h-11 rounded-lg flex items-center justify-center text-[15px] font-bold shrink-0 bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] border border-[var(--brand-primary)]/10"
       >
-        {o.customer.name.charAt(0)}
+        {(o.customer?.name || "K").charAt(0).toUpperCase()}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[14px] font-bold truncate text-[var(--text-main)]">{o.customer.name}</p>
+        <p className="text-[14px] font-bold truncate text-[var(--text-main)]">{o.customer?.name || "Khách hàng"}</p>
         <div className="flex items-center gap-4 mt-0.5 flex-wrap">
           <span className="inline-flex items-center gap-1 text-[12px] text-[var(--text-secondary)]">
             <Phone size={11} className="text-[var(--text-placeholder)]" />
@@ -198,9 +198,9 @@ const StandardOrderView = ({
             <Calendar size={18} className="text-[var(--status-pending)]" />
           </div>
           <div>
-            <p className="text-[10px] font-black text-[var(--sidebar-foreground)]/50 uppercase tracking-widest">Lịch trình</p>
+            <p className="text-[10px] font-black text-[var(--sidebar-foreground)]/50 uppercase tracking-widest">Ngày giao dự kiến</p>
             <p className="text-[13px] font-bold">
-              <span className="text-[var(--sidebar-foreground)]/40">Giao:</span> {o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString("vi-VN") : "Chưa hẹn"}
+              {o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString("vi-VN") : "Chưa hẹn"}
             </p>
           </div>
         </div>
@@ -327,8 +327,8 @@ const StandardOrderView = ({
                       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-[var(--bg-main)] rounded-xl">
                         {[
                           { label: "Chất liệu", val: p.material },
-                          { label: "Kích thước", val: p.size },
-                          { label: "Hoàn thiện", val: p.finish },
+                          { label: "Kích thước", val: typeof p.size === 'object' && p.size !== null ? `${p.size.length || 0}x${p.size.width || 0}x${p.size.height || 0} ${p.size.unit || ''}` : p.size },
+                          { label: "Màu sắc", val: p.color || p.finish },
                           { label: "Bảo hành", val: `${p.warranty || 12}T` },
                         ].map((spec, i) => (
                           <div key={i} className="space-y-1">
@@ -387,7 +387,7 @@ const StandardOrderView = ({
               <div className="p-5 space-y-4">
                 {[
                   { icon: MapPin, label: "Địa chỉ giao", val: o.customer.address },
-                  { icon: Calendar, label: "Ngày hẹn", val: fmtDate(o.deliveryDate) },
+                  { icon: Calendar, label: "Ngày giao dự kiến", val: fmtDate(o.deliveryDate) },
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <item.icon size={15} className="mt-0.5 text-[var(--text-placeholder)]" />

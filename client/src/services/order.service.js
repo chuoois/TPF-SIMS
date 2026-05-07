@@ -19,8 +19,15 @@ const orderService = {
   },
 
   /**
-   * Lấy danh sách đơn hàng
-   * @param {Object} params - { search, status, type, page, limit }
+   * Lấy danh sách đơn hàng có phân trang và lọc
+   * @param {Object} params - Các tham số query string
+   * @param {number} params.page - Trang hiện tại
+   * @param {number} params.limit - Số lượng trên 1 trang
+   * @param {string} params.search - Tìm kiếm mã đơn/tên KH
+   * @param {number} params.order_status - Trạng thái đơn hàng
+   * @param {number} params.order_type - Loại đơn hàng (1: Mộc, 2: Sẵn, 3: Đặt riêng)
+   * @param {string} params.dateFrom - Từ ngày (YYYY-MM-DD)
+   * @param {string} params.dateTo - Đến ngày (YYYY-MM-DD)
    * @returns {Promise}
    */
   async getAllOrders(params = {}) {
@@ -29,11 +36,12 @@ const orderService = {
   },
 
   /**
-   * Lấy chi tiết đơn hàng theo ID
-   * @param {number|string} id
+   * Lấy chi tiết đơn hàng theo ID (List Detail)
+   * Bao gồm thông tin chung, items, tasks, lịch sử, customer...
+   * @param {number|string} id - ID đơn hàng
    * @returns {Promise}
    */
-  async getOrderDetail(id) {
+  async getOrderById(id) {
     const response = await axiosInstance.get(`/order/${id}`);
     return response.data;
   },

@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const CustomerController = require("../controller/customer.controller");
-const { verifyAccessToken } = require("../middleware/auth.middleware");
-
+const { verifyAccessToken } = require("../middlewares/auth.middleware");
+const validate = require("../middlewares/validate.middleware");
+const { createCustomerSchema, updateCustomerSchema } = require("../validations/customer.validation");
 /**
  * Customer Routes - Quản lý khách hàng
  * Created By: ThinhBui
@@ -86,7 +87,7 @@ router.get("/customers/:id", CustomerController.getCustomerById);
  *       201:
  *         description: Customer created
  */
-router.post("/customers", CustomerController.createCustomer);
+router.post("/customers", validate(createCustomerSchema), CustomerController.createCustomer);
 
 /**
  * @swagger
@@ -104,7 +105,7 @@ router.post("/customers", CustomerController.createCustomer);
  *       200:
  *         description: Customer updated
  */
-router.put("/customers/:id", CustomerController.updateCustomer);
+router.put("/customers/:id", validate(updateCustomerSchema), CustomerController.updateCustomer);
 
 /**
  * @swagger

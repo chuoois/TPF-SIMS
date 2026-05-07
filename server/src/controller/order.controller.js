@@ -2,7 +2,7 @@ const { Op } = require("sequelize");
 const {
     sequelize, Order, OrderItem, OrderHistory, Product,
     ProductPricing, ProductItem, ProductMaterial, ProductColor,
-    CustomerProfile, UserAccount, UserRole
+    CustomerProfile, UserAccount, UserProfile, UserRole, ProductTask
 } = require("../entities");
 const systemLogController = require("./systemLog.controller");
 const { sendNotification } = require("../sockets/socketManager");
@@ -14,6 +14,168 @@ const { sendNotification } = require("../sockets/socketManager");
  * 2. OrderItem kế thừa thông tin Material, Color, Size, Warranty từ Product master data.
  */
 class OrderController {
+    /**
+     * Lấy danh sách đơn hàng cơ bản
+     */
+    async getAllOrders(req, res) {
+        try {
+            const { page = 1, limit = 10, search, order_status, order_type, dateFrom, dateTo } = req.query;
+            const offset = (page - 1) * limit;
+
+            const where = { status: 1 };
+
+            if (order_status) {
+                where.order_status = order_status;
+            }
+
+            if (order_type) {
+                where.order_type = order_type;
+            }
+
+            if (dateFrom || dateTo) {
+                const dateCond = {};
+                if (dateFrom) dateCond[Op.gte] = `${dateFrom} 00:00:00`;
+                if (dateTo) dateCond[Op.lte] = `${dateTo} 23:59:59`;
+                where.createdate = dateCond;
+            }
+
+            if (search) {
+                where[Op.or] = [
+                    { pk_order_id: isNaN(search) ? undefined : search },
+                    { '$customer.full_name$': { [Op.like]: `%${search}%` } }
+                ];
+                // Loại bỏ undefined nếu search không phải số
+                where[Op.or] = where[Op.or].filter(condition => Object.values(condition)[0] !== undefined);
+                if (where[Op.or].length === 0) delete where[Op.or];
+            }
+
+            const { count, rows } = await Order.findAndCountAll({
+                where,
+                include: [
+                    {
+                        model: CustomerProfile,
+                        as: 'customer',
+                        attributes: ['full_name', 'phone_number']
+                    }
+                ],
+                attributes: ['pk_order_id', 'createdate', 'expected_fulfillment_date', 'total_amount', 'deposit_amount', 'order_status', 'order_type'],
+                order: [['createdate', 'DESC']],
+                limit: parseInt(limit),
+                offset: parseInt(offset),
+                subQuery: false
+            });
+
+            // Lấy counts theo status (áp dụng các bộ lọc hiện tại trừ order_status)
+            const countWhere = { ...where };
+            delete countWhere.order_status;
+            
+            const countsQuery = await Order.count({
+                where: countWhere,
+                include: [
+                    {
+                        model: CustomerProfile,
+                        as: 'customer',
+                        attributes: []
+                    }
+                ],
+                group: ['order_status']
+            });
+
+            const statusCounts = {};
+            let totalStatusCount = 0;
+            countsQuery.forEach(c => {
+                const cCount = parseInt(c.count);
+                statusCounts[c.order_status] = cCount;
+                totalStatusCount += cCount;
+            });
+            statusCounts["all"] = totalStatusCount;
+
+            return res.status(200).json({
+                data: rows,
+                statusCounts,
+                pagination: {
+                    totalItems: count,
+                    totalPages: Math.ceil(count / limit),
+                    currentPage: parseInt(page),
+                    limit: parseInt(limit)
+                }
+            });
+        } catch (error) {
+            console.error("Get all orders error:", error);
+            return res.status(500).json({ message: "Lỗi hệ thống khi lấy danh sách đơn hàng" });
+        }
+    }
+
+    /**
+     * Lấy chi tiết đơn hàng (List detail)
+     */
+    async getOrderById(req, res) {
+        try {
+            const { id } = req.params;
+
+            const order = await Order.findByPk(id, {
+                include: [
+                    {
+                        model: CustomerProfile,
+                        as: 'customer',
+                        attributes: ['full_name', 'phone_number', 'email', 'address']
+                    },
+                    {
+                        model: OrderItem,
+                        as: 'items',
+                        where: { status: 1 },
+                        required: false,
+                        include: [
+                            {
+                                model: ProductTask,
+                                as: 'tasks',
+                                required: false,
+                                include: [
+                                    {
+                                        model: UserAccount,
+                                        as: 'worker',
+                                        attributes: ['user_account_id', 'email'],
+                                        include: [
+                                            {
+                                                model: UserProfile,
+                                                as: 'profile',
+                                                attributes: ['full_name', 'phone_number']
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        model: OrderHistory,
+                        as: 'histories',
+                        attributes: ['action', 'note', 'new_status', 'createdate'],
+                        required: false
+                    }
+                ],
+                attributes: [
+                    'pk_order_id', 'order_status', 'order_type', 'createdate', 
+                    'expected_fulfillment_date', 'total_amount', 'deposit_amount', 
+                    'address', 'note', 'fulfillment_method'
+                ],
+                order: [
+                    // Sắp xếp lịch sử từ mới nhất đến cũ nhất giống Shopee timeline
+                    [{ model: OrderHistory, as: 'histories' }, 'createdate', 'DESC']
+                ]
+            });
+
+            if (!order) {
+                return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+            }
+
+            return res.status(200).json({ data: order });
+        } catch (error) {
+            console.error("Get order by id error:", error);
+            return res.status(500).json({ message: "Lỗi hệ thống khi lấy chi tiết đơn hàng" });
+        }
+    }
+
     /**
      * API Tạo mới đơn hàng
      */
@@ -201,6 +363,91 @@ class OrderController {
             if (t && !t.finished) await t.rollback();
             console.error("Create order error:", error);
             return res.status(400).json({ message: error.message || "Lỗi hệ thống khi tạo đơn hàng" });
+        }
+    }
+
+    /**
+     * Cập nhật trạng thái đơn hàng
+     */
+    async updateOrderStatus(req, res) {
+        const t = await sequelize.transaction();
+        try {
+            const { id } = req.params;
+            const { order_status, note } = req.body;
+            const userId = req.user.userId;
+
+            if (order_status === undefined) {
+                throw new Error("Vui lòng cung cấp order_status");
+            }
+
+            const order = await Order.findByPk(id);
+            if (!order) {
+                throw new Error("Không tìm thấy đơn hàng");
+            }
+
+            const oldStatus = order.order_status;
+            
+            if (oldStatus === order_status) {
+                await t.rollback();
+                return res.status(200).json({ message: "Trạng thái không thay đổi", order });
+            }
+
+            // Cập nhật trạng thái Order
+            await order.update({
+                order_status,
+                modifiedate: new Date()
+            }, { transaction: t });
+
+            // Nếu hủy đơn (status = 0) và trước đó chưa hủy, nhả hàng trong kho
+            if (order_status == 0 && oldStatus != 0) {
+                const orderItems = await OrderItem.findAll({ where: { fk_order_id: id }, transaction: t });
+                if (orderItems.length > 0) {
+                    const orderItemIds = orderItems.map(i => i.pk_order_item_id);
+                    await ProductItem.update({
+                        item_status: 1, // Trả lại trạng thái Sẵn sàng
+                        fk_order_item_id: null,
+                        modifieby: userId,
+                        modifiedate: new Date()
+                    }, {
+                        where: { fk_order_item_id: { [Op.in]: orderItemIds } },
+                        transaction: t
+                    });
+                }
+            }
+
+            // Ghi lịch sử đơn hàng
+            await OrderHistory.create({
+                fk_order_id: id,
+                action: "CẬP_NHẬT_TRẠNG_THÁI",
+                new_status: order_status,
+                changed_by: userId,
+                note: note || `Cập nhật trạng thái từ ${oldStatus} sang ${order_status}`,
+                createby: userId,
+            }, { transaction: t });
+
+            await t.commit();
+
+            // Ghi log hệ thống
+            await systemLogController.record(req, "UPDATE_ORDER_STATUS", `Cập nhật trạng thái đơn #${id} thành ${order_status}`, "INFO", userId);
+
+            // Thông báo
+            await sendNotification({
+                userId: order.createby || userId, // Báo cho người tạo đơn
+                title: "Cập nhật đơn hàng",
+                message: `Đơn hàng DH-${id} đã chuyển trạng thái thành ${order_status}.`,
+                type: "INFO",
+                link: `/orders/${id}`,
+                createBy: userId
+            });
+
+            return res.status(200).json({
+                message: "Cập nhật trạng thái thành công",
+                order
+            });
+        } catch (error) {
+            if (t && !t.finished) await t.rollback();
+            console.error("Update order status error:", error);
+            return res.status(400).json({ message: error.message || "Lỗi hệ thống khi cập nhật trạng thái đơn hàng" });
         }
     }
 }

@@ -19,6 +19,7 @@ const CustomRequest = require("./CustomRequest");
 const CustomRequestItem = require("./CustomRequestItem");
 const ProductCoupon = require("./ProductCoupon");
 const CouponProduct = require("./CouponProduct");
+const ProductTask = require("./ProductTask");
 // ── Payroll ──────────────────────────────────────────────
 const Employee = require("./Employee");
 const PayrollPeriod = require("./PayrollPeriod");
@@ -124,6 +125,10 @@ OrderItem.belongsTo(Product, { foreignKey: "fk_product_id", as: "product" });
 OrderItem.hasMany(ProductItem, { foreignKey: "fk_order_item_id", as: "items" });
 ProductItem.belongsTo(OrderItem, { foreignKey: "fk_order_item_id", as: "orderItem" });
 
+// OrderItem 1:N ProductTask
+OrderItem.hasMany(ProductTask, { foreignKey: "fk_order_item_id", as: "tasks", onDelete: "CASCADE" });
+ProductTask.belongsTo(OrderItem, { foreignKey: "fk_order_item_id", as: "orderItem" });
+
 // Product 1:N ProductPricing
 Product.hasMany(ProductPricing, { foreignKey: "fk_product_id", as: "pricings" });
 ProductPricing.belongsTo(Product, { foreignKey: "fk_product_id", as: "product" });
@@ -172,6 +177,10 @@ SalaryRecord.belongsTo(PayrollPeriod, { foreignKey: "fk_period_id", as: "period"
 Employee.hasMany(SalaryRecord, { foreignKey: "fk_employee_id", as: "salaryRecords" });
 SalaryRecord.belongsTo(Employee, { foreignKey: "fk_employee_id", as: "employee" });
 
+// UserAccount 1:N ProductTask
+UserAccount.hasMany(ProductTask, { foreignKey: "fk_user_account_id", as: "tasks" });
+ProductTask.belongsTo(UserAccount, { foreignKey: "fk_user_account_id", as: "worker" });
+
 // SalaryRecord 1:N SalaryAdjustment
 SalaryRecord.hasMany(SalaryAdjustment, { foreignKey: "fk_record_id", as: "adjustments", onDelete: "CASCADE" });
 SalaryAdjustment.belongsTo(SalaryRecord, { foreignKey: "fk_record_id", as: "record" });
@@ -209,4 +218,5 @@ module.exports = {
   SalaryAdjustment,
   Notification,
   Supplier,
+  ProductTask,
 };

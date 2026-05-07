@@ -16,6 +16,7 @@ import toast from "react-hot-toast";
 import useDebounce from "@/hooks/useDebounce";
 import { PrintableInvoice } from "../orders/components/PrintableInvoice";
 import { PageHelmet } from "@/components/seo/PageHelmet";
+import { ORDER_CONFIG } from "@/constants/orderConfig";
 import AddCustomerModal from "@/pages/sales-page/components/AddCustomerModal";
 import WorkshopStatusModal from "@/pages/sales-page/components/WorkshopStatusModal";
 import CartPanel from "./CartPanel";
@@ -182,6 +183,8 @@ export default function InStockInvoicePage() {
           })
         );
 
+        const computedOrderType = finalCartItems.some((i) => i.productType === PRODUCT_TYPES.RAW) ? 1 : 2;
+
         // Prepare payload for backend
         const orderData = {
           fk_customer_id: values.selectedCustomer.id,
@@ -195,9 +198,8 @@ export default function InStockInvoicePage() {
           deposit_amount: values.depositAmount,
           address: values.selectedCustomer.address,
           total_amount: subtotal,
-          order_type: finalCartItems.some((i) => i.productType === PRODUCT_TYPES.RAW)
-            ? 1
-            : 2,
+          order_type: computedOrderType,
+          order_status: computedOrderType === 1 ? ORDER_CONFIG.REVERSE_STATUS_MAP["Chờ xử lý"] : ORDER_CONFIG.REVERSE_STATUS_MAP["Chờ giao hàng"],
           items: finalCartItems.map((item) => ({
             fk_product_id: item.id,
             item_name: item.name,

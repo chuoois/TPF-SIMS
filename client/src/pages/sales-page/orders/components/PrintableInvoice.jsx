@@ -1,3 +1,5 @@
+import React from 'react';
+
 /**
  * Component PrintableInvoice
  * Standardized invoice template for TPF-SIMS (Trọng Phóng Branding)

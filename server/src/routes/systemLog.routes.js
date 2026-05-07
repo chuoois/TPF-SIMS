@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const systemLogController = require("../controller/systemLog.controller");
-const { verifyAccessToken, verifyRole } = require("../middleware/auth.middleware");
+const { verifyAccessToken, verifyRole } = require("../middlewares/auth.middleware");
 
 /**
  * @swagger

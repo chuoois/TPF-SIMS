@@ -222,12 +222,6 @@ export default function OwnerOrders() {
       ),
     },
     {
-      header: "Tổng tiền",
-      headerClassName: "text-right pr-10",
-      render: (o) => <p className="text-[14px] font-bold" style={{ color: o.status === "Đơn đã hủy" ? "var(--text-placeholder)" : "var(--text-main)" }}>{formatCurrency(o.total)}</p>,
-      className: "text-right pr-10",
-    },
-    {
       header: "Ngày giao dự kiến",
       headerClassName: "text-center",
       render: (o) => (
@@ -239,6 +233,21 @@ export default function OwnerOrders() {
         </div>
       ),
       className: "text-center",
+    },
+    {
+      header: "Tổng tiền hàng",
+      headerClassName: "text-right",
+      render: (o) => <p className="text-[14px] font-bold" style={{ color: o.status === "Đơn đã hủy" ? "var(--text-placeholder)" : "var(--text-main)" }}>{formatCurrency(o.total)}</p>,
+      className: "text-right",
+    },
+    {
+      header: "Còn lại",
+      headerClassName: "text-right pr-10",
+      render: (o) => {
+        const remaining = (o.total || 0) - (o.deposit || 0);
+        return <p className="text-[14px] font-bold" style={{ color: o.status === "Đơn đã hủy" ? "var(--text-placeholder)" : "var(--status-error)" }}>{formatCurrency(remaining > 0 ? remaining : 0)}</p>;
+      },
+      className: "text-right pr-10",
     },
     {
       header: "Trạng thái",

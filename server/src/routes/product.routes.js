@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const ProductController = require("../controller/product.controller");
-const { verifyAccessToken } = require("../middleware/auth.middleware");
+const { verifyAccessToken } = require("../middlewares/auth.middleware");
 
 /**
  * Product Routes - Quản lý sản phẩm cho đơn hàng

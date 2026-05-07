@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const InventoryController = require("../controller/inventory.controller");
-const { verifyAccessToken } = require("../middleware/auth.middleware");
+const { verifyAccessToken } = require("../middlewares/auth.middleware");
 
 /**
  * Inventory Routes - Quản lý Kho hàng cho Kế toán
