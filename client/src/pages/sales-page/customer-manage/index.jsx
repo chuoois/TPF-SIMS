@@ -339,7 +339,7 @@ export default function SalesCustomerManage() {
       {/* Global Loading Bar */}
       {(isLoading || isRefreshing) && (
         <div className="fixed top-0 left-0 right-0 z-[9999]">
-          <div className="h-[2px] bg-[var(--brand-primary)] animate-[loading_1.5s_infinite] origin-left"></div>
+          <div className="h-[2px] bg-indigo-500 animate-[loading_1.5s_infinite] origin-left"></div>
         </div>
       )}
 
@@ -805,9 +805,9 @@ export default function SalesCustomerManage() {
                         const total = parseFloat(order.total_amount) || 0;
                         const paid = parseFloat(order.deposit_amount) || 0;
                         const balance = total - paid;
-                        
+
                         return (
-                          <div 
+                          <div
                             key={order.pk_order_id}
                             className="border border-[var(--grid-border)] rounded-xl overflow-hidden bg-white shadow-sm"
                           >
@@ -821,8 +821,8 @@ export default function SalesCustomerManage() {
                                 "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
                                 order.order_status === 5 ? "bg-[var(--status-focus)] text-[var(--status-success)]" : "bg-amber-50 text-amber-600"
                               )}>
-                                {order.order_status === 1 ? "Chờ xử lý" : 
-                                 order.order_status === 5 ? "Hoàn thành" : "Đang xử lý"}
+                                {order.order_status === 1 ? "Chờ xử lý" :
+                                  order.order_status === 5 ? "Hoàn thành" : "Đang xử lý"}
                               </span>
                             </div>
 
@@ -883,8 +883,8 @@ export default function SalesCustomerManage() {
                                 onClick={() => handleOpenHistory(currentCustomer, idx + 1)}
                                 className={cn(
                                   "w-6 h-6 rounded flex items-center justify-center text-[11px] font-bold transition",
-                                  historyPagination.page === idx + 1 
-                                    ? "bg-[var(--brand-primary)] text-white" 
+                                  historyPagination.page === idx + 1
+                                    ? "bg-[var(--brand-primary)] text-white"
                                     : "text-[var(--text-placeholder)] hover:bg-[var(--bg-main)]"
                                 )}
                               >

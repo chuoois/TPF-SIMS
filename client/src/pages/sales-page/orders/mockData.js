@@ -1,326 +1,1038 @@
 export const INITIAL_ORDERS = [
   {
-    id: "DH-SAN-001",
-    code: "DH-SAN-001",
-    customerName: "Lê Văn Tám",
-    phone: "0321654987",
+    id: "DH-SAN-101",
+    code: "DH-SAN-101",
+    customerName: "Trần Thị B",
+    phone: "0912345679",
     type: "Hàng sẵn",
-    total: 18500000,
+    total: 15000000,
     status: "Chờ giao hàng",
-    date: new Date().toISOString(),
-    salesPerson: "Bình Nguyễn",
-    deliveryDate: "2026-04-15",
-    deposit: 18500000,
-    fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Bàn ăn gỗ Sồi Nga 6 ghế", specs: "160x80 cm, Sơn màu hạt dẻ", qty: 1, unit: "Bộ" }]
-  },
-  {
-    id: "DH-MOC-001",
-    code: "DH-MOC-001",
-    customerName: "Nguyễn Văn Hùng",
-    phone: "0912345678",
-    type: "Hàng mộc",
-    total: 56000000,
-    status: "Chờ xử lý",
-    date: new Date().toISOString(),
+    date: new Date(Date.now() + 0 * 86400000).toISOString(),
     salesPerson: "Bình Nguyễn",
     deliveryDate: "2026-04-20",
-    deposit: 10000000,
+    deposit: 4500000,
     fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Sập thờ Tứ Linh", specs: "Gỗ mít, Chân 18, Dạ 5 phân", qty: 1, unit: "Chiếc" }]
+    products: [{ name: "Sản phẩm Hàng sẵn 1", specs: "Kích thước tiêu chuẩn", qty: 10, unit: "Cái" }]
   },
   {
-    id: "DH-MOC-002",
-    code: "DH-MOC-002",
-    customerName: "Đặng Tuấn Kiệt",
-    phone: "0931234567",
+    id: "DH-SAN-102",
+    code: "DH-SAN-102",
+    customerName: "Lê Văn C",
+    phone: "0912345680",
+    type: "Hàng sẵn",
+    total: 15000000,
+    status: "Đang giao hàng",
+    date: new Date(Date.now() - 2 * 86400000).toISOString(),
+    salesPerson: "Bình Nguyễn",
+    deliveryDate: "2026-04-18",
+    deposit: 4500000,
+    fulfillmentType: "Giao tận nơi",
+    products: [{ name: "Sản phẩm Hàng sẵn 2", specs: "Kích thước tiêu chuẩn", qty: 10, unit: "Cái" }]
+  },
+  {
+    id: "DH-SAN-103",
+    code: "DH-SAN-103",
+    customerName: "Phạm Thị D",
+    phone: "0912345681",
+    type: "Hàng sẵn",
+    total: 15000000,
+    status: "Hoàn thành",
+    date: new Date(Date.now() - 4 * 86400000).toISOString(),
+    salesPerson: "Bình Nguyễn",
+    deliveryDate: "2026-04-16",
+    deposit: 4500000,
+    fulfillmentType: "Giao tận nơi",
+    products: [{ name: "Sản phẩm Hàng sẵn 3", specs: "Kích thước tiêu chuẩn", qty: 10, unit: "Cái" }]
+  },
+  {
+    id: "DH-SAN-104",
+    code: "DH-SAN-104",
+    customerName: "Hoàng Văn E",
+    phone: "0912345682",
+    type: "Hàng sẵn",
+    total: 15000000,
+    status: "Chờ duyệt hủy",
+    date: new Date(Date.now() - 6 * 86400000).toISOString(),
+    salesPerson: "Bình Nguyễn",
+    deliveryDate: "2026-04-14",
+    deposit: 0,
+    fulfillmentType: "Giao tận nơi",
+    products: [{ name: "Sản phẩm Hàng sẵn 4", specs: "Kích thước tiêu chuẩn", qty: 10, unit: "Cái" }]
+  },
+  {
+    id: "DH-SAN-105",
+    code: "DH-SAN-105",
+    customerName: "Vũ Thị F",
+    phone: "0912345683",
+    type: "Hàng sẵn",
+    total: 15000000,
+    status: "Đơn đã hủy",
+    date: new Date(Date.now() - 8 * 86400000).toISOString(),
+    salesPerson: "Bình Nguyễn",
+    deliveryDate: "2026-04-12",
+    deposit: 0,
+    fulfillmentType: "Giao tận nơi",
+    products: [{ name: "Sản phẩm Hàng sẵn 5", specs: "Kích thước tiêu chuẩn", qty: 10, unit: "Cái" }]
+  },
+  {
+    id: "DH-MOC-101",
+    code: "DH-MOC-101",
+    customerName: "Đặng Văn G",
+    phone: "0912345684",
     type: "Hàng mộc",
-    total: 32000000,
+    total: 45000000,
+    status: "Chờ xử lý",
+    date: new Date(Date.now() + 0 * 86400000).toISOString(),
+    salesPerson: "Bình Nguyễn",
+    deliveryDate: "2026-04-20",
+    deposit: 13500000,
+    fulfillmentType: "Giao tận nơi",
+    products: [
+      { name: "Bộ bàn ghế ăn 6 chỗ", material: "Gỗ sồi", size: "D180 R90 C75", color: "Nâu đậm", finish: "Sơn PU bóng mờ", qty: 1, unit: "Bộ", note: "Bo góc tròn, chân tiện tròn kiểu cổ điển", image: "https://noithatzito.com/wp-content/uploads/2021/04/bo-ban-an-go-soi-nga-6-ghe.jpg", importPrice: 32000000 },
+      { name: "Tủ rượu cánh kính", material: "Gỗ sồi", size: "D120 R40 C200", color: "Nâu đậm", finish: "Sơn PU bóng mờ", qty: 2, unit: "Chiếc", note: "Kính cường lực 8mm, bản lề giảm chấn Blum", image: "https://noithatminhkhoi.com/upload/images/tu-quan-ao-go-soi-nga-4-canh-dep.jpg", importPrice: 8500000 }
+    ]
+  },
+  {
+    id: "DH-MOC-102",
+    code: "DH-MOC-102",
+    customerName: "Nguyễn Văn A",
+    phone: "0912345685",
+    type: "Hàng mộc",
+    total: 45000000,
     status: "Đang gia công",
-    date: new Date().toISOString(),
+    date: new Date(Date.now() - 2 * 86400000).toISOString(),
     salesPerson: "Bình Nguyễn",
-    deliveryDate: "2026-04-22",
-    deposit: 15000000,
+    deliveryDate: "2026-04-18",
+    deposit: 13500000,
     fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Bộ bàn ghế Âu Á", specs: "Gỗ Hương Đá, Chương voi", qty: 1, unit: "Bộ" }]
+    products: [
+      { name: "Sập thờ tứ linh", material: "Gỗ mít", size: "D197 R107 C87", color: "Tự nhiên", finish: "Đánh vecni bóng", qty: 1, unit: "Chiếc", note: "Đục chạm tứ linh: Long - Lân - Quy - Phụng, chân quỳ", image: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg", importPrice: 42000000 },
+      { name: "Kệ thờ treo tường", material: "Gỗ mít", size: "D107 R47 C57", color: "Tự nhiên", finish: "Đánh vecni bóng", qty: 2, unit: "Chiếc", note: "Chạm hoa sen, đục thủng 2 bên", image: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg", importPrice: 2500000 }
+    ]
   },
   {
-    id: "DH-DAT-001",
-    code: "DH-DAT-001",
-    customerName: "Trần Thùy Linh",
-    phone: "0987654321",
+    id: "DH-MOC-103",
+    code: "DH-MOC-103",
+    customerName: "Trần Thị B",
+    phone: "0912345686",
+    type: "Hàng mộc",
+    total: 45000000,
+    status: "Chờ giao hàng",
+    date: new Date(Date.now() - 4 * 86400000).toISOString(),
+    salesPerson: "Bình Nguyễn",
+    deliveryDate: "2026-04-16",
+    deposit: 13500000,
+    fulfillmentType: "Giao tận nơi",
+    products: [{ name: "Sản phẩm Hàng mộc 3", specs: "Kích thước tiêu chuẩn", qty: 10, unit: "Cái" }]
+  },
+  {
+    id: "DH-MOC-104",
+    code: "DH-MOC-104",
+    customerName: "Lê Văn C",
+    phone: "0912345687",
+    type: "Hàng mộc",
+    total: 45000000,
+    status: "Đang giao hàng",
+    date: new Date(Date.now() - 6 * 86400000).toISOString(),
+    salesPerson: "Bình Nguyễn",
+    deliveryDate: "2026-04-14",
+    deposit: 13500000,
+    fulfillmentType: "Giao tận nơi",
+    products: [{ name: "Sản phẩm Hàng mộc 4", specs: "Kích thước tiêu chuẩn", qty: 10, unit: "Cái" }]
+  },
+  {
+    id: "DH-MOC-105",
+    code: "DH-MOC-105",
+    customerName: "Phạm Thị D",
+    phone: "0912345688",
+    type: "Hàng mộc",
+    total: 45000000,
+    status: "Hoàn thành",
+    date: new Date(Date.now() - 8 * 86400000).toISOString(),
+    salesPerson: "Bình Nguyễn",
+    deliveryDate: "2026-04-12",
+    deposit: 13500000,
+    fulfillmentType: "Giao tận nơi",
+    products: [{ name: "Sản phẩm Hàng mộc 5", specs: "Kích thước tiêu chuẩn", qty: 10, unit: "Cái" }]
+  },
+  {
+    id: "DH-MOC-106",
+    code: "DH-MOC-106",
+    customerName: "Hoàng Văn E",
+    phone: "0912345689",
+    type: "Hàng mộc",
+    total: 45000000,
+    status: "Chờ duyệt hủy",
+    date: new Date(Date.now() - 10 * 86400000).toISOString(),
+    salesPerson: "Bình Nguyễn",
+    deliveryDate: "2026-04-10",
+    deposit: 0,
+    fulfillmentType: "Giao tận nơi",
+    products: [{ name: "Sản phẩm Hàng mộc 6", specs: "Kích thước tiêu chuẩn", qty: 10, unit: "Cái" }]
+  },
+  {
+    id: "DH-MOC-107",
+    code: "DH-MOC-107",
+    customerName: "Vũ Thị F",
+    phone: "0912345690",
+    type: "Hàng mộc",
+    total: 45000000,
+    status: "Đơn đã hủy",
+    date: new Date(Date.now() - 12 * 86400000).toISOString(),
+    salesPerson: "Bình Nguyễn",
+    deliveryDate: "2026-04-08",
+    deposit: 0,
+    fulfillmentType: "Giao tận nơi",
+    products: [{ name: "Sản phẩm Hàng mộc 7", specs: "Kích thước tiêu chuẩn", qty: 10, unit: "Cái" }]
+  },
+  {
+    id: "DH-DAT-101",
+    code: "DH-DAT-101",
+    customerName: "Đặng Văn G",
+    phone: "0912345691",
     type: "Hàng khách đặt",
-    total: 125000000,
+    total: 85000000,
     status: "Chờ sản xuất",
-    date: new Date().toISOString(),
+    date: new Date(Date.now() + 0 * 86400000).toISOString(),
     salesPerson: "Bình Nguyễn",
-    deliveryDate: "2026-05-10",
-    deposit: 40000000,
+    deliveryDate: "2026-04-20",
+    deposit: 25500000,
     fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Trường kỷ Sen Vịt", specs: "Gỗ Gụ Lào, 2m17, Đục tay kỹ", qty: 1, unit: "Bộ" }]
+    products: [
+      { name: "Bàn giám đốc chữ L", material: "Gỗ óc chó", size: "D200 R90 C75 + D140 R60", color: "Nâu óc chó", finish: "Sơn PU 7 lớp bóng mờ 40%", qty: 1, unit: "Chiếc", note: "Hộc tủ 3 ngăn bên phải, lỗ luồn dây điện mặt bàn, chân sắt sơn tĩnh điện đen", image: "https://noithatzito.com/wp-content/uploads/2021/04/bo-ban-an-go-soi-nga-6-ghe.jpg", importPrice: 55000000 },
+      { name: "Tủ hồ sơ 4 cánh", material: "Gỗ óc chó", size: "D160 R45 C200", color: "Nâu óc chó", finish: "Sơn PU bóng mờ", qty: 1, unit: "Chiếc", note: "Khóa âm, bản lề giảm chấn, ngăn trên cánh kính", importPrice: 15000000 },
+      { id: "SP001", name: "Sập thờ Mai Điều chân 20", material: "Gỗ Mít", size: "197x107x108", color: "Cánh gián", qty: 1, unit: "Chiếc", importPrice: 8500000, image: "https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=600" },
+      { id: "SP004", name: "Bộ Ghế Âu Á Chương Cuốn Thư", material: "Gỗ Hương", size: "Tay 10 - 6 món", color: "Cánh gián", qty: 1, unit: "Bộ", importPrice: 18000000, image: "https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?q=80&w=600" }
+    ]
   },
   {
-    id: "DH-DAT-002",
-    code: "DH-DAT-002",
-    customerName: "Phạm Phúc Lộc",
-    phone: "0944556677",
+    id: "DH-DAT-102",
+    code: "DH-DAT-102",
+    customerName: "Nguyễn Văn A",
+    phone: "0912345692",
     type: "Hàng khách đặt",
-    total: 80000000,
+    total: 85000000,
+    status: "Chờ xử lý",
+    date: new Date(Date.now() - 2 * 86400000).toISOString(),
+    salesPerson: "Bình Nguyễn",
+    deliveryDate: "2026-04-18",
+    deposit: 25500000,
+    fulfillmentType: "Giao tận nơi",
+    products: [
+      { name: "Giường ngủ đầu bọc nệm", material: "Gỗ tần bì", size: "D200 R180 C35 (đầu giường C120)", color: "Trắng ngà", finish: "Sơn PU trắng bóng mờ", qty: 1, unit: "Chiếc", note: "Đầu giường bọc nệm da Ý màu ghi, có hộc kéo 2 bên, dát phản" },
+      { name: "Tab đầu giường", material: "Gỗ tần bì", size: "D50 R40 C55", color: "Trắng ngà", finish: "Sơn PU trắng bóng mờ", qty: 2, unit: "Chiếc", note: "2 ngăn kéo, tay nắm đồng vàng" },
+      { name: "Tủ quần áo 6 cánh", material: "Gỗ tần bì", size: "D300 R60 C240", color: "Trắng ngà", finish: "Sơn PU trắng bóng mờ", qty: 1, unit: "Chiếc", note: "3 khoang, 2 cánh kính, thanh treo inox, ngăn kéo bên dưới, bản lề Blum" },
+      { id: "SP002", name: "Tủ áo gỗ Xoan Đào (3 cánh)", material: "Gỗ xoan đào", size: "160x200x55", color: "Để mộc", qty: 1, unit: "Chiếc", importPrice: 4500000, image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=600" },
+      { id: "SP005", name: "Đế kê tượng gỗ Hương", material: "Gỗ Hương", size: "30x30x20", color: "Cánh gián", qty: 1, unit: "Cái", importPrice: 1200000, image: "https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=600" }
+    ]
+  },
+  {
+    id: "DH-DAT-103",
+    code: "DH-DAT-103",
+    customerName: "Trần Thị B",
+    phone: "0912345693",
+    type: "Hàng khách đặt",
+    total: 85000000,
+    status: "Đang gia công",
+    date: new Date(Date.now() - 4 * 86400000).toISOString(),
+    salesPerson: "Bình Nguyễn",
+    deliveryDate: "2026-04-16",
+    deposit: 25500000,
+    fulfillmentType: "Giao tận nơi",
+    products: [
+      { name: "Bộ trường kỷ gỗ gụ", material: "Gỗ gụ", size: "D220 R70 C85", color: "Đỏ nâu tự nhiên", finish: "Đánh vecni bóng", qty: 1, unit: "Bộ", note: "Chạm đào - trúc - cúc - mai, lưng ghế chạm thủng, mặt ngồi phẳng", image: "https://langnghedoanhnhan.com/wp-content/uploads/2021/04/truong-ky-go-gu-lao-moc.jpg" },
+      { name: "Đôn kê trường kỷ", material: "Gỗ gụ", size: "D50 R50 C50", color: "Đỏ nâu tự nhiên", finish: "Đánh vecni bóng", qty: 2, unit: "Chiếc", note: "Chạm hoa lá, có ngăn kéo" }
+    ]
+  },
+  {
+    id: "DH-DAT-104",
+    code: "DH-DAT-104",
+    customerName: "Lê Văn C",
+    phone: "0912345694",
+    type: "Hàng khách đặt",
+    total: 85000000,
+    status: "Chờ giao hàng",
+    date: new Date(Date.now() - 6 * 86400000).toISOString(),
+    salesPerson: "Bình Nguyễn",
+    deliveryDate: "2026-04-14",
+    deposit: 25500000,
+    fulfillmentType: "Giao tận nơi",
+    products: [{ name: "Sản phẩm Hàng khách đặt 4", specs: "Kích thước tiêu chuẩn", qty: 10, unit: "Cái" }]
+  },
+  {
+    id: "DH-DAT-105",
+    code: "DH-DAT-105",
+    customerName: "Phạm Thị D",
+    phone: "0912345695",
+    type: "Hàng khách đặt",
+    total: 85000000,
+    status: "Đang giao hàng",
+    date: new Date(Date.now() - 8 * 86400000).toISOString(),
+    salesPerson: "Bình Nguyễn",
+    deliveryDate: "2026-04-12",
+    deposit: 25500000,
+    fulfillmentType: "Giao tận nơi",
+    products: [{ name: "Sản phẩm Hàng khách đặt 5", specs: "Kích thước tiêu chuẩn", qty: 10, unit: "Cái" }]
+  },
+  {
+    id: "DH-DAT-106",
+    code: "DH-DAT-106",
+    customerName: "Hoàng Văn E",
+    phone: "0912345696",
+    type: "Hàng khách đặt",
+    total: 85000000,
+    status: "Hoàn thành",
+    date: new Date(Date.now() - 10 * 86400000).toISOString(),
+    salesPerson: "Bình Nguyễn",
+    deliveryDate: "2026-04-10",
+    deposit: 25500000,
+    fulfillmentType: "Giao tận nơi",
+    products: [{ name: "Sản phẩm Hàng khách đặt 6", specs: "Kích thước tiêu chuẩn", qty: 10, unit: "Cái" }]
+  },
+  {
+    id: "DH-DAT-107",
+    code: "DH-DAT-107",
+    customerName: "Vũ Thị F",
+    phone: "0912345697",
+    type: "Hàng khách đặt",
+    total: 85000000,
+    status: "Chờ duyệt hủy",
+    date: new Date(Date.now() - 12 * 86400000).toISOString(),
+    salesPerson: "Bình Nguyễn",
+    deliveryDate: "2026-04-08",
+    deposit: 0,
+    fulfillmentType: "Giao tận nơi",
+    products: [{ name: "Sản phẩm Hàng khách đặt 7", specs: "Kích thước tiêu chuẩn", qty: 10, unit: "Cái" }]
+  },
+  {
+    id: "DH-DAT-108",
+    code: "DH-DAT-108",
+    customerName: "Đặng Văn G",
+    phone: "0912345698",
+    type: "Hàng khách đặt",
+    total: 85000000,
+    status: "Đơn đã hủy",
+    date: new Date(Date.now() - 14 * 86400000).toISOString(),
+    salesPerson: "Bình Nguyễn",
+    deliveryDate: "2026-04-06",
+    deposit: 0,
+    fulfillmentType: "Giao tận nơi",
+    products: [{ name: "Sản phẩm Hàng khách đặt 8", specs: "Kích thước tiêu chuẩn", qty: 10, unit: "Cái" }]
+  },
+  {
+    id: "DH-TEST-2X",
+    code: "DH-TEST-2X",
+    customerName: "Nguyễn Thị Thử",
+    phone: "0333444555",
+    type: "Hàng khách đặt",
+    total: 35000000,
     status: "Chờ xử lý",
     date: new Date().toISOString(),
     salesPerson: "Bình Nguyễn",
-    deliveryDate: "2026-05-15",
-    deposit: 30000000,
-    fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Tủ rượu Tân Cổ Điển", specs: "Gỗ Gõ Đỏ nguyên khối", qty: 1, unit: "Chiếc" }]
-  },
-  {
-    id: "DH-DAT-003",
-    code: "DH-DAT-003",
-    customerName: "Bùi Bách Hợp",
-    phone: "0988112233",
-    type: "Hàng khách đặt",
-    total: 95000000,
-    status: "Đang gia công",
-    date: new Date().toISOString(),
-    salesPerson: "Bình Nguyễn",
-    deliveryDate: "2026-05-20",
-    deposit: 45000000,
-    fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Sofa Nguyên Khối", specs: "Gỗ Hương Vân, Dày 10cm", qty: 1, unit: "Bộ" }]
-  },
-  {
-    id: "DH-SAN-002",
-    code: "DH-SAN-002",
-    customerName: "Vũ Minh Đức",
-    phone: "0966778899",
-    type: "Hàng sẵn",
-    total: 12000000,
-    status: "Đang giao hàng",
-    date: new Date().toISOString(),
-    salesPerson: "Bình Nguyễn",
-    deliveryDate: "2026-04-10",
-    deposit: 12000000,
-    fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Kệ tivi gỗ Xoan Đào", specs: "2m2, Mẫu lõm giữa", qty: 1, unit: "Chiếc" }]
-  },
-  {
-    id: "DH-SAN-003",
-    code: "DH-SAN-003",
-    customerName: "Ngô Thanh Vân",
-    phone: "0911223344",
-    type: "Hàng sẵn",
-    total: 45000000,
-    status: "Hoàn thành",
-    date: new Date(Date.now() - 86400000 * 5).toISOString(),
-    salesPerson: "Bình Nguyễn",
-    deliveryDate: "2026-04-05",
-    deposit: 45000000,
-    fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Giường ngủ mẫu chữ X", specs: "1m8 x 2m, Gỗ Gõ Đỏ", qty: 1, unit: "Chiếc" }]
-  },
-  {
-    id: "DH-MOC-003",
-    code: "DH-MOC-003",
-    customerName: "Chu Văn An",
-    phone: "0988776655",
-    type: "Hàng mộc",
-    total: 28000000,
-    status: "Chờ duyệt hủy",
-    date: new Date().toISOString(),
-    salesPerson: "Bình Nguyễn",
-    deliveryDate: "2026-04-25",
-    deposit: 5000000,
-    fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Tủ thờ gỗ Gụ", specs: "1m53, chân 10", qty: 1, unit: "Chiếc" }]
-  },
-  {
-    id: "DH-DAT-004",
-    code: "DH-DAT-004",
-    customerName: "Lý Thái Tổ",
-    phone: "0900112233",
-    type: "Hàng khách đặt",
-    total: 150000000,
-    status: "Đơn đã hủy",
-    date: new Date(Date.now() - 86400000 * 2).toISOString(),
-    salesPerson: "Bình Nguyễn",
     deliveryDate: "2026-05-01",
-    deposit: 0,
+    deposit: 10000000,
     fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Combo nội thất phòng thờ", specs: "Gỗ Hương Đá, Đục tay cao cấp", qty: 1, unit: "Bộ" }]
+    products: [
+      { name: "Ghế trường kỷ gỗ gụ", material: "Gỗ gụ", size: "D200 R65 C90", color: "Cánh gián", finish: "Đánh vecni bóng", qty: 1, unit: "Chiếc", note: "Tay vịn chạm rồng cuốn, lưng chạm tứ quý, mặt ngồi phẳng bo cạnh" },
+      { name: "Bàn trà đục chạm", material: "Gỗ gụ", size: "D120 R80 C48", color: "Cánh gián", finish: "Đánh vecni bóng", qty: 1, unit: "Cái", note: "Mặt bàn đục chạm mai điểu, chân quỳ, có ngăn kéo giữa" }
+    ]
   },
-  {
-    id: "DH-SAN-004",
-    code: "DH-SAN-004",
-    customerName: "Nguyễn Văn Hoàng",
-    phone: "0901234567",
-    type: "Hàng sẵn",
-    total: 25000000,
-    status: "Giao hàng thành công",
-    date: new Date(Date.now() - 86400000 * 30).toISOString(),
-    salesPerson: "Bình Nguyễn",
-    deliveryDate: "2026-03-20",
-    deposit: 25000000,
-    fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Tủ quần áo 4 cánh", specs: "Gỗ Hương", qty: 1, unit: "Chiếc" }]
-  },
-  {
-    id: "DH-DAT-005",
-    code: "DH-DAT-005",
-    customerName: "Nguyễn Văn Hoàng",
-    phone: "0901234567",
-    type: "Hàng khách đặt",
-    total: 110000000,
-    status: "Chờ sản xuất",
-    date: new Date(Date.now() - 86400000 * 2).toISOString(),
-    salesPerson: "Bình Nguyễn",
-    deliveryDate: "2026-05-20",
-    deposit: 50000000,
-    fulfillmentType: "Giao tận nơi",
-    products: [{ name: "Bộ bàn ghế Nguyên Khối", specs: "Gỗ Gõ Đỏ", qty: 1, unit: "Bộ" }]
-  }
 ];
 
 export const INITIAL_PRODUCTIONS = [
   {
-    id: "PROD-MOC-002",
-    orderId: "DH-MOC-002",
-    orderCode: "DH-MOC-002",
-    productName: "Bộ bàn ghế Âu Á",
-    assignedWorker: "Lê Văn Hùng (Thợ cả)",
-    status: "Chờ nghiệm thu",
-    isPendingApproval: true,
-    expectedEndDate: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
+    id: "PROD-DH-MOC-102-1",
+    orderId: "DH-MOC-102",
+    orderCode: "DH-MOC-102",
+    productName: "Sản phẩm Hàng mộc 2 - Item 1",
+    assignedWorker: "Thợ Cả Trần Thị B",
+    status: "Tiếp nhận",
+    isPendingApproval: false,
+    expectedEndDate: "2026-04-16",
     quantityPlanned: 1,
-    quantityCompleted: 1,
-    productImage: "https://xuongdogogiagoc.com/wp-content/uploads/2020/06/bo-ghe-au-a-go-huong-da-moc.jpg",
-    workerNotes: "Đã hoàn thiện phần khung và sơn lớp 1, chờ chủ xưởng nghiệm thu"
+    quantityCompleted: 0,
+    productImage: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80",
+    workerNotes: "Tiến độ đang bám sát kế hoạch đề ra."
   },
   {
-    id: "PROD-DAT-003",
-    orderId: "DH-DAT-003",
-    orderCode: "DH-DAT-003",
-    productName: "Sofa Nguyên Khối",
-    assignedWorker: "Trần Thế Kỷ (Thợ cả)",
+    id: "PROD-DH-MOC-102-2",
+    orderId: "DH-MOC-102",
+    orderCode: "DH-MOC-102",
+    productName: "Sản phẩm Hàng mộc 2 - Item 2",
+    assignedWorker: "Thợ Cả Lê Văn C",
+    status: "Tiếp nhận",
+    isPendingApproval: false,
+    expectedEndDate: "2026-04-16",
+    quantityPlanned: 1,
+    quantityCompleted: 0,
+    productImage: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80",
+    workerNotes: "Tiến độ đang bám sát kế hoạch đề ra."
+  },
+  {
+    id: "PROD-DH-MOC-102-3",
+    orderId: "DH-MOC-102",
+    orderCode: "DH-MOC-102",
+    productName: "Sản phẩm Hàng mộc 2 - Item 3",
+    assignedWorker: "Thợ Cả Phạm Thị D",
+    status: "Tiếp nhận",
+    isPendingApproval: false,
+    expectedEndDate: "2026-04-16",
+    quantityPlanned: 1,
+    quantityCompleted: 0,
+    productImage: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80",
+    workerNotes: "Tiến độ đang bám sát kế hoạch đề ra."
+  },
+  {
+    id: "PROD-DH-MOC-102-4",
+    orderId: "DH-MOC-102",
+    orderCode: "DH-MOC-102",
+    productName: "Sản phẩm Hàng mộc 2 - Item 4",
+    assignedWorker: "Thợ Cả Hoàng Văn E",
+    status: "Tiếp nhận",
+    isPendingApproval: false,
+    expectedEndDate: "2026-04-16",
+    quantityPlanned: 1,
+    quantityCompleted: 0,
+    productImage: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80",
+    workerNotes: "Tiến độ đang bám sát kế hoạch đề ra."
+  },
+  {
+    id: "PROD-DH-MOC-102-5",
+    orderId: "DH-MOC-102",
+    orderCode: "DH-MOC-102",
+    productName: "Sản phẩm Hàng mộc 2 - Item 5",
+    assignedWorker: "Thợ Cả Vũ Thị F",
+    status: "Tiếp nhận",
+    isPendingApproval: false,
+    expectedEndDate: "2026-04-16",
+    quantityPlanned: 1,
+    quantityCompleted: 0,
+    productImage: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80",
+    workerNotes: "Tiến độ đang bám sát kế hoạch đề ra."
+  },
+  {
+    id: "PROD-DH-MOC-102-6",
+    orderId: "DH-MOC-102",
+    orderCode: "DH-MOC-102",
+    productName: "Sản phẩm Hàng mộc 2 - Item 6",
+    assignedWorker: "Thợ Cả Đặng Văn G",
+    status: "Tiếp nhận",
+    isPendingApproval: false,
+    expectedEndDate: "2026-04-16",
+    quantityPlanned: 1,
+    quantityCompleted: 0,
+    productImage: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg",
+    workerNotes: "Tiến độ đang bám sát kế hoạch đề ra."
+  },
+  {
+    id: "PROD-DH-MOC-102-7",
+    orderId: "DH-MOC-102",
+    orderCode: "DH-MOC-102",
+    productName: "Sản phẩm Hàng mộc 2 - Item 7",
+    assignedWorker: "Thợ Cả Nguyễn Văn A",
     status: "Chờ nghiệm thu",
     isPendingApproval: true,
-    expectedEndDate: new Date(Date.now() + 86400000 * 5).toISOString().split('T')[0],
+    expectedEndDate: "2026-04-16",
     quantityPlanned: 1,
     quantityCompleted: 1,
     productImage: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg",
-    workerNotes: "Hoàn thiện sơn bóng mờ PU theo yêu cầu, chờ nghiệm thu."
-  }
+    workerNotes: "Tiến độ đang bám sát kế hoạch đề ra."
+  },
+  {
+    id: "PROD-DH-MOC-102-8",
+    orderId: "DH-MOC-102",
+    orderCode: "DH-MOC-102",
+    productName: "Sản phẩm Hàng mộc 2 - Item 8",
+    assignedWorker: "Thợ Cả Trần Thị B",
+    status: "Chờ nghiệm thu",
+    isPendingApproval: true,
+    expectedEndDate: "2026-04-16",
+    quantityPlanned: 1,
+    quantityCompleted: 1,
+    productImage: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg",
+    workerNotes: "Tiến độ đang bám sát kế hoạch đề ra."
+  },
+  {
+    id: "PROD-DH-MOC-102-9",
+    orderId: "DH-MOC-102",
+    orderCode: "DH-MOC-102",
+    productName: "Sản phẩm Hàng mộc 2 - Item 9",
+    assignedWorker: "Thợ Cả Lê Văn C",
+    status: "Chờ nghiệm thu",
+    isPendingApproval: true,
+    expectedEndDate: "2026-04-16",
+    quantityPlanned: 1,
+    quantityCompleted: 1,
+    productImage: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg",
+    workerNotes: "Tiến độ đang bám sát kế hoạch đề ra."
+  },
+  {
+    id: "PROD-DH-MOC-102-10",
+    orderId: "DH-MOC-102",
+    orderCode: "DH-MOC-102",
+    productName: "Sản phẩm Hàng mộc 2 - Item 10",
+    assignedWorker: "Thợ Cả Phạm Thị D",
+    status: "Chờ nghiệm thu",
+    isPendingApproval: true,
+    expectedEndDate: "2026-04-16",
+    quantityPlanned: 1,
+    quantityCompleted: 1,
+    productImage: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg",
+    workerNotes: "Tiến độ đang bám sát kế hoạch đề ra."
+  },
+  {
+    id: "PROD-DH-MOC-105-1",
+    orderId: "DH-MOC-105",
+    orderCode: "DH-MOC-105",
+    productName: "Sản phẩm Hàng mộc 5",
+    assignedWorker: "Thợ Cả Phạm Thị D",
+    status: "Hoàn thành",
+    isPendingApproval: false,
+    expectedEndDate: "2026-04-10",
+    quantityPlanned: 10,
+    quantityCompleted: 10,
+    productImage: "https://xuongdogogiagoc.com/wp-content/uploads/2020/06/bo-ghe-au-a-go-huong-da-moc.jpg",
+    workerNotes: "Đã giao hàng và hoàn tất lắp đặt."
+  },
+  {
+    id: "PROD-DH-DAT-103-1",
+    orderId: "DH-DAT-103",
+    orderCode: "DH-DAT-103",
+    productName: "Sản phẩm Hàng khách đặt 3 - Item 1",
+    assignedWorker: "Thợ Cả Lê Văn C",
+    status: "Tiếp nhận",
+    isPendingApproval: false,
+    expectedEndDate: "2026-04-14",
+    quantityPlanned: 1,
+    quantityCompleted: 0,
+    productImage: "https://langnghedoanhnhan.com/wp-content/uploads/2021/04/truong-ky-go-gu-lao-moc.jpg",
+    workerNotes: "Tiến độ đang bám sát kế hoạch đề ra."
+  },
+  {
+    id: "PROD-DH-DAT-103-2",
+    orderId: "DH-DAT-103",
+    orderCode: "DH-DAT-103",
+    productName: "Sản phẩm Hàng khách đặt 3 - Item 2",
+    assignedWorker: "Thợ Cả Phạm Thị D",
+    status: "Tiếp nhận",
+    isPendingApproval: false,
+    expectedEndDate: "2026-04-14",
+    quantityPlanned: 1,
+    quantityCompleted: 0,
+    productImage: "https://langnghedoanhnhan.com/wp-content/uploads/2021/04/truong-ky-go-gu-lao-moc.jpg",
+    workerNotes: "Tiến độ đang bám sát kế hoạch đề ra."
+  },
+  {
+    id: "PROD-DH-DAT-103-3",
+    orderId: "DH-DAT-103",
+    orderCode: "DH-DAT-103",
+    productName: "Sản phẩm Hàng khách đặt 3 - Item 3",
+    assignedWorker: "Thợ Cả Hoàng Văn E",
+    status: "Tiếp nhận",
+    isPendingApproval: false,
+    expectedEndDate: "2026-04-14",
+    quantityPlanned: 1,
+    quantityCompleted: 0,
+    productImage: "https://langnghedoanhnhan.com/wp-content/uploads/2021/04/truong-ky-go-gu-lao-moc.jpg",
+    workerNotes: "Tiến độ đang bám sát kế hoạch đề ra."
+  },
+  {
+    id: "PROD-DH-DAT-103-4",
+    orderId: "DH-DAT-103",
+    orderCode: "DH-DAT-103",
+    productName: "Sản phẩm Hàng khách đặt 3 - Item 4",
+    assignedWorker: "Thợ Cả Vũ Thị F",
+    status: "Tiếp nhận",
+    isPendingApproval: false,
+    expectedEndDate: "2026-04-14",
+    quantityPlanned: 1,
+    quantityCompleted: 0,
+    productImage: "https://langnghedoanhnhan.com/wp-content/uploads/2021/04/truong-ky-go-gu-lao-moc.jpg",
+    workerNotes: "Tiến độ đang bám sát kế hoạch đề ra."
+  },
+  {
+    id: "PROD-DH-DAT-103-5",
+    orderId: "DH-DAT-103",
+    orderCode: "DH-DAT-103",
+    productName: "Sản phẩm Hàng khách đặt 3 - Item 5",
+    assignedWorker: "Thợ Cả Đặng Văn G",
+    status: "Tiếp nhận",
+    isPendingApproval: false,
+    expectedEndDate: "2026-04-14",
+    quantityPlanned: 1,
+    quantityCompleted: 0,
+    productImage: "https://langnghedoanhnhan.com/wp-content/uploads/2021/04/truong-ky-go-gu-lao-moc.jpg",
+    workerNotes: "Tiến độ đang bám sát kế hoạch đề ra."
+  },
+  {
+    id: "PROD-DH-DAT-103-6",
+    orderId: "DH-DAT-103",
+    orderCode: "DH-DAT-103",
+    productName: "Sản phẩm Hàng khách đặt 3 - Item 6",
+    assignedWorker: "Thợ Cả Nguyễn Văn A",
+    status: "Tiếp nhận",
+    isPendingApproval: false,
+    expectedEndDate: "2026-04-14",
+    quantityPlanned: 1,
+    quantityCompleted: 0,
+    productImage: "https://langnghedoanhnhan.com/wp-content/uploads/2021/04/truong-ky-go-gu-lao-moc.jpg",
+    workerNotes: "Tiến độ đang bám sát kế hoạch đề ra."
+  },
+  {
+    id: "PROD-DH-DAT-103-7",
+    orderId: "DH-DAT-103",
+    orderCode: "DH-DAT-103",
+    productName: "Sản phẩm Hàng khách đặt 3 - Item 7",
+    assignedWorker: "Thợ Cả Trần Thị B",
+    status: "Chờ nghiệm thu",
+    isPendingApproval: true,
+    expectedEndDate: "2026-04-14",
+    quantityPlanned: 1,
+    quantityCompleted: 1,
+    productImage: "https://langnghedoanhnhan.com/wp-content/uploads/2021/04/truong-ky-go-gu-lao-moc.jpg",
+    workerNotes: "Tiến độ đang bám sát kế hoạch đề ra."
+  },
+  {
+    id: "PROD-DH-DAT-103-8",
+    orderId: "DH-DAT-103",
+    orderCode: "DH-DAT-103",
+    productName: "Sản phẩm Hàng khách đặt 3 - Item 8",
+    assignedWorker: "Thợ Cả Lê Văn C",
+    status: "Chờ nghiệm thu",
+    isPendingApproval: true,
+    expectedEndDate: "2026-04-14",
+    quantityPlanned: 1,
+    quantityCompleted: 1,
+    productImage: "https://langnghedoanhnhan.com/wp-content/uploads/2021/04/truong-ky-go-gu-lao-moc.jpg",
+    workerNotes: "Tiến độ đang bám sát kế hoạch đề ra."
+  },
+  {
+    id: "PROD-DH-DAT-103-9",
+    orderId: "DH-DAT-103",
+    orderCode: "DH-DAT-103",
+    productName: "Sản phẩm Hàng khách đặt 3 - Item 9",
+    assignedWorker: "Thợ Cả Phạm Thị D",
+    status: "Chờ nghiệm thu",
+    isPendingApproval: true,
+    expectedEndDate: "2026-04-14",
+    quantityPlanned: 1,
+    quantityCompleted: 1,
+    productImage: "https://langnghedoanhnhan.com/wp-content/uploads/2021/04/truong-ky-go-gu-lao-moc.jpg",
+    workerNotes: "Tiến độ đang bám sát kế hoạch đề ra."
+  },
+  {
+    id: "PROD-DH-DAT-103-10",
+    orderId: "DH-DAT-103",
+    orderCode: "DH-DAT-103",
+    productName: "Sản phẩm Hàng khách đặt 3 - Item 10",
+    assignedWorker: "Thợ Cả Hoàng Văn E",
+    status: "Chờ nghiệm thu",
+    isPendingApproval: true,
+    expectedEndDate: "2026-04-14",
+    quantityPlanned: 1,
+    quantityCompleted: 1,
+    productImage: "https://langnghedoanhnhan.com/wp-content/uploads/2021/04/truong-ky-go-gu-lao-moc.jpg",
+    workerNotes: "Tiến độ đang bám sát kế hoạch đề ra."
+  },
+  {
+    id: "PROD-DH-DAT-106-1",
+    orderId: "DH-DAT-106",
+    orderCode: "DH-DAT-106",
+    productName: "Sản phẩm Hàng khách đặt 6",
+    assignedWorker: "Thợ Cả Hoàng Văn E",
+    status: "Hoàn thành",
+    isPendingApproval: false,
+    expectedEndDate: "2026-04-08",
+    quantityPlanned: 10,
+    quantityCompleted: 10,
+    productImage: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80",
+    workerNotes: "Đã giao hàng và hoàn tất lắp đặt."
+  },
 ];
 
 export const MOCK_ORDERS_DETAILED = {
-  "DH-SAN-001": {
-    code: "DH-SAN-001", type: "Hàng sẵn", status: "Chờ giao hàng",
-    date: "2026-03-29T08:30:00", deliveryDate: "2026-04-01", fulfillmentType: "Giao tận nhà",
-    customer: { name: "Nguyễn Văn Hùng", phone: "0912345678", address: "45 Đường Giải Phóng, Hà Đông, Hà Nội" },
-    salesPerson: "Bình Nguyễn", total: 18500000, deposit: 2000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
-    notes: "Khách cần bọc lót kỹ phần chân gỗ khi vận chuyển.",
+  "DH-SAN-101": {
+    code: "DH-SAN-101", type: "Hàng sẵn", status: "Chờ giao hàng",
+    date: "2026-04-13T12:09:19.625Z", deliveryDate: "2026-04-20", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Trần Thị B", phone: "0912345679", address: "123 Đường Vĩnh Thực, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 15000000, deposit: 4500000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
+    notes: "Khách yêu cầu sơn cẩn thận, sản phẩm đạt chất lượng cao.",
     products: [{
-      name: "Bàn ăn gỗ Sồi Nga 6 ghế",
+      name: "Sản phẩm Hàng sẵn 1",
       image: "https://noithatzito.com/wp-content/uploads/2021/04/bo-ban-an-go-soi-nga-6-ghe.jpg",
-      customerSampleImage: "https://th.bing.com/th/id/OIP.vr9BRteYrPsEUU_wlBWOpwHaFj?o=7rm=3&rs=1&pid=ImgDetMain&o=7&rm=3",
-      material: "Gỗ sồi tự nhiên", size: "160x80 cm", finish: "Sơn màu hạt dẻ", qty: 1, price: 18500000, note: "Màu hạt dẻ"
+      customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
+      material: "Gỗ Tự Nhiên", size: "Tiêu chuẩn", finish: "Bóng mờ 50%", qty: 10, price: 1500000, unit: "Cái", note: "Yêu cầu chi tiết đục chạm tinh xảo"
     }],
     timeline: [
-      { time: "29/03/2026 08:30", label: "Tiếp nhận đơn", desc: "Đơn hàng mới từ showroom", active: true },
-      { time: "29/03/2026 09:15", label: "Đang kiểm kho", desc: "Xác nhận hàng sẵn có tại kho Hà Đông", active: true }
+      { time: "2026-04-12T12:09:19.625Z", label: "Tiếp nhận thông tin", desc: "Khách liên hệ qua Zalo", active: true },
+      { time: "2026-04-13T12:09:19.625Z", label: "Chốt đơn", desc: "Khách đã chốt mẫu và thanh toán cọc", active: true },
+      { time: "2026-04-14T12:09:19.625Z", label: "Cập nhật trạng thái", desc: "Đơn hàng bắt đầu sang trạng thái: Chờ giao hàng", active: true }
     ],
   },
-  "DH-MOC-001": {
-    code: "DH-MOC-001", type: "Hàng mộc", status: "Chờ xử lý",
-    date: "2026-03-30T10:00:00", deliveryDate: "2026-04-10", fulfillmentType: "Giao tận nơi",
-    customer: { name: "Hoàng Nguyệt Ánh", phone: "0978901234", address: "KĐT Ecopark, Hưng Yên" },
-    salesPerson: "Bình Nguyễn", total: 56000000, deposit: 10000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
+  "DH-SAN-102": {
+    code: "DH-SAN-102", type: "Hàng sẵn", status: "Đang giao hàng",
+    date: "2026-04-11T12:09:19.625Z", deliveryDate: "2026-04-18", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Lê Văn C", phone: "0912345680", address: "123 Đường Vĩnh Thực, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 15000000, deposit: 4500000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
+    notes: "Khách yêu cầu sơn cẩn thận, sản phẩm đạt chất lượng cao.",
     products: [{
-      name: "Sập thờ Tứ Linh",
-      image: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg",
-      customerSampleImage: "https://th.bing.com/th/id/OIP.vr9BRteYrPsEUU_wlBWOpwHaFj?o=7rm=3&rs=1&pid=ImgDetMain&o=7&rm=3",
-      material: "Gỗ mít", size: "Chân 18, Dạ 5 phân", finish: "Mộc", qty: 1, price: 56000000, note: "Đục tay kỹ",
-      painterLabor: 1200000, finishingDays: 7
+      name: "Sản phẩm Hàng sẵn 2",
+      image: "https://noithatminhkhoi.com/upload/images/tu-quan-ao-go-soi-nga-4-canh-dep.jpg",
+      customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
+      material: "Gỗ Tự Nhiên", size: "Tiêu chuẩn", finish: "Bóng mờ 50%", qty: 10, price: 1500000, unit: "Cái", note: "Yêu cầu chi tiết đục chạm tinh xảo"
     }],
     timeline: [
-      { time: "30/03/2026 10:00", label: "Tạo đơn", desc: "Nhận đơn hàng mộc từ kho", active: true }
+      { time: "2026-04-10T12:09:19.625Z", label: "Tiếp nhận thông tin", desc: "Khách liên hệ qua Zalo", active: true },
+      { time: "2026-04-11T12:09:19.625Z", label: "Chốt đơn", desc: "Khách đã chốt mẫu và thanh toán cọc", active: true },
+      { time: "2026-04-12T12:09:19.625Z", label: "Cập nhật trạng thái", desc: "Đơn hàng bắt đầu sang trạng thái: Đang giao hàng", active: true }
     ],
   },
-  "DH-MOC-002": {
-    code: "DH-MOC-002", type: "Hàng mộc", status: "Đang gia công",
-    date: "2026-03-28T15:30:00", deliveryDate: "2026-04-05", fulfillmentType: "Giao tận nơi",
-    customer: { name: "Đặng Tuấn Kiệt", phone: "0931234567", address: "Số 12A Xuân Thủy, Cầu Giấy" },
-    salesPerson: "Bình Nguyễn", total: 32000000, deposit: 15000000, depositMethod: "Tiền mặt", paymentStatus: "partial",
+  "DH-SAN-103": {
+    code: "DH-SAN-103", type: "Hàng sẵn", status: "Hoàn thành",
+    date: "2026-04-09T12:09:19.625Z", deliveryDate: "2026-04-16", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Phạm Thị D", phone: "0912345681", address: "123 Đường Vĩnh Thực, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 15000000, deposit: 4500000, depositMethod: "Chuyển khoản", paymentStatus: "paid",
+    notes: "Khách yêu cầu sơn cẩn thận, sản phẩm đạt chất lượng cao.",
     products: [{
-      name: "Bộ bàn ghế Âu Á",
+      name: "Sản phẩm Hàng sẵn 3",
+      image: "https://noithatzito.com/wp-content/uploads/2021/04/bo-ban-an-go-soi-nga-6-ghe.jpg",
+      customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
+      material: "Gỗ Tự Nhiên", size: "Tiêu chuẩn", finish: "Bóng mờ 50%", qty: 10, price: 1500000, unit: "Cái", note: "Yêu cầu chi tiết đục chạm tinh xảo"
+    }],
+    timeline: [
+      { time: "2026-04-08T12:09:19.625Z", label: "Tiếp nhận thông tin", desc: "Khách liên hệ qua Zalo", active: true },
+      { time: "2026-04-09T12:09:19.625Z", label: "Chốt đơn", desc: "Khách đã chốt mẫu và thanh toán cọc", active: true },
+      { time: "2026-04-10T12:09:19.625Z", label: "Cập nhật trạng thái", desc: "Đơn hàng bắt đầu sang trạng thái: Hoàn thành", active: true }
+    ],
+  },
+  "DH-SAN-104": {
+    code: "DH-SAN-104", type: "Hàng sẵn", status: "Chờ duyệt hủy",
+    date: "2026-04-07T12:09:19.625Z", deliveryDate: "2026-04-14", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Hoàng Văn E", phone: "0912345682", address: "123 Đường Vĩnh Thực, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 15000000, deposit: 0, depositMethod: "Chuyển khoản", paymentStatus: "unpaid",
+    notes: "Khách yêu cầu sơn cẩn thận, sản phẩm đạt chất lượng cao.",
+    products: [{
+      name: "Sản phẩm Hàng sẵn 4",
+      image: "https://noithatminhkhoi.com/upload/images/tu-quan-ao-go-soi-nga-4-canh-dep.jpg",
+      customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
+      material: "Gỗ Tự Nhiên", size: "Tiêu chuẩn", finish: "Bóng mờ 50%", qty: 10, price: 1500000, unit: "Cái", note: "Yêu cầu chi tiết đục chạm tinh xảo"
+    }],
+    timeline: [
+      { time: "2026-04-06T12:09:19.625Z", label: "Tiếp nhận thông tin", desc: "Khách liên hệ qua Zalo", active: true },
+      { time: "2026-04-07T12:09:19.625Z", label: "Chốt đơn", desc: "Khách đã chốt mẫu và thanh toán cọc", active: true },
+      { time: "2026-04-08T12:09:19.625Z", label: "Cập nhật trạng thái", desc: "Đơn hàng bắt đầu sang trạng thái: Chờ duyệt hủy", active: true }
+    ],
+  },
+  "DH-SAN-105": {
+    code: "DH-SAN-105", type: "Hàng sẵn", status: "Đơn đã hủy",
+    date: "2026-04-05T12:09:19.625Z", deliveryDate: "2026-04-12", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Vũ Thị F", phone: "0912345683", address: "123 Đường Vĩnh Thực, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 15000000, deposit: 0, depositMethod: "Chuyển khoản", paymentStatus: "unpaid",
+    notes: "Khách yêu cầu sơn cẩn thận, sản phẩm đạt chất lượng cao.",
+    products: [{
+      name: "Sản phẩm Hàng sẵn 5",
+      image: "https://noithatzito.com/wp-content/uploads/2021/04/bo-ban-an-go-soi-nga-6-ghe.jpg",
+      customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
+      material: "Gỗ Tự Nhiên", size: "Tiêu chuẩn", finish: "Bóng mờ 50%", qty: 10, price: 1500000, unit: "Cái", note: "Yêu cầu chi tiết đục chạm tinh xảo"
+    }],
+    timeline: [
+      { time: "2026-04-04T12:09:19.625Z", label: "Tiếp nhận thông tin", desc: "Khách liên hệ qua Zalo", active: true },
+      { time: "2026-04-05T12:09:19.625Z", label: "Chốt đơn", desc: "Khách đã chốt mẫu và thanh toán cọc", active: true },
+      { time: "2026-04-06T12:09:19.625Z", label: "Cập nhật trạng thái", desc: "Đơn hàng bắt đầu sang trạng thái: Đơn đã hủy", active: true }
+    ],
+  },
+  "DH-MOC-101": {
+    code: "DH-MOC-101", type: "Hàng mộc", status: "Chờ xử lý",
+    date: "2026-04-13T12:09:19.625Z", deliveryDate: "2026-04-20", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Đặng Văn G", phone: "0912345684", address: "123 Đường Vĩnh Thực, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 45000000, deposit: 13500000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
+    notes: "Khách yêu cầu sơn cẩn thận, sản phẩm đạt chất lượng cao.",
+    products: [{
+      name: "Sản phẩm Hàng mộc 1",
       image: "https://xuongdogogiagoc.com/wp-content/uploads/2020/06/bo-ghe-au-a-go-huong-da-moc.jpg",
-      customerSampleImage: "https://images.unsplash.com/photo-1595515106969-a0ff2bc82092?q=80&w=800",
-      material: "Gỗ Hương Đá", size: "Chương voi", finish: "Sơn Lau", qty: 1, price: 32000000, note: "Hàng mộc về xưởng"
+      customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
+      material: "Gỗ Tự Nhiên", size: "Tiêu chuẩn", finish: "Bóng mờ 50%", qty: 10, price: 4500000, unit: "Cái", note: "Yêu cầu chi tiết đục chạm tinh xảo"
     }],
-    timeline: [{ time: "29/03/2026 14:00", label: "Gia công", desc: "Đang trong giai đoạn sơn PU lớp 2", active: true }],
+    timeline: [
+      { time: "2026-04-12T12:09:19.625Z", label: "Tiếp nhận thông tin", desc: "Khách liên hệ qua Zalo", active: true },
+      { time: "2026-04-13T12:09:19.625Z", label: "Chốt đơn", desc: "Khách đã chốt mẫu và thanh toán cọc", active: true },
+      { time: "2026-04-14T12:09:19.625Z", label: "Cập nhật trạng thái", desc: "Đơn hàng bắt đầu sang trạng thái: Chờ xử lý", active: true }
+    ],
   },
-  "DH-DAT-001": {
-    code: "DH-DAT-001", type: "Hàng khách đặt", status: "Chờ sản xuất",
-    date: "2026-03-30T11:15:00", deliveryDate: "2026-04-30", fulfillmentType: "Giao tận nơi",
-    customer: { name: "Nguyễn Thị Hồng", phone: "0912123123", address: "Số 5 Đường Thành, Hoàn Kiếm" },
-    salesPerson: "Bình Nguyễn", total: 125000000, deposit: 40000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
+  "DH-MOC-102": {
+    code: "DH-MOC-102", type: "Hàng mộc", status: "Đang gia công",
+    date: "2026-04-11T12:09:19.625Z", deliveryDate: "2026-04-18", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Nguyễn Văn A", phone: "0912345685", address: "123 Đường Vĩnh Thực, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 45000000, deposit: 13500000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
+    notes: "Khách yêu cầu sơn cẩn thận, sản phẩm đạt chất lượng cao.",
     products: [{
-      name: "Trường kỷ Sen Vịt",
-      image: "https://langnghedoanhnhan.com/wp-content/uploads/2021/04/truong-ky-go-gu-lao-moc.jpg",
-      customerSampleImage: "https://images.unsplash.com/photo-1540632739335-ade38b0070bc?q=80&w=800",
-      material: "Gỗ Gụ Lào", size: "2m17", finish: "Đục tay kỹ", qty: 1, price: 125000000, note: "Đóng mộng thủ công",
-      painterLabor: 2500000, finishingDays: 14
-    }],
-    timeline: [{ time: "30/03/2026 11:15", label: "Nhận đơn", desc: "Đơn hàng đặt sản xuất theo mẫu riêng", active: true }],
-  },
-  "DH-DAT-002": {
-    code: "DH-DAT-002", type: "Hàng khách đặt", status: "Chờ xử lý",
-    date: "2026-03-31T09:00:00", deliveryDate: "2026-05-15", fulfillmentType: "Giao tận nơi",
-    customer: { name: "Phạm Phúc Lộc", phone: "0944556677", address: "KĐT Vinhomes Ocean Park" },
-    salesPerson: "Bình Nguyễn", total: 80000000, deposit: 30000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
-    products: [{
-      name: "Tủ rượu Tân Cổ Điển",
-      image: "https://langnghedoanhnhan.com/wp-content/uploads/2021/04/truong-ky-go-gu-lao-moc.jpg",
-      customerSampleImage: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?q=80&w=800",
-      material: "Gỗ Gõ Đỏ", size: "Cao 2m2, rộng 1m8", finish: "Khắc CNC sâu", qty: 1, price: 80000000, note: "Sản phẩm đặt làm riêng",
-      painterLabor: 3000000, finishingDays: 10
-    }],
-    timeline: [{ time: "31/03/2026 09:00", label: "Chờ xử lý hàng", desc: "Hàng mộc đã về, đang chờ điều phối thợ", active: true }],
-  },
-  "DH-DAT-003": {
-    code: "DH-DAT-003", type: "Hàng khách đặt", status: "Đang gia công",
-    date: "2026-03-25T14:20:00", deliveryDate: "2026-05-20", fulfillmentType: "Giao tận nơi",
-    customer: { name: "Bùi Bách Hợp", phone: "0988112233", address: "Biệt thự Ciputra, Tây Hồ" },
-    salesPerson: "Bình Nguyễn", total: 95000000, deposit: 45000000, depositMethod: "Tiền mặt", paymentStatus: "partial",
-    products: [{
-      name: "Sofa Nguyên Khối",
+      name: "Sản phẩm Hàng mộc 2",
       image: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg",
       customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
-      material: "Gỗ Hương Vân", size: "Dày 10cm", finish: "Sơn bóng mờ 50", qty: 1, price: 95000000, note: "Gỗ nguyên khối đặc",
-      painterLabor: 4000000, finishingDays: 15
+      material: "Gỗ Tự Nhiên", size: "Tiêu chuẩn", finish: "Bóng mờ 50%", qty: 10, price: 4500000, unit: "Cái", note: "Yêu cầu chi tiết đục chạm tinh xảo"
     }],
-    timeline: [{ time: "25/03/2026 14:20", label: "Đang gia công", desc: "Đã bàn giao cho thợ hoàn thiện", active: true }],
+    timeline: [
+      { time: "2026-04-10T12:09:19.625Z", label: "Tiếp nhận thông tin", desc: "Khách liên hệ qua Zalo", active: true },
+      { time: "2026-04-11T12:09:19.625Z", label: "Chốt đơn", desc: "Khách đã chốt mẫu và thanh toán cọc", active: true },
+      { time: "2026-04-12T12:09:19.625Z", label: "Cập nhật trạng thái", desc: "Đơn hàng bắt đầu sang trạng thái: Đang gia công", active: true }
+    ],
   },
-  "DH-SAN-004": {
-    code: "DH-SAN-004", type: "Hàng sẵn", status: "Giao hàng thành công",
-    date: "2026-03-20T08:30:00", deliveryDate: "2026-03-20", fulfillmentType: "Giao tận nơi",
-    customer: { name: "Nguyễn Văn Hoàng", phone: "0901234567", address: "123 Nguyễn Huệ, Q.1, TP.HCM" },
-    salesPerson: "Bình Nguyễn", total: 25000000, deposit: 25000000, depositMethod: "Chuyển khoản", paymentStatus: "paid",
+  "DH-MOC-103": {
+    code: "DH-MOC-103", type: "Hàng mộc", status: "Chờ giao hàng",
+    date: "2026-04-09T12:09:19.625Z", deliveryDate: "2026-04-16", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Trần Thị B", phone: "0912345686", address: "123 Đường Vĩnh Thực, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 45000000, deposit: 13500000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
+    notes: "Khách yêu cầu sơn cẩn thận, sản phẩm đạt chất lượng cao.",
     products: [{
-      name: "Tủ quần áo 4 cánh",
-      material: "Gỗ Hương", size: "2m x 2m2", finish: "Sơn bóng", qty: 1, price: 25000000
+      name: "Sản phẩm Hàng mộc 3",
+      image: "https://xuongdogogiagoc.com/wp-content/uploads/2020/06/bo-ghe-au-a-go-huong-da-moc.jpg",
+      customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
+      material: "Gỗ Tự Nhiên", size: "Tiêu chuẩn", finish: "Bóng mờ 50%", qty: 10, price: 4500000, unit: "Cái", note: "Yêu cầu chi tiết đục chạm tinh xảo"
     }],
-    timeline: [{ time: "20/03/2026 14:20", label: "Giao thành công", desc: "Khách đã nhận hàng", active: true }],
+    timeline: [
+      { time: "2026-04-08T12:09:19.625Z", label: "Tiếp nhận thông tin", desc: "Khách liên hệ qua Zalo", active: true },
+      { time: "2026-04-09T12:09:19.625Z", label: "Chốt đơn", desc: "Khách đã chốt mẫu và thanh toán cọc", active: true },
+      { time: "2026-04-10T12:09:19.625Z", label: "Cập nhật trạng thái", desc: "Đơn hàng bắt đầu sang trạng thái: Chờ giao hàng", active: true }
+    ],
   },
-  "DH-DAT-005": {
-    code: "DH-DAT-005", type: "Hàng khách đặt", status: "Chờ sản xuất",
-    date: "2026-04-18T14:20:00", deliveryDate: "2026-05-20", fulfillmentType: "Giao tận nơi",
-    customer: { name: "Nguyễn Văn Hoàng", phone: "0901234567", address: "123 Nguyễn Huệ, Q.1, TP.HCM" },
-    salesPerson: "Bình Nguyễn", total: 110000000, deposit: 50000000, depositMethod: "Tiền mặt", paymentStatus: "partial",
+  "DH-MOC-104": {
+    code: "DH-MOC-104", type: "Hàng mộc", status: "Đang giao hàng",
+    date: "2026-04-07T12:09:19.625Z", deliveryDate: "2026-04-14", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Lê Văn C", phone: "0912345687", address: "123 Đường Vĩnh Thực, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 45000000, deposit: 13500000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
+    notes: "Khách yêu cầu sơn cẩn thận, sản phẩm đạt chất lượng cao.",
     products: [{
-      name: "Bộ bàn ghế Nguyên Khối",
-      material: "Gỗ Gõ Đỏ", size: "Dày 10cm", finish: "Mộc", qty: 1, price: 110000000
+      name: "Sản phẩm Hàng mộc 4",
+      image: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg",
+      customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
+      material: "Gỗ Tự Nhiên", size: "Tiêu chuẩn", finish: "Bóng mờ 50%", qty: 10, price: 4500000, unit: "Cái", note: "Yêu cầu chi tiết đục chạm tinh xảo"
     }],
-    timeline: [{ time: "18/04/2026 14:20", label: "Tạo đơn", desc: "Đã nhận cọc", active: true }],
-  }
+    timeline: [
+      { time: "2026-04-06T12:09:19.625Z", label: "Tiếp nhận thông tin", desc: "Khách liên hệ qua Zalo", active: true },
+      { time: "2026-04-07T12:09:19.625Z", label: "Chốt đơn", desc: "Khách đã chốt mẫu và thanh toán cọc", active: true },
+      { time: "2026-04-08T12:09:19.625Z", label: "Cập nhật trạng thái", desc: "Đơn hàng bắt đầu sang trạng thái: Đang giao hàng", active: true }
+    ],
+  },
+  "DH-MOC-105": {
+    code: "DH-MOC-105", type: "Hàng mộc", status: "Hoàn thành",
+    date: "2026-04-05T12:09:19.625Z", deliveryDate: "2026-04-12", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Phạm Thị D", phone: "0912345688", address: "123 Đường Vĩnh Thực, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 45000000, deposit: 13500000, depositMethod: "Chuyển khoản", paymentStatus: "paid",
+    notes: "Khách yêu cầu sơn cẩn thận, sản phẩm đạt chất lượng cao.",
+    products: [{
+      name: "Sản phẩm Hàng mộc 5",
+      image: "https://xuongdogogiagoc.com/wp-content/uploads/2020/06/bo-ghe-au-a-go-huong-da-moc.jpg",
+      customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
+      material: "Gỗ Tự Nhiên", size: "Tiêu chuẩn", finish: "Bóng mờ 50%", qty: 10, price: 4500000, unit: "Cái", note: "Yêu cầu chi tiết đục chạm tinh xảo"
+    }],
+    timeline: [
+      { time: "2026-04-04T12:09:19.625Z", label: "Tiếp nhận thông tin", desc: "Khách liên hệ qua Zalo", active: true },
+      { time: "2026-04-05T12:09:19.625Z", label: "Chốt đơn", desc: "Khách đã chốt mẫu và thanh toán cọc", active: true },
+      { time: "2026-04-06T12:09:19.625Z", label: "Cập nhật trạng thái", desc: "Đơn hàng bắt đầu sang trạng thái: Hoàn thành", active: true }
+    ],
+  },
+  "DH-MOC-106": {
+    code: "DH-MOC-106", type: "Hàng mộc", status: "Chờ duyệt hủy",
+    date: "2026-04-03T12:09:19.625Z", deliveryDate: "2026-04-10", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Hoàng Văn E", phone: "0912345689", address: "123 Đường Vĩnh Thực, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 45000000, deposit: 0, depositMethod: "Chuyển khoản", paymentStatus: "unpaid",
+    notes: "Khách yêu cầu sơn cẩn thận, sản phẩm đạt chất lượng cao.",
+    products: [{
+      name: "Sản phẩm Hàng mộc 6",
+      image: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg",
+      customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
+      material: "Gỗ Tự Nhiên", size: "Tiêu chuẩn", finish: "Bóng mờ 50%", qty: 10, price: 4500000, unit: "Cái", note: "Yêu cầu chi tiết đục chạm tinh xảo"
+    }],
+    timeline: [
+      { time: "2026-04-02T12:09:19.625Z", label: "Tiếp nhận thông tin", desc: "Khách liên hệ qua Zalo", active: true },
+      { time: "2026-04-03T12:09:19.625Z", label: "Chốt đơn", desc: "Khách đã chốt mẫu và thanh toán cọc", active: true },
+      { time: "2026-04-04T12:09:19.625Z", label: "Cập nhật trạng thái", desc: "Đơn hàng bắt đầu sang trạng thái: Chờ duyệt hủy", active: true }
+    ],
+  },
+  "DH-MOC-107": {
+    code: "DH-MOC-107", type: "Hàng mộc", status: "Đơn đã hủy",
+    date: "2026-04-01T12:09:19.625Z", deliveryDate: "2026-04-08", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Vũ Thị F", phone: "0912345690", address: "123 Đường Vĩnh Thực, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 45000000, deposit: 0, depositMethod: "Chuyển khoản", paymentStatus: "unpaid",
+    notes: "Khách yêu cầu sơn cẩn thận, sản phẩm đạt chất lượng cao.",
+    products: [{
+      name: "Sản phẩm Hàng mộc 7",
+      image: "https://xuongdogogiagoc.com/wp-content/uploads/2020/06/bo-ghe-au-a-go-huong-da-moc.jpg",
+      customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
+      material: "Gỗ Tự Nhiên", size: "Tiêu chuẩn", finish: "Bóng mờ 50%", qty: 10, price: 4500000, unit: "Cái", note: "Yêu cầu chi tiết đục chạm tinh xảo"
+    }],
+    timeline: [
+      { time: "2026-03-31T12:09:19.625Z", label: "Tiếp nhận thông tin", desc: "Khách liên hệ qua Zalo", active: true },
+      { time: "2026-04-01T12:09:19.625Z", label: "Chốt đơn", desc: "Khách đã chốt mẫu và thanh toán cọc", active: true },
+      { time: "2026-04-02T12:09:19.625Z", label: "Cập nhật trạng thái", desc: "Đơn hàng bắt đầu sang trạng thái: Đơn đã hủy", active: true }
+    ],
+  },
+  "DH-DAT-101": {
+    code: "DH-DAT-101", type: "Hàng khách đặt", status: "Chờ sản xuất",
+    date: "2026-04-13T12:09:19.625Z", deliveryDate: "2026-04-20", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Đặng Văn G", phone: "0912345691", address: "123 Đường Vĩnh Thực, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 85000000, deposit: 25500000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
+    notes: "Khách yêu cầu sơn cẩn thận, sản phẩm đạt chất lượng cao.",
+    products: [{
+      name: "Sản phẩm Hàng khách đặt 1",
+      image: "https://langnghedoanhnhan.com/wp-content/uploads/2021/04/truong-ky-go-gu-lao-moc.jpg",
+      customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
+      material: "Gỗ Tự Nhiên", size: "Tiêu chuẩn", finish: "Bóng mờ 50%", qty: 10, price: 8500000, unit: "Cái", note: "Yêu cầu chi tiết đục chạm tinh xảo"
+    }],
+    timeline: [
+      { time: "2026-04-12T12:09:19.625Z", label: "Tiếp nhận thông tin", desc: "Khách liên hệ qua Zalo", active: true },
+      { time: "2026-04-13T12:09:19.625Z", label: "Chốt đơn", desc: "Khách đã chốt mẫu và thanh toán cọc", active: true },
+      { time: "2026-04-14T12:09:19.625Z", label: "Cập nhật trạng thái", desc: "Đơn hàng bắt đầu sang trạng thái: Chờ sản xuất", active: true }
+    ],
+  },
+  "DH-DAT-102": {
+    code: "DH-DAT-102", type: "Hàng khách đặt", status: "Chờ xử lý",
+    date: "2026-04-11T12:09:19.625Z", deliveryDate: "2026-04-18", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Nguyễn Văn A", phone: "0912345692", address: "123 Đường Vĩnh Thực, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 85000000, deposit: 25500000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
+    notes: "Khách yêu cầu sơn cẩn thận, sản phẩm đạt chất lượng cao.",
+    products: [{
+      name: "Sản phẩm Hàng khách đặt 2",
+      image: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/giuong-ngu-go-huong-da.jpg",
+      customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
+      material: "Gỗ Tự Nhiên", size: "Tiêu chuẩn", finish: "Bóng mờ 50%", qty: 10, price: 8500000, unit: "Cái", note: "Yêu cầu chi tiết đục chạm tinh xảo"
+    }],
+    timeline: [
+      { time: "2026-04-10T12:09:19.625Z", label: "Tiếp nhận thông tin", desc: "Khách liên hệ qua Zalo", active: true },
+      { time: "2026-04-11T12:09:19.625Z", label: "Chốt đơn", desc: "Khách đã chốt mẫu và thanh toán cọc", active: true },
+      { time: "2026-04-12T12:09:19.625Z", label: "Cập nhật trạng thái", desc: "Đơn hàng bắt đầu sang trạng thái: Chờ xử lý", active: true }
+    ],
+  },
+  "DH-DAT-103": {
+    code: "DH-DAT-103", type: "Hàng khách đặt", status: "Đang gia công",
+    date: "2026-04-09T12:09:19.625Z", deliveryDate: "2026-04-16", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Trần Thị B", phone: "0912345693", address: "123 Đường Vĩnh Thực, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 85000000, deposit: 25500000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
+    notes: "Khách yêu cầu sơn cẩn thận, sản phẩm đạt chất lượng cao.",
+    products: [{
+      name: "Sản phẩm Hàng khách đặt 3",
+      image: "https://langnghedoanhnhan.com/wp-content/uploads/2021/04/truong-ky-go-gu-lao-moc.jpg",
+      customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
+      material: "Gỗ Tự Nhiên", size: "Tiêu chuẩn", finish: "Bóng mờ 50%", qty: 10, price: 8500000, unit: "Cái", note: "Yêu cầu chi tiết đục chạm tinh xảo"
+    }],
+    timeline: [
+      { time: "2026-04-08T12:09:19.625Z", label: "Tiếp nhận thông tin", desc: "Khách liên hệ qua Zalo", active: true },
+      { time: "2026-04-09T12:09:19.625Z", label: "Chốt đơn", desc: "Khách đã chốt mẫu và thanh toán cọc", active: true },
+      { time: "2026-04-10T12:09:19.625Z", label: "Cập nhật trạng thái", desc: "Đơn hàng bắt đầu sang trạng thái: Đang gia công", active: true }
+    ],
+  },
+  "DH-DAT-104": {
+    code: "DH-DAT-104", type: "Hàng khách đặt", status: "Chờ giao hàng",
+    date: "2026-04-07T12:09:19.625Z", deliveryDate: "2026-04-14", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Lê Văn C", phone: "0912345694", address: "123 Đường Vĩnh Thực, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 85000000, deposit: 25500000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
+    notes: "Khách yêu cầu sơn cẩn thận, sản phẩm đạt chất lượng cao.",
+    products: [{
+      name: "Sản phẩm Hàng khách đặt 4",
+      image: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/giuong-ngu-go-huong-da.jpg",
+      customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
+      material: "Gỗ Tự Nhiên", size: "Tiêu chuẩn", finish: "Bóng mờ 50%", qty: 10, price: 8500000, unit: "Cái", note: "Yêu cầu chi tiết đục chạm tinh xảo"
+    }],
+    timeline: [
+      { time: "2026-04-06T12:09:19.625Z", label: "Tiếp nhận thông tin", desc: "Khách liên hệ qua Zalo", active: true },
+      { time: "2026-04-07T12:09:19.625Z", label: "Chốt đơn", desc: "Khách đã chốt mẫu và thanh toán cọc", active: true },
+      { time: "2026-04-08T12:09:19.625Z", label: "Cập nhật trạng thái", desc: "Đơn hàng bắt đầu sang trạng thái: Chờ giao hàng", active: true }
+    ],
+  },
+  "DH-DAT-105": {
+    code: "DH-DAT-105", type: "Hàng khách đặt", status: "Đang giao hàng",
+    date: "2026-04-05T12:09:19.625Z", deliveryDate: "2026-04-12", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Phạm Thị D", phone: "0912345695", address: "123 Đường Vĩnh Thực, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 85000000, deposit: 25500000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
+    notes: "Khách yêu cầu sơn cẩn thận, sản phẩm đạt chất lượng cao.",
+    products: [{
+      name: "Sản phẩm Hàng khách đặt 5",
+      image: "https://langnghedoanhnhan.com/wp-content/uploads/2021/04/truong-ky-go-gu-lao-moc.jpg",
+      customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
+      material: "Gỗ Tự Nhiên", size: "Tiêu chuẩn", finish: "Bóng mờ 50%", qty: 10, price: 8500000, unit: "Cái", note: "Yêu cầu chi tiết đục chạm tinh xảo"
+    }],
+    timeline: [
+      { time: "2026-04-04T12:09:19.625Z", label: "Tiếp nhận thông tin", desc: "Khách liên hệ qua Zalo", active: true },
+      { time: "2026-04-05T12:09:19.625Z", label: "Chốt đơn", desc: "Khách đã chốt mẫu và thanh toán cọc", active: true },
+      { time: "2026-04-06T12:09:19.625Z", label: "Cập nhật trạng thái", desc: "Đơn hàng bắt đầu sang trạng thái: Đang giao hàng", active: true }
+    ],
+  },
+  "DH-DAT-106": {
+    code: "DH-DAT-106", type: "Hàng khách đặt", status: "Hoàn thành",
+    date: "2026-04-03T12:09:19.625Z", deliveryDate: "2026-04-10", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Hoàng Văn E", phone: "0912345696", address: "123 Đường Vĩnh Thực, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 85000000, deposit: 25500000, depositMethod: "Chuyển khoản", paymentStatus: "paid",
+    notes: "Khách yêu cầu sơn cẩn thận, sản phẩm đạt chất lượng cao.",
+    products: [{
+      name: "Sản phẩm Hàng khách đặt 6",
+      image: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/giuong-ngu-go-huong-da.jpg",
+      customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
+      material: "Gỗ Tự Nhiên", size: "Tiêu chuẩn", finish: "Bóng mờ 50%", qty: 10, price: 8500000, unit: "Cái", note: "Yêu cầu chi tiết đục chạm tinh xảo"
+    }],
+    timeline: [
+      { time: "2026-04-02T12:09:19.625Z", label: "Tiếp nhận thông tin", desc: "Khách liên hệ qua Zalo", active: true },
+      { time: "2026-04-03T12:09:19.625Z", label: "Chốt đơn", desc: "Khách đã chốt mẫu và thanh toán cọc", active: true },
+      { time: "2026-04-04T12:09:19.625Z", label: "Cập nhật trạng thái", desc: "Đơn hàng bắt đầu sang trạng thái: Hoàn thành", active: true }
+    ],
+  },
+  "DH-DAT-107": {
+    code: "DH-DAT-107", type: "Hàng khách đặt", status: "Chờ duyệt hủy",
+    date: "2026-04-01T12:09:19.625Z", deliveryDate: "2026-04-08", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Vũ Thị F", phone: "0912345697", address: "123 Đường Vĩnh Thực, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 85000000, deposit: 0, depositMethod: "Chuyển khoản", paymentStatus: "unpaid",
+    notes: "Khách yêu cầu sơn cẩn thận, sản phẩm đạt chất lượng cao.",
+    products: [{
+      name: "Sản phẩm Hàng khách đặt 7",
+      image: "https://langnghedoanhnhan.com/wp-content/uploads/2021/04/truong-ky-go-gu-lao-moc.jpg",
+      customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
+      material: "Gỗ Tự Nhiên", size: "Tiêu chuẩn", finish: "Bóng mờ 50%", qty: 10, price: 8500000, unit: "Cái", note: "Yêu cầu chi tiết đục chạm tinh xảo"
+    }],
+    timeline: [
+      { time: "2026-03-31T12:09:19.625Z", label: "Tiếp nhận thông tin", desc: "Khách liên hệ qua Zalo", active: true },
+      { time: "2026-04-01T12:09:19.625Z", label: "Chốt đơn", desc: "Khách đã chốt mẫu và thanh toán cọc", active: true },
+      { time: "2026-04-02T12:09:19.625Z", label: "Cập nhật trạng thái", desc: "Đơn hàng bắt đầu sang trạng thái: Chờ duyệt hủy", active: true }
+    ],
+  },
+  "DH-DAT-108": {
+    code: "DH-DAT-108", type: "Hàng khách đặt", status: "Đơn đã hủy",
+    date: "2026-03-30T12:09:19.625Z", deliveryDate: "2026-04-06", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Đặng Văn G", phone: "0912345698", address: "123 Đường Vĩnh Thực, Hà Nội" },
+    salesPerson: "Bình Nguyễn", total: 85000000, deposit: 0, depositMethod: "Chuyển khoản", paymentStatus: "unpaid",
+    notes: "Khách yêu cầu sơn cẩn thận, sản phẩm đạt chất lượng cao.",
+    products: [{
+      name: "Sản phẩm Hàng khách đặt 8",
+      image: "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/giuong-ngu-go-huong-da.jpg",
+      customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
+      material: "Gỗ Tự Nhiên", size: "Tiêu chuẩn", finish: "Bóng mờ 50%", qty: 10, price: 8500000, unit: "Cái", note: "Yêu cầu chi tiết đục chạm tinh xảo"
+    }],
+    timeline: [
+      { time: "2026-03-29T12:09:19.625Z", label: "Tiếp nhận thông tin", desc: "Khách liên hệ qua Zalo", active: true },
+      { time: "2026-03-30T12:09:19.625Z", label: "Chốt đơn", desc: "Khách đã chốt mẫu và thanh toán cọc", active: true },
+      { time: "2026-03-31T12:09:19.625Z", label: "Cập nhật trạng thái", desc: "Đơn hàng bắt đầu sang trạng thái: Đơn đã hủy", active: true }
+    ],
+  },
+  "DH-TEST-2X": {
+    code: "DH-TEST-2X", type: "Hàng khách đặt", status: "Chờ xử lý",
+    date: new Date().toISOString(), deliveryDate: "2026-05-01", fulfillmentType: "Giao tận nơi",
+    customer: { name: "Nguyễn Thị Thử", phone: "0333444555", address: "Số 10 Phố Gỗ, Đồng Kỵ, Bắc Ninh" },
+    salesPerson: "Bình Nguyễn", total: 35000000, deposit: 10000000, depositMethod: "Chuyển khoản", paymentStatus: "partial",
+    notes: "Đơn hàng thử nghiệm tính năng deadline từng món.",
+    products: [
+      {
+        name: "Ghế trường kỷ gỗ gụ",
+        image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80",
+        customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
+        material: "Gỗ Gụ Lào", size: "2000 x 600 mm", finish: "Sơn PU mờ", qty: 1, price: 25000000, unit: "Chiếc", note: "Làm kỹ mộng"
+      },
+      {
+        name: "Bàn trà đục chạm",
+        image: "https://xuongdogogiagoc.com/wp-content/uploads/2020/06/bo-ghe-au-a-go-huong-da-moc.jpg",
+        customerSampleImage: "https://images.unsplash.com/photo-1540574163026-643ea20d25b5?q=80&w=800",
+        material: "Gỗ Gụ Lào", size: "1200 x 800 mm", finish: "Sơn PU mờ", qty: 1, price: 10000000, unit: "Cái", note: "Đục tích tứ linh"
+      }
+    ],
+    timeline: [
+      { time: new Date().toISOString(), label: "Tạo đơn", desc: "Đơn hàng khởi tạo để test deadline từng SP", active: true }
+    ],
+  },
 };

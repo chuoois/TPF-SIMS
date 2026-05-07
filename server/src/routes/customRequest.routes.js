@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const CustomRequestController = require("../controller/customRequest.controller");
-const { verifyAccessToken } = require("../middleware/auth.middleware");
-
+const { verifyAccessToken } = require("../middlewares/auth.middleware");
+const validate = require("../middlewares/validate.middleware");
+const { createRequestSchema, updateStatusSchema, updateRequestSchema } = require("../validations/customRequest.validation");
 /**
  * CustomRequest Routes - Quản lý phiếu yêu cầu đặt hàng riêng
  * Created By: ThinhBui
@@ -108,7 +109,7 @@ router.get("/", CustomRequestController.getAllRequests);
  *       201:
  *         description: Tạo thành công
  */
-router.post("/", CustomRequestController.createRequest);
+router.post("/", validate(createRequestSchema), CustomRequestController.createRequest);
 
 /**
  * @swagger
@@ -157,7 +158,7 @@ router.get("/:id", CustomRequestController.getRequestById);
  *       200:
  *         description: Cập nhật thành công
  */
-router.patch("/:id/status", CustomRequestController.updateStatus);
+router.patch("/:id/status", validate(updateStatusSchema), CustomRequestController.updateStatus);
 
 /**
  * @swagger
@@ -175,6 +176,6 @@ router.patch("/:id/status", CustomRequestController.updateStatus);
  *       200:
  *         description: Cập nhật thành công
  */
-router.put("/:id", CustomRequestController.updateRequest);
+router.put("/:id", validate(updateRequestSchema), CustomRequestController.updateRequest);
 
 module.exports = router;

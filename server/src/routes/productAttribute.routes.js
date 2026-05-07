@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const productAttributeController = require("../controller/productAttribute.controller");
-const { verifyAccessToken } = require("../middleware/auth.middleware");
+const { verifyAccessToken } = require("../middlewares/auth.middleware");
 
 // Yêu cầu đăng nhập để sử dụng các API này
 router.use(verifyAccessToken);

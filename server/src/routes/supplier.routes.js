@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const SupplierController = require("../controller/supplier.controller");
-const { verifyAccessToken } = require("../middleware/auth.middleware");
+const { verifyAccessToken } = require("../middlewares/auth.middleware");
 
 // Yêu cầu đăng nhập
 router.use(verifyAccessToken);

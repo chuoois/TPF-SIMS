@@ -18,9 +18,6 @@ class AuthController {
     try {
       const { email, password } = req.body;
 
-      if (!email || !password) {
-        return res.status(400).json({ message: "Vui lòng nhập email và mật khẩu" });
-      }
 
       // Tìm user kèm role và profile
       const user = await UserAccount.findOne({
@@ -223,9 +220,6 @@ class AuthController {
     try {
       const { email } = req.body;
 
-      if (!email) {
-        return res.status(400).json({ message: "Vui lòng nhập email" });
-      }
 
       const user = await UserAccount.findOne({ where: { email } });
 

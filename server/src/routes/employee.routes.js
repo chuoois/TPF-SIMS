@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const employeeController = require("../controller/employee.controller");
-const { verifyAccessToken, verifyRole } = require("../middleware/auth.middleware");
+const { verifyAccessToken, verifyRole } = require("../middlewares/auth.middleware");
 
 /**
  * @swagger

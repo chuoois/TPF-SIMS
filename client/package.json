@@ -26,6 +26,7 @@
     "recharts": "^3.7.0",
     "socket": "^1.1.86",
     "socket.io-client": "^4.8.3",
+    "swr": "^2.4.1",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.18",
     "xlsx": "^0.18.5",
