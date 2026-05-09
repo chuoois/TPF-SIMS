@@ -27,6 +27,27 @@ const productService = {
     const response = await axiosInstance.get(`/product/${id}`);
     return response.data;
   },
+
+  /**
+   * Xóa sản phẩm
+   * @param {number|string} id
+   * @returns {Promise}
+   */
+  async deleteProduct(id) {
+    const response = await axiosInstance.delete(`/product/${id}`);
+    return response.data;
+  },
+
+  /**
+   * Cập nhật thông tin sản phẩm và giá
+   * @param {number|string} id
+   * @param {object} payload
+   * @returns {Promise}
+   */
+  async updateProduct(id, payload) {
+    const response = await axiosInstance.put(`/product/${id}`, payload);
+    return response.data;
+  },
 };
 
 export default productService;

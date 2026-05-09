@@ -17,8 +17,8 @@ import {
   WOOD_TYPES,
   COLORS,
   PRODUCT_STATUSES,
-  UNITS,
 } from "./constants";
+import productService from "@/services/product.service";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 const fmtCurrency = (n) => {
@@ -189,27 +189,28 @@ export default function ProductModal({
   metadata = {},
 }) {
   // Extract options from metadata or use defaults
-  const categories = metadata.categories?.length > 0 
-    ? metadata.categories.map(c => c.category_name) 
-    : CATEGORIES;
-  
-  const materials = metadata.materials?.length > 0 
-    ? metadata.materials.map(m => m.material_name) 
-    : WOOD_TYPES;
+  const categories =
+    metadata.categories?.length > 0
+      ? metadata.categories.map((c) => c.category_name)
+      : CATEGORIES;
 
-  const colors = metadata.colors?.length > 0 
-    ? metadata.colors.map(c => c.color_name) 
-    : COLORS;
+  const materials =
+    metadata.materials?.length > 0
+      ? metadata.materials.map((m) => m.material_name)
+      : WOOD_TYPES;
 
-  const rooms = metadata.rooms?.length > 0 
-    ? metadata.rooms.map(r => r.room_name) 
-    : [];
+  const colors =
+    metadata.colors?.length > 0
+      ? metadata.colors.map((c) => c.color_name)
+      : COLORS;
+
+  const rooms =
+    metadata.rooms?.length > 0 ? metadata.rooms.map((r) => r.room_name) : [];
 
   const [form, setForm] = useState({
     name: "",
     code: "",
     category: "",
-    unit: "",
     material: "",
     color: "",
     dimL: "",
@@ -228,63 +229,78 @@ export default function ProductModal({
     retailPrice: 0,
   });
 
+  const [detailData, setDetailData] = useState(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+
   useEffect(() => {
-    if (product) {
-      const latestLot =
-        product.lots?.length > 0
-          ? product.lots.reduce(
-              (latest, current) =>
-                new Date(current.importDate) > new Date(latest.importDate)
-                  ? current
-                  : latest,
-              product.lots[0],
-            )
-          : null;
-      const initialCost = latestLot
-        ? latestLot.importPrice
-        : product.costPrice || 0;
+    if (product && product.id) {
+      setLoadingDetail(true);
+      productService
+        .getProductDetail(product.id)
+        .then((res) => {
+          setDetailData(res);
+          const p = res;
+          let sizeObj = p.size;
+          if (typeof sizeObj === "string" && sizeObj.startsWith("{")) {
+            try {
+              sizeObj = JSON.parse(sizeObj);
+            } catch (e) {}
+          }
 
-      const dims = (product.dimensions || "")
-        .split(/[xX*×]/)
-        .map((d) => d.trim());
-      setForm({
-        name: product.name || "",
-        code: product.code || "",
-        category: product.category || "",
-        unit: product.unit || "",
-        material: product.material || "",
-        color: product.color || "",
-        dimL: dims[0] || "",
-        dimW: dims[1] || "",
-        dimH: dims[2] || "",
-        status: product.status || "",
-        productType: product.productType || "",
-        warrantyMonths: product.warrantyMonths || 12,
-        leadTime: product.leadTime || 0,
-        description: product.description || "",
+          let dims = ["", "", ""];
+          if (typeof sizeObj === "object" && sizeObj !== null) {
+            dims = [
+              sizeObj.length || "",
+              sizeObj.width || "",
+              sizeObj.height || "",
+            ];
+          } else if (typeof sizeObj === "string") {
+            dims = sizeObj.split(/[xX*×]/).map((d) => d.trim());
+          }
 
-        costPrice: initialCost,
-        processingCost: product.processingCost || product.paintCost || 0,
-        margin: 20,
-        rawRetailPrice: product.rawRetailPrice || 0,
-        finishedRetailPrice: product.finishedRetailPrice || 0,
-        retailPrice: product.retailPrice || 0,
-      });
+          setForm({
+            name: p.product_name || "",
+            code: p.sku || "",
+            category: p.category_name || "",
+            material: p.material_name || "",
+            color: p.color_name || "",
+            dimL: dims[0] || "",
+            dimW: dims[1] || "",
+            dimH: dims[2] || "",
+            status: product.status || "", // Giữ status tính toán từ ngoài list
+            productType: product.productType || "",
+            warrantyMonths: p.warranty_months || 12,
+            leadTime: 0,
+            description: p.description || "",
+
+            costPrice: p.pricing?.original_raw_price || 0,
+            processingCost: 0,
+            margin: 20,
+            rawRetailPrice: p.pricing?.display_raw_price || 0,
+            finishedRetailPrice: p.pricing?.display_final_price || 0,
+            retailPrice:
+              p.pricing?.display_final_price ||
+              p.pricing?.display_raw_price ||
+              0,
+          });
+        })
+        .catch((err) => {
+          console.error(err);
+          toast.error("Không thể tải chi tiết sản phẩm");
+        })
+        .finally(() => {
+          setLoadingDetail(false);
+        });
+    } else {
+      setDetailData(null);
     }
   }, [product]);
 
   if (!product) return null;
 
-  const newestLot =
-    product.lots?.length > 0
-      ? product.lots.reduce(
-          (latest, current) =>
-            new Date(current.importDate) > new Date(latest.importDate)
-              ? current
-              : latest,
-          product.lots[0],
-        )
-      : null;
+  // Lịch sử lô hàng tạm thời lấy mảng rỗng vì API getProductDetail chưa trả về importDate
+  const lots = detailData?.items || [];
+  const newestLot = null;
 
   const sc = getStatusConfig(product.status);
   const isWood = product.productType === "Hàng mộc";
@@ -452,7 +468,7 @@ export default function ProductModal({
                       Tồn kho hiện tại
                     </span>
                     <span className="font-semibold text-[var(--text-main)] text-sm">
-                      {product.stock} {product.unit}
+                      {product.stock} SP
                     </span>
                   </div>
                 </div>
@@ -520,13 +536,6 @@ export default function ProductModal({
                     options={colors}
                     placeholder="Chọn màu"
                   />
-                  <SelectField
-                    label="Đơn vị"
-                    value={form.unit}
-                    onChange={set("unit")}
-                    options={UNITS}
-                    placeholder="Chọn đơn vị"
-                  />
                   <div className="col-span-2">
                     <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                       Kích thước (D × R × C) cm
@@ -587,7 +596,6 @@ export default function ProductModal({
                     <Field label="Chất liệu" value={product.material} />
                     <Field label="Màu sắc" value={product.color} />
                     <Field label="Kích thước" value={product.dimensions} />
-                    <Field label="Đơn vị" value={product.unit} />
                     {product.status !== "Chưa định giá" && (
                       <div>
                         <span className="text-[11px] text-[var(--text-secondary)] block mb-0.5">
@@ -595,7 +603,10 @@ export default function ProductModal({
                         </span>
                         <span className="flex items-center gap-1 font-bold text-[var(--brand-primary)] text-sm">
                           <ShieldCheck size={13} />{" "}
-                          {product.warrantyMonths || 12} tháng
+                          {detailData
+                            ? detailData.warranty_months
+                            : product.warrantyMonths || 12}{" "}
+                          tháng
                         </span>
                       </div>
                     )}
@@ -610,18 +621,18 @@ export default function ProductModal({
                       <span className="font-black text-[var(--text-main)]">
                         {product.productType === "Hàng khách đặt"
                           ? "—"
-                          : `${product.stock} ${product.unit || "SP"}`}
+                          : `${product.stock} SP`}
                       </span>
                     </div>
                   </div>
 
-                  {product.description && (
+                  {(detailData?.description || product.description) && (
                     <div>
                       <span className="text-[11px] font-semibold text-slate-400 uppercase block mb-1">
                         Mô tả
                       </span>
                       <p className="text-sm text-gray-700 bg-[var(--bg-main)] p-3 rounded-lg leading-relaxed">
-                        {product.description}
+                        {detailData?.description || product.description}
                       </p>
                     </div>
                   )}
@@ -884,7 +895,7 @@ export default function ProductModal({
         {/* ── Footer ── */}
         <div className="bg-slate-50/60 px-6 py-4 border-t border-slate-200 flex items-center justify-between shrink-0">
           <div>
-            {canDelete && mode === "edit" && (
+            {onDelete && (
               <button
                 onClick={() => onDelete?.(product)}
                 className="px-4 py-2 rounded-lg text-[13px] font-bold bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 transition flex items-center gap-2"

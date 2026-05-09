@@ -353,15 +353,24 @@ export default function ProductPanel({
                     }`}
                     style={{ border: "1px solid var(--grid-border)" }}
                   >
-                    {/* Stock badge */}
+                    {/* Badges overlay */}
+                    <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
+                      {product.discount_percent > 0 && (
+                        <div className="text-[10px] font-black px-2 py-1 rounded-md bg-red-500 text-white shadow-sm animate-pulse">
+                          GIẢM {product.discount_percent}%
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Stock & Status badges */}
                     {outOfStock ? (
                       <div
-                        className="absolute top-2 right-2 z-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-100 text-red-600"
+                        className="absolute top-2 right-2 z-10 text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-100 text-red-600"
                       >
                         Hết hàng
                       </div>
                     ) : (
-                      <div className="absolute top-2 right-2 z-1 flex flex-col gap-1 items-end">
+                      <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 items-end">
                         {(product.is_gift == 1 || product.product_name?.toLowerCase().includes("quà tặng")) && (
                           <div className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-600 border border-emerald-200 shadow-sm">
                             QUÀ TẶNG

@@ -9,6 +9,7 @@ import {
   Tag,
   ShieldCheck,
   Clock,
+  Image as ImageIcon,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import toast from "react-hot-toast";
@@ -16,195 +17,7 @@ import DataTable from "@/components/control/DataTable";
 import ConfirmModal from "@/components/control/ConfirmModal";
 import ProductModal from "./ProductModal";
 import productAttributeService from "@/services/productAttribute.service";
-
-const INITIAL_PRODUCTS = [
-  {
-    id: "SP001",
-    code: "ST-HS-197x107x108-Mit",
-    name: "Sập thờ Mai Điểu chân 20",
-    category: "Phòng thờ",
-    material: "Gỗ Mít",
-    color: "Cánh gián",
-    dimensions: "197x107x108",
-    costPrice: 32000000,
-    paintCost: 2500000,
-    retailPrice: 48000000,
-    unit: "Chiếc",
-    productType: "Hàng sẵn",
-    status: "Hàng sẵn",
-    stock: 2,
-    isPriced: true,
-    warrantyMonths: 120,
-    img: "https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=600",
-    description:
-      "Sập thờ trạm khắc tỉ mỉ tinh xảo, chất liệu gỗ mít lõi liền khối chọn lọc.",
-    techNotes: {
-      leg: "Chân 20",
-      apron: "Dạ đục tay Mai Điểu",
-      other: "Hàng sạch rác, gỗ chọn vân.",
-    },
-    lots: [
-      {
-        lotId: "LOT-SP001-1",
-        importDate: "2025-10-10",
-        importPrice: 30000000,
-        initialQuantity: 1,
-      },
-      {
-        lotId: "LOT-SP001-2",
-        importDate: "2026-01-20",
-        importPrice: 32000000,
-        initialQuantity: 1,
-      },
-    ],
-  },
-  {
-    id: "SP002",
-    code: "TA-HM-160x200x55-XoanDao",
-    name: "Tủ áo gỗ Xoan Đào (3 cánh)",
-    category: "Phòng ngủ",
-    material: "Gỗ xoan đào",
-    color: "Để mộc",
-    dimensions: "160x200x55",
-    costPrice: 8500000,
-    paintCost: 1200000,
-    rawRetailPrice: 11000000,
-    finishedRetailPrice: 14500000,
-    unit: "Chiếc",
-    productType: "Hàng mộc",
-    status: "Hàng mộc",
-    stock: 3,
-    isPriced: true,
-    warrantyMonths: 36,
-    img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=600",
-    description:
-      "Hàng mộc sẵn tại kho, có thể lấy ngay hoặc sơn hoàn thiện trong 7 ngày.",
-    lots: [
-      {
-        lotId: "LOT-002",
-        importDate: "2026-02-10",
-        importPrice: 8500000,
-        initialQuantity: 3,
-      },
-    ],
-  },
-  {
-    id: "SP003",
-    code: "BBG-HKD-Tay12-Huong",
-    name: "Bộ bàn ghế Quốc Voi (Khách đặt)",
-    category: "Phòng khách",
-    material: "Gỗ Hương",
-    color: "Mun",
-    dimensions: "Tay 12 - 6 món",
-    costPrice: 95000000,
-    paintCost: 0,
-    retailPrice: 125000000,
-    unit: "Bộ",
-    productType: "Hàng khách đặt",
-    status: "Hàng khách đặt",
-    stock: 0,
-    isPriced: true,
-    warrantyMonths: 60,
-    img: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=600",
-    description:
-      "Hàng đặt theo yêu cầu của Anh Hùng (Thanh Hóa). Đục tay sắc nét.",
-    lots: [
-      {
-        lotId: "LOT-003",
-        importDate: "2026-02-15",
-        importPrice: 95000000,
-        initialQuantity: 1,
-      },
-    ],
-  },
-  {
-    id: "SP004",
-    code: "BG-NEW-Huong-CDG",
-    name: "Bộ Ghế Âu Á Chương Cuốn Thư",
-    category: "Phòng khách",
-    material: "Gỗ Hương",
-    color: "Để mộc",
-    dimensions: "Tay 10 - 6 món",
-    costPrice: 18000000,
-    paintCost: 0,
-    retailPrice: 0,
-    unit: "Bộ",
-    productType: "Hàng mộc",
-    status: "Chưa định giá",
-    stock: 1,
-    isPriced: false,
-    warrantyMonths: 24,
-    img: "https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?q=80&w=600",
-    description:
-      "Hàng mới nhập kho sáng nay, gỗ đều màu, không rác. Cần định giá bán lẻ.",
-    lots: [
-      {
-        lotId: "LOT-004",
-        importDate: "2026-04-09",
-        importPrice: 18000000,
-        initialQuantity: 1,
-      },
-    ],
-  },
-  {
-    id: "SP005",
-    code: "QT-DK-01",
-    name: "Đế kê tượng gỗ Hương",
-    category: "Trang trí",
-    material: "Gỗ Hương",
-    color: "Cánh gián",
-    dimensions: "30x30x20",
-    costPrice: 450000,
-    paintCost: 0,
-    retailPrice: 0,
-    unit: "Cái",
-    productType: "Hàng sẵn",
-    status: "Quà tặng",
-    stock: 15,
-    isPriced: true,
-    warrantyMonths: 12,
-    img: "https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=600",
-    description:
-      "Sản phẩm dùng làm quà tặng kèm khi khách mua hóa đơn trên 50tr.",
-    lots: [
-      {
-        lotId: "LOT-005",
-        importDate: "2026-01-01",
-        importPrice: 450000,
-        initialQuantity: 20,
-      },
-    ],
-  },
-  {
-    id: "SP006",
-    code: "GHE-HH-TEST",
-    name: "Ghế đa năng gỗ Sồi",
-    category: "Phòng khách",
-    material: "Gỗ Sồi",
-    color: "Tự nhiên",
-    dimensions: "50x50x100",
-    costPrice: 1200000,
-    paintCost: 200000,
-    retailPrice: 2000000,
-    unit: "Cái",
-    productType: "Hàng sẵn",
-    status: "Hết hàng",
-    stock: 0,
-    isPriced: true,
-    warrantyMonths: 12,
-    img: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?q=80&w=600",
-    description: "Sản phẩm đang tạm hết hàng, tuần sau sẽ nhập lô mới.",
-    lots: [
-      {
-        lotId: "LOT-006",
-        importDate: "2025-11-20",
-        importPrice: 1200000,
-        initialQuantity: 10,
-        remainingQuantity: 0,
-      },
-    ],
-  },
-];
+import productService from "@/services/product.service";
 
 // ===================== HELPERS =====================
 const fmtCurrency = (n) => {
@@ -233,86 +46,9 @@ const getStatusConfig = (status) => {
 
 // ===================== COMPONENT =====================
 export default function OwnerProducts() {
-  const [products, setProducts] = useState(() => {
-    const saved = localStorage.getItem("tpf_simulated_products_v2");
-    if (!saved) {
-      localStorage.setItem(
-        "tpf_simulated_products_v2",
-        JSON.stringify(INITIAL_PRODUCTS),
-      );
-      return INITIAL_PRODUCTS;
-    }
-    const parsed = JSON.parse(saved);
-
-    let needsUpdate = false;
-    const merged = parsed.map((p) => {
-      const defaultProduct = INITIAL_PRODUCTS.find((dp) => dp.id === p.id);
-
-      if (p.productType === "Hàng khách đặt") {
-        if (!p.isPriced || p.status === "Chưa định giá") {
-          p.isPriced = true;
-          p.status = "Hàng khách đặt";
-          needsUpdate = true;
-        }
-      }
-
-      // Backfill pricing fields từ INITIAL_PRODUCTS nếu chưa có
-      if (defaultProduct) {
-        const pricingFields = ["paintCost"];
-        pricingFields.forEach((field) => {
-          if (p[field] === undefined && defaultProduct[field] !== undefined) {
-            p[field] = defaultProduct[field];
-            needsUpdate = true;
-          }
-        });
-      }
-
-      if (!p.lots) {
-        if (defaultProduct && defaultProduct.lots) {
-          needsUpdate = true;
-          return { ...p, lots: defaultProduct.lots };
-        }
-      }
-      return p;
-    });
-
-    if (!merged.some((p) => p.id === "SP006")) {
-      const sp006 = INITIAL_PRODUCTS.find((p) => p.id === "SP006");
-      if (sp006) {
-        merged.push(sp006);
-        needsUpdate = true;
-      }
-    }
-
-    merged.forEach((p) => {
-      if (p.status === "Ngừng kinh doanh") {
-        p.status = "Hết hàng";
-        needsUpdate = true;
-      }
-    });
-
-    if (needsUpdate) {
-      localStorage.setItem("tpf_simulated_products_v2", JSON.stringify(merged));
-    }
-
-    return merged;
-  });
-
-  // Sync to localStorage
-  useEffect(() => {
-    localStorage.setItem("tpf_simulated_products_v2", JSON.stringify(products));
-  }, [products]);
-
-  // Listen for storage changes (from other tabs/pages)
-  useEffect(() => {
-    const handleStorageChange = (e) => {
-      if (e.key === "tpf_simulated_products_v2" && e.newValue) {
-        setProducts(JSON.parse(e.newValue));
-      }
-    };
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
+  const [products, setProducts] = useState([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState("");
@@ -355,6 +91,139 @@ export default function OwnerProducts() {
     setModalState({ product, mode });
   const closeModal = () => setModalState({ product: null, mode: "view" });
 
+  // Format data from backend to frontend format
+  const formatProductData = (p) => {
+    let productType = "";
+    if (p.product_type === "FINISHED") productType = "Hàng sẵn";
+    else if (p.product_type === "RAW") productType = "Hàng mộc";
+    else if (p.product_type === "CUSTOM") productType = "Hàng khách đặt";
+    else productType = p.sell_type_name || "Sản phẩm"; // fallback
+
+    let status = productType;
+
+    if (p.is_gift === 1) {
+      status = "Quà tặng";
+    } else if (p.original_price === 0 && status !== "Hàng khách đặt") {
+      status = "Chưa định giá";
+    } else if (productType === "Hàng sẵn" && p.available_quantity === 0) {
+      status = "Hết hàng";
+    }
+
+    let sizeObj = p.size;
+    if (typeof sizeObj === "string" && sizeObj.startsWith("{")) {
+      try {
+        sizeObj = JSON.parse(sizeObj);
+      } catch (e) {}
+    }
+
+    let sizeStr = "";
+    if (typeof sizeObj === "object" && sizeObj !== null) {
+      sizeStr = [sizeObj.length, sizeObj.width, sizeObj.height]
+        .filter((v) => v != null && v !== "")
+        .join(" × ");
+    } else {
+      sizeStr = sizeObj || "";
+    }
+
+    return {
+      id: p.pk_product_id,
+      code: p.sku,
+      name: p.product_name,
+      category: p.category_name || "Chưa có",
+      material: p.material_name || "Chưa có",
+      color: p.color_name,
+      dimensions: sizeStr,
+      productType: productType,
+      status: status,
+      stock: p.available_quantity,
+      warrantyMonths: p.warranty_months,
+      img: p.product_img,
+      description: p.description,
+      retailPrice: p.display_price,
+      rawRetailPrice: p.sell_type_name === "Hàng mộc" ? p.original_price : 0,
+      finishedRetailPrice:
+        p.sell_type_name === "Hàng mộc" ? p.display_price : 0,
+      original_price: p.original_price,
+      display_price: p.display_price,
+    };
+  };
+
+  // Fetch products
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      let sell_type = "";
+      if (productTypeFilter === "Hàng mộc") sell_type = 1;
+      else if (productTypeFilter === "Hàng sẵn") sell_type = 2;
+      else if (productTypeFilter === "Hàng khách đặt") sell_type = 4;
+
+      let is_gift = "";
+      if (statusFilter === "Quà tặng") is_gift = 1;
+
+      // Because the backend category filter requires an ID, we need to find it from metadata
+      let category_id = "";
+      if (categoryFilter !== "Tất cả") {
+        const cat = metadata.categories?.find(
+          (c) => c.category_name === categoryFilter,
+        );
+        if (cat) category_id = cat.pk_product_category_id;
+      }
+
+      const params = {
+        page: currentPage,
+        limit: itemsPerPage,
+        search: searchQuery,
+        sell_type,
+        is_gift,
+        category_id,
+      };
+
+      const res = await productService.getAllProducts(params);
+      let formatted = (res.data || []).map(formatProductData);
+
+      // Client-side post-filter for statuses not natively supported by backend parameters
+      if (statusFilter === "Chưa định giá") {
+        formatted = formatted.filter((p) => p.status === "Chưa định giá");
+      } else if (statusFilter === "Hết hàng") {
+        formatted = formatted.filter((p) => p.status === "Hết hàng");
+      } else if (
+        statusFilter === "Hàng sẵn" ||
+        statusFilter === "Hàng mộc" ||
+        statusFilter === "Hàng khách đặt"
+      ) {
+        formatted = formatted.filter((p) => p.status === statusFilter);
+      }
+
+      setProducts(formatted);
+      // Since we post-filter client side, totalItems might be off, but it's acceptable for this iteration
+      setTotalItems(res.pagination?.totalItems || formatted.length);
+    } catch (error) {
+      toast.error("Lỗi khi tải danh sách sản phẩm!");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchProducts();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [
+    currentPage,
+    itemsPerPage,
+    searchQuery,
+    productTypeFilter,
+    statusFilter,
+    categoryFilter,
+    metadata,
+  ]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, categoryFilter, productTypeFilter]);
+
   // Actions
   const handleConfirmDelete = (item, e = null) => {
     if (e && e.stopPropagation) e.stopPropagation();
@@ -368,55 +237,27 @@ export default function OwnerProducts() {
     setShowDeleteConfirm(true);
   };
 
-  const handleDeleteProduct = (id) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
-    setShowDeleteConfirm(false);
-    setItemToDelete(null);
-    toast.success("Đã xóa sản phẩm thành công!");
-  };
-
-  // Filter logic
-  const statusCounts = useMemo(() => {
-    const counts = {
-      "Tất cả": products.length,
-      "Hàng sẵn": 0,
-      "Đặt theo mẫu": 0,
-      "Hết hàng": 0,
-      "Quà tặng": 0,
-    };
-    products.forEach((p) => {
-      counts[p.status] = (counts[p.status] || 0) + 1;
-    });
-    return counts;
-  }, [products]);
-
-  const filteredProducts = useMemo(() => {
-    let result = products;
-
-    if (statusFilter !== "Tất cả") {
-      result = result.filter((p) => p.status === statusFilter);
-    }
-    if (productTypeFilter !== "Tất cả") {
-      result = result.filter((p) => p.productType === productTypeFilter);
-    }
-    if (categoryFilter !== "Tất cả") {
-      result = result.filter((p) => p.category === categoryFilter);
-    }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q),
+  const handleDeleteProduct = async (id) => {
+    try {
+      await productService.deleteProduct(id);
+      toast.success("Đã xóa sản phẩm thành công!");
+      fetchProducts(); // Tải lại danh sách
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        error.response?.data?.message || "Lỗi khi xóa sản phẩm!",
       );
+    } finally {
+      setShowDeleteConfirm(false);
+      setItemToDelete(null);
     }
-
-    return result;
-  }, [products, statusFilter, productTypeFilter, categoryFilter, searchQuery]);
+  };
 
   const hasActiveFilters =
     categoryFilter !== "Tất cả" ||
     searchQuery ||
     productTypeFilter !== "Tất cả";
+
   const clearFilters = () => {
     setCategoryFilter("Tất cả");
     setSearchQuery("");
@@ -424,22 +265,65 @@ export default function OwnerProducts() {
     setProductTypeFilter("Tất cả");
   };
 
-  useEffect(() => {
-    setTimeout(() => setCurrentPage(1), 0);
-  }, [searchQuery, statusFilter, categoryFilter]);
+  const handleSave = async (updated, message) => {
+    try {
+      // Find IDs from metadata
+      const categoryId = metadata.categories?.find((c) => c.category_name === updated.category)?.pk_product_category_id;
+      const materialId = metadata.materials?.find((m) => m.material_name === updated.material)?.pk_product_material_id;
+      const colorId = metadata.colors?.find((c) => c.color_name === updated.color)?.pk_product_color_id;
 
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
+      // Map productType string back to ENUM
+      let product_type = "FINISHED";
+      if (updated.productType === "Hàng mộc") product_type = "RAW";
+      else if (updated.productType === "Hàng khách đặt") product_type = "CUSTOM";
 
-  // ===================== HANDLE SAVE =====================
-  const handleSave = (updated, message) => {
-    setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-    toast.success(message || "Đã cập nhật sản phẩm thành công!");
-    closeModal();
+      const payload = {
+        product_name: updated.name || updated.product_name,
+        sku: updated.code || updated.sku,
+        fk_category_id: categoryId || null,
+        fk_material_id: materialId || null,
+        fk_color_id: colorId || null,
+        description: updated.description,
+        warranty_months: updated.warrantyMonths,
+        product_type: product_type,
+        size: JSON.stringify({
+          length: updated.dimL || "",
+          width: updated.dimW || "",
+          height: updated.dimH || "",
+        }),
+        // Pricing
+        cost_price: updated.costPrice !== undefined ? updated.costPrice : updated.original_price,
+        raw_price: updated.rawRetailPrice,
+        final_price: updated.retailPrice || updated.finishedRetailPrice || updated.display_price,
+      };
+
+      await productService.updateProduct(updated.id, payload);
+      toast.success(message || "Đã cập nhật sản phẩm thành công!");
+      fetchProducts();
+      closeModal();
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        error.response?.data?.message || "Lỗi khi cập nhật sản phẩm!"
+      );
+    }
   };
+
+  // Status Counts
+  const statusCounts = useMemo(() => {
+    const counts = {
+      "Tất cả": totalItems,
+      "Hàng sẵn": 0,
+      "Đặt theo mẫu": 0,
+      "Hết hàng": 0,
+      "Quà tặng": 0,
+      "Chưa định giá": 0,
+    };
+    products.forEach((p) => {
+      counts[p.status] = (counts[p.status] || 0) + 1;
+    });
+    return counts;
+  }, [products, totalItems]);
 
   // ===================== TABLE COLUMNS =====================
 
@@ -664,7 +548,7 @@ export default function OwnerProducts() {
               className="text-[13px] mt-0.5"
               style={{ color: "var(--text-placeholder)" }}
             >
-              {filteredProducts.length} sản phẩm (
+              {totalItems} sản phẩm (
               {productTypeFilter === "Tất cả"
                 ? "tất cả loại"
                 : productTypeFilter.toLowerCase()}
@@ -777,7 +661,8 @@ export default function OwnerProducts() {
         {/* DATA TABLE */}
         <DataTable
           columns={columns}
-          data={paginatedProducts}
+          data={products}
+          loading={loading}
           searchTerm={searchQuery}
           setSearchTerm={setSearchQuery}
           searchPlaceholder="Theo Mã Sản Phẩm, tên sản phẩm..."
@@ -809,8 +694,6 @@ export default function OwnerProducts() {
               label: "Xóa sản phẩm",
               onClick: (item) => handleConfirmDelete(item),
               className: "text-red-500 hover:bg-red-50",
-              showIf: (item) =>
-                item.stock === 0 && (!item.lots || item.lots.length === 0),
             },
           ]}
           bulkActions={[
@@ -818,28 +701,11 @@ export default function OwnerProducts() {
               label: "XÓA HÀNG LOẠT",
               icon: Trash2,
               onClick: () => {
-                const invalidDeletes = products
-                  .filter((p) => selectedIds.includes(p.id))
-                  .some((p) => p.stock > 0 || (p.lots && p.lots.length > 0));
-
-                if (invalidDeletes) {
-                  toast.error(
-                    "Lỗi: Tồn tại sản phẩm đang có tồn kho hoặc lịch sử kiện hàng trong danh sách chọn!",
-                  );
-                  return;
-                }
-
-                setProducts((prev) =>
-                  prev.filter((p) => !selectedIds.includes(p.id)),
-                );
-                setSelectedIds([]);
-                toast.success(
-                  `Đã xóa ${selectedIds.length} sản phẩm đã chọn thành công!`,
-                );
+                toast.error("Chức năng xóa hàng loạt tạm thời vô hiệu hóa!");
               },
               requireConfirm: true,
               confirmTitle: "Xóa hàng loạt sản phẩm?",
-              confirmMessage: `Bạn có chắc chắn muốn xóa ${selectedIds.length} sản phẩm đang chọn? Hành động này không thể hoàn tác.`,
+              confirmMessage: `Bạn có chắc chắn muốn xóa ${selectedIds.length} sản phẩm đang chọn?`,
             },
           ]}
           extraFilters={
@@ -886,7 +752,7 @@ export default function OwnerProducts() {
             </>
           }
           pagination={{
-            total: filteredProducts.length,
+            total: totalItems,
             currentPage,
             setCurrentPage,
             itemsPerPage,
@@ -898,7 +764,7 @@ export default function OwnerProducts() {
       <ConfirmModal
         isOpen={showDeleteConfirm}
         title="Xác nhận xóa sản phẩm"
-        message={`Bạn có chắc chắn muốn xóa sản phẩm "${itemToDelete?.name}" (${itemToDelete?.code}) không? Hành động này không thể hoàn tác.`}
+        message={`Bạn có chắc chắn muốn xóa sản phẩm "${itemToDelete?.name}" (${itemToDelete?.code}) không?`}
         onCancel={() => {
           setShowDeleteConfirm(false);
           setItemToDelete(null);

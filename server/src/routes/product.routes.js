@@ -88,5 +88,7 @@ router.get("/", ProductController.getAllProducts);
  *         description: Chi tiết sản phẩm
  */
 router.get("/:id", ProductController.getProductDetail);
+router.delete("/:id", ProductController.deleteProduct);
+router.put("/:id", ProductController.updateProduct);
 
 module.exports = router;
