@@ -5,8 +5,11 @@ const {
   OrderItem,
   OrderItemProcessing,
   CustomerProfile,
-  Product
+  Product,
+  UserAccount,
+  UserRole
 } = require("../entities");
+const { sendNotification } = require("../sockets/socketManager");
 
 /**
  * Worker Controller - Quản lý các công việc của thợ gia công
@@ -118,7 +121,14 @@ class WorkerController {
               deadline: order.expected_fulfillment_date ? new Date(order.expected_fulfillment_date).toLocaleDateString('vi-VN') : null,
               note: (typeof noteStr === 'string' ? noteStr : null),
               picture: item.item_img || "https://placehold.co/400x400?text=No+Image",
-              finishedImage: proc.finished_img || null,
+              finishedImages: (() => {
+                try {
+                  const parsed = JSON.parse(proc.finished_img);
+                  return Array.isArray(parsed) ? parsed : proc.finished_img ? [proc.finished_img] : [];
+                } catch {
+                  return proc.finished_img ? [proc.finished_img] : [];
+                }
+              })(),
               status: itemStatus
             };
           })
@@ -302,7 +312,7 @@ class WorkerController {
     try {
       const orderItemId = req.params.id;
       const workerId = req.user?.userId || null;
-      const { finishedImage } = req.body;
+      const { finishedImages } = req.body; // Mảng URL ảnh hoàn thiện
 
       // Tìm bản ghi processing đang ở trạng thái "Đang gia công" hoặc "Chờ chủ duyệt" (gửi lại ảnh)
       const proc = await OrderItemProcessing.findOne({
@@ -320,11 +330,14 @@ class WorkerController {
         return res.status(404).json({ message: "Không tìm thấy công việc đang gia công" });
       }
 
+      // Lưu ảnh dưới dạng JSON array
+      const imgData = Array.isArray(finishedImages) ? JSON.stringify(finishedImages) : null;
+
       // Cập nhật trạng thái → Đang chờ duyệt của chủ
       await proc.update({
         processing_status: 4, // 4: Chờ duyệt của chủ (OWNER_PENDING)
         end_date: new Date(),
-        finished_img: finishedImage || null, // Lưu ảnh
+        finished_img: imgData, // Lưu mảng ảnh dạng JSON
         modifiedate: new Date(),
         modifieby: workerId
       }, { transaction: t });
@@ -344,6 +357,148 @@ class WorkerController {
       await t.rollback();
       console.error("Complete task error:", error);
       return res.status(500).json({ message: "Lỗi hệ thống khi hoàn thành gia công" });
+    }
+  }
+
+  /**
+   * 🟢 Chủ xưởng DUYỆT sản phẩm: chuyển trạng thái 4 (Chờ duyệt) → 3 (Hoàn thành)
+   * POST /api/worker/tasks/approve/:id
+   * :id = pk_order_item_id
+   */
+  async approveTask(req, res) {
+    const t = await sequelize.transaction();
+    try {
+      const orderItemId = req.params.id;
+      const ownerId = req.user?.userId || null;
+
+      // Tìm bản ghi processing đang chờ duyệt
+      const proc = await OrderItemProcessing.findOne({
+        where: {
+          fk_order_item_id: orderItemId,
+          processing_status: 4 // Chờ chủ duyệt
+        },
+        transaction: t
+      });
+
+      if (!proc) {
+        await t.rollback();
+        return res.status(404).json({ message: "Không tìm thấy sản phẩm đang chờ duyệt" });
+      }
+
+      // Cập nhật trạng thái → Hoàn thành
+      await proc.update({
+        processing_status: 3, // 3: Hoàn thành
+        modifiedate: new Date(),
+        modifieby: ownerId
+      }, { transaction: t });
+
+      // Lấy thông tin sản phẩm để gửi thông báo
+      const orderItem = await OrderItem.findByPk(orderItemId, {
+        include: [{ model: Order, as: 'order' }],
+        transaction: t
+      });
+
+      await t.commit();
+
+      // 🟢 Gửi thông báo cho Thợ: "Chủ xưởng đã duyệt"
+      const workerId = proc.fk_user_account_id;
+      if (workerId) {
+        await sendNotification({
+          userId: workerId,
+          title: "Chủ xưởng đã duyệt sản phẩm",
+          message: `Sản phẩm ${orderItem?.item_name || ''} (Đơn #${orderItem?.fk_order_id}) đã được chủ xưởng duyệt thành công.`,
+          type: "SUCCESS",
+          link: `/worker/dashboard`,
+          createBy: ownerId
+        });
+      }
+
+      return res.status(200).json({
+        message: "Đã duyệt sản phẩm thành công",
+        data: {
+          processingId: proc.pk_processing_id,
+          status: 3
+        }
+      });
+
+    } catch (error) {
+      if (t && !t.finished) await t.rollback();
+      console.error("Approve task error:", error);
+      return res.status(500).json({ message: "Lỗi hệ thống khi duyệt sản phẩm" });
+    }
+  }
+
+  /**
+   * 🔴 Chủ xưởng TỪ CHỐI (yêu cầu làm lại): chuyển trạng thái 4 (Chờ duyệt) → 2 (Đang gia công)
+   * POST /api/worker/tasks/reject/:id
+   * :id = pk_order_item_id
+   * Body: { reason: "Lý do từ chối" }
+   */
+  async rejectTask(req, res) {
+    const t = await sequelize.transaction();
+    try {
+      const orderItemId = req.params.id;
+      const ownerId = req.user?.userId || null;
+      const { reason } = req.body;
+
+      // Tìm bản ghi processing đang chờ duyệt
+      const proc = await OrderItemProcessing.findOne({
+        where: {
+          fk_order_item_id: orderItemId,
+          processing_status: 4 // Chờ chủ duyệt
+        },
+        transaction: t
+      });
+
+      if (!proc) {
+        await t.rollback();
+        return res.status(404).json({ message: "Không tìm thấy sản phẩm đang chờ duyệt" });
+      }
+
+      // Cập nhật trạng thái → Đang gia công (yêu cầu làm lại)
+      await proc.update({
+        processing_status: 2, // 2: Đang gia công (làm lại)
+        finished_img: null,   // Xóa ảnh cũ
+        end_date: null,       // Reset ngày hoàn thành
+        note: reason || null, // Lưu lý do từ chối
+        modifiedate: new Date(),
+        modifieby: ownerId
+      }, { transaction: t });
+
+      // Lấy thông tin sản phẩm để gửi thông báo
+      const orderItem = await OrderItem.findByPk(orderItemId, {
+        include: [{ model: Order, as: 'order' }],
+        transaction: t
+      });
+
+      await t.commit();
+
+      // 🔴 Gửi thông báo cho Thợ: "Chủ xưởng yêu cầu làm lại"
+      const workerId = proc.fk_user_account_id;
+      if (workerId) {
+        const reasonText = reason ? ` Lý do: ${reason}` : '';
+        await sendNotification({
+          userId: workerId,
+          title: "Chủ xưởng yêu cầu làm lại",
+          message: `Sản phẩm ${orderItem?.item_name || ''} (Đơn #${orderItem?.fk_order_id}) đã bị từ chối.${reasonText} Vui lòng xử lý lại!`,
+          type: "WARNING",
+          link: `/worker/dashboard`,
+          createBy: ownerId
+        });
+      }
+
+      return res.status(200).json({
+        message: "Đã từ chối và yêu cầu thợ làm lại",
+        data: {
+          processingId: proc.pk_processing_id,
+          status: 2
+        }
+      });
+
+    } catch (error) {
+      if (t && !t.finished) await t.rollback();
+      console.error("Reject task error:", error);
+      return res.status(500).json({ message: "Lỗi hệ thống khi từ chối sản phẩm" });
     }
   }
 }

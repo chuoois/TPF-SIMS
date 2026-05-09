@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const workerController = require("../controller/worker.controller");
 const { verifyAccessToken, verifyRole } = require("../middlewares/auth.middleware");
+const { taskIdSchema, completeTaskSchema, rejectTaskSchema, validate } = require("../validations/worker.validation");
 
 /**
  * @swagger
@@ -50,7 +51,7 @@ router.get("/tasks/completed", verifyAccessToken, verifyRole(['WORKER', 'OWNER',
  *         required: true
  *         description: pk_order_item_id
  */
-router.post("/tasks/start/:id", verifyAccessToken, verifyRole(['WORKER', 'OWNER', 'ADMIN']), workerController.startTask);
+router.post("/tasks/start/:id", verifyAccessToken, verifyRole(['WORKER', 'OWNER', 'ADMIN']), validate(taskIdSchema, 'params'), workerController.startTask);
 
 /**
  * @swagger
@@ -64,6 +65,42 @@ router.post("/tasks/start/:id", verifyAccessToken, verifyRole(['WORKER', 'OWNER'
  *         required: true
  *         description: pk_order_item_id
  */
-router.post("/tasks/complete/:id", verifyAccessToken, verifyRole(['WORKER', 'OWNER', 'ADMIN']), workerController.completeTask);
+router.post("/tasks/complete/:id", verifyAccessToken, verifyRole(['WORKER', 'OWNER', 'ADMIN']), validate(taskIdSchema, 'params'), validate(completeTaskSchema, 'body'), workerController.completeTask);
+
+/**
+ * @swagger
+ * /api/worker/tasks/approve/{id}:
+ *   post:
+ *     summary: Chủ xưởng duyệt sản phẩm (Chờ duyệt → Hoàn thành)
+ *     tags: [Worker]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: pk_order_item_id
+ */
+router.post("/tasks/approve/:id", verifyAccessToken, verifyRole(['OWNER', 'ADMIN']), validate(taskIdSchema, 'params'), workerController.approveTask);
+
+/**
+ * @swagger
+ * /api/worker/tasks/reject/{id}:
+ *   post:
+ *     summary: Chủ xưởng từ chối sản phẩm (Chờ duyệt → Đang gia công)
+ *     tags: [Worker]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: pk_order_item_id
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 description: Lý do từ chối
+ */
+router.post("/tasks/reject/:id", verifyAccessToken, verifyRole(['OWNER', 'ADMIN']), validate(taskIdSchema, 'params'), validate(rejectTaskSchema, 'body'), workerController.rejectTask);
 
 module.exports = router;
