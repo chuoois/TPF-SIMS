@@ -33,7 +33,7 @@ const OrderItemProcessing = sequelize.define(
       type: DataTypes.TINYINT,
       defaultValue: 1,
       comment:
-        "1: Chờ gia công, 2: Đang gia công, 3: Hoàn thành, 0: Hủy",
+        "1: Chờ gia công, 2: Đang gia công, 3: Hoàn thành, 4: Chờ chủ duyệt, 0: Hủy",
     },
 
     quantity: {
@@ -58,6 +58,12 @@ const OrderItemProcessing = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
       comment: "Ghi chú gia công",
+    },
+
+    finished_img: {
+      type: DataTypes.TEXT("long"),
+      allowNull: true,
+      comment: "Ảnh hoàn thiện do thợ gửi",
     },
 
     createdate: {

@@ -16,7 +16,8 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { getOrders, STATUS_CONFIG, getWarehouseStatus, updateWarehouseStatus } from "../mock";
+import { STATUS_CONFIG, getWarehouseStatus, updateWarehouseStatus } from "../mock";
+import workerService from "@/services/worker.service";
 
 const OrderItemRow = ({ item }) => {
   const navigate = useNavigate();
@@ -106,10 +107,23 @@ export default function WorkerDashboard() {
   const [orders, setOrders] = useState([]);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [isWarehouseOverloaded, setIsWarehouseOverloaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch global mock state so returning from Detail Page reflects updates
-    setOrders(getOrders());
+    const fetchTasks = async () => {
+      try {
+        setIsLoading(true);
+        const res = await workerService.getPendingTasks();
+        setOrders(res.data);
+      } catch (error) {
+        console.error("Fetch tasks failed", error);
+        toast.error("Lỗi khi tải dữ liệu công việc!");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchTasks();
     setIsWarehouseOverloaded(getWarehouseStatus().isOverloaded);
   }, []);
 
