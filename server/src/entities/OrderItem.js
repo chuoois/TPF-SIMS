@@ -55,6 +55,20 @@ const OrderItem = sequelize.define(
     item_note: {
       type: DataTypes.TEXT,
     },
+    item_is_bundle: {
+      type: DataTypes.TINYINT,
+      defaultValue: 0,
+      comment: "1: Là bộ sản phẩm, 0: SP đơn lẻ",
+    },
+    item_bundle_items: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      comment: "Danh sách sản phẩm con trong bộ, null nếu là SP đơn lẻ"
+    },
+    item_is_gift: {
+      type: DataTypes.TINYINT,
+      defaultValue: 0, // 1: Quà tặng, 0: Hàng bán bình thường
+    },
     is_finished: {
       type: DataTypes.TINYINT,
       defaultValue: 0, // 0: Mộc (Raw), 1: Sơn (Finished)

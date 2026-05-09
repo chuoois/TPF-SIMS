@@ -636,6 +636,36 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
           };
           setOrder(mappedOrder);
 
+          // === Map processing từ API vào productions state ===
+          const mappedProductions = (found.items || []).flatMap((item) =>
+            (item.processing || []).map((proc) => {
+              const PROC_STATUS_MAP = {
+                1: "Tiếp nhận",
+                2: "Đang sản xuất",
+                3: "Hoàn thành",
+                0: "Đã hủy",
+              };
+              const statusLabel = PROC_STATUS_MAP[proc.processing_status] ?? proc.processing_status;
+              return {
+                id: proc.pk_processing_id,
+                orderId: found.pk_order_id,
+                orderCode: `DH-${found.pk_order_id}`,
+                productName: item.item_name || `Sản phẩm #${item.pk_order_item_id}`,
+                productImage: item.item_img || null,
+                assignedWorker: proc.worker?.profile?.full_name || proc.worker?.email || "Chưa giao",
+                status: statusLabel,
+                isPendingApproval: statusLabel === "Chờ nghiệm thu",
+                expectedEndDate: proc.end_date || null,
+                quantityPlanned: proc.quantity || item.item_quantity || 1,
+                quantityCompleted: statusLabel === "Hoàn thành" ? (proc.quantity || item.item_quantity || 1) : 0,
+                needsRedo: false,
+                isDelayed: proc.end_date ? new Date(proc.end_date) < new Date() && statusLabel !== "Hoàn thành" : false,
+                workerNotes: proc.note || "",
+              };
+            })
+          );
+          setProductions(mappedProductions);
+
           const totalAmount = Number(found.total_amount) || 0;
           const depositAmount = Number(found.deposit_amount) || 0;
           const processingFee = Number(found.processing_fee) || 0;

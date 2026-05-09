@@ -239,6 +239,11 @@ export default function CartPanel({
                           Sẵn
                         </span>
                       )}
+                      {item.isBundle && (
+                        <span className="px-1.5 py-0.5 rounded bg-purple-100 text-purple-600 text-[10px] font-bold uppercase tracking-tight shrink-0 border border-purple-200">
+                          Bộ SP
+                        </span>
+                      )}
                       {item.isGift && (
                         <span className="px-1.5 py-0.5 rounded bg-orange-100 text-orange-600 text-[10px] font-bold uppercase tracking-tight shrink-0">
                           Quà tặng
