@@ -14,6 +14,9 @@ import {
 } from "lucide-react";
 import { getOrders, STATUS_CONFIG } from "../mock";
 
+import workerService from "@/services/worker.service";
+import toast from "react-hot-toast";
+
 const OrderItemRow = ({ item }) => {
   const navigate = useNavigate();
   const config = STATUS_CONFIG[item.status] || STATUS_CONFIG.COMPLETED;
@@ -99,9 +102,23 @@ export default function WorkerCompleted() {
   const [orders, setOrders] = useState([]);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
 
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    // Fetch global mock state so returning from Detail Page reflects updates
-    setOrders(getOrders());
+    const fetchTasks = async () => {
+      try {
+        setIsLoading(true);
+        const res = await workerService.getCompletedTasks();
+        setOrders(res.data);
+      } catch (error) {
+        console.error("Fetch completed tasks failed", error);
+        toast.error("Lỗi khi tải dữ liệu công việc đã hoàn thành!");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchTasks();
   }, []);
 
   const activeFilter = searchParams.get("filter") || "Tất cả";

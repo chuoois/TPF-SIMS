@@ -19,6 +19,7 @@ const payrollRoutes = require("./routes/payroll.routes");
 const notificationRoutes = require("./routes/notification.routes");
 const inventoryRoutes = require("./routes/inventory.routes");
 const supplierRoutes = require("./routes/supplier.routes");
+const workerRoutes = require("./routes/worker.routes");
 const swaggerUi = require("swagger-ui-express");
 const swaggerJsDoc = require("swagger-jsdoc");
 
@@ -55,6 +56,7 @@ app.use("/api/payroll", payrollRoutes);
 app.use("/api/notification", notificationRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/supplier", supplierRoutes);
+app.use("/api/worker", workerRoutes);
 
 // ── Swagger ───────────────────────────────────────────────
 const SERVER_URL = process.env.SERVER_URL || "http://localhost:3000";
