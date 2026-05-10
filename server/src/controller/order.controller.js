@@ -2,7 +2,7 @@ const { Op } = require("sequelize");
 const {
     sequelize, Order, OrderItem, OrderHistory, Product,
     ProductPricing, ProductItem, ProductMaterial, ProductColor,
-    CustomerProfile, UserAccount, UserProfile, UserRole, ProductTask
+    CustomerProfile, UserAccount, UserProfile, UserRole, OrderItemProcessing
 } = require("../entities");
 const systemLogController = require("./systemLog.controller");
 const { sendNotification } = require("../sockets/socketManager");
@@ -127,8 +127,8 @@ class OrderController {
                         required: false,
                         include: [
                             {
-                                model: ProductTask,
-                                as: 'tasks',
+                                model: OrderItemProcessing,
+                                as: 'processing',
                                 required: false,
                                 include: [
                                     {
@@ -193,7 +193,8 @@ class OrderController {
 
             // 0. Kiểm tra và lấy thông tin khách hàng (để lấy địa chỉ mặc định)
             const customer = await CustomerProfile.findOne({
-                where: { pk_customer_id: fk_customer_id, status: 1 }
+                where: { pk_customer_id: fk_customer_id, status: 1 },
+                transaction: t
             });
 
             if (!customer) {
@@ -226,7 +227,8 @@ class OrderController {
                     { model: ProductMaterial, as: "material", attributes: ["material_name"] },
                     { model: ProductColor, as: "color", attributes: ["color_name"] },
                     { model: ProductPricing, as: "pricings", where: { status: 1 }, required: false }
-                ]
+                ],
+                transaction: t
             });
 
             if (items && items.length > 0) {
@@ -265,6 +267,9 @@ class OrderController {
                         item_size: item.item_size || product?.size,
                         item_warranty: item.item_warranty || product?.warranty_months,
                         item_note: item.item_note,
+                        item_is_bundle: item.item_is_bundle ?? product?.is_bundle ?? 0,
+                        item_bundle_items: item.item_bundle_items || product?.bundle_items || null,
+                        item_is_gift: item.item_is_gift ?? product?.is_gift ?? 0,
                         is_finished: final_is_finished ? 1 : 0,
                         customer_img: Array.isArray(item.customer_img) ? item.customer_img : [],
                         design_img: Array.isArray(item.design_img) ? item.design_img : [],

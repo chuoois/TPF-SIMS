@@ -170,6 +170,15 @@ router.get("/:id", OrderController.getOrderById);
  *                       description: "Số tháng bảo hành"
  *                     item_note:
  *                       type: string
+ *                     item_is_bundle:
+ *                       type: integer
+ *                       description: "1: Bộ sản phẩm, 0: SP đơn lẻ"
+ *                     item_bundle_items:
+ *                       type: array
+ *                       description: "Danh sách sản phẩm con trong bộ (JSON)"
+ *                     item_is_gift:
+ *                       type: integer
+ *                       description: "1: Quà tặng, 0: Hàng bán bình thường"
  *                     is_finished:
  *                       type: integer
  *                       description: "1: Hàng hoàn thiện (sơn), 0: Hàng mộc"

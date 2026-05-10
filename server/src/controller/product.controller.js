@@ -176,7 +176,7 @@ class ProductController {
                 where,
                 attributes: [
                     "pk_product_id", "sku", "product_name", "product_img",
-                    "unit", "size", "is_gift", "description", "warranty_months",
+                    "is_bundle", "bundle_items", "size", "is_gift", "description", "warranty_months",
                     [stockQuantityLiteral, "available_quantity"]
                 ],
                 include: [
@@ -263,7 +263,8 @@ class ProductController {
                     sku: p.sku,
                     product_name: p.product_name,
                     product_img: p.product_img,
-                    unit: p.unit,
+                    is_bundle: p.is_bundle,
+                    bundle_items: p.bundle_items,
                     size: p.size,
                     is_gift: p.is_gift,
                     available_quantity: parseInt(p.available_quantity) || 0,
@@ -315,7 +316,7 @@ class ProductController {
             const product = await Product.findByPk(id, {
                 attributes: [
                     "pk_product_id", "sku", "product_name", "product_img",
-                    "unit", "size", "is_gift", "warranty_months", "description",
+                    "is_bundle", "bundle_items", "size", "is_gift", "warranty_months", "description",
                     [stockQuantityLiteral, "available_quantity"]
                 ],
                 include: [
@@ -394,7 +395,8 @@ class ProductController {
                 sku: p.sku,
                 product_name: p.product_name,
                 product_img: p.product_img,
-                unit: p.unit,
+                is_bundle: p.is_bundle,
+                bundle_items: p.bundle_items,
                 size: p.size,
                 is_gift: p.is_gift,
                 description: p.description,

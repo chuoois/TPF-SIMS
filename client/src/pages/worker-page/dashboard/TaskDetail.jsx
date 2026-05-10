@@ -30,16 +30,27 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import {
-  updateMockTaskStatus,
-  getTaskById,
-  updateTaskFinishedImage,
   updateTaskDeadline,
 } from "../mock";
+import workerService from "@/services/worker.service";
+import { uploadImage } from "@/services/cloudinary.service";
+
+// Helper to safely render values that may be objects
+const formatValue = (val) => {
+  if (val && typeof val === "object") {
+    try {
+      return JSON.stringify(val);
+    } catch {
+      return String(val);
+    }
+  }
+  return val;
+};
 
 /* ─── Production Steps ─── */
 const STEPS = [
   { id: 1, key: "WAITING", label: "Tiếp nhận", icon: PackageCheck },
-  { id: 2, key: "INSPECTION", label: "Nghiệm thu", icon: Play },
+  { id: 2, key: "PROCESSING", label: "Nghiệm thu", icon: Play },
   { id: 3, key: "OWNER_PENDING", label: "Chờ chủ duyệt", icon: AlertCircle },
   { id: 4, key: "COMPLETED", label: "Hoàn thành", icon: CheckCircle2 },
 ];
@@ -48,7 +59,7 @@ const getStepIndex = (status) => {
   switch (status) {
     case "WAITING":
       return 0;
-    case "INSPECTION":
+    case "PROCESSING":
       return 1;
     case "OWNER_PENDING":
       return 2;
@@ -68,11 +79,10 @@ const getStatusBadge = (status) => {
       color: "var(--text-secondary)",
       border: "var(--grid-border)",
     },
-    INSPECTION: {
-      label: "Đang nghiệm thu",
-      bg: "rgba(33,164,244,0.08)",
-      color: "#1a8fd4",
-      border: "rgba(33,164,244,0.2)",
+    PROCESSING: {
+      color: "var(--brand-primary)",
+      bg: "rgba(52,176,87,0.08)",
+      border: "rgba(52,176,87,0.15)",
     },
     OWNER_PENDING: {
       label: "Chờ chủ duyệt",
@@ -163,54 +173,119 @@ export default function TaskDetail() {
     return { label: `Còn lại ${diffDays} ngày`, color: "text-emerald-600" };
   };
 
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    const task = getTaskById(id);
-    if (task) {
-      setSelectedTask(task);
-    } else {
-      navigate("/worker/dashboard");
-    }
+    const fetchTask = async () => {
+      try {
+        setIsLoading(true);
+        const res = await workerService.getPendingTasks();
+        
+        let foundTask = null;
+        for (const order of res.data) {
+          const item = order.items.find((i) => i.id === id);
+          if (item) {
+            foundTask = {
+              ...item,
+              image: item.picture,
+              orderId: order.id,
+              customerName: order.customerName,
+              isCustomOrder: order.isCustomOrder
+            };
+            break;
+          }
+        }
+
+        if (foundTask) {
+          setSelectedTask(foundTask);
+        } else {
+          navigate("/worker/dashboard");
+        }
+      } catch (error) {
+        console.error("Lỗi khi tải chi tiết công việc:", error);
+        toast.error("Không thể tải dữ liệu công việc!");
+        navigate("/worker/dashboard");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTask();
   }, [id, navigate]);
 
-  const updateTaskStatus = (taskId, newStatus) => {
-    updateMockTaskStatus(taskId, newStatus, finishedImage);
-    // Re-read the task from mock to pick up any changes (e.g. startedAt)
-    const updated = getTaskById(taskId);
-    setSelectedTask(updated);
-    setFinishedImage(null);
+  // Trích xuất số ID thực từ "SP-123" → "123"
+  const extractRealId = (formattedId) => {
+    if (!formattedId) return null;
+    return String(formattedId).replace('SP-', '');
   };
 
-  const handleImageChange = (e) => {
+  const updateTaskStatus = async (taskId, newStatus) => {
+    const realId = extractRealId(taskId);
+    try {
+      if (newStatus === 'PROCESSING') {
+        await workerService.startTask(realId);
+        toast.success('Đã bắt đầu gia công!');
+      } else if (newStatus === 'OWNER_PENDING') {
+        await workerService.completeTask(realId, finishedImage);
+        toast.success('Đã gửi ảnh, chờ chủ duyệt!');
+      } else if (newStatus === 'COMPLETED') {
+        await workerService.completeTask(realId, finishedImage);
+        toast.success('Đã hoàn thành gia công!');
+      }
+      // Cập nhật lại trạng thái trên UI, giữ lại ảnh đã gửi
+      setSelectedTask(prev => ({ ...prev, status: newStatus, finishedImage: finishedImage || prev.finishedImage }));
+      setFinishedImage(null);
+    } catch (error) {
+      console.error('Lỗi cập nhật trạng thái:', error);
+      toast.error(error?.response?.data?.message || 'Lỗi khi cập nhật trạng thái!');
+    }
+  };
+
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       setIsUploading(true);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFinishedImage(reader.result);
+      try {
+        const uploadResult = await uploadImage(file);
+        setFinishedImage(uploadResult.url);
+        toast.success("Đã tải ảnh lên thành công!");
+      } catch (error) {
+        console.error("Lỗi upload ảnh:", error);
+        toast.error("Lỗi khi tải ảnh lên hệ thống!");
+      } finally {
         setIsUploading(false);
-      };
-      reader.readAsDataURL(file);
+      }
     }
   };
 
-  const handleUpdateImage = () => {
+  const handleUpdateImage = async () => {
     if (!finishedImage) return;
+    const realId = extractRealId(selectedTask.id);
     setIsUploading(true);
-    setTimeout(() => {
-      updateTaskFinishedImage(selectedTask.id, finishedImage);
-      const updated = getTaskById(selectedTask.id);
-      setSelectedTask(updated);
+    try {
+      await workerService.completeTask(realId, finishedImage);
+      // Cập nhật lại ảnh hoàn thiện trên UI
+      setSelectedTask(prev => ({ ...prev, finishedImage: finishedImage }));
       setFinishedImage(null);
-      setIsUploading(false);
       toast.success("Đã cập nhật ảnh sản phẩm!");
-    }, 1000);
+    } catch (error) {
+      console.error("Lỗi cập nhật ảnh:", error);
+      toast.error(error?.response?.data?.message || "Lỗi khi cập nhật ảnh!");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
-  const handleStartProduction = () => {
-    updateMockTaskStatus(selectedTask.id, "INSPECTION");
-    const updated = getTaskById(selectedTask.id);
-    setSelectedTask(updated);
-    toast.success("Bắt đầu chuyển sang nghiệm thu!");
+  const handleStartProduction = async () => {
+    const realId = extractRealId(selectedTask.id);
+    try {
+      await workerService.startTask(realId);
+      setSelectedTask(prev => ({ ...prev, status: 'PROCESSING', startedAt: new Date().toLocaleDateString('vi-VN') }));
+      toast.success('Đã bắt đầu gia công!');
+    } catch (error) {
+      console.error('Start task error:', error);
+      toast.error(error?.response?.data?.message || 'Lỗi khi bắt đầu gia công!');
+    }
   };
 
   const handleSetPlanDate = () => {
@@ -240,7 +315,7 @@ export default function TaskDetail() {
     updateTaskDeadline(selectedTask.id, dateStr, urgency);
 
     if (isStartingProduction) {
-      updateMockTaskStatus(selectedTask.id, "INSPECTION");
+      updateMockTaskStatus(selectedTask.id, "PROCESSING");
       setIsStartingProduction(false);
     }
 
@@ -282,7 +357,7 @@ export default function TaskDetail() {
       );
     }
 
-    if (selectedTask.status === "INSPECTION") {
+    if (selectedTask.status === "PROCESSING") {
       return (
         <div className="flex flex-col gap-4 items-end">
           <div className="w-full max-w-sm">
@@ -366,11 +441,26 @@ export default function TaskDetail() {
             <div className="relative group">
               <label className="w-full h-32 rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/30 flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-amber-50">
                 <div className="flex items-center gap-4 px-4 w-full">
-                  <img
-                    src={currentDisplayImage}
-                    className="w-24 h-24 rounded-xl object-cover border border-amber-200 shadow-md"
-                    alt="Preview"
-                  />
+                  <div 
+                    className="relative group/img w-24 h-24 shrink-0 rounded-xl overflow-hidden border border-amber-200 shadow-md cursor-zoom-in"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setZoomImage(currentDisplayImage);
+                    }}
+                  >
+                    <img
+                      src={currentDisplayImage}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-110"
+                      alt="Preview"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/20 transition-colors flex items-center justify-center">
+                      <ZoomIn
+                        size={20}
+                        className="text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow-md"
+                      />
+                    </div>
+                  </div>
                   <div className="flex flex-col">
                     <span className="text-amber-700 font-bold text-[13px]">
                       {finishedImage ? "Ảnh mới (Chưa lưu)" : "Ảnh đã gửi"}
@@ -419,24 +509,6 @@ export default function TaskDetail() {
                   Đang chờ chủ duyệt
                 </>
               )}
-            </button>
-            <button
-              onClick={() => {
-                updateTaskStatus(selectedTask.id, "COMPLETED");
-                toast.success("Mô phỏng: Chủ xưởng đã duyệt!");
-              }}
-              className="h-11 px-6 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
-              <CheckCircle2 size={15} /> Giả lập Chủ Duyệt
-            </button>
-            <button
-              onClick={() => {
-                updateTaskStatus(selectedTask.id, "INSPECTION");
-                toast.error("Mô phỏng: Chủ xưởng yêu cầu làm lại!");
-              }}
-              className="h-11 px-6 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
-            >
-              <AlertCircle size={15} /> Giả lập Từ Chối
             </button>
           </div>
         </div>
@@ -1009,7 +1081,7 @@ export default function TaskDetail() {
                       className="text-[13px] leading-relaxed break-words whitespace-pre-line"
                       style={{ color: "var(--text-main)" }}
                     >
-                      {selectedTask.note}
+                      {formatValue(selectedTask.note)}
                     </p>
                   </div>
                 </div>

@@ -205,6 +205,9 @@ export default function InStockInvoicePage() {
             item_name: item.name,
             item_quantity: item.quantity,
             item_price: item.price,
+            item_is_bundle: item.isBundle ? 1 : 0,
+            item_bundle_items: item.bundleItems || null,
+            item_is_gift: item.isGift ? 1 : 0,
             is_finished: item.productType === PRODUCT_TYPES.RAW ? 0 : 1,
             item_note: item.note,
             customer_img: item.images || [], // Gửi mảng URL ảnh hàng mộc
@@ -500,6 +503,8 @@ export default function InStockInvoicePage() {
           productType: productTypeTab,
           images: productTypeTab === PRODUCT_TYPES.RAW ? [] : null,
           isGift,
+          isBundle: product.is_bundle === 1,
+          bundleItems: product.bundle_items || null,
           leadTime: product.leadTime || 0,
           warrantyMonths: product.warranty_months || DEFAULT_WARRANTY,
           warrantyContent:
