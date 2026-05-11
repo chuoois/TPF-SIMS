@@ -168,16 +168,9 @@ export default function RequirementsListing({ userRole = 'sales' }) {
       className: "max-w-[200px]",
       render: (r) => (
         <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[13px] font-medium text-slate-700 truncate max-w-full" title={r.productNames}>
-              {r.productNames || "---"}
-            </span>
-            {r.hasBundle && (
-              <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 text-[9px] font-bold uppercase border border-amber-100 shrink-0">
-                Bộ
-              </span>
-            )}
-          </div>
+          <span className="text-[13px] font-medium text-slate-700 truncate max-w-full" title={r.productNames}>
+            {r.productNames || "---"}
+          </span>
           {r.itemCount > 0 && (
             <span className="text-[10px] text-slate-400 font-medium italic">
               {r.itemCount} sản phẩm

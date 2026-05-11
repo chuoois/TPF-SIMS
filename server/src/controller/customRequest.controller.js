@@ -351,6 +351,8 @@ class CustomRequestController {
                         item_price: item.item_price,
                         item_note: item.item_note,
                         item_size: item.item_size,
+                        item_is_bundle: item.item_is_bundle,
+                        item_bundle_items: item.item_bundle_items,
                         fk_supplier_id: item.fk_supplier_id,
                         expected_supplier_date: item.expected_supplier_date,
                         design_img: item.design_img !== undefined ? item.design_img : undefined,

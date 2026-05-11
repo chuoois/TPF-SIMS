@@ -362,11 +362,7 @@ export default function ProductPanel({
                       </div>
                     ) : (
                       <div className="absolute top-2 right-2 z-1 flex flex-col gap-1 items-end">
-                        {product.is_bundle === 1 && (
-                          <div className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-100 text-purple-600 border border-purple-200 shadow-sm">
-                            BỘ SP
-                          </div>
-                        )}
+
                         {(product.is_gift == 1 || product.product_name?.toLowerCase().includes("quà tặng")) && (
                           <div className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-600 border border-emerald-200 shadow-sm">
                             QUÀ TẶNG
@@ -584,14 +580,7 @@ export default function ProductPanel({
 
                 <div className="space-y-3">
                   {/* Bundle badge */}
-                  {selectedProductForView.is_bundle === 1 && (
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-50 border border-purple-200">
-                      <PackageCheck size={14} className="text-purple-600" />
-                      <span className="text-[12px] font-bold text-purple-700 uppercase tracking-wider">
-                        Bộ sản phẩm
-                      </span>
-                    </div>
-                  )}
+
 
                   {selectedProductForView.is_bundle === 1 && selectedProductForView.bundle_items ? (
                     <>

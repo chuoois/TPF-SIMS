@@ -3,7 +3,7 @@
  * Handles both Sales and Owner roles with specific permissions.
  */
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   X,
   User,
@@ -18,6 +18,8 @@ import {
   Ruler,
   Save,
   UploadCloud,
+  Plus,
+  Trash2,
   Image as ImageIcon
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -89,6 +91,9 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
 
   // Owner mới được sửa Supplier & Workshop Date
   const canEditProduction = canEdit && userRole === 'owner';
+
+  // Chưa bấm chỉnh sửa → mờ toàn bộ nội dung (cả Sales lẫn Owner)
+  const isInactive = !canEdit;
 
   useEffect(() => {
     const fetchAttributes = async () => {
@@ -197,11 +202,46 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
     setItemSpecs(newSpecs);
   };
 
-  const handleSaveAll = async () => {
-    if (!deliveryMethod) {
-      toast.error("Vui lòng chọn Phương thức giao hàng");
-      return;
+  const handleAddBundleSubItem = (itemIndex) => {
+    if (!canEdit) return;
+    const newSpecs = [...itemSpecs];
+    const bundleItems = [...(newSpecs[itemIndex].item_bundle_items || [])];
+    bundleItems.push({
+      name: "Sản phẩm mới",
+      quantity: 1,
+      size: { length: 0, width: 0, height: 0, unit: "cm", note: "" }
+    });
+    newSpecs[itemIndex].item_bundle_items = bundleItems;
+    setItemSpecs(newSpecs);
+  };
+
+  const handleUpdateBundleSubItem = (itemIndex, subIndex, field, value) => {
+    if (!canEdit) return;
+    const newSpecs = [...itemSpecs];
+    const bundleItems = [...(newSpecs[itemIndex].item_bundle_items || [])];
+    
+    if (field.startsWith("size.")) {
+      const sizeField = field.split(".")[1];
+      bundleItems[subIndex].size = { ...bundleItems[subIndex].size, [sizeField]: value };
+    } else {
+      bundleItems[subIndex][field] = value;
     }
+    
+    newSpecs[itemIndex].item_bundle_items = bundleItems;
+    setItemSpecs(newSpecs);
+  };
+
+  const handleRemoveBundleSubItem = (itemIndex, subIndex) => {
+    if (!canEdit) return;
+    const newSpecs = [...itemSpecs];
+    const bundleItems = [...(newSpecs[itemIndex].item_bundle_items || [])];
+    bundleItems.splice(subIndex, 1);
+    newSpecs[itemIndex].item_bundle_items = bundleItems;
+    setItemSpecs(newSpecs);
+  };
+
+  const handleSaveAll = async () => {
+
     setIsSaving(true);
     const loadingToast = toast.loading("Đang lưu thay đổi...");
     try {
@@ -237,6 +277,8 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
           fk_supplier_id: spec.fk_supplier_id || null,
           expected_supplier_date: spec.expectedWorkshopDate || null,
           design_img: spec.finalDesignImages,
+          item_is_bundle: spec.item_is_bundle,
+          item_bundle_items: spec.item_bundle_items,
           item_size: {
             unit: "cm",
             length: Number(spec.length) || 0,
@@ -274,6 +316,12 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
   };
 
   const handleUpdateStatus = async (newStatus, successMsg) => {
+    // Chỉ validate phương thức giao hàng khi xác nhận hoàn thành (xác nhận giao hàng)
+    if (newStatus === 3 && !deliveryMethod) {
+      toast.error("Vui lòng chọn Phương thức giao hàng trước khi hoàn thành");
+      return;
+    }
+
     try {
       await customRequestService.updateStatus(req.id, { status: newStatus });
       toast.success(successMsg);
@@ -311,7 +359,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
         </div>
 
         <div className="flex-1 overflow-y-auto bg-white">
-          <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-8 p-6">
+          <div className={`max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-8 p-6 transition-all duration-500 ${isInactive ? 'opacity-100 pointer-events-none select-none' : ''}`}>
             {/* Sidebar */}
             <aside className="w-full lg:w-80 shrink-0 space-y-6">
               <section className="space-y-3">
@@ -327,7 +375,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                 <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2"><Package size={14} /> Giao hàng</h3>
                 <div className="p-4 rounded-xl bg-white border border-gray-100 space-y-4">
                   <div className={`space-y-2 p-3 rounded-lg transition-all ${canEditProduction ? 'bg-[#EAF6EE]/40 border border-[#34B057]/20' : 'opacity-60'}`}>
-                    <p className={`text-[10px] font-bold uppercase ${canEditProduction ? 'text-[#34B057]' : 'text-gray-400'}`}>Phương thức <span className="text-red-500">*</span></p>
+                    <p className={`text-[10px] font-bold uppercase ${canEditProduction ? 'text-[#34B057]' : 'text-gray-400'}`}>Phương thức</p>
                     <div className="flex flex-col gap-2">
                       {['store', 'delivery'].map(m => (
                         <label key={m} className={`flex items-center gap-2 ${canEditProduction ? 'cursor-pointer' : 'cursor-not-allowed'}`}>
@@ -367,15 +415,15 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
               </section>
 
               <section className="space-y-2">
-                <h3 className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 ${canEdit ? 'text-[#34B057]' : 'text-gray-400'}`}><FileText size={14} /> Ghi chú</h3>
-                <textarea value={notes} readOnly={!canEdit} onChange={(e) => setNotes(e.target.value)} className={`w-full h-24 p-3 rounded-xl border text-[12px] resize-none transition-all ${canEdit ? 'border-[#34B057]/20 bg-[#EAF6EE]/30 text-gray-700 focus:ring-2 focus:ring-[#34B057]/20 cursor-text' : 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed opacity-60'}`} placeholder={canEdit ? "Nhập ghi chú chung..." : ""} />
+                <h3 className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 ${canEditProduction ? 'text-[#34B057]' : 'text-gray-400'}`}><FileText size={14} /> Ghi chú</h3>
+                <textarea value={notes} readOnly={!canEditProduction} onChange={(e) => setNotes(e.target.value)} className={`w-full h-24 p-3 rounded-xl border text-[12px] resize-none transition-all ${canEditProduction ? 'border-[#34B057]/20 bg-[#EAF6EE]/30 text-gray-700 focus:ring-2 focus:ring-[#34B057]/20 cursor-text' : 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed opacity-60'}`} placeholder={canEditProduction ? "Nhập ghi chú chung..." : ""} />
               </section>
             </aside>
 
             {/* Main Content */}
             <main className="flex-1 space-y-6">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-[15px] font-bold text-gray-900 flex items-center gap-2"><Layers size={18} className="text-[#34B057]" /> Chi tiết Kỹ thuật <span className="ml-2 px-2 py-0.5 bg-[#EAF6EE] text-[#34B057] text-[11px] rounded-full">{itemSpecs.length} sản phẩm</span></h3>
+                <h3 className="text-[15px] font-bold text-gray-900 flex items-center gap-2"><Layers size={18} className={isInactive ? 'text-gray-400' : 'text-[#34B057]'} /> Chi tiết Kỹ thuật <span className={`ml-2 px-2 py-0.5 text-[11px] rounded-full ${isInactive ? 'bg-gray-100 text-gray-400' : 'bg-[#EAF6EE] text-[#34B057]'}`}>{itemSpecs.length} sản phẩm</span></h3>
               </div>
 
               <div className="space-y-8 pb-10">
@@ -402,21 +450,21 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                           </div>
                         </div>
 
-                        <div className="space-y-2 pt-3 border-t border-gray-100">
-                          <h5 className="text-[11px] font-bold text-[#34B057] uppercase flex items-center gap-1.5"><Layers size={12} /> Bản thiết kế 3D</h5>
+                        <div className={`space-y-2 pt-3 border-t border-gray-100 ${!canEditProduction ? 'opacity-60' : ''}`}>
+                          <h5 className={`text-[11px] font-bold uppercase flex items-center gap-1.5 ${canEditProduction ? 'text-[#34B057]' : 'text-gray-400'}`}><Layers size={12} /> Bản thiết kế 3D</h5>
                           <div className="grid grid-cols-2 gap-2">
                             {spec.designImages.length > 0 ? (
                               spec.designImages.map((img, i) => {
                                 const src = typeof img === 'string' ? img : URL.createObjectURL(img);
                                 return (
-                                  <div key={i} className="relative aspect-square rounded-lg border border-green-100 overflow-hidden">
+                                  <div key={i} className={`relative aspect-square rounded-lg border overflow-hidden ${canEditProduction ? 'border-green-100' : 'border-gray-200'}`}>
                                     <img src={src} className="w-full h-full object-cover cursor-zoom-in" onClick={() => onEnlarge(src)} />
                                     {canEditProduction && <button onClick={() => handleRemoveDesignImage(index, i)} className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-md flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"><X size={14} /></button>}
                                   </div>
                                 );
                               })
                             ) : (
-                              <div className="col-span-2 py-4 border border-dashed border-green-100/50 rounded-lg bg-green-50/30 flex flex-col items-center justify-center text-green-600/50">
+                              <div className={`col-span-2 py-4 border border-dashed rounded-lg flex flex-col items-center justify-center ${canEditProduction ? 'border-green-100/50 bg-green-50/30 text-green-600/50' : 'border-gray-200 bg-gray-50 text-gray-400'}`}>
                                 <ImageIcon size={20} className="mb-1 opacity-50" />
                                 <span className="text-[10px] font-medium italic">Chưa có bản thiết kế 3D</span>
                               </div>
@@ -436,11 +484,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                         <div className="border-b border-gray-50 pb-4">
                           <h4 className="text-[17px] font-bold text-gray-900 mb-4">{spec.name}</h4>
 
-                          {Number(spec.item_is_bundle) === 1 && (
-                            <span className="inline-flex items-center gap-1.5 mb-3 px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-[11px] font-bold">
-                              <Package size={11} /> Bộ sản phẩm
-                            </span>
-                          )}
+
 
                           <div className="flex flex-col gap-4">
                             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
@@ -479,35 +523,100 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                           {/* === BUNDLE: danh sách món === */}
                           {Number(spec.item_is_bundle) === 1 ? (
-                            <div className="col-span-2 space-y-3 p-4 rounded-xl border bg-amber-50/30 border-amber-100">
-                              <p className="text-[10px] font-bold text-amber-600 uppercase flex items-center gap-2">
-                                <Package size={14} /> Bộ sản phẩm ({(spec.item_bundle_items || []).length} món)
-                              </p>
-                              <div className="space-y-2">
+                            <div className={`col-span-2 space-y-3 p-4 rounded-xl border ${isInactive ? 'bg-gray-50/50 border-gray-200' : 'bg-amber-50/30 border-amber-100'}`}>
+                              <div className="flex items-center justify-between mb-2">
+                                <p className={`text-[10px] font-bold uppercase flex items-center gap-2 ${isInactive ? 'text-gray-400' : 'text-amber-600'}`}>
+                                  <Package size={14} /> Bộ sản phẩm ({(spec.item_bundle_items || []).length} món)
+                                </p>
+                                {canEdit && (
+                                  <button
+                                    onClick={() => handleAddBundleSubItem(index)}
+                                    className="text-[11px] font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1 px-2 py-1 rounded bg-amber-100/50 transition-colors"
+                                  >
+                                    <Plus size={12} /> Thêm món
+                                  </button>
+                                )}
+                              </div>
+                              <div className="space-y-3">
                                 {(spec.item_bundle_items || []).map((sub, si) => {
                                   const size = sub.size || {};
-                                  const dims = [size.length, size.width, size.height].filter(v => v && v > 0);
+                                  const dims = [size.length, size.width, size.height].filter(v => v !== undefined && v !== "");
                                   const sizeStr = dims.length > 0 ? dims.join(' × ') + ` ${size.unit || 'cm'}` : null;
+                                  
                                   return (
-                                    <div key={si} className="flex items-center gap-3 p-3 rounded-lg bg-white border border-amber-100">
-                                      <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-[11px] font-black shrink-0">{si + 1}</div>
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-[13px] font-bold text-gray-800 truncate">{sub.name}</p>
-                                        <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                                          <span className="text-[11px] text-gray-500">SL: <b className="text-gray-700">{sub.quantity}</b></span>
-                                          {sizeStr && (
-                                            <span className="text-[11px] text-gray-500 flex items-center gap-1">
-                                              <Ruler size={10} className="text-gray-400" /> <b className="text-gray-700">{sizeStr}</b>
+                                    <div key={si} className={`flex flex-col gap-3 p-3 rounded-lg bg-white border ${isInactive ? 'border-gray-200' : 'border-amber-100'}`}>
+                                      <div className="flex items-center gap-3">
+                                        <div className={`w-7 h-7 rounded flex items-center justify-center text-[11px] font-black shrink-0 ${isInactive ? 'bg-gray-100 text-gray-400' : 'bg-amber-100 text-amber-700'}`}>{si + 1}</div>
+                                        
+                                        <div className="flex-1 flex flex-col md:flex-row gap-3">
+                                          {canEdit ? (
+                                            <input
+                                              type="text"
+                                              value={sub.name}
+                                              onChange={(e) => handleUpdateBundleSubItem(index, si, "name", e.target.value)}
+                                              className="flex-1 text-[13px] font-bold text-gray-800 bg-gray-50/50 border border-transparent focus:border-amber-200 rounded px-2 py-1 outline-none"
+                                              placeholder="Tên món..."
+                                            />
+                                          ) : (
+                                            <p className="flex-1 text-[13px] font-bold text-gray-800 truncate">{sub.name}</p>
+                                          )}
+                                          
+                                          <div className="flex items-center gap-2 shrink-0">
+                                            <span className="text-[11px] font-bold text-gray-400 uppercase">SL:</span>
+                                            {canEdit ? (
+                                              <input
+                                                type="number"
+                                                value={sub.quantity}
+                                                onChange={(e) => handleUpdateBundleSubItem(index, si, "quantity", Number(e.target.value))}
+                                                className="w-12 text-[13px] font-bold text-center text-gray-700 bg-gray-50/50 border border-transparent focus:border-amber-200 rounded py-1 outline-none"
+                                              />
+                                            ) : (
+                                              <b className="text-[13px] text-gray-700">{sub.quantity}</b>
+                                            )}
+                                          </div>
+                                        </div>
+
+                                        {canEdit && (
+                                          <button
+                                            onClick={() => handleRemoveBundleSubItem(index, si)}
+                                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                                          >
+                                            <Trash2 size={14} />
+                                          </button>
+                                        )}
+                                      </div>
+
+                                      {/* Sub-item Details (Size) */}
+                                      <div className="pl-10">
+                                        <div className="flex items-center gap-2">
+                                          <Ruler size={12} className="text-gray-400 shrink-0" />
+                                          {canEdit ? (
+                                            <div className="flex items-center gap-1 flex-1">
+                                              {['length', 'width', 'height'].map((dim, di) => (
+                                                <React.Fragment key={dim}>
+                                                  <input
+                                                    type="number"
+                                                    value={size[dim] || ""}
+                                                    onChange={(e) => handleUpdateBundleSubItem(index, si, `size.${dim}`, Number(e.target.value))}
+                                                    placeholder={dim === 'length' ? 'D' : dim === 'width' ? 'R' : 'C'}
+                                                    className="w-full text-[11px] text-center bg-gray-50/50 border border-transparent focus:border-amber-200 rounded py-0.5 outline-none"
+                                                  />
+                                                  {di < 2 && <span className="text-gray-300">×</span>}
+                                                </React.Fragment>
+                                              ))}
+                                            </div>
+                                          ) : (
+                                            <span className="text-[11px] text-gray-600 font-medium">
+                                              {sizeStr || "—"}
                                             </span>
                                           )}
-                                          {size.note && <span className="text-[11px] text-gray-400 italic">({size.note})</span>}
                                         </div>
                                       </div>
                                     </div>
                                   );
                                 })}
                                 {(spec.item_bundle_items || []).length === 0 && (
-                                  <div className="py-3 text-center text-[12px] text-amber-500 italic">Chưa có thông tin các món trong bộ</div>
+                                  <div className={`py-3 text-center text-[12px] italic ${isInactive ? 'text-gray-400' : 'text-amber-500'}`}>Chưa có thông tin các món trong bộ</div>
                                 )}
                               </div>
                             </div>
