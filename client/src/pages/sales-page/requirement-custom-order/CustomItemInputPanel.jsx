@@ -14,19 +14,22 @@ import {
   Palette,
   Ruler,
   PackageCheck,
-  CreditCard,
   ClipboardEdit,
   ImagePlus,
-  Hammer,
-  FileText,
-  ShieldCheck,
 } from "lucide-react";
 import * as Yup from "yup";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
-import { fmt, inputBase, inputStyle, getNextItemId } from "./mockData";
+import { fmt } from "@/constants/orderConfig";
 import productAttributeService from "@/services/productAttribute.service";
 import { uploadMultipleImages } from "@/services/cloudinary.service";
+
+const inputBase = "w-full text-[13px] rounded-lg px-4 py-3 focus:outline-none transition-all border";
+const inputStyle = {
+  color: "var(--text-main)",
+  borderColor: "var(--grid-border)",
+  backgroundColor: "var(--bg-main)",
+};
 
 // ===================== ITEM VALIDATION SCHEMA =====================
 const itemSchema = Yup.object().shape({
@@ -148,7 +151,12 @@ export default function CustomItemInputPanel({
         length: Number(newItem.length) || 0,
       };
 
-      const itemToSave = { ...newItem, item_size: sizeObj, size: sizeObj };
+      const itemToSave = { 
+        ...newItem, 
+        id: newItem.id || `custom-${Date.now()}`,
+        item_size: sizeObj, 
+        size: sizeObj 
+      };
 
       if (editingItemId) {
         formik.setFieldValue(

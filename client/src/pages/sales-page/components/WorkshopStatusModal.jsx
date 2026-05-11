@@ -6,10 +6,11 @@
 
 import React, { useState } from "react";
 import { 
-  Hammer, Clock, Search, X, AlertTriangle, CheckCircle2, Play, Calendar
+  Hammer, Clock, Search, X, Calendar
 } from "lucide-react";
 import { MOCK_ORDERS } from "../../worker-page/mock";
 import DataTable from "@/components/control/DataTable";
+import { formatShortDateVN, formatDateTimeVN, nowVN } from "@/lib/dateUtils";
 
 export default function WorkshopStatusModal({ isOpen, onClose }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -38,7 +39,7 @@ export default function WorkshopStatusModal({ isOpen, onClose }) {
     } else { d = new Date(dateStr); }
     if (isNaN(d.getTime())) return <span className="text-gray-300">—</span>;
 
-    const now = new Date();
+    const now = nowVN();
     now.setHours(0,0,0,0);
     const diff = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
     
@@ -49,7 +50,7 @@ export default function WorkshopStatusModal({ isOpen, onClose }) {
     return (
         <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] ${cls}`}>
             <Calendar size={10} />
-            {d.toLocaleDateString('vi-VN')}
+            {formatShortDateVN(d)}
             {diff >= 0 && diff <= 3 && <span className="text-[8px] uppercase">{diff === 0 ? "Hnay" : `${diff}n`}</span>}
         </div>
     );
@@ -254,7 +255,7 @@ export default function WorkshopStatusModal({ isOpen, onClose }) {
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-[11px] font-bold text-gray-400 uppercase tracking-widest">
           <div></div>
           <span>
-            Dữ liệu mới nhất lúc: {new Date().toLocaleTimeString("vi-VN")}
+            Dữ liệu mới nhất lúc: {formatDateTimeVN(nowVN())}
           </span>
         </div>
       </div>

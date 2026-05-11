@@ -135,7 +135,7 @@ class CustomerController {
       });
 
       // Ghi log tạo khách hàng
-      await systemLogController.record(req, "CREATE_CUSTOMER", `Đã tạo khách hàng mới: ${newCustomer.full_name} (${newCustomer.customer_code || 'N/A'})`, "INFO", userId);
+      await systemLogController.record(req, "Tạo khách hàng", `Đã tạo khách hàng mới: ${newCustomer.full_name} (${newCustomer.customer_code || 'N/A'})`, "INFO", userId);
 
       return res.status(201).json({
         message: "Tạo khách hàng thành công",
@@ -171,7 +171,7 @@ class CustomerController {
       });
 
       // Ghi log cập nhật khách hàng
-      await systemLogController.record(req, "UPDATE_CUSTOMER", `Đã cập nhật thông tin khách hàng: ${customer.full_name} (ID: ${id})`, "INFO", userId);
+      await systemLogController.record(req, "Cập nhật khách hàng", `Đã cập nhật thông tin khách hàng: ${customer.full_name} (ID: ${id})`, "INFO", userId);
 
       return res.status(200).json({
         message: "Cập nhật thông tin khách hàng thành công",
@@ -207,7 +207,7 @@ class CustomerController {
       });
 
       // Ghi log xóa khách hàng
-      await systemLogController.record(req, "DELETE_CUSTOMER", `Đã xóa khách hàng: ${customer.full_name} (ID: ${id})`, "WARN", userId);
+      await systemLogController.record(req, "Xóa khách hàng", `Đã xóa khách hàng: ${customer.full_name} (ID: ${id})`, "WARN", userId);
 
       return res.status(200).json({ message: "Xóa khách hàng thành công (Soft Delete)" });
     } catch (error) {

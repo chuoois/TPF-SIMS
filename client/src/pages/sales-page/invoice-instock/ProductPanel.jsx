@@ -20,7 +20,7 @@ import {
   Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fmt, PRODUCT_TYPES } from "./mockData";
+import { fmt, PRODUCT_TYPES } from "@/constants/orderConfig";
 import CustomCheckbox from "@/components/control/CustomCheckbox";
 
 // Helper component for paginated filter sections

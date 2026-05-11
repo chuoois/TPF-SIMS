@@ -1,22 +1,19 @@
-/**
- * Component InStockInvoicePage
- * POS-style invoice for in-stock wood products
- *
- * Layout: 2-column split — Cart (left) + Product Catalog (right)
- * Features: Multi-tab invoices, search, category filter, quantity controls
- *
- * Created By: DNC
- * Created Date: 25/02/2026
- */
+
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import toast from "react-hot-toast";
 import useDebounce from "@/hooks/useDebounce";
-import { PrintableInvoice } from "../orders/components/PrintableInvoice";
+import { PrintableInvoice } from "@/pages/common/orders/PrintableInvoice";
 import { PageHelmet } from "@/components/seo/PageHelmet";
-import { ORDER_CONFIG } from "@/constants/orderConfig";
+import {
+  ORDER_CONFIG,
+  PRODUCT_TYPES,
+  DELIVERY_METHODS,
+  createEmptyTab,
+  fmt
+} from "@/constants/orderConfig";
 import AddCustomerModal from "@/pages/sales-page/components/AddCustomerModal";
 import WorkshopStatusModal from "@/pages/sales-page/components/WorkshopStatusModal";
 import CartPanel from "./CartPanel";
@@ -27,14 +24,9 @@ import productAttributeService from "@/services/productAttribute.service";
 import customerService from "@/services/customer.service";
 import orderService from "@/services/order.service";
 import { uploadMultipleImages } from "@/services/cloudinary.service";
-import {
-  ITEMS_PER_PAGE,
-  createEmptyTab,
-  fmt,
-  PRODUCT_TYPES,
-  DELIVERY_METHODS,
-  DEFAULT_WARRANTY,
-} from "./mockData";
+import { todayVN, nowVN } from "@/lib/dateUtils";
+
+const { ITEMS_PER_PAGE, DEFAULT_WARRANTY } = ORDER_CONFIG;
 
 // ===================== VALIDATION SCHEMA =====================
 const orderSchema = Yup.object().shape({
@@ -192,14 +184,18 @@ export default function InStockInvoicePage() {
             values.deliveryMethod === "store" ? "Lấy tại cửa hàng" : "Giao tận nhà",
           expected_fulfillment_date:
             values.deliveryMethod === "store"
-              ? values.storePickupDate || new Date().toISOString().split("T")[0]
+              ? values.storePickupDate || todayVN()
               : values.deliveryDate,
           note: values.orderNote,
           deposit_amount: values.depositAmount,
           address: values.selectedCustomer.address,
           total_amount: subtotal,
           order_type: computedOrderType,
-          order_status: computedOrderType === 1 ? ORDER_CONFIG.REVERSE_STATUS_MAP["Chờ xử lý"] : ORDER_CONFIG.REVERSE_STATUS_MAP["Chờ giao hàng"],
+          order_status: computedOrderType === 1
+            ? ORDER_CONFIG.REVERSE_STATUS_MAP["Chờ xử lý"]
+            : (values.deliveryMethod === "store" && !values.storePickupDate)
+              ? ORDER_CONFIG.REVERSE_STATUS_MAP["Hoàn thành"]
+              : ORDER_CONFIG.REVERSE_STATUS_MAP["Chờ giao hàng"],
           items: finalCartItems.map((item) => ({
             fk_product_id: item.id,
             item_name: item.name,
@@ -250,13 +246,13 @@ export default function InStockInvoicePage() {
           deliveryMethod: values.deliveryMethod,
           deliveryDate:
             values.deliveryMethod === "store"
-              ? values.storePickupDate || new Date().toISOString().split("T")[0]
+              ? values.storePickupDate || todayVN()
               : values.deliveryDate,
           storePickupDate:
             values.deliveryMethod === "store"
               ? values.storePickupDate || null
               : null,
-          date: new Date().toISOString(),
+          date: todayVN(),
         };
 
         // Simulation: Update simulated warranties
@@ -267,20 +263,20 @@ export default function InStockInvoicePage() {
         const newWarranties = finalCartItems
           .filter((item) => !item.isGift && item.warrantyMonths)
           .map((item, idx) => {
-            const startDate = new Date();
+            const startDate = nowVN();
             const endDate = new Date(startDate);
             endDate.setMonth(endDate.getMonth() + (item.warrantyMonths || 12));
 
             return {
-              id: `BH-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000000)}`,
+              id: `BH-${nowVN().getFullYear()}-${Math.floor(Math.random() * 1000000)}`,
               orderId: newOrder.code,
               customerName: newOrder.customer.name,
               phone: newOrder.customer.phone,
               productCode: item.sku,
               productName: item.name,
               serial: `${item.sku}-${Date.now().toString().slice(-4)}${idx}`,
-              startDate: startDate.toISOString(),
-              endDate: endDate.toISOString(),
+              startDate: todayVN(),
+              endDate: formatDateVN(endDate, "yyyy-MM-dd"),
               warrantyMonths: item.warrantyMonths || 12,
               status: "Còn hạn",
               maintenanceHistory: [],
@@ -594,15 +590,7 @@ export default function InStockInvoicePage() {
       const lt = item.priceMode === "raw" ? 0 : item.leadTime || 0;
       return Math.max(max, lt);
     }, 0);
-  }, [activeTab.cartItems]);
-
-
-
-
-
-
-
-  const totalPayable = Math.max(
+  }, [activeTab.cartItems]); const totalPayable = Math.max(
     0,
     subtotal - activeTab.discount - activeTab.depositAmount,
   );

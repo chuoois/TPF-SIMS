@@ -21,11 +21,13 @@ import {
   ShieldCheck,
   AlertCircle,
   Hammer,
+  ImagePlus,
 } from "lucide-react";
-import { ImagePlus } from "lucide-react";
+import { todayVN } from "@/lib/dateUtils";
 import { Button } from "@/components/ui/button";
 import CustomCheckbox from "@/components/control/CustomCheckbox";
-import { fmt, PRODUCT_TYPES, DELIVERY_METHODS, calculateSuggestedDeposit, DEFAULT_WARRANTY } from "./mockData";
+import { fmt, PRODUCT_TYPES, DELIVERY_METHODS, calculateSuggestedDeposit, ORDER_CONFIG } from "@/constants/orderConfig";
+const { DEFAULT_WARRANTY } = ORDER_CONFIG;
 
 export default function CartPanel({
   tabs,
@@ -90,10 +92,6 @@ export default function CartPanel({
     currentSubtotal,
     formik.setFieldValue,
   ]);
-
-
-
-
 
   return (
     <div
@@ -665,7 +663,7 @@ export default function CartPanel({
                   <input
                     type="date"
                     value={formik.values.storePickupDate || ""}
-                    min={new Date().toISOString().split("T")[0]}
+                    min={todayVN()}
                     onChange={(e) =>
                       formik.setFieldValue("storePickupDate", e.target.value)
                     }
@@ -707,7 +705,7 @@ export default function CartPanel({
                 <input
                   type="date"
                   value={formik.values.deliveryDate || ""}
-                  min={new Date().toISOString().split("T")[0]}
+                  min={todayVN()}
                   onChange={(e) =>
                     formik.setFieldValue("deliveryDate", e.target.value)
                   }

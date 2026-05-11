@@ -21,7 +21,7 @@ import DataTable from "@/components/control/DataTable";
 import toast from "react-hot-toast";
 import CreateManufacturingOrderModal from "./components/CreateManufacturingOrderModal";
 import ManufacturingOrderDetail from "./components/ManufacturingOrderDetail";
-import { INITIAL_ORDERS } from "../orders/mockData";
+const INITIAL_ORDERS = [];
 
 const INITIAL_PRODUCTS = [
   {

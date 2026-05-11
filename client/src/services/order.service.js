@@ -45,6 +45,17 @@ const orderService = {
     const response = await axiosInstance.get(`/order/${id}`);
     return response.data;
   },
+
+  /**
+   * Cập nhật trạng thái và thông tin đơn hàng
+   * @param {number|string} id - ID đơn hàng
+   * @param {Object} updateData - Dữ liệu cập nhật (order_status, received_amount, note...)
+   * @returns {Promise}
+   */
+  async updateOrderStatus(id, updateData) {
+    const response = await axiosInstance.put(`/order/${id}/status`, updateData);
+    return response.data;
+  },
 };
 
 export default orderService;

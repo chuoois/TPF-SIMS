@@ -45,7 +45,7 @@ const Order = sequelize.define(
     },
     order_status: {
       type: DataTypes.TINYINT,
-      defaultValue: 1, // 1: Pending, 2: Confirmed, 3: Processing, 4: Shipping, 5: Completed, 0: Cancelled
+      defaultValue: 1, //  0: "Đơn đã hủy", 1: "Chờ sản xuất", 2: "Chờ xử lý", 3: "Đang gia công", 4: "Chờ giao hàng", 5: "Đang giao hàng", 6: "Hoàn thành", 7: "Chờ duyệt hủy"
     },
     order_type: {
       type: DataTypes.TINYINT,
