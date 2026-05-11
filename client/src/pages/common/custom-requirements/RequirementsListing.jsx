@@ -20,6 +20,7 @@ import useCachedFetch from "@/hooks/useCachedFetch";
 import customRequestService from "@/services/customRequest.service";
 import { STATUS_MAP, STATUS_CONFIG, REVERSE_STATUS_MAP } from "@/constants/customRequest.constants";
 import RequirementDetailModal, { ImageViewer } from "./RequirementDetailModal";
+import { formatShortDateVN, isoToDisplayDate } from "@/lib/dateUtils";
 
 export default function RequirementsListing({ userRole = 'sales' }) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -150,31 +151,42 @@ export default function RequirementsListing({ userRole = 'sales' }) {
         </div>
       ),
     },
-    { header: "Ngày tạo", render: (r) => r.createdDate ? new Date(r.createdDate).toLocaleDateString("vi-VN") : "---" },
+    { 
+      header: "Ngày tạo", 
+      headerClassName: "text-center", 
+      className: "text-center",
+      render: (r) => formatShortDateVN(r.createdDate) || "---" 
+    },
     {
       header: "Giao hàng (Dự kiến)",
+      headerClassName: "text-center",
+      className: "text-center",
       render: (r) => (
-        <div className="flex items-center gap-2 text-indigo-600">
+        <div className="flex items-center justify-center gap-2 text-indigo-600">
           <Calendar size={14} className="text-indigo-300" />
-          <span className="font-bold">{r.deliveryDate ? String(r.deliveryDate).split("T")[0].split("-").reverse().join("/") : "---"}</span>
+          <span className="font-bold">{isoToDisplayDate(r.deliveryDate) || "---"}</span>
         </div>
       ),
     },
     {
       header: "Xong xưởng (Dự kiến)",
+      headerClassName: "text-center",
+      className: "text-center",
       render: (r) => (
-        <div className="flex items-center gap-2 text-amber-600">
+        <div className="flex items-center justify-center gap-2 text-amber-600">
           <Calendar size={14} className="text-amber-300" />
-          <span className="font-bold">{r.expectedWorkshopDate ? String(r.expectedWorkshopDate).split("T")[0].split("-").reverse().join("/") : "---"}</span>
+          <span className="font-bold">{isoToDisplayDate(r.expectedWorkshopDate) || "---"}</span>
         </div>
       ),
     },
     {
       header: "Trạng thái",
+      headerClassName: "text-center",
+      className: "text-center",
       render: (r) => {
         const sc = STATUS_CONFIG[r.status] || STATUS_CONFIG["Chờ tiếp nhận"];
         return (
-          <div className="flex justify-center">
+          <div className="inline-flex justify-center">
             <span className="px-3 py-1 rounded-full text-[11px] font-bold border flex items-center" style={{ backgroundColor: sc.bg, color: sc.text, borderColor: sc.border }}>
               <span className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: sc.text }}></span>
               {r.status}

@@ -17,14 +17,27 @@ import {
   CreditCard,
   Calendar,
   ShieldCheck,
-  AlertCircle,
-  Hammer,
   Eye,
   Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CustomCheckbox from "@/components/control/CustomCheckbox";
-import { fmt, calculateSuggestedDeposit, DELIVERY_METHODS } from "./mockData";
+import { fmt, DELIVERY_METHODS } from "@/constants/orderConfig";
+
+const calculateCustomDeposit = (subtotal) => {
+  if (!subtotal || subtotal <= 0) {
+    return { amount: 0, percentage: 0, reason: "", rate: 0 };
+  }
+  const rate = 0.5;
+  let amount = Math.round(subtotal * rate);
+  amount = Math.min(amount, subtotal);
+  return {
+    amount,
+    percentage: Math.round(rate * 100),
+    rate,
+    reason: "Đơn hàng đặt làm riêng (Yêu cầu cọc 50% để nhập phôi gỗ)",
+  };
+};
 
 export default function RequirementCartPanel({
   tabs,
@@ -55,7 +68,7 @@ export default function RequirementCartPanel({
   const customerSearchRef = useRef(null);
 
   const suggestedDepositInfo = useMemo(() => {
-    return calculateSuggestedDeposit(subtotal);
+    return calculateCustomDeposit(subtotal);
   }, [subtotal]);
 
   // Tự động cập nhật tiền cọc vào Formik - Lấy nguyên logic bên invoice-instock

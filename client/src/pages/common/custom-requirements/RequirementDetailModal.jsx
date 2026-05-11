@@ -26,6 +26,7 @@ import supplierService from "@/services/supplier.service";
 import customRequestService from "@/services/customRequest.service";
 import productAttributeService from "@/services/productAttribute.service";
 import { uploadMultipleImages } from "@/services/cloudinary.service";
+import { formatDateVN } from "@/lib/dateUtils";
 
 // Add no-scrollbar utility if not available globally
 const noScrollbarStyle = `
@@ -133,7 +134,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
       setDepositAmount(Math.round(Number(req.depositAmount || 0)));
       setTotalAmount(Math.round(Number(req.totalAmount || 0)));
       setIsFullPayment(req.depositAmount >= req.totalAmount && req.totalAmount > 0);
-      setDeliveryDate(req.deliveryDate ? req.deliveryDate.split("T")[0] : "");
+      setDeliveryDate(formatDateVN(req.deliveryDate, "yyyy-MM-dd"));
       setDeliveryMethod(req.deliveryMethod || "");
       setNotes(req.notes || "");
       // totalCostPrice sẽ được tính tự động từ items bên dưới
@@ -155,7 +156,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
           note: item.specs?.note || "",
           designImages: item.designImages || [],
           fk_supplier_id: item.fk_supplier_id ? String(item.fk_supplier_id) : "",
-          expectedWorkshopDate: item.expectedWorkshopDate ? String(item.expectedWorkshopDate).split("T")[0] : "",
+          expectedWorkshopDate: formatDateVN(item.expectedWorkshopDate, "yyyy-MM-dd"),
         })),
       );
       setIsEditing(false);
@@ -197,6 +198,11 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
   };
 
   const handleSaveAll = async () => {
+    // Validate required fields
+    if (!deliveryMethod) {
+      toast.error("Vui lòng chọn Phương thức giao hàng");
+      return;
+    }
     setIsSaving(true);
     const loadingToast = toast.loading("Đang lưu thay đổi...");
     try {
@@ -321,20 +327,20 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
               <section className="space-y-3">
                 <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2"><Package size={14} /> Giao hàng</h3>
                 <div className="p-4 rounded-xl bg-white border border-gray-100 space-y-4">
-                  <div className="space-y-2">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase">Phương thức</p>
+                  <div className={`space-y-2 p-3 rounded-lg transition-all ${canEditProduction ? 'bg-[#EAF6EE]/40 border border-[#34B057]/20' : 'opacity-60'}`}>
+                    <p className={`text-[10px] font-bold uppercase ${canEditProduction ? 'text-[#34B057]' : 'text-gray-400'}`}>Phương thức <span className="text-red-500">*</span></p>
                     <div className="flex flex-col gap-2">
                       {['store', 'delivery'].map(m => (
-                        <label key={m} className={`flex items-center gap-2 ${canEditProduction ? 'cursor-pointer' : 'cursor-default'}`}>
+                        <label key={m} className={`flex items-center gap-2 ${canEditProduction ? 'cursor-pointer' : 'cursor-not-allowed'}`}>
                           <input type="radio" disabled={!canEditProduction} checked={deliveryMethod === m} onChange={() => setDeliveryMethod(m)} className="w-3.5 h-3.5 text-[#34B057] focus:ring-0" />
                           <span className={`text-[13px] ${deliveryMethod === m ? "font-bold text-[#34B057]" : "text-gray-600"}`}>{m === 'store' ? 'Lấy tại cửa hàng' : 'Giao tận nơi'}</span>
                         </label>
                       ))}
                     </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase">Ngày giao (Dự kiến)</p>
-                    <input type="date" readOnly={!canEdit} value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} className={`w-full border rounded-lg text-[13px] font-bold px-3 py-2 transition-colors ${canEdit ? 'bg-white border-[#34B057]/20 text-gray-700 focus:border-[#34B057]' : 'bg-gray-50 border-gray-100 text-gray-700'}`} />
+                  <div className={`space-y-1.5 p-3 rounded-lg transition-all ${canEditProduction ? 'bg-[#EAF6EE]/40 border border-[#34B057]/20' : 'opacity-60'}`}>
+                    <p className={`text-[10px] font-bold uppercase ${canEditProduction ? 'text-[#34B057]' : 'text-gray-400'}`}>Ngày giao (Dự kiến)</p>
+                    <input type="date" readOnly={!canEditProduction} value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} className={`w-full border rounded-lg text-[13px] font-bold px-3 py-2 transition-colors ${canEditProduction ? 'bg-white border-[#34B057]/20 text-gray-700 focus:border-[#34B057] cursor-pointer' : 'bg-gray-50 border-gray-100 text-gray-500 cursor-not-allowed'}`} />
                   </div>
                 </div>
               </section>
@@ -342,9 +348,9 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
               <section className="space-y-3">
                 <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2"><CheckCircle size={14} /> Thanh toán (đ)</h3>
                 <div className="p-4 rounded-xl bg-white border border-gray-100 space-y-4">
-                  <div className="space-y-1">
+                  <div className={`space-y-1 p-3 rounded-lg transition-all ${canEditProduction ? 'bg-[#EAF6EE]/40 border border-[#34B057]/20' : 'opacity-60'}`}>
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] font-bold text-[#34B057] uppercase">Tổng tiền</p>
+                      <p className={`text-[10px] font-bold uppercase ${canEditProduction ? 'text-[#34B057]' : 'text-gray-400'}`}>Tổng tiền</p>
                       {canEditProduction && (
                         <label className="flex items-center gap-1.5 cursor-pointer">
                           <input type="checkbox" className="w-3 h-3 rounded text-[#34B057]" checked={isFullPayment} onChange={(e) => setIsFullPayment(e.target.checked)} />
@@ -352,18 +358,18 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                         </label>
                       )}
                     </div>
-                    <input type="text" readOnly={!canEditProduction} value={totalAmount === 0 ? "" : totalAmount.toLocaleString("vi-VN")} onChange={(e) => setTotalAmount(Number(e.target.value.replace(/\D/g, "")))} className={`w-full text-[18px] font-bold text-[#34B057] bg-transparent border-none focus:ring-0 p-0 ${canEditProduction ? 'border-b border-[#34B057]/10' : ''}`} />
+                    <input type="text" readOnly={!canEditProduction} value={totalAmount === 0 ? "" : totalAmount.toLocaleString("vi-VN")} onChange={(e) => setTotalAmount(Number(e.target.value.replace(/\D/g, "")))} className={`w-full text-[18px] font-bold bg-transparent border-none focus:ring-0 p-0 ${canEditProduction ? 'text-[#34B057] border-b border-[#34B057]/10 cursor-text' : 'text-gray-400 cursor-not-allowed'}`} />
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase">Tiền cọc</p>
-                    <input type="text" readOnly={!canEditProduction || isFullPayment} value={depositAmount === 0 ? "" : depositAmount.toLocaleString("vi-VN")} onChange={(e) => setDepositAmount(Number(e.target.value.replace(/\D/g, "")))} className={`w-full text-[16px] font-bold text-gray-700 bg-transparent border-none focus:ring-0 p-0 ${canEditProduction ? 'border-b border-gray-100' : ''}`} />
+                  <div className={`space-y-1 p-3 rounded-lg transition-all ${canEditProduction && !isFullPayment ? 'bg-[#EAF6EE]/40 border border-[#34B057]/20' : 'opacity-60'}`}>
+                    <p className={`text-[10px] font-bold uppercase ${canEditProduction && !isFullPayment ? 'text-[#34B057]' : 'text-gray-400'}`}>Tiền cọc</p>
+                    <input type="text" readOnly={!canEditProduction || isFullPayment} value={depositAmount === 0 ? "" : depositAmount.toLocaleString("vi-VN")} onChange={(e) => setDepositAmount(Number(e.target.value.replace(/\D/g, "")))} className={`w-full text-[16px] font-bold bg-transparent border-none focus:ring-0 p-0 ${canEditProduction && !isFullPayment ? 'text-gray-700 border-b border-gray-100 cursor-text' : 'text-gray-400 cursor-not-allowed'}`} />
                   </div>
                 </div>
               </section>
 
               <section className="space-y-2">
-                <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2"><FileText size={14} /> Ghi chú</h3>
-                <textarea value={notes} readOnly={!canEdit} onChange={(e) => setNotes(e.target.value)} className="w-full h-24 p-3 rounded-xl border border-amber-100 bg-amber-50/20 text-[12px] text-gray-700 resize-none focus:ring-2 focus:ring-amber-200" placeholder={canEdit ? "Nhập ghi chú chung..." : ""} />
+                <h3 className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 ${canEdit ? 'text-[#34B057]' : 'text-gray-400'}`}><FileText size={14} /> Ghi chú</h3>
+                <textarea value={notes} readOnly={!canEdit} onChange={(e) => setNotes(e.target.value)} className={`w-full h-24 p-3 rounded-xl border text-[12px] resize-none transition-all ${canEdit ? 'border-[#34B057]/20 bg-[#EAF6EE]/30 text-gray-700 focus:ring-2 focus:ring-[#34B057]/20 cursor-text' : 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed opacity-60'}`} placeholder={canEdit ? "Nhập ghi chú chung..." : ""} />
               </section>
             </aside>
 
@@ -434,31 +440,29 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                               <div><p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Số lượng</p><div className="text-[14px] font-bold text-gray-700">{spec.quantity}</div></div>
                             </div>
                             
-                            <div className="p-3.5 rounded-xl bg-gray-50/50 border border-gray-100 grid grid-cols-2 gap-6">
+                            <div className={`p-3.5 rounded-xl grid grid-cols-2 gap-6 border transition-all ${canEditProduction ? 'bg-[#EAF6EE]/30 border-[#34B057]/20' : 'bg-gray-50/50 border-gray-100 opacity-60'}`}>
                               <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-[#34B057] uppercase block">Đơn giá bán (đ)</label>
+                                <label className={`text-[10px] font-bold uppercase block ${canEditProduction ? 'text-[#34B057]' : 'text-gray-400'}`}>Đơn giá bán (đ)</label>
                                 <input 
                                   type="text" 
                                   readOnly={!canEditProduction} 
                                   value={spec.price === 0 ? "" : spec.price.toLocaleString("vi-VN")} 
                                   onChange={(e) => handleUpdateItemSpec(index, "price", Number(e.target.value.replace(/\D/g, "")))} 
-                                  className={`w-full bg-transparent border-none focus:ring-0 text-[16px] font-black text-[#34B057] p-0 ${canEditProduction ? 'border-b border-[#34B057]/10' : ''}`} 
+                                  className={`w-full bg-transparent border-none focus:ring-0 text-[16px] font-black p-0 ${canEditProduction ? 'text-[#34B057] border-b border-[#34B057]/10 cursor-text' : 'text-gray-400 cursor-not-allowed'}`} 
                                   placeholder="0"
                                 />
                               </div>
-                              {userRole === 'owner' && (
-                                <div className="space-y-1 border-l border-gray-200 pl-6">
-                                  <label className="text-[10px] font-bold text-amber-600 uppercase block">Giá vốn / Nhập (đ)</label>
+                              <div className="space-y-1 border-l border-gray-200 pl-6">
+                                  <label className={`text-[10px] font-bold uppercase block ${canEditProduction ? 'text-amber-600' : 'text-gray-400'}`}>Giá vốn / Nhập (đ)</label>
                                   <input 
                                     type="text" 
                                     readOnly={!canEditProduction} 
                                     value={spec.costPrice === 0 ? "" : spec.costPrice.toLocaleString("vi-VN")} 
                                     onChange={(e) => handleUpdateItemSpec(index, "costPrice", Number(e.target.value.replace(/\D/g, "")))} 
-                                    className={`w-full bg-transparent border-none focus:ring-0 text-[16px] font-black text-amber-600 p-0 ${canEditProduction ? 'border-b border-amber-100' : ''}`} 
+                                    className={`w-full bg-transparent border-none focus:ring-0 text-[16px] font-black p-0 ${canEditProduction ? 'text-amber-600 border-b border-amber-100 cursor-text' : 'text-gray-400 cursor-not-allowed'}`} 
                                     placeholder="0"
                                   />
                                 </div>
-                              )}
                             </div>
                           </div>
                         </div>
@@ -469,31 +473,31 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                             <div className="flex items-center gap-2">
                               {['length', 'width', 'height'].map((f, i) => (
                                 <div key={f} className="flex-1 flex items-center gap-1">
-                                  <input type="number" readOnly={!canEdit} value={spec[f]} onChange={(e) => handleUpdateItemSpec(index, f, e.target.value)} className={`w-full bg-white border rounded-lg text-center text-[13px] font-bold py-2 ${canEdit ? 'border-[#34B057]/10' : 'border-gray-100'}`} />
+                                  <input type="number" readOnly={!canEdit} value={spec[f]} onChange={(e) => handleUpdateItemSpec(index, f, e.target.value)} className={`w-full border rounded-lg text-center text-[13px] font-bold py-2 transition-all ${canEdit ? 'bg-white border-[#34B057]/20 text-gray-700 cursor-text' : 'bg-gray-50 border-gray-100 text-gray-400 cursor-not-allowed'}`} />
                                   {i < 2 && <span className="text-gray-300">×</span>}
                                 </div>
                               ))}
                             </div>
                           </div>
 
-                          <div className={`space-y-3 p-4 rounded-xl border ${canEditProduction ? 'bg-amber-50/30 border-amber-100' : 'bg-gray-50/50 border-gray-100'}`}>
+                          <div className={`space-y-3 p-4 rounded-xl border transition-all ${canEditProduction ? 'bg-amber-50/30 border-amber-100' : 'bg-gray-50/50 border-gray-100 opacity-60'}`}>
                             <p className={`text-[10px] font-bold uppercase flex items-center gap-2 ${canEditProduction ? 'text-amber-600' : 'text-gray-400'}`}><Camera size={14} /> Phân bổ sản xuất</p>
                             <div className="flex flex-col gap-3">
-                              <div className="bg-white p-2.5 rounded-lg border border-gray-50">
-                                <label className="text-[9px] font-bold text-gray-400 uppercase">Xưởng / Nhà cung cấp</label>
-                                <select disabled={!canEditProduction} value={spec.fk_supplier_id} onChange={(e) => handleUpdateItemSpec(index, "fk_supplier_id", e.target.value)} className="w-full bg-transparent border-none text-[13px] font-bold p-0 mt-0.5">{suppliers.map(s => <option key={s.pk_supplier_id} value={String(s.pk_supplier_id)}>{s.supplier_name}</option>)}<option value="">Chọn xưởng...</option></select>
+                              <div className={`bg-white p-2.5 rounded-lg border ${canEditProduction ? 'border-amber-100' : 'border-gray-50'}`}>
+                                <label className={`text-[9px] font-bold uppercase ${canEditProduction ? 'text-amber-600' : 'text-gray-400'}`}>Xưởng / Nhà cung cấp</label>
+                                <select disabled={!canEditProduction} value={spec.fk_supplier_id} onChange={(e) => handleUpdateItemSpec(index, "fk_supplier_id", e.target.value)} className={`w-full bg-transparent border-none text-[13px] font-bold p-0 mt-0.5 ${canEditProduction ? 'text-gray-700 cursor-pointer' : 'text-gray-400 cursor-not-allowed'}`}>{suppliers.map(s => <option key={s.pk_supplier_id} value={String(s.pk_supplier_id)}>{s.supplier_name}</option>)}<option value="">Chọn xưởng...</option></select>
                               </div>
-                              <div className="bg-white p-2.5 rounded-lg border border-gray-50">
-                                <label className="text-[9px] font-bold text-gray-400 uppercase">Ngày xong dự kiến</label>
-                                <input type="date" readOnly={!canEditProduction} value={spec.expectedWorkshopDate} onChange={(e) => handleUpdateItemSpec(index, "expectedWorkshopDate", e.target.value)} className="w-full bg-transparent border-none text-[13px] font-bold p-0 mt-0.5" />
+                              <div className={`bg-white p-2.5 rounded-lg border ${canEditProduction ? 'border-amber-100' : 'border-gray-50'}`}>
+                                <label className={`text-[9px] font-bold uppercase ${canEditProduction ? 'text-amber-600' : 'text-gray-400'}`}>Ngày xong dự kiến</label>
+                                <input type="date" readOnly={!canEditProduction} value={spec.expectedWorkshopDate} onChange={(e) => handleUpdateItemSpec(index, "expectedWorkshopDate", e.target.value)} className={`w-full bg-transparent border-none text-[13px] font-bold p-0 mt-0.5 ${canEditProduction ? 'text-gray-700 cursor-pointer' : 'text-gray-400 cursor-not-allowed'}`} />
                               </div>
                             </div>
                           </div>
                         </div>
 
-                        <div className="p-4 rounded-xl border bg-gray-50/20 border-gray-100">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1 flex items-center gap-2"><FileText size={14} /> Yêu cầu kỹ thuật</label>
-                          <textarea readOnly={!canEdit} value={spec.note} onChange={(e) => handleUpdateItemSpec(index, "note", e.target.value)} className="w-full bg-transparent border-none text-[13px] text-gray-700 p-0 resize-none italic" rows={2} />
+                        <div className={`p-4 rounded-xl border transition-all ${canEdit ? 'bg-[#EAF6EE]/20 border-[#34B057]/10' : 'bg-gray-50/20 border-gray-100 opacity-60'}`}>
+                          <label className={`text-[10px] font-bold uppercase block mb-1 flex items-center gap-2 ${canEdit ? 'text-[#34B057]' : 'text-gray-400'}`}><FileText size={14} /> Yêu cầu kỹ thuật</label>
+                          <textarea readOnly={!canEdit} value={spec.note} onChange={(e) => handleUpdateItemSpec(index, "note", e.target.value)} className={`w-full bg-transparent border-none text-[13px] p-0 resize-none italic ${canEdit ? 'text-gray-700 cursor-text' : 'text-gray-400 cursor-not-allowed'}`} rows={2} />
                         </div>
                       </div>
                     </div>
@@ -557,9 +561,9 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
 
 // ============= HELPER =============
 const EditableSpecItem = ({ label, value, onChange, options, onSelect, onFocus, onBlur, readOnly }) => (
-  <div className="relative">
-    <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">{label}</label>
-    <input type="text" value={value} onFocus={onFocus} onBlur={onBlur} readOnly={readOnly} onChange={(e) => onChange(e.target.value)} className={`w-full bg-transparent border-none focus:ring-0 text-[13px] text-gray-700 font-bold p-0 border-b border-gray-100 ${readOnly ? '' : 'focus:border-[#34B057]'}`} />
+  <div className={`relative transition-all ${readOnly ? 'opacity-60' : ''}`}>
+    <label className={`text-[10px] font-bold uppercase block mb-1 ${readOnly ? 'text-gray-400' : 'text-[#34B057]'}`}>{label}</label>
+    <input type="text" value={value} onFocus={onFocus} onBlur={onBlur} readOnly={readOnly} onChange={(e) => onChange(e.target.value)} className={`w-full bg-transparent border-none focus:ring-0 text-[13px] font-bold p-0 border-b transition-all ${readOnly ? 'text-gray-400 border-gray-100 cursor-not-allowed' : 'text-gray-700 border-[#34B057]/30 focus:border-[#34B057] cursor-text'}`} />
     {options && (
       <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg z-50 max-h-40 overflow-y-auto border-gray-100 shadow-lg">
         {options.filter(o => o.toLowerCase().includes(value.toLowerCase())).map(o => (

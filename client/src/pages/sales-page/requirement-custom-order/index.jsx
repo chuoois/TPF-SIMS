@@ -18,7 +18,14 @@ import RequirementCartPanel from "./RequirementCartPanel";
 import CustomItemInputPanel from "./CustomItemInputPanel";
 import { Button } from "@/components/ui/button";
 import { X, Package } from "lucide-react";
-import { createEmptyTab, generateOrderCode, fmt, DELIVERY_METHODS } from "./mockData";
+import { 
+  ORDER_CONFIG, 
+  DELIVERY_METHODS, 
+  createEmptyTab, 
+  fmt 
+} from "@/constants/orderConfig";
+import { todayVN, nowVN } from "@/lib/dateUtils";
+import { format } from "date-fns";
 import customerService from "@/services/customer.service";
 import orderService from "@/services/order.service";
 import customRequestService from "@/services/customRequest.service";
@@ -62,6 +69,10 @@ export default function CustomOrderRequirementsPage() {
   const [customerSearch, setCustomerSearch] = useState("");
 
   const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0] || createEmptyTab();
+  
+  const generateOrderCode = useCallback(() => {
+    return format(nowVN(), "'DH'MMddHHmm");
+  }, []);
 
   const debouncedCustomerSearch = useDebounce(customerSearch, 300);
   const lastSyncedValuesRef = useRef(null);

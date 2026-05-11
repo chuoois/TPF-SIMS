@@ -20,7 +20,6 @@ const CustomRequestItem = require("./CustomRequestItem");
 const ProductCoupon = require("./ProductCoupon");
 const CouponProduct = require("./CouponProduct");
 const OrderItemProcessing = require("./OrderItemProcessing");
-// ── Payroll ──────────────────────────────────────────────
 const Employee = require("./Employee");
 const PayrollPeriod = require("./PayrollPeriod");
 const SalaryRecord = require("./SalaryRecord");

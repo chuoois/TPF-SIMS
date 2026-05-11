@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { AlertTriangle, Bell, Settings, LogOut, CheckCircle2, XCircle, Info, Clock, Check } from "lucide-react";
 import Logo from "@/assets/tp-logo.svg";
@@ -8,6 +9,7 @@ import { getWarehouseStatus } from "@/pages/worker-page/mock";
 
 export const Navbar = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotification();
   const [showSettings, setShowSettings] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -43,6 +45,7 @@ export const Navbar = () => {
     try {
       await logout();
       toast.success("Đã đăng xuất");
+      navigate("/auth/login");
     } catch (error) {
       toast.error("Lỗi khi đăng xuất");
     }
