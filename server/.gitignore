@@ -25,3 +25,7 @@ dist-ssr
 
 .env
 /src/generated/prisma
+
+# Testing
+coverage/
+coverage
