@@ -50,24 +50,32 @@ export default function RequirementsListing({ userRole = 'sales' }) {
     const response = await customRequestService.getAllRequests(params);
 
     return {
-      items: response.data.map((r) => ({
-        id: r.pk_custom_request_id,
-        code: r.request_code,
-        customer: r.customer?.full_name || "Khách lẻ",
-        phone: r.customer?.phone_number || "",
-        createdDate: r.createdate,
-        status: STATUS_MAP[r.status] || "Đang xử lý",
-        address: r.address,
-        notes: r.note,
-        totalAmount: r.total_amount,
-        deliveryDate: r.expected_fulfillment_date,
-        thumbnail: r.items?.[0]?.item_img,
-        expectedWorkshopDate: (r.items || []).reduce((max, item) => {
-          if (!item.expected_supplier_date) return max;
-          const itemDate = String(item.expected_supplier_date).split("T")[0];
-          return !max || itemDate > max ? itemDate : max;
-        }, null),
-      })),
+      items: response.data.map((r) => {
+        const itemNames = (r.items || []).map(it => it.item_name).filter(Boolean);
+        const hasBundle = (r.items || []).some(it => Number(it.item_is_bundle) === 1);
+        
+        return {
+          id: r.pk_custom_request_id,
+          code: r.request_code,
+          customer: r.customer?.full_name || "Khách lẻ",
+          phone: r.customer?.phone_number || "",
+          createdDate: r.createdate,
+          status: STATUS_MAP[r.status] || "Đang xử lý",
+          address: r.address,
+          notes: r.note,
+          totalAmount: r.total_amount,
+          deliveryDate: r.expected_fulfillment_date,
+          thumbnail: r.items?.[0]?.item_img,
+          productNames: itemNames.join(", "),
+          itemCount: itemNames.length,
+          hasBundle,
+          expectedWorkshopDate: (r.items || []).reduce((max, item) => {
+            if (!item.expected_supplier_date) return max;
+            const itemDate = String(item.expected_supplier_date).split("T")[0];
+            return !max || itemDate > max ? itemDate : max;
+          }, null),
+        };
+      }),
       total: response.pagination.totalItems,
       counts: response.statusCounts || {}
     };
@@ -152,6 +160,29 @@ export default function RequirementsListing({ userRole = 'sales' }) {
         <div className="flex flex-col">
           <span className="font-bold text-slate-900">{r.customer}</span>
           <span className="text-[11px] text-slate-400 font-medium">{r.phone}</span>
+        </div>
+      ),
+    },
+    {
+      header: "Sản phẩm",
+      className: "max-w-[200px]",
+      render: (r) => (
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[13px] font-medium text-slate-700 truncate max-w-full" title={r.productNames}>
+              {r.productNames || "---"}
+            </span>
+            {r.hasBundle && (
+              <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 text-[9px] font-bold uppercase border border-amber-100 shrink-0">
+                Bộ
+              </span>
+            )}
+          </div>
+          {r.itemCount > 0 && (
+            <span className="text-[10px] text-slate-400 font-medium italic">
+              {r.itemCount} sản phẩm
+            </span>
+          )}
         </div>
       ),
     },

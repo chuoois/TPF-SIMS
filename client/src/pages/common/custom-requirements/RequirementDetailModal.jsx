@@ -155,7 +155,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
           designImages: item.designImages || [],
           fk_supplier_id: item.fk_supplier_id ? String(item.fk_supplier_id) : "",
           expectedWorkshopDate: formatDateVN(item.expectedWorkshopDate, "yyyy-MM-dd"),
-          item_is_bundle: item.item_is_bundle ?? 0,
+          item_is_bundle: Number(item.item_is_bundle || 0),
           item_bundle_items: item.item_bundle_items || [],
         })),
       );
@@ -436,8 +436,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                         <div className="border-b border-gray-50 pb-4">
                           <h4 className="text-[17px] font-bold text-gray-900 mb-4">{spec.name}</h4>
 
-                          {/* Badge bộ sản phẩm */}
-                          {spec.item_is_bundle === 1 && (
+                          {Number(spec.item_is_bundle) === 1 && (
                             <span className="inline-flex items-center gap-1.5 mb-3 px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-[11px] font-bold">
                               <Package size={11} /> Bộ sản phẩm
                             </span>
@@ -479,7 +478,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                           {/* === BUNDLE: danh sách món === */}
-                          {spec.item_is_bundle === 1 ? (
+                          {Number(spec.item_is_bundle) === 1 ? (
                             <div className="col-span-2 space-y-3 p-4 rounded-xl border bg-amber-50/30 border-amber-100">
                               <p className="text-[10px] font-bold text-amber-600 uppercase flex items-center gap-2">
                                 <Package size={14} /> Bộ sản phẩm ({(spec.item_bundle_items || []).length} món)
@@ -528,7 +527,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                           )}
 
                           {/* === PHÂN BỔ SẢN XUẤT — hiển thị cho cả đơn lẻ VÀ bộ sản phẩm === */}
-                          <div className={`space-y-3 p-4 rounded-xl border transition-all ${spec.item_is_bundle === 1 ? 'col-span-2' : ''} ${canEditProduction ? 'bg-amber-50/30 border-amber-100' : 'bg-gray-50/50 border-gray-100 opacity-60'}`}>
+                          <div className={`space-y-3 p-4 rounded-xl border transition-all ${Number(spec.item_is_bundle) === 1 ? 'col-span-2' : ''} ${canEditProduction ? 'bg-amber-50/30 border-amber-100' : 'bg-gray-50/50 border-gray-100 opacity-60'}`}>
                             <p className={`text-[10px] font-bold uppercase flex items-center gap-2 ${canEditProduction ? 'text-amber-600' : 'text-gray-400'}`}><Camera size={14} /> Phân bổ sản xuất</p>
                             <div className="flex flex-col gap-3">
                               <div className={`bg-white p-2.5 rounded-lg border ${canEditProduction ? 'border-amber-100' : 'border-gray-50'}`}>

@@ -108,10 +108,7 @@ const CustomerInfoCard = ({ o }) => (
           <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--text-placeholder)]">Ngày giao</p>
           <p className="text-[13px] font-semibold mt-0.5 text-[var(--text-main)]">{fmtDate(o.deliveryDate)}</p>
         </div>
-        <div className="md:col-span-1">
-          <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--text-placeholder)]">Ghi chú</p>
-          <p className="text-[13px] font-semibold mt-0.5 text-[var(--text-main)]">{o.notes || "—"}</p>
-        </div>
+    
       </div>
     </div>
   </div>
@@ -286,7 +283,7 @@ const StandardOrderView = ({
                   <div className="bg-[var(--status-warning)]/5 p-5 rounded-xl border border-[var(--status-warning)]/10 space-y-2">
                     <div className="flex items-center gap-2 text-[var(--status-pending)]">
                       <FileText size={16} />
-                      <span className="text-[12px] font-black uppercase tracking-tight">Yêu cầu đặc biệt từ khách</span>
+                      <span className="text-[12px] font-black uppercase tracking-tight">Ghi chú đơn hàng</span>
                     </div>
                     <p className="text-[14px] text-[var(--text-main)] italic opacity-80 leading-relaxed">
                       "{o.customRequirements || "Khách yêu cầu làm kỹ phần đục chạm, đánh nhám kỹ trước khi lót. Chân quỳ đặc."}"
@@ -355,6 +352,15 @@ const StandardOrderView = ({
                         ))}
                       </div>
 
+                      {(p.note || p.size?.note) && (
+                        <div className="mt-4 p-3 bg-[var(--palette-orange)]/5 border border-[var(--palette-orange)]/10 rounded-lg">
+                          <p className="text-[12px] text-[var(--palette-orange)] font-medium leading-relaxed">
+                            <span className="opacity-60 mr-1.5 font-bold uppercase text-[10px] tracking-wider">Ghi chú sản phẩm:</span> 
+                            {p.note || p.size?.note}
+                          </p>
+                        </div>
+                      )}
+
                       {p.isBundle && p.bundleItems && p.bundleItems.length > 0 && (
                         <div className="mt-6 border-t border-[var(--grid-border)]/30 pt-4">
                           <span className="text-[10px] font-black text-[var(--text-placeholder)] uppercase tracking-widest block mb-3">Thành phần bộ sản phẩm</span>
@@ -368,20 +374,18 @@ const StandardOrderView = ({
                                   <p className="text-[13px] font-bold text-[var(--text-main)] truncate">{sub.name}</p>
                                   <div className="flex items-center gap-3 mt-0.5">
                                     <span className="text-[11px] text-[var(--text-secondary)] font-bold">x{sub.quantity || 1}</span>
-                                    <span className="text-[11px] text-[var(--text-placeholder)]">|</span>
-                                    <span className="text-[11px] text-[var(--text-secondary)]">{sub.material}</span>
-                                    <span className="text-[11px] text-[var(--text-placeholder)]">|</span>
-                                    <span className="text-[11px] text-[var(--text-secondary)]">{sub.color}</span>
                                     {sub.size && (
                                       <>
                                         <span className="text-[11px] text-[var(--text-placeholder)]">|</span>
                                         <span className="text-[11px] text-[var(--text-secondary)]">
-                                          {sub.size.length}x{sub.size.width}x{sub.size.height} {sub.size.unit || 'cm'}
+                                          {typeof sub.size === 'object' && sub.size !== null 
+                                            ? `${sub.size.length}x${sub.size.width}x${sub.size.height} ${sub.size.unit || 'cm'}` 
+                                            : sub.size}
                                         </span>
                                       </>
                                     )}
                                   </div>
-                                </div>
+                                  </div>
                               </div>
                             ))}
                           </div>
@@ -390,7 +394,7 @@ const StandardOrderView = ({
                     </div>
                   </div>
                 ))}
-              </div>
+              </div>   
             )}
 
             {activeTab === "production" && (
@@ -713,9 +717,13 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
           })),
           timeline: (found.histories || []).map(h => ({
             time: formatDateTimeVN(h.createdate),
-            label: h.label,
-            note: h.note || "",
+            label: h.action || h.label,
+            note: h.action === "Tạo đơn hàng" ? "Đơn hàng đã được tiếp nhận và chờ xử lý" : (h.note || ""),
             active: true
+          })),
+          histories: (found.histories || []).map(h => ({
+            ...h,
+            note: h.action === "Tạo đơn hàng" ? "Đơn hàng đã được tiếp nhận và chờ xử lý" : (h.note || "")
           })),
           processingFee: 0,
           discount: found.discount_amount || 0,
@@ -723,7 +731,8 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
           total: found.total_amount || 0,
           date: found.createdate,
           deliveryDate: found.expected_fulfillment_date,
-          notes: found.order_note || ""
+          notes: found.note || found.order_note || "",
+          customRequirements: found.note || found.order_note || ""
         };
 
         const mappedProductions = (found.items || []).flatMap((item) =>

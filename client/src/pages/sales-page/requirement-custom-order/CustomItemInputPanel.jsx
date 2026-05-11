@@ -367,7 +367,7 @@ export default function CustomItemInputPanel({
               id="isBundle"
               className="w-4 h-4 text-green-600 rounded border-gray-300"
             />
-            <label htmlFor="isBundle" className="text-[12px] font-bold text-[var(--text-main)] cursor-pointer">Là bộ sản phẩm</label>
+            <label htmlFor="isBundle" className="text-[12px] font-bold text-[var(--text-main)] cursor-pointer">Bộ sản phẩm</label>
           </div>
           
           {newItem.item_is_bundle === 1 && (
@@ -445,21 +445,7 @@ export default function CustomItemInputPanel({
                         />
                       </div>
                     ))}
-                    <div>
-                      <span className="text-[9px] text-gray-400 font-bold ml-0.5">Ghi chú</span>
-                      <input
-                        type="text"
-                        placeholder="VD: Tay 30"
-                        value={sub.size_note}
-                        onChange={(e) => {
-                          const updated = [...newItem.item_bundle_items];
-                          updated[idx] = { ...updated[idx], size_note: e.target.value };
-                          updateNewItem("item_bundle_items", updated);
-                        }}
-                        className={`${inputBase} !py-1 text-[11px]`}
-                        style={inputStyle}
-                      />
-                    </div>
+                    
                   </div>
                 </div>
               ))}

@@ -668,21 +668,28 @@ function AccountFormModal({ account, roles, defaultRoleId, onClose, onSave }) {
             <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
               Vai trò
             </label>
-            <select
-              value={formData.role_id}
-              onChange={(e) =>
-                setFormData({ ...formData, role_id: e.target.value })
-              }
-              className="flex h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:outline-none cursor-pointer"
-            >
-              {roles
-                .filter((r) => r.role_code !== "OWNER")
-                .map((r) => (
-                  <option key={r.role_id} value={r.role_id}>
-                    {r.role_name}
-                  </option>
-                ))}
-            </select>
+            {account ? (
+              <div className="h-11 w-full rounded-xl border border-gray-100 bg-gray-50/50 px-4 flex items-center text-sm font-bold text-emerald-700">
+                <Shield size={14} className="mr-2 opacity-70" />
+                {roles.find((r) => r.role_id === formData.role_id)?.role_name || "N/A"}
+              </div>
+            ) : (
+              <select
+                value={formData.role_id}
+                onChange={(e) =>
+                  setFormData({ ...formData, role_id: e.target.value })
+                }
+                className="flex h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-900 focus:outline-none cursor-pointer"
+              >
+                {roles
+                  .filter((r) => r.role_code !== "OWNER")
+                  .map((r) => (
+                    <option key={r.role_id} value={r.role_id}>
+                      {r.role_name}
+                    </option>
+                  ))}
+              </select>
+            )}
           </div>
         </div>
 
