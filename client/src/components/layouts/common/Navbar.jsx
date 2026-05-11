@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import { AlertTriangle, Bell, Settings, LogOut, CheckCircle2, XCircle, Info, Clock, Check } from "lucide-react";
+import { Bell, Settings, LogOut, CheckCircle2, XCircle, Info, Clock, Check } from "lucide-react";
 import Logo from "@/assets/tp-logo.svg";
 import { useAuth } from "@/context/AuthContext";
 import { useNotification } from "@/context/NotificationContext";
-import { getWarehouseStatus } from "@/pages/worker-page/mock";
 
 export const Navbar = () => {
   const { user, logout } = useAuth();
@@ -13,19 +12,9 @@ export const Navbar = () => {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotification();
   const [showSettings, setShowSettings] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [warehouseStatus, setWarehouseStatus] = useState({ isOverloaded: false });
   const settingsRef = useRef(null);
   const notifRef = useRef(null);
 
-  // Poll warehouse status (mocking real-time updates)
-  useEffect(() => {
-    const checkStatus = () => {
-      setWarehouseStatus(getWarehouseStatus());
-    };
-    checkStatus();
-    const interval = setInterval(checkStatus, 3000); // Check every 3 seconds
-    return () => clearInterval(interval);
-  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -92,15 +81,7 @@ export const Navbar = () => {
           </span>
         </div>
 
-        {/* Warehouse Overload Warning for Sales */}
-        {warehouseStatus.isOverloaded && (
-          <div className="ml-4 flex items-center gap-2 bg-red-50 px-3 py-1 rounded-full border border-red-100 animate-pulse transition-all">
-            <AlertTriangle size={16} className="text-red-600" />
-            <span className="text-[12px] font-bold text-red-600 whitespace-nowrap">
-              KHO ĐANG QUÁ TẢI - HẠN CHẾ NHẬN ĐƠN MỚI
-            </span>
-          </div>
-        )}
+
       </div>
 
       {/* RIGHT */}

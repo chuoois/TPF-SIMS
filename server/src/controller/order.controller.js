@@ -489,15 +489,49 @@ class OrderController {
             // Ghi log hệ thống
             await systemLogController.record(req, "Cập nhật đơn hàng", `Cập nhật đơn hàng #${id}: ${statusText}`, "INFO", userId);
 
-            // Thông báo
+            // Thông báo cho người tạo đơn
             await sendNotification({
-                userId: order.createby || userId, // Báo cho người tạo đơn
+                userId: order.createby || userId,
                 title: "Cập nhật đơn hàng",
                 message: `Đơn hàng DH-${id}: ${statusText}`,
                 type: "INFO",
                 link: `/orders/${id}`,
                 createBy: userId
             });
+
+            // 🟢 Thông báo cho TẤT CẢ THỢ khi đơn hàng chuyển sang "Đang gia công" (status 3)
+            if (Number(order_status) === 3 && Number(oldStatus) !== 3) {
+                // Lấy thông tin đơn hàng kèm sản phẩm
+                const orderWithItems = await Order.findByPk(id, {
+                    include: [
+                        { model: CustomerProfile, as: 'customer', attributes: ['full_name'] },
+                        { model: OrderItem, as: 'items', attributes: ['item_name'] }
+                    ]
+                });
+                const itemNames = orderWithItems?.items?.map(i => i.item_name).join(', ') || 'Sản phẩm';
+                const customerName = orderWithItems?.customer?.full_name || 'Khách hàng';
+
+                // Tìm tất cả tài khoản có role WORKER
+                const workers = await UserAccount.findAll({
+                    include: [{
+                        model: UserRole,
+                        as: "role",
+                        where: { role_code: "WORKER" }
+                    }],
+                    where: { status: 1 }
+                });
+
+                for (const worker of workers) {
+                    await sendNotification({
+                        userId: worker.user_account_id,
+                        title: "Có công việc mới cần gia công",
+                        message: `Đơn hàng #${id} của khách ${customerName} có sản phẩm (${itemNames}) cần gia công.`,
+                        type: "SUCCESS",
+                        link: `/worker/dashboard`,
+                        createBy: userId
+                    });
+                }
+            }
 
             return res.status(200).json({
                 message: "Cập nhật trạng thái thành công",

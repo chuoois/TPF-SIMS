@@ -29,9 +29,7 @@ import {
   X,
   AlertTriangle,
 } from "lucide-react";
-import {
-  updateTaskDeadline,
-} from "../mock";
+
 import workerService from "@/services/worker.service";
 import { uploadImage } from "@/services/cloudinary.service";
 
@@ -139,7 +137,7 @@ export default function TaskDetail() {
 
   const [selectedTask, setSelectedTask] = useState(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [finishedImage, setFinishedImage] = useState(null);
+  const [pendingFiles, setPendingFiles] = useState([]);  // File objects chưa upload (preview cục bộ)
   const [isUploading, setIsUploading] = useState(false);
   const [showDeadlineModal, setShowDeadlineModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
@@ -225,48 +223,62 @@ export default function TaskDetail() {
       if (newStatus === 'PROCESSING') {
         await workerService.startTask(realId);
         toast.success('Đã bắt đầu gia công!');
+        setSelectedTask(prev => ({ ...prev, status: newStatus }));
       } else if (newStatus === 'OWNER_PENDING') {
-        await workerService.completeTask(realId, finishedImage);
+        // Upload tất cả ảnh lên Cloudinary rồi mới gọi API
+        setIsUploading(true);
+        const uploadedUrls = [];
+        for (const file of pendingFiles) {
+          const result = await uploadImage(file);
+          uploadedUrls.push(result.url);
+        }
+        await workerService.completeTask(realId, uploadedUrls);
         toast.success('Đã gửi ảnh, chờ chủ duyệt!');
-      } else if (newStatus === 'COMPLETED') {
-        await workerService.completeTask(realId, finishedImage);
-        toast.success('Đã hoàn thành gia công!');
+        setSelectedTask(prev => ({ ...prev, status: newStatus, finishedImages: uploadedUrls }));
+        setPendingFiles([]);
+        setIsUploading(false);
       }
-      // Cập nhật lại trạng thái trên UI, giữ lại ảnh đã gửi
-      setSelectedTask(prev => ({ ...prev, status: newStatus, finishedImage: finishedImage || prev.finishedImage }));
-      setFinishedImage(null);
     } catch (error) {
+      setIsUploading(false);
       console.error('Lỗi cập nhật trạng thái:', error);
       toast.error(error?.response?.data?.message || 'Lỗi khi cập nhật trạng thái!');
     }
   };
 
-  const handleImageChange = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setIsUploading(true);
-      try {
-        const uploadResult = await uploadImage(file);
-        setFinishedImage(uploadResult.url);
-        toast.success("Đã tải ảnh lên thành công!");
-      } catch (error) {
-        console.error("Lỗi upload ảnh:", error);
-        toast.error("Lỗi khi tải ảnh lên hệ thống!");
-      } finally {
-        setIsUploading(false);
-      }
+  // Chọn ảnh → chỉ preview cục bộ, CHƯA upload Cloudinary
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    // Giới hạn tối đa 10 ảnh
+    const total = pendingFiles.length + files.length;
+    if (total > 10) {
+      toast.error(`Tối đa 10 ảnh! Bạn đã chọn ${pendingFiles.length}, thêm ${files.length} sẽ vượt quá.`);
+      return;
     }
+    setPendingFiles(prev => [...prev, ...files]);
+    // Reset input để có thể chọn lại cùng file
+    e.target.value = null;
   };
 
-  const handleUpdateImage = async () => {
-    if (!finishedImage) return;
+  // Xóa 1 ảnh khỏi danh sách pending
+  const handleRemovePendingFile = (index) => {
+    setPendingFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Gửi lại ảnh mới khi đang ở OWNER_PENDING
+  const handleUpdateImages = async () => {
+    if (pendingFiles.length === 0) return;
     const realId = extractRealId(selectedTask.id);
     setIsUploading(true);
     try {
-      await workerService.completeTask(realId, finishedImage);
-      // Cập nhật lại ảnh hoàn thiện trên UI
-      setSelectedTask(prev => ({ ...prev, finishedImage: finishedImage }));
-      setFinishedImage(null);
+      const uploadedUrls = [];
+      for (const file of pendingFiles) {
+        const result = await uploadImage(file);
+        uploadedUrls.push(result.url);
+      }
+      await workerService.completeTask(realId, uploadedUrls);
+      setSelectedTask(prev => ({ ...prev, finishedImages: uploadedUrls }));
+      setPendingFiles([]);
       toast.success("Đã cập nhật ảnh sản phẩm!");
     } catch (error) {
       console.error("Lỗi cập nhật ảnh:", error);
@@ -312,15 +324,19 @@ export default function TaskDetail() {
     if (diffDays <= 1) urgency = "URGENT";
     else if (diffDays <= 3) urgency = "WARNING";
 
-    updateTaskDeadline(selectedTask.id, dateStr, urgency);
+    // Since mock data was removed, we update local state for demonstration
+    // In a real app, this should call workerService.updateDeadline(...)
+    setSelectedTask(prev => ({
+      ...prev,
+      deadline: dateStr,
+      status: isStartingProduction ? "PROCESSING" : prev.status,
+      startedAt: isStartingProduction ? new Date().toLocaleDateString("vi-VN") : prev.startedAt
+    }));
 
     if (isStartingProduction) {
-      updateMockTaskStatus(selectedTask.id, "PROCESSING");
       setIsStartingProduction(false);
     }
 
-    const updated = getTaskById(selectedTask.id);
-    setSelectedTask(updated);
     setShowDeadlineModal(false);
     setSelectedDate("");
     toast.success(
@@ -363,116 +379,155 @@ export default function TaskDetail() {
           <div className="w-full max-w-sm">
             <label className="block text-[12px] font-bold text-gray-500 mb-2 uppercase tracking-wider">
               Ảnh sản phẩm hoàn thiện <span className="text-red-500">*</span>
+              <span className="text-[10px] font-normal text-gray-400 ml-1">
+                ({pendingFiles.length}/10 ảnh)
+              </span>
             </label>
-            <div className="relative group">
-              <label
-                className={`w-full h-32 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${
-                  finishedImage
-                    ? "border-emerald-500 bg-emerald-50"
-                    : "border-gray-200 bg-gray-50 hover:bg-gray-100"
-                }`}
-              >
-                {finishedImage ? (
-                  <div className="flex items-center gap-4 px-4 w-full">
+
+            {/* Grid preview ảnh đã chọn */}
+            {pendingFiles.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {pendingFiles.map((file, index) => (
+                  <div key={index} className="relative group/thumb rounded-xl overflow-hidden border border-emerald-200 shadow-sm aspect-square">
                     <img
-                      src={finishedImage}
-                      className="w-24 h-24 rounded-xl object-cover border border-emerald-200 shadow-md"
-                      alt="Preview"
+                      src={URL.createObjectURL(file)}
+                      className="w-full h-full object-cover"
+                      alt={`Preview ${index + 1}`}
                     />
-                    <div className="flex flex-col">
-                      <span className="text-emerald-700 font-bold text-[13px]">
-                        Ảnh đã chọn
-                      </span>
-                      <span className="text-[11px] text-gray-400 font-medium">
-                        Nhấp để thay đổi
-                      </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePendingFile(index)}
+                      className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity cursor-pointer"
+                    >
+                      <X size={12} className="text-white" />
+                    </button>
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/40 text-white text-[9px] text-center py-0.5 font-medium">
+                      {index + 1}
                     </div>
                   </div>
-                ) : (
-                  <>
-                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm mb-2 group-hover:scale-110 transition-transform">
-                      <Camera size={20} className="text-gray-400" />
-                    </div>
-                    <span className="text-gray-400 text-[11px] font-bold uppercase tracking-wider">
-                      Chụp hoặc tải ảnh lên
-                    </span>
-                  </>
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageChange}
-                />
-              </label>
-            </div>
+                ))}
+              </div>
+            )}
+
+            {/* Nút thêm ảnh */}
+            {pendingFiles.length < 10 && (
+              <div className="relative group">
+                <label
+                  className="w-full h-20 rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 hover:bg-gray-100 flex flex-col items-center justify-center cursor-pointer transition-all"
+                >
+                  <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm mb-1 group-hover:scale-110 transition-transform">
+                    <Camera size={16} className="text-gray-400" />
+                  </div>
+                  <span className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">
+                    Chụp hoặc thêm ảnh
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+                </label>
+              </div>
+            )}
           </div>
+
           <button
             onClick={() => {
-              if (!finishedImage) {
-                toast.error("Vui lòng tải ảnh sản phẩm hoàn thiện!");
+              if (pendingFiles.length === 0) {
+                toast.error("Vui lòng tải ít nhất 1 ảnh sản phẩm hoàn thiện!");
                 return;
               }
               updateTaskStatus(selectedTask.id, "OWNER_PENDING");
             }}
-            disabled={isUploading || !finishedImage}
+            disabled={isUploading || pendingFiles.length === 0}
             className={`h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 ${
-              isUploading || !finishedImage
+              isUploading || pendingFiles.length === 0
                 ? "opacity-50 cursor-not-allowed bg-gray-400"
                 : "cursor-pointer bg-emerald-600 hover:bg-emerald-700"
             }`}
             style={{ color: "#fff" }}
           >
-            <CheckCircle2 size={15} /> Gửi ảnh cho chủ duyệt
+            {isUploading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Đang tải ảnh lên...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 size={15} /> Gửi {pendingFiles.length} ảnh cho chủ duyệt
+              </>
+            )}
           </button>
         </div>
       );
     }
 
     if (selectedTask.status === "OWNER_PENDING") {
-      const currentDisplayImage = finishedImage || selectedTask.finishedImage;
+      const serverImages = selectedTask.finishedImages || [];
+      const hasPendingFiles = pendingFiles.length > 0;
 
       return (
         <div className="flex flex-col gap-4 items-end">
           <div className="w-full max-w-sm">
             <label className="block text-[12px] font-bold text-gray-500 mb-2 uppercase tracking-wider">
-              {finishedImage ? "Ảnh mới chọn" : "Ảnh đã gửi cho chủ duyệt"}
+              {hasPendingFiles ? "Ảnh mới chọn (chưa lưu)" : "Ảnh đã gửi cho chủ duyệt"}
             </label>
-            <div className="relative group">
-              <label className="w-full h-32 rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/30 flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-amber-50">
-                <div className="flex items-center gap-4 px-4 w-full">
-                  <div 
-                    className="relative group/img w-24 h-24 shrink-0 rounded-xl overflow-hidden border border-amber-200 shadow-md cursor-zoom-in"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setZoomImage(currentDisplayImage);
-                    }}
+
+            {/* Grid ảnh đã gửi (từ server) */}
+            {!hasPendingFiles && serverImages.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {serverImages.map((url, index) => (
+                  <div
+                    key={index}
+                    className="relative group/img rounded-xl overflow-hidden border border-amber-200 shadow-sm aspect-square cursor-zoom-in"
+                    onClick={() => setZoomImage(url)}
                   >
-                    <img
-                      src={currentDisplayImage}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-110"
-                      alt="Preview"
-                    />
+                    <img src={url} className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-110" alt={`Sent ${index + 1}`} />
                     <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/20 transition-colors flex items-center justify-center">
-                      <ZoomIn
-                        size={20}
-                        className="text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow-md"
-                      />
+                      <ZoomIn size={18} className="text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow-md" />
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/40 text-white text-[9px] text-center py-0.5 font-medium">
+                      {index + 1}
                     </div>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-amber-700 font-bold text-[13px]">
-                      {finishedImage ? "Ảnh mới (Chưa lưu)" : "Ảnh đã gửi"}
-                    </span>
-                    <span className="text-[11px] text-gray-400 font-medium">
-                      Nhấp để thay đổi ảnh khác
-                    </span>
+                ))}
+              </div>
+            )}
+
+            {/* Grid ảnh mới (pending files) */}
+            {hasPendingFiles && (
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {pendingFiles.map((file, index) => (
+                  <div key={index} className="relative group/thumb rounded-xl overflow-hidden border border-amber-200 shadow-sm aspect-square">
+                    <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" alt={`New ${index + 1}`} />
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePendingFile(index)}
+                      className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity cursor-pointer"
+                    >
+                      <X size={12} className="text-white" />
+                    </button>
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/40 text-white text-[9px] text-center py-0.5 font-medium">
+                      {index + 1}
+                    </div>
                   </div>
-                </div>
+                ))}
+              </div>
+            )}
+
+            {/* Nút thêm ảnh mới */}
+            <div className="relative group">
+              <label className="w-full h-16 rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/30 flex items-center justify-center cursor-pointer transition-all hover:bg-amber-50 gap-2">
+                <Camera size={16} className="text-amber-500" />
+                <span className="text-amber-600 text-[11px] font-bold uppercase tracking-wider">
+                  {hasPendingFiles ? "Thêm ảnh" : "Chọn ảnh mới để gửi lại"}
+                </span>
                 <input
                   type="file"
                   accept="image/*"
+                  multiple
                   className="hidden"
                   onChange={handleImageChange}
                 />
@@ -481,27 +536,32 @@ export default function TaskDetail() {
           </div>
 
           <div className="flex gap-3">
-            {finishedImage && (
+            {hasPendingFiles && (
               <button
-                onClick={() => setFinishedImage(null)}
+                onClick={() => setPendingFiles([])}
                 className="h-11 px-6 rounded-xl font-semibold text-[14px] border border-gray-200 text-gray-500 hover:bg-gray-50 transition-all cursor-pointer"
               >
                 Hủy thay đổi
               </button>
             )}
             <button
-              onClick={finishedImage ? handleUpdateImage : null}
-              disabled={isUploading || !finishedImage}
+              onClick={hasPendingFiles ? handleUpdateImages : null}
+              disabled={isUploading || !hasPendingFiles}
               className={`h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 ${
-                !finishedImage
+                !hasPendingFiles
                   ? "opacity-50 cursor-not-allowed bg-amber-100/50 text-amber-600 border border-amber-200"
                   : "cursor-pointer bg-amber-600 hover:bg-amber-700 text-white shadow-amber-200"
               }`}
             >
-              {finishedImage ? (
+              {isUploading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Đang tải ảnh lên...
+                </>
+              ) : hasPendingFiles ? (
                 <>
                   <CheckCircle2 size={15} />
-                  Cập nhật ảnh đã gửi
+                  Gửi lại {pendingFiles.length} ảnh mới
                 </>
               ) : (
                 <>

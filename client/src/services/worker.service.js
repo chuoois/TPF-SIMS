@@ -27,13 +27,13 @@ const workerService = {
   },
 
   /**
-   * Hoàn thành gia công (Đang gia công → Hoàn thành)
+   * Hoàn thành gia công / Gửi ảnh chờ duyệt
    * @param {number|string} orderItemId - pk_order_item_id
-   * @param {string} finishedImage - base64 string of the finished image
+   * @param {string[]} finishedImages - Mảng URL ảnh hoàn thiện
    */
-  async completeTask(orderItemId, finishedImage) {
+  async completeTask(orderItemId, finishedImages) {
     const response = await axiosInstance.post(`/worker/tasks/complete/${orderItemId}`, {
-      finishedImage
+      finishedImages
     });
     return response.data;
   },

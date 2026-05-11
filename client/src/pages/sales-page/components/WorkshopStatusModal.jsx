@@ -8,7 +8,45 @@ import React, { useState } from "react";
 import { 
   Hammer, Clock, Search, X, Calendar
 } from "lucide-react";
-import { MOCK_ORDERS } from "../../worker-page/mock";
+// Mock data moved here after cleanup of worker-page/mock.js
+const MOCK_ORDERS = [
+  {
+    id: "ORD-2023-001",
+    customerName: "Nguyễn Văn A",
+    status: "PROCESSING",
+    items: [
+      {
+        id: "ITEM-101",
+        productName: "Bàn ăn gỗ sồi tân cổ điển",
+        picture: "https://images.unsplash.com/photo-1577140917170-285929fb55b7?q=80&w=200",
+        size: "120x80x75 cm",
+        type: "Gỗ sồi Nga",
+        color: "Màu tự nhiên",
+        quantity: 1,
+        status: "WAITING",
+        deadline: "26/10/2023",
+      },
+    ],
+  },
+  {
+    id: "ORD-2023-002",
+    customerName: "Trần Thị Cẩm Tú",
+    status: "PROCESSING",
+    items: [
+      {
+        id: "ITEM-201",
+        productName: "Tủ quần áo MDF 4 cánh",
+        picture: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=200",
+        size: "200x60x220 cm",
+        type: "Gỗ MDF chống ẩm",
+        color: "Trắng vân gỗ",
+        quantity: 1,
+        status: "INSPECTION",
+        deadline: "28/10/2023",
+      },
+    ],
+  },
+];
 import DataTable from "@/components/control/DataTable";
 import { formatShortDateVN, formatDateTimeVN, nowVN } from "@/lib/dateUtils";
 
