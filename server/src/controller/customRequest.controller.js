@@ -16,7 +16,7 @@ class CustomRequestController {
         const t = await sequelize.transaction();
         try {
             const {
-                fk_customer_id, fulfillment_method, expected_fulfillment_date,
+                fk_customer_id, fulfillment_method, payment_method, expected_fulfillment_date,
                 note, deposit_amount, address, total_amount,
                 order_status, order_type, items
             } = req.body;
@@ -27,6 +27,7 @@ class CustomRequestController {
                 fk_customer_id,
                 request_code: "YC-" + Date.now(),
                 fulfillment_method,
+                payment_method,
                 expected_fulfillment_date,
                 deposit_amount,
                 address,
@@ -316,7 +317,7 @@ class CustomRequestController {
             const { id } = req.params;
             const { 
                 deposit_amount, total_amount, expected_fulfillment_date, 
-                fulfillment_method, note, items 
+                fulfillment_method, payment_method, note, items 
             } = req.body;
             const userId = req.user.userId;
 
@@ -339,6 +340,7 @@ class CustomRequestController {
                 total_estimated_price: total_amount !== undefined ? total_amount : request.total_estimated_price,
                 expected_fulfillment_date: expected_fulfillment_date || request.expected_fulfillment_date,
                 fulfillment_method: fulfillment_method || request.fulfillment_method,
+                payment_method: payment_method || request.payment_method,
                 note: note || request.note,
                 modifieby: userId,
                 modifiedate: new Date()

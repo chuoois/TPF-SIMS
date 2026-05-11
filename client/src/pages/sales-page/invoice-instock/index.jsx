@@ -11,6 +11,7 @@ import {
   ORDER_CONFIG,
   PRODUCT_TYPES,
   DELIVERY_METHODS,
+  PAYMENT_METHODS,
   createEmptyTab,
   fmt
 } from "@/constants/orderConfig";
@@ -24,7 +25,7 @@ import productAttributeService from "@/services/productAttribute.service";
 import customerService from "@/services/customer.service";
 import orderService from "@/services/order.service";
 import { uploadMultipleImages } from "@/services/cloudinary.service";
-import { todayVN, nowVN } from "@/lib/dateUtils";
+import { todayVN, nowVN, formatDateVN } from "@/lib/dateUtils";
 
 const { ITEMS_PER_PAGE, DEFAULT_WARRANTY } = ORDER_CONFIG;
 
@@ -38,6 +39,7 @@ const orderSchema = Yup.object().shape({
     otherwise: (schema) => schema.nullable(),
   }),
   depositAmount: Yup.number().min(0, "Số tiền đặt cọc không hợp lệ"),
+  paymentMethod: Yup.string().required("Vui lòng chọn phương thức thanh toán"),
   orderNote: Yup.string().nullable(),
 });
 
@@ -92,6 +94,7 @@ export default function InStockInvoicePage() {
       deliveryMethod: "store",
       deliveryDate: "",
       storePickupDate: "",
+      paymentMethod: PAYMENT_METHODS.CASH,
     },
   ]);
   const [activeTabId, setActiveTabId] = useState(tabs[0].id);
@@ -188,6 +191,7 @@ export default function InStockInvoicePage() {
               : values.deliveryDate,
           note: values.orderNote,
           deposit_amount: values.depositAmount,
+          payment_method: values.paymentMethod,
           address: values.selectedCustomer.address,
           total_amount: subtotal,
           order_type: computedOrderType,

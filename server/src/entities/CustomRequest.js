@@ -26,20 +26,6 @@ const CustomRequest = sequelize.define(
       type: DataTypes.DECIMAL(15, 2),
       defaultValue: 0,
     },
-    total_amount: {
-      type: DataTypes.DECIMAL(15, 2),
-      defaultValue: 0,
-    },
-    fulfillment_method: {
-      type: DataTypes.STRING(100),
-    },
-    expected_fulfillment_date: {
-      type: DataTypes.DATE,
-    },
-    deposit_amount: {
-      type: DataTypes.DECIMAL(15, 2),
-      defaultValue: 0,
-    },
     address: {
       type: DataTypes.TEXT,
     },

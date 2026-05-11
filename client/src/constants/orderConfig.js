@@ -14,6 +14,11 @@ export const DELIVERY_METHODS = {
   DELIVERY: "delivery",
 };
 
+export const PAYMENT_METHODS = {
+  CASH: "Tiền mặt",
+  TRANSFER: "Chuyển khoản",
+};
+
 export const ORDER_CONFIG = {
   ITEMS_PER_PAGE: 15,
   DEFAULT_WARRANTY: 12,
@@ -101,4 +106,5 @@ export const createEmptyTab = () => ({
   deliveryMethod: DELIVERY_METHODS.STORE,
   deliveryDate: "",
   storePickupDate: "",
+  paymentMethod: PAYMENT_METHODS.CASH,
 });

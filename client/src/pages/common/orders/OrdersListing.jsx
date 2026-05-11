@@ -256,12 +256,12 @@ export default function OrdersListing({ userRole = 'owner' }) {
               label: "Xem chi tiết",
               onClick: (o) => setDetailId(o.pk_order_id),
             },
-            userRole === 'owner' && {
+            (userRole === 'owner' || userRole === 'sales') && {
               icon: Trash2,
-              label: "Hủy đơn",
+              label: userRole === 'sales' ? "Yêu cầu hủy" : "Hủy đơn",
               showIf: (o) => {
                 const statusName = ORDER_CONFIG.STATUS_MAP[o.order_status];
-                return ["Chờ xử lý", "Chờ sản xuất", "Đang gia công"].includes(statusName);
+                return ["Chờ xử lý", "Chờ sản xuất", "Đang gia công", "Chờ giao hàng"].includes(statusName);
               },
               onClick: (o) => handleSingleCancel(o),
               className: "bg-white border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200",

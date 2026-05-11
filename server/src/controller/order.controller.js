@@ -58,7 +58,7 @@ class OrderController {
                         attributes: ['full_name', 'phone_number']
                     }
                 ],
-                attributes: ['pk_order_id', 'createdate', 'expected_fulfillment_date', 'total_amount', 'deposit_amount', 'order_status', 'order_type'],
+                attributes: ['pk_order_id', 'createdate', 'expected_fulfillment_date', 'total_amount', 'deposit_amount', 'order_status', 'order_type', 'payment_method'],
                 order: [['createdate', 'DESC']],
                 limit: parseInt(limit),
                 offset: parseInt(offset),
@@ -157,7 +157,7 @@ class OrderController {
                 attributes: [
                     'pk_order_id', 'order_status', 'order_type', 'createdate', 
                     'expected_fulfillment_date', 'total_amount', 'deposit_amount', 
-                    'address', 'note', 'fulfillment_method'
+                    'address', 'note', 'fulfillment_method', 'payment_method'
                 ],
                 order: [
                     // Sắp xếp lịch sử từ mới nhất đến cũ nhất giống Shopee timeline
@@ -183,7 +183,7 @@ class OrderController {
         const t = await sequelize.transaction();
         try {
             const {
-                fk_customer_id, fulfillment_method, expected_fulfillment_date,
+                fk_customer_id, fulfillment_method, payment_method, expected_fulfillment_date,
                 note, deposit_amount, address, total_amount,
                 order_status, order_type, items // items: [{ fk_product_id, item_quantity, ... }]
             } = req.body;
@@ -208,6 +208,7 @@ class OrderController {
                 fk_customer_id,
                 fk_user_account_id: userId,
                 fulfillment_method,
+                payment_method,
                 expected_fulfillment_date,
                 note,
                 deposit_amount,

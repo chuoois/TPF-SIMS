@@ -26,7 +26,7 @@ import ConfirmModal from "@/components/control/ConfirmModal";
 import useCachedFetch from "@/hooks/useCachedFetch";
 import useDebounce from "@/hooks/useDebounce";
 import customerService from "@/services/customer.service";
-import { formatShortDateVN } from "@/lib/dateUtils";
+import { formatShortDateVN, formatDateVN } from "@/lib/dateUtils";
 
 // ===================== CONFIG =====================
 const GENDER_OPTIONS = ["Nam", "Nữ", "Khác"];

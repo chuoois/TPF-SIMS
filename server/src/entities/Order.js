@@ -26,6 +26,9 @@ const Order = sequelize.define(
     fulfillment_method: {
       type: DataTypes.STRING(100),
     },
+    payment_method: {
+      type: DataTypes.STRING(100),
+    },
     expected_fulfillment_date: {
       type: DataTypes.DATE,
     },

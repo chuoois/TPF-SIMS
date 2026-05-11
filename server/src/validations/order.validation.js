@@ -31,6 +31,7 @@ const createOrderSchema = Joi.object({
     'any.required': 'Vui lòng chọn khách hàng',
   }),
   fulfillment_method: Joi.string().max(100).allow(null, '').optional(),
+  payment_method: Joi.string().max(100).allow(null, '').optional(),
   expected_fulfillment_date: Joi.date().allow(null, '').optional().messages({
     'date.base': 'Ngày giao hàng dự kiến không hợp lệ',
   }),

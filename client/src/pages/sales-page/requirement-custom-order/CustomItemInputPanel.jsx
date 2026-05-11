@@ -16,6 +16,7 @@ import {
   PackageCheck,
   ClipboardEdit,
   ImagePlus,
+  Receipt
 } from "lucide-react";
 import * as Yup from "yup";
 import toast from "react-hot-toast";
@@ -169,7 +170,7 @@ export default function CustomItemInputPanel({
       } else {
         formik.setFieldValue("cartItems", [
           ...formik.values.cartItems,
-          { id: getNextItemId(), ...itemToSave },
+          itemToSave,
         ]);
         toast.success("Đã thêm vào danh sách");
       }
@@ -345,6 +346,19 @@ export default function CustomItemInputPanel({
                   updateNewItem("quantity", newQty);
                 }} className="w-12 h-full flex items-center justify-center hover:bg-gray-50 border-l" style={{ borderColor: "var(--grid-border)" }}><Plus size={14} /></button>
               </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-2">
+                <Receipt size={12} /> Giá dự kiến (VNĐ)
+              </label>
+              <input
+                type="number"
+                placeholder="0"
+                value={newItem.expectedPrice}
+                onChange={(e) => updateNewItem("expectedPrice", e.target.value)}
+                className={`${inputBase} !py-2`}
+                style={inputStyle}
+              />
             </div>
           </div>
         </div>

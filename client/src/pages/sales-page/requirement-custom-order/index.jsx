@@ -100,8 +100,23 @@ export default function CustomOrderRequirementsPage() {
 
               let newUrls = [];
               if (filesToUpload.length > 0) {
-                const uploadedResults = await uploadMultipleImages(filesToUpload);
-                newUrls = uploadedResults.map((res) => res.url);
+                try {
+                  const uploadedResults = await uploadMultipleImages(filesToUpload);
+                  newUrls = uploadedResults.map((res) => res.url);
+                } catch (uploadError) {
+                  console.error("Image upload failed:", uploadError);
+                  // If upload fails, we notify but don't crash the whole process 
+                  // unless it's critical. For custom orders, images are important,
+                  // but we let the user decide if they want to proceed without them.
+                  const msg = uploadError.message?.includes("cloud_name is disabled")
+                    ? "Lỗi cấu hình máy chủ ảnh (Cloudinary bị vô hiệu hóa). Vẫn tiếp tục lưu yêu cầu không có ảnh mẫu?"
+                    : "Không thể tải ảnh lên máy chủ. Vẫn tiếp tục lưu yêu cầu không có ảnh mẫu?";
+                  
+                  if (!window.confirm(msg)) {
+                    throw new Error("Người dùng đã hủy lưu do lỗi tải ảnh.");
+                  }
+                  newUrls = []; 
+                }
               }
 
               return {
@@ -115,11 +130,12 @@ export default function CustomOrderRequirementsPage() {
 
         const requestData = {
           fk_customer_id: values.selectedCustomer.id,
-          fulfillment_method: null,
+          fulfillment_method: values.deliveryMethod === 'delivery' ? 'Giao hàng' : 'Lấy tại cửa hàng',
+          payment_method: values.paymentMethod,
           expected_fulfillment_date: null,
           note: values.orderNote,
           deposit_amount: values.depositAmount,
-          address: values.selectedCustomer.address || "",
+          address: values.deliveryMethod === 'delivery' ? (values.selectedCustomer?.address || "") : 'Lấy tại cửa hàng',
           total_amount: subtotal,
           order_status: 1,
           order_type: 3,

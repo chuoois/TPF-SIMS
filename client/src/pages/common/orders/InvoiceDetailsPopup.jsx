@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import orderService from "@/services/order.service";
 import { ORDER_CONFIG } from "@/constants/orderConfig";
 import { formatShortDateVN, formatDateTimeVN, todayVN, addDaysVN } from "@/lib/dateUtils";
+import ConfirmModal from "@/components/control/ConfirmModal";
 
 
 const fmtCurrency = (n) =>
@@ -31,6 +32,18 @@ const fmtDateTime = (s) => {
   if (!s) return "—";
   const d = new Date(s);
   return `${d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })} — ${d.toLocaleDateString("vi-VN")}`;
+};
+
+const parseItemSize = (s) => {
+  if (!s) return "Chuẩn";
+  if (typeof s === "object") return s;
+  try {
+    const p = JSON.parse(s);
+    if (p && typeof p === "object") return p;
+    return s;
+  } catch (e) {
+    return s;
+  }
 };
 
 const statusStyle = (status) => {
@@ -86,10 +99,7 @@ const CustomerInfoCard = ({ o }) => (
           <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--text-placeholder)]">Loại hàng</p>
           <p className="text-[13px] font-semibold mt-0.5 text-[var(--text-main)]">{o.type}</p>
         </div>
-        <div>
-          <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--text-placeholder)]">Nhân viên</p>
-          <p className="text-[13px] font-semibold mt-0.5 text-[var(--text-main)]">{o.salesPerson}</p>
-        </div>
+
         <div>
           <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--text-placeholder)]">Ngày tạo</p>
           <p className="text-[13px] font-semibold mt-0.5 text-[var(--text-main)]">{fmtDateTime(o.date)}</p>
@@ -118,23 +128,23 @@ const HistoryCard = ({ o, className = "" }) => (
     </div>
     <div className="px-5 py-5 space-y-6 relative ml-3 mt-2">
       <div className="absolute top-2 bottom-2 left-[-13px] w-0.5 bg-[var(--grid-border)]" />
-      {o.timeline?.map((t, idx) => (
+      {o.histories?.map((t, idx) => (
         <div key={idx} className="relative pl-1">
           <div
-            className={`absolute top-1 left-[-21px] w-4 h-4 rounded-full border-2 bg-[var(--background)] flex items-center justify-center z-10 transition-colors ${t.active ? "border-[var(--brand-primary)] shadow-[0_0_8px_rgba(52,176,87,0.3)]" : "border-[var(--grid-border)]"
+            className={`absolute top-1 left-[-21px] w-4 h-4 rounded-full border-2 bg-[var(--background)] flex items-center justify-center z-10 transition-colors ${idx === 0 ? "border-[var(--brand-primary)] shadow-[0_0_8px_rgba(52,176,87,0.3)]" : "border-[var(--grid-border)]"
               }`}
           >
-            {t.active && <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand-primary)]" />}
+            {idx === 0 && <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand-primary)]" />}
           </div>
           <div className="flex items-start justify-between min-w-0">
             <div className="min-w-0">
-              <p className={`text-[13px] font-bold ${t.active ? "text-[var(--text-main)]" : "text-[var(--text-placeholder)]"}`}>
-                {t.label}
+              <p className={`text-[13px] font-bold ${idx === 0 ? "text-[var(--text-main)]" : "text-[var(--text-placeholder)]"}`}>
+                {t.action}
               </p>
-              <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">{t.desc}</p>
+              <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">{t.note}</p>
             </div>
             <span className="text-[10px] font-bold text-[var(--text-placeholder)] shrink-0 ml-4">
-              {t.time}
+              {fmtDateTime(t.createdate)}
             </span>
           </div>
         </div>
@@ -329,9 +339,14 @@ const StandardOrderView = ({
                       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-[var(--bg-main)] rounded-xl">
                         {[
                           { label: "Chất liệu", val: p.material },
-                          { label: "Kích thước", val: typeof p.size === 'object' && p.size !== null ? `${p.size.length || 0}x${p.size.width || 0}x${p.size.height || 0} ${p.size.unit || ''}` : p.size },
+                          { 
+                            label: "Kích thước", 
+                            val: typeof p.size === 'object' && p.size !== null 
+                              ? `${p.size.length || 0}x${p.size.width || 0}x${p.size.height || 0}${p.size.unit ? ` ${p.size.unit}` : ''}` 
+                              : p.size 
+                          },
                           { label: "Màu sắc", val: p.color || p.finish },
-                          { label: "Bảo hành", val: `${p.warranty || 12}T` },
+                          { label: "Bảo hành", val: `${p.warranty || 12} Tháng` },
                         ].map((spec, i) => (
                           <div key={i} className="space-y-1">
                             <span className="text-[9px] font-black text-[var(--text-placeholder)] uppercase tracking-widest block">{spec.label}</span>
@@ -339,6 +354,39 @@ const StandardOrderView = ({
                           </div>
                         ))}
                       </div>
+
+                      {p.isBundle && p.bundleItems && p.bundleItems.length > 0 && (
+                        <div className="mt-6 border-t border-[var(--grid-border)]/30 pt-4">
+                          <span className="text-[10px] font-black text-[var(--text-placeholder)] uppercase tracking-widest block mb-3">Thành phần bộ sản phẩm</span>
+                          <div className="space-y-3">
+                            {p.bundleItems.map((sub, sIdx) => (
+                              <div key={sIdx} className="flex items-center gap-3 p-3 bg-white/50 rounded-lg border border-[var(--grid-border)]/20 hover:border-[var(--brand-primary)]/30 transition-colors">
+                                <div className="w-8 h-8 rounded-md bg-[var(--brand-primary)]/5 flex items-center justify-center text-[var(--brand-primary)] text-[12px] font-black">
+                                  {sIdx + 1}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[13px] font-bold text-[var(--text-main)] truncate">{sub.name}</p>
+                                  <div className="flex items-center gap-3 mt-0.5">
+                                    <span className="text-[11px] text-[var(--text-secondary)] font-bold">x{sub.quantity || 1}</span>
+                                    <span className="text-[11px] text-[var(--text-placeholder)]">|</span>
+                                    <span className="text-[11px] text-[var(--text-secondary)]">{sub.material}</span>
+                                    <span className="text-[11px] text-[var(--text-placeholder)]">|</span>
+                                    <span className="text-[11px] text-[var(--text-secondary)]">{sub.color}</span>
+                                    {sub.size && (
+                                      <>
+                                        <span className="text-[11px] text-[var(--text-placeholder)]">|</span>
+                                        <span className="text-[11px] text-[var(--text-secondary)]">
+                                          {sub.size.length}x{sub.size.width}x{sub.size.height} {sub.size.unit || 'cm'}
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -366,6 +414,10 @@ const StandardOrderView = ({
                   <div className="flex justify-between text-[13px] text-[var(--text-secondary)]">
                     <span>Tổng tiền hàng</span>
                     <span className="font-bold text-[var(--text-main)]">{fmtCurrency(productTotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-[13px] text-[var(--text-secondary)]">
+                    <span>PT thanh toán</span>
+                    <span className="font-bold text-[var(--brand-primary)]">{o.payment_method || "Tiền mặt"}</span>
                   </div>
                   <div className="h-px bg-[var(--grid-border)]/30" />
                   <div className="grid grid-cols-2 gap-3">
@@ -607,6 +659,9 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
   const [finalPayment, setFinalPayment] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("Chuyển khoản");
 
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState({ title: "", message: "", onConfirm: () => { } });
+
   const [handoverDeadline, setHandoverDeadline] = useState("");
   const [handoverItemsData, setHandoverItemsData] = useState([]);
   const [handoverNotes, setHandoverNotes] = useState("");
@@ -649,10 +704,12 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
             unit: p.unit || "Bộ",
             price: p.item_price || 0,
             material: p.item_material || "Gỗ tự nhiên",
-            size: p.item_size || "Chuẩn",
+            size: parseItemSize(p.item_size),
             finish: p.item_color || (p.is_finished ? "Sơn PU" : "Hàng Mộc"),
             warranty: p.item_warranty || ORDER_CONFIG.DEFAULT_WARRANTY,
-            note: p.item_note || ""
+            note: p.item_note || "",
+            isBundle: p.item_is_bundle === 1,
+            bundleItems: p.item_bundle_items || []
           })),
           timeline: (found.histories || []).map(h => ({
             time: formatDateTimeVN(h.createdate),
@@ -900,7 +957,15 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
   const handleSafeClose = () => {
     if (hasUnsavedChanges) {
-      if (window.confirm("Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn đóng?")) onClose();
+      setConfirmConfig({
+        title: "Xác nhận đóng",
+        message: "Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn đóng?",
+        onConfirm: () => {
+          setShowConfirm(false);
+          onClose();
+        }
+      });
+      setShowConfirm(true);
     } else onClose();
   };
 
@@ -1020,11 +1085,11 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
           )}
         </div>
 
-        {viewState === "ready" && order && userRole === 'owner' && (
+        {viewState === "ready" && order && (userRole === 'owner' || userRole === 'sales') && (
           <div className="p-4 border-t border-[var(--grid-border)]/50 bg-[var(--bg-main)]/50 flex items-center justify-end shrink-0 popup-footer printer-hidden">
             <div className="flex items-center gap-3">
               {/* ── Hàng mộc & Hàng khách đặt: bàn giao xưởng ── */}
-              {order.status === "Chờ xử lý" && (order.type === "Hàng mộc" || order.type === "Hàng khách đặt") && (
+              {userRole === 'owner' && order.status === "Chờ xử lý" && (order.type === "Hàng mộc" || order.type === "Hàng khách đặt") && (
                 <button
                   className="px-5 py-2 bg-[var(--brand-primary)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center gap-2"
                   onClick={() => setShowHandoverModal(true)}
@@ -1033,7 +1098,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                 </button>
               )}
 
-              {order.status === "Đang gia công" && (order.type === "Hàng mộc" || order.type === "Hàng khách đặt") && (
+              {userRole === 'owner' && order.status === "Đang gia công" && (order.type === "Hàng mộc" || order.type === "Hàng khách đặt") && (
                 <button
                   disabled={productions.length > 0 && !productions.every(p => p.status === "Hoàn thành")}
                   className={`h-10 px-5 rounded-lg text-[13px] font-bold transition-all active:scale-95 flex items-center gap-2 ${productions.length > 0 && !productions.every(p => p.status === "Hoàn thành")
@@ -1052,7 +1117,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                 </button>
               )}
 
-              {order.status === "Chờ giao hàng" && (
+              {userRole === 'owner' && order.status === "Chờ giao hàng" && (
                 <button
                   className="px-5 py-2 bg-[var(--palette-blue)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center gap-2"
                   onClick={() => handleUpdate("Đang giao hàng")}
@@ -1061,7 +1126,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                 </button>
               )}
 
-              {order.status === "Đang giao hàng" && (
+              {userRole === 'owner' && order.status === "Đang giao hàng" && (
                 <button
                   className="px-5 py-2 bg-[var(--status-success)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center gap-2"
                   onClick={() => setShowCompleteModal(true)}
@@ -1070,19 +1135,25 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                 </button>
               )}
 
-              {order.status === "Chờ duyệt hủy" && (
+              {userRole === 'owner' && order.status === "Chờ duyệt hủy" && (
                 <div className="flex gap-2 p-1 bg-[var(--background)] border border-[var(--grid-border)]/50 rounded-xl">
                   <button
                     disabled={["Đang sản xuất", "Đang gia công", "Chờ giao hàng"].includes(lastActiveStatus) || (order.productionOrders?.length > 0)}
                     className="px-6 py-2.5 bg-[var(--bg-main)] text-[var(--text-secondary)] rounded-lg text-[13px] font-bold hover:bg-[var(--grid-border)]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex items-center gap-2"
                     onClick={() => {
-                      if (window.confirm("Duyệt hủy đơn và HOÀN TRẢ TIỀN CỌC cho khách hàng?")) {
-                        handleUpdate("Đơn đã hủy", {
-                          depositResolution: "refunded",
-                          timelineLabel: "Duyệt đơn hủy (Hoàn cọc)",
-                          timelineDesc: "Đơn bị hủy khi chưa triển khai. Chủ cửa hàng đã đồng ý hoàn trả 100% tiền cọc."
-                        });
-                      }
+                      setConfirmConfig({
+                        title: "Duyệt đơn hủy & Hoàn cọc",
+                        message: "Duyệt hủy đơn và HOÀN TRẢ TIỀN CỌC cho khách hàng?",
+                        onConfirm: () => {
+                          handleUpdate("Đơn đã hủy", {
+                            depositResolution: "refunded",
+                            timelineLabel: "Duyệt đơn hủy (Hoàn cọc)",
+                            timelineDesc: "Đơn bị hủy khi chưa triển khai. Chủ cửa hàng đã đồng ý hoàn trả 100% tiền cọc."
+                          });
+                          setShowConfirm(false);
+                        }
+                      });
+                      setShowConfirm(true);
                     }}
                   >
                     {["Đang sản xuất", "Đang gia công", "Chờ giao hàng"].includes(lastActiveStatus) ? <Lock size={16} /> : <RefreshCw size={16} />}
@@ -1091,17 +1162,23 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                   <button
                     className="px-6 py-2.5 bg-[var(--palette-orange)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center gap-2"
                     onClick={() => {
-                      const recoveryAmt = order.deposit || 0;
                       const msg = recoveryAmt > 0
                         ? `Thu hồi ${fmtCurrency(recoveryAmt)} cọc & Nhập lại kho?`
                         : `Hủy đơn & Nhập lại kho?`;
-                      if (window.confirm(msg)) {
-                        handleUpdate("Đơn đã hủy", {
-                          depositResolution: "forfeited",
-                          timelineLabel: "Duyệt đơn hủy (Thu cọc)",
-                          timelineDesc: `Quyết định của Chủ: Thu hồi ${recoveryAmt} cọc bồi thường chi phí. Tự động nhập kho món hàng sẵn/mộc.`
-                        });
-                      }
+                      
+                      setConfirmConfig({
+                        title: "Duyệt đơn hủy & Thu cọc",
+                        message: msg,
+                        onConfirm: () => {
+                          handleUpdate("Đơn đã hủy", {
+                            depositResolution: "forfeited",
+                            timelineLabel: "Duyệt đơn hủy (Thu cọc)",
+                            timelineDesc: `Quyết định của Chủ: Thu hồi ${recoveryAmt} cọc bồi thường chi phí. Tự động nhập kho món hàng sẵn/mộc.`
+                          });
+                          setShowConfirm(false);
+                        }
+                      });
+                      setShowConfirm(true);
                     }}
                   >
                     <Trash2 size={16} /> DUYỆT & THU CỌC
@@ -1120,12 +1197,21 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                     } else {
                       confirmMsg = "HÀNG ĐANG XỬ LÝ - Chuyển sang Chờ duyệt hủy để thực hiện THU CỌC bồi thường?";
                     }
-                    if (window.confirm(confirmMsg)) {
-                      handleUpdate("Chờ duyệt hủy", { cancelReason: "Chủ cửa hàng yêu cầu hủy" });
-                    }
+
+                    setConfirmConfig({
+                      title: userRole === 'sales' ? "Yêu cầu hủy đơn hàng" : "Hủy đơn hàng",
+                      message: confirmMsg,
+                      onConfirm: () => {
+                        handleUpdate("Chờ duyệt hủy", {
+                          cancelReason: userRole === 'sales' ? "Nhân viên Sales yêu cầu hủy" : "Chủ cửa hàng yêu cầu hủy"
+                        });
+                        setShowConfirm(false);
+                      }
+                    });
+                    setShowConfirm(true);
                   }}
                 >
-                  <Ban size={16} /> HỦY
+                  <Ban size={16} /> {userRole === 'sales' ? "YÊU CẦU HỦY" : "HỦY"}
                 </button>
               )}
             </div>
@@ -1530,6 +1616,14 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={showConfirm}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setShowConfirm(false)}
+      />
     </div>
   );
 }

@@ -112,6 +112,10 @@ router.get("/:id", OrderController.getOrderById);
  *                 type: string
  *                 description: "Phương thức giao hàng (VD: Lấy tại cửa hàng, Giao tận nhà)"
  *                 example: "Giao tận nhà"
+ *               payment_method:
+ *                 type: string
+ *                 description: "Phương thức thanh toán (VD: Tiền mặt, Chuyển khoản)"
+ *                 example: "Chuyển khoản"
  *               expected_fulfillment_date:
  *                 type: string
  *                 format: date-time
