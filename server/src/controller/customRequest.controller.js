@@ -16,8 +16,7 @@ class CustomRequestController {
         const t = await sequelize.transaction();
         try {
             const {
-                fk_customer_id, fulfillment_method, payment_method, expected_fulfillment_date,
-                note, deposit_amount, address, total_amount,
+                fk_customer_id, note, address,
                 order_status, order_type, items
             } = req.body;
             const userId = req.user.userId;
@@ -26,13 +25,7 @@ class CustomRequestController {
             const newRequest = await CustomRequest.create({
                 fk_customer_id,
                 request_code: "YC-" + Date.now(),
-                fulfillment_method,
-                payment_method,
-                expected_fulfillment_date,
-                deposit_amount,
                 address,
-                total_amount,
-                total_estimated_price: total_amount, // Đồng bộ với total_amount
                 status: order_status || 1,
                 order_type: order_type || 3,
                 note,
@@ -43,6 +36,8 @@ class CustomRequestController {
             if (items && items.length > 0) {
                 const itemsData = items.map(item => ({
                     ...item,
+                    item_is_bundle: item.item_is_bundle || 0,
+                    item_bundle_items: item.item_is_bundle ? item.item_bundle_items : null,
                     fk_custom_request_id: newRequest.pk_custom_request_id,
                     createby: userId
                 }));

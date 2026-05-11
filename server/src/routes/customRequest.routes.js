@@ -55,17 +55,8 @@ router.get("/", CustomRequestController.getAllRequests);
  *             properties:
  *               fk_customer_id:
  *                 type: integer
- *               fulfillment_method:
- *                 type: string
- *               expected_fulfillment_date:
- *                 type: string
- *                 format: date-time
- *               deposit_amount:
- *                 type: number
  *               address:
  *                 type: string
- *               total_amount:
- *                 type: number
  *               order_status:
  *                 type: integer
  *               order_type:
@@ -97,6 +88,12 @@ router.get("/", CustomRequestController.getAllRequests);
  *                     is_finished:
  *                       type: integer
  *                       description: "0: Mộc, 1: Sơn"
+ *                     item_is_bundle:
+ *                       type: integer
+ *                       description: "1: Là bộ sản phẩm, 0: SP đơn lẻ"
+ *                     item_bundle_items:
+ *                       type: array
+ *                       description: "Danh sách sản phẩm con trong bộ"
  *                     customer_img:
  *                       type: array
  *                       items:

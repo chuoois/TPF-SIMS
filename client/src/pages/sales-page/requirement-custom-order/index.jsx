@@ -130,13 +130,8 @@ export default function CustomOrderRequirementsPage() {
 
         const requestData = {
           fk_customer_id: values.selectedCustomer.id,
-          fulfillment_method: values.deliveryMethod === 'delivery' ? 'Giao hàng' : 'Lấy tại cửa hàng',
-          payment_method: values.paymentMethod,
-          expected_fulfillment_date: null,
           note: values.orderNote,
-          deposit_amount: values.depositAmount,
           address: values.deliveryMethod === 'delivery' ? (values.selectedCustomer?.address || "") : 'Lấy tại cửa hàng',
-          total_amount: subtotal,
           order_status: 1,
           order_type: 3,
           items: finalCartItems.map((item) => ({
@@ -149,6 +144,8 @@ export default function CustomOrderRequirementsPage() {
             item_size: item.size,
             item_note: item.note,
             is_finished: 0,
+            item_is_bundle: item.item_is_bundle || 0,
+            item_bundle_items: item.item_bundle_items || null,
             customer_img: item.images || [],
           })),
         };

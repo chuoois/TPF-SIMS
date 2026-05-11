@@ -27,7 +27,7 @@ export default function RequirementsListing({ userRole = 'sales' }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  
+
   const [selectedReq, setSelectedReq] = useState(null);
   const [selectedReqId, setSelectedReqId] = useState(null);
   const [enlargedImg, setEnlargedImg] = useState(null);
@@ -48,7 +48,7 @@ export default function RequirementsListing({ userRole = 'sales' }) {
       dateTo: dateTo || undefined,
     };
     const response = await customRequestService.getAllRequests(params);
-    
+
     return {
       items: response.data.map((r) => ({
         id: r.pk_custom_request_id,
@@ -83,6 +83,7 @@ export default function RequirementsListing({ userRole = 'sales' }) {
   const totalItems = cachedData?.total || 0;
   const statusCountsFromApi = cachedData?.counts || {};
 
+  // ─── handleViewDetail: map đầy đủ tất cả fields từ API ───────────────────
   const handleViewDetail = async (id) => {
     try {
       const response = await customRequestService.getRequestById(id);
@@ -119,6 +120,9 @@ export default function RequirementsListing({ userRole = 'sales' }) {
           designImages: item.design_img || [],
           fk_supplier_id: item.fk_supplier_id,
           expectedWorkshopDate: item.expected_supplier_date,
+          // ✅ Bundle fields — bắt buộc để hiển thị đúng loại sản phẩm
+          item_is_bundle: item.item_is_bundle ?? 0,
+          item_bundle_items: item.item_bundle_items || [],
         })),
       };
       setSelectedReq(detailedReq);
@@ -132,15 +136,15 @@ export default function RequirementsListing({ userRole = 'sales' }) {
   const columns = [
     { header: "STT", render: (_, idx) => (currentPage - 1) * itemsPerPage + idx + 1, headerClassName: "w-[60px] text-center", className: "text-center font-medium text-slate-400" },
     { header: "Mã yêu cầu", key: "code", className: "font-mono font-bold text-slate-700" },
-    { 
-      header: "Ảnh", headerClassName: "w-[80px] text-center", className: "text-center", 
+    {
+      header: "Ảnh", headerClassName: "w-[80px] text-center", className: "text-center",
       render: (r) => (
         <div className="flex justify-center">
           <div className="w-10 h-10 rounded-lg border border-slate-100 bg-slate-50 overflow-hidden cursor-zoom-in group relative" onClick={(e) => { e.stopPropagation(); setEnlargedImg(r.thumbnail); }}>
             {r.thumbnail ? <img src={r.thumbnail} className="w-full h-full object-cover group-hover:scale-110 transition-transform" /> : <ImageIcon size={16} className="text-slate-300 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />}
           </div>
         </div>
-      ) 
+      )
     },
     {
       header: "Khách hàng",
@@ -151,11 +155,11 @@ export default function RequirementsListing({ userRole = 'sales' }) {
         </div>
       ),
     },
-    { 
-      header: "Ngày tạo", 
-      headerClassName: "text-center", 
+    {
+      header: "Ngày tạo",
+      headerClassName: "text-center",
       className: "text-center",
-      render: (r) => formatShortDateVN(r.createdDate) || "---" 
+      render: (r) => formatShortDateVN(r.createdDate) || "---"
     },
     {
       header: "Giao hàng (Dự kiến)",
@@ -259,11 +263,11 @@ export default function RequirementsListing({ userRole = 'sales' }) {
           </div>
         </div>
 
-        {/* Status Filter Row - Below Title */}
+        {/* Status Filter Row */}
         <div className="flex items-center gap-2 shrink-0 px-1 overflow-x-auto no-scrollbar pb-1">
           {["Tất cả", "Chờ tiếp nhận", "Đã tiếp nhận", "Hoàn thành", "Đã hủy"].map((status) => {
-            const count = status === "Tất cả" 
-              ? totalItems 
+            const count = status === "Tất cả"
+              ? totalItems
               : statusCountsFromApi[REVERSE_STATUS_MAP[status]] || 0;
             const isActive = statusFilter === status;
             const sc = STATUS_CONFIG[status];
@@ -293,14 +297,12 @@ export default function RequirementsListing({ userRole = 'sales' }) {
           })}
         </div>
 
-        {/* Data Table Container */}
+        {/* Data Table */}
         <DataTable
           columns={columns}
           data={requirements}
           isLoading={isLoading}
           isRefreshing={isRefreshing}
-          
-          // Search & Filters integrated into DataTable
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           searchPlaceholder="Tìm tên khách, số điện thoại, mã..."
@@ -310,7 +312,6 @@ export default function RequirementsListing({ userRole = 'sales' }) {
           setDateTo={setDateTo}
           hasActiveFilters={hasActiveFilters}
           clearAllFilters={() => { setSearchParams({ status: "Tất cả" }); setDateFrom(""); setDateTo(""); setSearchTerm(""); }}
-
           pagination={{
             total: totalItems,
             currentPage: currentPage,
@@ -318,7 +319,6 @@ export default function RequirementsListing({ userRole = 'sales' }) {
             itemsPerPage: itemsPerPage,
             setItemsPerPage: setItemsPerPage,
           }}
-          
           selectedIds={selectedIds}
           setSelectedIds={setSelectedIds}
           rowActions={rowActions}

@@ -28,7 +28,6 @@ import productAttributeService from "@/services/productAttribute.service";
 import { uploadMultipleImages } from "@/services/cloudinary.service";
 import { formatDateVN } from "@/lib/dateUtils";
 
-// Add no-scrollbar utility if not available globally
 const noScrollbarStyle = `
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -75,7 +74,6 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
   const [colorOptions, setColorOptions] = useState([]);
   const [activeDropdown, setActiveDropdown] = useState({ index: null, type: null });
 
-  // Logic tính tiền cọc gợi ý cho hàng Custom (Mặc định 50%)
   const calculateSuggested = (total) => {
     if (!total || total <= 0) return { amount: 0, percentage: 50 };
     return { amount: total * 0.5, percentage: 50 };
@@ -131,13 +129,13 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
 
   useEffect(() => {
     if (req) {
+
       setDepositAmount(Math.round(Number(req.depositAmount || 0)));
       setTotalAmount(Math.round(Number(req.totalAmount || 0)));
       setIsFullPayment(req.depositAmount >= req.totalAmount && req.totalAmount > 0);
       setDeliveryDate(formatDateVN(req.deliveryDate, "yyyy-MM-dd"));
       setDeliveryMethod(req.deliveryMethod || "");
       setNotes(req.notes || "");
-      // totalCostPrice sẽ được tính tự động từ items bên dưới
 
       setItemSpecs(
         req.items.map((item) => ({
@@ -157,6 +155,8 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
           designImages: item.designImages || [],
           fk_supplier_id: item.fk_supplier_id ? String(item.fk_supplier_id) : "",
           expectedWorkshopDate: formatDateVN(item.expectedWorkshopDate, "yyyy-MM-dd"),
+          item_is_bundle: item.item_is_bundle ?? 0,
+          item_bundle_items: item.item_bundle_items || [],
         })),
       );
       setIsEditing(false);
@@ -198,7 +198,6 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
   };
 
   const handleSaveAll = async () => {
-    // Validate required fields
     if (!deliveryMethod) {
       toast.error("Vui lòng chọn Phương thức giao hàng");
       return;
@@ -383,6 +382,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                 {itemSpecs.map((spec, index) => (
                   <div key={spec.id} className={`flex flex-col gap-6 p-6 rounded-2xl border border-gray-100 bg-white transition-all ${canEdit ? 'hover:border-[#34B057]/30' : ''}`}>
                     <div className="flex flex-col md:flex-row gap-6">
+                      {/* Image column */}
                       <div className="w-full md:w-64 space-y-4 shrink-0">
                         <div className="space-y-2">
                           <h5 className="text-[11px] font-bold text-gray-500 uppercase flex items-center gap-1.5"><User size={12} /> Ảnh mẫu</h5>
@@ -401,6 +401,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                             )}
                           </div>
                         </div>
+
                         <div className="space-y-2 pt-3 border-t border-gray-100">
                           <h5 className="text-[11px] font-bold text-[#34B057] uppercase flex items-center gap-1.5"><Layers size={12} /> Bản thiết kế 3D</h5>
                           <div className="grid grid-cols-2 gap-2">
@@ -430,66 +431,129 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                         </div>
                       </div>
 
+                      {/* Spec fields */}
                       <div className="flex-1 space-y-5">
                         <div className="border-b border-gray-50 pb-4">
                           <h4 className="text-[17px] font-bold text-gray-900 mb-4">{spec.name}</h4>
+
+                          {/* Badge bộ sản phẩm */}
+                          {spec.item_is_bundle === 1 && (
+                            <span className="inline-flex items-center gap-1.5 mb-3 px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-[11px] font-bold">
+                              <Package size={11} /> Bộ sản phẩm
+                            </span>
+                          )}
+
                           <div className="flex flex-col gap-4">
                             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                               <EditableSpecItem label="Chất liệu" value={spec.material} readOnly={!canEdit} onFocus={() => canEdit && setActiveDropdown({ index, type: 'material' })} onBlur={() => setTimeout(() => setActiveDropdown({ index: null, type: null }), 200)} onChange={(v) => handleUpdateItemSpec(index, "material", v)} options={activeDropdown.index === index && activeDropdown.type === 'material' ? materialOptions : null} onSelect={(v) => handleUpdateItemSpec(index, "material", v)} />
                               <EditableSpecItem label="Màu sắc" value={spec.color} readOnly={!canEdit} onFocus={() => canEdit && setActiveDropdown({ index, type: 'color' })} onBlur={() => setTimeout(() => setActiveDropdown({ index: null, type: null }), 200)} onChange={(v) => handleUpdateItemSpec(index, "color", v)} options={activeDropdown.index === index && activeDropdown.type === 'color' ? colorOptions : null} onSelect={(v) => handleUpdateItemSpec(index, "color", v)} />
                               <div><p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Số lượng</p><div className="text-[14px] font-bold text-gray-700">{spec.quantity}</div></div>
                             </div>
-                            
+
                             <div className={`p-3.5 rounded-xl grid grid-cols-2 gap-6 border transition-all ${canEditProduction ? 'bg-[#EAF6EE]/30 border-[#34B057]/20' : 'bg-gray-50/50 border-gray-100 opacity-60'}`}>
                               <div className="space-y-1">
                                 <label className={`text-[10px] font-bold uppercase block ${canEditProduction ? 'text-[#34B057]' : 'text-gray-400'}`}>Đơn giá bán (đ)</label>
-                                <input 
-                                  type="text" 
-                                  readOnly={!canEditProduction} 
-                                  value={spec.price === 0 ? "" : spec.price.toLocaleString("vi-VN")} 
-                                  onChange={(e) => handleUpdateItemSpec(index, "price", Number(e.target.value.replace(/\D/g, "")))} 
-                                  className={`w-full bg-transparent border-none focus:ring-0 text-[16px] font-black p-0 ${canEditProduction ? 'text-[#34B057] border-b border-[#34B057]/10 cursor-text' : 'text-gray-400 cursor-not-allowed'}`} 
+                                <input
+                                  type="text"
+                                  readOnly={!canEditProduction}
+                                  value={spec.price === 0 ? "" : spec.price.toLocaleString("vi-VN")}
+                                  onChange={(e) => handleUpdateItemSpec(index, "price", Number(e.target.value.replace(/\D/g, "")))}
+                                  className={`w-full bg-transparent border-none focus:ring-0 text-[16px] font-black p-0 ${canEditProduction ? 'text-[#34B057] border-b border-[#34B057]/10 cursor-text' : 'text-gray-400 cursor-not-allowed'}`}
                                   placeholder="0"
                                 />
                               </div>
                               <div className="space-y-1 border-l border-gray-200 pl-6">
-                                  <label className={`text-[10px] font-bold uppercase block ${canEditProduction ? 'text-amber-600' : 'text-gray-400'}`}>Giá vốn / Nhập (đ)</label>
-                                  <input 
-                                    type="text" 
-                                    readOnly={!canEditProduction} 
-                                    value={spec.costPrice === 0 ? "" : spec.costPrice.toLocaleString("vi-VN")} 
-                                    onChange={(e) => handleUpdateItemSpec(index, "costPrice", Number(e.target.value.replace(/\D/g, "")))} 
-                                    className={`w-full bg-transparent border-none focus:ring-0 text-[16px] font-black p-0 ${canEditProduction ? 'text-amber-600 border-b border-amber-100 cursor-text' : 'text-gray-400 cursor-not-allowed'}`} 
-                                    placeholder="0"
-                                  />
-                                </div>
+                                <label className={`text-[10px] font-bold uppercase block ${canEditProduction ? 'text-amber-600' : 'text-gray-400'}`}>Giá vốn / Nhập (đ)</label>
+                                <input
+                                  type="text"
+                                  readOnly={!canEditProduction}
+                                  value={spec.costPrice === 0 ? "" : spec.costPrice.toLocaleString("vi-VN")}
+                                  onChange={(e) => handleUpdateItemSpec(index, "costPrice", Number(e.target.value.replace(/\D/g, "")))}
+                                  className={`w-full bg-transparent border-none focus:ring-0 text-[16px] font-black p-0 ${canEditProduction ? 'text-amber-600 border-b border-amber-100 cursor-text' : 'text-gray-400 cursor-not-allowed'}`}
+                                  placeholder="0"
+                                />
+                              </div>
                             </div>
                           </div>
                         </div>
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                          <div className={`space-y-3 p-4 rounded-xl border ${canEdit ? 'bg-[#EAF6EE]/50 border-[#34B057]/10' : 'bg-gray-50/50 border-gray-100'}`}>
-                            <p className={`text-[10px] font-bold uppercase flex items-center gap-2 ${canEdit ? 'text-[#34B057]' : 'text-gray-400'}`}><Ruler size={14} /> Kích thước (D x R x C)</p>
-                            <div className="flex items-center gap-2">
-                              {['length', 'width', 'height'].map((f, i) => (
-                                <div key={f} className="flex-1 flex items-center gap-1">
-                                  <input type="number" readOnly={!canEdit} value={spec[f]} onChange={(e) => handleUpdateItemSpec(index, f, e.target.value)} className={`w-full border rounded-lg text-center text-[13px] font-bold py-2 transition-all ${canEdit ? 'bg-white border-[#34B057]/20 text-gray-700 cursor-text' : 'bg-gray-50 border-gray-100 text-gray-400 cursor-not-allowed'}`} />
-                                  {i < 2 && <span className="text-gray-300">×</span>}
-                                </div>
-                              ))}
+                          {/* === BUNDLE: danh sách món === */}
+                          {spec.item_is_bundle === 1 ? (
+                            <div className="col-span-2 space-y-3 p-4 rounded-xl border bg-amber-50/30 border-amber-100">
+                              <p className="text-[10px] font-bold text-amber-600 uppercase flex items-center gap-2">
+                                <Package size={14} /> Bộ sản phẩm ({(spec.item_bundle_items || []).length} món)
+                              </p>
+                              <div className="space-y-2">
+                                {(spec.item_bundle_items || []).map((sub, si) => {
+                                  const size = sub.size || {};
+                                  const dims = [size.length, size.width, size.height].filter(v => v && v > 0);
+                                  const sizeStr = dims.length > 0 ? dims.join(' × ') + ` ${size.unit || 'cm'}` : null;
+                                  return (
+                                    <div key={si} className="flex items-center gap-3 p-3 rounded-lg bg-white border border-amber-100">
+                                      <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-[11px] font-black shrink-0">{si + 1}</div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-[13px] font-bold text-gray-800 truncate">{sub.name}</p>
+                                        <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                                          <span className="text-[11px] text-gray-500">SL: <b className="text-gray-700">{sub.quantity}</b></span>
+                                          {sizeStr && (
+                                            <span className="text-[11px] text-gray-500 flex items-center gap-1">
+                                              <Ruler size={10} className="text-gray-400" /> <b className="text-gray-700">{sizeStr}</b>
+                                            </span>
+                                          )}
+                                          {size.note && <span className="text-[11px] text-gray-400 italic">({size.note})</span>}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                                {(spec.item_bundle_items || []).length === 0 && (
+                                  <div className="py-3 text-center text-[12px] text-amber-500 italic">Chưa có thông tin các món trong bộ</div>
+                                )}
+                              </div>
                             </div>
-                          </div>
+                          ) : (
+                            /* === ĐƠN LẺ: kích thước === */
+                            <div className={`space-y-3 p-4 rounded-xl border ${canEdit ? 'bg-[#EAF6EE]/50 border-[#34B057]/10' : 'bg-gray-50/50 border-gray-100'}`}>
+                              <p className={`text-[10px] font-bold uppercase flex items-center gap-2 ${canEdit ? 'text-[#34B057]' : 'text-gray-400'}`}><Ruler size={14} /> Kích thước (D x R x C)</p>
+                              <div className="flex items-center gap-2">
+                                {['length', 'width', 'height'].map((f, i) => (
+                                  <div key={f} className="flex-1 flex items-center gap-1">
+                                    <input type="number" readOnly={!canEdit} value={spec[f]} onChange={(e) => handleUpdateItemSpec(index, f, e.target.value)} className={`w-full border rounded-lg text-center text-[13px] font-bold py-2 transition-all ${canEdit ? 'bg-white border-[#34B057]/20 text-gray-700 cursor-text' : 'bg-gray-50 border-gray-100 text-gray-400 cursor-not-allowed'}`} />
+                                    {i < 2 && <span className="text-gray-300">×</span>}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
 
-                          <div className={`space-y-3 p-4 rounded-xl border transition-all ${canEditProduction ? 'bg-amber-50/30 border-amber-100' : 'bg-gray-50/50 border-gray-100 opacity-60'}`}>
+                          {/* === PHÂN BỔ SẢN XUẤT — hiển thị cho cả đơn lẻ VÀ bộ sản phẩm === */}
+                          <div className={`space-y-3 p-4 rounded-xl border transition-all ${spec.item_is_bundle === 1 ? 'col-span-2' : ''} ${canEditProduction ? 'bg-amber-50/30 border-amber-100' : 'bg-gray-50/50 border-gray-100 opacity-60'}`}>
                             <p className={`text-[10px] font-bold uppercase flex items-center gap-2 ${canEditProduction ? 'text-amber-600' : 'text-gray-400'}`}><Camera size={14} /> Phân bổ sản xuất</p>
                             <div className="flex flex-col gap-3">
                               <div className={`bg-white p-2.5 rounded-lg border ${canEditProduction ? 'border-amber-100' : 'border-gray-50'}`}>
                                 <label className={`text-[9px] font-bold uppercase ${canEditProduction ? 'text-amber-600' : 'text-gray-400'}`}>Xưởng / Nhà cung cấp</label>
-                                <select disabled={!canEditProduction} value={spec.fk_supplier_id} onChange={(e) => handleUpdateItemSpec(index, "fk_supplier_id", e.target.value)} className={`w-full bg-transparent border-none text-[13px] font-bold p-0 mt-0.5 ${canEditProduction ? 'text-gray-700 cursor-pointer' : 'text-gray-400 cursor-not-allowed'}`}>{suppliers.map(s => <option key={s.pk_supplier_id} value={String(s.pk_supplier_id)}>{s.supplier_name}</option>)}<option value="">Chọn xưởng...</option></select>
+                                <select
+                                  disabled={!canEditProduction}
+                                  value={spec.fk_supplier_id}
+                                  onChange={(e) => handleUpdateItemSpec(index, "fk_supplier_id", e.target.value)}
+                                  className={`w-full bg-transparent border-none text-[13px] font-bold p-0 mt-0.5 ${canEditProduction ? 'text-gray-700 cursor-pointer' : 'text-gray-400 cursor-not-allowed'}`}
+                                >
+                                  <option value="">Chọn xưởng...</option>
+                                  {suppliers.map(s => (
+                                    <option key={s.pk_supplier_id} value={String(s.pk_supplier_id)}>{s.supplier_name}</option>
+                                  ))}
+                                </select>
                               </div>
                               <div className={`bg-white p-2.5 rounded-lg border ${canEditProduction ? 'border-amber-100' : 'border-gray-50'}`}>
                                 <label className={`text-[9px] font-bold uppercase ${canEditProduction ? 'text-amber-600' : 'text-gray-400'}`}>Ngày xong dự kiến</label>
-                                <input type="date" readOnly={!canEditProduction} value={spec.expectedWorkshopDate} onChange={(e) => handleUpdateItemSpec(index, "expectedWorkshopDate", e.target.value)} className={`w-full bg-transparent border-none text-[13px] font-bold p-0 mt-0.5 ${canEditProduction ? 'text-gray-700 cursor-pointer' : 'text-gray-400 cursor-not-allowed'}`} />
+                                <input
+                                  type="date"
+                                  readOnly={!canEditProduction}
+                                  value={spec.expectedWorkshopDate}
+                                  onChange={(e) => handleUpdateItemSpec(index, "expectedWorkshopDate", e.target.value)}
+                                  className={`w-full bg-transparent border-none text-[13px] font-bold p-0 mt-0.5 ${canEditProduction ? 'text-gray-700 cursor-pointer' : 'text-gray-400 cursor-not-allowed'}`}
+                                />
                               </div>
                             </div>
                           </div>
@@ -508,6 +572,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
           </div>
         </div>
 
+        {/* Footer */}
         <div className="p-4 border-t border-gray-100 bg-white shrink-0 flex items-center justify-between">
           <div className="flex flex-col">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Lưu ý</span>
