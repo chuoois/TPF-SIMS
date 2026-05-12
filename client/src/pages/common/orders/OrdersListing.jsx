@@ -5,6 +5,7 @@ import {
   Clock,
   Trash2,
   Eye,
+  CheckCircle2
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import DataTable from "@/components/control/DataTable";
@@ -176,12 +177,19 @@ export default function OrdersListing({ userRole = 'owner' }) {
       render: (o) => {
         const statusName = ORDER_CONFIG.STATUS_MAP[o.order_status] || "Chờ xử lý";
         const sc = getStatusColor(statusName);
+        const isReady = Number(o.total_processing_count) > 0 && Number(o.pending_processing_count) === 0 && o.order_status === 3;
+
         return (
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-1">
             <span className="px-3 py-1 rounded-full text-[11px] font-bold border flex items-center" style={{ backgroundColor: sc.bg, color: sc.text, borderColor: sc.border }}>
               <span className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: sc.text }}></span>
               {statusName}
             </span>
+            {isReady && (
+              <span className="flex items-center gap-1 text-[10px] font-black text-[#16a34a]">
+                <CheckCircle2 size={10} /> XƯỞNG ĐÃ XONG
+              </span>
+            )}
           </div>
         );
       },

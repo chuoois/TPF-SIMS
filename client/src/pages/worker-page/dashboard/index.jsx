@@ -21,7 +21,7 @@ import DataTable from "@/components/control/DataTable";
 
 const OrderItemRow = ({ item }) => {
   const navigate = useNavigate();
-  const config = STATUS_CONFIG[item.status] || STATUS_CONFIG.WAITING;
+  const config = STATUS_CONFIG[item.status] || STATUS_CONFIG["Chờ gia công"] || { label: item.status, color: "bg-gray-100 text-gray-700", icon: LayoutDashboard };
   const StatusIcon = config.icon || LayoutDashboard;
 
   return (
@@ -73,9 +73,9 @@ const OrderItemRow = ({ item }) => {
                {item.startedAt && <span className="text-[11px]"><strong className="text-slate-400 uppercase tracking-tighter mr-1">Ngày làm:</strong> <span className="font-bold text-slate-600">{item.startedAt}</span></span>}
                {item.deadline && <span className="text-[11px]"><strong className="text-slate-400 uppercase tracking-tighter mr-1">Hạn chót:</strong> <span className="font-bold text-slate-600">{item.deadline}</span></span>}
                {item.note && (
-                  <div className="text-[11px] flex items-center gap-1.5 text-amber-600 bg-amber-50/50 px-2 py-0.5 rounded border border-amber-100">
-                    <Info size={12} className="shrink-0" />
-                    <span className="font-bold truncate max-w-[200px]">{item.note}</span>
+                  <div className="mt-2 text-[11px] flex items-start gap-1.5 text-amber-600 bg-amber-50 px-2 py-1.5 rounded-md border border-amber-100 w-fit max-w-full">
+                    <Info size={14} className="shrink-0 mt-0.5" />
+                    <span className="truncate font-medium">Ghi chú: {item.note}</span>
                   </div>
                )}
             </div>
@@ -242,15 +242,22 @@ export default function WorkerDashboard() {
     },
     {
       header: "Trạng thái",
-      render: (o) => (
-        <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-bold border ${
-            o.status === "COMPLETED" ? "bg-green-50 text-green-600 border-green-100"
-          : o.status === "PROCESSING" ? "bg-blue-50 text-blue-600 border-blue-100"
-          : "bg-gray-50 text-gray-600 border-gray-200"
-        }`}>
-          {o.status === "PROCESSING" ? "ĐANG XỬ LÝ" : o.status === "COMPLETED" ? "HOÀN THÀNH" : "CHỜ XỬ LÝ"}
-        </div>
-      ),
+      render: (o) => {
+        const isCompleted = o.status === "Hoàn Thành";
+        const isProcessing = o.status === "Đang gia công";
+        const isPending = o.status === "Gửi Nghiệm Thu";
+        
+        return (
+          <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-bold border ${
+              isCompleted ? "bg-green-50 text-green-600 border-green-100"
+            : isProcessing ? "bg-blue-50 text-blue-600 border-blue-100"
+            : isPending ? "bg-amber-50 text-amber-600 border-amber-100"
+            : "bg-gray-50 text-gray-600 border-gray-200"
+          }`}>
+            {o.status.toUpperCase()}
+          </div>
+        );
+      },
     },
     {
       header: "Số lượng",
@@ -284,11 +291,11 @@ export default function WorkerDashboard() {
       </div>
 
       {/* TỔNG HỢP TIẾN ĐỘ (STATS ROW) */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0">
-        <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-4 rounded-2xl shadow-lg shadow-indigo-200 flex items-center justify-between group">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
+        <div className="bg-gradient-to-br from-slate-500 to-slate-600 p-4 rounded-2xl shadow-lg shadow-slate-200 flex items-center justify-between group">
           <div className="text-white">
-            <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-70">Tổng đơn tại xưởng</p>
-            <h3 className="text-3xl font-black mt-1 leading-none">{orders.length}</h3>
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-70">Chờ nhận</p>
+            <h3 className="text-3xl font-black mt-1 leading-none">{orders.filter(o => o.status === 'Chờ gia công').length}</h3>
           </div>
           <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white group-hover:scale-110 transition-transform">
              <Package size={24} />
@@ -297,27 +304,27 @@ export default function WorkerDashboard() {
 
         <div className="bg-gradient-to-br from-sky-500 to-blue-600 p-4 rounded-2xl shadow-lg shadow-blue-200 flex items-center justify-between group">
           <div className="text-white">
-            <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-70">Đang xử lý</p>
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-70">Đang làm</p>
             <h3 className="text-3xl font-black mt-1 leading-none">
-              {orders.filter(o => ["WAITING", "PROCESSING", "INSPECTION", "OWNER_PENDING"].includes(o.status)).length}
+              {orders.filter(o => o.status === "Đang gia công").length}
+            </h3>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+             <Hammer size={24} />
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-4 rounded-2xl shadow-lg shadow-orange-200 flex items-center justify-between group">
+          <div className="text-white">
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-70">Chờ duyệt</p>
+            <h3 className="text-3xl font-black mt-1 leading-none">
+              {orders.filter(o => o.status === "Gửi Nghiệm Thu").length}
             </h3>
           </div>
           <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white group-hover:scale-110 transition-transform">
              <Clock size={24} />
           </div>
         </div>
-
-        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-4 rounded-2xl shadow-lg shadow-emerald-200 flex items-center justify-between group">
-          <div className="text-white">
-            <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-70">Hoàn thành</p>
-            <h3 className="text-3xl font-black mt-1 leading-none">{orders.filter(o => o.status === 'COMPLETED').length}</h3>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white group-hover:scale-110 transition-transform">
-             <CheckCircle2 size={24} />
-          </div>
-        </div>
-
-
       </div>
 
       <DataTable

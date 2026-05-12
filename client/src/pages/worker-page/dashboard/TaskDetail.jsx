@@ -27,7 +27,7 @@ import {
   Calendar,
   Settings,
   X,
-  AlertTriangle,
+  Hammer,
 } from "lucide-react";
 
 import workerService from "@/services/worker.service";
@@ -47,21 +47,21 @@ const formatValue = (val) => {
 
 /* ─── Production Steps ─── */
 const STEPS = [
-  { id: 1, key: "WAITING", label: "Tiếp nhận", icon: PackageCheck },
-  { id: 2, key: "PROCESSING", label: "Nghiệm thu", icon: Play },
-  { id: 3, key: "OWNER_PENDING", label: "Chờ chủ duyệt", icon: AlertCircle },
-  { id: 4, key: "COMPLETED", label: "Hoàn thành", icon: CheckCircle2 },
+  { id: 1, key: "Chờ gia công", label: "Chờ nhận", icon: Clock },
+  { id: 2, key: "Đang gia công", label: "Đang làm", icon: Hammer },
+  { id: 3, key: "Gửi Nghiệm Thu", label: "Nghiệm thu", icon: Camera },
+  { id: 4, key: "Hoàn Thành", label: "Xong", icon: CheckCircle2 },
 ];
 
 const getStepIndex = (status) => {
   switch (status) {
-    case "WAITING":
+    case "Chờ gia công":
       return 0;
-    case "PROCESSING":
+    case "Đang gia công":
       return 1;
-    case "OWNER_PENDING":
+    case "Gửi Nghiệm Thu":
       return 2;
-    case "COMPLETED":
+    case "Hoàn Thành":
       return 4;
     default:
       return 0;
@@ -71,31 +71,32 @@ const getStepIndex = (status) => {
 /* ─── Status badge helper ─── */
 const getStatusBadge = (status) => {
   const map = {
-    WAITING: {
-      label: "Tiếp nhận",
+    "Chờ gia công": {
+      label: "Chờ gia công",
       bg: "rgba(158,158,158,0.1)",
       color: "var(--text-secondary)",
       border: "var(--grid-border)",
     },
-    PROCESSING: {
-      color: "var(--brand-primary)",
+    "Đang gia công": {
+      label: "Đang gia công",
       bg: "rgba(52,176,87,0.08)",
+      color: "var(--brand-primary)",
       border: "rgba(52,176,87,0.15)",
     },
-    OWNER_PENDING: {
+    "Gửi Nghiệm Thu": {
       label: "Chờ chủ duyệt",
       bg: "rgba(245,158,11,0.08)",
       color: "#d97706",
       border: "rgba(245,158,11,0.2)",
     },
-    COMPLETED: {
+    "Hoàn Thành": {
       label: "Hoàn thành",
       bg: "rgba(52,176,87,0.08)",
       color: "var(--status-success)",
       border: "rgba(52,176,87,0.2)",
     },
   };
-  return map[status] || map.WAITING;
+  return map[status] || map["Chờ gia công"];
 };
 
 const getDeadlineStyle = (urgency) => {
@@ -178,7 +179,7 @@ export default function TaskDetail() {
       try {
         setIsLoading(true);
         const res = await workerService.getPendingTasks();
-        
+
         let foundTask = null;
         for (const order of res.data) {
           const item = order.items.find((i) => i.id === id);
@@ -188,7 +189,8 @@ export default function TaskDetail() {
               image: item.picture,
               orderId: order.id,
               customerName: order.customerName,
-              isCustomOrder: order.isCustomOrder
+              isCustomOrder: order.isCustomOrder,
+              workerNotes: item.note || "" // Áp dụng note từ backend vào workerNotes
             };
             break;
           }
@@ -220,11 +222,11 @@ export default function TaskDetail() {
   const updateTaskStatus = async (taskId, newStatus) => {
     const realId = extractRealId(taskId);
     try {
-      if (newStatus === 'PROCESSING') {
+      if (newStatus === 'Đang gia công') {
         await workerService.startTask(realId);
         toast.success('Đã bắt đầu gia công!');
         setSelectedTask(prev => ({ ...prev, status: newStatus }));
-      } else if (newStatus === 'OWNER_PENDING') {
+      } else if (newStatus === 'Gửi Nghiệm Thu') {
         // Upload tất cả ảnh lên Cloudinary rồi mới gọi API
         setIsUploading(true);
         const uploadedUrls = [];
@@ -292,7 +294,7 @@ export default function TaskDetail() {
     const realId = extractRealId(selectedTask.id);
     try {
       await workerService.startTask(realId);
-      setSelectedTask(prev => ({ ...prev, status: 'PROCESSING', startedAt: new Date().toLocaleDateString('vi-VN') }));
+      setSelectedTask(prev => ({ ...prev, status: 'Đang gia công', startedAt: new Date().toLocaleDateString('vi-VN') }));
       toast.success('Đã bắt đầu gia công!');
     } catch (error) {
       console.error('Start task error:', error);
@@ -329,7 +331,7 @@ export default function TaskDetail() {
     setSelectedTask(prev => ({
       ...prev,
       deadline: dateStr,
-      status: isStartingProduction ? "PROCESSING" : prev.status,
+      status: isStartingProduction ? "Đang gia công" : prev.status,
       startedAt: isStartingProduction ? new Date().toLocaleDateString("vi-VN") : prev.startedAt
     }));
 
@@ -354,7 +356,7 @@ export default function TaskDetail() {
 
   /* ─── Action Button ─── */
   const renderActionButton = () => {
-    if (selectedTask.status === "WAITING") {
+    if (selectedTask.status === "Chờ gia công") {
       return (
         <button
           onClick={handleStartProduction}
@@ -368,12 +370,12 @@ export default function TaskDetail() {
           }
           onMouseLeave={(e) => (e.currentTarget.style.filter = "none")}
         >
-          <Play size={15} /> Bắt đầu nghiệm thu
+          <Play size={15} /> Bắt đầu gia công
         </button>
       );
     }
 
-    if (selectedTask.status === "PROCESSING") {
+    if (selectedTask.status === "Đang gia công") {
       return (
         <div className="flex flex-col gap-4 items-end">
           <div className="w-full max-w-sm">
@@ -439,14 +441,13 @@ export default function TaskDetail() {
                 toast.error("Vui lòng tải ít nhất 1 ảnh sản phẩm hoàn thiện!");
                 return;
               }
-              updateTaskStatus(selectedTask.id, "OWNER_PENDING");
+              updateTaskStatus(selectedTask.id, "Gửi Nghiệm Thu");
             }}
             disabled={isUploading || pendingFiles.length === 0}
-            className={`h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 ${
-              isUploading || pendingFiles.length === 0
+            className={`h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 ${isUploading || pendingFiles.length === 0
                 ? "opacity-50 cursor-not-allowed bg-gray-400"
                 : "cursor-pointer bg-emerald-600 hover:bg-emerald-700"
-            }`}
+              }`}
             style={{ color: "#fff" }}
           >
             {isUploading ? (
@@ -464,7 +465,7 @@ export default function TaskDetail() {
       );
     }
 
-    if (selectedTask.status === "OWNER_PENDING") {
+    if (selectedTask.status === "Gửi Nghiệm Thu") {
       const serverImages = selectedTask.finishedImages || [];
       const hasPendingFiles = pendingFiles.length > 0;
 
@@ -547,11 +548,10 @@ export default function TaskDetail() {
             <button
               onClick={hasPendingFiles ? handleUpdateImages : null}
               disabled={isUploading || !hasPendingFiles}
-              className={`h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 ${
-                !hasPendingFiles
+              className={`h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 ${!hasPendingFiles
                   ? "opacity-50 cursor-not-allowed bg-amber-100/50 text-amber-600 border border-amber-200"
                   : "cursor-pointer bg-amber-600 hover:bg-amber-700 text-white shadow-amber-200"
-              }`}
+                }`}
             >
               {isUploading ? (
                 <>
@@ -668,7 +668,7 @@ export default function TaskDetail() {
             {/* Left: Product title & badges */}
             <div className="flex flex-col gap-3">
               <div className="flex flex-wrap items-center gap-2.5">
-                {selectedTask.status !== "WAITING" &&
+                {selectedTask.status !== "Chờ gia công" &&
                   selectedTask.status !== "REWORK" && (
                     <button
                       onClick={() => {
@@ -807,6 +807,22 @@ export default function TaskDetail() {
             />
           </div>
         </div>
+        
+        {/* HIỂN THỊ GHI CHÚ TỪ CHỦ XƯỞNG (ĐẶC BIỆT KHI YÊU CẦU SỬA LẠI) */}
+        {selectedTask.workerNotes && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 animate-in fade-in slide-in-from-top-2">
+            <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={20} />
+            <div>
+              <p className="text-[11px] font-black text-amber-600 uppercase tracking-widest mb-1 flex items-center gap-2">
+                Ghi chú từ chủ xưởng 
+                {selectedTask.status === 'Đang gia công' && <span className="bg-amber-500 text-white px-1.5 py-0.5 rounded text-[9px] animate-pulse">CẦN SỬA LẠI</span>}
+              </p>
+              <p className="text-[14px] font-bold text-amber-900 leading-relaxed italic">
+                "{selectedTask.workerNotes}"
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* ═══════════ MAIN 2-COLUMN LAYOUT ═══════════ */}
         <div className="flex flex-col lg:flex-row gap-5 items-start w-full">
@@ -838,7 +854,7 @@ export default function TaskDetail() {
                       className="text-[13px] font-bold"
                       style={{ color: "var(--text-main)" }}
                     >
-                      Hình ảnh sản phẩm 
+                      Hình ảnh sản phẩm
                     </h3>
                   </div>
                   {/* Main Image */}
@@ -936,12 +952,12 @@ export default function TaskDetail() {
                         boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
                       }}
                       onMouseEnter={(e) =>
-                        (e.currentTarget.style.borderColor =
-                          "var(--brand-primary)")
+                      (e.currentTarget.style.borderColor =
+                        "var(--brand-primary)")
                       }
                       onMouseLeave={(e) =>
-                        (e.currentTarget.style.borderColor =
-                          "var(--grid-border)")
+                      (e.currentTarget.style.borderColor =
+                        "var(--grid-border)")
                       }
                     >
                       <FileSignature size={13} style={{ color: "#4368E0" }} />{" "}

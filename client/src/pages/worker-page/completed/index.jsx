@@ -20,7 +20,7 @@ import DataTable from "@/components/control/DataTable";
 
 const OrderItemRow = ({ item }) => {
   const navigate = useNavigate();
-  const config = STATUS_CONFIG[item.status] || STATUS_CONFIG.COMPLETED;
+  const config = STATUS_CONFIG[item.status] || STATUS_CONFIG["Hoàn Thành"];
   const StatusIcon = config.icon || CheckCircle2;
 
   return (
@@ -158,7 +158,7 @@ export default function WorkerCompleted() {
   const filters = ["Tất cả", "Hàng khách đặt", "Hàng mộc"];
 
   // Filter ONLY COMPLETED orders
-  const completedOrders = orders.filter(o => o.status === "COMPLETED");
+  const completedOrders = orders.filter(o => o.status === "Hoàn Thành");
 
   const filteredOrders = completedOrders.filter((o) => {
     if (activeFilter === "Hàng khách đặt" && !o.isCustomOrder) return false;

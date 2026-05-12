@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { sequelize, CustomRequest, CustomRequestItem, CustomerProfile, UserAccount, UserRole, Supplier } = require("../entities");
+const { sequelize, CustomRequest, CustomRequestItem, CustomerProfile, UserAccount, UserRole, Supplier, Order, OrderItem, OrderHistory, OrderItemProcessing } = require("../entities");
 const systemLogController = require("./systemLog.controller");
 const { sendNotification } = require("../sockets/socketManager");
 
@@ -239,34 +239,132 @@ class CustomRequestController {
      * Cập nhật trạng thái yêu cầu (Xác nhận/Báo giá)
      */
     async updateStatus(req, res) {
+        const t = await sequelize.transaction();
         try {
             const { id } = req.params;
             const { status, total_estimated_price, note } = req.body;
             const userId = req.user.userId;
 
-            const request = await CustomRequest.findByPk(id);
+            const request = await CustomRequest.findByPk(id, {
+                include: [
+                    { model: CustomRequestItem, as: "items" },
+                    { model: CustomerProfile, as: "customer" }
+                ],
+                transaction: t
+            });
+
             if (!request) {
+                await t.rollback();
                 return res.status(404).json({ message: "Không tìm thấy yêu cầu" });
             }
 
+            const oldStatus = request.status;
+
+            // 1. Cập nhật trạng thái yêu cầu
             await request.update({
                 status,
                 total_estimated_price: total_estimated_price || request.total_estimated_price,
                 note: note || request.note,
                 modifieby: userId,
                 modifiedate: new Date()
-            });
+            }, { transaction: t });
+
+            // 2. LOGIC: Tự động tạo Order khi chuyển sang Hoàn thành (status 3)
+            let createdOrderId = null;
+            if (Number(status) === 3 && Number(oldStatus) !== 3 && !request.fk_order_id) {
+                // A. Tạo Order Header
+                const newOrder = await Order.create({
+                    fk_customer_id: request.fk_customer_id,
+                    fk_user_account_id: request.createby, // Gán cho người tạo yêu cầu (thường là Sales)
+                    fulfillment_method: request.fulfillment_method || "Giao tận nhà",
+                    expected_fulfillment_date: request.expected_fulfillment_date,
+                    note: request.note,
+                    deposit_amount: request.deposit_amount || 0,
+                    received_amount: 0,
+                    address: request.address || (request.customer ? request.customer.address : ""),
+                    total_amount: request.total_amount || request.total_estimated_price,
+                    order_status: 1, // 1: Chờ sản xuất
+                    order_type: 3,   // 3: Đơn hàng đặt riêng
+                    status: 1,
+                    createby: userId,
+                }, { transaction: t });
+
+                createdOrderId = newOrder.pk_order_id;
+
+                // B. Tạo Order Items
+                if (request.items && request.items.length > 0) {
+                    for (const reqItem of request.items) {
+                        const newOrderItem = await OrderItem.create({
+                            fk_order_id: newOrder.pk_order_id,
+                            fk_product_id: reqItem.fk_product_id,
+                            item_name: reqItem.item_name,
+                            item_img: reqItem.item_img,
+                            item_quantity: reqItem.item_quantity,
+                            item_price: reqItem.item_price,
+                            item_material: reqItem.item_material,
+                            item_color: reqItem.item_color,
+                            item_size: reqItem.item_size,
+                            item_note: reqItem.item_note,
+                            item_is_bundle: reqItem.item_is_bundle,
+                            item_bundle_items: reqItem.item_bundle_items,
+                            customer_img: reqItem.customer_img,
+                            design_img: reqItem.design_img,
+                            is_finished: reqItem.is_finished,
+                            item_warranty: reqItem.item_warranty || 12,
+                            createby: userId,
+                        }, { transaction: t });
+
+                        // C. Nếu item đã gán xưởng (Supplier) -> Tạo luôn bản ghi gia công
+                        if (reqItem.fk_supplier_id) {
+                            await OrderItemProcessing.create({
+                                fk_order_item_id: newOrderItem.pk_order_item_id,
+                                processing_status: 1, // Chờ gia công
+                                quantity: reqItem.item_quantity,
+                                createby: userId,
+                                createdate: new Date()
+                            }, { transaction: t });
+                        }
+                    }
+                }
+
+                // D. Cập nhật liên kết ngược lại CustomRequest
+                await request.update({ fk_order_id: newOrder.pk_order_id }, { transaction: t });
+
+                // E. Ghi lịch sử đơn hàng
+                await OrderHistory.create({
+                    fk_order_id: newOrder.pk_order_id,
+                    action: "Tạo từ yêu cầu đặt riêng",
+                    new_status: 1,
+                    changed_by: userId,
+                    note: `Đơn hàng được tạo tự động từ yêu cầu thiết kế ${request.request_code}`,
+                    createby: userId,
+                }, { transaction: t });
+            }
+
+            await t.commit();
 
             await systemLogController.record(req, "UPDATE_CUSTOM_REQUEST_STATUS", `Cập nhật trạng thái yêu cầu ID: ${id} sang ${status}`, "INFO", userId);
 
-            // Thông báo cho người tạo yêu cầu (Sales) và các bên liên quan
+            // 3. Thông báo cho người tạo yêu cầu (Sales) và các bên liên quan
             if (request.createby) {
                 await sendNotification({
                     userId: request.createby,
                     title: "Cập nhật yêu cầu đặt riêng",
-                    message: `Yêu cầu ${request.request_code} đã được cập nhật trạng thái mới.`,
+                    message: `Yêu cầu ${request.request_code} đã được cập nhật trạng thái mới${createdOrderId ? ' và đã tạo đơn hàng' : ''}.`,
                     type: "INFO",
                     link: `/custom-requirements/${id}`,
+                    createBy: userId
+                });
+            }
+
+            // Nếu đã tạo đơn hàng -> Thông báo thêm về đơn hàng mới
+            if (createdOrderId) {
+                await sendNotification({
+                    userId: request.createby,
+                    title: "Đơn hàng mới từ yêu cầu",
+                    message: `Yêu cầu ${request.request_code} đã được chuyển thành đơn hàng #${createdOrderId}.`,
+                    type: "SUCCESS",
+                    link: `/orders/${createdOrderId}`,
                     createBy: userId
                 });
             }
@@ -284,11 +382,14 @@ class CustomRequestController {
             });
 
             for (const mgr of managers) {
-                if (String(mgr.user_account_id) !== String(userId) && String(mgr.user_account_id) !== String(request.createby)) {
+                const isActor = String(mgr.user_account_id) === String(userId);
+                const isCreator = String(mgr.user_account_id) === String(request.createby);
+
+                if (!isActor && !isCreator) {
                     await sendNotification({
                         userId: mgr.user_account_id,
                         title: "Cập nhật yêu cầu đặt riêng",
-                        message: `Yêu cầu ${request.request_code} vừa được cập nhật trạng thái.`,
+                        message: `Yêu cầu ${request.request_code} vừa được cập nhật trạng thái${createdOrderId ? ' (Đã tạo đơn hàng)' : ''}.`,
                         type: "INFO",
                         link: `/custom-requirements/${id}`,
                         createBy: userId
@@ -296,8 +397,13 @@ class CustomRequestController {
                 }
             }
 
-            return res.status(200).json({ message: "Cập nhật thành công", data: request });
+            return res.status(200).json({ 
+                message: createdOrderId ? "Cập nhật thành công và đã tạo đơn hàng" : "Cập nhật thành công", 
+                data: request,
+                orderId: createdOrderId 
+            });
         } catch (error) {
+            if (t && !t.finished) await t.rollback();
             console.error("Update request status error:", error);
             return res.status(500).json({ message: "Lỗi hệ thống khi cập nhật trạng thái" });
         }
@@ -312,7 +418,7 @@ class CustomRequestController {
             const { id } = req.params;
             const { 
                 deposit_amount, total_amount, expected_fulfillment_date, 
-                fulfillment_method, payment_method, note, items 
+                fulfillment_method, note, items 
             } = req.body;
             const userId = req.user.userId;
 
@@ -335,7 +441,6 @@ class CustomRequestController {
                 total_estimated_price: total_amount !== undefined ? total_amount : request.total_estimated_price,
                 expected_fulfillment_date: expected_fulfillment_date || request.expected_fulfillment_date,
                 fulfillment_method: fulfillment_method || request.fulfillment_method,
-                payment_method: payment_method || request.payment_method,
                 note: note || request.note,
                 modifieby: userId,
                 modifiedate: new Date()
@@ -356,6 +461,7 @@ class CustomRequestController {
                         fk_supplier_id: item.fk_supplier_id,
                         expected_supplier_date: item.expected_supplier_date,
                         design_img: item.design_img !== undefined ? item.design_img : undefined,
+                        item_warranty: item.item_warranty,
                         modifieby: userId,
                         modifiedate: new Date()
                     };

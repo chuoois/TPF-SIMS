@@ -47,7 +47,7 @@ class WorkerController {
                 required: true,
                 where: {
                   processing_status: {
-                    [Op.in]: [1, 2, 4] // 1: Chờ gia công, 2: Đang gia công, 4: Chờ chủ duyệt
+                    [Op.in]: [1, 2, 3] // Chỉ hiện Chờ, Đang, Nghiệm thu tại Dashboard
                   }
                 }
               }
@@ -60,15 +60,24 @@ class WorkerController {
       // Format response to match UI mock data structure
       const formattedOrders = orders.map(order => {
         // Evaluate order status from processing items
-        let orderStatus = "WAITING";
+        let orderStatus = "Chờ gia công";
         const hasOwnerPending = order.items.some(item => 
-          item.processing && item.processing.some(p => p.processing_status === 4)
+          item.processing && item.processing.some(p => p.processing_status === 3)
         );
         const hasProcessing = order.items.some(item => 
           item.processing && item.processing.some(p => p.processing_status === 2)
         );
-        if (hasProcessing) orderStatus = "PROCESSING";
-        if (hasOwnerPending) orderStatus = "OWNER_PENDING";
+        const allCompleted = order.items.every(item => 
+          item.processing && item.processing.every(p => p.processing_status === 4)
+        );
+        const allCancelled = order.items.every(item => 
+          item.processing && item.processing.every(p => p.processing_status === 0)
+        );
+
+        if (hasProcessing) orderStatus = "Đang gia công";
+        if (hasOwnerPending) orderStatus = "Gửi Nghiệm Thu";
+        if (allCompleted) orderStatus = "Hoàn Thành";
+        if (allCancelled) orderStatus = "Hủy";
         
         // order_type = 1 (Hàng Mộc), order_type = 2 (Hàng Sẵn), order_type = 3 (Hàng Custom)
         const isCustomOrder = order.order_type === 3;
@@ -106,9 +115,10 @@ class WorkerController {
               }
             } catch (e) {}
 
-            let itemStatus = "WAITING";
-            if (proc.processing_status === 2) itemStatus = "PROCESSING";
-            if (proc.processing_status === 4) itemStatus = "OWNER_PENDING";
+            let itemStatus = "Chờ gia công";
+            if (proc.processing_status === 2) itemStatus = "Đang gia công";
+            if (proc.processing_status === 3) itemStatus = "Gửi Nghiệm Thu";
+            if (proc.processing_status === 4) itemStatus = "Hoàn Thành";
 
             return {
               id: `SP-${item.pk_order_item_id}`,
@@ -183,16 +193,16 @@ class WorkerController {
       const fullyCompletedOrders = orders.filter(order => {
         if (!order.items || order.items.length === 0) return false;
         
-        // Kiểm tra xem tất cả các item có ít nhất 1 processing = 3 không
+        // Kiểm tra xem tất cả các item có ít nhất 1 processing = 4 (Hoàn thành) không
         const allItemsCompleted = order.items.every(item => 
-          item.processing && item.processing.some(p => p.processing_status === 3)
+          item.processing && item.processing.some(p => p.processing_status === 4)
         );
         return allItemsCompleted;
       });
 
       // Format data giống như getPendingTasks
       const formattedOrders = fullyCompletedOrders.map(order => {
-        let orderStatus = "COMPLETED";
+        let orderStatus = "Hoàn Thành";
         
         const isCustomOrder = order.order_type === 3;
         const orderDate = new Date(order.createdate).toLocaleDateString('vi-VN');
@@ -236,7 +246,7 @@ class WorkerController {
               note: (typeof noteStr === 'string' ? noteStr : null),
               picture: item.item_img || "https://placehold.co/400x400?text=No+Image",
               finishedImage: proc.finished_img || null,
-              status: "COMPLETED"
+              status: "Hoàn Thành"
             };
           })
         };
@@ -319,7 +329,7 @@ class WorkerController {
         where: {
           fk_order_item_id: orderItemId,
           processing_status: {
-            [Op.in]: [2, 4] // 2: Đang gia công, 4: Chờ chủ duyệt (cho phép gửi lại)
+            [Op.in]: [2, 3] // 2: Đang gia công, 3: Gửi Nghiệm Thu (cho phép gửi lại)
           }
         },
         transaction: t
@@ -333,11 +343,11 @@ class WorkerController {
       // Lưu ảnh dưới dạng JSON array
       const imgData = Array.isArray(finishedImages) ? JSON.stringify(finishedImages) : null;
 
-      // Cập nhật trạng thái → Đang chờ duyệt của chủ
+      // Cập nhật trạng thái -> Gửi Nghiệm Thu (3)
       await proc.update({
-        processing_status: 4, // 4: Chờ duyệt của chủ (OWNER_PENDING)
+        processing_status: 3, 
         end_date: new Date(),
-        finished_img: imgData, // Lưu mảng ảnh dạng JSON
+        finished_img: imgData, 
         modifiedate: new Date(),
         modifieby: workerId
       }, { transaction: t });
@@ -348,7 +358,7 @@ class WorkerController {
         message: "Đã gửi ảnh, chờ duyệt của chủ",
         data: {
           processingId: proc.pk_processing_id,
-          status: 4,
+          status: 3,
           endDate: proc.end_date
         }
       });
@@ -375,7 +385,7 @@ class WorkerController {
       const proc = await OrderItemProcessing.findOne({
         where: {
           fk_order_item_id: orderItemId,
-          processing_status: 4 // Chờ chủ duyệt
+          processing_status: 3 // Gửi Nghiệm Thu
         },
         transaction: t
       });
@@ -385,9 +395,9 @@ class WorkerController {
         return res.status(404).json({ message: "Không tìm thấy sản phẩm đang chờ duyệt" });
       }
 
-      // Cập nhật trạng thái → Hoàn thành
+      // Cập nhật trạng thái → Hoàn thành (4)
       await proc.update({
-        processing_status: 3, // 3: Hoàn thành
+        processing_status: 4, // 4: Hoàn thành
         modifiedate: new Date(),
         modifieby: ownerId
       }, { transaction: t });
@@ -417,7 +427,7 @@ class WorkerController {
         message: "Đã duyệt sản phẩm thành công",
         data: {
           processingId: proc.pk_processing_id,
-          status: 3
+          status: 4
         }
       });
 
@@ -445,7 +455,7 @@ class WorkerController {
       const proc = await OrderItemProcessing.findOne({
         where: {
           fk_order_item_id: orderItemId,
-          processing_status: 4 // Chờ chủ duyệt
+          processing_status: 3 // Gửi Nghiệm Thu
         },
         transaction: t
       });

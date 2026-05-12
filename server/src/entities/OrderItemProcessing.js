@@ -33,7 +33,12 @@ const OrderItemProcessing = sequelize.define(
       type: DataTypes.TINYINT,
       defaultValue: 1,
       comment:
-        "1: Chờ gia công, 2: Đang gia công, 3: Hoàn thành, 0: Hủy",
+        "1: Chờ gia công, 2: Đang gia công, 3: Gửi Nghiệm Thu, 4: Hoàn Thành, 0: Hủy",
+    },
+    cancel_note: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: "Ghi chú khi hủy",
     },
 
     quantity: {

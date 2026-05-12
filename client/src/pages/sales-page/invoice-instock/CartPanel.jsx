@@ -23,10 +23,10 @@ import {
   Hammer,
   ImagePlus,
 } from "lucide-react";
-import { todayVN } from "@/lib/dateUtils";
+import { todayVN, formatShortDateVN, isoToDisplayDate, formatLongDateVN } from "@/lib/dateUtils";
 import { Button } from "@/components/ui/button";
 import CustomCheckbox from "@/components/control/CustomCheckbox";
-import { fmt, PRODUCT_TYPES, DELIVERY_METHODS, PAYMENT_METHODS, calculateSuggestedDeposit, ORDER_CONFIG } from "@/constants/orderConfig";
+import { fmt, PRODUCT_TYPES, DELIVERY_METHODS, calculateSuggestedDeposit, ORDER_CONFIG } from "@/constants/orderConfig";
 const { DEFAULT_WARRANTY } = ORDER_CONFIG;
 
 export default function CartPanel({
@@ -675,8 +675,8 @@ export default function CartPanel({
                 className="text-[11px] italic"
                 style={{ color: "var(--text-placeholder)" }}
               >
-                {formik.values.storePickupDate
-                  ? `Khách hẹn lấy tại cửa hàng ngày ${formik.values.storePickupDate.split("-").reverse().join("/")}`
+                {formik.values.cartItems?.some(i => i.productType === "Hàng mộc")
+                  ? "Hàng mộc cần thời gian gia công, vui lòng chọn ngày hẹn lấy"
                   : "Để trống nếu khách lấy ngay tại cửa hàng"}
               </p>
 
@@ -731,25 +731,7 @@ export default function CartPanel({
         >
 
           <div className="flex flex-col">
-            <div className="flex justify-between text-[13px] items-center mb-3">
-              <span
-                className="font-medium flex items-center"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                <CreditCard size={12} className="inline mr-1.5" />
-                Phương thức thanh toán
-              </span>
-              <select
-                value={formik.values.paymentMethod}
-                onChange={(e) => formik.setFieldValue("paymentMethod", e.target.value)}
-                className="text-[12px] font-bold rounded-lg px-2 py-1.5 focus:outline-none bg-white border border-gray-200 cursor-pointer"
-                style={{ color: "var(--text-main)" }}
-              >
-                {Object.values(PAYMENT_METHODS).map((m) => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
-              </select>
-            </div>
+
 
             <div className="flex justify-between text-[13px] items-center">
               <span

@@ -11,7 +11,6 @@ import {
   ORDER_CONFIG,
   PRODUCT_TYPES,
   DELIVERY_METHODS,
-  PAYMENT_METHODS,
   createEmptyTab,
   fmt
 } from "@/constants/orderConfig";
@@ -39,7 +38,7 @@ const orderSchema = Yup.object().shape({
     otherwise: (schema) => schema.nullable(),
   }),
   depositAmount: Yup.number().min(0, "Số tiền đặt cọc không hợp lệ"),
-  paymentMethod: Yup.string().required("Vui lòng chọn phương thức thanh toán"),
+
   orderNote: Yup.string().nullable(),
 });
 
@@ -94,7 +93,7 @@ export default function InStockInvoicePage() {
       deliveryMethod: "store",
       deliveryDate: "",
       storePickupDate: "",
-      paymentMethod: PAYMENT_METHODS.CASH,
+
     },
   ]);
   const [activeTabId, setActiveTabId] = useState(tabs[0].id);
@@ -191,7 +190,7 @@ export default function InStockInvoicePage() {
               : values.deliveryDate,
           note: values.orderNote,
           deposit_amount: values.depositAmount,
-          payment_method: values.paymentMethod,
+
           address: values.selectedCustomer.address,
           total_amount: subtotal,
           order_type: computedOrderType,
@@ -465,7 +464,27 @@ export default function InStockInvoicePage() {
     // Unique ID = ProductID + Type (để phân biệt cùng 1 sp nhưng bán Mộc hoặc Sẵn)
     const cartItemId = `${product.pk_product_id}-${productTypeTab}`;
 
-    const existing = formik.values.cartItems.find(
+    // Kiểm tra tính đồng nhất của giỏ hàng (Không cho phép lẫn Hàng Mộc và Hàng Sẵn)
+    const currentItems = formik.values.cartItems || [];
+    const isAddingGift = productTypeTab === PRODUCT_TYPES.GIFT;
+    const isAddingRaw = productTypeTab === PRODUCT_TYPES.RAW;
+    const isAddingInstock = productTypeTab === PRODUCT_TYPES.INSTOCK;
+
+    if (!isAddingGift) {
+      const hasRaw = currentItems.some(i => i.productType === PRODUCT_TYPES.RAW);
+      const hasInstock = currentItems.some(i => i.productType === PRODUCT_TYPES.INSTOCK);
+
+      if (isAddingRaw && hasInstock) {
+        toast.error("Giỏ hàng đang có hàng Sẵn, không thể thêm hàng Mộc!", { id: "mix-error" });
+        return;
+      }
+      if (isAddingInstock && hasRaw) {
+        toast.error("Giỏ hàng đang có hàng Mộc, không thể thêm hàng Sẵn!", { id: "mix-error" });
+        return;
+      }
+    }
+
+    const existing = currentItems.find(
       (i) => i.cartItemId === cartItemId,
     );
     if (existing) {
@@ -475,7 +494,7 @@ export default function InStockInvoicePage() {
       }
       formik.setFieldValue(
         "cartItems",
-        formik.values.cartItems.map((i) =>
+        currentItems.map((i) =>
           i.cartItemId === cartItemId ? { ...i, quantity: i.quantity + 1 } : i,
         ),
       );
@@ -489,10 +508,11 @@ export default function InStockInvoicePage() {
       }
       const isGift = productTypeTab === PRODUCT_TYPES.GIFT;
       formik.setFieldValue("cartItems", [
-        ...formik.values.cartItems,
+        ...currentItems,
         {
           cartItemId, // ID duy nhất trong giỏ
           id: product.pk_product_id, // ID sản phẩm thực tế
+          productType: productTypeTab, // Lưu loại sản phẩm (Mộc/Sẵn/Quà)
           name: product.product_name,
           image: product.product_img,
           price: isGift ? 0 : parseFloat(product.display_price),
@@ -500,7 +520,6 @@ export default function InStockInvoicePage() {
           sku: product.sku,
           quantity: 1,
           note: "",
-          productType: productTypeTab,
           images: productTypeTab === PRODUCT_TYPES.RAW ? [] : null,
           isGift,
           isBundle: product.is_bundle === 1,

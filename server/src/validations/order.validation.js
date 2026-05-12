@@ -31,7 +31,7 @@ const createOrderSchema = Joi.object({
     'any.required': 'Vui lòng chọn khách hàng',
   }),
   fulfillment_method: Joi.string().max(100).allow(null, '').optional(),
-  payment_method: Joi.string().max(100).allow(null, '').optional(),
+
   expected_fulfillment_date: Joi.date().allow(null, '').optional().messages({
     'date.base': 'Ngày giao hàng dự kiến không hợp lệ',
   }),
@@ -39,6 +39,10 @@ const createOrderSchema = Joi.object({
   deposit_amount: Joi.number().min(0).allow(null).optional().messages({
     'number.min': 'Số tiền cọc không được âm',
   }),
+  received_amount: Joi.number().min(0).allow(null).optional().messages({
+    'number.min': 'Số tiền thu thêm không được âm',
+  }),
+  delivery_image: Joi.any().optional(),
   deposit_method: Joi.string().max(50).allow(null, '').optional(),
   deposit_date: Joi.date().allow(null, '').optional(),
   deposit_proof_img: Joi.array().items(Joi.string()).allow(null).optional(),

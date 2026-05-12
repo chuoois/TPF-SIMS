@@ -26,9 +26,7 @@ const Order = sequelize.define(
     fulfillment_method: {
       type: DataTypes.STRING(100),
     },
-    payment_method: {
-      type: DataTypes.STRING(100),
-    },
+
     expected_fulfillment_date: {
       type: DataTypes.DATE,
     },
@@ -41,6 +39,13 @@ const Order = sequelize.define(
     },
     address: {
       type: DataTypes.STRING(255),
+    },
+    received_amount: {
+      type: DataTypes.DECIMAL(15, 2),
+      defaultValue: 0,
+    },
+    delivery_image: {
+      type: DataTypes.JSON, // Mảng URL ảnh khi giao hàng thành công
     },
     total_amount: {
       type: DataTypes.DECIMAL(15, 2),
