@@ -531,12 +531,15 @@ class OrderController {
             const actionTitle = "Cập nhật đơn hàng";
 
             // Ghi lịch sử đơn hàng
+            // Nếu là bàn giao xưởng (status 3), ưu tiên dùng statusText cho lịch sử (vì note thường là dặn thợ)
+            const historyNote = (Number(order_status) === 3) ? statusText : (note || statusText);
+
             await OrderHistory.create({
                 fk_order_id: id,
                 action: actionTitle,
                 new_status: order_status !== undefined ? order_status : oldStatus,
                 changed_by: userId,
-                note: note || statusText,
+                note: historyNote,
                 createby: userId,
             }, { transaction: t });
 
