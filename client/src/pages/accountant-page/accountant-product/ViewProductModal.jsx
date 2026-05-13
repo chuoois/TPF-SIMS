@@ -29,6 +29,10 @@ import {
   ChevronDown,
   Hash,
   AlertTriangle,
+  MapPin,
+  ShieldCheck,
+  Gift,
+  StickyNote as NoteIcon,
 } from "lucide-react";
 import ProcessDefectiveModal from "./ProcessDefectiveModal";
 import { toast } from "react-hot-toast";
@@ -1081,13 +1085,33 @@ function GeneralInfoTab({ product }) {
       {/* Chi tiết */}
       <div className="px-6 py-2">
         <InfoRow icon={Layers} label="Danh mục" value={product.category} />
+        <InfoRow icon={MapPin} label="Phòng / Không gian" value={product.room} />
         <InfoRow icon={Tag} label="Chất liệu" value={product.materialType} />
         <InfoRow icon={Palette} label="Màu sắc" value={product.color} />
         {dims.length > 0 && (
           <InfoRow
             icon={Ruler}
-            label="Kích thước (Dài × Rộng × Cao)"
-            value={`${dims.join(" × ")} cm`}
+            label={`Kích thước (Dài × Rộng × Cao) – ${product.sizeUnit || "cm"}`}
+            value={`${dims.join(" × ")} ${product.sizeUnit || "cm"}`}
+          />
+        )}
+        {product.sizeNote && (
+          <InfoRow icon={NoteIcon} label="Ghi chú kích thước" value={product.sizeNote} />
+        )}
+        {product.warrantyMonths != null && (
+          <InfoRow
+            icon={ShieldCheck}
+            label="Bảo hành"
+            value={`${product.warrantyMonths} tháng`}
+            valueStyle={{ color: "#1D4ED8" }}
+          />
+        )}
+        {product.isGift && (
+          <InfoRow
+            icon={Gift}
+            label="Loại sản phẩm"
+            value="Quà tặng"
+            valueStyle={{ color: "#7C3AED" }}
           />
         )}
         {product.details && (

@@ -4,7 +4,7 @@ const systemLogController = require("./systemLog.controller");
 
 /**
  * Payroll Controller – Quản lý kỳ lương, bản ghi lương, thưởng/phạt
- * Created By: ThinhBui
+ * Created By: Hieunm
  * Created Date: 25/04/2026
  */
 
