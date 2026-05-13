@@ -5,8 +5,11 @@ const {
   OrderItem,
   OrderItemProcessing,
   CustomerProfile,
-  Product
+  Product,
+  UserAccount,
+  UserRole
 } = require("../entities");
+const { sendNotification } = require("../sockets/socketManager");
 
 /**
  * Worker Controller - Quản lý các công việc của thợ gia công
@@ -44,7 +47,7 @@ class WorkerController {
                 required: true,
                 where: {
                   processing_status: {
-                    [Op.in]: [1, 2, 4] // 1: Chờ gia công, 2: Đang gia công, 4: Chờ chủ duyệt
+                    [Op.in]: [1, 2, 3] // Chỉ hiện Chờ, Đang, Nghiệm thu tại Dashboard
                   }
                 }
               }
@@ -57,15 +60,24 @@ class WorkerController {
       // Format response to match UI mock data structure
       const formattedOrders = orders.map(order => {
         // Evaluate order status from processing items
-        let orderStatus = "WAITING";
+        let orderStatus = "Chờ gia công";
         const hasOwnerPending = order.items.some(item => 
-          item.processing && item.processing.some(p => p.processing_status === 4)
+          item.processing && item.processing.some(p => p.processing_status === 3)
         );
         const hasProcessing = order.items.some(item => 
           item.processing && item.processing.some(p => p.processing_status === 2)
         );
-        if (hasProcessing) orderStatus = "PROCESSING";
-        if (hasOwnerPending) orderStatus = "OWNER_PENDING";
+        const allCompleted = order.items.every(item => 
+          item.processing && item.processing.every(p => p.processing_status === 4)
+        );
+        const allCancelled = order.items.every(item => 
+          item.processing && item.processing.every(p => p.processing_status === 0)
+        );
+
+        if (hasProcessing) orderStatus = "Đang gia công";
+        if (hasOwnerPending) orderStatus = "Gửi Nghiệm Thu";
+        if (allCompleted) orderStatus = "Hoàn Thành";
+        if (allCancelled) orderStatus = "Hủy";
         
         // order_type = 1 (Hàng Mộc), order_type = 2 (Hàng Sẵn), order_type = 3 (Hàng Custom)
         const isCustomOrder = order.order_type === 3;
@@ -103,9 +115,10 @@ class WorkerController {
               }
             } catch (e) {}
 
-            let itemStatus = "WAITING";
-            if (proc.processing_status === 2) itemStatus = "PROCESSING";
-            if (proc.processing_status === 4) itemStatus = "OWNER_PENDING";
+            let itemStatus = "Chờ gia công";
+            if (proc.processing_status === 2) itemStatus = "Đang gia công";
+            if (proc.processing_status === 3) itemStatus = "Gửi Nghiệm Thu";
+            if (proc.processing_status === 4) itemStatus = "Hoàn Thành";
 
             return {
               id: `SP-${item.pk_order_item_id}`,
@@ -118,7 +131,14 @@ class WorkerController {
               deadline: order.expected_fulfillment_date ? new Date(order.expected_fulfillment_date).toLocaleDateString('vi-VN') : null,
               note: (typeof noteStr === 'string' ? noteStr : null),
               picture: item.item_img || "https://placehold.co/400x400?text=No+Image",
-              finishedImage: proc.finished_img || null,
+              finishedImages: (() => {
+                try {
+                  const parsed = JSON.parse(proc.finished_img);
+                  return Array.isArray(parsed) ? parsed : proc.finished_img ? [proc.finished_img] : [];
+                } catch {
+                  return proc.finished_img ? [proc.finished_img] : [];
+                }
+              })(),
               status: itemStatus
             };
           })
@@ -173,16 +193,16 @@ class WorkerController {
       const fullyCompletedOrders = orders.filter(order => {
         if (!order.items || order.items.length === 0) return false;
         
-        // Kiểm tra xem tất cả các item có ít nhất 1 processing = 3 không
+        // Kiểm tra xem tất cả các item có ít nhất 1 processing = 4 (Hoàn thành) không
         const allItemsCompleted = order.items.every(item => 
-          item.processing && item.processing.some(p => p.processing_status === 3)
+          item.processing && item.processing.some(p => p.processing_status === 4)
         );
         return allItemsCompleted;
       });
 
       // Format data giống như getPendingTasks
       const formattedOrders = fullyCompletedOrders.map(order => {
-        let orderStatus = "COMPLETED";
+        let orderStatus = "Hoàn Thành";
         
         const isCustomOrder = order.order_type === 3;
         const orderDate = new Date(order.createdate).toLocaleDateString('vi-VN');
@@ -226,7 +246,7 @@ class WorkerController {
               note: (typeof noteStr === 'string' ? noteStr : null),
               picture: item.item_img || "https://placehold.co/400x400?text=No+Image",
               finishedImage: proc.finished_img || null,
-              status: "COMPLETED"
+              status: "Hoàn Thành"
             };
           })
         };
@@ -302,14 +322,14 @@ class WorkerController {
     try {
       const orderItemId = req.params.id;
       const workerId = req.user?.userId || null;
-      const { finishedImage } = req.body;
+      const { finishedImages } = req.body; // Mảng URL ảnh hoàn thiện
 
       // Tìm bản ghi processing đang ở trạng thái "Đang gia công" hoặc "Chờ chủ duyệt" (gửi lại ảnh)
       const proc = await OrderItemProcessing.findOne({
         where: {
           fk_order_item_id: orderItemId,
           processing_status: {
-            [Op.in]: [2, 4] // 2: Đang gia công, 4: Chờ chủ duyệt (cho phép gửi lại)
+            [Op.in]: [2, 3] // 2: Đang gia công, 3: Gửi Nghiệm Thu (cho phép gửi lại)
           }
         },
         transaction: t
@@ -320,11 +340,14 @@ class WorkerController {
         return res.status(404).json({ message: "Không tìm thấy công việc đang gia công" });
       }
 
-      // Cập nhật trạng thái → Đang chờ duyệt của chủ
+      // Lưu ảnh dưới dạng JSON array
+      const imgData = Array.isArray(finishedImages) ? JSON.stringify(finishedImages) : null;
+
+      // Cập nhật trạng thái -> Gửi Nghiệm Thu (3)
       await proc.update({
-        processing_status: 4, // 4: Chờ duyệt của chủ (OWNER_PENDING)
+        processing_status: 3, 
         end_date: new Date(),
-        finished_img: finishedImage || null, // Lưu ảnh
+        finished_img: imgData, 
         modifiedate: new Date(),
         modifieby: workerId
       }, { transaction: t });
@@ -335,7 +358,7 @@ class WorkerController {
         message: "Đã gửi ảnh, chờ duyệt của chủ",
         data: {
           processingId: proc.pk_processing_id,
-          status: 4,
+          status: 3,
           endDate: proc.end_date
         }
       });
@@ -344,6 +367,148 @@ class WorkerController {
       await t.rollback();
       console.error("Complete task error:", error);
       return res.status(500).json({ message: "Lỗi hệ thống khi hoàn thành gia công" });
+    }
+  }
+
+  /**
+   * 🟢 Chủ xưởng DUYỆT sản phẩm: chuyển trạng thái 4 (Chờ duyệt) → 3 (Hoàn thành)
+   * POST /api/worker/tasks/approve/:id
+   * :id = pk_order_item_id
+   */
+  async approveTask(req, res) {
+    const t = await sequelize.transaction();
+    try {
+      const orderItemId = req.params.id;
+      const ownerId = req.user?.userId || null;
+
+      // Tìm bản ghi processing đang chờ duyệt
+      const proc = await OrderItemProcessing.findOne({
+        where: {
+          fk_order_item_id: orderItemId,
+          processing_status: 3 // Gửi Nghiệm Thu
+        },
+        transaction: t
+      });
+
+      if (!proc) {
+        await t.rollback();
+        return res.status(404).json({ message: "Không tìm thấy sản phẩm đang chờ duyệt" });
+      }
+
+      // Cập nhật trạng thái → Hoàn thành (4)
+      await proc.update({
+        processing_status: 4, // 4: Hoàn thành
+        modifiedate: new Date(),
+        modifieby: ownerId
+      }, { transaction: t });
+
+      // Lấy thông tin sản phẩm để gửi thông báo
+      const orderItem = await OrderItem.findByPk(orderItemId, {
+        include: [{ model: Order, as: 'order' }],
+        transaction: t
+      });
+
+      await t.commit();
+
+      // 🟢 Gửi thông báo cho Thợ: "Chủ xưởng đã duyệt"
+      const workerId = proc.fk_user_account_id;
+      if (workerId) {
+        await sendNotification({
+          userId: workerId,
+          title: "Chủ xưởng đã duyệt sản phẩm",
+          message: `Sản phẩm ${orderItem?.item_name || ''} (Đơn #${orderItem?.fk_order_id}) đã được chủ xưởng duyệt thành công.`,
+          type: "SUCCESS",
+          link: `/worker/dashboard`,
+          createBy: ownerId
+        });
+      }
+
+      return res.status(200).json({
+        message: "Đã duyệt sản phẩm thành công",
+        data: {
+          processingId: proc.pk_processing_id,
+          status: 4
+        }
+      });
+
+    } catch (error) {
+      if (t && !t.finished) await t.rollback();
+      console.error("Approve task error:", error);
+      return res.status(500).json({ message: "Lỗi hệ thống khi duyệt sản phẩm" });
+    }
+  }
+
+  /**
+   * 🔴 Chủ xưởng TỪ CHỐI (yêu cầu làm lại): chuyển trạng thái 4 (Chờ duyệt) → 2 (Đang gia công)
+   * POST /api/worker/tasks/reject/:id
+   * :id = pk_order_item_id
+   * Body: { reason: "Lý do từ chối" }
+   */
+  async rejectTask(req, res) {
+    const t = await sequelize.transaction();
+    try {
+      const orderItemId = req.params.id;
+      const ownerId = req.user?.userId || null;
+      const { reason } = req.body;
+
+      // Tìm bản ghi processing đang chờ duyệt
+      const proc = await OrderItemProcessing.findOne({
+        where: {
+          fk_order_item_id: orderItemId,
+          processing_status: 3 // Gửi Nghiệm Thu
+        },
+        transaction: t
+      });
+
+      if (!proc) {
+        await t.rollback();
+        return res.status(404).json({ message: "Không tìm thấy sản phẩm đang chờ duyệt" });
+      }
+
+      // Cập nhật trạng thái → Đang gia công (yêu cầu làm lại)
+      await proc.update({
+        processing_status: 2, // 2: Đang gia công (làm lại)
+        finished_img: null,   // Xóa ảnh cũ
+        end_date: null,       // Reset ngày hoàn thành
+        note: reason || null, // Lưu lý do từ chối
+        modifiedate: new Date(),
+        modifieby: ownerId
+      }, { transaction: t });
+
+      // Lấy thông tin sản phẩm để gửi thông báo
+      const orderItem = await OrderItem.findByPk(orderItemId, {
+        include: [{ model: Order, as: 'order' }],
+        transaction: t
+      });
+
+      await t.commit();
+
+      // 🔴 Gửi thông báo cho Thợ: "Chủ xưởng yêu cầu làm lại"
+      const workerId = proc.fk_user_account_id;
+      if (workerId) {
+        const reasonText = reason ? ` Lý do: ${reason}` : '';
+        await sendNotification({
+          userId: workerId,
+          title: "Chủ xưởng yêu cầu làm lại",
+          message: `Sản phẩm ${orderItem?.item_name || ''} (Đơn #${orderItem?.fk_order_id}) đã bị từ chối.${reasonText} Vui lòng xử lý lại!`,
+          type: "WARNING",
+          link: `/worker/dashboard`,
+          createBy: ownerId
+        });
+      }
+
+      return res.status(200).json({
+        message: "Đã từ chối và yêu cầu thợ làm lại",
+        data: {
+          processingId: proc.pk_processing_id,
+          status: 2
+        }
+      });
+
+    } catch (error) {
+      if (t && !t.finished) await t.rollback();
+      console.error("Reject task error:", error);
+      return res.status(500).json({ message: "Lỗi hệ thống khi từ chối sản phẩm" });
     }
   }
 }

@@ -25,6 +25,9 @@ const itemSchema = Joi.object({
   fk_supplier_id: Joi.number().integer().allow(null).optional(),
   expected_supplier_date: Joi.date().allow(null, '').optional(),
   item_cost_price: Joi.number().min(0).allow(null).optional(),
+  item_is_bundle: Joi.number().valid(0, 1).allow(null).optional(),
+  item_bundle_items: Joi.any().allow(null).optional(),
+  item_warranty: Joi.number().integer().allow(null).optional(),
 }).unknown(false);
 
 const createRequestSchema = Joi.object({
@@ -33,24 +36,9 @@ const createRequestSchema = Joi.object({
     'number.integer': 'ID khách hàng phải là số nguyên',
     'any.required': 'Vui lòng cung cấp ID khách hàng (fk_customer_id)',
   }),
-  fulfillment_method: Joi.string().max(100).allow(null, '').optional().messages({
-    'string.base': 'Phương thức giao hàng phải là một chuỗi ký tự',
-    'string.max': 'Phương thức giao hàng không được vượt quá 100 ký tự',
-  }),
-  expected_fulfillment_date: Joi.date().allow(null, '').optional().messages({
-    'date.base': 'Ngày giao hàng dự kiến không hợp lệ',
-  }),
-  deposit_amount: Joi.number().min(0).allow(null).optional().messages({
-    'number.base': 'Số tiền cọc phải là một số',
-    'number.min': 'Số tiền cọc không được âm',
-  }),
   address: Joi.string().max(255).allow(null, '').optional().messages({
     'string.base': 'Địa chỉ phải là một chuỗi ký tự',
     'string.max': 'Địa chỉ không được vượt quá 255 ký tự',
-  }),
-  total_amount: Joi.number().min(0).allow(null).optional().messages({
-    'number.base': 'Tổng tiền phải là một số',
-    'number.min': 'Tổng tiền không được âm',
   }),
   order_status: Joi.number().integer().allow(null).optional(),
   order_type: Joi.number().integer().allow(null).optional(),
@@ -93,6 +81,7 @@ const updateRequestSchema = Joi.object({
     'string.base': 'Phương thức giao hàng phải là một chuỗi ký tự',
     'string.max': 'Phương thức giao hàng không được vượt quá 100 ký tự',
   }),
+
   note: Joi.string().allow(null, '').optional(),
   items: Joi.array().items(itemSchema).optional().messages({
     'array.base': 'Danh sách sản phẩm phải là một mảng',

@@ -58,7 +58,28 @@ class OrderController {
                         attributes: ['full_name', 'phone_number']
                     }
                 ],
-                attributes: ['pk_order_id', 'createdate', 'expected_fulfillment_date', 'total_amount', 'deposit_amount', 'order_status', 'order_type'],
+                attributes: [
+                    'pk_order_id', 'createdate', 'expected_fulfillment_date', 'total_amount', 
+                    'deposit_amount', 'received_amount', 'delivery_image', 'order_status', 'order_type',
+                    [
+                        sequelize.literal(`(
+                            SELECT COUNT(*) 
+                            FROM order_item_processing AS p
+                            JOIN order_item AS i ON p.fk_order_item_id = i.pk_order_item_id
+                            WHERE i.fk_order_id = Order.pk_order_id AND i.status = 1
+                        )`),
+                        'total_processing_count'
+                    ],
+                    [
+                        sequelize.literal(`(
+                            SELECT COUNT(*) 
+                            FROM order_item_processing AS p
+                            JOIN order_item AS i ON p.fk_order_item_id = i.pk_order_item_id
+                            WHERE i.fk_order_id = Order.pk_order_id AND i.status = 1 AND p.processing_status != 4
+                        )`),
+                        'pending_processing_count'
+                    ]
+                ],
                 order: [['createdate', 'DESC']],
                 limit: parseInt(limit),
                 offset: parseInt(offset),
@@ -156,8 +177,8 @@ class OrderController {
                 ],
                 attributes: [
                     'pk_order_id', 'order_status', 'order_type', 'createdate', 
-                    'expected_fulfillment_date', 'total_amount', 'deposit_amount', 
-                    'address', 'note', 'fulfillment_method'
+                    'expected_fulfillment_date', 'total_amount', 'deposit_amount', 'received_amount',
+                    'address', 'note', 'fulfillment_method', 'delivery_image'
                 ],
                 order: [
                     // Sắp xếp lịch sử từ mới nhất đến cũ nhất giống Shopee timeline
@@ -184,8 +205,8 @@ class OrderController {
         try {
             const {
                 fk_customer_id, fulfillment_method, expected_fulfillment_date,
-                note, deposit_amount, address, total_amount,
-                order_status, order_type, items // items: [{ fk_product_id, item_quantity, ... }]
+                note, deposit_amount, received_amount, address, total_amount,
+                delivery_image, order_status, order_type, items // items: [{ fk_product_id, item_quantity, ... }]
             } = req.body;
 
             const userId = req.user.userId;
@@ -211,8 +232,10 @@ class OrderController {
                 expected_fulfillment_date,
                 note,
                 deposit_amount,
+                received_amount,
                 address: finalAddress,
                 total_amount,
+                delivery_image,
                 order_status: currentStatus,
                 order_type: order_type || 1, // 1: Mộc, 2: Sẵn
                 status: 1,
@@ -312,17 +335,17 @@ class OrderController {
             // 5. Ghi lịch sử đơn hàng
             await OrderHistory.create({
                 fk_order_id: newOrder.pk_order_id,
-                action: "TẠO_ĐƠN_HÀNG",
+                action: "Tạo đơn hàng",
                 new_status: currentStatus,
                 changed_by: userId,
-                note: note || "Đơn hàng được tạo mới thành công",
+                note: note || "Đơn hàng đã được tiếp nhận và chờ xử lý",
                 createby: userId,
             }, { transaction: t });
 
             await t.commit();
 
             // Ghi log hệ thống
-            await systemLogController.record(req, "CREATE_ORDER", `Tạo đơn hàng #${newOrder.pk_order_id}`, "INFO", userId);
+            await systemLogController.record(req, "Tạo đơn hàng", `Tạo đơn hàng #${newOrder.pk_order_id} thành công`, "INFO", userId);
 
             // 6. Gửi thông báo real-time
             await sendNotification({
@@ -378,12 +401,8 @@ class OrderController {
         const t = await sequelize.transaction();
         try {
             const { id } = req.params;
-            const { order_status, note } = req.body;
+            const { order_status, note, deposit_amount, received_amount, delivery_image, handover_items } = req.body;
             const userId = req.user.userId;
-
-            if (order_status === undefined) {
-                throw new Error("Vui lòng cung cấp order_status");
-            }
 
             const order = await Order.findByPk(id);
             if (!order) {
@@ -392,16 +411,92 @@ class OrderController {
 
             const oldStatus = order.order_status;
             
-            if (oldStatus === order_status) {
-                await t.rollback();
-                return res.status(200).json({ message: "Trạng thái không thay đổi", order });
+            // Cập nhật thông tin cơ bản
+            const updateData = {
+                modifiedate: new Date(),
+                modifieby: userId
+            };
+
+            if (order_status !== undefined) {
+                updateData.order_status = order_status;
             }
 
-            // Cập nhật trạng thái Order
-            await order.update({
-                order_status,
-                modifiedate: new Date()
-            }, { transaction: t });
+            if (deposit_amount !== undefined) {
+                updateData.deposit_amount = deposit_amount;
+            }
+
+            if (delivery_image !== undefined) {
+                updateData.delivery_image = delivery_image;
+            }
+
+            if (received_amount !== undefined) {
+                updateData.received_amount = received_amount;
+            } else if (Number(order_status) === 6) {
+                // Nếu hoàn thành đơn (status = 6) mà không truyền số tiền, tự động thu đủ tiền
+                updateData.received_amount = Number(order.total_amount) - Number(order.deposit_amount);
+            }
+
+            await order.update(updateData, { transaction: t });
+
+            // Logic BÀN GIAO GIA CÔNG (Status 3: Đang gia công)
+            if (order_status == 3 || handover_items) {
+                const items = await OrderItem.findAll({ where: { fk_order_id: id }, transaction: t });
+                
+                for (const item of items) {
+                    // Tìm thông tin bàn giao tương ứng cho item này (nếu có)
+                    const handoverData = (handover_items || []).find(h => h.pk_order_item_id === item.pk_order_item_id);
+
+                    // Kiểm tra xem đã có bản ghi gia công chưa
+                    let processingRecord = await OrderItemProcessing.findOne({ 
+                        where: { fk_order_item_id: item.pk_order_item_id },
+                        transaction: t 
+                    });
+                    
+                    if (!processingRecord) {
+                        processingRecord = await OrderItemProcessing.create({
+                            fk_order_item_id: item.pk_order_item_id,
+                            processing_status: 1, // Chờ gia công
+                            quantity: item.item_quantity,
+                            start_date: new Date(), // Mặc định ngày bắt đầu là hôm nay khi bàn giao
+                            createby: userId,
+                            createdate: new Date()
+                        }, { transaction: t });
+                    }
+
+                    // Nếu có thông tin bàn giao/cập nhật thì xử lý
+                    if (handoverData) {
+                        const pData = {
+                            fk_user_account_id: handoverData.fk_user_account_id || processingRecord.fk_user_account_id,
+                            start_date: handoverData.start_date || processingRecord.start_date || new Date(),
+                            end_date: handoverData.end_date || processingRecord.end_date,
+                            note: handoverData.note || processingRecord.note,
+                            cancel_note: handoverData.cancel_note || processingRecord.cancel_note,
+                            modifiedate: new Date(),
+                            modifieby: userId
+                        };
+
+                        // Ưu tiên trạng thái gửi lên từ frontend, nếu không có thì tự động tính toán
+                        if (handoverData.processing_status !== undefined) {
+                            pData.processing_status = handoverData.processing_status;
+                        } else if (Number(order_status) === 6) {
+                            pData.processing_status = 4; // Hoàn thành
+                        } else if (Number(order_status) === 0) {
+                            pData.processing_status = 0; // Hủy
+                        } else if (handoverData.fk_user_account_id) {
+                            pData.processing_status = 2; // Đang gia công
+                        }
+
+                        await processingRecord.update(pData, { transaction: t });
+                    } else if (Number(order_status) === 6 || Number(order_status) === 0) {
+                        // Tự động cập nhật tất cả items nếu đơn hàng tổng chuyển sang Hoàn thành/Hủy
+                        await processingRecord.update({
+                            processing_status: Number(order_status) === 6 ? 4 : 0,
+                            modifiedate: new Date(),
+                            modifieby: userId
+                        }, { transaction: t });
+                    }
+                }
+            }
 
             // Nếu hủy đơn (status = 0) và trước đó chưa hủy, nhả hàng trong kho
             if (order_status == 0 && oldStatus != 0) {
@@ -420,30 +515,82 @@ class OrderController {
                 }
             }
 
+            // Mapping mô tả trạng thái kiểu Shopee
+            const statusDescriptions = {
+                0: "Đơn hàng đã được hủy thành công.",
+                1: "Người bán đang chuẩn bị hàng.",
+                2: "Sản phẩm đã được kiểm tra và chờ xử lý.",
+                3: "Đơn hàng đã được bàn giao cho xưởng gia công sản xuất.",
+                4: "Xưởng đã hoàn thiện sản phẩm. Đơn hàng đã sẵn sàng để giao.",
+                5: "Đơn hàng đang được vận chuyển đến bạn.",
+                6: "Đơn hàng đã được giao thành công. Cảm ơn bạn đã mua hàng!",
+                7: "Yêu cầu hủy đơn hàng đang được xem xét."
+            };
+
+            const statusText = statusDescriptions[order_status] || "Thông tin đơn hàng đã được cập nhật.";
+            const actionTitle = "Cập nhật đơn hàng";
+
             // Ghi lịch sử đơn hàng
+            // Nếu là bàn giao xưởng (status 3), ưu tiên dùng statusText cho lịch sử (vì note thường là dặn thợ)
+            const historyNote = (Number(order_status) === 3) ? statusText : (note || statusText);
+
             await OrderHistory.create({
                 fk_order_id: id,
-                action: "CẬP_NHẬT_TRẠNG_THÁI",
-                new_status: order_status,
+                action: actionTitle,
+                new_status: order_status !== undefined ? order_status : oldStatus,
                 changed_by: userId,
-                note: note || `Cập nhật trạng thái từ ${oldStatus} sang ${order_status}`,
+                note: historyNote,
                 createby: userId,
             }, { transaction: t });
 
             await t.commit();
 
             // Ghi log hệ thống
-            await systemLogController.record(req, "UPDATE_ORDER_STATUS", `Cập nhật trạng thái đơn #${id} thành ${order_status}`, "INFO", userId);
+            await systemLogController.record(req, "Cập nhật đơn hàng", `Cập nhật đơn hàng #${id}: ${statusText}`, "INFO", userId);
 
-            // Thông báo
+            // Thông báo cho người tạo đơn
             await sendNotification({
-                userId: order.createby || userId, // Báo cho người tạo đơn
+                userId: order.createby || userId,
                 title: "Cập nhật đơn hàng",
-                message: `Đơn hàng DH-${id} đã chuyển trạng thái thành ${order_status}.`,
+                message: `Đơn hàng DH-${id}: ${statusText}`,
                 type: "INFO",
                 link: `/orders/${id}`,
                 createBy: userId
             });
+
+            // 🟢 Thông báo cho TẤT CẢ THỢ khi đơn hàng chuyển sang "Đang gia công" (status 3)
+            if (Number(order_status) === 3 && Number(oldStatus) !== 3) {
+                // Lấy thông tin đơn hàng kèm sản phẩm
+                const orderWithItems = await Order.findByPk(id, {
+                    include: [
+                        { model: CustomerProfile, as: 'customer', attributes: ['full_name'] },
+                        { model: OrderItem, as: 'items', attributes: ['item_name'] }
+                    ]
+                });
+                const itemNames = orderWithItems?.items?.map(i => i.item_name).join(', ') || 'Sản phẩm';
+                const customerName = orderWithItems?.customer?.full_name || 'Khách hàng';
+
+                // Tìm tất cả tài khoản có role WORKER
+                const workers = await UserAccount.findAll({
+                    include: [{
+                        model: UserRole,
+                        as: "role",
+                        where: { role_code: "WORKER" }
+                    }],
+                    where: { status: 1 }
+                });
+
+                for (const worker of workers) {
+                    await sendNotification({
+                        userId: worker.user_account_id,
+                        title: "Có công việc mới cần gia công",
+                        message: `Đơn hàng #${id} của khách ${customerName} có sản phẩm (${itemNames}) cần gia công.`,
+                        type: "SUCCESS",
+                        link: `/worker/dashboard`,
+                        createBy: userId
+                    });
+                }
+            }
 
             return res.status(200).json({
                 message: "Cập nhật trạng thái thành công",

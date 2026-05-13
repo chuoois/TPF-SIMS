@@ -80,13 +80,21 @@ const handleNotification = (notification, onNewNotification) => {
  * Created By: ThinhBui
  * Created Date: 26/04/2026
  */
-export const initSocket = (userId, onNewNotification) => {
+export const initSocket = (userId, onNewNotification, onForceLogout) => {
   if (socket) {
     // Nếu socket đã tồn tại, cập nhật lại listener với callback mới
     socket.off("new_notification");
     socket.on("new_notification", (notification) => {
       handleNotification(notification, onNewNotification);
     });
+
+    socket.off("force_logout");
+    if (onForceLogout) {
+      socket.on("force_logout", (data) => {
+        onForceLogout(data);
+      });
+    }
+
     return socket;
   }
 
@@ -106,6 +114,13 @@ export const initSocket = (userId, onNewNotification) => {
   socket.on("new_notification", (notification) => {
     handleNotification(notification, onNewNotification);
   });
+
+  // Lắng nghe yêu cầu đăng xuất
+  if (onForceLogout) {
+    socket.on("force_logout", (data) => {
+      onForceLogout(data);
+    });
+  }
 
   socket.on("disconnect", () => {
     console.log("Disconnected from real-time server");

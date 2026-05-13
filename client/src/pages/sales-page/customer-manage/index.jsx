@@ -1,12 +1,4 @@
-/**
- * Component SalesCustomerManage
- * Quản lý khách hàng — SWR Caching & API Integration
- *
- * Created By: DNC
- * Created Date: 24/02/2026
- * Updated By: Antigravity
- * Updated Date: 04/05/2026
- */
+
 
 import { useState, useMemo, useCallback } from "react";
 import toast from "react-hot-toast";
@@ -24,18 +16,17 @@ import {
   Eye,
   MapPin,
   Calendar,
-  ShoppingCart,
-  Package
+  ShoppingCart
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
 import DataTable from "@/components/control/DataTable";
 import ConfirmModal from "@/components/control/ConfirmModal";
-import { INITIAL_ORDERS } from "../orders/mockData";
 import useCachedFetch from "@/hooks/useCachedFetch";
 import useDebounce from "@/hooks/useDebounce";
 import customerService from "@/services/customer.service";
+import { formatShortDateVN, formatDateVN } from "@/lib/dateUtils";
 
 // ===================== CONFIG =====================
 const GENDER_OPTIONS = ["Nam", "Nữ", "Khác"];
@@ -43,7 +34,7 @@ const GENDER_MAP = { "Nam": 1, "Nữ": 2, "Khác": 3 };
 const REVERSE_GENDER_MAP = { 1: "Nam", 2: "Nữ", 3: "Khác" };
 
 // ===================== HELPERS =====================
-const formatDate = (d) => (d ? new Date(d).toLocaleDateString("vi-VN") : "—");
+const formatDate = (d) => formatShortDateVN(d) || "—";
 
 const inputIconBase =
   "w-full text-[13px] rounded-lg pl-10 pr-3 py-2.5 focus:outline-none focus:ring-2 transition bg-transparent";
@@ -132,7 +123,7 @@ export default function SalesCustomerManage() {
       phone_number: c.phone_number,
       email: c.email || "",
       gender: c.gender ? REVERSE_GENDER_MAP[c.gender] : "",
-      dob: c.dob ? new Date(c.dob).toISOString().split("T")[0] : "",
+      dob: c.dob ? formatDateVN(c.dob, "yyyy-MM-dd") : "",
       address: c.address || "",
       note: c.note || "",
     });
@@ -161,8 +152,8 @@ export default function SalesCustomerManage() {
     if (!form.phone_number.trim()) errors.phone_number = "Vui lòng nhập SĐT";
 
     if (form.dob) {
-      const selectedDate = new Date(form.dob);
-      const today = new Date();
+      const selectedDate = form.dob ? new Date(form.dob) : nowVN();
+      const today = nowVN();
       if (selectedDate > today) {
         errors.dob = "Ngày sinh không thể ở tương lai";
       }

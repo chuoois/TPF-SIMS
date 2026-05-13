@@ -14,19 +14,23 @@ import {
   Palette,
   Ruler,
   PackageCheck,
-  CreditCard,
   ClipboardEdit,
   ImagePlus,
-  Hammer,
-  FileText,
-  ShieldCheck,
+  Receipt
 } from "lucide-react";
 import * as Yup from "yup";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
-import { fmt, inputBase, inputStyle, getNextItemId } from "./mockData";
+import { fmt } from "@/constants/orderConfig";
 import productAttributeService from "@/services/productAttribute.service";
 import { uploadMultipleImages } from "@/services/cloudinary.service";
+
+const inputBase = "w-full text-[13px] rounded-lg px-4 py-3 focus:outline-none transition-all border";
+const inputStyle = {
+  color: "var(--text-main)",
+  borderColor: "var(--grid-border)",
+  backgroundColor: "var(--bg-main)",
+};
 
 // ===================== ITEM VALIDATION SCHEMA =====================
 const itemSchema = Yup.object().shape({
@@ -49,10 +53,11 @@ export default function CustomItemInputPanel({
     width: "",
     height: "",
     color: "",
-    expectedPrice: "",
     quantity: 1,
     note: "",
     images: [],
+    item_is_bundle: 0,
+    item_bundle_items: [],
   });
 
   const [errors, setErrors] = useState({});
@@ -108,10 +113,11 @@ export default function CustomItemInputPanel({
       width: "",
       height: "",
       color: "",
-      expectedPrice: "",
       quantity: 1,
       note: "",
       images: [],
+      item_is_bundle: 0,
+      item_bundle_items: [],
     });
     setErrors({});
     setEditingItemId(null);
@@ -148,7 +154,33 @@ export default function CustomItemInputPanel({
         length: Number(newItem.length) || 0,
       };
 
-      const itemToSave = { ...newItem, item_size: sizeObj, size: sizeObj };
+      let bundleData = null;
+      if (newItem.item_is_bundle === 1) {
+        const validItems = (newItem.item_bundle_items || []).filter(b => b.name?.trim());
+        if (validItems.length === 0) {
+          toast.error("Vui lòng thêm ít nhất 1 sản phẩm con trong bộ");
+          return;
+        }
+        bundleData = validItems.map(b => ({
+          name: b.name,
+          quantity: Number(b.quantity) || 1,
+          size: {
+            note: b.size_note || "",
+            unit: "cm",
+            width: Number(b.size_width) || 0,
+            height: Number(b.size_height) || 0,
+            length: Number(b.size_length) || 0,
+          },
+        }));
+      }
+
+      const itemToSave = { 
+        ...newItem, 
+        id: newItem.id || `custom-${Date.now()}`,
+        item_size: sizeObj, 
+        size: sizeObj,
+        item_bundle_items: bundleData
+      };
 
       if (editingItemId) {
         formik.setFieldValue(
@@ -161,7 +193,7 @@ export default function CustomItemInputPanel({
       } else {
         formik.setFieldValue("cartItems", [
           ...formik.values.cartItems,
-          { id: getNextItemId(), ...itemToSave },
+          itemToSave,
         ]);
         toast.success("Đã thêm vào danh sách");
       }
@@ -277,7 +309,8 @@ export default function CustomItemInputPanel({
           </div>
         </div>
 
-        {/* Section: Specs */}
+        {/* Section: Specs — only for non-bundle items */}
+        {newItem.item_is_bundle !== 1 && (
         <div className="p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--grid-border)] space-y-3">
           <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Thông số kỹ thuật</p>
 
@@ -301,7 +334,11 @@ export default function CustomItemInputPanel({
               </div>
             ))}
           </div>
+        </div>
+        )}
 
+        {/* Section: Ghi chú + Bundle (always visible) */}
+        <div className="p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--grid-border)] space-y-3">
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1">
               <ClipboardEdit size={10} /> Ghi chú sản xuất (Yêu cầu riêng)
@@ -314,6 +351,106 @@ export default function CustomItemInputPanel({
               style={{ ...inputStyle, backgroundColor: "white" }}
             />
           </div>
+
+          {/* Bundle Toggle */}
+          <div className="flex items-center gap-2 mt-4 px-1">
+            <input 
+              type="checkbox" 
+              checked={newItem.item_is_bundle === 1}
+              onChange={(e) => {
+                const isBundle = e.target.checked ? 1 : 0;
+                updateNewItem("item_is_bundle", isBundle);
+                if (isBundle && (!newItem.item_bundle_items || newItem.item_bundle_items.length === 0)) {
+                  updateNewItem("item_bundle_items", [{ name: "", quantity: 1, size_note: "", size_width: "", size_height: "", size_length: "" }]);
+                }
+              }}
+              id="isBundle"
+              className="w-4 h-4 text-green-600 rounded border-gray-300"
+            />
+            <label htmlFor="isBundle" className="text-[12px] font-bold text-[var(--text-main)] cursor-pointer">Bộ sản phẩm</label>
+          </div>
+          
+          {newItem.item_is_bundle === 1 && (
+            <div className="space-y-3 mt-2">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Danh sách sản phẩm con ({(newItem.item_bundle_items || []).length})</span>
+                <button
+                  type="button"
+                  onClick={() => updateNewItem("item_bundle_items", [...(newItem.item_bundle_items || []), { name: "", quantity: 1, size_note: "", size_width: "", size_height: "", size_length: "" }])}
+                  className="text-[11px] font-bold text-green-600 hover:text-green-700 flex items-center gap-1 cursor-pointer"
+                >
+                  <Plus size={12} /> Thêm món
+                </button>
+              </div>
+
+              {(newItem.item_bundle_items || []).map((sub, idx) => (
+                <div key={idx} className="p-3 rounded-lg border border-gray-200 bg-white space-y-2 relative">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase">Món {idx + 1}</span>
+                    {(newItem.item_bundle_items || []).length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => updateNewItem("item_bundle_items", newItem.item_bundle_items.filter((_, i) => i !== idx))}
+                        className="text-red-400 hover:text-red-600 cursor-pointer"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-[1fr_80px] gap-2">
+                    <input
+                      type="text"
+                      placeholder="Tên sản phẩm con..."
+                      value={sub.name}
+                      onChange={(e) => {
+                        const updated = [...newItem.item_bundle_items];
+                        updated[idx] = { ...updated[idx], name: e.target.value };
+                        updateNewItem("item_bundle_items", updated);
+                      }}
+                      className={`${inputBase} !py-1.5 text-[12px]`}
+                      style={inputStyle}
+                    />
+                    <input
+                      type="number"
+                      placeholder="SL"
+                      value={sub.quantity}
+                      onChange={(e) => {
+                        const updated = [...newItem.item_bundle_items];
+                        updated[idx] = { ...updated[idx], quantity: parseInt(e.target.value) || 1 };
+                        updateNewItem("item_bundle_items", updated);
+                      }}
+                      className={`${inputBase} !py-1.5 text-[12px] text-center`}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {[
+                      { field: "size_length", label: "Dài" },
+                      { field: "size_width", label: "Rộng" },
+                      { field: "size_height", label: "Cao" },
+                    ].map((dim) => (
+                      <div key={dim.field}>
+                        <span className="text-[9px] text-gray-400 font-bold ml-0.5">{dim.label}</span>
+                        <input
+                          type="number"
+                          placeholder="cm"
+                          value={sub[dim.field]}
+                          onChange={(e) => {
+                            const updated = [...newItem.item_bundle_items];
+                            updated[idx] = { ...updated[idx], [dim.field]: e.target.value };
+                            updateNewItem("item_bundle_items", updated);
+                          }}
+                          className={`${inputBase} !py-1 text-[11px] text-center`}
+                          style={inputStyle}
+                        />
+                      </div>
+                    ))}
+                    
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Section: Price & Deposit */}
