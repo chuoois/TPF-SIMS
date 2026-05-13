@@ -669,7 +669,6 @@ export default function ManufacturingOrderDetail({ order: initialOrder, onClose 
                         </span>
                       </span>
                     </div>
-
                     {(item.expected_date || item.expectedDate || order.expected_delivery_date || order.expectedDate) && (
                       <div className="detail-row" style={{ marginTop: '4px' }}>
                         <span className="detail-label">Ngày giao:</span>
@@ -677,7 +676,6 @@ export default function ManufacturingOrderDetail({ order: initialOrder, onClose 
                           {formatDateVN(item.expected_date || item.expectedDate || order.expected_delivery_date || order.expectedDate) || "—"}
                         </span>
                       </div>
-
                     )}
                     {item.note && (
                       <div className="detail-note">

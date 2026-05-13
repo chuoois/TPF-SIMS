@@ -178,7 +178,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
 
     useEffect(() => {
         const localData = JSON.parse(localStorage.getItem("tpf_manufacturing_orders") || "[]");
-        
+
         const adaptedLocal = localData.map(r => ({
             id: r.id,
             requestCode: r.id,
@@ -252,7 +252,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
         setLines(prev => {
             const lineToRemove = prev.find(l => l._id === id);
             const newList = prev.filter(l => l._id !== id);
-            
+
             if (newList.length === 0) {
                 setActiveRequestId(null);
                 setSupplier("");
@@ -316,14 +316,14 @@ export default function CreateImportModal({ onClose, onSaved }) {
         }
 
         const selectedReqIds = [...new Set(selectedItemsEntries.map(([k]) => k.split('_')[0]))];
-        
+
         if (selectedReqIds.length > 1) {
             toast.error("Chỉ được chọn mặt hàng từ cùng 1 yêu cầu trong mỗi lần thêm!");
             return;
         }
 
         const reqId = selectedReqIds[0];
-        
+
         if (activeRequestId && activeRequestId !== reqId) {
             toast.error("Mỗi phiếu nhập chỉ áp dụng cho 01 yêu cầu duy nhất để đảm bảo chính xác thông tin xưởng.");
             return;
@@ -379,7 +379,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
 
         setLines(prev => [...prev, ...newLines]);
         toast.success(`Đã thêm ${newLines.length} mặt hàng vào phiếu!`, { style: { fontSize: "13px" } });
-        
+
         setSelectedRequestItems({});
     };
 
@@ -580,10 +580,10 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                     })}
                                 {mergedRequests.filter(r => r.status === "PENDING" || r.status === "Chờ xử lý" || r.status === "Chờ sản xuất" || r.status === "Đang gia công")
                                     .filter(r => (r.requestCode || "").toLowerCase().includes(requestSearchTerm.toLowerCase()) || (r.note || "").toLowerCase().includes(requestSearchTerm.toLowerCase())).length === 0 && (
-                                    <div className="p-8 text-center text-gray-400 border border-dashed rounded-xl text-[12px] bg-gray-50/50 mt-2">
-                                        Không tìm thấy yêu cầu nào phù hợp.
-                                    </div>
-                                )}
+                                        <div className="p-8 text-center text-gray-400 border border-dashed rounded-xl text-[12px] bg-gray-50/50 mt-2">
+                                            Không tìm thấy yêu cầu nào phù hợp.
+                                        </div>
+                                    )}
                             </div>
 
                             {/* ── Add button – luôn hiện, không bị khuất ── */}
@@ -724,7 +724,10 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveImage,
                     </div>
                     <div>
                         <label className={lbl} style={lblS}>Giá gốc nhập (₫) - từ YC *</label>
-                        <input type="text" value={formatNumber(line.importPrice)} readOnly className={`${inp} bg-gray-50 text-gray-500 cursor-not-allowed`} style={inpS} />
+                        <input type="text" value={formatNumber(line.importPrice)} onChange={(e) =>
+                            onUpdate("importPrice", parseNumber(e.target.value))
+                        }
+                            className={inp} style={{ ...inpS, borderColor: "#7C3AED" }} />
                     </div>
                     <div>
                         <label className={lbl} style={lblS}><AlignLeft size={11} className="inline mr-1" />Ghi chú</label>
