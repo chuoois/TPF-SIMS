@@ -15,31 +15,21 @@ import {
   StickyNote, AlertTriangle, Sparkles,
   ChevronDown, Trash2, Calendar, Paintbrush,
 } from "lucide-react";
+import { formatDateVN } from "@/lib/dateUtils";
 
+
+// UI Constants for autocomplete
 const WOOD_TYPES = ["Gỗ sồi", "Gỗ óc chó", "Gỗ tần bì", "Gỗ cao su", "Gỗ thông", "Gỗ hương"];
 const COLORS = ["Tự nhiên", "Nâu đậm", "Nâu nhạt", "Đen", "Trắng ngà", "Ghi xám"];
-import toast from "react-hot-toast";
-import DataTable from "@/components/control/DataTable";
 
 const ELIGIBLE_TYPES = ["Hàng khách đặt"];
 const ELIGIBLE_STATUSES = ["Chờ xử lý", "Chờ sản xuất", "Đang gia công"];
 
-const TYPE_BADGE = {
-  "Hàng mộc": { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" },
-  "Hàng khách đặt": { bg: "#FEF3C7", text: "#B45309", border: "#FDE68A" },
-};
+import toast from "react-hot-toast";
+import DataTable from "@/components/control/DataTable";
+import manufacturingOrderService from "@/services/manufacturingOrder.service";
 
-const STATUS_BADGE = {
-  "Chờ xử lý": { bg: "#EFF6FF", text: "#1D4ED8" },
-  "Chờ sản xuất": { bg: "#FEF3C7", text: "#B45309" },
-  "Đang gia công": { bg: "#FEF3C7", text: "#D97706" },
-};
 
-const INITIAL_SUPPLIERS = [
-  { id: "NCC001", code: "NCC-TAM", name: "Xưởng gỗ mỹ nghệ Thành Tâm", contactPerson: "Nguyễn Văn Tâm", phone: "0901234567", address: "Làng nghề Đồng Kỵ, Từ Sơn, Bắc Ninh", specialty: "Chuyên đồ thờ, sập thờ chân 20-24" },
-  { id: "NCC002", code: "NCC-HAI", name: "Xưởng mộc gia dụng Nam Hải", contactPerson: "Trần Thế Hải", phone: "0912345678", address: "Khu CN Thạch Thất, Hà Nội", specialty: "Chuyên đóng phôi gỗ mít, xoan đào" },
-  { id: "NCC003", code: "NCC-PHAT", name: "Xưởng mộc nội thất Gia Phát", contactPerson: "Lê Văn Phát", phone: "0987654321", address: "Làng mộc Hữu Bằng, Thạch Thất, Hà Nội", specialty: "Chuyên bàn ghế, sofa gỗ hiện đại" }
-];
 
 function removeAccents(str) {
   if (!str) return "";
@@ -59,20 +49,31 @@ function getInitials(str) {
     .toUpperCase();
 }
 
-function genId() {
-  const now = new Date();
-  const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
-  const existing = JSON.parse(localStorage.getItem("tpf_manufacturing_orders") || "[]");
-  const todayPrefix = `YCNH-${dateStr}-`;
-  const todayOrders = existing.filter((o) => o.id.startsWith(todayPrefix));
-  const seq = String(todayOrders.length + 1).padStart(3, "0");
-  return `${todayPrefix}${seq}`;
-}
+// Helper: get display size
+const getDisplaySize = (item) => {
+  const size = item.item_size || item.size || item.dimensions;
+  if (!size) return "—";
+  if (typeof size === "string") return size;
+  
+  const { length, width, height } = size;
+  const parts = [
+    length ? `D${length}` : "",
+    width ? `R${width}` : "",
+    height ? `C${height}` : "",
+  ]
+    .filter(Boolean)
+    .join(" × ");
+  return parts || "—";
+};
+
+
+// genId function removed as it is now handled by the backend
+
 
 // ── Step 2 Sub-component ──
 const ReviewItem = ({ item, isCustom }) => {
-  const sizeParts = [item.length ? `D${item.length}` : "", item.width ? `R${item.width}` : "", item.height ? `C${item.height}` : ""].filter(Boolean).join(" ");
-  const sizeDisplay = item.size || sizeParts;
+  const sizeDisplay = getDisplaySize(item);
+
   const colorFinish = [item.color, item.finish].filter(Boolean).join(" / ");
   const allImages = [...(item.image ? [item.image] : []), ...(item.images || [])];
 
@@ -105,7 +106,8 @@ const ReviewItem = ({ item, isCustom }) => {
   );
 };
 
-export default function CreateManufacturingOrderModal({ orders, catalogProducts, onClose, onCreated }) {
+export default function CreateManufacturingOrderModal({ orders, catalogProducts, suppliers, onClose, onCreated }) {
+
   const [step, setStep] = useState(1);
   const [activeTab, setActiveTab] = useState("orders"); // "orders" | "catalog"
   const [selectedProductKeys, setSelectedProductKeys] = useState(new Set()); // "orderId-idx"
@@ -157,9 +159,12 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
     setActiveTab(tab);
   };
 
-  // ── Eligible orders ──
+  // ── Eligible orders (CustomRequests) ──
   const eligibleOrders = useMemo(() =>
-    (orders || []).filter((o) => ELIGIBLE_TYPES.includes(o.type) && ELIGIBLE_STATUSES.includes(o.status)),
+    (orders || []).filter((o) => {
+      // 3: Ordered/Confirmed status
+      return o.status === 3 || o.status === "3";
+    }),
     [orders]
   );
 
@@ -167,47 +172,77 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
     const q = search.toLowerCase().trim();
     if (!q) return eligibleOrders;
     return eligibleOrders.filter((o) =>
-      o.code.toLowerCase().includes(q) ||
-      (o.customerName || o.customer?.name || "").toLowerCase().includes(q) ||
-      o.products?.some(p => (p.name || p.productName || "").toLowerCase().includes(q))
+      (o.request_code || "").toLowerCase().includes(q) ||
+      (o.customer?.full_name || "").toLowerCase().includes(q) ||
+      (o.customer?.phone_number || "").includes(q) ||
+      o.items?.some(it => (it.item_name || "").toLowerCase().includes(q))
     );
   }, [eligibleOrders, search]);
+
 
   // ── Catalog products filter ──
   const filteredCatalog = useMemo(() => {
     const q = catSearch.toLowerCase().trim();
     if (!q) return catalogProducts || [];
     return (catalogProducts || []).filter((p) =>
-      p.name.toLowerCase().includes(q) ||
-      (p.code || "").toLowerCase().includes(q)
+      (p.product_name || p.name || "").toLowerCase().includes(q) ||
+      (p.sku || p.code || "").toLowerCase().includes(q)
     );
   }, [catalogProducts, catSearch]);
+
 
   // ── Suppliers filter ──
   const filteredSuppliersForStep1 = useMemo(() => {
     const q = suppSearch.toLowerCase().trim();
-    const base = INITIAL_SUPPLIERS.map(s => {
-      // Nhóm sản phẩm từ catalog cho từng NCC (Mock logic)
-      // Trong thực tế, dữ liệu này sẽ được trả về từ API theo cấu trúc NCC -> SP
-      const products = (catalogProducts || []).filter((_, idx) => {
-        if (s.id === "NCC001") return idx % 3 === 0;
-        if (s.id === "NCC002") return idx % 3 === 1;
-        return idx % 3 === 2;
-      }).map((p, pIdx) => {
-        // Mock: thêm ngày hẹn giao (7-21 ngày kể từ hôm nay)
-        const daysOffset = 7 + ((pIdx * 3 + (s.id === "NCC001" ? 0 : s.id === "NCC002" ? 5 : 10)) % 15);
-        const d = new Date();
-        d.setDate(d.getDate() + daysOffset);
-        return {
-          ...p,
-          deliveryDate: p.deliveryDate || d.toISOString().split("T")[0],
-          importPrice: p.importPrice || p.price || 0,
-        };
-      });
-      return {
+    const base = (suppliers || []).map(s => {
+      // Map backend fields to frontend expected fields
+      const normalizedS = {
         ...s,
-        products: products
+        id: s.pk_supplier_id,
+        name: s.supplier_name,
+        code: `NCC#${s.pk_supplier_id}`,
+        phone: s.phone_number,
+        contactPerson: s.contact_person,
+        address: s.address
       };
+
+
+      // 1. Nhóm sản phẩm từ yêu cầu khách hàng (CustomRequest) đã gán cho NCC này
+      const orderItems = [];
+      eligibleOrders.forEach(order => {
+        (order.items || []).forEach(it => {
+          if (String(it.fk_supplier_id) === String(s.pk_supplier_id)) {
+            orderItems.push({
+              ...it,
+              id: it.pk_custom_request_item_id,
+              name: it.item_name,
+              material: it.item_material,
+              size: it.item_size,
+              qty: it.item_quantity,
+              unit: it.item_unit || "Cái",
+              image: it.item_img,
+              color: it.item_color || "",
+              isBundle: it.item_is_bundle || 0,
+              bundleItems: it.item_bundle_items || null,
+              hasManufacturingOrder: !!it.manufacturingDetail,
+              deliveryDate: it.expected_supplier_date ? it.expected_supplier_date.split("T")[0] : "",
+              importPrice: it.item_cost_price || 0,
+              fk_custom_request_item_id: it.pk_custom_request_item_id,
+              fk_product_id: it.fk_product_id || null,
+              sourceOrder: order.request_code,
+              sourceOrderData: order
+            });
+          }
+        });
+      });
+
+      return {
+        ...normalizedS,
+        products: orderItems
+      };
+
+
+
     });
 
     if (!q) return base;
@@ -284,7 +319,8 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
         supplierIds.add(key.substring(0, lastDash));
       }
     });
-    return INITIAL_SUPPLIERS.filter(s => supplierIds.has(s.id));
+    return (suppliers || []).filter(s => supplierIds.has(s.id));
+
   }, [selectedProductKeys]);
 
 
@@ -438,10 +474,18 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
   ];
 
   const catalogDataForTable = useMemo(() => {
-    const items = filteredCatalog.map(p => ({ ...p, id: p.id }));
+    const items = (catalogProducts || []).map(p => ({
+      ...p,
+      id: p.pk_product_id || p.id,
+      name: p.product_name || p.name,
+      code: p.sku || p.code || "CUSTOM",
+      image: p.product_img || p.image || p.img,
+      material: p.material_name || p.material || "—"
+    }));
     const custom = customItems.map(ci => ({ ...ci, id: ci.id }));
     return [...custom, ...items];
-  }, [filteredCatalog, customItems]);
+  }, [catalogProducts, customItems]);
+
 
   // 3. Supplier Tab (Step 2)
   const supplierColumns = [
@@ -491,14 +535,24 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
 
   const supplierDataForTable = useMemo(() => {
     const q = suppSearch.toLowerCase().trim();
-    if (!q) return INITIAL_SUPPLIERS;
-    return INITIAL_SUPPLIERS.filter(s =>
-      s.name.toLowerCase().includes(q) ||
-      s.code.toLowerCase().includes(q) ||
+    const base = (suppliers || []).map(s => ({
+      ...s,
+      id: s.pk_supplier_id,
+      name: s.supplier_name,
+      code: `NCC#${s.pk_supplier_id}`,
+      phone: s.phone_number,
+      contactPerson: s.contact_person,
+      address: s.address
+    }));
+    if (!q) return base;
+    return base.filter(s =>
+      s.name?.toLowerCase().includes(q) ||
+      s.code?.toLowerCase().includes(q) ||
       s.contactPerson?.toLowerCase().includes(q) ||
       (s.specialty && s.specialty.toLowerCase().includes(q))
     );
-  }, [suppSearch]);
+  }, [suppSearch, suppliers]);
+
 
 
   // ── Build items from selected suppliers (carry ALL product fields as-is) ──
@@ -516,22 +570,25 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
           type: "Hàng nhập xưởng",
         };
 
-        const matchedOrder = eligibleOrders.find(order =>
-          (order.products || []).some(op => {
-            const opName = (op.name || op.productName || "").toLowerCase().trim();
-            const pName = (p.name || p.productName || "").toLowerCase().trim();
-            return (opName && pName && opName === pName) || (op.id && p.id && op.id === p.id);
+        const matchedOrder = p.sourceOrderData || eligibleOrders.find(order =>
+          (order.items || []).some(op => {
+            const opName = (op.item_name || op.productName || "").toLowerCase().trim();
+            const pName = (p.product_name || p.name || p.productName || "").toLowerCase().trim();
+            const opId = op.fk_product_id || op.id;
+            const pId = p.pk_product_id || p.id;
+            return (opName && pName && opName === pName) || (opId && pId && opId === pId);
           })
         );
 
         if (matchedOrder) {
-          sourceKey = matchedOrder.code || matchedOrder.id;
+          sourceKey = matchedOrder.request_code || matchedOrder.code || matchedOrder.id;
           sourceDetail = {
-            customerName: matchedOrder.customerName || matchedOrder.customer?.name || "Khách lẻ",
+            customerName: matchedOrder.customer?.full_name || matchedOrder.customerName || matchedOrder.customer?.name || "Khách lẻ",
             type: "Hàng khách đặt",
-            deadline: matchedOrder.deliveryDate,
+            deadline: matchedOrder.expected_fulfillment_date || matchedOrder.deliveryDate,
           };
         }
+
 
         items.push({
           id: Math.random().toString(36).substr(2, 9),
@@ -550,7 +607,10 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
           customerSampleImage: p.customerSampleImage || "",
           images: p.images || [],
           importPrice: p.importPrice || p.price || 0,
-          deliveryDate: p.deliveryDate || matchedOrder?.deliveryDate || "",
+          deliveryDate: p.deliveryDate || matchedOrder?.deadline || "",
+          customerDeadline: matchedOrder?.deadline || p.deliveryDate || "",
+          isBundle: p.isBundle || 0,
+          bundleItems: p.bundleItems || null,
           sourceOrders: [sourceKey],
           sourceOrderDetails: {
             [sourceKey]: sourceDetail,
@@ -561,21 +621,23 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
 
     // 2. From Catalog
     Object.entries(selectedCatalogProducts).forEach(([pId, qty]) => {
-      const p = catalogProducts.find(cp => cp.id === pId);
+      const p = catalogProducts.find(cp => String(cp.pk_product_id || cp.id) === String(pId));
       if (!p) return;
       items.push({
         id: Math.random().toString(36).substr(2, 9),
-        productName: p.name || "",
-        material: p.material || "",
+        productName: p.product_name || p.name || "",
+        material: p.material_name || p.material || "",
         size: p.dimensions || p.size || "",
-        color: p.color || "",
+        color: p.color_name || p.color || "",
         finish: p.finish || "Để mộc",
         qty: qty,
         unit: p.unit || "Cái",
         note: "Sản phẩm nhập thêm (từ danh mục)",
-        image: p.img || p.image || "",
-        importPrice: p.importPrice || p.price || 0,
+        image: p.product_img || p.img || p.image || "",
+        importPrice: p.importPrice || p.display_price || p.price || 0,
         deliveryDate: p.deliveryDate || "",
+        customerDeadline: p.deliveryDate || "",
+        fk_product_id: p.pk_product_id || p.id,
         sourceOrders: ["DANH-MUC"],
         sourceOrderDetails: {
           "DANH-MUC": {
@@ -585,6 +647,7 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
         },
       });
     });
+
 
     // 3. From Custom Entries
     customItems.forEach(ci => {
@@ -687,34 +750,48 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
   const totalSelectedFromOrders = selectedProductKeys.size;
   const totalSelectedFromCatalog = Object.values(selectedCatalogProducts).reduce((s, q) => s + q, 0) + customItems.reduce((s, i) => s + i.qty, 0);
 
-  const goToStep2 = () => {
-    if (selectedProductKeys.size === 0 && selectedCatCount === 0) {
-      toast.error("Vui lòng chọn ít nhất 1 sản phẩm!");
-      return;
-    }
+  const handleNext = () => {
+    if (step === 1) {
+      const items = buildItems();
+      if (items.length === 0) {
+        toast.error("Vui lòng chọn ít nhất một sản phẩm");
+        return;
+      }
 
-    // Logic: Nếu đang ở tab NCC và có sản phẩm được chọn
-    // Thì NCC đó đã được xác định, đi thẳng tới bước 3
-    if (activeTab === "orders" && selectedSuppliersFromStep1.length > 0) {
-      setSelectedSupplier(selectedSuppliersFromStep1[0]);
+      // Tự động nhận diện nhà cung cấp nếu tất cả SP thuộc về 1 NCC
+      const supplierIds = new Set();
+      selectedProductKeys.forEach(key => {
+        const [suppId] = key.split("-");
+        supplierIds.add(suppId);
+      });
+
+      if (supplierIds.size === 1 && Object.keys(selectedCatalogProducts).length === 0 && customItems.length === 0) {
+        const autoId = Array.from(supplierIds)[0];
+        const found = suppliers.find(s => String(s.pk_supplier_id || s.id) === String(autoId));
+        if (found) {
+          setSelectedSupplier({
+            ...found,
+            id: found.pk_supplier_id || found.id,
+            name: found.supplier_name || found.name,
+            code: `NCC#${found.pk_supplier_id || found.id}`
+          });
+          setStep(3); // Nhảy thẳng sang bước review
+          return;
+        }
+      }
+
+      setStep(2);
+    } else if (step === 2) {
+      if (!selectedSupplier) {
+        toast.error("Vui lòng chọn nhà cung cấp!");
+        return;
+      }
       setStep(3);
-      return;
     }
-
-    // Nếu chọn từ Catalog (Sản phẩm), vẫn yêu cầu chọn NCC ở bước 2
-    setStep(2);
-  };
-
-  const goToStep3 = () => {
-    if (!selectedSupplier) {
-      toast.error("Vui lòng chọn nhà cung cấp!");
-      return;
-    }
-    setStep(3);
   };
 
   // ── Save ──
-  const handleSave = () => {
+  const handleSave = async () => {
     const finalItems = buildItems();
     if (!finalItems.length) {
       toast.error("Yêu cầu không có sản phẩm nào!");
@@ -734,53 +811,44 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
       return;
     }
 
-    const allSourceOrders = new Set();
-    const allSourceOrderDetails = {};
-    finalItems.forEach(it => {
-      const src = it.sourceOrders?.[0] || "KHAC";
-      it.expectedDate = orderDates[src]; // Attach specific date to item
-
-      it.sourceOrders.forEach(o => {
-        allSourceOrders.add(o);
-        if (it.sourceOrderDetails?.[o]) {
-          allSourceOrderDetails[o] = it.sourceOrderDetails[o];
-        }
+    try {
+      const payloadItems = finalItems.map(it => {
+        const src = it.sourceOrders?.[0] || "KHAC";
+        // Map to backend schema
+        return {
+          fk_product_id: it.fk_product_id ? Number(it.fk_product_id) : null,
+          fk_custom_request_item_id: it.fk_custom_request_item_id ? Number(it.fk_custom_request_item_id) : null,
+          item_name: it.productName,
+          item_material: it.material,
+          item_size: it.size,
+          item_color: it.color,
+          item_is_bundle: it.isBundle || 0,
+          item_bundle_items: it.bundleItems || null,
+          quantity: it.qty,
+          import_price: it.importPrice,
+          expected_date: orderDates[src],
+          note: it.note
+        };
       });
-    });
 
-    const newOrder = {
-      id: genId(),
-      createdAt: new Date().toISOString(),
-      createdBy: "Chủ xưởng",
-      status: "Mới tạo",
-      note: note.trim(),
-      supplierId: selectedSupplier?.id,
-      supplierName: selectedSupplier?.name,
-      expectedDate: Object.values(orderDates).sort()[0] || "",
-      orderDates: orderDates,
-      orderIds: Array.from(allSourceOrders),
-      sourceOrderDetails: allSourceOrderDetails,
-      items: finalItems,
-      totalImportAmount,
-      deposit,
-    };
-    const existing = JSON.parse(localStorage.getItem("tpf_manufacturing_orders") || "[]");
-    localStorage.setItem("tpf_manufacturing_orders", JSON.stringify([newOrder, ...existing]));
-    toast.success(`Đã tạo yêu cầu ${newOrder.id} thành công!`);
-    onCreated?.(newOrder);
-    onClose();
+      const payload = {
+        fk_supplier_id: selectedSupplier?.pk_supplier_id || selectedSupplier?.id,
+        note: note.trim(),
+        deposit_amount: deposit,
+        expected_delivery_date: Object.values(orderDates).sort()[0] || "",
+        items: payloadItems
+      };
+
+      await manufacturingOrderService.createOrder(payload);
+      toast.success(`Đã tạo yêu cầu nhập hàng thành công!`);
+      onCreated?.();
+      onClose();
+    } catch (error) {
+      console.error("Save error:", error);
+      toast.error(error.response?.data?.message || "Lỗi khi tạo phiếu nhập hàng");
+    }
   };
 
-  // helper: get display size
-  const getDisplaySize = (item) => {
-    if (item.size) return item.size;
-    const parts = [
-      item.length ? `D${item.length}` : "",
-      item.width ? `R${item.width}` : "",
-      item.height ? `C${item.height}` : "",
-    ].filter(Boolean).join(" ");
-    return parts || "";
-  };
 
   // ─────────────────────────────────────────────────
   return (
@@ -935,14 +1003,27 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                               }
                             </div>
                             <div className="w-8 h-8 rounded border overflow-hidden shrink-0 bg-gray-50">
-                              <img src={p.image || p.img || "https://placehold.co/40"} alt="" className="w-full h-full object-cover" />
+                              <img src={p.product_img || p.image || p.img || "https://placehold.co/40"} alt="" className="w-full h-full object-cover" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-[12px] font-bold text-[var(--text-main)] truncate">{p.name || p.productName}</p>
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <p className="text-[12px] font-bold text-[var(--text-main)] truncate">{p.name || p.product_name || p.productName}</p>
+                                {p.sourceOrder && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-100 text-amber-700 uppercase tracking-tighter">
+                                    {p.sourceOrder}
+                                  </span>
+                                )}
+                                {!p.sourceOrder && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-slate-100 text-slate-500 uppercase tracking-tighter">
+                                    Danh mục
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">
-                                {p.material} • {p.size || p.specs || "—"}
+                                {p.material_name || p.material} • {getDisplaySize(p) || p.specs || "—"}
                               </p>
                             </div>
+
                             <div className="shrink-0 text-right">
                               <span className="text-[13px] font-black text-[var(--brand-primary)]">{p.qty || 1}</span>
                               <span className="text-[10px] text-[var(--text-placeholder)] ml-1">{p.unit || "Cái"}</span>
@@ -989,7 +1070,8 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
             {/* Footer Step 1 */}
             <div className="px-5 py-4 border-t shrink-0 flex items-center justify-end bg-white" style={{ borderColor: "var(--grid-border)" }}>
               <button
-                onClick={goToStep2}
+                onClick={handleNext}
+
                 disabled={selectedProductKeys.size === 0 && selectedCatCount === 0}
                 className="flex items-center gap-2 px-8 py-2.5 rounded-lg text-[13px] font-bold text-white disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all"
                 style={{ background: "var(--brand-primary)" }}
@@ -1213,13 +1295,14 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                 selectionMode="single"
                 hideSelectionToolbar={true}
                 onSelectOne={(id) => {
-                  const s = INITIAL_SUPPLIERS.find(it => it.id === id);
+                  const s = (suppliers || []).find(it => it.id === id);
                   setSelectedSupplier(s);
                 }}
                 onRowClick={(s) => setSelectedSupplier(s)}
                 pagination={{
                   total: supplierDataForTable.length,
-                  itemsPerPage: INITIAL_SUPPLIERS.length,
+                  itemsPerPage: (suppliers || []).length || 15,
+
                   currentPage: 1,
                   setCurrentPage: () => { },
                   setItemsPerPage: () => { }
@@ -1237,7 +1320,8 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                 <ChevronLeft size={16} /> Quay lại
               </button>
               <button
-                onClick={goToStep3}
+                onClick={handleNext}
+
                 disabled={!selectedSupplier}
                 className="flex items-center justify-center gap-2 px-8 py-2.5 rounded-lg text-[13px] font-bold text-white disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 style={{ background: "var(--brand-primary)" }}
@@ -1281,9 +1365,8 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                               <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-100 bg-gray-50/50">
                                 <Calendar size={14} className="text-gray-400" />
                                 <span className="text-[13px] font-black text-gray-700">
-                                  {item.deliveryDate
-                                    ? new Date(item.deliveryDate).toLocaleDateString("vi-VN")
-                                    : "Chưa xác định"}
+                                  {formatDateVN(item.deliveryDate) || "Chưa xác định"}
+
                                 </span>
                               </div>
                             </div>
@@ -1296,6 +1379,23 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                               </div>
                             </div>
                           </div>
+
+                          {/* Bundle detail display in Step 3 */}
+                          {item.isBundle === 1 && item.bundleItems && (
+                            <div className="mt-3 p-3 rounded-xl border border-dashed border-indigo-200 bg-indigo-50/30">
+                              <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                <Layers size={12} /> Thành phần trong bộ
+                              </p>
+                              <div className="grid grid-cols-1 gap-1.5">
+                                {item.bundleItems.map((bi, bidx) => (
+                                  <div key={bidx} className="flex items-center justify-between text-[11px]">
+                                    <span className="font-semibold text-slate-600 truncate mr-2">{bi.name}</span>
+                                    <span className="font-bold text-indigo-600 shrink-0">×{bi.quantity}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -1365,7 +1465,16 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
             <div className="px-5 py-4 border-t shrink-0 flex items-center justify-end gap-3 bg-white" style={{ borderColor: "var(--grid-border)" }}>
               <button
                 onClick={() => {
-                  if (activeTab === "orders" && selectedSuppliersFromStep1.length > 0) {
+                  // Kiểm tra nếu đơn hàng này thỏa mãn điều kiện tự động chọn xưởng (skip bước 2)
+                  const supplierIds = new Set();
+                  selectedProductKeys.forEach(key => {
+                    const [suppId] = key.split("-");
+                    supplierIds.add(suppId);
+                  });
+
+                  const isAutoSelected = supplierIds.size === 1 && Object.keys(selectedCatalogProducts).length === 0 && customItems.length === 0;
+
+                  if (isAutoSelected) {
                     setStep(1);
                   } else {
                     setStep(2);

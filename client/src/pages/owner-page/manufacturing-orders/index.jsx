@@ -21,168 +21,98 @@ import DataTable from "@/components/control/DataTable";
 import toast from "react-hot-toast";
 import CreateManufacturingOrderModal from "./components/CreateManufacturingOrderModal";
 import ManufacturingOrderDetail from "./components/ManufacturingOrderDetail";
-import { INITIAL_ORDERS } from "../orders/mockData";
+import manufacturingOrderService from "@/services/manufacturingOrder.service";
+import customRequestService from "@/services/customRequest.service";
+import productService from "@/services/product.service";
+import supplierService from "@/services/supplier.service";
+import { useEffect, useCallback } from "react";
+import useCachedFetch from "@/hooks/useCachedFetch";
+import { formatDateTimeVN, formatDateVN } from "@/lib/dateUtils";
 
-const INITIAL_PRODUCTS = [
-  {
-    id: "SP001",
-    code: "ST-HS-197x107x108-Mit",
-    name: "Sập thờ Mai Điều chân 20",
-    material: "Gỗ Mít",
-    dimensions: "197x107x108",
-    img: "https://images.unsplash.com/photo-1620608208153-90928221805b?q=80&w=600",
-    importPrice: 8500000,
-  },
-  {
-    id: "SP002",
-    code: "TA-HM-160x200x55-XoanDao",
-    name: "Tủ áo gỗ Xoan Đào (3 cánh)",
-    material: "Gỗ xoan đào",
-    dimensions: "160x200x55",
-    img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=600",
-    importPrice: 4500000,
-  },
-  {
-    id: "SP004",
-    code: "BG-NEW-Huong-CDG",
-    name: "Bộ Ghế Âu Á Chương Cuốn Thư",
-    material: "Gỗ Hương",
-    dimensions: "Tay 10 - 6 món",
-    img: "https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?q=80&w=600",
-    importPrice: 18000000,
-  },
-  {
-    id: "SP005",
-    code: "QT-DK-01",
-    name: "Đế kê tượng gỗ Hương",
-    material: "Gỗ Hương",
-    dimensions: "30x30x20",
-    img: "https://images.unsplash.com/photo-1595246140625-573b715d11dc?q=80&w=600",
-    importPrice: 1200000,
-  },
-];
-
-// ── Load all orders (same pattern as orders page) ────────────────────────────
-function loadAllOrders() {
-  try {
-    const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
-    const uniqueInitial = INITIAL_ORDERS.filter((io) => !saved.find((so) => so.id === io.id));
-    const all = [...saved, ...uniqueInitial];
-    
-    // Patch importPrice for existing orders if missing
-    return all.map(order => ({
-      ...order,
-      products: (order.products || []).map(p => {
-        // Try to find a matching product in INITIAL_PRODUCTS or INITIAL_ORDERS to get importPrice
-        const productDef = INITIAL_PRODUCTS.find(d => d.name === p.name);
-        return { ...p, importPrice: p.importPrice || productDef?.importPrice || 0 };
-      })
-    }));
-  } catch {
-    return INITIAL_ORDERS;
-  }
-}
-
-// ── Load all products (from catalog) ─────────────────────────────────────────
-function loadAllProducts() {
-  try {
-    const saved = JSON.parse(localStorage.getItem("tpf_simulated_products") || "[]");
-    if (saved.length > 0) {
-      return saved.map(p => {
-        const def = INITIAL_PRODUCTS.find(d => d.id === p.id || d.name === p.name);
-        return { ...p, importPrice: p.importPrice || def?.importPrice || 0 };
-      });
-    }
-    return INITIAL_PRODUCTS;
-  } catch {
-    return INITIAL_PRODUCTS;
-  }
-}
 
 const STATUS_MAP = {
   "Mới tạo": { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" },
   "Đã hủy": { bg: "#FEF2F2", text: "#991B1B", border: "#FCA5A5" },
 };
 
-// ── Load manufacturing orders ─────────────────────────────────────────────────
-function loadManufacturingOrders() {
-  try {
-    const list = JSON.parse(
-      localStorage.getItem("tpf_manufacturing_orders") || "[]",
-    );
-    
-    // Add a specific test order if it doesn't exist to show off multi-dates and financial fields
-    const testId = "YCNH-20260505-TEST";
-    if (!list.find(o => o.id === testId)) {
-      list.unshift({
-        id: testId,
-        createdAt: new Date().toISOString(),
-        supplierName: "Xưởng gỗ Gia Phát (Mẫu)",
-        supplierId: "NCC001",
-        items: [
-          { productName: "Sập thờ Mai Điều chân 20", qty: 1, importPrice: 8500000, expectedDate: "2026-05-10", material: "Gỗ Mít", unit: "Cái" },
-          { productName: "Bộ Ghế Âu Á Chương Cuốn Thư", qty: 1, importPrice: 18000000, expectedDate: "2026-05-15", material: "Gỗ Hương", unit: "Bộ" }
-        ],
-        totalAmount: 26500000,
-        deposit: 10000000,
-        status: "Mới tạo",
-        orderIds: ["DH-MAU-01", "DH-MAU-02"],
-        sourceOrderDetails: {
-          "DH-MAU-01": { customerName: "Khách hàng A", type: "Hàng khách đặt" },
-          "DH-MAU-02": { customerName: "Khách hàng B", type: "Hàng khách đặt" }
-        }
-      });
-    }
-
-    const hasStaleData = list.some((o) =>
-      o.items?.some((it) => !it.material && !it.color && !it.finish),
-    );
-    if (hasStaleData && list.length > 0) {
-      localStorage.removeItem("tpf_manufacturing_orders");
-      localStorage.removeItem("tpf_simulated_orders");
-      return [];
-    }
-    return list;
-  } catch {
-    return [];
-  }
-}
-
-const formatDateTime = (iso) =>
-  iso
-    ? new Date(iso).toLocaleString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : "—";
-
 export default function ManufacturingOrdersPage() {
-  const [allOrders] = useState(loadAllOrders);
-  const [allProducts] = useState(loadAllProducts);
+  const [allOrders, setAllOrders] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
+  const [allSuppliers, setAllSuppliers] = useState([]);
+
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(15);
+
+  const fetchFn = useCallback(async () => {
+    const res = await manufacturingOrderService.getAllOrders({
+      page: currentPage,
+      limit: itemsPerPage,
+      search: searchTerm,
+    });
+    return {
+      items: res.data || [],
+      total: res.pagination?.totalItems || 0,
+    };
+  }, [currentPage, itemsPerPage, searchTerm]);
+
+  const {
+    data: cachedData,
+    isLoading,
+    isRefreshing,
+    refresh,
+  } = useCachedFetch(
+    `manufacturing_orders_${searchTerm}_${currentPage}_${itemsPerPage}`,
+    fetchFn,
+    { ttl: 1000 * 60 * 5 },
+  );
+
+  const manufacturingOrders = cachedData?.items || [];
+  const totalItems = cachedData?.total || 0;
+
+  const [showCreate, setShowCreate] = useState(false);
+  const [detailOrder, setDetailOrder] = useState(null);
 
   const getUniqueExpectedDates = (o) => {
     const dates = (o.items || [])
-      .map((it) => it.expectedDate)
+      .map((it) => it.expectedDate || it.expected_date)
       .filter(Boolean)
       .sort((a, b) => new Date(a) - new Date(b));
 
     const unique = [...new Set(dates)];
     if (unique.length === 0)
-      return o.expectedDate ? [new Date(o.expectedDate)] : [];
+      return o.expectedDate || o.expected_delivery_date
+        ? [new Date(o.expectedDate || o.expected_delivery_date)]
+        : [];
     return unique.map((d) => new Date(d));
   };
 
-  const [manufacturingOrders, setManufacturingOrders] = useState(
-    loadManufacturingOrders,
-  );
-  const [showCreate, setShowCreate] = useState(false);
-  const [detailOrder, setDetailOrder] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(15);
+  const fetchInitialData = async () => {
+    try {
+      // Lấy danh sách yêu cầu hợp lệ để gom đơn (status = 2: Quoted)
+      const resReq = await customRequestService.getAllRequests({
+        status: 3,
+        limit: 100,
+      });
+      setAllOrders(resReq.data || []);
+
+      // Lấy danh mục sản phẩm
+      const resProd = await productService.getAllProducts({ limit: 100 });
+      setAllProducts(resProd.data || []);
+
+      // Lấy danh sách nhà cung cấp
+      const resSupp = await supplierService.getAllSuppliers();
+      setAllSuppliers(resSupp.data || []);
+
+    } catch (error) {
+      console.error("Fetch initial data error:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchInitialData();
+  }, []);
 
   const fmt = (n) =>
     new Intl.NumberFormat("vi-VN", {
@@ -190,44 +120,25 @@ export default function ManufacturingOrdersPage() {
       currency: "VND",
     }).format(n || 0);
 
-  const persist = (list) => {
-    setManufacturingOrders(list);
-    localStorage.setItem("tpf_manufacturing_orders", JSON.stringify(list));
+  const handleCreated = () => {
+    refresh();
   };
 
-  const handleCreated = (newOrder) => {
-    const updated = [newOrder, ...manufacturingOrders];
-    setManufacturingOrders(updated);
-  };
-
-  const handleCancel = (id) => {
-    const updated = manufacturingOrders.map((o) =>
-      o.id === id ? { ...o, status: "Đã hủy" } : o
-    );
-    persist(updated);
-    toast.success("Đã hủy phiếu nhập hàng");
+  const handleCancel = async (id) => {
+    try {
+      await manufacturingOrderService.updateStatus(id, { status: 0 });
+      toast.success("Đã hủy phiếu nhập hàng");
+      refresh();
+    } catch (error) {
+      toast.error("Không thể hủy phiếu");
+    }
   };
 
   // ── Filter ──
-  const filtered = useMemo(() => {
-    if (!searchTerm.trim()) return manufacturingOrders;
-    const q = searchTerm.toLowerCase();
-    return manufacturingOrders.filter(
-      (o) =>
-        o.id.toLowerCase().includes(q) ||
-        o.orderIds?.some((id) => id.toLowerCase().includes(q)) ||
-        o.note?.toLowerCase().includes(q),
-    );
-  }, [manufacturingOrders, searchTerm]);
+  // Filter logic handled by API, using search from API
+  const filtered = manufacturingOrders;
 
-  const paginated = useMemo(
-    () =>
-      filtered.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage,
-      ),
-    [filtered, currentPage, itemsPerPage],
-  );
+  const paginated = manufacturingOrders;
 
   // ── Columns ──
   const columns = [
@@ -245,7 +156,7 @@ export default function ManufacturingOrdersPage() {
           className="text-[13px] font-bold font-mono"
           style={{ color: "var(--text-main)" }}
         >
-          {o.id}
+          {o.order_code || o.id}
         </p>
       ),
     },
@@ -253,7 +164,7 @@ export default function ManufacturingOrdersPage() {
       header: "Ngày tạo",
       render: (o) => (
         <p className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
-          {formatDateTime(o.createdAt)}
+          {formatDateTimeVN(o.createdate || o.createdAt) || "—"}
         </p>
       ),
     },
@@ -265,14 +176,14 @@ export default function ManufacturingOrdersPage() {
             className="text-[13px] font-bold"
             style={{ color: "var(--text-main)" }}
           >
-            {o.supplierName || "—"}
+            {o.supplier?.supplier_name || o.supplierName || "—"}
           </p>
-          {o.supplierId && (
+          {(o.supplier?.pk_supplier_id || o.fk_supplier_id) && (
             <p
               className="text-[11px] font-mono font-bold"
               style={{ color: "var(--text-placeholder)" }}
             >
-              {o.supplierId}
+              NCC#{o.supplier?.pk_supplier_id || o.fk_supplier_id}
             </p>
           )}
         </div>
@@ -306,7 +217,7 @@ export default function ManufacturingOrdersPage() {
                     className="text-[13px] font-bold"
                     style={{ color: isOverdue ? "#ef4444" : "var(--text-main)" }}
                   >
-                    {d.toLocaleDateString("vi-VN")}
+                    {formatDateVN(d) || "—"}
                   </span>
                 ))}
               </div>
@@ -325,7 +236,7 @@ export default function ManufacturingOrdersPage() {
       headerClassName: "text-center",
       className: "text-center",
       render: (o) => {
-        const total = o.items?.reduce((s, i) => s + (i.qty || 0), 0) || 0;
+        const total = o.items?.reduce((s, i) => s + (i.quantity || i.qty || 0), 0) || 0;
         return (
           <div className="flex flex-col items-center gap-0.5">
             <span
@@ -362,6 +273,14 @@ export default function ManufacturingOrdersPage() {
   return (
     <>
       <PageHelmet title="Yêu cầu nhập hàng | TPF-SIMS" />
+
+      {/* ── Global Loading (The Purple Bar) ── */}
+      {(isLoading || isRefreshing) && (
+        <div className="fixed top-0 left-0 right-0 z-[9999]">
+          <div className="h-[2px] bg-indigo-500 animate-[loading_1.5s_infinite] origin-left"></div>
+        </div>
+      )}
+
       <div
         className="flex flex-col h-[calc(100vh-64px)] -m-6 p-6 gap-4"
         style={{ backgroundColor: "var(--bg-main)" }}
@@ -450,22 +369,23 @@ export default function ManufacturingOrdersPage() {
               {
                 icon: XCircle,
                 label: "Hủy phiếu",
-                onClick: (o) => handleCancel(o.id),
+                onClick: (o) => handleCancel(o.pk_manufacturing_order_id || o.id),
                 className:
                   "bg-white border-gray-200 text-gray-400 hover:text-rose-500 hover:border-rose-200",
                 requireConfirm: true,
                 confirmTitle: "Hủy phiếu nhập hàng?",
                 confirmMessage: "Bạn có chắc chắn muốn hủy phiếu này không?",
-                showIf: (o) => o.status !== "Đã hủy",
+                showIf: (o) => o.status !== 0 && o.status !== "Đã hủy",
               },
             ]}
             pagination={{
-              total: filtered.length,
+              total: totalItems,
               currentPage,
               setCurrentPage,
               itemsPerPage,
               setItemsPerPage,
             }}
+            loading={isLoading}
           />
         )}
       </div>
@@ -475,9 +395,11 @@ export default function ManufacturingOrdersPage() {
         <CreateManufacturingOrderModal
           orders={allOrders}
           catalogProducts={allProducts}
+          suppliers={allSuppliers}
           onClose={() => setShowCreate(false)}
           onCreated={handleCreated}
         />
+
       )}
 
       {detailOrder && (

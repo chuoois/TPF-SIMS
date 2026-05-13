@@ -20,13 +20,15 @@ const CustomRequestItem = require("./CustomRequestItem");
 const ProductCoupon = require("./ProductCoupon");
 const CouponProduct = require("./CouponProduct");
 const OrderItemProcessing = require("./OrderItemProcessing");
-// ── Payroll ──────────────────────────────────────────────
 const Employee = require("./Employee");
 const PayrollPeriod = require("./PayrollPeriod");
 const SalaryRecord = require("./SalaryRecord");
 const SalaryAdjustment = require("./SalaryAdjustment");
 const Notification = require("./Notification");
 const Supplier = require("./Supplier");
+const ManufacturingOrder = require("./ManufacturingOrder");
+const ManufacturingOrderItem = require("./ManufacturingOrderItem");
+
 
 /**
  * Định nghĩa quan hệ giữa các bảng
@@ -189,6 +191,25 @@ SalaryAdjustment.belongsTo(SalaryRecord, { foreignKey: "fk_record_id", as: "reco
 UserAccount.hasMany(Notification, { foreignKey: "fk_user_id", as: "notifications", onDelete: "CASCADE" });
 Notification.belongsTo(UserAccount, { foreignKey: "fk_user_id", as: "recipient" });
 
+// ── Manufacturing Order Associations ────────────────────
+
+// Supplier 1:N ManufacturingOrder
+Supplier.hasMany(ManufacturingOrder, { foreignKey: "fk_supplier_id", as: "manufacturingOrders" });
+ManufacturingOrder.belongsTo(Supplier, { foreignKey: "fk_supplier_id", as: "supplier" });
+
+// ManufacturingOrder 1:N ManufacturingOrderItem
+ManufacturingOrder.hasMany(ManufacturingOrderItem, { foreignKey: "fk_manufacturing_order_id", as: "items", onDelete: "CASCADE" });
+ManufacturingOrderItem.belongsTo(ManufacturingOrder, { foreignKey: "fk_manufacturing_order_id", as: "order" });
+
+// Product 1:N ManufacturingOrderItem
+Product.hasMany(ManufacturingOrderItem, { foreignKey: "fk_product_id", as: "manufacturingItems" });
+ManufacturingOrderItem.belongsTo(Product, { foreignKey: "fk_product_id", as: "product" });
+
+// CustomRequestItem 1:1 ManufacturingOrderItem (Một món đặt riêng thường chỉ nằm trong 1 phiếu nhập)
+CustomRequestItem.hasOne(ManufacturingOrderItem, { foreignKey: "fk_custom_request_item_id", as: "manufacturingDetail" });
+ManufacturingOrderItem.belongsTo(CustomRequestItem, { foreignKey: "fk_custom_request_item_id", as: "customRequestItem" });
+
+
 module.exports = {
   sequelize,
   UserRole,
@@ -219,4 +240,6 @@ module.exports = {
   Notification,
   Supplier,
   OrderItemProcessing,
-};
+  ManufacturingOrder,
+  ManufacturingOrderItem,
+};

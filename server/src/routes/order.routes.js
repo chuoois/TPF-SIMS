@@ -112,6 +112,7 @@ router.get("/:id", OrderController.getOrderById);
  *                 type: string
  *                 description: "Phương thức giao hàng (VD: Lấy tại cửa hàng, Giao tận nhà)"
  *                 example: "Giao tận nhà"
+
  *               expected_fulfillment_date:
  *                 type: string
  *                 format: date-time

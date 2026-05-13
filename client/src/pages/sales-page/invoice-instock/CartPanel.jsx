@@ -21,11 +21,13 @@ import {
   ShieldCheck,
   AlertCircle,
   Hammer,
+  ImagePlus,
 } from "lucide-react";
-import { ImagePlus } from "lucide-react";
+import { todayVN, formatShortDateVN, isoToDisplayDate, formatLongDateVN } from "@/lib/dateUtils";
 import { Button } from "@/components/ui/button";
 import CustomCheckbox from "@/components/control/CustomCheckbox";
-import { fmt, PRODUCT_TYPES, DELIVERY_METHODS, calculateSuggestedDeposit, DEFAULT_WARRANTY } from "./mockData";
+import { fmt, PRODUCT_TYPES, DELIVERY_METHODS, calculateSuggestedDeposit, ORDER_CONFIG } from "@/constants/orderConfig";
+const { DEFAULT_WARRANTY } = ORDER_CONFIG;
 
 export default function CartPanel({
   tabs,
@@ -90,10 +92,6 @@ export default function CartPanel({
     currentSubtotal,
     formik.setFieldValue,
   ]);
-
-
-
-
 
   return (
     <div
@@ -239,11 +237,7 @@ export default function CartPanel({
                           Sẵn
                         </span>
                       )}
-                      {item.isBundle && (
-                        <span className="px-1.5 py-0.5 rounded bg-purple-100 text-purple-600 text-[10px] font-bold uppercase tracking-tight shrink-0 border border-purple-200">
-                          Bộ SP
-                        </span>
-                      )}
+
                       {item.isGift && (
                         <span className="px-1.5 py-0.5 rounded bg-orange-100 text-orange-600 text-[10px] font-bold uppercase tracking-tight shrink-0">
                           Quà tặng
@@ -665,7 +659,7 @@ export default function CartPanel({
                   <input
                     type="date"
                     value={formik.values.storePickupDate || ""}
-                    min={new Date().toISOString().split("T")[0]}
+                    min={todayVN()}
                     onChange={(e) =>
                       formik.setFieldValue("storePickupDate", e.target.value)
                     }
@@ -681,8 +675,8 @@ export default function CartPanel({
                 className="text-[11px] italic"
                 style={{ color: "var(--text-placeholder)" }}
               >
-                {formik.values.storePickupDate
-                  ? `Khách hẹn lấy tại cửa hàng ngày ${formik.values.storePickupDate.split("-").reverse().join("/")}`
+                {formik.values.cartItems?.some(i => i.productType === "Hàng mộc")
+                  ? "Hàng mộc cần thời gian gia công, vui lòng chọn ngày hẹn lấy"
                   : "Để trống nếu khách lấy ngay tại cửa hàng"}
               </p>
 
@@ -707,7 +701,7 @@ export default function CartPanel({
                 <input
                   type="date"
                   value={formik.values.deliveryDate || ""}
-                  min={new Date().toISOString().split("T")[0]}
+                  min={todayVN()}
                   onChange={(e) =>
                     formik.setFieldValue("deliveryDate", e.target.value)
                   }
@@ -737,6 +731,8 @@ export default function CartPanel({
         >
 
           <div className="flex flex-col">
+
+
             <div className="flex justify-between text-[13px] items-center">
               <span
                 className="font-medium flex items-center"

@@ -67,6 +67,16 @@ const CustomRequestItem = sequelize.define(
     item_note: {
       type: DataTypes.TEXT,
     },
+    item_is_bundle: {
+      type: DataTypes.TINYINT,
+      defaultValue: 0,
+      comment: "1: Là bộ sản phẩm, 0: SP đơn lẻ",
+    },
+    item_bundle_items: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      comment: "Danh sách sản phẩm con trong bộ, null nếu là SP đơn lẻ"
+    },
     item_warranty: {
       type: DataTypes.INTEGER,
       comment: "Thời gian bảo hành (tháng)",
