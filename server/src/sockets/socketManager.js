@@ -25,6 +25,7 @@ const initSocket = (server) => {
     socket.on("register", (userId) => {
       if (userId) {
         userSockets.set(userId.toString(), socket.id);
+        socket.join(userId.toString()); // Join a room to support multi-device broadcast
         console.log(`User ${userId} registered with socket ${socket.id}`);
       }
     });
@@ -79,8 +80,21 @@ const sendNotification = async ({ userId, title, message, type = "INFO", link = 
   }
 };
 
+/**
+ * Buộc đăng xuất tất cả các thiết bị của một người dùng
+ */
+const forceLogout = (userId) => {
+  if (io && userId) {
+    io.to(userId.toString()).emit("force_logout", {
+      message: "Tài khoản của bạn đã bị vô hiệu hóa hoặc xóa.",
+    });
+    console.log(`Emitted force_logout to user ${userId}`);
+  }
+};
+
 module.exports = {
   initSocket,
   sendNotification,
+  forceLogout,
   getIO: () => io,
 };
