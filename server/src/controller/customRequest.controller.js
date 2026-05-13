@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { sequelize, CustomRequest, CustomRequestItem, CustomerProfile, UserAccount, UserRole, Supplier, Order, OrderItem, OrderHistory, OrderItemProcessing } = require("../entities");
+const { sequelize, CustomRequest, CustomRequestItem, CustomerProfile, UserAccount, UserRole, Supplier, Order, OrderItem, OrderHistory, OrderItemProcessing, ManufacturingOrderItem } = require("../entities");
 const systemLogController = require("./systemLog.controller");
 const { sendNotification } = require("../sockets/socketManager");
 
@@ -140,7 +140,10 @@ class CustomRequestController {
                     {
                         model: CustomRequestItem,
                         as: "items",
-                        include: [{ model: Supplier, as: "supplier", attributes: ["supplier_name"] }]
+                        include: [
+                            { model: Supplier, as: "supplier", attributes: ["supplier_name"] },
+                            { model: ManufacturingOrderItem, as: "manufacturingDetail", attributes: ["pk_manufacturing_order_item_id"] }
+                        ]
                     }
                 ],
                 order: [["createdate", "DESC"]],

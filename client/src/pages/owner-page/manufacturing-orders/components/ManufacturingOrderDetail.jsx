@@ -15,27 +15,15 @@ import {
   Package,
   Users,
   Clock,
+  Layers,
 } from "lucide-react";
+import { formatDateTimeVN, formatDateVN } from "@/lib/dateUtils";
+import { useEffect } from "react";
+import manufacturingOrderService from "@/services/manufacturingOrder.service";
+import LoadingState from "@/components/control/LoadingState";
 
-const formatDate = (iso) =>
-  iso
-    ? new Date(iso).toLocaleDateString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-    : "—";
+// Formatting removed
 
-const formatDateTime = (iso) =>
-  iso
-    ? new Date(iso).toLocaleString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : "—";
 
 const fmt = (n) =>
   new Intl.NumberFormat("vi-VN", {
@@ -45,22 +33,48 @@ const fmt = (n) =>
 
 // Helper: get display size
 const getDisplaySize = (item) => {
-  if (item.size) return item.size;
+  const size = item.item_size || item.size;
+  if (!size) return "—";
+  if (typeof size === "string") return size;
+  
+  const { length, width, height } = size;
   const parts = [
-    item.length ? `Dài ${item.length}cm` : "",
-    item.width ? `Rộng ${item.width}cm` : "",
-    item.height ? `Cao ${item.height}cm` : "",
+    length ? `D${length}` : "",
+    width ? `R${width}` : "",
+    height ? `C${height}` : "",
   ]
     .filter(Boolean)
     .join(" × ");
-  return parts || "";
+  return parts || "—";
 };
 
-export default function ManufacturingOrderDetail({ order, onClose }) {
+
+export default function ManufacturingOrderDetail({ order: initialOrder, onClose }) {
   const printRef = useRef(null);
   const [previewImage, setPreviewImage] = useState(null);
+  const [order, setOrder] = useState(initialOrder);
+  const [loading, setLoading] = useState(false);
 
-  if (!order) return null;
+  const fetchDetail = async () => {
+    if (!initialOrder?.pk_manufacturing_order_id && !initialOrder?.id) return;
+    try {
+      setLoading(true);
+      const res = await manufacturingOrderService.getOrderById(initialOrder.pk_manufacturing_order_id || initialOrder.id);
+      if (res.data) {
+        setOrder(res.data);
+      }
+    } catch (error) {
+      console.error("Fetch order detail error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDetail();
+  }, [initialOrder]);
+
+  if (!initialOrder) return null;
 
   const handlePrint = () => {
     const printContent = printRef.current?.innerHTML;
@@ -72,7 +86,8 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
       <html lang="vi">
       <head>
         <meta charset="UTF-8"/>
-        <title>Yêu cầu Nhập hàng ${order.id}</title>
+        <title>Yêu cầu Nhập hàng ${order.order_code || order.id}</title>
+
         <style>
           * { box-sizing: border-box; margin: 0; padding: 0; }
           body { font-family: 'Times New Roman', serif; font-size: 13px; color: #111; background: #fff; padding: 20px 28px; }
@@ -116,7 +131,8 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
     }, 400);
   };
 
-  const totalQty = order.items?.reduce((s, i) => s + (i.qty || 0), 0) || 0;
+  const totalQty = order.items?.reduce((s, i) => s + (i.quantity || i.qty || 0), 0) || 0;
+
 
   return (
     <div
@@ -161,10 +177,11 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                 className="text-[12px] font-mono"
                 style={{ color: "var(--text-secondary)" }}
               >
-                {order.id}
+                {order.order_code || order.id}
               </p>
             </div>
           </div>
+
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
@@ -186,6 +203,12 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
 
         {/* ── Scrollable body ── */}
         <div className="flex-1 overflow-y-auto p-6">
+          {loading ? (
+            <div className="py-20">
+              <LoadingState message="Đang tải chi tiết phiếu..." />
+            </div>
+          ) : (
+            <>
           {/* Compact Summary Bar */}
           <div className="flex items-center gap-4 mb-6 px-4 py-3 rounded-xl border border-dashed border-gray-200 bg-gray-50/50">
             <div className="flex items-center gap-1.5 text-[12px]">
@@ -197,9 +220,11 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                 Ngày tạo:
               </span>
               <span className="font-bold" style={{ color: "var(--text-main)" }}>
-                {formatDateTime(order.createdAt)}
+                {formatDateTimeVN(order.createdate || order.createdAt) || "—"}
               </span>
+
             </div>
+
             <div className="w-px h-4 bg-gray-200" />
             <div className="flex items-center gap-1.5 text-[12px]">
               <User size={14} style={{ color: "var(--text-placeholder)" }} />
@@ -217,9 +242,10 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                 Nhà cung cấp:
               </span>
               <span className="font-bold" style={{ color: "var(--text-main)" }}>
-                {order.supplierName || "—"}
+                {order.supplier?.supplier_name || order.supplierName || "—"}
               </span>
             </div>
+
             <div className="w-px h-4 bg-gray-200" />
             <div className="flex items-center gap-1.5 text-[12px]">
               <Package size={14} style={{ color: "var(--text-placeholder)" }} />
@@ -260,14 +286,17 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
           <div className="flex flex-col gap-3">
             {order.items?.map((item, idx) => {
               const allImages = [
+                ...(item.product?.product_img ? [item.product.product_img] : []),
                 ...(item.image ? [item.image] : []),
                 ...(item.customerSampleImage ? [item.customerSampleImage] : []),
                 ...(item.images || []),
               ];
+
               const sizeDisplay = getDisplaySize(item);
-              const colorFinish = [item.color, item.finish]
+              const colorFinish = [item.item_color || item.color, item.item_finish || item.finish]
                 .filter(Boolean)
                 .join(" / ");
+
               const srcDetail = item.sourceOrders?.[0]
                 ? item.sourceOrderDetails?.[item.sourceOrders[0]] ||
                   order.sourceOrderDetails?.[item.sourceOrders[0]]
@@ -301,24 +330,26 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                         className="text-[13px] font-bold"
                         style={{ color: "var(--text-main)" }}
                       >
-                        {item.productName}
+                        {item.item_name || item.productName || item.product?.product_name}
                       </span>
                     </div>
+
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-1">
                         <span
                           className="text-[16px] font-black"
                           style={{ color: "var(--brand-primary)" }}
                         >
-                          ×{item.qty}
+                          ×{item.quantity || item.qty}
                         </span>
                         <span
                           className="text-[11px]"
                           style={{ color: "var(--text-placeholder)" }}
                         >
-                          {item.unit || "Cái"}
+                          {item.unit || item.product?.unit || "Cái"}
                         </span>
                       </div>
+
                     </div>
                   </div>
 
@@ -374,9 +405,10 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                                 : "var(--text-placeholder)",
                             }}
                           >
-                            {item.material || "—"}
+                            {item.item_material || item.material || "—"}
                           </span>
                         </div>
+
 
                         {/* Kích thước */}
                         <div className="flex items-start gap-2">
@@ -414,29 +446,12 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                                 : "var(--text-placeholder)",
                             }}
                           >
-                            {item.color || "—"}
+                            {item.item_color || item.color || "—"}
                           </span>
                         </div>
 
-                        {/* Hoàn thiện */}
-                        <div className="flex items-start gap-2">
-                          <span
-                            className="text-[11px] font-bold uppercase tracking-wide shrink-0 w-[80px]"
-                            style={{ color: "var(--text-placeholder)" }}
-                          >
-                            Hoàn thiện
-                          </span>
-                          <span
-                            className="text-[13px] font-semibold"
-                            style={{
-                              color: item.finish
-                                ? "var(--text-main)"
-                                : "var(--text-placeholder)",
-                            }}
-                          >
-                            {item.finish || "—"}
-                          </span>
-                        </div>
+
+
 
                         {/* Tài chính từng SP */}
                         <div className="flex items-start gap-2">
@@ -448,13 +463,14 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                           </span>
                           <div className="flex flex-col">
                             <span className="text-[13px] font-bold text-indigo-700">
-                              {fmt(item.importPrice)}
+                              {fmt(item.import_price || item.importPrice)}
                             </span>
                             <span className="text-[10px] text-gray-400">
-                              Thành tiền: {fmt(item.importPrice * item.qty)}
+                              Thành tiền: {fmt((item.import_price || item.importPrice) * (item.quantity || item.qty))}
                             </span>
                           </div>
                         </div>
+
 
                         {/* Hẹn giao */}
                         <div className="flex items-start gap-2">
@@ -467,74 +483,12 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                           <span
                             className="text-[13px] font-bold text-rose-600"
                           >
-                            {new Date(item.expectedDate || order.expectedDate).toLocaleDateString("vi-VN")}
+                            {formatDateVN(item.expected_date || item.expectedDate || order.expected_delivery_date || order.expectedDate) || "—"}
                           </span>
                         </div>
 
-                        {/* Nguồn đơn */}
-                        <div className="flex items-start gap-2 col-span-2">
-                          <span
-                            className="text-[11px] font-bold uppercase tracking-wide shrink-0 w-[80px]"
-                            style={{ color: "var(--text-placeholder)" }}
-                          >
-                            Nguồn đơn
-                          </span>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {item.sourceOrders?.map((src) => {
-                              const detail =
-                                item.sourceOrderDetails?.[src] ||
-                                order.sourceOrderDetails?.[src];
-                              return (
-                                <div
-                                  key={src}
-                                  className="flex items-center gap-1.5"
-                                >
-                                  <span
-                                    className="text-[11px] font-bold px-1.5 py-0.5 rounded"
-                                    style={{
-                                      background:
-                                        src === "DANH-MUC"
-                                          ? "var(--status-focus)"
-                                          : "#F3F4F6",
-                                      color:
-                                        src === "DANH-MUC"
-                                          ? "var(--brand-primary)"
-                                          : "var(--text-main)",
-                                      border: "1px solid var(--grid-border)",
-                                    }}
-                                  >
-                                    {src === "DANH-MUC" ? "Hàng có sẵn" : src}
-                                  </span>
-                                  {detail?.customerName && (
-                                    <span
-                                      className="text-[12px] font-semibold"
-                                      style={{ color: "var(--text-main)" }}
-                                    >
-                                      {detail.customerName}
-                                    </span>
-                                  )}
-                                  {detail?.type && (
-                                    <span
-                                      className="text-[11px] px-1 py-0.5 rounded font-medium"
-                                      style={{
-                                        background:
-                                          detail.type === "Hàng khách đặt"
-                                            ? "#FEF3C7"
-                                            : "#EFF6FF",
-                                        color:
-                                          detail.type === "Hàng khách đặt"
-                                            ? "#B45309"
-                                            : "#1D4ED8",
-                                      }}
-                                    >
-                                      {detail.type}
-                                    </span>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
+
+
                       </div>
 
                       {/* Ghi chú kỹ thuật */}
@@ -549,6 +503,26 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                         >
                           <span className="font-bold">Ghi chú KT: </span>
                           {item.note}
+                        </div>
+                      )}
+
+                      {/* Chi tiết bộ sản phẩm (nếu có) */}
+                      {(item.item_is_bundle === 1 || item.customRequestItem?.item_is_bundle === 1 || item.product?.is_bundle === 1) && (
+                        <div className="mt-4 p-3 rounded-xl border border-dashed border-indigo-200 bg-indigo-50/30">
+                          <p className="text-[11px] font-black text-indigo-600 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                            <Layers size={14} /> Thành phần trong bộ sản phẩm
+                          </p>
+                          <div className="grid grid-cols-1 gap-2">
+                            {(item.item_bundle_items || item.customRequestItem?.item_bundle_items || item.product?.bundle_items || []).map((bi, bidx) => (
+                              <div key={bidx} className="flex items-center justify-between py-1.5 border-b border-indigo-100/50 last:border-0">
+                                <div className="flex flex-col">
+                                  <span className="text-[13px] font-bold text-slate-700">{bi.name}</span>
+                                  <span className="text-[11px] text-slate-400">Kích thước: {getDisplaySize({ item_size: bi.size }) || "Theo chuẩn"}</span>
+                                </div>
+                                <div className="text-[13px] font-black text-indigo-600">×{bi.quantity}</div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -574,15 +548,18 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
               <div className="w-px h-8 bg-gray-200" />
               <div className="flex flex-col items-end gap-1">
                 <span className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Tổng tiền nhập</span>
-                <p className="text-[18px] font-black text-indigo-700">{fmt(order.totalImportAmount || order.totalAmount)}</p>
+                <p className="text-[18px] font-black text-indigo-700">{fmt(order.total_amount || order.totalImportAmount || order.totalAmount)}</p>
               </div>
               <div className="w-px h-8 bg-gray-200" />
               <div className="flex flex-col items-end gap-1">
                 <span className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Tiền cọc nhập hàng</span>
-                <p className="text-[18px] font-black text-emerald-700">{fmt(order.deposit)}</p>
+                <p className="text-[18px] font-black text-emerald-700">{fmt(order.deposit_amount || order.deposit)}</p>
               </div>
             </div>
+
           </div>
+            </>
+          )}
         </div>
 
         {/* ══════════ Hidden print template — ĐẦY ĐỦ ══════════ */}
@@ -592,23 +569,25 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
               <div className="company">TPF - Xưởng Gỗ Mỹ Nghệ</div>
               <h1>Phiếu Yêu cầu Nhập hàng</h1>
               <div className="meta">
-                Mã phiếu: <strong>{order.id}</strong> &nbsp;|&nbsp; Ngày in:{" "}
-                {formatDate(new Date().toISOString())}
+                Mã phiếu: <strong>{order.order_code || order.id}</strong> &nbsp;|&nbsp; Ngày in:{" "}
+                {formatDateVN(new Date())}
               </div>
+
             </div>
 
             <div className="info-grid">
               <div>
                 <span className="label">Ngày tạo: </span>
-                <span className="value">{formatDateTime(order.createdAt)}</span>
+                <span className="value">{formatDateTimeVN(order.createdate || order.createdAt)}</span>
               </div>
+
               <div>
                 <span className="label">Người tạo: </span>
-                <span className="value">{order.createdBy || "Chủ xưởng"}</span>
+                <span className="value">{order.creator?.full_name || order.createdBy || "Chủ xưởng"}</span>
               </div>
               <div>
                 <span className="label">Nhà cung cấp: </span>
-                <span className="value">{order.supplierName || "—"}</span>
+                <span className="value">{order.supplier?.supplier_name || order.supplierName || "—"}</span>
               </div>
               <div>
                 <span className="label">Tổng số lượng: </span>
@@ -616,13 +595,14 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
               </div>
               <div>
                 <span className="label">Tổng tiền hàng: </span>
-                <span className="value">{fmt(order.totalImportAmount || order.totalAmount)}</span>
+                <span className="value">{fmt(order.total_amount || order.totalImportAmount || order.totalAmount)}</span>
               </div>
               <div>
                 <span className="label">Tiền cọc nhập: </span>
-                <span className="value">{fmt(order.deposit)}</span>
+                <span className="value">{fmt(order.deposit_amount || order.deposit)}</span>
               </div>
             </div>
+
 
             {order.note && (
               <>
@@ -657,45 +637,47 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
                       }}
                     >
                       <span>
-                        SL: {item.qty} {item.unit || "Cái"}
+                        SL: {item.quantity || item.qty} {item.unit || item.product?.unit || "Cái"}
                       </span>
                     </div>
+
                   </div>
                   <div className="product-card-body">
                     <div className="detail-row">
                       <span className="detail-label">Chất liệu:</span>
                       <span className="detail-value">
-                        {item.material || "—"}
+                        {item.item_material || item.material || "—"}
                       </span>
                     </div>
+
                     <div className="detail-row">
                       <span className="detail-label">Kích thước:</span>
                       <span className="detail-value">{sizeDisplay || "—"}</span>
                     </div>
                     <div className="detail-row">
                       <span className="detail-label">Màu sắc:</span>
-                      <span className="detail-value">{item.color || "—"}</span>
+                      <span className="detail-value">{item.item_color || item.color || "—"}</span>
                     </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Hoàn thiện:</span>
-                      <span className="detail-value">{item.finish || "—"}</span>
-                    </div>
+
+
                     <div className="detail-row" style={{ marginTop: '4px', paddingTop: '4px', borderTop: '1px dashed #eee' }}>
                       <span className="detail-label">Giá nhập:</span>
                       <span className="detail-value">
-                        {fmt(item.importPrice)} &nbsp; 
+                        {fmt(item.import_price || item.importPrice)} &nbsp; 
                         <span style={{ fontSize: '11px', color: '#666', fontWeight: 'normal' }}>
-                          (Thành tiền: {fmt(item.importPrice * item.qty)})
+                          (Thành tiền: {fmt((item.import_price || item.importPrice) * (item.quantity || item.qty))})
                         </span>
                       </span>
                     </div>
-                    {(item.expectedDate || order.expectedDate) && (
+
+                    {(item.expected_date || item.expectedDate || order.expected_delivery_date || order.expectedDate) && (
                       <div className="detail-row" style={{ marginTop: '4px' }}>
                         <span className="detail-label">Ngày giao:</span>
                         <span className="detail-value" style={{ color: '#dc2626', fontWeight: 'bold' }}>
-                          {new Date(item.expectedDate || order.expectedDate).toLocaleDateString("vi-VN")}
+                          {formatDateVN(item.expected_date || item.expectedDate || order.expected_delivery_date || order.expectedDate) || "—"}
                         </span>
                       </div>
+
                     )}
                     {item.note && (
                       <div className="detail-note">
@@ -725,12 +707,13 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
               </div>
               <div style={{ borderLeft: '1px solid #ccc' }}>
                 <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#666' }}>Tổng tiền hàng</div>
-                <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{fmt(order.totalImportAmount || order.totalAmount)}</div>
+                <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{fmt(order.total_amount || order.totalImportAmount || order.totalAmount)}</div>
               </div>
               <div style={{ borderLeft: '1px solid #ccc' }}>
                 <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#666' }}>Tiền cọc nhập hàng</div>
-                <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{fmt(order.deposit)}</div>
+                <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{fmt(order.deposit_amount || order.deposit)}</div>
               </div>
+
             </div>
 
             <div className="signatures">
@@ -750,8 +733,9 @@ export default function ManufacturingOrderDetail({ order, onClose }) {
 
             <div className="footer-note">
               Phiếu được tạo tự động bởi hệ thống TPF-SIMS &bull;{" "}
-              {formatDateTime(new Date().toISOString())}
+              {formatDateTimeVN(new Date())}
             </div>
+
           </div>
         </div>
       </div>
