@@ -1,7 +1,8 @@
 const { Op } = require("sequelize");
 const bcrypt = require("bcrypt");
-const { UserAccount, UserProfile, UserRole } = require("../entities");
+const { UserAccount, UserProfile, UserRole, RefreshToken } = require("../entities");
 const systemLogController = require("./systemLog.controller");
+const socketManager = require("../sockets/socketManager");
 
 /**
  * Account Controller - Quản lý tài khoản và hồ sơ nhân viên
@@ -273,6 +274,12 @@ class AccountController {
         modifieby: currentUserId,
       });
 
+      // Nếu trạng thái là khóa (status === 0), xóa token và buộc đăng xuất
+      if (status === 0) {
+        await RefreshToken.destroy({ where: { user_account_id: id } });
+        socketManager.forceLogout(id);
+      }
+
       const statusName = status === 1 ? "Kích hoạt" : "Khóa";
       // Ghi log
       await systemLogController.record(
@@ -323,12 +330,18 @@ class AccountController {
       const fullName = account.profile?.full_name || email;
 
       await UserAccount.sequelize.transaction(async (t) => {
+        // Xóa token trước
+        await RefreshToken.destroy({ where: { user_account_id: id }, transaction: t });
+        
         // Xóa profile trước (vì có foreign key)
         if (account.profile) {
           await account.profile.destroy({ transaction: t });
         }
         await account.destroy({ transaction: t });
       });
+
+      // Buộc đăng xuất qua socket
+      socketManager.forceLogout(id);
 
       // Ghi log
       await systemLogController.record(

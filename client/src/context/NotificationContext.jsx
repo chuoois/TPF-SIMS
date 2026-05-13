@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import axiosInstance from "@/lib/axios";
 import { useAuth } from "./AuthContext";
 import { initSocket, disconnectSocket } from "@/services/socket.service";
+import toast from "react-hot-toast";
 
 const NotificationContext = createContext();
 
@@ -12,7 +13,7 @@ const NotificationContext = createContext();
  * Created Date: 26/04/2026
  */
 export const NotificationProvider = ({ children }) => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -38,9 +39,16 @@ export const NotificationProvider = ({ children }) => {
       fetchNotifications();
       // Khởi tạo Socket và lắng nghe thông báo mới
       if (user && user.user_account_id) {
-        initSocket(user.user_account_id, (notif) => {
-          addNotification(notif);
-        });
+        initSocket(
+          user.user_account_id,
+          (notif) => {
+            addNotification(notif);
+          },
+          (data) => {
+            toast.error(data?.message || "Tài khoản của bạn đã bị vô hiệu hóa hoặc xóa.", { duration: 5000 });
+            if (logout) logout();
+          }
+        );
       }
     } else {
       setNotifications([]);

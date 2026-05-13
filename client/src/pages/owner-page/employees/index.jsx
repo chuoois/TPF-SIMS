@@ -137,9 +137,10 @@ export default function OwnerEmployees() {
   const handleSaveAccount = async (formData) => {
     try {
       if (editingAccount) {
+        const { email, ...updateData } = formData;
         await accountService.updateAccount(
           editingAccount.user_account_id,
-          formData,
+          updateData,
         );
         toast.success("Cập nhật tài khoản thành công");
       } else {
@@ -401,6 +402,24 @@ export default function OwnerEmployees() {
                 </div>
               ),
             },
+            {
+              header: "Trạng thái",
+              render: (a) => {
+                const status = STATUS_MAP[a.status] || STATUS_MAP[1];
+                return (
+                  <span
+                    className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold border uppercase tracking-tight"
+                    style={{
+                      backgroundColor: status.bg,
+                      color: status.text,
+                      borderColor: status.border,
+                    }}
+                  >
+                    {status.label}
+                  </span>
+                );
+              },
+            },
           ]}
           rowActions={[
             {
@@ -579,7 +598,6 @@ function AccountFormModal({ account, roles, defaultRoleId, onClose, onSave }) {
     password: "",
     full_name: account?.profile?.full_name || "",
     phone_number: account?.profile?.phone_number || "",
-    address: account?.profile?.address || "",
     gender: account?.profile?.gender || "1",
     dob: account?.profile?.dob
       ? new Date(account.profile.dob).toISOString().split("T")[0]
@@ -724,19 +742,7 @@ function AccountFormModal({ account, roles, defaultRoleId, onClose, onSave }) {
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-            Địa chỉ
-          </label>
-          <Input
-            className="rounded-xl h-11"
-            placeholder="Nhập địa chỉ cư trú..."
-            value={formData.address}
-            onChange={(e) =>
-              setFormData({ ...formData, address: e.target.value })
-            }
-          />
-        </div>
+
         <div className="pt-4 flex gap-3">
           <Button
             type="button"
@@ -769,24 +775,24 @@ function StatusModal({ account, onClose, onUpdate }) {
         <div
           className={cn(
             "w-16 h-16 rounded-3xl mx-auto flex items-center justify-center border-2",
-            String(account.status) === "-1"
+            String(account.status) === "0"
               ? "bg-red-50 text-red-600 border-red-100"
               : "bg-emerald-50 text-emerald-600 border-emerald-100",
           )}
         >
-          {String(account.status) === "-1" ? (
+          {String(account.status) === "0" ? (
             <Lock size={30} />
           ) : (
             <Unlock size={30} />
           )}
         </div>
         <h4 className="font-bold text-gray-900">
-          {String(account.status) === "-1"
+          {String(account.status) === "0"
             ? "Mở khóa tài khoản?"
             : "Cập nhật trạng thái?"}
         </h4>
         <div className="grid grid-cols-1 gap-2">
-          {String(account.status) === "-1" ? (
+          {String(account.status) === "0" ? (
             <Button
               onClick={() => onUpdate(1)}
               className="h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
@@ -794,20 +800,12 @@ function StatusModal({ account, onClose, onUpdate }) {
               Mở khóa tài khoản
             </Button>
           ) : (
-            <>
-              <Button
-                onClick={() => onUpdate(-1)}
-                className="h-12 rounded-xl border-red-100 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-200 border bg-red-50/50 font-bold"
-              >
-                Khóa truy cập
-              </Button>
-              <Button
-                onClick={() => onUpdate(0)}
-                className="h-12 rounded-xl border-gray-200 text-gray-600 hover:bg-gray-50 border bg-white font-bold"
-              >
-                Tạm nghỉ
-              </Button>
-            </>
+            <Button
+              onClick={() => onUpdate(0)}
+              className="h-12 rounded-xl border-red-100 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-200 border bg-red-50/50 font-bold"
+            >
+              Khóa truy cập
+            </Button>
           )}
           <Button
             onClick={onClose}
