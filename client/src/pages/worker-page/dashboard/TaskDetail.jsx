@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import * as Yup from "yup";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import {
@@ -44,6 +45,14 @@ const formatValue = (val) => {
   }
   return val;
 };
+
+// Schema validate khi thợ gửi ảnh hoàn thành (mảng files)
+const finishedImagesSchema = Yup.object().shape({
+  files: Yup.array()
+    .min(1, "Vui lòng tải lên ít nhất 1 ảnh sản phẩm hoàn thành")
+    .max(10, "Tối đa 10 ảnh")
+    .required("Vui lòng tải lên ảnh sản phẩm hoàn thành trước khi gửi"),
+});
 
 /* ─── Production Steps ─── */
 const STEPS = [
@@ -248,18 +257,18 @@ export default function TaskDetail() {
   };
 
   // Chọn ảnh → chỉ preview cục bộ, CHƯA upload Cloudinary
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
-    // Giới hạn tối đa 10 ảnh
-    const total = pendingFiles.length + files.length;
-    if (total > 10) {
-      toast.error(`Tối đa 10 ảnh! Bạn đã chọn ${pendingFiles.length}, thêm ${files.length} sẽ vượt quá.`);
-      return;
+    
+    try {
+      await finishedImagesSchema.validate({ files: [...pendingFiles, ...files] });
+      setPendingFiles(prev => [...prev, ...files]);
+      // Reset input để có thể chọn lại cùng file
+      e.target.value = null;
+    } catch (err) {
+      toast.error(err.message);
     }
-    setPendingFiles(prev => [...prev, ...files]);
-    // Reset input để có thể chọn lại cùng file
-    e.target.value = null;
   };
 
   // Xóa 1 ảnh khỏi danh sách pending
@@ -269,7 +278,12 @@ export default function TaskDetail() {
 
   // Gửi lại ảnh mới khi đang ở OWNER_PENDING
   const handleUpdateImages = async () => {
-    if (pendingFiles.length === 0) return;
+    try {
+      await finishedImagesSchema.validate({ files: pendingFiles });
+    } catch (err) {
+      toast.error(err.message);
+      return;
+    }
     const realId = extractRealId(selectedTask.id);
     setIsUploading(true);
     try {
@@ -436,12 +450,13 @@ export default function TaskDetail() {
           </div>
 
           <button
-            onClick={() => {
-              if (pendingFiles.length === 0) {
-                toast.error("Vui lòng tải ít nhất 1 ảnh sản phẩm hoàn thiện!");
-                return;
+            onClick={async () => {
+              try {
+                await finishedImagesSchema.validate({ files: pendingFiles });
+                updateTaskStatus(selectedTask.id, "Gửi Nghiệm Thu");
+              } catch (err) {
+                toast.error(err.message);
               }
-              updateTaskStatus(selectedTask.id, "Gửi Nghiệm Thu");
             }}
             disabled={isUploading || pendingFiles.length === 0}
             className={`h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 ${isUploading || pendingFiles.length === 0
