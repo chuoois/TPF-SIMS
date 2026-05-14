@@ -76,6 +76,15 @@ const Order = sequelize.define(
     modifieby: {
       type: DataTypes.INTEGER,
     },
+    deposit_resolution: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      comment: "refunded: Đã hoàn cọc, forfeited: Mất cọc"
+    },
+    cancel_reason: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
   },
   {
     tableName: "order",

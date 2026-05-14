@@ -15,7 +15,7 @@ import toast from "react-hot-toast";
 const GENDER_OPTIONS = [
   { value: 1, label: "Nam" },
   { value: 2, label: "Nữ" },
-  { value: 0, label: "Khác" },
+  { value: 3, label: "Khác" },
 ];
 
 const INITIAL_FORM = {
@@ -54,7 +54,18 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
 
     const newErrors = {};
     if (!form.full_name.trim()) newErrors.full_name = "Vui lòng nhập tên";
-    if (!form.phone_number.trim()) newErrors.phone_number = "Vui lòng nhập SĐT";
+    
+    // Validate SĐT: 10-11 số, bắt đầu bằng 0
+    const phoneRegex = /^(0[3|5|7|8|9])[0-9]{8}$/;
+    if (!form.phone_number.trim()) {
+      newErrors.phone_number = "Vui lòng nhập SĐT";
+    } else if (!phoneRegex.test(form.phone_number.trim())) {
+      newErrors.phone_number = "SĐT không đúng định dạng (10 số, bắt đầu bằng 0)";
+    }
+
+    if (!form.address.trim()) {
+      newErrors.address = "Vui lòng nhập địa chỉ giao hàng";
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -67,8 +78,8 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
         full_name: form.full_name.trim(),
         phone_number: form.phone_number.trim(),
         email: form.email.trim() || null,
-        address: form.address.trim() || null,
-        gender: form.gender || null,
+        address: form.address.trim(),
+        gender: Number(form.gender),
         dob: form.dob || null,
         note: form.note.trim() || null,
       });
@@ -322,9 +333,17 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
                 value={form.address}
                 onChange={(e) => updateField("address", e.target.value)}
                 className={inputBase}
-                style={inputStyle}
+                style={{
+                  ...inputStyle,
+                  borderColor: errors.address ? "var(--status-error)" : "var(--grid-border)"
+                }}
               />
             </div>
+            {errors.address && (
+              <p className="text-[11px] mt-1" style={{ color: "var(--status-error)" }}>
+                {errors.address}
+              </p>
+            )}
           </div>
 
           {/* Ghi chú */}
