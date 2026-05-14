@@ -65,6 +65,12 @@ const OrderItemProcessing = sequelize.define(
       comment: "Ghi chú gia công",
     },
 
+    finished_img: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: "JSON array chứa các URL ảnh hoàn thiện từ Cloudinary",
+    },
+
     createdate: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

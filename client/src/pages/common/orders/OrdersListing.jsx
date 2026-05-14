@@ -99,103 +99,187 @@ export default function OrdersListing({ userRole = 'owner' }) {
     return ["Tất cả", ...new Set(allStatuses)];
   }, [activeTab]);
 
-  const columns = [
-    {
-      header: "STT",
-      headerClassName: "text-center w-[60px]",
-      render: (_, idx) => (currentPage - 1) * itemsPerPage + idx + 1,
-      className: "text-center text-[13px] font-medium",
-      style: { color: "var(--text-secondary)" },
-    },
-    {
-      header: "Mã đơn",
-      render: (o) => <p className="text-[13px] font-bold font-mono" style={{ color: "var(--text-main)" }}>DH-{o.pk_order_id}</p>,
-    },
-    {
-      header: "Khách hàng",
-      render: (o) => {
-        const cName = o.customer?.full_name || "—";
-        const cPhone = o.customer?.phone_number || "—";
-        return (
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[12px] group-hover:bg-white border transition" style={{ backgroundColor: "var(--bg-main)", color: "var(--text-placeholder)", borderColor: "var(--grid-border)" }}>
-              {cName.charAt(0)}
-            </div>
-            <div>
-              <p className="text-[13px] font-semibold" style={{ color: "var(--text-main)" }}>{cName}</p>
-              <p className="text-[11px]" style={{ color: "var(--text-placeholder)" }}>{cPhone}</p>
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      header: "Ngày tiếp nhận",
-      headerClassName: "text-center",
-      render: (o) => (
-        <div className="flex flex-col items-center justify-center gap-1">
-          <div className="flex items-center gap-1.5 text-gray-600 font-bold text-[13px]">
-            {o.createdate ? formatShortDateVN(o.createdate) : "---"}
-          </div>
-        </div>
-      ),
-      className: "text-center",
-    },
-    {
-      header: "Ngày giao dự kiến",
-      headerClassName: "text-center",
-      render: (o) => (
-        <div className="flex flex-col items-center justify-center gap-1">
-          <div className="flex items-center gap-1.5 text-gray-600 font-bold text-[13px]">
-            <Clock size={12} className="text-gray-400" />
-            {o.expected_fulfillment_date ? formatShortDateVN(o.expected_fulfillment_date) : "---"}
-          </div>
-        </div>
-      ),
-      className: "text-center",
-    },
-    {
-      header: "Tổng tiền hàng",
-      headerClassName: "text-right",
-      render: (o) => <p className="text-[14px] font-bold" style={{ color: o.order_status === 0 ? "var(--text-placeholder)" : "var(--text-main)" }}>{formatCurrency(o.total_amount)}</p>,
-      className: "text-right",
-    },
-    {
-      header: "Còn lại",
-      headerClassName: "text-right pr-10",
-      render: (o) => {
-        const total = Number(o.total_amount) || 0;
-        const deposit = Number(o.deposit_amount) || 0;
-        const remaining = total - deposit;
-        return <p className="text-[14px] font-bold" style={{ color: o.order_status === 0 ? "var(--text-placeholder)" : "var(--status-error)" }}>{formatCurrency(remaining > 0 ? remaining : 0)}</p>;
-      },
-      className: "text-right pr-10",
-    },
-    {
-      header: "Trạng thái",
-      headerClassName: "text-center",
-      render: (o) => {
-        const statusName = ORDER_CONFIG.STATUS_MAP[o.order_status] || "Chờ xử lý";
-        const sc = getStatusColor(statusName);
-        const isReady = Number(o.total_processing_count) > 0 && Number(o.pending_processing_count) === 0 && o.order_status === 3;
-
-        return (
-          <div className="flex flex-col items-center gap-1">
-            <span className="px-3 py-1 rounded-full text-[11px] font-bold border flex items-center" style={{ backgroundColor: sc.bg, color: sc.text, borderColor: sc.border }}>
-              <span className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: sc.text }}></span>
-              {statusName}
-            </span>
-            {isReady && (
-              <span className="flex items-center gap-1 text-[10px] font-black text-[#16a34a]">
-                <CheckCircle2 size={10} /> XƯỞNG ĐÃ XONG
-              </span>
-            )}
-          </div>
-        );
-      },
-      className: "text-center",
+  const columns = useMemo(() => {
+    if (statusFilter === "Đơn đã hủy") {
+      return [
+        {
+          header: "Mã đơn",
+          render: (o) => <p className="text-[13px] font-bold font-mono" style={{ color: "var(--text-main)" }}>DH-{o.pk_order_id}</p>,
+        },
+        {
+          header: "Khách hàng",
+          render: (o) => {
+            const cName = o.customer?.full_name || "—";
+            return (
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[12px]" style={{ backgroundColor: "var(--bg-main)", color: "var(--text-placeholder)", border: "1px solid var(--grid-border)" }}>
+                  {cName.charAt(0)}
+                </div>
+                <p className="text-[13px] font-semibold" style={{ color: "var(--text-main)" }}>{cName}</p>
+              </div>
+            );
+          },
+        },
+        {
+          header: "Tổng tiền",
+          headerClassName: "text-right",
+          render: (o) => <p className="text-[14px] font-bold text-[var(--text-placeholder)]">{formatCurrency(o.total_amount)}</p>,
+          className: "text-right",
+        },
+        {
+          header: "Đã thanh toán",
+          headerClassName: "text-right",
+          render: (o) => <p className="text-[14px] font-bold text-[var(--text-main)]">{formatCurrency((Number(o.deposit_amount) || 0) + (Number(o.received_amount) || 0))}</p>,
+          className: "text-right",
+        },
+        {
+          header: "Hoàn tiền",
+          headerClassName: "text-right",
+          render: (o) => {
+            const isRefunded = o.deposit_resolution === "refunded";
+            const refundAmt = isRefunded ? (Number(o.deposit_amount) || 0) + (Number(o.received_amount) || 0) : 0;
+            return <p className="text-[14px] font-bold" style={{ color: refundAmt > 0 ? "var(--brand-primary)" : "var(--text-placeholder)" }}>{formatCurrency(refundAmt)}</p>;
+          },
+          className: "text-right",
+        },
+        {
+          header: "Trạng thái hoàn tiền",
+          headerClassName: "text-center",
+          render: (o) => {
+            const isRefunded = o.deposit_resolution === "refunded";
+            return (
+              <div className="flex items-center justify-center gap-2">
+                <div className={`w-2.5 h-2.5 rounded-full ${isRefunded ? "bg-[var(--status-success)]" : "bg-[var(--status-error)]"}`} />
+                <span className="text-[12px] font-bold" style={{ color: isRefunded ? "var(--status-success)" : "var(--status-error)" }}>
+                  {isRefunded ? "Đã hoàn cọc" : "Mất cọc"}
+                </span>
+              </div>
+            );
+          },
+          className: "text-center",
+        },
+        {
+          header: "Trạng thái",
+          headerClassName: "text-center",
+          render: (o) => {
+            const sc = getStatusColor("Đơn đã hủy");
+            return (
+              <div className="flex flex-col items-center gap-1">
+                <span className="px-3 py-1 rounded-full text-[11px] font-bold border flex items-center" style={{ backgroundColor: sc.bg, color: sc.text, borderColor: sc.border }}>
+                  <span className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: sc.text }}></span>
+                  Đã huỷ
+                </span>
+              </div>
+            );
+          },
+          className: "text-center",
+        },
+        {
+          header: "Lý do",
+          render: (o) => <p className="text-[12px] text-[var(--text-secondary)] italic truncate max-w-[150px]" title={o.cancel_reason || o.order_note}>{o.cancel_reason || o.order_note || "—"}</p>,
+        }
+      ];
     }
-  ];
+
+    return [
+      {
+        header: "STT",
+        headerClassName: "text-center w-[60px]",
+        render: (_, idx) => (currentPage - 1) * itemsPerPage + idx + 1,
+        className: "text-center text-[13px] font-medium",
+        style: { color: "var(--text-secondary)" },
+      },
+      {
+        header: "Mã đơn",
+        render: (o) => <p className="text-[13px] font-bold font-mono" style={{ color: "var(--text-main)" }}>DH-{o.pk_order_id}</p>,
+      },
+      {
+        header: "Khách hàng",
+        render: (o) => {
+          const cName = o.customer?.full_name || "—";
+          const cPhone = o.customer?.phone_number || "—";
+          return (
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[12px] group-hover:bg-white border transition" style={{ backgroundColor: "var(--bg-main)", color: "var(--text-placeholder)", borderColor: "var(--grid-border)" }}>
+                {cName.charAt(0)}
+              </div>
+              <div>
+                <p className="text-[13px] font-semibold" style={{ color: "var(--text-main)" }}>{cName}</p>
+                <p className="text-[11px]" style={{ color: "var(--text-placeholder)" }}>{cPhone}</p>
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        header: "Ngày tiếp nhận",
+        headerClassName: "text-center",
+        render: (o) => (
+          <div className="flex flex-col items-center justify-center gap-1">
+            <div className="flex items-center gap-1.5 text-gray-600 font-bold text-[13px]">
+              {o.createdate ? formatShortDateVN(o.createdate) : "---"}
+            </div>
+          </div>
+        ),
+        className: "text-center",
+      },
+      {
+        header: "Ngày giao dự kiến",
+        headerClassName: "text-center",
+        render: (o) => (
+          <div className="flex flex-col items-center justify-center gap-1">
+            <div className="flex items-center gap-1.5 text-gray-600 font-bold text-[13px]">
+              <Clock size={12} className="text-gray-400" />
+              {o.expected_fulfillment_date ? formatShortDateVN(o.expected_fulfillment_date) : "---"}
+            </div>
+          </div>
+        ),
+        className: "text-center",
+      },
+      {
+        header: "Tổng tiền hàng",
+        headerClassName: "text-right",
+        render: (o) => <p className="text-[14px] font-bold" style={{ color: o.order_status === 0 ? "var(--text-placeholder)" : "var(--text-main)" }}>{formatCurrency(o.total_amount)}</p>,
+        className: "text-right",
+      },
+      {
+        header: "Còn lại",
+        headerClassName: "text-right pr-10",
+        render: (o) => {
+          const total = Number(o.total_amount) || 0;
+          const deposit = Number(o.deposit_amount) || 0;
+          const received = Number(o.received_amount) || 0;
+          const remaining = total - deposit - received;
+          return <p className="text-[14px] font-bold" style={{ color: o.order_status === 0 ? "var(--text-placeholder)" : "var(--status-error)" }}>{formatCurrency(remaining > 0 ? remaining : 0)}</p>;
+        },
+        className: "text-right pr-10",
+      },
+      {
+        header: "Trạng thái",
+        headerClassName: "text-center",
+        render: (o) => {
+          const statusName = ORDER_CONFIG.STATUS_MAP[o.order_status] || "Chờ xử lý";
+          const sc = getStatusColor(statusName);
+          const isReady = Number(o.total_processing_count) > 0 && Number(o.pending_processing_count) === 0 && o.order_status === 3;
+
+          return (
+            <div className="flex flex-col items-center gap-1">
+              <span className="px-3 py-1 rounded-full text-[11px] font-bold border flex items-center" style={{ backgroundColor: sc.bg, color: sc.text, borderColor: sc.border }}>
+                <span className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: sc.text }}></span>
+                {statusName}
+              </span>
+              {isReady && (
+                <span className="flex items-center gap-1 text-[10px] font-black text-[#16a34a]">
+                  <CheckCircle2 size={10} /> XƯỞNG ĐÃ XONG
+                </span>
+              )}
+            </div>
+          );
+        },
+        className: "text-center",
+      }
+    ];
+  }, [statusFilter, currentPage, itemsPerPage]);
 
   const hasActiveFilters = statusFilter !== "Tất cả" || dateFrom || dateTo || searchTerm;
 

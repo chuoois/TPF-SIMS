@@ -8,7 +8,7 @@ import * as XLSX from "xlsx";
  * Accountant Customer Debt
  * Quản lý công nợ khách hàng (Mock data)
  *
- * Created By: AI
+ * Created By: HieuNM
  * Updated: 14/03/2026
  */
 
@@ -131,11 +131,11 @@ export default function AccountantCustomerDebt() {
         setDebts((prevDebts) =>
             prevDebts.map((debt) =>
                 debt.id === selectedDebt.id
-                    ? { 
-                        ...debt, 
+                    ? {
+                        ...debt,
                         deposit_amount: debt.deposit_amount + amountNum,
                         payment_history: [...(debt.payment_history || []), newPayment]
-                      }
+                    }
                     : debt
             )
         );
@@ -197,7 +197,7 @@ export default function AccountantCustomerDebt() {
                                         style={{ color: "var(--text-placeholder)" }}><X size={14} /></button>
                                 )}
                             </div>
-                            
+
                             <select
                                 value={statusFilter}
                                 onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
@@ -367,7 +367,7 @@ export default function AccountantCustomerDebt() {
                         <div className="px-6 py-5 shrink-0 border-b relative" style={{ borderColor: "var(--grid-border)" }}>
                             <button onClick={() => setIsSettleModalOpen(false)}
                                 className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-black/5 cursor-pointer transition">
-                                <X size={18} style={{ color: "var(--text-secondary)" }}/>
+                                <X size={18} style={{ color: "var(--text-secondary)" }} />
                             </button>
                             <h2 className="text-[17px] font-black" style={{ color: "var(--text-main)" }}>Ghi nhận thanh toán</h2>
                             <p className="text-[13px] mt-1" style={{ color: "var(--text-secondary)" }}>
@@ -411,7 +411,7 @@ export default function AccountantCustomerDebt() {
                                     ) : (
                                         <div className="relative group rounded-xl overflow-hidden border" style={{ borderColor: "var(--grid-border)" }}>
                                             <img src={billPhoto} alt="Bill Preview" className="w-full h-40 object-cover" />
-                                            <button onClick={() => setBillPhoto(null)} 
+                                            <button onClick={() => setBillPhoto(null)}
                                                 className="absolute top-2 right-2 p-1.5 bg-black/50 text-white rounded-lg hover:bg-red-500 transition shadow-lg backdrop-blur-sm">
                                                 <X size={14} />
                                             </button>
@@ -452,10 +452,10 @@ export default function AccountantCustomerDebt() {
                         <div className="px-6 py-5 shrink-0 border-b relative" style={{ borderColor: "var(--grid-border)" }}>
                             <button onClick={() => setViewDebtDetails(null)}
                                 className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-black/5 cursor-pointer transition">
-                                <X size={18} style={{ color: "var(--text-secondary)" }}/>
+                                <X size={18} style={{ color: "var(--text-secondary)" }} />
                             </button>
                             <h2 className="text-[17px] font-black flex items-center gap-2" style={{ color: "var(--text-main)" }}>
-                                <Users size={20} style={{ color: "var(--brand-primary)" }}/>
+                                <Users size={20} style={{ color: "var(--brand-primary)" }} />
                                 Lịch sử công nợ khách hàng
                             </h2>
                             <p className="text-[13px] mt-1" style={{ color: "var(--text-secondary)" }}>
@@ -489,7 +489,7 @@ export default function AccountantCustomerDebt() {
                                         viewDebtDetails.payment_history.map((pay, pIdx) => (
                                             <div key={pIdx} className="flex gap-4 p-3 rounded-xl border bg-white shadow-sm transition-all hover:bg-gray-50/50" style={{ borderColor: "var(--grid-border)" }}>
                                                 {/* Bill Thumbnail */}
-                                                <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0 border cursor-pointer relative group" 
+                                                <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0 border cursor-pointer relative group"
                                                     style={{ borderColor: "var(--grid-border)" }}
                                                     onClick={() => setShowFullBill(pay.bill_img)}>
                                                     <img src={pay.bill_img} alt="Bill" className="w-full h-full object-cover" />

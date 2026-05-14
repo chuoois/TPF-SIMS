@@ -5,11 +5,26 @@ const { verifyAccessToken } = require("../middlewares/auth.middleware");
 
 /**
  * Inventory Routes - Quản lý Kho hàng cho Kế toán
+ * Created By: Hieunm
  * Created Date: 2026-04-26
  */
 
 // Yêu cầu đăng nhập
 router.use(verifyAccessToken);
+
+/**
+ * @swagger
+ * /api/inventory/dashboard:
+ *   get:
+ *     summary: Lấy thống kê tổng quan kho hàng (KPI, cảnh báo, nhập gần đây)
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Thống kê tổng quan kho hàng
+ */
+router.get("/dashboard", InventoryController.getDashboardStats);
 
 /**
  * @swagger

@@ -102,11 +102,17 @@ initSocket(server);
 
 // ── Start ─────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running at ${SERVER_URL}`);
-  console.log(`Swagger docs available at ${SERVER_URL}/api-docs`);
-});
 
 sequelize.sync({ alter: true })
-  .then(() => console.log("Database connected and synced successful"))
-  .catch((err) => console.error("Unable to connect/sync the database:", err.message));
+  .then(() => {
+    console.log("Database connected and synced successful");
+    server.listen(PORT, "0.0.0.0", () => {
+      const SERVER_URL = `http://localhost:${PORT}`;
+      console.log(`Server running at ${SERVER_URL}`);
+      console.log(`Swagger docs available at ${SERVER_URL}/api-docs`);
+    });
+  })
+  .catch((err) => {
+    console.error("Unable to connect/sync the database:", err.message);
+    process.exit(1);
+  });

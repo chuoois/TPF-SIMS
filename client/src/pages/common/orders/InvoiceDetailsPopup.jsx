@@ -9,7 +9,7 @@ import {
 import toast from "react-hot-toast";
 import orderService from "@/services/order.service";
 import { ORDER_CONFIG } from "@/constants/orderConfig";
-import { formatShortDateVN, formatDateTimeVN, todayVN, addDaysVN, diffDays } from "@/lib/dateUtils";
+import { formatShortDateVN, formatDateTimeVN, todayVN, addDaysVN, diffDays, isDateAfter } from "@/lib/dateUtils";
 import ConfirmModal from "@/components/control/ConfirmModal";
 import { uploadImage } from "@/services/cloudinary.service";
 
@@ -161,7 +161,6 @@ const StandardOrderView = ({
   deliveryImage,
   onDeliveryImageChange,
   onPreview,
-  // New props from parent
   lastActiveStatus,
   isStarted,
   isRefundBlocked,
@@ -406,6 +405,7 @@ const StandardOrderView = ({
                 onInspect={onInspect}
                 onRedoRequest={onRedoRequest}
                 productions={productions}
+                onPreview={onPreview}
               />
             )}
           </div>
@@ -476,7 +476,7 @@ const StandardOrderView = ({
 const PROD_STATUS_CFG = {
   "Chờ gia công": { label: "Chờ gia công", bg: "var(--bg-main)", text: "var(--text-placeholder)", border: "var(--grid-border)", icon: Clock },
   "Đang gia công": { label: "Đang gia công", bg: "var(--palette-blue)/10", text: "var(--palette-dark-blue)", border: "var(--palette-blue)/20", icon: Hammer },
-  "Gửi Nghiệm Thu": { label: "Gửi Nghiệm Thu", bg: "var(--status-warning)/10", text: "var(--palette-orange)", border: "var(--status-warning)/20", icon: Camera },
+  "Gửi Nghiệm Thu": { label: "Chờ Nghiệm Thu", bg: "var(--status-warning)/10", text: "var(--palette-orange)", border: "var(--status-warning)/20", icon: Camera },
   "Hoàn Thành": { label: "Hoàn Thành", bg: "var(--status-success)/10", text: "var(--brand-primary)", border: "var(--status-success)/20", icon: CheckCircle2 },
   "Hủy": { label: "Hủy", bg: "var(--status-error)/5", text: "var(--status-error)", border: "var(--status-error)/10", icon: Ban },
 };
@@ -495,7 +495,7 @@ function getItemStep(item) {
   return 1; // Chờ gia công
 }
 
-function ProdItemRow({ item, onInspect }) {
+function ProdItemRow({ item, onInspect, onPreview }) {
   const cfg = PROD_STATUS_CFG[item.status]
     || { label: item.status, bg: "var(--bg-main)", text: "var(--text-placeholder)", border: "var(--grid-border)", icon: Package };
   const step = getItemStep(item);
@@ -512,14 +512,33 @@ function ProdItemRow({ item, onInspect }) {
   return (
     <div className="p-4 border border-[var(--grid-border)]/50 rounded-lg bg-[var(--background)] space-y-3">
       <div className="flex items-start gap-3">
-        <div className="h-12 w-12 rounded-lg overflow-hidden shrink-0 border border-[var(--grid-border)]/50 bg-[var(--bg-main)] relative">
-          {item.productImage
-            ? <img src={item.productImage} alt={item.productName} className="w-full h-full object-cover" />
-            : <div className="w-full h-full flex items-center justify-center"><Package size={20} className="text-[var(--text-placeholder)]" /></div>
-          }
-          {item.needsRedo && (
-            <div className="absolute inset-0 bg-[var(--status-error)]/10 flex items-center justify-center">
-              <RotateCcw size={14} className="text-[var(--status-error)]" style={{ animation: "spin 3s linear infinite" }} />
+        <div className="flex items-center gap-2 shrink-0">
+          <div 
+            className="h-12 w-12 rounded-lg overflow-hidden border border-[var(--grid-border)]/50 bg-[var(--bg-main)] relative cursor-zoom-in hover:opacity-90 transition-all"
+            onClick={() => item.productImage && onPreview(item.productImage)}
+            title="Ảnh mẫu sản phẩm"
+          >
+            {item.productImage
+              ? <img src={item.productImage} alt={item.productName} className="w-full h-full object-cover" />
+              : <div className="w-full h-full flex items-center justify-center"><Package size={20} className="text-[var(--text-placeholder)]" /></div>
+            }
+            {item.needsRedo && (
+              <div className="absolute inset-0 bg-[var(--status-error)]/10 flex items-center justify-center">
+                <RotateCcw size={14} className="text-[var(--status-error)]" style={{ animation: "spin 3s linear infinite" }} />
+              </div>
+            )}
+          </div>
+
+          {item.completionPhoto && (
+            <div 
+              className="h-12 w-12 rounded-lg overflow-hidden border-2 border-[var(--status-success)]/30 bg-[var(--bg-main)] relative cursor-zoom-in hover:scale-105 transition-all shadow-sm"
+              onClick={() => onPreview(item.completionPhoto)}
+              title="Ảnh thợ đã hoàn thiện - Bấm để xem"
+            >
+              <img src={item.completionPhoto} alt="Hoàn thiện" className="w-full h-full object-cover" />
+              <div className="absolute top-0 right-0 p-0.5 bg-[var(--status-success)] rounded-bl-md">
+                <Camera size={8} className="text-white" />
+              </div>
             </div>
           )}
         </div>
@@ -593,7 +612,7 @@ function ProdItemRow({ item, onInspect }) {
   );
 }
 
-function ProductionProgressCard({ order, onInspect, onRedoRequest, productions }) {
+function ProductionProgressCard({ order, onInspect, onRedoRequest, productions, onPreview }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -608,7 +627,7 @@ function ProductionProgressCard({ order, onInspect, onRedoRequest, productions }
       <div className="grid grid-cols-1 gap-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
         {productions.length > 0 ? (
           productions.map((p) => (
-            <ProdItemRow key={p.id} item={p} onInspect={onInspect} />
+            <ProdItemRow key={p.id} item={p} onInspect={onInspect} onPreview={onPreview} />
           ))
         ) : (
           <div className="py-12 flex flex-col items-center justify-center border-2 border-dashed border-[var(--grid-border)] rounded-xl bg-[var(--bg-main)]/30">
@@ -635,6 +654,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
 
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showOwnerCancel, setShowOwnerCancel] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState({ title: "", message: "", onConfirm: () => { } });
 
   const [handoverDeadline, setHandoverDeadline] = useState("");
@@ -710,13 +730,13 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
         const mappedProductions = (found.items || []).flatMap((item) =>
           (item.processing || []).map((proc) => {
-            const PROC_STATUS_MAP = {
-              1: "Chờ gia công",
-              2: "Đang gia công",
-              3: "Gửi Nghiệm Thu",
-              4: "Hoàn Thành",
-              0: "Hủy",
-            };
+              const PROC_STATUS_MAP = {
+                1: "Chờ gia công",
+                2: "Đang gia công",
+                3: "Gửi Nghiệm Thu", // Vẫn giữ key "Gửi Nghiệm Thu" để khớp với logic data nhưng Label sẽ là "Chờ Nghiệm Thu"
+                4: "Hoàn Thành",
+                0: "Hủy",
+              };
             const statusLabel = PROC_STATUS_MAP[proc.processing_status] ?? proc.processing_status;
             return {
               id: proc.pk_processing_id,
@@ -732,10 +752,15 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
               quantityCompleted: statusLabel === "Hoàn Thành" ? (proc.quantity || item.item_quantity || 1) : 0,
               needsRedo: false,
               completionPhoto: (() => {
+                if (!proc.finished_img) return null;
                 try {
                   const imgs = JSON.parse(proc.finished_img);
-                  return Array.isArray(imgs) ? imgs[0] : proc.finished_img;
-                } catch { return proc.finished_img; }
+                  if (Array.isArray(imgs)) return imgs[0];
+                  return proc.finished_img;
+                } catch {
+                  // Nếu không phải JSON, trả về nguyên bản (có thể là URL string)
+                  return proc.finished_img;
+                }
               })(),
               isDelayed: proc.end_date ? diffDays(proc.end_date, todayVN()) < 0 && statusLabel !== "Hoàn Thành" : false,
               workerNotes: proc.note || "",
@@ -850,7 +875,8 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
   };
 
   const productTotal = order?.products?.reduce((acc, p) => acc + (p.price || 0) * (p.qty || 1), 0) || 0;
-  const remainingValue = productTotal - (order?.deposit || 0) - (order?.receivedAmount || 0);
+  const remainingValue = order?.status === "Đơn đã hủy" ? 0 : (productTotal - (order?.deposit || 0) - (order?.receivedAmount || 0));
+  const recoveryAmt = (order?.deposit || 0) + (order?.receivedAmount || 0);
 
   const lastActiveStatus = useMemo(() => {
     if (!order?.timeline) return "Chờ xử lý";
@@ -903,14 +929,9 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
     try {
       // 1. Kiểm tra logic ngày: Deadline xưởng sơn phải <= Ngày giao khách
       if (order.deliveryDate) {
-        const deliveryDate = new Date(order.deliveryDate);
-        deliveryDate.setHours(0, 0, 0, 0);
-
-        const invalidItems = handoverItemsData.filter((item, idx) => {
+        const invalidItems = handoverItemsData.filter((item) => {
           if (!item.deadline) return false;
-          const itemDeadline = new Date(item.deadline);
-          itemDeadline.setHours(0, 0, 0, 0);
-          return itemDeadline > deliveryDate;
+          return isDateAfter(item.deadline, order.deliveryDate);
         });
 
         if (invalidItems.length > 0) {
@@ -918,9 +939,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
           return;
         }
 
-        const overallDeadline = new Date(handoverDeadline);
-        overallDeadline.setHours(0, 0, 0, 0);
-        if (overallDeadline > deliveryDate) {
+        if (isDateAfter(handoverDeadline, order.deliveryDate)) {
           toast.error("Hạn bàn giao tổng không được sau Ngày giao khách!");
           return;
         }
@@ -1141,7 +1160,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                         message: "Duyệt hủy đơn và HOÀN TRẢ TIỀN CỌC cho khách hàng?",
                         onConfirm: () => {
                           handleUpdate("Đơn đã hủy", {
-                            depositResolution: "refunded",
+                            deposit_resolution: "refunded",
                             timelineLabel: "Duyệt đơn hủy (Hoàn cọc)",
                             timelineDesc: "Đơn bị hủy khi chưa triển khai. Chủ cửa hàng đã đồng ý hoàn trả 100% tiền cọc."
                           });
@@ -1166,7 +1185,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                         message: msg,
                         onConfirm: () => {
                           handleUpdate("Đơn đã hủy", {
-                            depositResolution: "forfeited",
+                            deposit_resolution: "forfeited",
                             timelineLabel: "Duyệt đơn hủy (Thu cọc)",
                             timelineDesc: `Quyết định của Chủ: Thu hồi ${recoveryAmt} cọc bồi thường chi phí. Tự động nhập kho món hàng sẵn/mộc.`
                           });
@@ -1185,6 +1204,11 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                 <button
                   className="px-4 py-2 bg-[var(--background)] text-[var(--status-error)] border border-[var(--status-error)]/10 rounded-lg text-[13px] font-bold hover:bg-[var(--status-error)]/5 transition-all flex items-center gap-2"
                   onClick={() => {
+                    if (userRole === 'owner') {
+                      setShowOwnerCancel(true);
+                      return;
+                    }
+
                     const isInitial = order.status === "Chờ xử lý" || order.status === "Chờ sản xuất";
                     let confirmMsg = "Xác nhận yêu cầu hủy đơn hàng này?";
                     if (isInitial) {
@@ -1194,11 +1218,14 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                     }
 
                     setConfirmConfig({
-                      title: userRole === 'sales' ? "Yêu cầu hủy đơn hàng" : "Hủy đơn hàng",
+                      title: "Yêu cầu hủy đơn hàng",
                       message: confirmMsg,
-                      onConfirm: () => {
+                      showInput: true,
+                      inputPlaceholder: "Nhập lý do khách hàng muốn hủy đơn...",
+                      required: true,
+                      onConfirm: (reason) => {
                         handleUpdate("Chờ duyệt hủy", {
-                          cancelReason: userRole === 'sales' ? "Nhân viên Sales yêu cầu hủy" : "Chủ cửa hàng yêu cầu hủy"
+                          cancel_reason: reason || "Nhân viên Sales yêu cầu hủy"
                         });
                         setShowConfirm(false);
                       }
@@ -1409,7 +1436,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                             <div className="relative">
                               <input
                                 type="date"
-                                className={`w-full pl-8 pr-2 py-1.5 bg-white border rounded-lg font-bold text-[11px] outline-none transition-all ${itemData.deadline && order?.deliveryDate && new Date(itemData.deadline) > new Date(order.deliveryDate) ? 'border-red-500 text-red-600' : 'border-[var(--grid-border)] text-[var(--text-main)] focus:border-[var(--brand-primary)]'}`}
+                                className={`w-full pl-8 pr-2 py-1.5 bg-white border rounded-lg font-bold text-[11px] outline-none transition-all ${itemData.deadline && order?.deliveryDate && isDateAfter(itemData.deadline, order.deliveryDate) ? 'border-red-500 text-red-600 bg-red-50' : 'border-[var(--grid-border)] text-[var(--text-main)] focus:border-[var(--brand-primary)]'}`}
                                 value={itemData.deadline || ""}
                                 onChange={(e) => {
                                   const newData = [...handoverItemsData];
@@ -1611,10 +1638,82 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
         message={confirmConfig.message}
         onConfirm={confirmConfig.onConfirm}
         onCancel={() => setShowConfirm(false)}
+        showInput={confirmConfig.showInput}
+        inputPlaceholder={confirmConfig.inputPlaceholder}
+        required={confirmConfig.required}
+      />
+
+      <OwnerCancelModal
+        isOpen={showOwnerCancel}
+        onClose={() => setShowOwnerCancel(false)}
+        onConfirm={(res, reason) => {
+          handleUpdate("Đơn đã hủy", {
+            deposit_resolution: res,
+            cancel_reason: reason,
+            timelineLabel: res === "refunded" ? "Hủy đơn (Hoàn cọc)" : "Hủy đơn (Thu cọc)",
+            timelineDesc: reason
+          });
+          setShowOwnerCancel(false);
+        }}
       />
     </div>
   );
 }
+
+const OwnerCancelModal = ({ isOpen, onClose, onConfirm }) => {
+  const [reason, setReason] = useState("");
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={onClose} />
+      <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in border border-gray-100">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
+              <Ban size={20} className="text-rose-500" /> HỦY ĐƠN HÀNG
+            </h3>
+            <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-full transition cursor-pointer text-gray-400"><X size={18} /></button>
+          </div>
+
+          <div className="space-y-4">
+            <p className="text-[13px] text-gray-500 leading-relaxed">
+              Bạn đang thực hiện hủy đơn hàng trực tiếp với quyền Chủ cửa hàng. Vui lòng nhập lý do và quyết định phương án xử lý tiền cọc.
+            </p>
+
+            <textarea
+              autoFocus
+              className="w-full h-28 p-4 text-[13px] border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all resize-none font-medium"
+              placeholder="Lý do hủy đơn..."
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+
+            <div className="flex gap-2 pt-4 border-t border-gray-50">
+              <button
+                disabled={!reason.trim()}
+                onClick={() => onConfirm("refunded", reason)}
+                className="flex-1 px-4 py-2.5 bg-[var(--bg-main)] text-[var(--text-secondary)] rounded-xl text-[12px] font-bold hover:bg-[var(--grid-border)]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex items-center justify-center gap-2 border border-[var(--grid-border)]/30"
+              >
+                <RefreshCw size={16} /> HOÀN CỌC
+              </button>
+
+              <button
+                disabled={!reason.trim()}
+                onClick={() => onConfirm("forfeited", reason)}
+                className="flex-1 px-4 py-2.5 bg-[var(--palette-orange)] text-white rounded-xl text-[12px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20"
+              >
+                <Trash2 size={16} /> THU CỌC
+              </button>
+            </div>
+
+
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // ===================== MINI UI ATOMS =====================
 

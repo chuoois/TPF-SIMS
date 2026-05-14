@@ -24,9 +24,9 @@ const createCustomerSchema = Joi.object({
     'string.base': 'Địa chỉ phải là một chuỗi ký tự',
     'string.max': 'Địa chỉ không được vượt quá 255 ký tự',
   }),
-  gender: Joi.number().valid(0, 1).allow(null, '').optional().messages({
+  gender: Joi.number().valid(1, 2, 3).allow(null, 0, '').optional().messages({
     'number.base': 'Giới tính phải là số',
-    'any.only': 'Giới tính chỉ nhận giá trị 0 (Nữ) hoặc 1 (Nam)',
+    'any.only': 'Giới tính không hợp lệ (1: Nam, 2: Nữ, 3: Khác)',
   }),
   dob: Joi.date().allow(null, '').optional().messages({
     'date.base': 'Ngày sinh không hợp lệ',
@@ -65,9 +65,9 @@ const updateCustomerSchema = Joi.object({
     'string.base': 'Địa chỉ phải là một chuỗi ký tự',
     'string.max': 'Địa chỉ không được vượt quá 255 ký tự',
   }),
-  gender: Joi.number().valid(0, 1).allow(null, '').optional().messages({
+  gender: Joi.number().valid(1, 2, 3).allow(null, 0, '').optional().messages({
     'number.base': 'Giới tính phải là số',
-    'any.only': 'Giới tính chỉ nhận giá trị 0 (Nữ) hoặc 1 (Nam)',
+    'any.only': 'Giới tính không hợp lệ (1: Nam, 2: Nữ, 3: Khác)',
   }),
   dob: Joi.date().allow(null, '').optional().messages({
     'date.base': 'Ngày sinh không hợp lệ',

@@ -25,6 +25,9 @@ import {
   AlertTriangle,
   Clock,
   Layers,
+  MapPin,
+  ShieldCheck,
+  Gift,
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import ViewProductModal from "./ViewProductModal";
@@ -470,18 +473,56 @@ export default function AccountantProductManage() {
                           >
                             {p.name}
                           </p>
-                          {p.isBundle && p.items && (
-                            <span
-                              className="inline-flex items-center gap-1 text-[10px] font-bold mt-0.5 px-1.5 py-0.5 rounded-md"
-                              style={{
-                                backgroundColor: "#F5F3FF",
-                                color: "#7C3AED",
-                                border: "1px solid #EDE9FE",
-                              }}
-                            >
-                              <Layers size={9} /> {p.items.length} món lẻ
-                            </span>
-                          )}
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {p.isBundle && p.bundleItems && (
+                              <span
+                                className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-md"
+                                style={{
+                                  backgroundColor: "#F5F3FF",
+                                  color: "#7C3AED",
+                                  border: "1px solid #EDE9FE",
+                                }}
+                              >
+                                <Layers size={9} /> {p.bundleItems.length} món lẻ
+                              </span>
+                            )}
+                            {p.room && (
+                              <span
+                                className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md"
+                                style={{
+                                  backgroundColor: "#F0F9FF",
+                                  color: "#0369A1",
+                                  border: "1px solid #BAE6FD",
+                                }}
+                              >
+                                <MapPin size={9} /> {p.room}
+                              </span>
+                            )}
+                            {p.warrantyMonths != null && (
+                              <span
+                                className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md"
+                                style={{
+                                  backgroundColor: "#EFF6FF",
+                                  color: "#1D4ED8",
+                                  border: "1px solid #BFDBFE",
+                                }}
+                              >
+                                <ShieldCheck size={9} /> {p.warrantyMonths}th
+                              </span>
+                            )}
+                            {p.isGift && (
+                              <span
+                                className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md"
+                                style={{
+                                  backgroundColor: "#FDF4FF",
+                                  color: "#7C3AED",
+                                  border: "1px solid #E9D5FF",
+                                }}
+                              >
+                                <Gift size={9} /> Quà tặng
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </td>
                       {/* Danh mục */}

@@ -61,6 +61,7 @@ class OrderController {
                 attributes: [
                     'pk_order_id', 'createdate', 'expected_fulfillment_date', 'total_amount', 
                     'deposit_amount', 'received_amount', 'delivery_image', 'order_status', 'order_type',
+                    'deposit_resolution', 'cancel_reason',
                     [
                         sequelize.literal(`(
                             SELECT COUNT(*) 
@@ -178,7 +179,7 @@ class OrderController {
                 attributes: [
                     'pk_order_id', 'order_status', 'order_type', 'createdate', 
                     'expected_fulfillment_date', 'total_amount', 'deposit_amount', 'received_amount',
-                    'address', 'note', 'fulfillment_method', 'delivery_image'
+                    'address', 'note', 'fulfillment_method', 'delivery_image', 'deposit_resolution', 'cancel_reason'
                 ],
                 order: [
                     // Sắp xếp lịch sử từ mới nhất đến cũ nhất giống Shopee timeline
@@ -401,7 +402,10 @@ class OrderController {
         const t = await sequelize.transaction();
         try {
             const { id } = req.params;
-            const { order_status, note, deposit_amount, received_amount, delivery_image, handover_items } = req.body;
+            const { 
+                order_status, note, deposit_amount, received_amount, 
+                delivery_image, handover_items, deposit_resolution, cancel_reason 
+            } = req.body;
             const userId = req.user.userId;
 
             const order = await Order.findByPk(id);
@@ -410,6 +414,11 @@ class OrderController {
             }
 
             const oldStatus = order.order_status;
+            
+            // Nếu Sales yêu cầu hủy (chuyển sang Chờ duyệt hủy - 7), bắt buộc phải có lý do
+            if (Number(order_status) === 7 && req.user.roleCode === 'SALES' && !cancel_reason) {
+                throw new Error("Vui lòng nhập lý do hủy đơn hàng.");
+            }
             
             // Cập nhật thông tin cơ bản
             const updateData = {
@@ -434,6 +443,14 @@ class OrderController {
             } else if (Number(order_status) === 6) {
                 // Nếu hoàn thành đơn (status = 6) mà không truyền số tiền, tự động thu đủ tiền
                 updateData.received_amount = Number(order.total_amount) - Number(order.deposit_amount);
+            }
+
+            if (deposit_resolution !== undefined) {
+                updateData.deposit_resolution = deposit_resolution;
+            }
+
+            if (cancel_reason !== undefined) {
+                updateData.cancel_reason = cancel_reason;
             }
 
             await order.update(updateData, { transaction: t });
