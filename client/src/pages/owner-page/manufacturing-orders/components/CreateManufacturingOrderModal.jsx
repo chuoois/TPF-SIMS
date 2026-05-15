@@ -19,16 +19,13 @@ import { formatDateVN } from "@/lib/dateUtils";
 
 
 // UI Constants for autocomplete
-const WOOD_TYPES = ["Gỗ sồi", "Gỗ óc chó", "Gỗ tần bì", "Gỗ cao su", "Gỗ thông", "Gỗ hương"];
-const COLORS = ["Tự nhiên", "Nâu đậm", "Nâu nhạt", "Đen", "Trắng ngà", "Ghi xám"];
-
 const ELIGIBLE_TYPES = ["Hàng khách đặt"];
 const ELIGIBLE_STATUSES = ["Chờ xử lý", "Chờ sản xuất", "Đang gia công"];
 
 import toast from "react-hot-toast";
 import DataTable from "@/components/control/DataTable";
 import manufacturingOrderService from "@/services/manufacturingOrder.service";
-
+import productAttributeService from "@/services/productAttribute.service";
 
 
 function removeAccents(str) {
@@ -94,6 +91,11 @@ const ReviewItem = ({ item, isCustom }) => {
           {sizeDisplay && <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium ${isCustom ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}`}>{sizeDisplay}</span>}
           {item.color && <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium ${isCustom ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}`}>{item.color}</span>}
         </div>
+        {(item.isBundle === 1 || item.item_is_bundle === 1 || item.is_bundle === 1) && item.bundleItems && (
+          <div className="mt-2 text-[11px] bg-white/50 p-1.5 rounded-lg border border-dashed border-gray-200">
+            <strong>Gồm:</strong> {item.bundleItems.map(b => `${b.quantity}x ${b.name}`).join(", ")}
+          </div>
+        )}
         <p className={`mt-1.5 text-[12px] font-medium italic opacity-60 flex items-center gap-1 ${isCustom ? 'text-green-600' : 'text-purple-600'}`}>
           {isCustom ? <><Sparkles size={10} /> Sản phẩm mới chưa có trong danh mục</> : <><Package size={10} /> Sản phẩm từ danh mục có sẵn</>}
         </p>
@@ -125,11 +127,27 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
 
   const fmt = (v) => new Intl.NumberFormat("vi-VN").format(v || 0) + " ₫";
 
-  // ── Manual Item Entry State ──
+  const [attributes, setAttributes] = useState({ categories: [], colors: [], materials: [], rooms: [] });
+
+  useEffect(() => {
+    productAttributeService.getAllAttributes().then(res => {
+      // The API returns the data object directly
+      if (res && res.categories) {
+        setAttributes({
+          categories: res.categories?.map(c => c.category_name) || [],
+          colors: res.colors?.map(c => c.color_name) || [],
+          materials: res.materials?.map(m => m.material_name) || [],
+          rooms: res.rooms?.map(r => r.room_name) || []
+        });
+      }
+    }).catch(err => console.error("Failed to load attributes:", err));
+  }, []);
+
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [customItems, setCustomItems] = useState([]);
   const [newProduct, setNewProduct] = useState({
-    name: "", material: "", length: "", width: "", height: "", color: "", qty: 1, note: "", images: [], code: "", isManualCode: false
+    name: "", material: "", length: "", width: "", height: "", color: "", qty: 1, note: "", images: [], code: "", isManualCode: false,
+    isBundle: 0, bundleItems: [], category: "", room: ""
   });
 
   useEffect(() => {
@@ -142,6 +160,8 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
   }, [newProduct.name, newProduct.material, newProduct.color, newProduct.isManualCode]);
   const [showWoodDropdown, setShowWoodDropdown] = useState(false);
   const [showColorDropdown, setShowColorDropdown] = useState(false);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [showRoomDropdown, setShowRoomDropdown] = useState(false);
 
   const handleSwitchTab = (tab) => {
     if (tab === activeTab) return;
@@ -276,7 +296,9 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
   };
 
   const toggleSupplierRow = (supplier) => {
-    const pKeys = (supplier.products || []).map(p => `${supplier.id}-${p.id}`);
+    const pKeys = (supplier.products || [])
+      .filter(p => !p.hasManufacturingOrder)
+      .map(p => `${supplier.id}-${p.id}`);
     const allSelected = pKeys.length > 0 && pKeys.every(k => selectedProductKeys.has(k));
 
     setSelectedProductKeys(prev => {
@@ -403,7 +425,9 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
 
   const selectedSupplierRowIds = useMemo(() => {
     return filteredSuppliersForStep1.filter(s => {
-      const pKeys = (s.products || []).map(p => `${s.id}-${p.id}`);
+      const pKeys = (s.products || [])
+        .filter(p => !p.hasManufacturingOrder)
+        .map(p => `${s.id}-${p.id}`);
       return pKeys.length > 0 && pKeys.every(k => selectedProductKeys.has(k));
     }).map(s => s.id);
   }, [filteredSuppliersForStep1, selectedProductKeys]);
@@ -611,6 +635,8 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
           customerDeadline: matchedOrder?.deadline || p.deliveryDate || "",
           isBundle: p.isBundle || 0,
           bundleItems: p.bundleItems || null,
+          fk_custom_request_item_id: p.fk_custom_request_item_id,
+          fk_product_id: p.fk_product_id,
           sourceOrders: [sourceKey],
           sourceOrderDetails: {
             [sourceKey]: sourceDetail,
@@ -638,6 +664,8 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
         deliveryDate: p.deliveryDate || "",
         customerDeadline: p.deliveryDate || "",
         fk_product_id: p.pk_product_id || p.id,
+        isBundle: p.is_bundle || p.isBundle || 0,
+        bundleItems: p.bundle_items || p.bundleItems || null,
         sourceOrders: ["DANH-MUC"],
         sourceOrderDetails: {
           "DANH-MUC": {
@@ -660,9 +688,11 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
         finish: "Theo yêu cầu",
         qty: ci.qty || 1,
         unit: "Cái",
-        note: ci.note || "Sản phẩm mới nhập thêm",
+        note: [ci.category && `Danh mục: ${ci.category}`, ci.room && `Phòng: ${ci.room}`, ci.note].filter(Boolean).join(" - ") || "Sản phẩm mới nhập thêm",
         image: ci.images?.[0] || "",
         images: ci.images || [],
+        isBundle: ci.isBundle || 0,
+        bundleItems: ci.bundleItems || null,
         sourceOrders: ["MO-TAO"],
         sourceOrderDetails: {
           "MO-TAO": {
@@ -988,19 +1018,22 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                         return (
                           <div
                             key={key}
-                            onClick={() => toggleProduct(s, p)}
-                            className="flex items-center gap-3 p-2.5 rounded-lg border border-transparent cursor-pointer"
+                            onClick={() => { if (!p.hasManufacturingOrder) toggleProduct(s, p); }}
+                            className={`flex items-center gap-3 p-2.5 rounded-lg border border-transparent ${p.hasManufacturingOrder ? 'opacity-60 cursor-not-allowed bg-gray-50' : 'cursor-pointer'}`}
                             style={{
-                              background: isPSelected ? "white" : "transparent",
+                              background: isPSelected ? "white" : (p.hasManufacturingOrder ? "var(--bg-muted, #f8fafc)" : "transparent"),
                               borderColor: isPSelected ? "var(--brand-primary)" : "transparent",
                               boxShadow: isPSelected ? "0 2px 8px -2px rgba(0,0,0,0.05)" : "none"
                             }}
                           >
                             <div className="shrink-0">
-                              {isPSelected
-                                ? <CheckSquare size={16} className="text-[var(--brand-primary)]" />
-                                : <Square size={16} className="text-gray-300" />
-                              }
+                              {p.hasManufacturingOrder ? (
+                                <Square size={16} className="text-gray-200" />
+                              ) : isPSelected ? (
+                                <CheckSquare size={16} className="text-[var(--brand-primary)]" />
+                              ) : (
+                                <Square size={16} className="text-gray-300" />
+                              )}
                             </div>
                             <div className="w-8 h-8 rounded border overflow-hidden shrink-0 bg-gray-50">
                               <img src={p.product_img || p.image || p.img || "https://placehold.co/40"} alt="" className="w-full h-full object-cover" />
@@ -1016,6 +1049,11 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                                 {!p.sourceOrder && (
                                   <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-slate-100 text-slate-500 uppercase tracking-tighter">
                                     Danh mục
+                                  </span>
+                                )}
+                                {p.hasManufacturingOrder && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-green-100 text-green-700 uppercase tracking-tighter ml-auto">
+                                    Đã tạo YC
                                   </span>
                                 )}
                               </div>
@@ -1137,10 +1175,10 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                     {showWoodDropdown && (
                       <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-md shadow-xl z-50 overflow-hidden border-slate-100 ring-1 ring-black/5">
                         <div className="max-h-32 overflow-y-auto p-0.5">
-                          {WOOD_TYPES.filter(w => w.toLowerCase().includes(newProduct.material.toLowerCase())).map(w => (
+                          {attributes.materials.filter(w => w.toLowerCase().includes(newProduct.material.toLowerCase())).map(w => (
                             <div
                               key={w}
-                              className="px-2.5 py-1.5 text-[12px] cursor-pointer rounded font-bold text-slate-700"
+                              className="px-2.5 py-1.5 text-[12px] cursor-pointer rounded font-bold text-slate-700 hover:bg-slate-50"
                               onMouseDown={(e) => {
                                 e.preventDefault();
                                 setNewProduct({ ...newProduct, material: w });
@@ -1172,7 +1210,7 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                     {showColorDropdown && (
                       <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-md shadow-xl z-50 overflow-hidden border-slate-100 ring-1 ring-black/5">
                         <div className="max-h-32 overflow-y-auto p-0.5">
-                          {COLORS.filter(c => c.toLowerCase().includes(newProduct.color.toLowerCase())).map(c => (
+                          {attributes.colors.filter(c => c.toLowerCase().includes(newProduct.color.toLowerCase())).map(c => (
                             <div
                               key={c}
                               className="px-2.5 py-1.5 text-[12px] cursor-pointer rounded font-bold text-slate-700"
@@ -1183,6 +1221,73 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                               }}
                             >
                               {c}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="relative col-span-1">
+                    <label className="block text-[11px] font-bold text-[var(--text-placeholder)] uppercase mb-1 ml-0.5 tracking-wider">Danh mục</label>
+                    <input
+                      placeholder="VD: Sofa, Bàn, Giường..."
+                      className="w-full px-3 py-1.5 text-[12px] rounded-md border border-gray-200 focus:border-[var(--brand-primary)] outline-none bg-gray-50/20"
+                      value={newProduct.category}
+                      onChange={e => {
+                        setNewProduct({ ...newProduct, category: e.target.value });
+                        setShowCategoryDropdown(true);
+                      }}
+                      onFocus={() => setShowCategoryDropdown(true)}
+                      onBlur={() => setTimeout(() => setShowCategoryDropdown(false), 200)}
+                    />
+                    {showCategoryDropdown && (
+                      <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-md shadow-xl z-50 overflow-hidden border-slate-100 ring-1 ring-black/5">
+                        <div className="max-h-32 overflow-y-auto p-0.5">
+                          {attributes.categories.filter(c => c.toLowerCase().includes(newProduct.category.toLowerCase())).map(c => (
+                            <div
+                              key={c}
+                              className="px-2.5 py-1.5 text-[12px] cursor-pointer rounded font-bold text-slate-700 hover:bg-slate-50"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                setNewProduct({ ...newProduct, category: c });
+                                setShowCategoryDropdown(false);
+                              }}
+                            >
+                              {c}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="relative col-span-1">
+                    <label className="block text-[11px] font-bold text-[var(--text-placeholder)] uppercase mb-1 ml-0.5 tracking-wider">Phòng</label>
+                    <input
+                      placeholder="VD: Phòng khách..."
+                      className="w-full px-3 py-1.5 text-[12px] rounded-md border border-gray-200 focus:border-[var(--brand-primary)] outline-none bg-gray-50/20"
+                      value={newProduct.room}
+                      onChange={e => {
+                        setNewProduct({ ...newProduct, room: e.target.value });
+                        setShowRoomDropdown(true);
+                      }}
+                      onFocus={() => setShowRoomDropdown(true)}
+                      onBlur={() => setTimeout(() => setShowRoomDropdown(false), 200)}
+                    />
+                    {showRoomDropdown && (
+                      <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-md shadow-xl z-50 overflow-hidden border-slate-100 ring-1 ring-black/5">
+                        <div className="max-h-32 overflow-y-auto p-0.5">
+                          {attributes.rooms.filter(r => r.toLowerCase().includes(newProduct.room.toLowerCase())).map(r => (
+                            <div
+                              key={r}
+                              className="px-2.5 py-1.5 text-[12px] cursor-pointer rounded font-bold text-slate-700 hover:bg-slate-50"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                setNewProduct({ ...newProduct, room: r });
+                                setShowRoomDropdown(false);
+                              }}
+                            >
+                              {r}
                             </div>
                           ))}
                         </div>
@@ -1217,6 +1322,79 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                       value={newProduct.note}
                       onChange={e => setNewProduct({ ...newProduct, note: e.target.value })}
                     />
+                  </div>
+
+                  {/* Bundle Toggle & List */}
+                  <div className="col-span-2 mt-1">
+                    <label className="flex items-center gap-2 text-[12px] font-bold text-[var(--text-main)] cursor-pointer mb-2">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 rounded border-gray-300 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
+                        checked={newProduct.isBundle === 1}
+                        onChange={(e) => {
+                          const isBundle = e.target.checked ? 1 : 0;
+                          setNewProduct({ ...newProduct, isBundle, bundleItems: isBundle ? [{ name: "", quantity: 1, size: { length: "", width: "", height: "" } }] : [] });
+                        }}
+                      />
+                      Sản phẩm này là một BỘ (gồm nhiều món nhỏ)
+                    </label>
+
+                    {newProduct.isBundle === 1 && (
+                      <div className="p-3 bg-indigo-50/50 border border-indigo-100 rounded-lg flex flex-col gap-2">
+                        {newProduct.bundleItems.map((b, bidx) => (
+                          <div key={bidx} className="flex gap-2 items-start">
+                            <input 
+                              placeholder="Tên món (VD: Bàn ăn)"
+                              className="flex-1 px-2 py-1 text-[12px] rounded border border-gray-200 focus:border-indigo-400 outline-none"
+                              value={b.name}
+                              onChange={(e) => {
+                                const newBundle = [...newProduct.bundleItems];
+                                newBundle[bidx].name = e.target.value;
+                                setNewProduct({ ...newProduct, bundleItems: newBundle });
+                              }}
+                            />
+                            <div className="flex gap-1 w-[120px]">
+                              {['length', 'width', 'height'].map(dim => (
+                                <input key={dim} placeholder={dim[0].toUpperCase()} type="number" 
+                                  className="w-full px-1 py-1 text-[11px] text-center rounded border border-gray-200 focus:border-indigo-400 outline-none"
+                                  value={b.size[dim]} 
+                                  onChange={e => {
+                                    const newBundle = [...newProduct.bundleItems];
+                                    newBundle[bidx].size[dim] = e.target.value;
+                                    setNewProduct({ ...newProduct, bundleItems: newBundle });
+                                  }}
+                                />
+                              ))}
+                            </div>
+                            <input 
+                              type="number" placeholder="SL" min="1"
+                              className="w-12 px-1 py-1 text-[12px] text-center rounded border border-gray-200 focus:border-indigo-400 outline-none"
+                              value={b.quantity}
+                              onChange={(e) => {
+                                const newBundle = [...newProduct.bundleItems];
+                                newBundle[bidx].quantity = e.target.value;
+                                setNewProduct({ ...newProduct, bundleItems: newBundle });
+                              }}
+                            />
+                            <button 
+                              onClick={() => {
+                                const newBundle = newProduct.bundleItems.filter((_, i) => i !== bidx);
+                                setNewProduct({ ...newProduct, bundleItems: newBundle });
+                              }}
+                              className="w-6 h-6 flex items-center justify-center text-red-500 hover:bg-red-50 rounded cursor-pointer shrink-0 mt-0.5"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ))}
+                        <button 
+                          onClick={() => setNewProduct({ ...newProduct, bundleItems: [...newProduct.bundleItems, { name: "", quantity: 1, size: { length: "", width: "", height: "" } }] })}
+                          className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 cursor-pointer self-start mt-1"
+                        >
+                          <Plus size={12} /> Thêm món con
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1267,7 +1445,7 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                   onClick={() => {
                     if (!newProduct.name) return toast.error("Vui lòng nhập tên sản phẩm");
                     setCustomItems([...customItems, { ...newProduct, id: Date.now() }]);
-                    setNewProduct({ name: "", material: "", length: "", width: "", height: "", color: "", qty: 1, note: "", images: [], code: "", isManualCode: false });
+                    setNewProduct({ name: "", material: "", length: "", width: "", height: "", color: "", qty: 1, note: "", images: [], code: "", isManualCode: false, isBundle: 0, bundleItems: [], category: "", room: "" });
                     setShowCustomForm(false);
                     toast.success("Đã thêm sản phẩm");
                   }}
