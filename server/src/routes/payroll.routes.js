@@ -12,7 +12,7 @@ const { verifyAccessToken, verifyRole } = require("../middlewares/auth.middlewar
 
 /**
  * Payroll Routes
- * Created By: ThinhBui
+ * Created By: Hieunm
  * Created Date: 25/04/2026
  */
 

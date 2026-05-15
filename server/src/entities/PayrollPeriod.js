@@ -6,7 +6,7 @@ const sequelize = require("../config/db");
  * Mỗi kỳ lương = 1 tháng. Là "folder" chứa toàn bộ bảng lương tháng đó.
  * status DRAFT = đang soạn thảo, có thể sửa
  * status LOCKED = đã chốt, KHÔNG CHO SỬA bất kỳ dữ liệu nào trong kỳ này
- * Created By: ThinhBui
+ * Created By: hieunm
  * Created Date: 25/04/2026
  */
 const PayrollPeriod = sequelize.define(
@@ -21,6 +21,7 @@ const PayrollPeriod = sequelize.define(
     period_month: {
       type: DataTypes.STRING(7),
       allowNull: false,
+      unique: true, // Mỗi tháng chỉ có 1 kỳ lương
     },
     status: {
       type: DataTypes.ENUM("DRAFT", "LOCKED"),

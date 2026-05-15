@@ -5,7 +5,7 @@ const sequelize = require("../config/db");
  * Model Employee
  * Bảng nhân viên xưởng (thợ sơn, thợ giấy ráp, bán hàng, kế toán...)
  * Tách biệt hoàn toàn với UserAccount – nhân viên không bắt buộc có tài khoản login.
- * Created By: ThinhBui
+ * Created By: hieunm
  * Created Date: 25/04/2026
  */
 const Employee = sequelize.define(
@@ -19,6 +19,7 @@ const Employee = sequelize.define(
     employee_code: {
       type: DataTypes.STRING(20),
       allowNull: false,
+      unique: true, // "NV001", "KT001"
     },
     full_name: {
       type: DataTypes.STRING(100),

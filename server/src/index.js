@@ -21,6 +21,7 @@ const inventoryRoutes = require("./routes/inventory.routes");
 const supplierRoutes = require("./routes/supplier.routes");
 const workerRoutes = require("./routes/worker.routes");
 const manufacturingOrderRoutes = require("./routes/manufacturingOrder.routes");
+const importRoutes = require("./routes/import.routes");
 const swaggerUi = require("swagger-ui-express");
 
 const swaggerJsDoc = require("swagger-jsdoc");
@@ -61,6 +62,7 @@ app.use("/api/inventory", inventoryRoutes);
 app.use("/api/supplier", supplierRoutes);
 app.use("/api/worker", workerRoutes);
 app.use("/api/manufacturing-order", manufacturingOrderRoutes);
+app.use("/api/import", importRoutes);
 
 
 // ── Swagger ───────────────────────────────────────────────
