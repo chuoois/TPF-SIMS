@@ -17,7 +17,6 @@ import {
   WOOD_TYPES,
   COLORS,
   PRODUCT_STATUSES,
-  UNITS,
 } from "./constants";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -209,7 +208,6 @@ export default function ProductModal({
     name: "",
     code: "",
     category: "",
-    unit: "",
     material: "",
     color: "",
     dimL: "",
@@ -251,7 +249,7 @@ export default function ProductModal({
         name: product.name || "",
         code: product.code || "",
         category: product.category || "",
-        unit: product.unit || "",
+        category: product.category || "",
         material: product.material || "",
         color: product.color || "",
         dimL: dims[0] || "",
@@ -452,7 +450,7 @@ export default function ProductModal({
                       Tồn kho hiện tại
                     </span>
                     <span className="font-semibold text-[var(--text-main)] text-sm">
-                      {product.stock} {product.unit}
+                      {product.stock}
                     </span>
                   </div>
                 </div>
@@ -520,13 +518,6 @@ export default function ProductModal({
                     options={colors}
                     placeholder="Chọn màu"
                   />
-                  <SelectField
-                    label="Đơn vị"
-                    value={form.unit}
-                    onChange={set("unit")}
-                    options={UNITS}
-                    placeholder="Chọn đơn vị"
-                  />
                   <div className="col-span-2">
                     <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
                       Kích thước (D × R × C) cm
@@ -587,7 +578,6 @@ export default function ProductModal({
                     <Field label="Chất liệu" value={product.material} />
                     <Field label="Màu sắc" value={product.color} />
                     <Field label="Kích thước" value={product.dimensions} />
-                    <Field label="Đơn vị" value={product.unit} />
                     {product.status !== "Chưa định giá" && (
                       <div>
                         <span className="text-[11px] text-[var(--text-secondary)] block mb-0.5">
@@ -610,7 +600,7 @@ export default function ProductModal({
                       <span className="font-black text-[var(--text-main)]">
                         {product.productType === "Hàng khách đặt"
                           ? "—"
-                          : `${product.stock} ${product.unit || "SP"}`}
+                          : product.stock}
                       </span>
                     </div>
                   </div>
