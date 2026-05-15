@@ -109,7 +109,7 @@ const fmtCurrency = (n) =>
   n != null ? new Intl.NumberFormat("vi-VN").format(n) + "₫" : "—";
 
 // ── Hỗ trợ tính ngày tồn kho ──────────────────────────────
-const TODAY = new Date("2026-03-17");
+const TODAY = new Date();
 
 const getImportDateRange = (p) => {
   let dates = [];

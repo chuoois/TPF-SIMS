@@ -2,8 +2,9 @@ import axiosInstance from "@/lib/axios";
 
 /**
  * Employee Service
- * Created By: ThinhBui
+ * Created By: Hieunm
  * Created Date: 26/04/2026
+ * Dich vu quan ly nhan vien xưởng
  */
 const employeeService = {
   /**
