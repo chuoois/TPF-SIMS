@@ -16,8 +16,8 @@ const { createManufacturingOrderSchema, updateManufacturingStatusSchema } = requ
 router.use(verifyAccessToken);
 
 // Chỉ Owner và Admin mới có quyền quản lý phiếu nhập hàng
-router.use(verifyRole(["OWNER", "ADMIN"]));
-
+const ownerAndAdminOnly = verifyRole(["OWNER", "ADMIN"]);
+router.use(ownerAndAdminOnly);
 /**
  * @swagger
  * tags:

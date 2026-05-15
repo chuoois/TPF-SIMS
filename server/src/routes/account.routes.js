@@ -19,8 +19,8 @@ const { createAccountSchema, updateAccountSchema, toggleStatusSchema } = require
 
 // Tất cả các route này yêu cầu đăng nhập và thường chỉ dành cho Admin (Owner)
 router.use(verifyAccessToken);
-// const adminOnly = verifyRole(["OWNER", "ADMIN"]);
-// router.use(adminOnly);
+const adminOnly = verifyRole(["OWNER"]);
+router.use(adminOnly);
 
 /**
  * @swagger

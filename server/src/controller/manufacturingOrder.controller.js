@@ -147,9 +147,27 @@ class ManufacturingOrderController {
                 createby: userId
             }, { transaction: t });
 
-            // 4. Tạo chi tiết sản phẩm
+            // 4. Validate Custom Request Items (prevent duplicates)
+            const customRequestItemIds = items
+                .filter(it => it.fk_custom_request_item_id)
+                .map(it => it.fk_custom_request_item_id);
+
+            if (customRequestItemIds.length > 0) {
+                const existingItems = await ManufacturingOrderItem.findAll({
+                    where: { fk_custom_request_item_id: { [Op.in]: customRequestItemIds } },
+                    attributes: ['fk_custom_request_item_id'],
+                    transaction: t
+                });
+
+                if (existingItems.length > 0) {
+                    await t.rollback();
+                    return res.status(400).json({ message: "Một số sản phẩm từ yêu cầu khách hàng đã được tạo phiếu nhập trước đó." });
+                }
+            }
+
+            // 5. Tạo chi tiết sản phẩm
             if (items && items.length > 0) {
-                const itemsData = items.map(item => ({
+                let itemsData = items.map(item => ({
                     fk_manufacturing_order_id: newOrder.pk_manufacturing_order_id,
                     fk_product_id: item.fk_product_id || null,
                     fk_custom_request_item_id: item.fk_custom_request_item_id || null,
@@ -165,20 +183,46 @@ class ManufacturingOrderController {
                     note: item.note,
                     createby: userId
                 }));
+                // Lấy thông tin từ Product nếu có
+                const productIds = itemsData.map(it => it.fk_product_id).filter(Boolean);
+                let productsMap = {};
+                if (productIds.length > 0) {
+                    const products = await Product.findAll({
+                        where: { pk_product_id: { [Op.in]: productIds } },
+                        attributes: ['pk_product_id', 'is_bundle', 'bundle_items'],
+                        transaction: t
+                    });
+                    products.forEach(p => {
+                        productsMap[p.pk_product_id] = p;
+                    });
+                }
+
+                itemsData = itemsData.map(item => {
+                    if (item.fk_product_id && productsMap[item.fk_product_id]) {
+                        const prod = productsMap[item.fk_product_id];
+                        // Ghi đè hoặc clone dữ liệu bundle từ product nếu chưa có
+                        if (prod.is_bundle === 1) {
+                            item.item_is_bundle = 1;
+                            item.item_bundle_items = item.item_bundle_items || prod.bundle_items;
+                        }
+                    }
+                    return item;
+                });
+
                 await ManufacturingOrderItem.bulkCreate(itemsData, { transaction: t });
 
                 // 5. Cập nhật trạng thái các CustomRequestItem nếu có liên kết
-                const customRequestItemIds = items
+                const customRequestItemIdsToUpdate = items
                     .filter(it => it.fk_custom_request_item_id)
                     .map(it => it.fk_custom_request_item_id);
 
-                if (customRequestItemIds.length > 0) {
+                if (customRequestItemIdsToUpdate.length > 0) {
                     // Cập nhật trạng thái CustomRequestItem (giả sử có trường status hoặc dùng status của CustomRequest)
                     // Hiện tại CustomRequestItem chưa có status riêng rõ ràng ngoài is_finished
                     // Nhưng ta có thể cập nhật fk_supplier_id nếu chưa có
                     await CustomRequestItem.update(
                         { fk_supplier_id: fk_supplier_id, modifiedate: new Date(), modifieby: userId },
-                        { where: { pk_custom_request_item_id: { [Op.in]: customRequestItemIds } }, transaction: t }
+                        { where: { pk_custom_request_item_id: { [Op.in]: customRequestItemIdsToUpdate } }, transaction: t }
                     );
                 }
             }

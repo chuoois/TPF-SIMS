@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const CustomerController = require("../controller/customer.controller");
-const { verifyAccessToken } = require("../middlewares/auth.middleware");
+const { verifyAccessToken, verifyRole } = require("../middlewares/auth.middleware");
 const validate = require("../middlewares/validate.middleware");
 const { createCustomerSchema, updateCustomerSchema } = require("../validations/customer.validation");
 /**
@@ -12,7 +12,8 @@ const { createCustomerSchema, updateCustomerSchema } = require("../validations/c
 
 // Tất cả các route yêu cầu đăng nhập
 router.use(verifyAccessToken);
-
+const salesOnly = verifyRole(["SALES"]);
+router.use(salesOnly);
 /**
  * @swagger
  * /api/sale/customers:

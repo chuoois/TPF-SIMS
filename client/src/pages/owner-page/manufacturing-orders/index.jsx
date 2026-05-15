@@ -122,6 +122,7 @@ export default function ManufacturingOrdersPage() {
 
   const handleCreated = () => {
     refresh();
+    fetchInitialData();
   };
 
   const handleCancel = async (id) => {
@@ -303,7 +304,10 @@ export default function ManufacturingOrdersPage() {
             </p>
           </div>
           <button
-            onClick={() => setShowCreate(true)}
+            onClick={() => {
+              fetchInitialData();
+              setShowCreate(true);
+            }}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold cursor-pointer transition-all"
             style={{ background: "var(--brand-primary)", color: "#fff" }}
           >
@@ -336,7 +340,10 @@ export default function ManufacturingOrdersPage() {
               </p>
             </div>
             <button
-              onClick={() => setShowCreate(true)}
+              onClick={() => {
+                fetchInitialData();
+                setShowCreate(true);
+              }}
               className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-[14px] font-bold cursor-pointer transition-all"
               style={{ background: "var(--brand-primary)", color: "#fff" }}
             >
