@@ -17,7 +17,7 @@ const createManufacturingOrderSchema = Joi.object({
       fk_custom_request_item_id: Joi.number().integer().allow(null),
       item_name: Joi.string().required(),
       item_material: Joi.string().allow("", null),
-      item_size: Joi.alternatives().try(Joi.object(), Joi.string()).allow(null),
+      item_size: Joi.alternatives().try(Joi.object(), Joi.string().allow("", null)).allow(null),
       item_color: Joi.string().allow("", null),
       quantity: Joi.number().integer().min(1).required(),
       import_price: Joi.number().min(0).required(),

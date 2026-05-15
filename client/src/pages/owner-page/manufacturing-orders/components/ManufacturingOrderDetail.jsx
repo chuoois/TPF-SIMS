@@ -682,6 +682,30 @@ export default function ManufacturingOrderDetail({ order: initialOrder, onClose 
                         <strong>Ghi chú KT:</strong> {item.note}
                       </div>
                     )}
+                    {(item.item_is_bundle === 1 || item.customRequestItem?.item_is_bundle === 1 || item.product?.is_bundle === 1) && (
+                      <div style={{ marginTop: '8px', border: '1px solid #ddd', borderRadius: '4px', background: '#f9f9f9', padding: '6px 10px' }}>
+                        <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: '#555', marginBottom: '4px' }}>
+                          Thành phần trong bộ sản phẩm
+                        </div>
+                        <table style={{ margin: 0, border: 'none', width: '100%' }}>
+                          <tbody>
+                            {(item.item_bundle_items || item.customRequestItem?.item_bundle_items || item.product?.bundle_items || []).map((bi, bidx) => (
+                              <tr key={bidx} style={{ borderBottom: '1px solid #eee' }}>
+                                <td style={{ padding: '4px 0', border: 'none', background: 'transparent' }}>
+                                  <span style={{ fontWeight: 'bold' }}>{bi.name}</span>
+                                  <span style={{ fontSize: '10px', color: '#666', marginLeft: '6px' }}>
+                                    (KT: {getDisplaySize({ item_size: bi.size }) || "Theo chuẩn"})
+                                  </span>
+                                </td>
+                                <td style={{ padding: '4px 0', border: 'none', background: 'transparent', textAlign: 'right', fontWeight: 'bold', width: '40px' }}>
+                                  ×{bi.quantity}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
                 </div>
               );

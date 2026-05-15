@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const ProductController = require("../controller/product.controller");
-const { verifyAccessToken } = require("../middlewares/auth.middleware");
+const { verifyAccessToken, verifyRole } = require("../middlewares/auth.middleware");
 
 /**
  * Product Routes - Quản lý sản phẩm cho đơn hàng
@@ -11,6 +11,8 @@ const { verifyAccessToken } = require("../middlewares/auth.middleware");
 
 // Yêu cầu đăng nhập
 router.use(verifyAccessToken);
+const allRoles = verifyRole(["OWNER", "ADMIN", "SALES"]);
+router.use(allRoles);
 
 /**
  * @swagger
