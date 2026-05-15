@@ -10,7 +10,7 @@
  * Updated: 14/03/2026 – Đổi ghi chú thành ngày nhập, bỏ trạng thái
  */
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
     Search, ArrowDownToLine, Eye, Plus, X,
     ChevronLeft, ChevronRight, Calendar,
@@ -19,11 +19,7 @@ import { PageHelmet } from "@/components/seo/PageHelmet";
 import { toast } from "react-hot-toast";
 import CreateImportModal from "../accountant-product/CreateImportModal";
 import ViewImportModal from "./ViewImportModal";
-
-// ─────────────────────────────────────────────────────────
-// MOCK DATA
-// ─────────────────────────────────────────────────────────
-import { INIT_IMPORTS } from "../mockData";
+import importService from "@/services/import.service";
 
 const fmtCurrency = (n) => new Intl.NumberFormat("vi-VN").format(n) + "₫";
 const fmtDateTime = (s) => {
@@ -34,7 +30,10 @@ const fmtDateTime = (s) => {
 
 // ─────────────────────────────────────────────────────────
 export default function AccountantImportManage() {
-    const [imports, setImports] = useState(INIT_IMPORTS);
+    const [imports, setImports] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [totalItems, setTotalItems] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
     const [search, setSearch] = useState("");
     const [dateFilter, setDateFilter] = useState("");
     const [page, setPage] = useState(1);
@@ -42,52 +41,34 @@ export default function AccountantImportManage() {
     const [showCreate, setShowCreate] = useState(false);
     const [viewItem, setViewItem] = useState(null);
 
-    const filtered = useMemo(() => {
-        let r = imports;
-        if (dateFilter) {
-            r = r.filter(i => {
-                const dateOnly = i.date.split("T")[0]; // YYYY-MM-DD
-                return dateOnly === dateFilter;
+    const fetchReceipts = async () => {
+        try {
+            setLoading(true);
+            const res = await importService.getImportReceipts({
+                search: search.trim(),
+                date: dateFilter || undefined,
+                page,
+                limit: perPage,
             });
+            setImports(res.data || []);
+            setTotalItems(res.pagination?.totalItems || 0);
+            setTotalPages(res.pagination?.totalPages || 1);
+        } catch (err) {
+            console.error("Lỗi tải phiếu nhập:", err);
+            toast.error("Không thể tải dữ liệu nhập hàng!");
+        } finally {
+            setLoading(false);
         }
-        if (search.trim()) {
-            const q = search.toLowerCase();
-            r = r.filter(i =>
-                i.code.toLowerCase().includes(q) ||
-                i.product.toLowerCase().includes(q) ||
-                i.supplier.toLowerCase().includes(q)
-            );
-        }
-        return r;
-    }, [imports, dateFilter, search]);
+    };
 
-    useEffect(() => setPage(1), [search, dateFilter]);
+    useEffect(() => { fetchReceipts(); }, [page, perPage, search, dateFilter]);
+    useEffect(() => { setPage(1); }, [search, dateFilter]);
 
-    const paginated = filtered.slice((page - 1) * perPage, page * perPage);
-    const totalPages = Math.ceil(filtered.length / perPage) || 1;
+    const paginated = imports;
 
-    const handleSaved = (data) => {
-        const newItem = {
-            id: `NK-${Date.now()}`,
-            code: `NK-${new Date().toLocaleDateString("vi-VN").replace(/\//g, "")}-${String(imports.length + 1).padStart(3, "0")}`,
-            date: new Date().toISOString(),
-            product: data.lines[0]?.isBundle
-                ? (data.lines[0]?.bundleName ?? "")
-                : (data.lines[0]?.productName ?? ""),
-            supplier: data.supplier,
-            qty: data.lines.reduce((s, l) => {
-                if (l.isBundle) return s + Number(l.bundleQty || 0);
-                return s + Number(l.qty || 0);
-            }, 0),
-            unitPrice: data.lines[0]?.isBundle
-                ? Number(data.lines[0]?.bundlePrice || 0)
-                : Number(data.lines[0]?.importPrice || 0),
-            totalPrice: data.grandTotal,
-            warehouse: "Kho chính",
-            lines: data.lines,
-        };
-        setImports(prev => [newItem, ...prev]);
-        toast.success("Tạo phiếu nhập thành công!");
+    const handleSaved = () => {
+        setPage(1);
+        fetchReceipts();
     };
 
     return (
@@ -103,7 +84,7 @@ export default function AccountantImportManage() {
                             Quản lý Nhập Hàng
                         </h1>
                         <p className="text-[13px] mt-0.5" style={{ color: "var(--text-placeholder)" }}>
-                            {filtered.length} phiếu nhập · Kế toán tạo phiếu và lưu kho
+                            {totalItems} phiếu nhập · Kế toán tạo phiếu và lưu kho
                         </p>
                     </div>
                     <button onClick={() => setShowCreate(true)}
@@ -183,7 +164,14 @@ export default function AccountantImportManage() {
                                         </td>
                                     </tr>
                                 ))}
-                                {paginated.length === 0 && (
+                                {loading ? (
+                                    <tr><td colSpan={7} className="py-24 text-center">
+                                        <div className="flex flex-col items-center gap-3" style={{ color: "var(--text-placeholder)" }}>
+                                            <div className="w-8 h-8 border-4 border-gray-200 border-t-[var(--brand-primary)] rounded-full animate-spin" />
+                                            <p className="text-sm font-medium">Đang tải dữ liệu...</p>
+                                        </div>
+                                    </td></tr>
+                                ) : paginated.length === 0 ? (
                                     <tr><td colSpan={7} className="py-24 text-center">
                                         <div className="flex flex-col items-center gap-2" style={{ color: "var(--text-placeholder)" }}>
                                             <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ backgroundColor: "var(--bg-main)" }}>
@@ -192,17 +180,17 @@ export default function AccountantImportManage() {
                                             <p className="text-sm font-medium mt-1">Không tìm thấy phiếu nhập nào</p>
                                         </div>
                                     </td></tr>
-                                )}
+                                ) : null}
                             </tbody>
                         </table>
                     </div>
 
                     {/* Pagination */}
-                    {filtered.length > 0 && (
+                    {totalItems > 0 && (
                         <div className="flex items-center justify-between px-6 py-3 border-t shrink-0"
                             style={{ borderColor: "var(--grid-border)", backgroundColor: "var(--bg-main)" }}>
                             <div className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
-                                Tổng: <span className="font-bold" style={{ color: "var(--text-main)" }}>{filtered.length}</span> phiếu
+                                Tổng: <span className="font-bold" style={{ color: "var(--text-main)" }}>{totalItems}</span> phiếu
                             </div>
                             <div className="flex items-center gap-5">
                                 <div className="flex items-center gap-2">
@@ -219,7 +207,7 @@ export default function AccountantImportManage() {
                                 </div>
                                 <span className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
                                     <span className="font-bold" style={{ color: "var(--text-main)" }}>
-                                        {(page - 1) * perPage + 1}–{Math.min(page * perPage, filtered.length)}
+                                        {(page - 1) * perPage + 1}–{Math.min(page * perPage, totalItems)}
                                     </span> phiếu
                                 </span>
                                 <div className="flex items-center gap-1">
@@ -242,7 +230,7 @@ export default function AccountantImportManage() {
             {showCreate && (
                 <CreateImportModal
                     onClose={() => setShowCreate(false)}
-                    onSaved={(data) => { handleSaved(data); setShowCreate(false); }}
+                    onSaved={() => { handleSaved(); setShowCreate(false); }}
                 />
             )}
 

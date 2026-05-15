@@ -28,6 +28,7 @@ const Notification = require("./Notification");
 const Supplier = require("./Supplier");
 const ManufacturingOrder = require("./ManufacturingOrder");
 const ManufacturingOrderItem = require("./ManufacturingOrderItem");
+const ImportReceipt = require("./ImportReceipt");
 
 
 /**
@@ -209,6 +210,12 @@ ManufacturingOrderItem.belongsTo(Product, { foreignKey: "fk_product_id", as: "pr
 CustomRequestItem.hasOne(ManufacturingOrderItem, { foreignKey: "fk_custom_request_item_id", as: "manufacturingDetail" });
 ManufacturingOrderItem.belongsTo(CustomRequestItem, { foreignKey: "fk_custom_request_item_id", as: "customRequestItem" });
 
+// ── ImportReceipt Associations ───────────────────────────
+
+// ManufacturingOrder 1:N ImportReceipt
+ManufacturingOrder.hasMany(ImportReceipt, { foreignKey: "fk_manufacturing_order_id", as: "importReceipts" });
+ImportReceipt.belongsTo(ManufacturingOrder, { foreignKey: "fk_manufacturing_order_id", as: "manufacturingOrder" });
+
 
 module.exports = {
   sequelize,
@@ -242,4 +249,5 @@ module.exports = {
   OrderItemProcessing,
   ManufacturingOrder,
   ManufacturingOrderItem,
+  ImportReceipt,
 };

@@ -17,7 +17,12 @@ const ProductItem = sequelize.define(
     },
     fk_product_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
+    },
+    item_name: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      comment: "Tên sản phẩm (lưu trực tiếp để hiển thị khi product bị null)",
     },
     fk_order_item_id: {
       type: DataTypes.INTEGER,
