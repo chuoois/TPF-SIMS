@@ -23,6 +23,7 @@ const workerRoutes = require("./routes/worker.routes");
 const manufacturingOrderRoutes = require("./routes/manufacturingOrder.routes");
 const importRoutes = require("./routes/import.routes");
 const customerDebtRoutes = require("./routes/customerDebt.routes");
+const dashboardRoutes = require("./routes/dashboard.routes");
 
 const swaggerUi = require("swagger-ui-express");
 const couponRoutes = require("./routes/coupon.routes");
