@@ -10,6 +10,9 @@ import {
   Tag,
   Wrench,
   Package,
+  Loader2,
+  Upload,
+  Plus,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
@@ -17,8 +20,9 @@ import {
   WOOD_TYPES,
   COLORS,
   PRODUCT_STATUSES,
-  UNITS,
 } from "./constants";
+import productService from "@/services/product.service";
+import { uploadImage } from "@/services/cloudinary.service";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 const fmtCurrency = (n) => {
@@ -205,11 +209,14 @@ export default function ProductModal({
     ? metadata.rooms.map(r => r.room_name) 
     : [];
 
+  const [saving, setSaving] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+
   const [form, setForm] = useState({
     name: "",
     code: "",
     category: "",
-    unit: "",
     material: "",
     color: "",
     dimL: "",
@@ -229,21 +236,10 @@ export default function ProductModal({
   });
 
   useEffect(() => {
-    if (product) {
-      const latestLot =
-        product.lots?.length > 0
-          ? product.lots.reduce(
-              (latest, current) =>
-                new Date(current.importDate) > new Date(latest.importDate)
-                  ? current
-                  : latest,
-              product.lots[0],
-            )
-          : null;
-      const initialCost = latestLot
-        ? latestLot.importPrice
-        : product.costPrice || 0;
-
+    setImageFile(null);
+    setImagePreview(null);
+    setSaving(false);
+    if (product && product.id) {
       const dims = (product.dimensions || "")
         .split(/[xX*×]/)
         .map((d) => d.trim());
@@ -251,24 +247,31 @@ export default function ProductModal({
         name: product.name || "",
         code: product.code || "",
         category: product.category || "",
-        unit: product.unit || "",
         material: product.material || "",
         color: product.color || "",
         dimL: dims[0] || "",
         dimW: dims[1] || "",
         dimH: dims[2] || "",
         status: product.status || "",
-        productType: product.productType || "",
+        productType: product.productType || "Hàng sẵn",
         warrantyMonths: product.warrantyMonths || 12,
         leadTime: product.leadTime || 0,
         description: product.description || "",
-
-        costPrice: initialCost,
+        costPrice: product.costPrice || 0,
         processingCost: product.processingCost || product.paintCost || 0,
-        margin: 20,
+        margin: product.profitMargin || 20,
         rawRetailPrice: product.rawRetailPrice || 0,
         finishedRetailPrice: product.finishedRetailPrice || 0,
         retailPrice: product.retailPrice || 0,
+      });
+    } else if (product) {
+      // Create mode - reset form
+      setForm({
+        name: "", code: "", category: "", material: "", color: "",
+        dimL: "", dimW: "", dimH: "", status: "",
+        productType: "Hàng sẵn", warrantyMonths: 12, leadTime: 0,
+        description: "", costPrice: 0, processingCost: 0, margin: 20,
+        rawRetailPrice: 0, finishedRetailPrice: 0, retailPrice: 0,
       });
     }
   }, [product]);
@@ -286,10 +289,10 @@ export default function ProductModal({
         )
       : null;
 
+  const isCreate = mode === "create";
   const sc = getStatusConfig(product.status);
-  const isWood = product.productType === "Hàng mộc";
-  const canDelete =
-    product.stock === 0 && (!product.lots || product.lots.length === 0);
+  const isWood = isCreate ? form.productType === "Hàng mộc" : product.productType === "Hàng mộc";
+  const canDelete = product.stock === 0;
 
   const set = (key) => (e) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
@@ -298,56 +301,97 @@ export default function ProductModal({
     setForm((prev) => ({ ...prev, [key]: raw === "" ? 0 : Number(raw) }));
   };
 
-  const handleSaveEdit = () => {
-    if (!form.name?.trim()) {
-      toast.error("Tên sản phẩm không được để trống!");
-      return;
+  // Helper: lookup FK ID from metadata by name
+  const findCategoryId = (name) => metadata.categories?.find(c => c.category_name === name)?.pk_product_category_id || null;
+  const findMaterialId = (name) => metadata.materials?.find(m => m.material_name === name)?.pk_product_material_id || null;
+  const findColorId = (name) => metadata.colors?.find(c => c.color_name === name)?.pk_product_color_id || null;
+
+  const PRODUCT_TYPE_MAP = { "Hàng sẵn": "FINISHED", "Hàng mộc": "RAW", "Hàng khách đặt": "CUSTOM" };
+
+  // Build API payload from form
+  const buildPayload = async (includePricing = false) => {
+    let imgUrl = product.img || null;
+    if (imageFile) {
+      const result = await uploadImage(imageFile);
+      imgUrl = result.url;
     }
-    if (!form.code?.trim()) {
-      toast.error("Mã sản phẩm không được để trống!");
-      return;
-    }
-    const updated = {
-      ...product,
-      ...form,
-      dimensions: [form.dimL, form.dimW, form.dimH].filter(Boolean).join(" × "),
-      warrantyMonths: Number(form.warrantyMonths),
-      leadTime: Number(form.leadTime),
-      retailPrice: Number(product.retailPrice || 0),
-      rawRetailPrice: Number(product.rawRetailPrice || 0),
-      finishedRetailPrice: Number(product.finishedRetailPrice || 0),
+    const payload = {
+      product_name: form.name,
+      sku: form.code,
+      fk_category_id: findCategoryId(form.category),
+      fk_material_id: findMaterialId(form.material),
+      fk_color_id: findColorId(form.color),
+      product_img: imgUrl,
+      description: form.description,
+      product_type: PRODUCT_TYPE_MAP[form.productType] || "FINISHED",
+      warranty_months: Number(form.warrantyMonths) || 12,
+      size: { length: form.dimL || null, width: form.dimW || null, height: form.dimH || null },
+      is_gift: form.productType === "Quà tặng" ? 1 : 0,
     };
-    onSave?.(updated, "Đã lưu thông tin sản phẩm thành công!");
+    if (includePricing) {
+      payload.pricing = {
+        cost_price: form.costPrice || 0,
+        raw_price: form.rawRetailPrice || 0,
+        final_price: isWood ? (form.finishedRetailPrice || 0) : (form.retailPrice || 0),
+        profit_margin: form.margin || 0,
+      };
+    }
+    return payload;
   };
 
-  const handleSavePricing = () => {
-    const updated = {
-      ...product,
-      costPrice: form.costPrice,
-      processingCost: form.processingCost,
-      warrantyMonths: Number(form.warrantyMonths),
-      status: "Hàng sẵn",
-      ...(isWood
-        ? {
-            rawRetailPrice: form.rawRetailPrice,
-            finishedRetailPrice: form.finishedRetailPrice,
-          }
-        : {
-            retailPrice: form.retailPrice,
-          }),
-    };
+  const handleSaveEdit = async () => {
+    if (!form.name?.trim()) { toast.error("Tên sản phẩm không được để trống!"); return; }
+    if (!form.code?.trim()) { toast.error("Mã sản phẩm không được để trống!"); return; }
+    setSaving(true);
+    try {
+      const payload = await buildPayload(false);
+      await productService.updateProduct(product.id, payload);
+      toast.success("Đã lưu thông tin sản phẩm thành công!");
+      onSave?.();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Lỗi khi cập nhật sản phẩm");
+    } finally { setSaving(false); }
+  };
+
+  const handleSavePricing = async () => {
     if (isWood) {
       if (!form.rawRetailPrice || !form.finishedRetailPrice) {
-        toast.error("Vui lòng nhập đầy đủ giá bán mộc và giá hoàn thiện.");
-        return;
+        toast.error("Vui lòng nhập đầy đủ giá bán mộc và giá hoàn thiện."); return;
       }
     } else {
-      if (!form.retailPrice) {
-        toast.error("Vui lòng nhập giá bán niêm yết.");
-        return;
-      }
+      if (!form.retailPrice) { toast.error("Vui lòng nhập giá bán niêm yết."); return; }
     }
-    onSave?.(updated, "Đã định giá và mở bán thành công!");
+    setSaving(true);
+    try {
+      const payload = await buildPayload(true);
+      await productService.updateProduct(product.id, payload);
+      toast.success("Đã định giá và mở bán thành công!");
+      onSave?.();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Lỗi khi định giá sản phẩm");
+    } finally { setSaving(false); }
+  };
+
+  const handleCreate = async () => {
+    if (!form.name?.trim()) { toast.error("Tên sản phẩm không được để trống!"); return; }
+    if (!form.code?.trim()) { toast.error("Mã sản phẩm không được để trống!"); return; }
+    setSaving(true);
+    try {
+      const payload = await buildPayload(true);
+      await productService.createProduct(payload);
+      toast.success("Tạo sản phẩm thành công!");
+      onSave?.();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Lỗi khi tạo sản phẩm");
+    } finally { setSaving(false); }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
   };
 
   const totalCost = form.costPrice + form.processingCost;
@@ -368,32 +412,40 @@ export default function ProductModal({
         {/* ── Header ── */}
         <div className="bg-white px-6 py-4 border-b border-slate-200 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            {/* Segmented Control */}
-            <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
-              <button
-                onClick={() => onSwitchMode("view")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] uppercase tracking-wider font-bold rounded-md transition-all ${mode === "view" ? "bg-white text-slate-800" : "text-slate-500 hover:text-slate-700"}`}
-              >
-                <Eye size={12} /> Xem chi tiết
-              </button>
-              <button
-                onClick={() => onSwitchMode("edit")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] uppercase tracking-wider font-bold rounded-md transition-all ${mode === "edit" ? "bg-white text-[var(--brand-primary)]" : "text-slate-500 hover:text-slate-700"}`}
-              >
-                <Pencil size={12} /> Sửa thông tin
-              </button>
-              {product.productType !== "Hàng khách đặt" && (
-                <button
-                  onClick={() => onSwitchMode("pricing")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] uppercase tracking-wider font-bold rounded-md transition-all ${mode === "pricing" ? "bg-emerald-500 text-white" : "text-slate-500 hover:text-slate-700"}`}
-                >
-                  <Tag size={12} /> Định giá & Mở bán
-                </button>
-              )}
-            </div>
-            <span className="font-mono text-sm text-[var(--brand-primary)] px-2 py-0.5 bg-[var(--brand-primary)]/5 rounded-md border border-[var(--brand-primary)]/10">
-              {product.code}
-            </span>
+            {isCreate ? (
+              <h2 className="text-base font-bold text-[var(--text-main)] flex items-center gap-2">
+                <Plus size={16} className="text-[var(--brand-primary)]" /> Thêm sản phẩm mới
+              </h2>
+            ) : (
+              <>
+                {/* Segmented Control */}
+                <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+                  <button
+                    onClick={() => onSwitchMode("view")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] uppercase tracking-wider font-bold rounded-md transition-all ${mode === "view" ? "bg-white text-slate-800" : "text-slate-500 hover:text-slate-700"}`}
+                  >
+                    <Eye size={12} /> Xem chi tiết
+                  </button>
+                  <button
+                    onClick={() => onSwitchMode("edit")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] uppercase tracking-wider font-bold rounded-md transition-all ${mode === "edit" ? "bg-white text-[var(--brand-primary)]" : "text-slate-500 hover:text-slate-700"}`}
+                  >
+                    <Pencil size={12} /> Sửa thông tin
+                  </button>
+                  {product.productType !== "Hàng khách đặt" && (
+                    <button
+                      onClick={() => onSwitchMode("pricing")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] uppercase tracking-wider font-bold rounded-md transition-all ${mode === "pricing" ? "bg-emerald-500 text-white" : "text-slate-500 hover:text-slate-700"}`}
+                    >
+                      <Tag size={12} /> Định giá & Mở bán
+                    </button>
+                  )}
+                </div>
+                <span className="font-mono text-sm text-[var(--brand-primary)] px-2 py-0.5 bg-[var(--brand-primary)]/5 rounded-md border border-[var(--brand-primary)]/10">
+                  {product.code}
+                </span>
+              </>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -408,7 +460,26 @@ export default function ProductModal({
           <div className="flex gap-6">
             {/* Left column: image + status */}
             <div className="w-[160px] shrink-0 space-y-3">
-              {product.img ? (
+              {(mode === "edit" || isCreate) ? (
+                <label className="block cursor-pointer group relative">
+                  {(imagePreview || product.img) ? (
+                    <img
+                      src={imagePreview || product.img}
+                      alt={form.name || "Ảnh sản phẩm"}
+                      className="w-full aspect-square object-cover rounded-xl border group-hover:opacity-70 transition"
+                    />
+                  ) : (
+                    <div className="w-full aspect-square bg-gray-100 rounded-xl border flex flex-col items-center justify-center text-slate-300 group-hover:bg-gray-200 transition">
+                      <Upload size={28} className="mb-1" />
+                      <span className="text-xs">Chọn ảnh</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 rounded-xl flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition">
+                    <Upload size={20} className="text-white" />
+                  </div>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                </label>
+              ) : product.img ? (
                 <img
                   src={product.img}
                   alt={product.name}
@@ -452,7 +523,7 @@ export default function ProductModal({
                       Tồn kho hiện tại
                     </span>
                     <span className="font-semibold text-[var(--text-main)] text-sm">
-                      {product.stock} {product.unit}
+                      {product.stock}
                     </span>
                   </div>
                 </div>
@@ -462,7 +533,7 @@ export default function ProductModal({
             {/* Right column */}
             <div className="flex-1 space-y-5">
               {/* Title / Form basic inputs */}
-              {mode === "edit" ? (
+              {(mode === "edit" || isCreate) ? (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
                     <InputField
@@ -498,7 +569,7 @@ export default function ProductModal({
               )}
 
               {/* Edit Mode Content */}
-              {mode === "edit" && (
+              {(mode === "edit" || isCreate) && (
                 <div className="grid grid-cols-2 gap-4">
                   <SelectField
                     label="Loại hàng"
@@ -519,13 +590,6 @@ export default function ProductModal({
                     onChange={set("color")}
                     options={colors}
                     placeholder="Chọn màu"
-                  />
-                  <SelectField
-                    label="Đơn vị"
-                    value={form.unit}
-                    onChange={set("unit")}
-                    options={UNITS}
-                    placeholder="Chọn đơn vị"
                   />
                   <div className="col-span-2">
                     <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
@@ -587,7 +651,6 @@ export default function ProductModal({
                     <Field label="Chất liệu" value={product.material} />
                     <Field label="Màu sắc" value={product.color} />
                     <Field label="Kích thước" value={product.dimensions} />
-                    <Field label="Đơn vị" value={product.unit} />
                     {product.status !== "Chưa định giá" && (
                       <div>
                         <span className="text-[11px] text-[var(--text-secondary)] block mb-0.5">
@@ -610,7 +673,7 @@ export default function ProductModal({
                       <span className="font-black text-[var(--text-main)]">
                         {product.productType === "Hàng khách đặt"
                           ? "—"
-                          : `${product.stock} ${product.unit || "SP"}`}
+                          : product.stock}
                       </span>
                     </div>
                   </div>
@@ -902,7 +965,6 @@ export default function ProductModal({
               Hủy
             </button>
 
-            {/* In view mode, allow switching to edit instead of closing and saving */}
             {mode === "view" && product.status !== "Hết hàng" && (
               <button
                 onClick={() => onSwitchMode("edit")}
@@ -915,18 +977,30 @@ export default function ProductModal({
             {mode === "edit" && (
               <button
                 onClick={handleSaveEdit}
-                className="px-6 py-2.5 rounded-lg text-sm font-bold text-white bg-[var(--brand-primary)] hover:opacity-90 transition active:scale-95 flex items-center gap-2"
+                disabled={saving}
+                className="px-6 py-2.5 rounded-lg text-sm font-bold text-white bg-[var(--brand-primary)] hover:opacity-90 transition active:scale-95 flex items-center gap-2 disabled:opacity-50"
               >
-                <Pencil size={14} /> Lưu thay đổi
+                {saving ? <Loader2 size={14} className="animate-spin" /> : <Pencil size={14} />} {saving ? "Đang lưu..." : "Lưu thay đổi"}
               </button>
             )}
 
             {mode === "pricing" && (
               <button
                 onClick={handleSavePricing}
-                className="px-6 py-2.5 rounded-lg text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition active:scale-95 flex items-center gap-2"
+                disabled={saving}
+                className="px-6 py-2.5 rounded-lg text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition active:scale-95 flex items-center gap-2 disabled:opacity-50"
               >
-                <Tag size={14} /> Xác nhận & Mở bán
+                {saving ? <Loader2 size={14} className="animate-spin" /> : <Tag size={14} />} {saving ? "Đang xử lý..." : "Xác nhận & Mở bán"}
+              </button>
+            )}
+
+            {isCreate && (
+              <button
+                onClick={handleCreate}
+                disabled={saving}
+                className="px-6 py-2.5 rounded-lg text-sm font-bold text-white bg-[var(--brand-primary)] hover:opacity-90 transition active:scale-95 flex items-center gap-2 disabled:opacity-50"
+              >
+                {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} {saving ? "Đang tạo..." : "Tạo sản phẩm"}
               </button>
             )}
           </div>
