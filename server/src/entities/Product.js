@@ -98,6 +98,11 @@ const Product = sequelize.define(
       type: DataTypes.TINYINT,
       defaultValue: 1, // 1: Active, 0: Inactive
     },
+    min_stock: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      comment: "Số lượng tồn kho tối thiểu để cảnh báo",
+    },
     createdate: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

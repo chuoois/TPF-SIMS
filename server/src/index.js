@@ -22,8 +22,11 @@ const supplierRoutes = require("./routes/supplier.routes");
 const workerRoutes = require("./routes/worker.routes");
 const manufacturingOrderRoutes = require("./routes/manufacturingOrder.routes");
 const importRoutes = require("./routes/import.routes");
+const customerDebtRoutes = require("./routes/customerDebt.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
+
 const swaggerUi = require("swagger-ui-express");
+const couponRoutes = require("./routes/coupon.routes");
 
 const swaggerJsDoc = require("swagger-jsdoc");
 
@@ -65,6 +68,8 @@ app.use("/api/worker", workerRoutes);
 app.use("/api/manufacturing-order", manufacturingOrderRoutes);
 app.use("/api/import", importRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/customer-debt", customerDebtRoutes);
+app.use("/api/coupon", couponRoutes);
 
 
 // ── Swagger ───────────────────────────────────────────────
@@ -107,7 +112,7 @@ initSocket(server);
 // ── Start ─────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 
-sequelize.sync({ alter: true })
+sequelize.sync({ alter: false })
   .then(() => {
     console.log("Database connected and synced successful");
     server.listen(PORT, "0.0.0.0", () => {

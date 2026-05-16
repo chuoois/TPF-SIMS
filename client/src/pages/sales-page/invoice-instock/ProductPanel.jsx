@@ -189,7 +189,7 @@ export default function ProductPanel({
                         : "var(--text-secondary)",
                   }}
                 >
-                  {tab}
+                  {tab === PRODUCT_TYPES.RAW ? "Hàng gia công" : tab}
                 </button>
               ))}
             </div>

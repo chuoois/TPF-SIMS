@@ -1,111 +1,112 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Users, Search, CheckCircle, Package, X, ChevronLeft, ChevronRight, Eye, Camera, DollarSign, Calendar, FileText, Plus, Image as ImageIcon, Download } from "lucide-react";
 import { toast } from "react-hot-toast";
 import * as XLSX from "xlsx";
+import customerDebtService from "@/services/customerDebt.service";
+import { uploadImage } from "@/services/cloudinary.service";
+import useCachedFetch from "@/hooks/useCachedFetch";
+import { formatShortDateVN } from "@/lib/dateUtils";
 
 /**
  * Accountant Customer Debt
- * Quản lý công nợ khách hàng (Mock data)
- *
- * Created By: HieuNM
- * Updated: 14/03/2026
+ * Quản lý công nợ khách hàng
  */
 
-// --- Mock Data ---
 const formatCurrency = (n) => n != null ? new Intl.NumberFormat("vi-VN").format(n) + "₫" : "—";
 
-import { MOCK_DEBTS } from "../mockData";
-
 export default function AccountantCustomerDebt() {
-    const [debts, setDebts] = useState(MOCK_DEBTS);
     const [searchQuery, setSearchQuery] = useState("");
-    const [statusFilter, setStatusFilter] = useState("ALL");
+    const [statusFilter, setStatusFilter] = useState("DEBT");
     const [selectedDebt, setSelectedDebt] = useState(null);
     const [isSettleModalOpen, setIsSettleModalOpen] = useState(false);
     const [viewDebtDetails, setViewDebtDetails] = useState(null);
     const [payAmount, setPayAmount] = useState("");
     const [billPhoto, setBillPhoto] = useState(null);
+    const [billFile, setBillFile] = useState(null);
     const [paymentNote, setPaymentNote] = useState("");
     const [showFullBill, setShowFullBill] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [paymentHistory, setPaymentHistory] = useState([]);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(15);
 
-    const getRemainingAmount = (total, deposit) => Math.max(0, total - deposit);
+    const fetchFn = useCallback(async () => {
+        const params = {
+            page: currentPage,
+            limit: itemsPerPage,
+            search: searchQuery || undefined,
+            status: statusFilter === "ALL" ? undefined : statusFilter
+        };
+        return await customerDebtService.getAllCustomerDebts(params);
+    }, [currentPage, itemsPerPage, searchQuery, statusFilter]);
+
+    const cacheKey = `customer_debts_${searchQuery}_${statusFilter}_${currentPage}_${itemsPerPage}`;
+    const { data: apiResponse, isLoading, refresh } = useCachedFetch(cacheKey, fetchFn);
+
+    const debts = apiResponse?.data || [];
+    const totalItems = apiResponse?.pagination?.totalItems || 0;
+    const totalPages = apiResponse?.pagination?.totalPages || 1;
+
+    const getRemainingAmount = (order) => {
+        const total = Number(order.total_amount) || 0;
+        const deposit = Number(order.deposit_amount) || 0;
+        const received = Number(order.received_amount) || 0;
+        return Math.max(0, total - (deposit + received));
+    };
 
     const handleExportExcel = () => {
         try {
-            const dataToExport = filteredDebts.map(debt => {
-                const remaining = getRemainingAmount(debt.total_amount, debt.deposit_amount);
+            const dataToExport = debts.map(debt => {
+                const remaining = getRemainingAmount(debt);
                 const isSettled = remaining <= 0;
                 return {
-                    "Mã Đơn": debt.order_code,
-                    "Khách Hàng": debt.customer_name,
-                    "Số Điện Thoại": debt.phone_number,
-                    "Tổng Tiền": debt.total_amount,
-                    "Đã Thanh Toán": debt.deposit_amount,
+                    "Mã Đơn": `DH-${debt.pk_order_id}`,
+                    "Khách Hàng": debt.customer?.full_name || "—",
+                    "Số Điện Thoại": debt.customer?.phone_number || "—",
+                    "Tổng Tiền": Number(debt.total_amount),
+                    "Đã Thanh Toán": Number(debt.deposit_amount) + Number(debt.received_amount),
                     "Còn Nợ": remaining,
-                    "Ngày Đặt": debt.order_date,
+                    "Ngày Đặt": formatShortDateVN(debt.createdate),
                     "Trạng Thái": isSettled ? "Đã thanh toán" : "Còn nợ"
                 };
             });
 
             const ws = XLSX.utils.json_to_sheet(dataToExport);
-            const wscols = [
-                { wch: 15 }, { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }
-            ];
+            const wscols = [{ wch: 15 }, { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }];
             ws['!cols'] = wscols;
 
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "CongNoKhachHang");
-
             XLSX.writeFile(wb, `CongNoKhachHang_${new Date().toISOString().slice(0, 10)}.xlsx`);
-            toast.success("Xuất file Excel thành công!", { style: { fontSize: "14px", fontWeight: "bold" } });
+            toast.success("Xuất file Excel thành công!");
         } catch (error) {
             console.error("Lỗi xuất excel:", error);
             toast.error("Không thể xuất file Excel");
         }
     };
 
-    const filteredDebts = useMemo(() => {
-        let r = debts;
-
-        if (statusFilter === "DEBT") {
-            r = r.filter(d => getRemainingAmount(d.total_amount, d.deposit_amount) > 0);
-        } else if (statusFilter === "SETTLED") {
-            r = r.filter(d => getRemainingAmount(d.total_amount, d.deposit_amount) <= 0);
-        }
-
-        if (searchQuery.trim()) {
-            const q = searchQuery.toLowerCase();
-            r = r.filter(
-                (d) =>
-                    d.order_code.toLowerCase().includes(q) ||
-                    d.customer_name.toLowerCase().includes(q) ||
-                    d.phone_number.includes(q)
-            );
-        }
-        return r;
-    }, [debts, searchQuery, statusFilter]);
-
-    const totalPages = Math.ceil(filteredDebts.length / itemsPerPage) || 1;
-    const paginated = filteredDebts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-    const totalDebt = debts.reduce((acc, d) => acc + getRemainingAmount(d.total_amount, d.deposit_amount), 0);
+    const totalDebt = useMemo(() => {
+        // Lưu ý: totalDebt này chỉ tính trên trang hiện tại nếu API không trả về total sum
+        // Trong thực tế nên để API trả về tổng dư nợ toàn hệ thống
+        return debts.reduce((acc, d) => acc + getRemainingAmount(d), 0);
+    }, [debts]);
 
     const handleOpenSettleModal = (debt) => {
         setSelectedDebt(debt);
-        setPayAmount(getRemainingAmount(debt.total_amount, debt.deposit_amount));
+        setPayAmount(getRemainingAmount(debt));
         setBillPhoto(null);
+        setBillFile(null);
         setPaymentNote("");
         setIsSettleModalOpen(true);
     };
 
-    const handleConfirmSettle = () => {
-        if (!selectedDebt || !payAmount || !billPhoto) {
-            toast.error("Vui lòng nhập số tiền và đính kèm ảnh Bill bằng chứng!", { style: { fontSize: "14px", fontWeight: "bold" } });
+    const handleConfirmSettle = async () => {
+        if (!selectedDebt || !payAmount) {
+            toast.error("Vui lòng nhập số tiền thanh toán!");
             return;
         }
 
@@ -115,41 +116,59 @@ export default function AccountantCustomerDebt() {
             return;
         }
 
-        const remaining = getRemainingAmount(selectedDebt.total_amount, selectedDebt.deposit_amount);
-        if (amountNum > remaining) {
+        const remaining = getRemainingAmount(selectedDebt);
+        if (amountNum > remaining + 1000) { // Cho phép sai lệch nhỏ
             toast.error("Số tiền thanh toán vượt quá dư nợ hiện tại!");
             return;
         }
 
-        const newPayment = {
-            date: new Date().toLocaleDateString("vi-VN"),
-            amount: amountNum,
-            bill_img: billPhoto, // Trong thực tế là URL, ở đây mock bằng preview
-            note: paymentNote || (amountNum === remaining ? "Tất toán công nợ" : "Thanh toán một phần")
-        };
+        setIsSubmitting(true);
+        const loadingToast = toast.loading("Đang xử lý thanh toán...");
 
-        setDebts((prevDebts) =>
-            prevDebts.map((debt) =>
-                debt.id === selectedDebt.id
-                    ? {
-                        ...debt,
-                        deposit_amount: debt.deposit_amount + amountNum,
-                        payment_history: [...(debt.payment_history || []), newPayment]
-                    }
-                    : debt
-            )
-        );
+        try {
+            let uploadedImageUrl = null;
+            if (billFile) {
+                const uploadRes = await uploadImage(billFile);
+                uploadedImageUrl = uploadRes.url;
+            }
 
-        setIsSettleModalOpen(false);
-        setSelectedDebt(null);
-        toast.success(amountNum === remaining ? "Đã tất toán công nợ thành công!" : "Đã ghi nhận thanh toán một phần!", { style: { fontSize: "14px", fontWeight: "bold" } });
+            await customerDebtService.addPayment(selectedDebt.pk_order_id, {
+                amount: amountNum,
+                method: "Chuyển khoản/Tiền mặt",
+                note: paymentNote,
+                bill_image: uploadedImageUrl
+            });
+
+            toast.success("Đã ghi nhận thanh toán thành công!", { id: loadingToast });
+            setIsSettleModalOpen(false);
+            refresh();
+        } catch (error) {
+            console.error("Payment error:", error);
+            toast.error(error.response?.data?.message || "Lỗi khi ghi nhận thanh toán", { id: loadingToast });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            // Mock preview URL
+            setBillFile(file);
             setBillPhoto(URL.createObjectURL(file));
+        }
+    };
+
+    const handleViewDetails = async (debt) => {
+        setViewDebtDetails(debt);
+        setIsLoadingHistory(true);
+        try {
+            const res = await customerDebtService.getPaymentHistory(debt.pk_order_id);
+            setPaymentHistory(res.data || []);
+        } catch (error) {
+            console.error("Get history error:", error);
+            toast.error("Không thể tải lịch sử thanh toán");
+        } finally {
+            setIsLoadingHistory(false);
         }
     };
 
@@ -165,7 +184,7 @@ export default function AccountantCustomerDebt() {
                             Công nợ khách hàng
                         </h1>
                         <p className="text-[13px] mt-1 font-medium italic" style={{ color: "var(--text-placeholder)" }}>
-                            {filteredDebts.length} khoản công nợ · {debts.filter(d => getRemainingAmount(d.total_amount, d.deposit_amount) > 0).length} đơn đang nợ
+                            {totalItems} khoản công nợ · {apiResponse?.activeDebtCount || "..."} đơn đang nợ
                         </p>
                     </div>
 
@@ -239,26 +258,35 @@ export default function AccountantCustomerDebt() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {paginated.map((debt) => {
-                                    const remaining = getRemainingAmount(debt.total_amount, debt.deposit_amount);
+                                {isLoading ? (
+                                    <tr>
+                                        <td colSpan={7} className="py-24 text-center">
+                                            <div className="flex flex-col items-center gap-2" style={{ color: "var(--text-placeholder)" }}>
+                                                <div className="w-8 h-8 border-4 border-t-blue-500 border-blue-100 rounded-full animate-spin"></div>
+                                                <p className="text-[14px] font-medium mt-2">Đang tải dữ liệu...</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : debts.map((debt) => {
+                                    const remaining = getRemainingAmount(debt);
                                     const isSettled = remaining === 0;
 
                                     return (
-                                        <tr key={debt.id} className="group hover:bg-gray-50/50 transition-colors relative"
+                                        <tr key={debt.pk_order_id} className="group hover:bg-gray-50/50 transition-colors relative"
                                             style={{ borderBottom: "1px solid var(--grid-border)", backgroundColor: isSettled ? "#F0FDF4" : "transparent" }}>
                                             {/* Mã Đơn */}
                                             <td className="px-4 py-3">
                                                 <span className="text-[12px] font-bold font-mono px-2 py-1 rounded" style={{ backgroundColor: "var(--bg-main)", color: "var(--text-main)", border: "1px solid var(--grid-border)" }}>
-                                                    {debt.order_code}
+                                                    DH-{debt.pk_order_id}
                                                 </span>
                                             </td>
                                             {/* Khách hàng */}
                                             <td className="px-4 py-3 text-[13px] font-semibold" style={{ color: "var(--text-main)" }}>
-                                                {debt.customer_name}
+                                                {debt.customer?.full_name || "—"}
                                             </td>
                                             {/* Số điện thoại */}
                                             <td className="px-4 py-3 text-[13px]" style={{ color: "var(--text-secondary)" }}>
-                                                {debt.phone_number}
+                                                {debt.customer?.phone_number || "—"}
                                             </td>
                                             {/* Tổng tiền */}
                                             <td className="px-4 py-3 text-right text-[13px] font-bold" style={{ color: "var(--text-main)" }}>
@@ -266,7 +294,7 @@ export default function AccountantCustomerDebt() {
                                             </td>
                                             {/* Đã thanh toán */}
                                             <td className="px-4 py-3 text-right text-[13px] font-semibold" style={{ color: "var(--text-secondary)" }}>
-                                                {formatCurrency(debt.deposit_amount)}
+                                                {formatCurrency(Number(debt.deposit_amount) + Number(debt.received_amount))}
                                             </td>
                                             {/* Còn nợ */}
                                             <td className="px-4 py-3 text-right text-[13px] font-bold" style={{ color: isSettled ? "#15803D" : "#D97706" }}>
@@ -274,14 +302,14 @@ export default function AccountantCustomerDebt() {
                                             </td>
                                             {/* Ngày đặt */}
                                             <td className="px-4 py-3 text-center text-[12px]" style={{ color: "var(--text-secondary)" }}>
-                                                {debt.order_date}
+                                                {formatShortDateVN(debt.createdate)}
                                             </td>
                                             {/* Spacer */}
                                             <td className="px-4 py-3"></td>
                                             {/* Actions */}
                                             <td className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                                 <div className="flex gap-1.5 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-gray-100">
-                                                    <button onClick={() => setViewDebtDetails(debt)}
+                                                        <button onClick={() => handleViewDetails(debt)}
                                                         className="h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[12px] font-bold hover:bg-gray-100 cursor-pointer transition"
                                                         style={{ color: "var(--text-secondary)" }}>
                                                         <Eye size={14} /> Chi tiết
@@ -303,7 +331,7 @@ export default function AccountantCustomerDebt() {
                                         </tr>
                                     );
                                 })}
-                                {paginated.length === 0 && (
+                                {!isLoading && debts.length === 0 && (
                                     <tr>
                                         <td colSpan={7} className="py-24 text-center">
                                             <div className="flex flex-col items-center gap-2" style={{ color: "var(--text-placeholder)" }}>
@@ -322,11 +350,11 @@ export default function AccountantCustomerDebt() {
                     </div>
 
                     {/* Pagination */}
-                    {filteredDebts.length > 0 && (
+                    {totalItems > 0 && (
                         <div className="flex items-center justify-between px-6 py-3 border-t shrink-0"
                             style={{ borderColor: "var(--grid-border)", backgroundColor: "var(--bg-main)" }}>
                             <div className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
-                                Tổng: <span className="font-bold" style={{ color: "var(--text-main)" }}>{filteredDebts.length}</span> khoản
+                                Tổng: <span className="font-bold" style={{ color: "var(--text-main)" }}>{totalItems}</span> khoản
                             </div>
                             <div className="flex items-center gap-5">
                                 <div className="flex items-center gap-2">
@@ -343,7 +371,7 @@ export default function AccountantCustomerDebt() {
                                 </div>
                                 <span className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
                                     <span className="font-bold" style={{ color: "var(--text-main)" }}>
-                                        {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredDebts.length)}
+                                        {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, totalItems)}
                                     </span> khoản
                                 </span>
                                 <div className="flex items-center gap-1">
@@ -379,9 +407,7 @@ export default function AccountantCustomerDebt() {
                             <div className="p-6 space-y-4 flex-1 overflow-y-auto max-h-[60vh]">
                                 <div className="p-3 rounded-xl bg-blue-50/50 border border-blue-100 flex justify-between items-center text-[13px]">
                                     <span className="font-bold text-blue-800">Dư nợ hiện tại:</span>
-                                    <span className="font-black text-blue-900 text-[15px]">
-                                        {formatCurrency(getRemainingAmount(selectedDebt.total_amount, selectedDebt.deposit_amount))}
-                                    </span>
+                                        {formatCurrency(getRemainingAmount(selectedDebt))}
                                 </div>
 
                                 {/* Số tiền thu */}
@@ -438,7 +464,12 @@ export default function AccountantCustomerDebt() {
                             <button className="h-10 px-6 rounded-xl text-[13px] font-bold cursor-pointer hover:opacity-90 transition flex items-center gap-2"
                                 style={{ backgroundColor: "var(--brand-primary)", color: "#fff" }}
                                 onClick={handleConfirmSettle}>
-                                <CheckCircle size={14} /> Xác Nhận Thanh Toán
+                                {isSubmitting ? (
+                                    <div className="w-5 h-5 border-2 border-t-white border-white/30 rounded-full animate-spin"></div>
+                                ) : (
+                                    <CheckCircle size={14} />
+                                )}
+                                {isSubmitting ? "Đang xử lý..." : "Xác Nhận Thanh Toán"}
                             </button>
                         </div>
                     </div>
@@ -459,7 +490,7 @@ export default function AccountantCustomerDebt() {
                                 Lịch sử công nợ khách hàng
                             </h2>
                             <p className="text-[13px] mt-1" style={{ color: "var(--text-secondary)" }}>
-                                Chi tiết các khoản nợ của khách hàng <span className="font-bold text-gray-900">{viewDebtDetails.customer_name}</span>
+                                Chi tiết các khoản nợ của khách hàng <span className="font-bold text-gray-900">{viewDebtDetails.customer?.full_name || "—"}</span>
                             </p>
                         </div>
 
@@ -473,7 +504,7 @@ export default function AccountantCustomerDebt() {
                                 <div className="p-4 rounded-xl border flex flex-col items-center justify-center text-center shadow-sm" style={{ borderColor: "var(--grid-border)", backgroundColor: "rgba(220, 38, 38, 0.05)" }}>
                                     <p className="text-[11px] font-bold text-red-500 uppercase tracking-widest mb-1">Tổng nợ hiện tại</p>
                                     <p className="text-xl font-black text-red-600">
-                                        {formatCurrency(getRemainingAmount(viewDebtDetails.total_amount, viewDebtDetails.deposit_amount))}
+                                        {formatCurrency(getRemainingAmount(viewDebtDetails))}
                                     </p>
                                 </div>
                             </div>
@@ -485,26 +516,39 @@ export default function AccountantCustomerDebt() {
                                     Lịch sử các đợt thanh toán
                                 </h3>
                                 <div className="space-y-3">
-                                    {viewDebtDetails.payment_history && viewDebtDetails.payment_history.length > 0 ? (
-                                        viewDebtDetails.payment_history.map((pay, pIdx) => (
-                                            <div key={pIdx} className="flex gap-4 p-3 rounded-xl border bg-white shadow-sm transition-all hover:bg-gray-50/50" style={{ borderColor: "var(--grid-border)" }}>
+                                    {isLoadingHistory ? (
+                                        <div className="py-12 text-center">
+                                            <div className="w-8 h-8 border-4 border-t-blue-500 border-blue-100 rounded-full animate-spin mx-auto"></div>
+                                            <p className="text-[13px] text-gray-400 mt-2">Đang tải lịch sử...</p>
+                                        </div>
+                                    ) : paymentHistory.length > 0 ? (
+                                        paymentHistory.map((pay, pIdx) => (
+                                            <div key={pay.pk_history_id || pIdx} className="flex gap-4 p-3 rounded-xl border bg-white shadow-sm transition-all hover:bg-gray-50/50" style={{ borderColor: "var(--grid-border)" }}>
                                                 {/* Bill Thumbnail */}
                                                 <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0 border cursor-pointer relative group"
                                                     style={{ borderColor: "var(--grid-border)" }}
-                                                    onClick={() => setShowFullBill(pay.bill_img)}>
-                                                    <img src={pay.bill_img} alt="Bill" className="w-full h-full object-cover" />
-                                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                                        <Search size={14} className="text-white" />
-                                                    </div>
+                                                    onClick={() => pay.bill_image && setShowFullBill(pay.bill_image)}>
+                                                    {pay.bill_image ? (
+                                                        <img src={pay.bill_image} alt="Bill" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
+                                                            <ImageIcon size={20} />
+                                                        </div>
+                                                    )}
+                                                    {pay.bill_image && (
+                                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                                            <Search size={14} className="text-white" />
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 {/* Info */}
                                                 <div className="flex-1">
                                                     <div className="flex justify-between items-start mb-0.5">
                                                         <span className="text-[14px] font-black text-green-700">+{formatCurrency(pay.amount)}</span>
-                                                        <span className="text-[11px] font-bold text-gray-400">{pay.date}</span>
+                                                        <span className="text-[11px] font-bold text-gray-400">{formatShortDateVN(pay.date)}</span>
                                                     </div>
                                                     <p className="text-[12px] text-gray-600 line-clamp-2 italic leading-snug">
-                                                        {pay.note || "Không có ghi chú"}
+                                                        {pay.note || "Thanh toán đợt"}
                                                     </p>
                                                 </div>
                                             </div>
@@ -536,12 +580,12 @@ export default function AccountantCustomerDebt() {
                                             <tr className="hover:bg-gray-50/50 transition-colors">
                                                 <td className="px-4 py-3">
                                                     <span className="text-[12px] font-bold font-mono px-2 py-1 rounded" style={{ backgroundColor: "var(--bg-main)", color: "var(--text-main)" }}>
-                                                        {viewDebtDetails.order_code}
+                                                        DH-{viewDebtDetails.pk_order_id}
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3 text-right font-semibold text-gray-800">{formatCurrency(viewDebtDetails.total_amount)}</td>
                                                 <td className="px-4 py-3 text-right font-bold text-red-600">
-                                                    {formatCurrency(getRemainingAmount(viewDebtDetails.total_amount, viewDebtDetails.deposit_amount))}
+                                                    {formatCurrency(getRemainingAmount(viewDebtDetails))}
                                                 </td>
                                             </tr>
                                         </tbody>

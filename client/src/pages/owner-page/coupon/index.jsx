@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import {
@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 import DataTable from "@/components/control/DataTable";
 import ConfirmModal from "@/components/control/ConfirmModal";
+import couponService from "@/services/coupon.service";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 const fmtDate = (iso) => {
@@ -21,87 +22,7 @@ const fmtDiscount = (value) => {
     return `${value}%`;
 };
 
-// ─── Mock data ─────────────────────────────────────────────────────────────
-const INITIAL_COUPONS = [
-    {
-        id: "cp1",
-        name: "Khuyến mãi mùa hè",
-        code: "SUMMER2026",
-        discountType: "PERCENT",
-        discountValue: 20,
-        usageLimit: 100,
-        usedCount: 43,
-        applyAllProducts: true,
-        productIds: [],
-        fromDate: "2026-06-01T00:00:00",
-        toDate: "2026-08-31T23:59:59",
-        grantedTo: "Tất cả khách hàng",
-        isActive: true,
-    },
-    {
-        id: "cp2",
-        name: "Flash sale tháng 3",
-        code: "FLASH3T26",
-        discountType: "PERCENT",
-        discountValue: 15,
-        usageLimit: 50,
-        usedCount: 50,
-        applyAllProducts: false,
-        productIds: ["SP001", "SP003"],
-        fromDate: "2026-03-01T00:00:00",
-        toDate: "2026-03-31T23:59:59",
-        grantedTo: "Tất cả khách hàng",
-        isActive: false,
-    },
-    {
-        id: "cp3",
-        name: "Ưu đãi VIP",
-        code: "VIP50OFF",
-        discountType: "PERCENT",
-        discountValue: 50,
-        usageLimit: null,
-        usedCount: 12,
-        applyAllProducts: false,
-        productIds: ["SP001", "SP002", "SP003", "SP004", "SP005"],
-        fromDate: null,
-        toDate: null,
-        grantedTo: "Tất cả khách hàng",
-        isActive: true,
-    },
-    {
-        id: "cp4",
-        name: "Giảm tiền sản phẩm gỗ",
-        code: "WOOD1M",
-        discountType: "PERCENT",
-        discountValue: 12,
-        usageLimit: 200,
-        usedCount: 88,
-        applyAllProducts: true,
-        productIds: [],
-        fromDate: "2026-01-01T00:00:00",
-        toDate: "2026-12-31T23:59:59",
-        grantedTo: "Tất cả khách hàng",
-        isActive: true,
-    },
-    {
-        id: "cp5",
-        name: "Chào hàng tuần mới",
-        code: "NEWWEEK26",
-        discountType: "PERCENT",
-        discountValue: 10,
-        usageLimit: 30,
-        usedCount: 30,
-        applyAllProducts: false,
-        productIds: ["SP005", "SP006"],
-        fromDate: "2026-03-10T00:00:00",
-        toDate: "2026-03-17T23:59:59",
-        grantedTo: "Tất cả khách hàng",
-        isActive: false,
-    },
-];
-
 // ─── Sub-components ────────────────────────────────────────────────────────
-
 
 /** Expiry badge simplified */
 function ExpiryBadge({ toDate, isActive }) {
@@ -124,34 +45,43 @@ function ExpiryBadge({ toDate, isActive }) {
 // ─── Main ──────────────────────────────────────────────────────────────────
 export default function CouponListPage() {
     const navigate = useNavigate();
-    const [coupons, setCoupons] = useState(INITIAL_COUPONS);
+    const [coupons, setCoupons] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(15);
+    const [totalItems, setTotalItems] = useState(0);
     const [selectedIds, setSelectedIds] = useState([]);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [couponToDelete, setCouponToDelete] = useState(null);
 
-    // Filter Logic
-    const filteredResults = useMemo(() => {
-        let results = coupons;
-        if (searchTerm.trim()) {
-            const s = searchTerm.toLowerCase();
-            results = results.filter(c =>
-                c.name.toLowerCase().includes(s) ||
-                c.code.toLowerCase().includes(s)
-            );
+    // ── Fetch coupons from API ──────────────────────────────────────────────
+    const fetchCoupons = useCallback(async () => {
+        try {
+            setLoading(true);
+            const res = await couponService.getAllCoupons({
+                search: searchTerm.trim() || undefined,
+                page: currentPage,
+                limit: itemsPerPage,
+            });
+            setCoupons(res.data || []);
+            setTotalItems(res.pagination?.totalItems || 0);
+        } catch (error) {
+            console.error("Fetch coupons error:", error);
+            toast.error("Không thể tải danh sách mã giảm giá");
+        } finally {
+            setLoading(false);
         }
-        return results;
-    }, [coupons, searchTerm]);
+    }, [searchTerm, currentPage, itemsPerPage]);
 
-    // Paginated Data for DataTable (since it only renders current page)
-    const paginatedData = useMemo(() => {
-        const start = (currentPage - 1) * itemsPerPage;
-        return filteredResults.slice(start, start + itemsPerPage);
-    }, [filteredResults, currentPage, itemsPerPage]);
+    useEffect(() => {
+        fetchCoupons();
+    }, [fetchCoupons]);
 
-    // Toggle logic
+    // Reset về trang 1 khi search
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
 
     // Delete logic
     const handleDelete = (item) => {
@@ -159,18 +89,28 @@ export default function CouponListPage() {
         setShowDeleteModal(true);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (!couponToDelete) return;
-        setCoupons(prev => prev.filter(c => c.id !== couponToDelete.id));
-        setShowDeleteModal(false);
-        setCouponToDelete(null);
-        toast.success("Đã xóa mã coupon thành công!");
+        try {
+            await couponService.deleteCoupon({ id: couponToDelete.pk_coupon_id });
+            setShowDeleteModal(false);
+            setCouponToDelete(null);
+            toast.success("Đã xóa mã coupon thành công!");
+            fetchCoupons();
+        } catch (error) {
+            toast.error(error?.response?.data?.message || "Lỗi khi xóa mã giảm giá");
+        }
     };
 
-    const handleBulkDelete = () => {
-        setCoupons(prev => prev.filter(c => !selectedIds.includes(c.id)));
-        setSelectedIds([]);
-        toast.success(`Đã xóa ${selectedIds.length} mã coupon thành công!`);
+    const handleBulkDelete = async () => {
+        try {
+            await couponService.deleteCoupon({ ids: selectedIds });
+            setSelectedIds([]);
+            toast.success(`Đã xóa ${selectedIds.length} mã coupon thành công!`);
+            fetchCoupons();
+        } catch (error) {
+            toast.error(error?.response?.data?.message || "Lỗi khi xóa hàng loạt");
+        }
     };
 
     const columns = [
@@ -182,49 +122,57 @@ export default function CouponListPage() {
         },
         {
             header: "Tên Coupon",
-            key: "name",
+            render: (c) => c.coupon_name || c.coupon_code,
         },
         {
             header: "Mã giảm giá",
-            key: "code",
-            type: "code",
+            render: (c) => (
+                <code className="px-2 py-0.5 rounded-md text-[12px] font-mono font-bold tracking-wider"
+                    style={{ backgroundColor: "var(--status-focus)", color: "var(--brand-primary)" }}>
+                    {c.coupon_code}
+                </code>
+            ),
         },
         {
             header: "Mức giảm",
             render: (c) => (
                 <span className={cn(
                     "inline-flex px-2.5 py-1 rounded-lg text-[13px] font-bold border tracking-tight w-fit",
-                    c.discountType === "PERCENT"
-                        ? "bg-purple-50 text-purple-600 border-purple-100"
-                        : "bg-blue-50 text-blue-600 border-blue-100"
+                    "bg-purple-50 text-purple-600 border-purple-100"
                 )}>
-                    {fmtDiscount(c.discountValue)}
+                    {fmtDiscount(c.discount_percent)}
                 </span>
             )
         },
         {
             header: "Áp dụng",
-            render: (c) => (
-                <div className="flex items-center gap-2">
-                    {c.applyAllProducts ? (
-                        <span className="text-[12px] font-medium text-slate-400 flex items-center gap-1.5 uppercase tracking-wider">
-                            <Package size={12} className="opacity-40" /> Tất cả SP
-                        </span>
-                    ) : (
-                        <span className="text-[12px] font-bold text-[var(--brand-primary)] flex items-center gap-1.5 uppercase tracking-wider">
-                            <Package size={12} /> {c.productIds.length} Sản phẩm
-                        </span>
-                    )}
-                </div>
-            )
+            render: (c) => {
+                const productCount = c.products?.length || 0;
+                return (
+                    <div className="flex items-center gap-2">
+                        {productCount === 0 ? (
+                            <span className="text-[12px] font-medium text-slate-400 flex items-center gap-1.5 uppercase tracking-wider">
+                                <Package size={12} className="opacity-40" /> Tất cả SP
+                            </span>
+                        ) : (
+                            <span className="text-[12px] font-bold flex items-center gap-1.5 uppercase tracking-wider"
+                                style={{ color: "var(--brand-primary)" }}>
+                                <Package size={12} /> {productCount} Sản phẩm
+                            </span>
+                        )}
+                    </div>
+                );
+            }
         },
         {
             header: "Hiệu lực",
             className: "max-w-[160px]",
             render: (c) => (
                 <div className="flex flex-col gap-0.5 whitespace-nowrap">
-                    <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>{fmtDate(c.fromDate)} ~ {c.toDate ? fmtDate(c.toDate) : "∞"}</span>
-                    <ExpiryBadge toDate={c.toDate} isActive={c.isActive} />
+                    <span className="text-[12px]" style={{ color: "var(--text-secondary)" }}>
+                        {fmtDate(c.start_date)} ~ {c.end_date ? fmtDate(c.end_date) : "∞"}
+                    </span>
+                    <ExpiryBadge toDate={c.end_date} isActive={c.status === 1} />
                 </div>
             )
         }
@@ -246,7 +194,7 @@ export default function CouponListPage() {
                         </h1>
                         <p className="text-[13px] mt-0.5"
                             style={{ color: "var(--text-placeholder)" }}>
-                            {filteredResults.length} coupons ({searchTerm ? "đang lọc" : "toàn bộ"})
+                            {totalItems} coupons ({searchTerm ? "đang lọc" : "toàn bộ"})
                         </p>
                     </div>
                     <button
@@ -261,25 +209,27 @@ export default function CouponListPage() {
                 {/* DataTable Integration */}
                 <DataTable
                     columns={columns}
-                    data={paginatedData}
+                    data={coupons}
+                    loading={loading}
                     searchTerm={searchTerm}
                     setSearchTerm={setSearchTerm}
                     searchPlaceholder="Tìm mã coupon, tên khuyến mãi..."
                     selectedIds={selectedIds}
                     setSelectedIds={setSelectedIds}
+                    idField="pk_coupon_id"
                     pagination={{
-                        total: filteredResults.length,
+                        total: totalItems,
                         currentPage,
                         setCurrentPage,
                         itemsPerPage,
                         setItemsPerPage
                     }}
-                    onRowClick={(item) => navigate(`/owner/coupons/${item.id}/edit`)}
+                    onRowClick={(item) => navigate(`/owner/coupons/${item.pk_coupon_id}/edit`)}
                     rowActions={[
                         {
                             icon: Pencil,
                             label: "Chỉnh sửa",
-                            onClick: (item) => navigate(`/owner/coupons/${item.id}/edit`),
+                            onClick: (item) => navigate(`/owner/coupons/${item.pk_coupon_id}/edit`),
                         },
                         {
                             icon: Trash2,
@@ -304,7 +254,7 @@ export default function CouponListPage() {
             <ConfirmModal
                 isOpen={showDeleteModal}
                 title="Xác nhận xóa mã giảm giá"
-                message={`Bạn có chắc chắn muốn xóa vĩnh viễn coupon "${couponToDelete?.name}" (${couponToDelete?.code}) không? Thao tác này không thể hoàn tác.`}
+                message={`Bạn có chắc chắn muốn xóa vĩnh viễn coupon "${couponToDelete?.coupon_name}" (${couponToDelete?.coupon_code}) không? Thao tác này không thể hoàn tác.`}
                 onConfirm={confirmDelete}
                 onCancel={() => setShowDeleteModal(false)}
             />
