@@ -1,5 +1,7 @@
-import { useState, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import couponService from "@/services/coupon.service";
+import productService from "@/services/product.service";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,55 +17,7 @@ import toast from "react-hot-toast";
 // ─── Constants (synced with sales invoice-instock page) ───────────────────
 const WOOD_FINISHING_RATE = 1.35; // Giá hoàn thiện = giá thô × 1.35
 
-const WOOD_PRODUCTS = [
-    { id: 1, name: "Bộ bàn ăn gỗ sồi 4 ghế", sku: "BA-SOI-4G", price: 12500000, discount: 10, stock: 8, image: "/wood_products.png", category: "Phòng ăn", productType: "Hàng sẵn", size: "180 x 90 x 75 cm", color: "Sồi tự nhiên", description: "Bộ bàn ăn 6 ghế chất liệu gỗ sồi Nga tự nhiên, xử lý chống mối mọt, thiết kế hiện đại phù hợp cho phòng ăn gia đình." },
-    { id: 2, name: "Kệ sách gỗ óc chó 5 tầng", sku: "KS-OC-5T", price: 8900000, stock: 5, image: "/wood_products.png", category: "Phòng làm việc", productType: "Hàng sẵn", size: "120 x 35 x 180 cm", color: "Óc chó đậm", description: "Kệ sách 5 tầng bền bỉ, vân gỗ óc chó sang trọng, tạo điểm nhấn cho không gian làm việc hoặc phòng khách." },
-    { id: 3, name: "Bàn làm việc gỗ sồi 3 ngăn", sku: "BLV-SOI-3N", price: 7200000, discount: 12, stock: 12, image: "/wood_products.png", category: "Phòng làm việc", productType: "Hàng mộc", size: "140 x 70 x 75 cm", color: "Trắng sồi", description: "Bàn làm việc sơn trắng sồi thanh lịch, tích hợp 3 ngăn kéo tiện lợi cho việc lưu trữ hồ sơ, văn phòng phẩm." },
-    { id: 4, name: "Tủ đựng đồ gỗ óc chó", sku: "TDD-OC-01", price: 9800000, stock: 3, image: "/wood_products.png", category: "Phòng ngủ", productType: "Hàng mộc", size: "100 x 45 x 120 cm", color: "Nguyên mộc" },
-    { id: 5, name: "Ghế ăn gỗ sồi tự nhiên", sku: "GA-SOI-TN", price: 1850000, stock: 25, image: "/wood_products.png", category: "Phòng ăn", productType: "Hàng sẵn", size: "45 x 48 x 90 cm", color: "Sồi sáng" },
-    { id: 6, name: "Bàn trà đôi mặt đá Marble", sku: "BT-MD-06", price: 4200000, discount: 15, stock: 8, image: "/wood_products.png", category: "Phòng khách", productType: "Hàng sẵn", size: "D80 & D60 cm", color: "Trắng vân mây" },
-    { id: 7, name: "Tủ rượu góc gỗ hương", sku: "TR-HU-07", price: 8900000, stock: 0, image: "/wood_products.png", category: "Phòng khách", productType: "Hàng mộc", size: "Cao 220" },
-    { id: 8, name: "Vách ngăn lam gỗ trang trí", sku: "VN-LG-08", price: 2500000, stock: 15, image: "/wood_products.png", category: "Phòng khách", productType: "Hàng sẵn", size: "Module 100 x 240", color: "Nâu cà phê" },
-    { id: 9, name: "Sofa nỉ chữ L cỡ lớn", sku: "SF-NL-09", price: 15800000, discount: 5, stock: 4, image: "/wood_products.png", category: "Phòng khách", productType: "Hàng sẵn", size: "280 x 160", color: "Xanh Navy" },
-    { id: 10, name: "Tủ giày gỗ thông ghép", sku: "TG-GT-10", price: 1200000, discount: 10, stock: 30, image: "/wood_products.png", category: "Phòng khách", productType: "Hàng mộc", size: "80 x 120 x 30 cm", color: "Nguyên mộc" },
-    { id: 11, name: "Tủ giày MDF phủ Melamine", sku: "TG-MDF-11", price: 1850000, stock: 18, image: "/wood_products.png", category: "Phòng khách", productType: "Hàng sẵn", size: "100 x 110 x 35", color: "Trắng + Vân gỗ" },
-    { id: 12, name: "Bàn console gỗ óc chó", sku: "BC-OC-01", price: 6800000, stock: 7, image: "/wood_products.png", category: "Phòng khách", productType: "Hàng sẵn", size: "140 x 40 x 85", color: "Cánh gián nhạt" },
-    { id: 13, name: "Sofa da thật góc L chữ U", sku: "SF-DA-13", price: 25000000, stock: 3, image: "/wood_products.png", category: "Phòng khách", productType: "Hàng sẵn", size: "320 x 200", color: "Đen tuyền" },
-    { id: 14, name: "Bàn trà đôi mặt kính khung sắt", sku: "BT-K-14", price: 3200000, stock: 15, image: "/wood_products.png", category: "Phòng khách", productType: "Hàng sẵn", size: "Tròn 70", color: "Đen mờ" },
-    { id: 15, name: "Kệ TV treo tường tối giản", sku: "KTV-TT-15", price: 4100000, stock: 20, image: "/wood_products.png", category: "Phòng khách", productType: "Hàng sẵn", size: "180 x 35", color: "Xám chì" },
-    { id: 16, name: "Tủ giày thông minh 3 tầng", sku: "TG-TM-16", price: 2800000, stock: 12, image: "/wood_products.png", category: "Phòng khách", productType: "Hàng sẵn", size: "90 x 120 x 24", color: "Vân sồi" },
-    { id: 17, name: "Ghế đôn sofa bọc nhung", sku: "GD-BN-17", price: 850000, stock: 30, image: "/wood_products.png", category: "Phòng khách", productType: "Hàng mộc", size: "Tròn 40" },
-    { id: 18, name: "Vách ngăn phòng khách cnc", sku: "VN-CNC-18", price: 5600000, stock: 5, image: "/wood_products.png", category: "Phòng khách", productType: "Hàng mộc", size: "Module 120x260" },
-    // Phòng ngủ
-    { id: 19, name: "Giường bọc da đầu giường cao", sku: "GBD-19", price: 18500000, discount: 7, stock: 4, image: "/wood_products.png", category: "Phòng ngủ", productType: "Hàng mộc", size: "180 x 200" },
-    { id: 20, name: "Tủ quần áo cánh lùa kính đen", sku: "TQA-L-20", price: 21000000, discount: 8, stock: 2, image: "/wood_products.png", category: "Phòng ngủ", productType: "Hàng sẵn", size: "240 x 220 x 60", color: "Khung đen" },
-    { id: 21, name: "Bàn trang điểm gương LED", sku: "BTD-LED-21", price: 5400000, stock: 8, image: "/wood_products.png", category: "Phòng ngủ", productType: "Hàng sẵn", size: "100 x 40 x 75", color: "Trắng sứ" },
-    { id: 22, name: "Tab đầu giường gỗ tự nhiên", sku: "TDG-TN-22", price: 1200000, stock: 25, image: "/wood_products.png", category: "Phòng ngủ", productType: "Hàng sẵn", size: "45 x 40 x 45", color: "Sơn bóng mờ" },
-    { id: 23, name: "Giường tầng trẻ em gỗ thông", sku: "GT-TE-23", price: 9500000, stock: 6, image: "/wood_products.png", category: "Phòng ngủ", productType: "Hàng mộc", size: "120 x 200" },
-    { id: 24, name: "Ghế thư giãn đọc sách kèm đôn", sku: "GTG-24", price: 6200000, stock: 10, image: "/wood_products.png", category: "Phòng ngủ", productType: "Hàng sẵn", size: "Ghế: 85x85, Đôn: 50x40", color: "Ghi sáng" },
-    { id: 25, name: "Tủ ngăn kéo để đồ mini", sku: "TNK-25", price: 3100000, stock: 14, image: "/wood_products.png", category: "Phòng ngủ", productType: "Hàng mộc", size: "60 x 80 x 40" },
-    { id: 26, name: "Giá treo quần áo khung thép", sku: "GTQA-26", price: 950000, stock: 40, image: "/wood_products.png", category: "Phòng ngủ", productType: "Hàng mộc", size: "150 x 40" },
-    // Phòng ăn
-    { id: 27, name: "Bộ bàn ăn mặt đá ceramic", sku: "BCC-27", price: 17800000, stock: 5, image: "/wood_products.png", category: "Phòng ăn", productType: "Hàng sẵn", size: "160 x 80", color: "Mặt đá xám vân xoáy" },
-    { id: 28, name: "Tủ lạnh âm tủ đa năng", sku: "TCA-28", price: 12500000, stock: 3, image: "/wood_products.png", category: "Phòng ăn", productType: "Hàng sẵn", size: "Module 60x60x220", color: "Đen nhám" },
-    { id: 29, name: "Tủ bếp acrylic bóng gương", sku: "TBAC-29", price: 28000000, stock: 1, image: "/wood_products.png", category: "Phòng ăn", productType: "Hàng sẵn", size: "Theo mặt bằng thực tế", color: "Xanh ngọc / Trắng" },
-    { id: 30, name: "Ghế ăn bọc da PU cao cấp", sku: "GAAP-30", price: 1450000, stock: 50, image: "/wood_products.png", category: "Phòng ăn", productType: "Hàng sẵn", size: "Chân 45cm", color: "Da bò" },
-    { id: 31, name: "Đảo bếp di động mặt gỗ", sku: "DB-31", price: 8900000, discount: 15, stock: 7, image: "/wood_products.png", category: "Phòng ăn", productType: "Hàng mộc", size: "120 x 80" },
-    { id: 32, name: "Kệ để rượu treo tường", sku: "KDR-32", price: 2100000, stock: 18, image: "/wood_products.png", category: "Phòng ăn", productType: "Hàng sẵn", size: "80 x 110 x 20", color: "Nâu cánh gián" },
-    { id: 33, name: "Bàn ăn tròn xoay thông minh", sku: "BAT-33", price: 15600000, stock: 4, image: "/wood_products.png", category: "Phòng ăn", productType: "Hàng sẵn", size: "Đường kính 1.4m", color: "Mặt đá vân mây trắng" },
-    // Phòng làm việc
-    { id: 34, name: "Ghế công thái học Ergonomic", sku: "GCTH-34", price: 4500000, discount: 20, stock: 22, image: "/wood_products.png", category: "Phòng làm việc", productType: "Hàng sẵn", size: "Tiêu chuẩn Adult", color: "Đen / Trắng xám" },
-    { id: 35, name: "Bàn nâng hạ chiều cao điện", sku: "BNH-35", price: 8200000, stock: 9, image: "/wood_products.png", category: "Phòng làm việc", productType: "Hàng sẵn", size: "160 x 75", color: "Mặt óc chó / Chân đen" },
-    { id: 36, name: "Tủ hồ sơ văn phòng 2 cánh", sku: "THS-36", price: 3600000, stock: 16, image: "/wood_products.png", category: "Phòng làm việc", productType: "Hàng sẵn", size: "120 x 200 x 40", color: "Ghi chì" },
-    { id: 37, name: "Kệ máy in để bàn", sku: "KMI-37", price: 650000, stock: 35, image: "/wood_products.png", category: "Phòng làm việc", productType: "Hàng mộc", size: "50 x 40 x 30" },
-    { id: 38, name: "Ghế xoay lưới văn phòng", sku: "GXV-38", price: 1850000, stock: 45, image: "/wood_products.png", category: "Phòng làm việc", productType: "Hàng sẵn", size: "Size L", color: "Đen" },
-    { id: 39, name: "Hộc tủ di động 3 ngăn kéo", sku: "HT-39", price: 1550000, stock: 28, image: "/wood_products.png", category: "Phòng làm việc", productType: "Hàng mộc", size: "50 x 40 x 30 cm", color: "Gỗ thông mộc" },
-    { id: 40, name: "Bàn họp chân sắt chữ U", sku: "BHC-40", price: 9800000, stock: 5, image: "/wood_products.png", category: "Phòng làm việc", productType: "Hàng sẵn", size: "240 x 120 x 75 cm", color: "Vàng vân gỗ / Chân ghi" },
-];
-
-const ALL_PRODUCTS = WOOD_PRODUCTS;
-const PRODUCT_TYPES = ["Hàng mộc", "Hàng sẵn"];
-const CATEGORIES = ["Tất cả", "Phòng khách", "Phòng ngủ", "Phòng ăn", "Phòng làm việc"];
+const CATEGORIES = ["Tất cả"];
 const MODAL_PAGE_SIZE = 12;
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -127,23 +81,18 @@ function FieldRow({ label, required, hint, tooltip, error, children, half }) {
 }
 
 // ─── Product Modal (Sales-invoice style) ──────────────────────────────────
-function ProductModal({ selected, onClose, onConfirm }) {
+function ProductModal({ allProducts, selected, onClose, onConfirm }) {
     const [localSelected, setLocalSelected] = useState(new Set(selected));
-    const [productType, setProductType] = useState("Hàng mộc");
-    const [woodPriceMode, setWoodPriceMode] = useState("finished"); // "finished" | "raw"
-    const [category, setCategory] = useState("Tất cả");
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
 
     const filtered = useMemo(() => {
-        return WOOD_PRODUCTS.filter(p => {
-            const matchType = p.productType === productType;
-            const matchCategory = category === "Tất cả" || p.category === category;
+        return allProducts.filter(p => {
             const s = search.toLowerCase();
             const matchSearch = !search.trim() || p.name.toLowerCase().includes(s) || p.sku.toLowerCase().includes(s);
-            return matchType && matchCategory && matchSearch;
+            return matchSearch;
         });
-    }, [productType, category, search]);
+    }, [allProducts, search]);
 
     const pageCount = Math.max(1, Math.ceil(filtered.length / MODAL_PAGE_SIZE));
     const paged = filtered.slice((page - 1) * MODAL_PAGE_SIZE, page * MODAL_PAGE_SIZE);
@@ -156,7 +105,7 @@ function ProductModal({ selected, onClose, onConfirm }) {
         });
     };
 
-    const selectAll = () => setLocalSelected(new Set(ALL_PRODUCTS.map(p => p.id)));
+    const selectAll = () => setLocalSelected(new Set(allProducts.map(p => p.id)));
     const clearAll = () => setLocalSelected(new Set());
 
     return (
@@ -168,7 +117,7 @@ function ProductModal({ selected, onClose, onConfirm }) {
                     <div>
                         <h3 className="text-[15px] font-bold text-gray-900">Chọn sản phẩm áp dụng</h3>
                         <p className="text-[12px] text-gray-400 mt-0.5">
-                            Đã chọn <strong className="text-emerald-600">{localSelected.size}</strong> / {ALL_PRODUCTS.length} sản phẩm
+                            Đã chọn <strong className="text-emerald-600">{localSelected.size}</strong> / {allProducts.length} sản phẩm
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -181,48 +130,8 @@ function ProductModal({ selected, onClose, onConfirm }) {
                     </div>
                 </div>
 
-                {/* Product type tab strip — identical to sales invoice */}
+                {/* Search bar */}
                 <div className="px-4 pt-3 pb-2 space-y-2.5 border-b shrink-0" style={{ borderColor: "var(--grid-border)", backgroundColor: "var(--grid-header-bg)" }}>
-                    <div className="flex rounded-xl overflow-hidden" style={{ border: "1px solid var(--grid-border)", backgroundColor: "var(--bg-main)" }}>
-                        {PRODUCT_TYPES.map(tab => (
-                            <button key={tab}
-                                onClick={() => { setProductType(tab); setCategory("Tất cả"); setPage(1); }}
-                                className="flex-1 py-2.5 text-[13px] font-semibold transition-all cursor-pointer"
-                                style={{
-                                    backgroundColor: productType === tab ? "var(--brand-primary)" : "transparent",
-                                    color: productType === tab ? "#fff" : "var(--text-secondary)",
-                                }}>
-                                {tab}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Toggle chọn loại giá cho Hàng mộc */}
-                    {productType === "Hàng mộc" && (
-                        <div className="flex items-center rounded-xl overflow-hidden"
-                            style={{ border: "1px solid var(--grid-border)", backgroundColor: "var(--bg-main)" }}>
-                            <button onClick={() => setWoodPriceMode("finished")}
-                                className="flex-1 flex items-center justify-center gap-2 py-2 text-[12px] font-semibold transition-all cursor-pointer"
-                                style={{
-                                    backgroundColor: woodPriceMode === "finished" ? "var(--brand-primary)" : "transparent",
-                                    color: woodPriceMode === "finished" ? "#fff" : "var(--text-secondary)",
-                                }}>
-                                <PackageCheck size={14} />
-                                Giá hoàn thiện
-                            </button>
-                            <button onClick={() => setWoodPriceMode("raw")}
-                                className="flex-1 flex items-center justify-center gap-2 py-2 text-[12px] font-semibold transition-all cursor-pointer"
-                                style={{
-                                    backgroundColor: woodPriceMode === "raw" ? "var(--brand-primary)" : "transparent",
-                                    color: woodPriceMode === "raw" ? "#fff" : "var(--text-secondary)",
-                                }}>
-                                <Hammer size={14} />
-                                Giá thô
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Search + category pills */}
                     <div className="flex gap-2 items-center">
                         <div className="relative flex-1">
                             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--text-placeholder)" }} />
@@ -236,22 +145,6 @@ function ProductModal({ selected, onClose, onConfirm }) {
                                 </button>
                             )}
                         </div>
-                    </div>
-                    <div className="flex gap-1.5 flex-wrap">
-                        <button onClick={() => { setCategory("Tất cả"); setPage(1); }}
-                            className={cn("h-7 px-3 rounded-lg text-[12px] font-semibold transition cursor-pointer",
-                                category === "Tất cả" ? "text-white" : "bg-white border hover:bg-gray-50")}
-                            style={category === "Tất cả" ? { backgroundColor: "var(--brand-primary)" } : { borderColor: "var(--grid-border)", color: "var(--text-secondary)" }}>
-                            Tất cả
-                        </button>
-                        {CATEGORIES.filter(c => c !== "Tất cả").map(c => (
-                            <button key={c} onClick={() => { setCategory(c); setPage(1); }}
-                                className={cn("h-7 px-3 rounded-lg text-[12px] font-semibold transition cursor-pointer",
-                                    category === c ? "text-white" : "bg-white border hover:bg-gray-50")}
-                                style={category === c ? { backgroundColor: "var(--brand-primary)" } : { borderColor: "var(--grid-border)", color: "var(--text-secondary)" }}>
-                                {c}
-                            </button>
-                        ))}
                     </div>
                 </div>
 
@@ -307,12 +200,7 @@ function ProductModal({ selected, onClose, onConfirm }) {
                                             <p className="text-[10px] truncate" style={{ color: "var(--text-placeholder)" }}>KT: {p.size}</p>
                                             <p className="text-[10px] truncate" style={{ color: "var(--text-placeholder)" }}>Màu: {p.color}</p>
                                             <p className="text-[12px] font-bold" style={{ color: "var(--brand-primary)" }}>
-                                                {(() => {
-                                                    const displayPrice = p.productType === "Hàng mộc" && woodPriceMode === "finished"
-                                                        ? Math.round(p.price * WOOD_FINISHING_RATE)
-                                                        : p.price;
-                                                    return `${displayPrice.toLocaleString("vi-VN")}₫`;
-                                                })()}
+                                                {Number(p.price).toLocaleString("vi-VN")}₫
                                             </p>
                                         </div>
                                     </button>
@@ -372,12 +260,72 @@ const INIT = {
 
 export default function CouponCreatePage() {
     const navigate = useNavigate();
+    const { id: editId } = useParams();
+    const isEdit = !!editId;
     const [form, setForm] = useState(INIT);
+    const [allProducts, setAllProducts] = useState([]);
     const [errors, setErrors] = useState({});
     const [touched, setTouched] = useState({});
     const [loading, setLoading] = useState(false);
     const [showProductModal, setShowProductModal] = useState(false);
     const [codeGenLoading, setCodeGenLoading] = useState(false);
+
+    // Load all products once for selection and preview
+    useEffect(() => {
+        const fetchAll = async () => {
+            try {
+                const res = await productService.getAllProducts({ limit: 1000 });
+                const products = (res.data || []).map(p => ({
+                    id: p.pk_product_id,
+                    name: p.product_name,
+                    sku: p.sku || "",
+                    image: p.product_img || "/wood_products.png",
+                    stock: p.available_quantity || 0,
+                    price: p.display_price || 0,
+                    size: (() => {
+                        if (typeof p.size === "object" && p.size !== null) {
+                            return [p.size.length, p.size.width, p.size.height].filter(v => v != null && v !== "").join(" × ");
+                        }
+                        return p.size || "";
+                    })(),
+                    color: p.color_name || "",
+                    category: p.category_name || "",
+                }));
+                setAllProducts(products);
+            } catch (err) {
+                console.error("Fetch all products error:", err);
+            }
+        };
+        fetchAll();
+    }, []);
+
+    // Load coupon data for edit mode
+    useEffect(() => {
+        if (!isEdit) return;
+        const loadCoupon = async () => {
+            try {
+                const res = await couponService.getCouponById(editId);
+                const c = res.data;
+                if (!c) return;
+                setForm(prev => ({
+                    ...prev,
+                    code: c.coupon_code || "",
+                    name: c.coupon_name || "",
+                    description: c.description || "",
+                    discountValue: c.discount_percent ? String(c.discount_percent) : "",
+                    startDate: c.start_date ? new Date(c.start_date).toISOString().slice(0, 10) : "",
+                    endDate: c.end_date ? new Date(c.end_date).toISOString().slice(0, 10) : "",
+                    allProducts: !c.products || c.products.length === 0,
+                    selectedProducts: c.products ? c.products.map(p => p.pk_product_id) : [],
+                    isActive: c.status === 1,
+                }));
+            } catch (err) {
+                console.error("Load coupon error:", err);
+                toast.error("Không thể tải thông tin mã giảm giá");
+            }
+        };
+        loadCoupon();
+    }, [editId, isEdit]);
 
     const set = useCallback((field, value) => {
         setForm(prev => ({ ...prev, [field]: value }));
@@ -443,26 +391,27 @@ export default function CouponCreatePage() {
         if (Object.keys(errs).length > 0) { toast.error("Vui lòng kiểm tra lại thông tin"); return; }
         setLoading(true);
         try {
-            await new Promise(r => setTimeout(r, 1200));
             const payload = {
-                couponCode: form.code.toUpperCase(),
-                couponName: form.name.trim(),
+                coupon_code: form.code.toUpperCase(),
+                coupon_name: form.name.trim(),
                 description: form.description.trim() || null,
-                discountType: "PERCENT",
-                discountValue: parseFloat(form.discountValue),
-                minOrderValue: form.minOrderValue ? parseRaw(form.minOrderValue) : null,
-                usageLimit: form.usageLimit ? parseInt(form.usageLimit) : null,
-                startDate: form.startDate || null,
-                endDate: form.endDate || null,
-                applyAllProducts: form.allProducts,
+                discount_percent: parseFloat(form.discountValue),
+                start_date: form.startDate || null,
+                end_date: form.endDate || null,
                 productIds: form.allProducts ? [] : form.selectedProducts,
-                isActive: form.isActive,
+                status: form.isActive ? 1 : 0,
             };
-            console.log("[CouponCreate] →", payload);
-            toast.success("Tạo mã coupon thành công!");
+
+            if (isEdit) {
+                await couponService.updateCoupon(editId, payload);
+                toast.success("Cập nhật mã coupon thành công!");
+            } else {
+                await couponService.createCoupon(payload);
+                toast.success("Tạo mã coupon thành công!");
+            }
             navigate("/owner/coupons");
-        } catch {
-            toast.error("Có lỗi xảy ra. Vui lòng thử lại.");
+        } catch (err) {
+            toast.error(err?.response?.data?.message || "Có lỗi xảy ra. Vui lòng thử lại.");
         } finally {
             setLoading(false);
         }
@@ -470,22 +419,23 @@ export default function CouponCreatePage() {
 
     // ── Selected product names (for preview tags) ────────────────────────────
     const selectedProductObjects = useMemo(
-        () => ALL_PRODUCTS.filter(p => form.selectedProducts.includes(p.id)),
-        [form.selectedProducts]
+        () => allProducts.filter(p => form.selectedProducts.includes(p.id)),
+        [form.selectedProducts, allProducts]
     );
 
     // ─── Render ──────────────────────────────────────────────────────────────
     return (
         <>
-            <PageHelmet title="Tạo mã giảm giá | TPF-SIMS" />
+            <PageHelmet title={isEdit ? "Chỉnh sửa mã giảm giá | TPF-SIMS" : "Tạo mã giảm giá | TPF-SIMS"} />
 
             {showProductModal && (
                 <ProductModal
+                    allProducts={allProducts}
                     selected={form.selectedProducts}
                     onClose={() => setShowProductModal(false)}
                     onConfirm={(ids) => {
                         set("selectedProducts", ids);
-                        set("allProducts", ids.length === ALL_PRODUCTS.length || ids.length === 0);
+                        set("allProducts", ids.length === 0);
                         setErrors(prev => ({ ...prev, selectedProducts: "" }));
                         setShowProductModal(false);
                     }}
@@ -503,10 +453,10 @@ export default function CouponCreatePage() {
                             </div>
                             <div>
                                 <h1 className="text-[22px] font-bold leading-tight" style={{ color: "var(--text-main)", letterSpacing: "-0.01em" }}>
-                                    Tạo mã giảm giá
+                                    {isEdit ? "Chỉnh sửa mã giảm giá" : "Tạo mã giảm giá"}
                                 </h1>
                                 <p className="text-[13px] font-medium italic" style={{ color: "var(--text-placeholder)" }}>
-                                    Cài đặt coupon mới cho chương trình khuyến mãi
+                                    {isEdit ? "Cập nhật thông tin coupon khuyến mãi" : "Cài đặt coupon mới cho chương trình khuyến mãi"}
                                 </p>
                             </div>
                         </div>
@@ -522,7 +472,7 @@ export default function CouponCreatePage() {
                                 isValid && !loading ? "hover:-translate-y-0.5" : "opacity-50 cursor-not-allowed")}
                             style={{ backgroundColor: "var(--brand-primary)" }}>
                             {loading && <Loader2 size={14} className="animate-spin" />}
-                            {loading ? "Đang lưu..." : "Lưu mã giảm giá"}
+                            {loading ? "Đang lưu..." : isEdit ? "Cập nhật" : "Lưu mã giảm giá"}
                         </button>
                     </div>
                 </div>
@@ -684,7 +634,7 @@ export default function CouponCreatePage() {
                                 </div>
                                 <div>
                                     <p className={cn("text-[13px] font-bold", form.allProducts ? "text-emerald-700" : "text-gray-700")}>Áp dụng tất cả sản phẩm</p>
-                                    <p className="text-[11px] text-gray-400 mt-0.5">Coupon hợp lệ với toàn bộ {ALL_PRODUCTS.length} sản phẩm trong hệ thống</p>
+                                    <p className="text-[11px] text-gray-400 mt-0.5">Coupon hợp lệ với toàn bộ sản phẩm trong hệ thống</p>
                                 </div>
                             </button>
 
@@ -748,7 +698,7 @@ export default function CouponCreatePage() {
                                     isValid && !loading ? "hover:opacity-90 hover:-translate-y-0.5" : "opacity-50 cursor-not-allowed")}
                                 style={{ backgroundColor: "var(--brand-primary)" }}>
                                 {loading && <Loader2 size={16} className="animate-spin" />}
-                                {loading ? "Đang lưu..." : "Lưu mã coupon"}
+                                {loading ? "Đang lưu..." : isEdit ? "Cập nhật coupon" : "Lưu mã coupon"}
                             </button>
                         </div>
 

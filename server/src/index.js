@@ -24,6 +24,7 @@ const manufacturingOrderRoutes = require("./routes/manufacturingOrder.routes");
 const importRoutes = require("./routes/import.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const swaggerUi = require("swagger-ui-express");
+const couponRoutes = require("./routes/coupon.routes");
 
 const swaggerJsDoc = require("swagger-jsdoc");
 
@@ -65,7 +66,7 @@ app.use("/api/worker", workerRoutes);
 app.use("/api/manufacturing-order", manufacturingOrderRoutes);
 app.use("/api/import", importRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-
+app.use("/api/coupon", couponRoutes);
 
 // ── Swagger ───────────────────────────────────────────────
 const SERVER_URL = process.env.SERVER_URL || "http://localhost:3000";
