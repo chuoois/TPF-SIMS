@@ -29,5 +29,3 @@ export const PRODUCT_STATUSES = [
   "Hết hàng",
   "Quà tặng",
 ];
-
-export const UNITS = ["Chiếc", "Bộ", "Bộ 6 ghế", "Bộ 8 ghế", "m", "m2"];
