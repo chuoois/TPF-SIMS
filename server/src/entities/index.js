@@ -19,13 +19,17 @@ const CustomRequest = require("./CustomRequest");
 const CustomRequestItem = require("./CustomRequestItem");
 const ProductCoupon = require("./ProductCoupon");
 const CouponProduct = require("./CouponProduct");
-// ── Payroll ──────────────────────────────────────────────
+const OrderItemProcessing = require("./OrderItemProcessing");
 const Employee = require("./Employee");
 const PayrollPeriod = require("./PayrollPeriod");
 const SalaryRecord = require("./SalaryRecord");
 const SalaryAdjustment = require("./SalaryAdjustment");
 const Notification = require("./Notification");
 const Supplier = require("./Supplier");
+const ManufacturingOrder = require("./ManufacturingOrder");
+const ManufacturingOrderItem = require("./ManufacturingOrderItem");
+const ImportReceipt = require("./ImportReceipt");
+
 
 /**
  * Định nghĩa quan hệ giữa các bảng
@@ -124,6 +128,10 @@ OrderItem.belongsTo(Product, { foreignKey: "fk_product_id", as: "product" });
 OrderItem.hasMany(ProductItem, { foreignKey: "fk_order_item_id", as: "items" });
 ProductItem.belongsTo(OrderItem, { foreignKey: "fk_order_item_id", as: "orderItem" });
 
+// OrderItem 1:N OrderItemProcessing
+OrderItem.hasMany(OrderItemProcessing, { foreignKey: "fk_order_item_id", as: "processing", onDelete: "CASCADE" });
+OrderItemProcessing.belongsTo(OrderItem, { foreignKey: "fk_order_item_id", as: "orderItem" });
+
 // Product 1:N ProductPricing
 Product.hasMany(ProductPricing, { foreignKey: "fk_product_id", as: "pricings" });
 ProductPricing.belongsTo(Product, { foreignKey: "fk_product_id", as: "product" });
@@ -172,6 +180,10 @@ SalaryRecord.belongsTo(PayrollPeriod, { foreignKey: "fk_period_id", as: "period"
 Employee.hasMany(SalaryRecord, { foreignKey: "fk_employee_id", as: "salaryRecords" });
 SalaryRecord.belongsTo(Employee, { foreignKey: "fk_employee_id", as: "employee" });
 
+// UserAccount 1:N OrderItemProcessing
+UserAccount.hasMany(OrderItemProcessing, { foreignKey: "fk_user_account_id", as: "processingTasks" });
+OrderItemProcessing.belongsTo(UserAccount, { foreignKey: "fk_user_account_id", as: "worker" });
+
 // SalaryRecord 1:N SalaryAdjustment
 SalaryRecord.hasMany(SalaryAdjustment, { foreignKey: "fk_record_id", as: "adjustments", onDelete: "CASCADE" });
 SalaryAdjustment.belongsTo(SalaryRecord, { foreignKey: "fk_record_id", as: "record" });
@@ -179,6 +191,31 @@ SalaryAdjustment.belongsTo(SalaryRecord, { foreignKey: "fk_record_id", as: "reco
 // UserAccount 1:N Notification
 UserAccount.hasMany(Notification, { foreignKey: "fk_user_id", as: "notifications", onDelete: "CASCADE" });
 Notification.belongsTo(UserAccount, { foreignKey: "fk_user_id", as: "recipient" });
+
+// ── Manufacturing Order Associations ────────────────────
+
+// Supplier 1:N ManufacturingOrder
+Supplier.hasMany(ManufacturingOrder, { foreignKey: "fk_supplier_id", as: "manufacturingOrders" });
+ManufacturingOrder.belongsTo(Supplier, { foreignKey: "fk_supplier_id", as: "supplier" });
+
+// ManufacturingOrder 1:N ManufacturingOrderItem
+ManufacturingOrder.hasMany(ManufacturingOrderItem, { foreignKey: "fk_manufacturing_order_id", as: "items", onDelete: "CASCADE" });
+ManufacturingOrderItem.belongsTo(ManufacturingOrder, { foreignKey: "fk_manufacturing_order_id", as: "order" });
+
+// Product 1:N ManufacturingOrderItem
+Product.hasMany(ManufacturingOrderItem, { foreignKey: "fk_product_id", as: "manufacturingItems" });
+ManufacturingOrderItem.belongsTo(Product, { foreignKey: "fk_product_id", as: "product" });
+
+// CustomRequestItem 1:1 ManufacturingOrderItem (Một món đặt riêng thường chỉ nằm trong 1 phiếu nhập)
+CustomRequestItem.hasOne(ManufacturingOrderItem, { foreignKey: "fk_custom_request_item_id", as: "manufacturingDetail" });
+ManufacturingOrderItem.belongsTo(CustomRequestItem, { foreignKey: "fk_custom_request_item_id", as: "customRequestItem" });
+
+// ── ImportReceipt Associations ───────────────────────────
+
+// ManufacturingOrder 1:N ImportReceipt
+ManufacturingOrder.hasMany(ImportReceipt, { foreignKey: "fk_manufacturing_order_id", as: "importReceipts" });
+ImportReceipt.belongsTo(ManufacturingOrder, { foreignKey: "fk_manufacturing_order_id", as: "manufacturingOrder" });
+
 
 module.exports = {
   sequelize,
@@ -209,4 +246,8 @@ module.exports = {
   SalaryAdjustment,
   Notification,
   Supplier,
-};
+  OrderItemProcessing,
+  ManufacturingOrder,
+  ManufacturingOrderItem,
+  ImportReceipt,
+};

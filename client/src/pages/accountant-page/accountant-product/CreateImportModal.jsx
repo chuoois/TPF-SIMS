@@ -19,8 +19,9 @@ import {
     SUPPLIERS,
     PRODUCT_TYPES,
     ALL_PRODUCTS,
-    MOCK_IMPORT_REQUESTS
 } from "../mockData";
+import importService from "@/services/import.service";
+import { uploadImage } from "@/services/cloudinary.service";
 
 // ── Helpers ────────────────────────────────────────────
 const fmtCurrency = (n) =>
@@ -175,35 +176,25 @@ export default function CreateImportModal({ onClose, onSaved }) {
     const [expandedRequests, setExpandedRequests] = useState({});
     const [selectedRequestItems, setSelectedRequestItems] = useState({});
     const [requestSearchTerm, setRequestSearchTerm] = useState("");
+    const [requestsLoading, setRequestsLoading] = useState(false);
+
+    // Submit state
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
-        const localData = JSON.parse(localStorage.getItem("tpf_manufacturing_orders") || "[]");
-        
-        const adaptedLocal = localData.map(r => ({
-            id: r.id,
-            requestCode: r.id,
-            date: r.createdAt ? r.createdAt.substring(0, 10) : "",
-            createdBy: r.workshopName || r.supplierName || r.createdBy || "Chủ xưởng",
-            supplier: r.workshopName || r.supplierName || r.createdBy || "Chủ xưởng",
-            note: r.note || "Yêu cầu từ xưởng",
-            status: r.status === "Mới tạo" ? "PENDING" : r.status,
-            items: (r.items || []).map((it, idx) => ({
-                id: `loc_item_${r.id}_${it.id || idx}`,
-                productCode: "",
-                productName: it.productName || it.name || "Sản phẩm",
-                category: "",
-                materialType: it.material || "",
-                color: it.color || "",
-                productType: "FINISHED",
-                requestedQty: it.qty || 1,
-                estimatedPrice: 0,
-                isBundle: false,
-                details: it.note || it.size || "",
-            }))
-        }));
-
-        const combined = [...adaptedLocal, ...MOCK_IMPORT_REQUESTS];
-        setMergedRequests(combined);
+        const fetchRequests = async () => {
+            try {
+                setRequestsLoading(true);
+                const res = await importService.getImportRequests();
+                setMergedRequests(res.data || []);
+            } catch (err) {
+                console.error("Lỗi tải yêu cầu nhập:", err);
+                toast.error("Không thể tải danh sách yêu cầu nhập hàng");
+            } finally {
+                setRequestsLoading(false);
+            }
+        };
+        fetchRequests();
     }, []);
 
     // ── File handlers ──────────────────────────────────
@@ -252,7 +243,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
         setLines(prev => {
             const lineToRemove = prev.find(l => l._id === id);
             const newList = prev.filter(l => l._id !== id);
-            
+
             if (newList.length === 0) {
                 setActiveRequestId(null);
                 setSupplier("");
@@ -316,15 +307,16 @@ export default function CreateImportModal({ onClose, onSaved }) {
         }
 
         const selectedReqIds = [...new Set(selectedItemsEntries.map(([k]) => k.split('_')[0]))];
-        
+
         if (selectedReqIds.length > 1) {
             toast.error("Chỉ được chọn mặt hàng từ cùng 1 yêu cầu trong mỗi lần thêm!");
             return;
         }
 
         const reqId = selectedReqIds[0];
-        
-        if (activeRequestId && activeRequestId !== reqId) {
+
+        // So sánh dụng String() để tránh type mismatch (API trả về id là integer, key là string)
+        if (activeRequestId && String(activeRequestId) !== String(reqId)) {
             toast.error("Mỗi phiếu nhập chỉ áp dụng cho 01 yêu cầu duy nhất để đảm bảo chính xác thông tin xưởng.");
             return;
         }
@@ -334,9 +326,12 @@ export default function CreateImportModal({ onClose, onSaved }) {
         // Tự động gán xưởng và khóa yêu cầu
         if (!activeRequestId) {
             setActiveRequestId(reqId);
-            const request = mergedRequests.find(r => r.id === reqId);
+            // Dùng String() để so sánh đúng với cả integer id từ API lẫn string id từ mock
+            const request = mergedRequests.find(r => String(r.id) === String(reqId));
             if (request) {
                 setSupplier(request.supplier || request.createdBy || "Xưởng hệ thống");
+            } else {
+                setSupplier("Xưởng hệ thống"); // fallback an toàn
             }
         }
 
@@ -353,7 +348,11 @@ export default function CreateImportModal({ onClose, onSaved }) {
                 newBundle.productType = p.productType || "FINISHED";
                 newBundle.bundleQty = qtyToImport;
                 newBundle.bundlePrice = p.estimatedPrice || "";
-                newBundle.items = (p.items || []).map(it => ({ ...it, _id: Math.random(), productNote: "" }));
+                // Dùng bundleItems (từ API) hoặc items (từ mock), nếu rỗng thì init 1 món lẻ trống
+                const subItems = p.bundleItems || p.items || [];
+                newBundle.items = subItems.length > 0
+                    ? subItems.map(it => ({ ...it, _id: Math.random(), productNote: "" }))
+                    : [emptyBundleItem()];
                 if (qtyToImport > 0 && newBundle.bundleCode) {
                     newBundle.unitIds = generateBundleUnitIds({ ...newBundle, bundleCode: newBundle.bundleCode }, qtyToImport);
                 }
@@ -379,15 +378,15 @@ export default function CreateImportModal({ onClose, onSaved }) {
 
         setLines(prev => [...prev, ...newLines]);
         toast.success(`Đã thêm ${newLines.length} mặt hàng vào phiếu!`, { style: { fontSize: "13px" } });
-        
+
         setSelectedRequestItems({});
     };
 
     // ── Submit ─────────────────────────────────────────
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!supplier.trim()) { toast.error("Vui lòng chọn mặt hàng từ yêu cầu để xác định xưởng nhập"); return; }
         if (!importDate) { toast.error("Vui lòng chọn ngày nhập"); return; }
+        if (lines.length === 0) { toast.error("Vui lòng thêm ít nhất 1 mặt hàng vào phiếu"); return; }
 
         for (const l of lines) {
             if (l.isBundle) {
@@ -404,9 +403,71 @@ export default function CreateImportModal({ onClose, onSaved }) {
             }
         }
 
-        toast.success("Tạo phiếu nhập thành công!", { duration: 4000, style: { fontSize: "13px" } });
-        onSaved?.({ supplier, importDate, invoiceFile, note, lines, grandTotal });
-        onClose();
+        try {
+            setSubmitting(true);
+
+            // 1. Upload ảnh chứng từ lên Cloudinary (nếu có)
+            let invoiceImgUrl = null;
+            if (invoiceFile) {
+                const uploadToast = toast.loading("Đang tải ảnh chứng từ...");
+                try {
+                    const uploaded = await uploadImage(invoiceFile);
+                    invoiceImgUrl = uploaded.url;
+                    toast.dismiss(uploadToast);
+                } catch (uploadErr) {
+                    toast.dismiss(uploadToast);
+                    toast.error("Tải ảnh chứng từ thất bại, tiếp tục lưu không có ảnh");
+                }
+            }
+
+            // 2. Tìm manufacturingOrderId từ request đang active
+            const activeReq = mergedRequests.find(r => String(r.id) === String(activeRequestId));
+            const manufacturingOrderId = activeReq?.id || null;
+
+            // 3. Gửi dữ liệu về backend
+            const payload = {
+                importDate,
+                supplier,
+                note: note || null,
+                invoiceImgUrl,
+                manufacturingOrderId,
+                lines: lines.map(l => ({
+                    isBundle: l.isBundle,
+                    // Dòng lẻ
+                    productId: l.productId || null,
+                    productCode: l.productCode || "",
+                    productName: l.productName || "",
+                    qty: Number(l.qty) || 0,
+                    importPrice: Number(l.importPrice) || 0,
+                    unitIds: l.unitIds || [],
+                    details: l.details || "",
+                    // Thông tin chi tiết sản phẩm (để tạo Product mới đầy đủ)
+                    category: l.category || "",
+                    materialType: l.materialType || "",
+                    color: l.color || "",
+                    productType: l.productType || "FINISHED",
+                    // Dòng bộ
+                    bundleCode: l.bundleCode || "",
+                    bundleName: l.bundleName || "",
+                    bundleQty: Number(l.bundleQty) || 0,
+                    bundlePrice: Number(l.bundlePrice) || 0,
+                    bundleUnitIds: l.unitIds || [],
+                    items: l.items || [],
+                })),
+            };
+
+            await importService.createImportReceipt(payload);
+
+            toast.success("Tạo phiếu nhập thành công!", { duration: 4000, style: { fontSize: "13px" } });
+            onSaved?.({ supplier, importDate, invoiceImgUrl, note, lines, grandTotal });
+            onClose();
+        } catch (err) {
+            console.error("Submit import error:", err);
+            const msg = err?.response?.data?.message || "Tạo phiếu nhập thất bại, vui lòng thử lại";
+            toast.error(msg);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     // Shared styles
@@ -501,7 +562,12 @@ export default function CreateImportModal({ onClose, onSaved }) {
 
                             {/* Request list */}
                             <div className="flex-1 overflow-y-auto px-4 pb-3 space-y-2 custom-scrollbar">
-                                {mergedRequests
+                                {requestsLoading ? (
+                                    <div className="flex flex-col items-center justify-center py-12 gap-3">
+                                        <div className="w-7 h-7 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin" />
+                                        <span className="text-[12px] text-gray-400">Đang tải yêu cầu...</span>
+                                    </div>
+                                ) : mergedRequests
                                     .filter(r => r.status === "PENDING" || r.status === "Chờ xử lý" || r.status === "Chờ sản xuất" || r.status === "Đang gia công")
                                     .filter(r => (r.requestCode || "").toLowerCase().includes(requestSearchTerm.toLowerCase()) || (r.note || "").toLowerCase().includes(requestSearchTerm.toLowerCase()))
                                     .map(req => {
@@ -579,11 +645,11 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                         );
                                     })}
                                 {mergedRequests.filter(r => r.status === "PENDING" || r.status === "Chờ xử lý" || r.status === "Chờ sản xuất" || r.status === "Đang gia công")
-                                    .filter(r => (r.requestCode || "").toLowerCase().includes(requestSearchTerm.toLowerCase()) || (r.note || "").toLowerCase().includes(requestSearchTerm.toLowerCase())).length === 0 && (
-                                    <div className="p-8 text-center text-gray-400 border border-dashed rounded-xl text-[12px] bg-gray-50/50 mt-2">
-                                        Không tìm thấy yêu cầu nào phù hợp.
-                                    </div>
-                                )}
+                                    .filter(r => (r.requestCode || "").toLowerCase().includes(requestSearchTerm.toLowerCase()) || (r.note || "").toLowerCase().includes(requestSearchTerm.toLowerCase())).length === 0 && !requestsLoading && (
+                                        <div className="p-8 text-center text-gray-400 border border-dashed rounded-xl text-[12px] bg-gray-50/50 mt-2">
+                                            Không tìm thấy yêu cầu nào phù hợp.
+                                        </div>
+                                    )}
                             </div>
 
                             {/* ── Add button – luôn hiện, không bị khuất ── */}
@@ -669,9 +735,15 @@ export default function CreateImportModal({ onClose, onSaved }) {
                                     Hủy
                                 </button>
                                 <button type="submit"
-                                    className="h-10 px-8 rounded-xl text-[13px] font-bold cursor-pointer hover:opacity-90 transition shadow-sm"
+                                    disabled={submitting}
+                                    className="h-10 px-8 rounded-xl text-[13px] font-bold cursor-pointer hover:opacity-90 transition shadow-sm disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
                                     style={{ backgroundColor: "var(--brand-primary)", color: "#fff" }}>
-                                    Lưu Phiếu Nhập
+                                    {submitting ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                                            Đang lưu...
+                                        </>
+                                    ) : "Lưu Phiếu Nhập"}
                                 </button>
                             </div>
                         </div>
@@ -724,7 +796,10 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveImage,
                     </div>
                     <div>
                         <label className={lbl} style={lblS}>Giá gốc nhập (₫) - từ YC *</label>
-                        <input type="text" value={formatNumber(line.importPrice)} readOnly className={`${inp} bg-gray-50 text-gray-500 cursor-not-allowed`} style={inpS} />
+                        <input type="text" value={formatNumber(line.importPrice)} onChange={(e) =>
+                            onUpdate("importPrice", parseNumber(e.target.value))
+                        }
+                            className={inp} style={{ ...inpS, borderColor: "#7C3AED" }} />
                     </div>
                     <div>
                         <label className={lbl} style={lblS}><AlignLeft size={11} className="inline mr-1" />Ghi chú</label>

@@ -1,12 +1,4 @@
-/**
- * Component SalesCustomerManage
- * Quản lý khách hàng — SWR Caching & API Integration
- *
- * Created By: DNC
- * Created Date: 24/02/2026
- * Updated By: Antigravity
- * Updated Date: 04/05/2026
- */
+
 
 import { useState, useMemo, useCallback } from "react";
 import toast from "react-hot-toast";
@@ -24,18 +16,17 @@ import {
   Eye,
   MapPin,
   Calendar,
-  ShoppingCart,
-  Package
+  ShoppingCart
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
 import DataTable from "@/components/control/DataTable";
 import ConfirmModal from "@/components/control/ConfirmModal";
-import { INITIAL_ORDERS } from "../orders/mockData";
 import useCachedFetch from "@/hooks/useCachedFetch";
 import useDebounce from "@/hooks/useDebounce";
 import customerService from "@/services/customer.service";
+import { formatShortDateVN, formatDateVN, nowVN } from "@/lib/dateUtils";
 
 // ===================== CONFIG =====================
 const GENDER_OPTIONS = ["Nam", "Nữ", "Khác"];
@@ -43,7 +34,7 @@ const GENDER_MAP = { "Nam": 1, "Nữ": 2, "Khác": 3 };
 const REVERSE_GENDER_MAP = { 1: "Nam", 2: "Nữ", 3: "Khác" };
 
 // ===================== HELPERS =====================
-const formatDate = (d) => (d ? new Date(d).toLocaleDateString("vi-VN") : "—");
+const formatDate = (d) => formatShortDateVN(d) || "—";
 
 const inputIconBase =
   "w-full text-[13px] rounded-lg pl-10 pr-3 py-2.5 focus:outline-none focus:ring-2 transition bg-transparent";
@@ -132,7 +123,7 @@ export default function SalesCustomerManage() {
       phone_number: c.phone_number,
       email: c.email || "",
       gender: c.gender ? REVERSE_GENDER_MAP[c.gender] : "",
-      dob: c.dob ? new Date(c.dob).toISOString().split("T")[0] : "",
+      dob: c.dob ? formatDateVN(c.dob, "yyyy-MM-dd") : "",
       address: c.address || "",
       note: c.note || "",
     });
@@ -161,8 +152,8 @@ export default function SalesCustomerManage() {
     if (!form.phone_number.trim()) errors.phone_number = "Vui lòng nhập SĐT";
 
     if (form.dob) {
-      const selectedDate = new Date(form.dob);
-      const today = new Date();
+      const selectedDate = form.dob ? new Date(form.dob) : nowVN();
+      const today = nowVN();
       if (selectedDate > today) {
         errors.dob = "Ngày sinh không thể ở tương lai";
       }
@@ -339,7 +330,7 @@ export default function SalesCustomerManage() {
       {/* Global Loading Bar */}
       {(isLoading || isRefreshing) && (
         <div className="fixed top-0 left-0 right-0 z-[9999]">
-          <div className="h-[2px] bg-[var(--brand-primary)] animate-[loading_1.5s_infinite] origin-left"></div>
+          <div className="h-[2px] bg-indigo-500 animate-[loading_1.5s_infinite] origin-left"></div>
         </div>
       )}
 
@@ -805,9 +796,9 @@ export default function SalesCustomerManage() {
                         const total = parseFloat(order.total_amount) || 0;
                         const paid = parseFloat(order.deposit_amount) || 0;
                         const balance = total - paid;
-                        
+
                         return (
-                          <div 
+                          <div
                             key={order.pk_order_id}
                             className="border border-[var(--grid-border)] rounded-xl overflow-hidden bg-white shadow-sm"
                           >
@@ -821,8 +812,8 @@ export default function SalesCustomerManage() {
                                 "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
                                 order.order_status === 5 ? "bg-[var(--status-focus)] text-[var(--status-success)]" : "bg-amber-50 text-amber-600"
                               )}>
-                                {order.order_status === 1 ? "Chờ xử lý" : 
-                                 order.order_status === 5 ? "Hoàn thành" : "Đang xử lý"}
+                                {order.order_status === 1 ? "Chờ xử lý" :
+                                  order.order_status === 5 ? "Hoàn thành" : "Đang xử lý"}
                               </span>
                             </div>
 
@@ -883,8 +874,8 @@ export default function SalesCustomerManage() {
                                 onClick={() => handleOpenHistory(currentCustomer, idx + 1)}
                                 className={cn(
                                   "w-6 h-6 rounded flex items-center justify-center text-[11px] font-bold transition",
-                                  historyPagination.page === idx + 1 
-                                    ? "bg-[var(--brand-primary)] text-white" 
+                                  historyPagination.page === idx + 1
+                                    ? "bg-[var(--brand-primary)] text-white"
                                     : "text-[var(--text-placeholder)] hover:bg-[var(--bg-main)]"
                                 )}
                               >

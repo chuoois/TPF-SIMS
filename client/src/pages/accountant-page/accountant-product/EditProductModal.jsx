@@ -9,7 +9,7 @@ import {
     X, Package, Tag, Layers, Palette, Ruler, MapPin,
     BarChart2, DollarSign, CheckCircle, Hammer, Users,
     Image as ImageIcon, TrendingDown, TrendingUp, ArrowDownToLine,
-    Save
+    Save, ShieldCheck, Gift
 } from "lucide-react";
 
 // ── Helpers ──────────────────────────────────────────────
@@ -151,13 +151,26 @@ export default function EditProductModal({ product, onClose, onSave }) {
                             value={product.importPrice ? new Intl.NumberFormat("vi-VN").format(product.importPrice) + " ₫" : "—"}
                             valueStyle={{ color: "#C2410C", fontSize: "15px" }} />
                         <InfoRow icon={Layers} label="Danh mục" value={product.category} />
-                        <InfoRow icon={Tag} label="Loại" value={product.materialType || "—"} />
+                        {product.room && <InfoRow icon={MapPin} label="Phòng / Không gian" value={product.room} />}
+                        <InfoRow icon={Tag} label="Chất liệu" value={product.materialType || "—"} />
                         <InfoRow icon={Palette} label="Màu sắc" value={product.color} />
                         {dims.length > 0 && (
-                            <InfoRow icon={Ruler} label="Kích thước (Dài × Rộng × Cao)"
-                                value={`${dims.join(" × ")} cm`} />
+                            <InfoRow icon={Ruler}
+                                label={`Kích thước (Dài × Rộng × Cao) – ${product.sizeUnit || "cm"}`}
+                                value={`${dims.join(" × ")} ${product.sizeUnit || "cm"}`} />
                         )}
-
+                        {product.sizeNote && (
+                            <InfoRow icon={Tag} label="Ghi chú kích thước" value={product.sizeNote} />
+                        )}
+                        {product.warrantyMonths != null && (
+                            <InfoRow icon={ShieldCheck} label="Bảo hành"
+                                value={`${product.warrantyMonths} tháng`}
+                                valueStyle={{ color: "#1D4ED8" }} />
+                        )}
+                        {product.isGift && (
+                            <InfoRow icon={Gift} label="Loại sản phẩm" value="Quà tặng"
+                                valueStyle={{ color: "#7C3AED" }} />
+                        )}
                         {product.details && (
                             <div className="py-2.5 border-b" style={{ borderColor: "var(--grid-border)" }}>
                                 <div className="flex items-center gap-3 mb-2">

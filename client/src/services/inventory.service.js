@@ -18,6 +18,15 @@ const inventoryService = {
   },
 
   /**
+   * Lấy thống kê tổng quan kho hàng cho Dashboard
+   * @returns {Promise<{ kpi, lowStockProducts, longStayProducts, recentImports }>}
+   */
+  async getDashboardStats() {
+    const response = await axiosInstance.get("/inventory/dashboard");
+    return response.data;
+  },
+
+  /**
    * Lấy chi tiết các đơn vị sản phẩm của 1 sản phẩm
    * @param {number|string} productId 
    * @returns {Promise<Array>}

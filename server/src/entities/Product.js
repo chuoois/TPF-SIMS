@@ -46,8 +46,34 @@ const Product = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    unit: {
-      type: DataTypes.STRING(50),
+    is_bundle: {
+      type: DataTypes.TINYINT,
+      defaultValue: 0,
+      comment: "1: Là bộ sản phẩm, 0: SP đơn lẻ",
+    },
+    bundle_items: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      comment: "Danh sách sản phẩm con trong bộ, null nếu là SP đơn lẻ"
+      /*
+        Cấu trúc JSON:
+        [
+          {
+            "name": "Bàn ăn Osaka",
+            "quantity": 1,
+            "size": { "note": "Tay 30", "unit": "cm", "width": 240, "height": 240, "length": 120 },
+            "color": "Walnut",
+            "material": "Gỗ sồi"
+          },
+          {
+            "name": "Ghế ăn Osaka",
+            "quantity": 4,
+            "size":{"note": "Tay 30", "unit": "cm", "width": 240, "height": 240, "length": 120}
+            "color": "Walnut",
+            "material": "Gỗ sồi"
+          }
+        ]
+      */
     },
     stock_quantity: {
       type: DataTypes.INTEGER,

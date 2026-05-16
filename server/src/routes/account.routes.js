@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const accountController = require("../controller/account.controller");
-const { verifyAccessToken, verifyRole } = require("../middleware/auth.middleware");
-
+const { verifyAccessToken, verifyRole } = require("../middlewares/auth.middleware");
+const validate = require("../middlewares/validate.middleware");
+const { createAccountSchema, updateAccountSchema, toggleStatusSchema } = require("../validations/account.validation");
 /**
  * @swagger
  * tags:
@@ -18,8 +19,8 @@ const { verifyAccessToken, verifyRole } = require("../middleware/auth.middleware
 
 // Tất cả các route này yêu cầu đăng nhập và thường chỉ dành cho Admin (Owner)
 router.use(verifyAccessToken);
-// const adminOnly = verifyRole(["OWNER", "ADMIN"]);
-// router.use(adminOnly);
+const adminOnly = verifyRole(["OWNER"]);
+router.use(adminOnly);
 
 /**
  * @swagger
@@ -153,7 +154,7 @@ router.get("/:id", accountController.getAccountById);
  *       400:
  *         description: Email đã tồn tại hoặc dữ liệu không hợp lệ
  */
-router.post("/", accountController.createAccount);
+router.post("/", validate(createAccountSchema), accountController.createAccount);
 
 /**
  * @swagger
@@ -196,7 +197,7 @@ router.post("/", accountController.createAccount);
  *       404:
  *         description: Không tìm thấy tài khoản
  */
-router.put("/:id", accountController.updateAccount);
+router.put("/:id", validate(updateAccountSchema), accountController.updateAccount);
 
 /**
  * @swagger
@@ -230,7 +231,7 @@ router.put("/:id", accountController.updateAccount);
  *       400:
  *         description: Không thể tự khóa tài khoản của mình
  */
-router.patch("/:id/status", accountController.toggleStatus);
+router.patch("/:id/status", validate(toggleStatusSchema), accountController.toggleStatus);
 
 /**
  * @swagger

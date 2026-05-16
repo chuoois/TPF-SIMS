@@ -218,6 +218,7 @@ class ProductController {
         required: false,
       };
 
+<<<<<<< HEAD
       // === Build query ===
       const queryOptions = {
         where,
@@ -250,6 +251,32 @@ class ProductController {
         subQuery: false,
         distinct: true,
       };
+=======
+            // === Build query ===
+            const queryOptions = {
+                where,
+                attributes: [
+                    "pk_product_id", "sku", "product_name", "product_img",
+                    "is_bundle", "bundle_items", "size", "is_gift", "description", "warranty_months",
+                    [stockQuantityLiteral, "available_quantity"]
+                ],
+                include: [
+                    {
+                        ...pricingInclude,
+                        attributes: ["raw_price", "final_price"]
+                    },
+                    categoryInclude,
+                    colorInclude,
+                    materialInclude,
+                    roomInclude,
+                    couponInclude
+                ],
+                order: [[sequelize.col("Product.createdate"), "DESC"]],
+                // subQuery: false cần thiết khi search trên bảng join kết hợp với limit/offset
+                subQuery: false,
+                distinct: true,
+            };
+>>>>>>> dev
 
       // Đếm tổng (cần query riêng vì subQuery: false ảnh hưởng count)
       const totalItems = await Product.count({
@@ -287,6 +314,7 @@ class ProductController {
         const isActuallyGift =
           p.is_gift == 1 || p.product_name?.toLowerCase().includes("quà tặng");
 
+<<<<<<< HEAD
         if (isActuallyGift) {
           original_price = 0;
           sell_type_name = "Quà tặng";
@@ -307,6 +335,72 @@ class ProductController {
               : 0;
             sell_type_name = "Sản phẩm";
           }
+=======
+                if (isActuallyGift) {
+                    original_price = 0;
+                    sell_type_name = "Quà tặng";
+                } else {
+                    if (sell_type == 1) {
+                        original_price = pricing ? pricing.raw_price : 0;
+                        sell_type_name = "Hàng mộc";
+                    } else if (sell_type == 2) {
+                        original_price = pricing ? pricing.final_price : 0;
+                        sell_type_name = "Hàng sẵn";
+                    } else if (sell_type == 4) {
+                        original_price = pricing ? pricing.final_price : 0;
+                        sell_type_name = "Hàng custom";
+                    } else {
+                        // Mặc định nếu không có sell_type cụ thể
+                        original_price = pricing ? (pricing.final_price || pricing.raw_price) : 0;
+                        sell_type_name = "Sản phẩm";
+                    }
+                }
+
+                // Tính toán giá sau giảm
+                let display_price = original_price;
+                let discount_percent = 0;
+                if (coupon && original_price > 0) {
+                    discount_percent = parseFloat(coupon.discount_percent);
+                    display_price = original_price * (1 - discount_percent / 100);
+                }
+
+                return {
+                    pk_product_id: p.pk_product_id,
+                    sku: p.sku,
+                    product_name: p.product_name,
+                    product_img: p.product_img,
+                    is_bundle: p.is_bundle,
+                    bundle_items: p.bundle_items,
+                    size: p.size,
+                    is_gift: p.is_gift,
+                    available_quantity: parseInt(p.available_quantity) || 0,
+                    category_name: p.category ? p.category.category_name : null,
+                    color_name: p.color ? p.color.color_name : null,
+                    material_name: p.material ? p.material.material_name : null,
+                    room_name: p.room ? p.room.room_name : null,
+                    original_price,
+                    display_price,
+                    discount_percent,
+                    coupon_code: coupon ? coupon.coupon_code : null,
+                    sell_type_name,
+                    description: p.description,
+                    warranty_months: p.warranty_months,
+                };
+            });
+
+            return res.status(200).json({
+                data: processedRows,
+                pagination: {
+                    totalItems,
+                    totalPages: Math.ceil(totalItems / limit),
+                    currentPage: parseInt(page),
+                    limit: parseInt(limit),
+                },
+            });
+        } catch (error) {
+            console.error("Get all products error:", error);
+            return res.status(500).json({ message: "Lỗi hệ thống khi lấy danh sách sản phẩm" });
+>>>>>>> dev
         }
 
         // Tính toán giá sau giảm
@@ -374,6 +468,7 @@ class ProductController {
                 AND product_item.fk_order_item_id IS NULL
             )`);
 
+<<<<<<< HEAD
       const product = await Product.findByPk(id, {
         attributes: [
           "pk_product_id",
@@ -442,6 +537,62 @@ class ProductController {
           },
         ],
       });
+=======
+            const product = await Product.findByPk(id, {
+                attributes: [
+                    "pk_product_id", "sku", "product_name", "product_img",
+                    "is_bundle", "bundle_items", "size", "is_gift", "warranty_months", "description",
+                    [stockQuantityLiteral, "available_quantity"]
+                ],
+                include: [
+                    {
+                        model: ProductPricing,
+                        as: "pricings",
+                        where: { status: 1 },
+                        required: false,
+                        attributes: ["raw_price", "final_price"]
+                    },
+                    {
+                        model: ProductCategory,
+                        as: "category",
+                        attributes: ["category_name"]
+                    },
+                    {
+                        model: ProductColor,
+                        as: "color",
+                        attributes: ["color_name"]
+                    },
+                    {
+                        model: ProductMaterial,
+                        as: "material",
+                        attributes: ["material_name"]
+                    },
+                    {
+                        model: ProductRoom,
+                        as: "room",
+                        attributes: ["room_name"]
+                    },
+                    {
+                        model: ProductCoupon,
+                        as: "coupons",
+                        where: {
+                            status: 1,
+                            start_date: { [Op.lte]: new Date() },
+                            end_date: { [Op.gte]: new Date() }
+                        },
+                        required: false,
+                        through: { attributes: [] }
+                    },
+                    {
+                        model: ProductItem,
+                        as: "items",
+                        where: { item_status: 1, fk_order_item_id: null },
+                        required: false,
+                        attributes: ["pk_item_id", "item_serial", "batch_code", "item_status", "note"]
+                    }
+                ]
+            });
+>>>>>>> dev
 
       if (!product) {
         return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
@@ -467,6 +618,7 @@ class ProductController {
         display_raw_price = original_raw_price * (1 - discount_percent / 100);
       }
 
+<<<<<<< HEAD
       const response = {
         pk_product_id: p.pk_product_id,
         sku: p.sku,
@@ -493,6 +645,34 @@ class ProductController {
         },
         items: p.items || [],
       };
+=======
+            const response = {
+                pk_product_id: p.pk_product_id,
+                sku: p.sku,
+                product_name: p.product_name,
+                product_img: p.product_img,
+                is_bundle: p.is_bundle,
+                bundle_items: p.bundle_items,
+                size: p.size,
+                is_gift: p.is_gift,
+                description: p.description,
+                warranty_months: p.warranty_months,
+                available_quantity: parseInt(p.available_quantity) || 0,
+                category_name: p.category ? p.category.category_name : null,
+                color_name: p.color ? p.color.color_name : null,
+                material_name: p.material ? p.material.material_name : null,
+                room_name: p.room ? p.room.room_name : null,
+                pricing: {
+                    original_raw_price,
+                    original_final_price,
+                    display_raw_price,
+                    display_final_price,
+                    discount_percent,
+                    coupon_code: coupon ? coupon.coupon_code : null
+                },
+                items: p.items || []
+            };
+>>>>>>> dev
 
       return res.status(200).json(response);
     } catch (error) {
@@ -501,6 +681,7 @@ class ProductController {
         .status(500)
         .json({ message: "Lỗi hệ thống khi lấy chi tiết sản phẩm" });
     }
+<<<<<<< HEAD
   }
 
   /**
@@ -631,6 +812,430 @@ class ProductController {
       return res.status(500).json({ message: "Lỗi hệ thống khi cập nhật sản phẩm" });
     }
   }
+=======
+    // ======================== OWNER ENDPOINTS ========================
+
+    /**
+     * Lấy danh sách sản phẩm cho Owner (bao gồm cả inactive, chưa định giá)
+     * 
+     * Query params:
+     *  - search: tìm kiếm theo tên, SKU
+     *  - category_id, color_id, material_id, room_id: filter theo FK
+     *  - product_type: FINISHED | RAW | CUSTOM
+     *  - product_status: 0 | 1 (mặc định lấy tất cả)
+     *  - is_gift: 0 | 1
+     *  - page, limit: phân trang
+     */
+    async getAllProductsForOwner(req, res) {
+        try {
+            const {
+                category_id, color_id, material_id, room_id,
+                product_type, product_status, search, is_gift,
+                page = 1, limit = 20
+            } = req.query;
+            const offset = (page - 1) * limit;
+
+            const andConditions = [];
+
+            // Owner có thể xem cả active lẫn inactive, nhưng nếu có filter thì áp dụng
+            if (product_status !== undefined && product_status !== '') {
+                andConditions.push({ product_status: parseInt(product_status) });
+            }
+
+            if (product_type) {
+                andConditions.push({ product_type });
+            }
+
+            if (is_gift !== undefined && is_gift !== '') {
+                andConditions.push({ is_gift: parseInt(is_gift) });
+            }
+
+            // Lọc theo FK
+            if (category_id) {
+                const ids = String(category_id).split(",").map(Number).filter(n => !isNaN(n));
+                andConditions.push({ fk_category_id: ids.length === 1 ? ids[0] : { [Op.in]: ids } });
+            }
+            if (color_id) {
+                const ids = String(color_id).split(",").map(Number).filter(n => !isNaN(n));
+                andConditions.push({ fk_color_id: ids.length === 1 ? ids[0] : { [Op.in]: ids } });
+            }
+            if (material_id) {
+                const ids = String(material_id).split(",").map(Number).filter(n => !isNaN(n));
+                andConditions.push({ fk_material_id: ids.length === 1 ? ids[0] : { [Op.in]: ids } });
+            }
+            if (room_id) {
+                const ids = String(room_id).split(",").map(Number).filter(n => !isNaN(n));
+                andConditions.push({ fk_room_id: ids.length === 1 ? ids[0] : { [Op.in]: ids } });
+            }
+
+            // Search
+            if (search) {
+                const searchTerm = `%${search}%`;
+                andConditions.push({
+                    [Op.or]: [
+                        { product_name: { [Op.like]: searchTerm } },
+                        { sku: { [Op.like]: searchTerm } },
+                        { "$category.category_name$": { [Op.like]: searchTerm } },
+                        { "$material.material_name$": { [Op.like]: searchTerm } },
+                    ]
+                });
+            }
+
+            const where = andConditions.length > 0 ? { [Op.and]: andConditions } : {};
+
+            // Subquery tính số lượng tồn kho thực tế
+            const stockQuantityLiteral = sequelize.literal(`(
+                SELECT COUNT(*)
+                FROM product_item
+                WHERE product_item.fk_product_id = Product.pk_product_id
+                AND product_item.item_status = 1
+                AND product_item.fk_order_item_id IS NULL
+            )`);
+
+            const includes = [
+                {
+                    model: ProductPricing,
+                    as: "pricings",
+                    where: { status: 1 },
+                    required: false,
+                    attributes: ["pk_pricing_id", "cost_price", "raw_price", "final_price", "profit_margin", "operating_margin"]
+                },
+                {
+                    model: ProductCategory,
+                    as: "category",
+                    attributes: ["pk_product_category_id", "category_name"]
+                },
+                {
+                    model: ProductColor,
+                    as: "color",
+                    attributes: ["pk_product_color_id", "color_name"]
+                },
+                {
+                    model: ProductMaterial,
+                    as: "material",
+                    attributes: ["pk_product_material_id", "material_name"]
+                },
+                {
+                    model: ProductRoom,
+                    as: "room",
+                    attributes: ["pk_product_room_id", "room_name"]
+                },
+            ];
+
+            // Count
+            const totalItems = await Product.count({
+                where,
+                include: includes,
+                distinct: true,
+                col: "pk_product_id"
+            });
+
+            // Query
+            const rows = await Product.findAll({
+                where,
+                attributes: [
+                    "pk_product_id", "sku", "product_name", "product_img",
+                    "is_bundle", "bundle_items", "size", "is_gift", "description",
+                    "warranty_months", "product_type", "product_status",
+                    "stock_quantity", "createdate", "modifiedate",
+                    [stockQuantityLiteral, "available_quantity"]
+                ],
+                include: includes,
+                order: [["createdate", "DESC"]],
+                subQuery: false,
+                distinct: true,
+                limit: parseInt(limit),
+                offset: parseInt(offset),
+            });
+
+            // Map dữ liệu
+            const PRODUCT_TYPE_MAP = { FINISHED: "Hàng sẵn", RAW: "Hàng mộc", CUSTOM: "Hàng khách đặt" };
+
+            const processedRows = rows.map(product => {
+                const p = product.toJSON();
+                const pricing = p.pricings && p.pricings.length > 0 ? p.pricings[0] : null;
+                const availableQty = parseInt(p.available_quantity) || 0;
+                const productTypeName = PRODUCT_TYPE_MAP[p.product_type] || p.product_type;
+
+                // Xác định status hiển thị
+                let displayStatus;
+                if (p.product_status === 0) {
+                    displayStatus = "Ngừng kinh doanh";
+                } else if (p.is_gift === 1) {
+                    displayStatus = "Quà tặng";
+                } else if (!pricing || (pricing.final_price <= 0 && pricing.raw_price <= 0)) {
+                    displayStatus = "Chưa định giá";
+                } else if (p.product_type === "CUSTOM") {
+                    displayStatus = "Hàng khách đặt";
+                } else if (availableQty === 0 && p.product_type !== "CUSTOM") {
+                    displayStatus = "Hết hàng";
+                } else if (p.product_type === "RAW") {
+                    displayStatus = "Hàng mộc";
+                } else {
+                    displayStatus = "Hàng sẵn";
+                }
+
+                // Dimensions string
+                let dimensions = "";
+                if (p.size) {
+                    const parts = [];
+                    if (p.size.length) parts.push(p.size.length);
+                    if (p.size.width) parts.push(p.size.width);
+                    if (p.size.height) parts.push(p.size.height);
+                    dimensions = parts.join(" × ");
+                    if (p.size.note) dimensions = dimensions ? `${dimensions} (${p.size.note})` : p.size.note;
+                }
+
+                return {
+                    id: p.pk_product_id,
+                    code: p.sku,
+                    name: p.product_name,
+                    img: p.product_img,
+                    category: p.category ? p.category.category_name : null,
+                    category_id: p.category ? p.category.pk_product_category_id : null,
+                    material: p.material ? p.material.material_name : null,
+                    material_id: p.material ? p.material.pk_product_material_id : null,
+                    color: p.color ? p.color.color_name : null,
+                    color_id: p.color ? p.color.pk_product_color_id : null,
+                    room: p.room ? p.room.room_name : null,
+                    room_id: p.room ? p.room.pk_product_room_id : null,
+                    dimensions,
+                    size: p.size,
+                    productType: productTypeName,
+                    productTypeCode: p.product_type,
+                    status: displayStatus,
+                    stock: availableQty,
+                    is_bundle: p.is_bundle,
+                    bundle_items: p.bundle_items,
+                    is_gift: p.is_gift,
+                    warrantyMonths: p.warranty_months,
+                    description: p.description,
+                    product_status: p.product_status,
+                    // Pricing
+                    costPrice: pricing ? parseFloat(pricing.cost_price) : 0,
+                    rawRetailPrice: pricing ? parseFloat(pricing.raw_price) : 0,
+                    retailPrice: pricing ? parseFloat(pricing.final_price) : 0,
+                    finishedRetailPrice: pricing ? parseFloat(pricing.final_price) : 0,
+                    profitMargin: pricing ? parseFloat(pricing.profit_margin) : 0,
+                    isPriced: pricing ? (parseFloat(pricing.final_price) > 0 || parseFloat(pricing.raw_price) > 0) : false,
+                    createdate: p.createdate,
+                };
+            });
+
+            return res.status(200).json({
+                data: processedRows,
+                pagination: {
+                    totalItems,
+                    totalPages: Math.ceil(totalItems / limit),
+                    currentPage: parseInt(page),
+                    limit: parseInt(limit),
+                },
+            });
+        } catch (error) {
+            console.error("Get owner products error:", error);
+            return res.status(500).json({ message: "Lỗi hệ thống khi lấy danh sách sản phẩm" });
+        }
+    }
+
+    /**
+     * Tạo sản phẩm mới (Chỉ OWNER)
+     */
+    async createProduct(req, res) {
+        const t = await sequelize.transaction();
+        try {
+            const { pricing, ...productData } = req.body;
+            const userId = req.user.id;
+
+            // Kiểm tra SKU unique
+            const existingSku = await Product.findOne({ where: { sku: productData.sku } });
+            if (existingSku) {
+                await t.rollback();
+                return res.status(409).json({ message: `Mã sản phẩm "${productData.sku}" đã tồn tại` });
+            }
+
+            // Tạo Product
+            const product = await Product.create({
+                ...productData,
+                product_status: 1,
+                createby: userId,
+                createdate: new Date(),
+            }, { transaction: t });
+
+            // Tạo Pricing nếu có
+            if (pricing) {
+                await ProductPricing.create({
+                    fk_product_id: product.pk_product_id,
+                    fk_user_account_id: userId,
+                    cost_price: pricing.cost_price || 0,
+                    raw_price: pricing.raw_price || 0,
+                    final_price: pricing.final_price || 0,
+                    profit_margin: pricing.profit_margin || 0,
+                    operating_margin: pricing.operating_margin || 0,
+                    status: 1,
+                    createby: userId,
+                    createdate: new Date(),
+                }, { transaction: t });
+            }
+
+            await t.commit();
+
+            // Fetch lại sản phẩm đầy đủ
+            const fullProduct = await Product.findByPk(product.pk_product_id, {
+                include: [
+                    { model: ProductPricing, as: "pricings", where: { status: 1 }, required: false },
+                    { model: ProductCategory, as: "category" },
+                    { model: ProductColor, as: "color" },
+                    { model: ProductMaterial, as: "material" },
+                    { model: ProductRoom, as: "room" },
+                ]
+            });
+
+            return res.status(201).json({
+                message: "Tạo sản phẩm thành công",
+                data: fullProduct,
+            });
+        } catch (error) {
+            await t.rollback();
+            console.error("Create product error:", error);
+            return res.status(500).json({ message: "Lỗi hệ thống khi tạo sản phẩm" });
+        }
+    }
+
+    /**
+     * Cập nhật sản phẩm (Chỉ OWNER)
+     */
+    async updateProduct(req, res) {
+        const t = await sequelize.transaction();
+        try {
+            const { id } = req.params;
+            const { pricing, ...productData } = req.body;
+            const userId = req.user.id;
+
+            const product = await Product.findByPk(id);
+            if (!product) {
+                await t.rollback();
+                return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
+            }
+
+            // Kiểm tra SKU unique (trừ chính nó)
+            if (productData.sku) {
+                const existingSku = await Product.findOne({
+                    where: { sku: productData.sku, pk_product_id: { [Op.ne]: id } }
+                });
+                if (existingSku) {
+                    await t.rollback();
+                    return res.status(409).json({ message: `Mã sản phẩm "${productData.sku}" đã tồn tại` });
+                }
+            }
+
+            // Cập nhật Product
+            await product.update({
+                ...productData,
+                modifieby: userId,
+                modifiedate: new Date(),
+            }, { transaction: t });
+
+            // Cập nhật Pricing nếu có
+            if (pricing) {
+                // Tắt pricing cũ
+                await ProductPricing.update(
+                    { status: 0, modifieby: userId, modifiedate: new Date() },
+                    { where: { fk_product_id: id, status: 1 }, transaction: t }
+                );
+
+                // Tạo pricing mới
+                await ProductPricing.create({
+                    fk_product_id: parseInt(id),
+                    fk_user_account_id: userId,
+                    cost_price: pricing.cost_price || 0,
+                    raw_price: pricing.raw_price || 0,
+                    final_price: pricing.final_price || 0,
+                    profit_margin: pricing.profit_margin || 0,
+                    operating_margin: pricing.operating_margin || 0,
+                    status: 1,
+                    createby: userId,
+                    createdate: new Date(),
+                }, { transaction: t });
+            }
+
+            await t.commit();
+
+            // Fetch lại đầy đủ
+            const fullProduct = await Product.findByPk(id, {
+                include: [
+                    { model: ProductPricing, as: "pricings", where: { status: 1 }, required: false },
+                    { model: ProductCategory, as: "category" },
+                    { model: ProductColor, as: "color" },
+                    { model: ProductMaterial, as: "material" },
+                    { model: ProductRoom, as: "room" },
+                ]
+            });
+
+            return res.status(200).json({
+                message: "Cập nhật sản phẩm thành công",
+                data: fullProduct,
+            });
+        } catch (error) {
+            await t.rollback();
+            console.error("Update product error:", error);
+            return res.status(500).json({ message: "Lỗi hệ thống khi cập nhật sản phẩm" });
+        }
+    }
+
+    /**
+     * Xóa sản phẩm (Soft-delete, chỉ OWNER)
+     */
+    async deleteProduct(req, res) {
+        const t = await sequelize.transaction();
+        try {
+            const { id } = req.params;
+            const userId = req.user.id;
+
+            const product = await Product.findByPk(id);
+            if (!product) {
+                await t.rollback();
+                return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
+            }
+
+            // Kiểm tra có ProductItem active không
+            const activeItems = await ProductItem.count({
+                where: {
+                    fk_product_id: id,
+                    item_status: 1,
+                    fk_order_item_id: null,
+                }
+            });
+
+            if (activeItems > 0) {
+                await t.rollback();
+                return res.status(400).json({
+                    message: `Không thể xóa! Sản phẩm đang có ${activeItems} món hàng tồn kho.`
+                });
+            }
+
+            // Soft-delete: set product_status = 0
+            await product.update({
+                product_status: 0,
+                modifieby: userId,
+                modifiedate: new Date(),
+            }, { transaction: t });
+
+            // Tắt pricing liên quan
+            await ProductPricing.update(
+                { status: 0, modifieby: userId, modifiedate: new Date() },
+                { where: { fk_product_id: id, status: 1 }, transaction: t }
+            );
+
+            await t.commit();
+
+            return res.status(200).json({ message: "Đã vô hiệu hóa sản phẩm thành công" });
+        } catch (error) {
+            await t.rollback();
+            console.error("Delete product error:", error);
+            return res.status(500).json({ message: "Lỗi hệ thống khi xóa sản phẩm" });
+        }
+    }
+>>>>>>> dev
 }
 
 module.exports = new ProductController();

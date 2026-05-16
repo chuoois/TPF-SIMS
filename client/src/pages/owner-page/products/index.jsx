@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   Pencil,
   Eye,
@@ -8,8 +8,15 @@ import {
   ChevronDown,
   Tag,
   ShieldCheck,
+<<<<<<< HEAD
   Clock,
   Image as ImageIcon,
+=======
+  Plus,
+  Loader2,
+  PackageOpen,
+  RefreshCw,
+>>>>>>> dev
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import toast from "react-hot-toast";
@@ -39,16 +46,33 @@ const getStatusConfig = (status) => {
       return { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" };
     case "Quà tặng":
       return { bg: "#FAF5FF", text: "#7E22CE", border: "#E9D5FF" };
+    case "Ngừng kinh doanh":
+      return { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
     default:
       return { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
   }
 };
 
+const PRODUCT_TYPE_MAP_REVERSE = {
+  "Tất cả": "",
+  "Hàng sẵn": "FINISHED",
+  "Hàng mộc": "RAW",
+  "Hàng khách đặt": "CUSTOM",
+};
+
 // ===================== COMPONENT =====================
 export default function OwnerProducts() {
+<<<<<<< HEAD
   const [products, setProducts] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(false);
+=======
+  // Data states
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [totalItems, setTotalItems] = useState(0);
+>>>>>>> dev
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState("");
@@ -63,20 +87,7 @@ export default function OwnerProducts() {
     rooms: [],
   });
 
-  // Fetch metadata
-  useEffect(() => {
-    const fetchMetadata = async () => {
-      try {
-        const data = await productAttributeService.getAllAttributes();
-        setMetadata(data);
-      } catch (error) {
-        console.error("Failed to fetch metadata", error);
-      }
-    };
-    fetchMetadata();
-  }, []);
-
-  // Pagination
+  // Pagination (server-side)
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
 
@@ -84,13 +95,23 @@ export default function OwnerProducts() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
 
-  // Modal state: { product, mode: 'view' | 'edit' }
+  // Modal state
   const [modalState, setModalState] = useState({ product: null, mode: "view" });
 
-  const openModal = (product, mode = "view") =>
-    setModalState({ product, mode });
-  const closeModal = () => setModalState({ product: null, mode: "view" });
+  // Fetch metadata
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      try {
+        const data = await productAttributeService.getAllAttributes();
+        setMetadata(data);
+      } catch (err) {
+        console.error("Failed to fetch metadata", err);
+      }
+    };
+    fetchMetadata();
+  }, []);
 
+<<<<<<< HEAD
   // Format data from backend to frontend format
   const formatProductData = (p) => {
     let productType = "";
@@ -162,10 +183,28 @@ export default function OwnerProducts() {
 
       // Because the backend category filter requires an ID, we need to find it from metadata
       let category_id = "";
+=======
+  // Fetch products from API
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = {
+        page: currentPage,
+        limit: itemsPerPage,
+      };
+
+      if (searchQuery.trim()) params.search = searchQuery.trim();
+      if (productTypeFilter !== "Tất cả") {
+        params.product_type = PRODUCT_TYPE_MAP_REVERSE[productTypeFilter];
+      }
+      // Lọc category theo ID
+>>>>>>> dev
       if (categoryFilter !== "Tất cả") {
         const cat = metadata.categories?.find(
           (c) => c.category_name === categoryFilter,
         );
+<<<<<<< HEAD
         if (cat) category_id = cat.pk_product_category_id;
       }
 
@@ -232,11 +271,25 @@ export default function OwnerProducts() {
         "Không thể xoá! Sản phẩm đang có tồn kho hoặc đã có lịch sử nhập lô.",
       );
       return;
-    }
-    setItemToDelete(item);
-    setShowDeleteConfirm(true);
-  };
+=======
+        if (cat) params.category_id = cat.pk_product_category_id;
+      }
 
+      const result = await productService.getOwnerProducts(params);
+      setProducts(result.data || []);
+      setTotalItems(result.pagination?.totalItems || 0);
+    } catch (err) {
+      console.error("Fetch products error:", err);
+      setError(err?.response?.data?.message || "Không thể tải danh sách sản phẩm");
+      setProducts([]);
+      setTotalItems(0);
+    } finally {
+      setLoading(false);
+>>>>>>> dev
+    }
+  }, [currentPage, itemsPerPage, searchQuery, productTypeFilter, categoryFilter, metadata.categories]);
+
+<<<<<<< HEAD
   const handleDeleteProduct = async (id) => {
     try {
       await productService.deleteProduct(id);
@@ -252,6 +305,35 @@ export default function OwnerProducts() {
       setItemToDelete(null);
     }
   };
+=======
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  // Reset page khi filter thay đổi
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, categoryFilter, productTypeFilter]);
+
+  // Client-side status filter (applied after API data)
+  const filteredProducts = useMemo(() => {
+    if (statusFilter === "Tất cả") return products;
+    return products.filter((p) => p.status === statusFilter);
+  }, [products, statusFilter]);
+
+  const statusCounts = useMemo(() => {
+    const counts = {
+      "Tất cả": products.length,
+      "Chưa định giá": 0,
+      "Hết hàng": 0,
+      "Quà tặng": 0,
+    };
+    products.forEach((p) => {
+      if (counts[p.status] !== undefined) counts[p.status]++;
+    });
+    return counts;
+  }, [products]);
+>>>>>>> dev
 
   const hasActiveFilters =
     categoryFilter !== "Tất cả" ||
@@ -265,6 +347,7 @@ export default function OwnerProducts() {
     setProductTypeFilter("Tất cả");
   };
 
+<<<<<<< HEAD
   const handleSave = async (updated, message) => {
     try {
       // Find IDs from metadata
@@ -307,6 +390,40 @@ export default function OwnerProducts() {
         error.response?.data?.message || "Lỗi khi cập nhật sản phẩm!"
       );
     }
+=======
+  // Modal handlers
+  const openModal = (product, mode = "view") =>
+    setModalState({ product, mode });
+  const closeModal = () => setModalState({ product: null, mode: "view" });
+
+  // Delete handlers
+  const handleConfirmDelete = (item, e = null) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    if (item.stock > 0) {
+      toast.error("Không thể xoá! Sản phẩm đang có tồn kho.");
+      return;
+    }
+    setItemToDelete(item);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteProduct = async (id) => {
+    try {
+      await productService.deleteProduct(id);
+      toast.success("Đã vô hiệu hóa sản phẩm thành công!");
+      setShowDeleteConfirm(false);
+      setItemToDelete(null);
+      fetchProducts();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Lỗi khi xóa sản phẩm");
+    }
+  };
+
+  // Save handler (create / update)
+  const handleSave = async () => {
+    closeModal();
+    fetchProducts();
+>>>>>>> dev
   };
 
   // Status Counts
@@ -326,7 +443,6 @@ export default function OwnerProducts() {
   }, [products, totalItems]);
 
   // ===================== TABLE COLUMNS =====================
-
   const columns = [
     {
       header: "STT",
@@ -347,7 +463,7 @@ export default function OwnerProducts() {
             />
           ) : (
             <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-[var(--bg-main)] border text-gray-300">
-              <ImageIcon size={18} />
+              <Package size={18} />
             </div>
           )}
           {item.status === "Chưa định giá" && (
@@ -362,10 +478,7 @@ export default function OwnerProducts() {
       header: "MÃ SẢN PHẨM",
       render: (item) => (
         <div className="inline-block bg-gray-100 border border-gray-200 rounded-lg px-2 py-1 leading-none">
-          <p
-            className="text-[12px] font-bold font-mono"
-            style={{ color: "var(--text-main)" }}
-          >
+          <p className="text-[12px] font-bold font-mono" style={{ color: "var(--text-main)" }}>
             {item.code}
           </p>
         </div>
@@ -380,15 +493,12 @@ export default function OwnerProducts() {
               {item.name}
             </p>
             {item.status === "Chưa định giá" && (
-              <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[var(--status-error)]/10 text-[var(--status-error)] text-[9px] font-black uppercase tracking-tighter border border-[var(--status-error)]/20 animate-in fade-in zoom-in duration-500">
+              <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[var(--status-error)]/10 text-[var(--status-error)] text-[9px] font-black uppercase tracking-tighter border border-[var(--status-error)]/20">
                 <AlertCircle size={10} /> Cần định giá
               </span>
             )}
           </div>
-          <span
-            className="text-[11px] font-medium"
-            style={{ color: "var(--text-placeholder)" }}
-          >
+          <span className="text-[11px] font-medium" style={{ color: "var(--text-placeholder)" }}>
             {item.category}
           </span>
         </div>
@@ -464,10 +574,7 @@ export default function OwnerProducts() {
           );
         }
         return (
-          <p
-            className="text-[13px] font-bold"
-            style={{ color: "var(--text-main)" }}
-          >
+          <p className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>
             {fmtCurrency(item.retailPrice)}
           </p>
         );
@@ -478,10 +585,8 @@ export default function OwnerProducts() {
       headerClassName: "text-right",
       className: "text-right",
       render: (item) =>
-        item.productType === "Hàng sẵn" ? (
-          <span
-            className={`font-bold ${item.stock === 0 ? "text-[var(--status-error)]" : "text-[var(--text-main)]"}`}
-          >
+        item.productType !== "Hàng khách đặt" ? (
+          <span className={`font-bold ${item.stock === 0 ? "text-[var(--status-error)]" : "text-[var(--text-main)]"}`}>
             {item.stock}
           </span>
         ) : (
@@ -501,10 +606,7 @@ export default function OwnerProducts() {
               border: `1px solid ${sc.border}`,
             }}
           >
-            <span
-              className="w-1.5 h-1.5 rounded-full shrink-0"
-              style={{ backgroundColor: sc.text }}
-            />
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: sc.text }} />
             {item.status}
           </span>
         );
@@ -544,6 +646,7 @@ export default function OwnerProducts() {
               <Package size={22} style={{ color: "var(--brand-primary)" }} />
               Quản lý sản phẩm
             </h1>
+<<<<<<< HEAD
             <p
               className="text-[13px] mt-0.5"
               style={{ color: "var(--text-placeholder)" }}
@@ -553,35 +656,45 @@ export default function OwnerProducts() {
                 ? "tất cả loại"
                 : productTypeFilter.toLowerCase()}
               )
+=======
+            <p className="text-[13px] mt-0.5" style={{ color: "var(--text-placeholder)" }}>
+              {totalItems} sản phẩm (
+              {productTypeFilter === "Tất cả" ? "tất cả loại" : productTypeFilter.toLowerCase()})
+>>>>>>> dev
             </p>
           </div>
 
-          <div
-            className="flex p-1 rounded-lg"
-            style={{
-              backgroundColor: "var(--grid-header-bg)",
-              border: "1px solid var(--grid-border)",
-            }}
-          >
-            {["Tất cả", "Hàng sẵn", "Hàng mộc", "Hàng khách đặt"].map(
-              (type) => (
+          <div className="flex items-center gap-3">
+            {/* Nút thêm sản phẩm mới */}
+            <button
+              onClick={() => setModalState({ product: {}, mode: "create" })}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold text-white transition-all active:scale-95 cursor-pointer"
+              style={{ backgroundColor: "var(--brand-primary)" }}
+            >
+              <Plus size={16} /> Thêm sản phẩm
+            </button>
+
+            <div
+              className="flex p-1 rounded-lg"
+              style={{
+                backgroundColor: "var(--grid-header-bg)",
+                border: "1px solid var(--grid-border)",
+              }}
+            >
+              {["Tất cả", "Hàng sẵn", "Hàng mộc", "Hàng khách đặt"].map((type) => (
                 <button
                   key={type}
                   onClick={() => setProductTypeFilter(type)}
                   className="px-4 py-1.5 rounded-lg text-[13px] font-semibold transition-all cursor-pointer"
                   style={{
-                    backgroundColor:
-                      productTypeFilter === type ? "#fff" : "transparent",
-                    color:
-                      productTypeFilter === type
-                        ? "var(--text-main)"
-                        : "var(--text-secondary)",
+                    backgroundColor: productTypeFilter === type ? "#fff" : "transparent",
+                    color: productTypeFilter === type ? "var(--text-main)" : "var(--text-secondary)",
                   }}
                 >
                   {type}
                 </button>
-              ),
-            )}
+              ))}
+            </div>
           </div>
         </div>
 
@@ -589,18 +702,8 @@ export default function OwnerProducts() {
         <div className="flex items-center gap-2 shrink-0 flex-wrap py-1">
           {[
             { id: "Tất cả", label: "Tất cả" },
-            {
-              id: "Chưa định giá",
-              label: "Chưa định giá",
-              color: "red",
-              icon: AlertCircle,
-            },
-            {
-              id: "Hết hàng",
-              label: "Hết hàng",
-              color: "red",
-              icon: AlertCircle,
-            },
+            { id: "Chưa định giá", label: "Chưa định giá", color: "red", icon: AlertCircle },
+            { id: "Hết hàng", label: "Hết hàng", color: "red", icon: AlertCircle },
             { id: "Quà tặng", label: "Quà tặng", color: "purple" },
           ].map((s) => {
             const isActive = statusFilter === s.id;
@@ -620,21 +723,9 @@ export default function OwnerProducts() {
                 onClick={() => setStatusFilter(s.id)}
                 className="px-4 py-1.5 rounded-lg text-[12px] font-bold transition-all cursor-pointer flex items-center gap-2 border"
                 style={{
-                  backgroundColor: isActive
-                    ? sc
-                      ? sc.bg
-                      : "#fff"
-                    : "transparent",
-                  color: isActive
-                    ? sc
-                      ? sc.text
-                      : "var(--brand-primary)"
-                    : "var(--text-secondary)",
-                  borderColor: isActive
-                    ? sc
-                      ? sc.border
-                      : "var(--grid-border)"
-                    : "transparent",
+                  backgroundColor: isActive ? (sc ? sc.bg : "#fff") : "transparent",
+                  color: isActive ? (sc ? sc.text : "var(--brand-primary)") : "var(--text-secondary)",
+                  borderColor: isActive ? (sc ? sc.border : "var(--grid-border)") : "transparent",
                 }}
               >
                 {s.icon && (
@@ -642,9 +733,7 @@ export default function OwnerProducts() {
                     size={14}
                     className={
                       isActive
-                        ? isRedForce
-                          ? "text-red-500"
-                          : "text-[var(--brand-primary)]"
+                        ? isRedForce ? "text-red-500" : "text-[var(--brand-primary)]"
                         : "text-slate-300"
                     }
                   />
@@ -658,7 +747,46 @@ export default function OwnerProducts() {
           })}
         </div>
 
+        {/* ERROR STATE */}
+        {error && (
+          <div className="flex flex-col items-center justify-center py-12 gap-4">
+            <AlertCircle size={48} className="text-red-400" />
+            <p className="text-red-600 font-semibold">{error}</p>
+            <button
+              onClick={fetchProducts}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition cursor-pointer"
+            >
+              <RefreshCw size={14} /> Thử lại
+            </button>
+          </div>
+        )}
+
+        {/* LOADING STATE */}
+        {loading && !error && (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 size={32} className="animate-spin text-[var(--brand-primary)]" />
+            <span className="ml-3 text-[var(--text-secondary)] font-medium">Đang tải sản phẩm...</span>
+          </div>
+        )}
+
+        {/* EMPTY STATE */}
+        {!loading && !error && products.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <PackageOpen size={56} className="text-slate-300" />
+            <p className="text-lg font-semibold text-slate-400">Chưa có sản phẩm nào</p>
+            <p className="text-sm text-slate-400">Bấm "Thêm sản phẩm" để tạo sản phẩm mới</p>
+            <button
+              onClick={() => setModalState({ product: {}, mode: "create" })}
+              className="flex items-center gap-2 mt-2 px-5 py-2.5 rounded-lg text-sm font-bold text-white transition active:scale-95 cursor-pointer"
+              style={{ backgroundColor: "var(--brand-primary)" }}
+            >
+              <Plus size={16} /> Thêm sản phẩm đầu tiên
+            </button>
+          </div>
+        )}
+
         {/* DATA TABLE */}
+<<<<<<< HEAD
         <DataTable
           columns={columns}
           data={products}
@@ -759,12 +887,125 @@ export default function OwnerProducts() {
             setItemsPerPage,
           }}
         />
+=======
+        {!loading && !error && products.length > 0 && (
+          <DataTable
+            columns={columns}
+            data={filteredProducts}
+            searchTerm={searchQuery}
+            setSearchTerm={setSearchQuery}
+            searchPlaceholder="Theo Mã Sản Phẩm, tên sản phẩm..."
+            hasActiveFilters={!!hasActiveFilters}
+            clearAllFilters={clearFilters}
+            selectedIds={selectedIds}
+            setSelectedIds={setSelectedIds}
+            onRowClick={(item) => openModal(item, "view")}
+            rowActions={[
+              {
+                icon: Eye,
+                label: "Xem chi tiết",
+                onClick: (item) => openModal(item, "view"),
+              },
+              {
+                icon: Tag,
+                label: "Định giá",
+                onClick: (item) => openModal(item, "pricing"),
+                showIf: (item) => item.productType !== "Hàng khách đặt",
+              },
+              {
+                icon: Pencil,
+                label: "Sửa thông tin",
+                onClick: (item) => openModal(item, "edit"),
+                showIf: (item) => item.status !== "Hết hàng",
+              },
+              {
+                icon: Trash2,
+                label: "Xóa sản phẩm",
+                onClick: (item) => handleConfirmDelete(item),
+                className: "text-red-500 hover:bg-red-50",
+                showIf: (item) => item.stock === 0,
+              },
+            ]}
+            bulkActions={[
+              {
+                label: "XÓA HÀNG LOẠT",
+                icon: Trash2,
+                onClick: async () => {
+                  const invalidDeletes = products
+                    .filter((p) => selectedIds.includes(p.id))
+                    .some((p) => p.stock > 0);
+
+                  if (invalidDeletes) {
+                    toast.error("Lỗi: Tồn tại sản phẩm đang có tồn kho trong danh sách chọn!");
+                    return;
+                  }
+
+                  try {
+                    await Promise.all(selectedIds.map((id) => productService.deleteProduct(id)));
+                    setSelectedIds([]);
+                    toast.success(`Đã vô hiệu hóa ${selectedIds.length} sản phẩm!`);
+                    fetchProducts();
+                  } catch (err) {
+                    toast.error(err?.response?.data?.message || "Lỗi khi xóa hàng loạt");
+                  }
+                },
+                requireConfirm: true,
+                confirmTitle: "Xóa hàng loạt sản phẩm?",
+                confirmMessage: `Bạn có chắc chắn muốn vô hiệu hóa ${selectedIds.length} sản phẩm đang chọn?`,
+              },
+            ]}
+            extraFilters={
+              <>
+                <div className="relative flex items-center">
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="h-10 px-3 pr-9 rounded-lg text-[13px] font-medium outline-none cursor-pointer focus:ring-2 transition appearance-none"
+                    style={{
+                      border: categoryFilter !== "Tất cả" ? "1px solid var(--brand-primary)" : "1px solid var(--grid-border)",
+                      backgroundColor: categoryFilter !== "Tất cả" ? "var(--status-focus)" : "#fff",
+                      color: categoryFilter !== "Tất cả" ? "var(--brand-primary)" : "var(--text-main)",
+                    }}
+                  >
+                    <option value="Tất cả">Danh mục sản phẩm</option>
+                    {(metadata.categories || []).map((c) => (
+                      <option key={c.category_name} value={c.category_name}>
+                        {c.category_name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={14}
+                    className="absolute right-3 pointer-events-none opacity-50"
+                    style={{
+                      color: categoryFilter !== "Tất cả" ? "var(--brand-primary)" : "var(--text-main)",
+                    }}
+                    strokeWidth={2.5}
+                  />
+                </div>
+              </>
+            }
+            pagination={{
+              total: statusFilter === "Tất cả" ? totalItems : filteredProducts.length,
+              currentPage,
+              setCurrentPage,
+              itemsPerPage,
+              setItemsPerPage,
+            }}
+          />
+        )}
+>>>>>>> dev
       </div>
 
       <ConfirmModal
         isOpen={showDeleteConfirm}
+<<<<<<< HEAD
         title="Xác nhận xóa sản phẩm"
         message={`Bạn có chắc chắn muốn xóa sản phẩm "${itemToDelete?.name}" (${itemToDelete?.code}) không?`}
+=======
+        title="Xác nhận vô hiệu hóa sản phẩm"
+        message={`Bạn có chắc chắn muốn vô hiệu hóa sản phẩm "${itemToDelete?.name}" (${itemToDelete?.code}) không? Sản phẩm sẽ không hiển thị trong bán hàng.`}
+>>>>>>> dev
         onCancel={() => {
           setShowDeleteConfirm(false);
           setItemToDelete(null);

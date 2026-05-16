@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const OrderController = require("../controller/order.controller");
-const { verifyAccessToken } = require("../middleware/auth.middleware");
-
+const { verifyAccessToken, verifyRole } = require("../middlewares/auth.middleware");
+const validate = require("../middlewares/validate.middleware");
+const { createOrderSchema } = require("../validations/order.validation");
 /**
  * Order Routes - Quản lý đơn hàng
  * Created By: ThinhBui
@@ -11,6 +12,78 @@ const { verifyAccessToken } = require("../middleware/auth.middleware");
 
 // Yêu cầu đăng nhập
 router.use(verifyAccessToken);
+const ownerAndSalesOnly = verifyRole(["SALES", "OWNER"]);
+router.use(ownerAndSalesOnly);
+
+/**
+ * @swagger
+ * /api/order:
+ *   get:
+ *     summary: Lấy danh sách đơn hàng
+ *     tags: [Order]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: "Trang hiện tại"
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: "Số bản ghi trên 1 trang"
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: "Tìm kiếm theo mã đơn hoặc tên khách hàng"
+ *       - in: query
+ *         name: order_status
+ *         schema:
+ *           type: integer
+ *         description: "Trạng thái đơn hàng"
+ *       - in: query
+ *         name: order_type
+ *         schema:
+ *           type: integer
+ *         description: "Loại đơn hàng (1: Mộc, 2: Sẵn, 3: Đặt riêng)"
+ *       - in: query
+ *         name: dateFrom
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: "Từ ngày (YYYY-MM-DD)"
+ *       - in: query
+ *         name: dateTo
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: "Đến ngày (YYYY-MM-DD)"
+ *     responses:
+ *       200:
+ *         description: Danh sách đơn hàng
+ */
+router.get("/", OrderController.getAllOrders);
+
+/**
+ * @swagger
+ * /api/order/{id}:
+ *   get:
+ *     summary: Lấy chi tiết đơn hàng (List detail)
+ *     tags: [Order]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Chi tiết đơn hàng
+ */
+router.get("/:id", OrderController.getOrderById);
 
 /**
  * @swagger
@@ -41,6 +114,7 @@ router.use(verifyAccessToken);
  *                 type: string
  *                 description: "Phương thức giao hàng (VD: Lấy tại cửa hàng, Giao tận nhà)"
  *                 example: "Giao tận nhà"
+
  *               expected_fulfillment_date:
  *                 type: string
  *                 format: date-time
@@ -99,6 +173,15 @@ router.use(verifyAccessToken);
  *                       description: "Số tháng bảo hành"
  *                     item_note:
  *                       type: string
+ *                     item_is_bundle:
+ *                       type: integer
+ *                       description: "1: Bộ sản phẩm, 0: SP đơn lẻ"
+ *                     item_bundle_items:
+ *                       type: array
+ *                       description: "Danh sách sản phẩm con trong bộ (JSON)"
+ *                     item_is_gift:
+ *                       type: integer
+ *                       description: "1: Quà tặng, 0: Hàng bán bình thường"
  *                     is_finished:
  *                       type: integer
  *                       description: "1: Hàng hoàn thiện (sơn), 0: Hàng mộc"
@@ -129,6 +212,39 @@ router.use(verifyAccessToken);
  *       500:
  *         description: Lỗi hệ thống
  */
-router.post("/", OrderController.createOrder);
+router.post("/", validate(createOrderSchema), OrderController.createOrder);
+
+/**
+ * @swagger
+ * /api/order/{id}/status:
+ *   put:
+ *     summary: Cập nhật trạng thái đơn hàng
+ *     tags: [Order]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - order_status
+ *             properties:
+ *               order_status:
+ *                 type: integer
+ *                 description: "Trạng thái mới (0: Đã hủy, 1: Chờ xử lý...)"
+ *               note:
+ *                 type: string
+ *                 description: "Ghi chú thay đổi trạng thái"
+ *     responses:
+ *       200:
+ *         description: Cập nhật thành công
+ */
+router.put("/:id/status", OrderController.updateOrderStatus);
 
 module.exports = router;

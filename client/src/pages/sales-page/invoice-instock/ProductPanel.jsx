@@ -20,7 +20,7 @@ import {
   Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fmt, PRODUCT_TYPES } from "./mockData";
+import { fmt, PRODUCT_TYPES } from "@/constants/orderConfig";
 import CustomCheckbox from "@/components/control/CustomCheckbox";
 
 // Helper component for paginated filter sections
@@ -370,7 +370,12 @@ export default function ProductPanel({
                         Hết hàng
                       </div>
                     ) : (
+<<<<<<< HEAD
                       <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 items-end">
+=======
+                      <div className="absolute top-2 right-2 z-1 flex flex-col gap-1 items-end">
+
+>>>>>>> dev
                         {(product.is_gift == 1 || product.product_name?.toLowerCase().includes("quà tặng")) && (
                           <div className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-600 border border-emerald-200 shadow-sm">
                             QUÀ TẶNG
@@ -535,10 +540,13 @@ export default function ProductPanel({
 
       {/* ── Product Quick View Modal ── */}
       {selectedProductForView && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm font-sans text-left">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 font-sans text-left">
           <div
-            className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300"
-            style={{ border: "1px solid var(--grid-border)" }}
+            className="absolute inset-0 bg-black/30 backdrop-blur-[2px] animate-in fade-in duration-200"
+            onClick={() => setSelectedProductForView(null)}
+          />
+          <div
+            className="relative bg-white w-[800px] rounded-lg border border-gray-100 overflow-hidden shadow-2xl animate-in zoom-in-95 fade-in duration-200"
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
@@ -548,16 +556,16 @@ export default function ProductPanel({
               <button
                 type="button"
                 onClick={() => setSelectedProductForView(null)}
-                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 text-gray-400 hover:text-gray-900 transition cursor-pointer"
+                className="p-1 hover:bg-gray-100 rounded-full transition text-gray-400 cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="flex flex-col md:flex-row p-6 gap-6 max-h-[80vh] overflow-y-auto">
+            <div className="flex p-6 gap-6 max-h-[75vh] overflow-y-auto">
               {/* Product Image */}
-              <div className="w-full md:w-1/2 aspect-square rounded-lg overflow-hidden bg-gray-50 border border-gray-100 shadow-inner flex items-center justify-center">
+              <div className="w-1/2 aspect-square rounded-lg overflow-hidden bg-gray-50 border border-gray-100 shadow-inner flex items-center justify-center shrink-0">
                 {selectedProductForView.image ? (
                   <img
                     src={selectedProductForView.image}
@@ -573,7 +581,7 @@ export default function ProductPanel({
               </div>
 
               {/* Product Specs */}
-              <div className="w-full md:w-1/2 space-y-5">
+              <div className="w-1/2 space-y-5">
                 <div className="text-left">
                   <h2 className="text-[20px] font-bold text-gray-900 leading-tight">
                     {selectedProductForView.name}
@@ -584,43 +592,123 @@ export default function ProductPanel({
                 </div>
 
                 <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                        Màu sắc
-                      </p>
-                      <p className="text-[13px] font-semibold text-gray-700 mt-0.5">
-                         {selectedProductForView.color_name || "—"}
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                        Kích thước
-                      </p>
-                      <p className="text-[13px] font-semibold text-gray-700 mt-0.5 truncate">
-                        {selectedProductForView.size ? `${selectedProductForView.size.width}x${selectedProductForView.size.height}x${selectedProductForView.size.length} ${selectedProductForView.size.unit}` : "—"}
-                      </p>
-                    </div>
-                  </div>
+                  {/* Bundle badge */}
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                        Danh mục
-                      </p>
-                      <p className="text-[13px] font-semibold text-gray-700 mt-0.5">
-                        {selectedProductForView.category_name || "—"}
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                        Chất liệu
-                      </p>
-                      <p className="text-[13px] font-semibold text-gray-700 mt-0.5">
-                        {selectedProductForView.material_name || "—"}
-                      </p>
-                    </div>
-                  </div>
+
+                  {selectedProductForView.is_bundle === 1 && selectedProductForView.bundle_items ? (
+                    <>
+                      {/* Bundle items list */}
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                          Thành phần trong bộ
+                        </p>
+                        <div className="space-y-1.5 max-h-[200px] overflow-y-auto pr-1">
+                          {(typeof selectedProductForView.bundle_items === "string"
+                            ? JSON.parse(selectedProductForView.bundle_items)
+                            : selectedProductForView.bundle_items
+                          ).map((bi, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-start gap-3 p-2.5 rounded-lg bg-gray-50 border border-gray-100"
+                            >
+                              <span className="w-5 h-5 rounded-full bg-purple-100 text-purple-600 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                                {idx + 1}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[13px] font-semibold text-gray-800 leading-tight">
+                                  {bi.name}
+                                  <span className="ml-1.5 text-[11px] font-bold text-purple-600">
+                                    ×{bi.quantity}
+                                  </span>
+                                </p>
+                                <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+                                  {bi.material && (
+                                    <span className="text-[11px] text-gray-500">
+                                      Chất liệu: <b className="text-gray-700">{bi.material}</b>
+                                    </span>
+                                  )}
+                                  {bi.color && (
+                                    <span className="text-[11px] text-gray-500">
+                                      Màu: <b className="text-gray-700">{bi.color}</b>
+                                    </span>
+                                  )}
+                                </div>
+                                {bi.size && (
+                                  <span className="text-[11px] text-gray-400 mt-0.5 block">
+                                    {bi.size.width}×{bi.size.height}×{bi.size.length} {bi.size.unit}
+                                    {bi.size.note ? ` (${bi.size.note})` : ""}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Compact info for bundle */}
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="p-2.5 rounded-lg bg-gray-50 border border-gray-100">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Danh mục</p>
+                          <p className="text-[12px] font-semibold text-gray-700 mt-0.5 truncate">
+                            {selectedProductForView.category_name || "—"}
+                          </p>
+                        </div>
+                        <div className="p-2.5 rounded-lg bg-gray-50 border border-gray-100">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Chất liệu</p>
+                          <p className="text-[12px] font-semibold text-gray-700 mt-0.5 truncate">
+                            {selectedProductForView.material_name || "—"}
+                          </p>
+                        </div>
+                        <div className="p-2.5 rounded-lg bg-gray-50 border border-gray-100">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Màu sắc</p>
+                          <p className="text-[12px] font-semibold text-gray-700 mt-0.5 truncate">
+                            {selectedProductForView.color_name || "—"}
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Original layout for single product */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                            Màu sắc
+                          </p>
+                          <p className="text-[13px] font-semibold text-gray-700 mt-0.5">
+                             {selectedProductForView.color_name || "—"}
+                          </p>
+                        </div>
+                        <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                            Kích thước
+                          </p>
+                          <p className="text-[13px] font-semibold text-gray-700 mt-0.5 truncate">
+                            {selectedProductForView.size ? `${selectedProductForView.size.width}x${selectedProductForView.size.height}x${selectedProductForView.size.length} ${selectedProductForView.size.unit}` : "—"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                            Danh mục
+                          </p>
+                          <p className="text-[13px] font-semibold text-gray-700 mt-0.5">
+                            {selectedProductForView.category_name || "—"}
+                          </p>
+                        </div>
+                        <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                            Chất liệu
+                          </p>
+                          <p className="text-[13px] font-semibold text-gray-700 mt-0.5">
+                            {selectedProductForView.material_name || "—"}
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-100 text-left">
                     <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">

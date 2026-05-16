@@ -7,7 +7,11 @@ import {
   Paintbrush, RotateCcw, ChevronRight, Eye, AlertCircle
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { MOCK_ORDERS_DETAILED, INITIAL_ORDERS } from "../mockData";
+import orderService from "@/services/order.service";
+import { ORDER_CONFIG } from "@/constants/orderConfig";
+import { formatShortDateVN, formatDateTimeVN, todayVN, addDaysVN, diffDays, isDateAfter } from "@/lib/dateUtils";
+import ConfirmModal from "@/components/control/ConfirmModal";
+import { uploadImage } from "@/services/cloudinary.service";
 
 
 const fmtCurrency = (n) =>
@@ -29,6 +33,18 @@ const fmtDateTime = (s) => {
   if (!s) return "—";
   const d = new Date(s);
   return `${d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })} — ${d.toLocaleDateString("vi-VN")}`;
+};
+
+const parseItemSize = (s) => {
+  if (!s) return "Chuẩn";
+  if (typeof s === "object") return s;
+  try {
+    const p = JSON.parse(s);
+    if (p && typeof p === "object") return p;
+    return s;
+  } catch (e) {
+    return s;
+  }
 };
 
 const statusStyle = (status) => {
@@ -57,10 +73,10 @@ const CustomerInfoCard = ({ o }) => (
       <div
         className="w-11 h-11 rounded-lg flex items-center justify-center text-[15px] font-bold shrink-0 bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] border border-[var(--brand-primary)]/10"
       >
-        {o.customer.name.charAt(0)}
+        {(o.customer?.name || "K").charAt(0).toUpperCase()}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[14px] font-bold truncate text-[var(--text-main)]">{o.customer.name}</p>
+        <p className="text-[14px] font-bold truncate text-[var(--text-main)]">{o.customer?.name || "Khách hàng"}</p>
         <div className="flex items-center gap-4 mt-0.5 flex-wrap">
           <span className="inline-flex items-center gap-1 text-[12px] text-[var(--text-secondary)]">
             <Phone size={11} className="text-[var(--text-placeholder)]" />
@@ -84,10 +100,7 @@ const CustomerInfoCard = ({ o }) => (
           <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--text-placeholder)]">Loại hàng</p>
           <p className="text-[13px] font-semibold mt-0.5 text-[var(--text-main)]">{o.type}</p>
         </div>
-        <div>
-          <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--text-placeholder)]">Nhân viên</p>
-          <p className="text-[13px] font-semibold mt-0.5 text-[var(--text-main)]">{o.salesPerson}</p>
-        </div>
+
         <div>
           <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--text-placeholder)]">Ngày tạo</p>
           <p className="text-[13px] font-semibold mt-0.5 text-[var(--text-main)]">{fmtDateTime(o.date)}</p>
@@ -96,10 +109,7 @@ const CustomerInfoCard = ({ o }) => (
           <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--text-placeholder)]">Ngày giao</p>
           <p className="text-[13px] font-semibold mt-0.5 text-[var(--text-main)]">{fmtDate(o.deliveryDate)}</p>
         </div>
-        <div className="md:col-span-1">
-          <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--text-placeholder)]">Ghi chú</p>
-          <p className="text-[13px] font-semibold mt-0.5 text-[var(--text-main)]">{o.notes || "—"}</p>
-        </div>
+
       </div>
     </div>
   </div>
@@ -116,23 +126,25 @@ const HistoryCard = ({ o, className = "" }) => (
     </div>
     <div className="px-5 py-5 space-y-6 relative ml-3 mt-2">
       <div className="absolute top-2 bottom-2 left-[-13px] w-0.5 bg-[var(--grid-border)]" />
-      {o.timeline?.map((t, idx) => (
+      {o.histories?.map((t, idx) => (
         <div key={idx} className="relative pl-1">
           <div
-            className={`absolute top-1 left-[-21px] w-4 h-4 rounded-full border-2 bg-[var(--background)] flex items-center justify-center z-10 transition-colors ${t.active ? "border-[var(--brand-primary)] shadow-[0_0_8px_rgba(52,176,87,0.3)]" : "border-[var(--grid-border)]"
+            className={`absolute top-1 left-[-21px] w-4 h-4 rounded-full border-2 bg-[var(--background)] flex items-center justify-center z-10 transition-colors ${idx === 0 ? "border-[var(--brand-primary)] shadow-[0_0_8px_rgba(52,176,87,0.3)]" : "border-[var(--grid-border)]"
               }`}
           >
-            {t.active && <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand-primary)]" />}
+            {idx === 0 && <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand-primary)]" />}
           </div>
           <div className="flex items-start justify-between min-w-0">
             <div className="min-w-0">
-              <p className={`text-[13px] font-bold ${t.active ? "text-[var(--text-main)]" : "text-[var(--text-placeholder)]"}`}>
-                {t.label}
+              <p className={`text-[13px] font-bold ${idx === 0 ? "text-[var(--text-main)]" : "text-[var(--text-placeholder)]"}`}>
+                {t.action}
               </p>
-              <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">{t.desc}</p>
+              {t.note && t.note !== t.action && (
+                <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">{t.note}</p>
+              )}
             </div>
             <span className="text-[10px] font-bold text-[var(--text-placeholder)] shrink-0 ml-4">
-              {t.time}
+              {fmtDateTime(t.createdate)}
             </span>
           </div>
         </div>
@@ -149,7 +161,6 @@ const StandardOrderView = ({
   deliveryImage,
   onDeliveryImageChange,
   onPreview,
-  // New props from parent
   lastActiveStatus,
   isStarted,
   isRefundBlocked,
@@ -165,7 +176,7 @@ const StandardOrderView = ({
   // Check if all items in production are actually finished
   const allProdItemsFinished = useMemo(() => {
     if (productions.length === 0) return true; // If no production orders, it's effectively finished or not started
-    return productions.every(p => p.status === "Hoàn thành");
+    return productions.every(p => p.status === "Hoàn Thành");
   }, [productions]);
 
   const pendingKcsCount = useMemo(() => {
@@ -198,9 +209,9 @@ const StandardOrderView = ({
             <Calendar size={18} className="text-[var(--status-pending)]" />
           </div>
           <div>
-            <p className="text-[10px] font-black text-[var(--sidebar-foreground)]/50 uppercase tracking-widest">Lịch trình</p>
+            <p className="text-[10px] font-black text-[var(--sidebar-foreground)]/50 uppercase tracking-widest">Ngày giao dự kiến</p>
             <p className="text-[13px] font-bold">
-              <span className="text-[var(--sidebar-foreground)]/40">Giao:</span> {o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString("vi-VN") : "Chưa hẹn"}
+              {o.deliveryDate ? new Date(o.deliveryDate).toLocaleDateString("vi-VN") : "Chưa hẹn"}
             </p>
           </div>
         </div>
@@ -242,7 +253,7 @@ const StandardOrderView = ({
       <div className="bg-[var(--background)]/95 backdrop-blur-md px-6 pt-4 border-b border-[var(--grid-border)]/50 flex items-center gap-6 sticky top-[72px] z-10">
         {[
           { id: "info", label: "Tổng quan", icon: FileText },
-          { id: "products", label: `Sản phẩm (${o.products.length})`, icon: Package },
+          { id: "products", label: `Sản phẩm`, icon: Package },
           { id: "production", label: "Tiến độ", icon: Hammer, visible: o.status === "Đang gia công" || productions.length > 0 },
         ].map(tab => {
           if (tab.visible === false) return null;
@@ -274,7 +285,7 @@ const StandardOrderView = ({
                   <div className="bg-[var(--status-warning)]/5 p-5 rounded-xl border border-[var(--status-warning)]/10 space-y-2">
                     <div className="flex items-center gap-2 text-[var(--status-pending)]">
                       <FileText size={16} />
-                      <span className="text-[12px] font-black uppercase tracking-tight">Yêu cầu đặc biệt từ khách</span>
+                      <span className="text-[12px] font-black uppercase tracking-tight">Ghi chú đơn hàng</span>
                     </div>
                     <p className="text-[14px] text-[var(--text-main)] italic opacity-80 leading-relaxed">
                       "{o.customRequirements || "Khách yêu cầu làm kỹ phần đục chạm, đánh nhám kỹ trước khi lót. Chân quỳ đặc."}"
@@ -327,9 +338,14 @@ const StandardOrderView = ({
                       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-[var(--bg-main)] rounded-xl">
                         {[
                           { label: "Chất liệu", val: p.material },
-                          { label: "Kích thước", val: p.size },
-                          { label: "Hoàn thiện", val: p.finish },
-                          { label: "Bảo hành", val: `${p.warranty || 12}T` },
+                          {
+                            label: "Kích thước",
+                            val: typeof p.size === 'object' && p.size !== null
+                              ? `${p.size.length || 0}x${p.size.width || 0}x${p.size.height || 0}${p.size.unit ? ` ${p.size.unit}` : ''}`
+                              : p.size
+                          },
+                          { label: "Màu sắc", val: p.color || p.finish },
+                          { label: "Bảo hành", val: `${p.warranty || 12} Tháng` },
                         ].map((spec, i) => (
                           <div key={i} className="space-y-1">
                             <span className="text-[9px] font-black text-[var(--text-placeholder)] uppercase tracking-widest block">{spec.label}</span>
@@ -337,6 +353,46 @@ const StandardOrderView = ({
                           </div>
                         ))}
                       </div>
+
+                      {(p.note || p.size?.note) && (
+                        <div className="mt-4 p-3 bg-[var(--palette-orange)]/5 border border-[var(--palette-orange)]/10 rounded-lg">
+                          <p className="text-[12px] text-[var(--palette-orange)] font-medium leading-relaxed">
+                            <span className="opacity-60 mr-1.5 font-bold uppercase text-[10px] tracking-wider">Ghi chú sản phẩm:</span>
+                            {p.note || p.size?.note}
+                          </p>
+                        </div>
+                      )}
+
+                      {p.isBundle && p.bundleItems && p.bundleItems.length > 0 && (
+                        <div className="mt-6 border-t border-[var(--grid-border)]/30 pt-4">
+                          <span className="text-[10px] font-black text-[var(--text-placeholder)] uppercase tracking-widest block mb-3">Thành phần bộ sản phẩm</span>
+                          <div className="space-y-3">
+                            {p.bundleItems.map((sub, sIdx) => (
+                              <div key={sIdx} className="flex items-center gap-3 p-3 bg-white/50 rounded-lg border border-[var(--grid-border)]/20 hover:border-[var(--brand-primary)]/30 transition-colors">
+                                <div className="w-8 h-8 rounded-md bg-[var(--brand-primary)]/5 flex items-center justify-center text-[var(--brand-primary)] text-[12px] font-black">
+                                  {sIdx + 1}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[13px] font-bold text-[var(--text-main)] truncate">{sub.name}</p>
+                                  <div className="flex items-center gap-3 mt-0.5">
+                                    <span className="text-[11px] text-[var(--text-secondary)] font-bold">x{sub.quantity || 1}</span>
+                                    {sub.size && (
+                                      <>
+                                        <span className="text-[11px] text-[var(--text-placeholder)]">|</span>
+                                        <span className="text-[11px] text-[var(--text-secondary)]">
+                                          {typeof sub.size === 'object' && sub.size !== null
+                                            ? `${sub.size.length}x${sub.size.width}x${sub.size.height} ${sub.size.unit || 'cm'}`
+                                            : sub.size}
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -349,6 +405,7 @@ const StandardOrderView = ({
                 onInspect={onInspect}
                 onRedoRequest={onRedoRequest}
                 productions={productions}
+                onPreview={onPreview}
               />
             )}
           </div>
@@ -365,6 +422,7 @@ const StandardOrderView = ({
                     <span>Tổng tiền hàng</span>
                     <span className="font-bold text-[var(--text-main)]">{fmtCurrency(productTotal)}</span>
                   </div>
+
                   <div className="h-px bg-[var(--grid-border)]/30" />
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-3 bg-[var(--status-success)]/10 rounded-lg border border-[var(--status-success)]/10">
@@ -387,7 +445,7 @@ const StandardOrderView = ({
               <div className="p-5 space-y-4">
                 {[
                   { icon: MapPin, label: "Địa chỉ giao", val: o.customer.address },
-                  { icon: Calendar, label: "Ngày hẹn", val: fmtDate(o.deliveryDate) },
+                  { icon: Calendar, label: "Ngày giao dự kiến", val: fmtDate(o.deliveryDate) },
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <item.icon size={15} className="mt-0.5 text-[var(--text-placeholder)]" />
@@ -416,30 +474,32 @@ const StandardOrderView = ({
 
 // =================== PRODUCTION PROGRESS CARD ===================
 const PROD_STATUS_CFG = {
-  "Tiếp nhận": { label: "Tiếp nhận", bg: "var(--palette-blue)/10", text: "var(--palette-dark-blue)", border: "var(--palette-blue)/20", icon: Package },
-  "Đang đánh giấy ráp": { label: "Tiếp nhận", bg: "var(--palette-blue)/10", text: "var(--palette-dark-blue)", border: "var(--palette-blue)/20", icon: Package },
-  "Đang sơn": { label: "Tiếp nhận", bg: "var(--palette-blue)/10", text: "var(--palette-dark-blue)", border: "var(--palette-blue)/20", icon: Package },
-  "Chờ nghiệm thu": { label: "Nghiệm thu", bg: "var(--status-warning)/10", text: "var(--palette-orange)", border: "var(--status-warning)/20", icon: Camera },
-  "Hoàn thành": { label: "Hoàn thành", bg: "var(--status-success)/10", text: "var(--brand-primary)", border: "var(--status-success)/20", icon: CheckCircle2 },
+  "Chờ gia công": { label: "Chờ gia công", bg: "var(--bg-main)", text: "var(--text-placeholder)", border: "var(--grid-border)", icon: Clock },
+  "Đang gia công": { label: "Đang gia công", bg: "var(--palette-blue)/10", text: "var(--palette-dark-blue)", border: "var(--palette-blue)/20", icon: Hammer },
+  "Gửi Nghiệm Thu": { label: "Chờ Nghiệm Thu", bg: "var(--status-warning)/10", text: "var(--palette-orange)", border: "var(--status-warning)/20", icon: Camera },
+  "Hoàn Thành": { label: "Hoàn Thành", bg: "var(--status-success)/10", text: "var(--brand-primary)", border: "var(--status-success)/20", icon: CheckCircle2 },
+  "Hủy": { label: "Hủy", bg: "var(--status-error)/5", text: "var(--status-error)", border: "var(--status-error)/10", icon: Ban },
 };
 
 const STEP_LABELS = [
-  { key: "Tiếp nhận", icon: Package },
+  { key: "Chờ", icon: Clock },
+  { key: "Gia công", icon: Hammer },
   { key: "Nghiệm thu", icon: Camera },
-  { key: "Hoàn thành", icon: CheckCircle2 },
+  { key: "Xong", icon: CheckCircle2 },
 ];
 
 function getItemStep(item) {
-  if (item.status === "Hoàn thành" || item.status === "COMPLETED") return 3;
-  if (item.isPendingApproval || item.status === "Chờ nghiệm thu" || item.status === "OWNER_PENDING" || item.status === "QC_PENDING") return 2;
-  return 1;
+  if (item.status === "Hoàn Thành") return 4;
+  if (item.status === "Gửi Nghiệm Thu") return 3;
+  if (item.status === "Đang gia công") return 2;
+  return 1; // Chờ gia công
 }
 
-function ProdItemRow({ item, onInspect }) {
-  const cfg = PROD_STATUS_CFG[item.isPendingApproval ? "Chờ nghiệm thu" : item.status]
+function ProdItemRow({ item, onInspect, onPreview }) {
+  const cfg = PROD_STATUS_CFG[item.status]
     || { label: item.status, bg: "var(--bg-main)", text: "var(--text-placeholder)", border: "var(--grid-border)", icon: Package };
   const step = getItemStep(item);
-  const needsKCS = item.isPendingApproval || item.status === "Chờ nghiệm thu";
+  const needsKCS = item.status === "Gửi Nghiệm Thu";
 
   const deadlineStyle = (() => {
     if (!item.expectedEndDate) return { color: "var(--text-placeholder)", urgent: false };
@@ -452,14 +512,33 @@ function ProdItemRow({ item, onInspect }) {
   return (
     <div className="p-4 border border-[var(--grid-border)]/50 rounded-lg bg-[var(--background)] space-y-3">
       <div className="flex items-start gap-3">
-        <div className="h-12 w-12 rounded-lg overflow-hidden shrink-0 border border-[var(--grid-border)]/50 bg-[var(--bg-main)] relative">
-          {item.productImage
-            ? <img src={item.productImage} alt={item.productName} className="w-full h-full object-cover" />
-            : <div className="w-full h-full flex items-center justify-center"><Package size={20} className="text-[var(--text-placeholder)]" /></div>
-          }
-          {item.needsRedo && (
-            <div className="absolute inset-0 bg-[var(--status-error)]/10 flex items-center justify-center">
-              <RotateCcw size={14} className="text-[var(--status-error)]" style={{ animation: "spin 3s linear infinite" }} />
+        <div className="flex items-center gap-2 shrink-0">
+          <div 
+            className="h-12 w-12 rounded-lg overflow-hidden border border-[var(--grid-border)]/50 bg-[var(--bg-main)] relative cursor-zoom-in hover:opacity-90 transition-all"
+            onClick={() => item.productImage && onPreview(item.productImage)}
+            title="Ảnh mẫu sản phẩm"
+          >
+            {item.productImage
+              ? <img src={item.productImage} alt={item.productName} className="w-full h-full object-cover" />
+              : <div className="w-full h-full flex items-center justify-center"><Package size={20} className="text-[var(--text-placeholder)]" /></div>
+            }
+            {item.needsRedo && (
+              <div className="absolute inset-0 bg-[var(--status-error)]/10 flex items-center justify-center">
+                <RotateCcw size={14} className="text-[var(--status-error)]" style={{ animation: "spin 3s linear infinite" }} />
+              </div>
+            )}
+          </div>
+
+          {item.completionPhoto && (
+            <div 
+              className="h-12 w-12 rounded-lg overflow-hidden border-2 border-[var(--status-success)]/30 bg-[var(--bg-main)] relative cursor-zoom-in hover:scale-105 transition-all shadow-sm"
+              onClick={() => onPreview(item.completionPhoto)}
+              title="Ảnh thợ đã hoàn thiện - Bấm để xem"
+            >
+              <img src={item.completionPhoto} alt="Hoàn thiện" className="w-full h-full object-cover" />
+              <div className="absolute top-0 right-0 p-0.5 bg-[var(--status-success)] rounded-bl-md">
+                <Camera size={8} className="text-white" />
+              </div>
             </div>
           )}
         </div>
@@ -474,7 +553,7 @@ function ProdItemRow({ item, onInspect }) {
             <div>
               <p className="text-[9px] font-black text-[var(--text-placeholder)] uppercase tracking-wider">Hạn bàn giao</p>
               <p className="text-[12px] font-bold" style={{ color: deadlineStyle.color }}>
-                {item.expectedEndDate ? new Date(item.expectedEndDate).toLocaleDateString("vi-VN") : "—"}
+                {formatShortDateVN(item.expectedEndDate)}
               </p>
             </div>
             {item.quantityPlanned > 1 && (
@@ -521,7 +600,7 @@ function ProdItemRow({ item, onInspect }) {
                 <span className={`text-[9px] font-bold whitespace-nowrap ${done ? "text-[var(--status-success)]" : active ? "text-[var(--palette-orange)]" : "text-[var(--text-placeholder)]"
                   }`}>{s.key}</span>
               </div>
-              {i < 2 && (
+              {i < 3 && (
                 <div className={`flex-1 h-0.5 mx-1 rounded ${step > i + 1 ? "bg-[var(--status-success)]/40" : step === i + 1 ? "bg-[var(--status-warning)]/40" : "bg-[var(--bg-main)]"
                   }`} />
               )}
@@ -533,67 +612,35 @@ function ProdItemRow({ item, onInspect }) {
   );
 }
 
-function ProductionProgressCard({ order, onInspect, onRedoRequest, productions }) {
-  const updateProductionInLocal = (itemId, updates) => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("tpf_simulated_productions") || "[]");
-      const index = saved.findIndex(p => p.id === itemId);
-      if (index !== -1) {
-        saved[index] = { ...saved[index], ...updates };
-        localStorage.setItem("tpf_simulated_productions", JSON.stringify(saved));
-        window.dispatchEvent(new Event("storage"));
-      }
-    } catch (e) { console.error(e); }
-  };
-
-  if (productions.length === 0) return null;
-
-  const total = productions.length;
-  const completed = productions.filter(p => p.status === "Hoàn thành").length;
-  const hasPendingKCS = productions.some(p => p.isPendingApproval || p.status === "Chờ nghiệm thu");
-  const progress = Math.round((completed / total) * 100);
-
+function ProductionProgressCard({ order, onInspect, onRedoRequest, productions, onPreview }) {
   return (
-    <div className="rounded-lg overflow-hidden bg-white border border-[var(--grid-border)] printer-hidden">
-      <div className="px-5 py-3 flex items-center justify-between gap-2 border-b border-[var(--grid-border)]/50 bg-[var(--grid-header-bg)]">
-        <div className="flex items-center gap-2">
-          <Hammer size={14} className="text-[var(--status-pending)]" />
-          <span className="text-[12px] font-bold uppercase tracking-wider text-[var(--status-pending)]">Tiến độ gia công</span>
-          {hasPendingKCS && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--status-success)]/10 text-[var(--status-success)] text-[9px] font-black uppercase">
-              <Camera size={9} /> Chờ nghiệm thu
-            </span>
-          )}
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-[14px] font-black text-[var(--text-main)] uppercase tracking-tight flex items-center gap-2">
+          <Hammer size={18} className="text-[var(--brand-primary)]" /> Tiến độ gia công xưởng
+        </h3>
+        <div className="px-2 py-1 bg-[var(--bg-main)] rounded text-[10px] font-bold text-[var(--text-secondary)] border border-[var(--grid-border)]">
+          {productions.length} sản phẩm
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5">
-            <div className="w-20 h-1.5 bg-[var(--bg-main)] rounded-full overflow-hidden">
-              <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, backgroundColor: progress === 100 ? "var(--status-success)" : "var(--status-warning)" }} />
-            </div>
-            <span className="text-[10px] font-black text-[var(--text-placeholder)]">{completed}/{total}</span>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+        {productions.length > 0 ? (
+          productions.map((p) => (
+            <ProdItemRow key={p.id} item={p} onInspect={onInspect} onPreview={onPreview} />
+          ))
+        ) : (
+          <div className="py-12 flex flex-col items-center justify-center border-2 border-dashed border-[var(--grid-border)] rounded-xl bg-[var(--bg-main)]/30">
+            <Package size={32} className="text-[var(--text-placeholder)] mb-2 opacity-20" />
+            <p className="text-[12px] font-medium text-[var(--text-placeholder)]">Chưa có sản phẩm nào được bàn giao gia công</p>
           </div>
-        </div>
-      </div>
-
-      <div className="p-4 space-y-3">
-        {productions.map(item => (
-          <ProdItemRow
-            key={item.id}
-            item={item}
-            onInspect={onInspect}
-            onUpdate={updateProductionInLocal}
-          />
-        ))}
-      </div>
-
-      <div className="px-5 py-2 border-t border-[var(--grid-border)]/50 flex items-center justify-between">
-        <p className="text-[10px] text-[var(--text-placeholder)] italic">* Tiến độ được thợ xưởng cập nhật trực tiếp</p>
-        <p className="text-[9px] font-bold text-[var(--brand-primary)]/50 uppercase">PRODUCTION TRACKER</p>
+        )}
       </div>
     </div>
   );
 }
-export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStatusChanged }) {
+
+export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStatusChanged, userRole = 'owner' }) {
   const [viewState, setViewState] = useState("loading");
   const [order, setOrder] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -603,7 +650,12 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
   const [showHandoverModal, setShowHandoverModal] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [finalPayment, setFinalPayment] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState("Chuyển khoản");
+  const [isUploading, setIsUploading] = useState(false);
+
+
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showOwnerCancel, setShowOwnerCancel] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState({ title: "", message: "", onConfirm: () => { } });
 
   const [handoverDeadline, setHandoverDeadline] = useState("");
   const [handoverItemsData, setHandoverItemsData] = useState([]);
@@ -621,27 +673,115 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
     window.print();
   };
 
-  const syncProductions = useCallback((orderData) => {
-    if (!orderData) return;
+  const fetchOrderData = useCallback(async () => {
+    if (!invoiceId) return;
     try {
-      const saved = JSON.parse(localStorage.getItem("tpf_simulated_productions") || "[]");
-      const filtered = saved.filter(p => p.orderId === orderData.id || p.orderCode === orderData.code);
-      setProductions(filtered);
-    } catch (e) { }
-  }, []);
+      const res = await orderService.getOrderById(invoiceId);
+      const found = res.data;
+      if (found) {
+        // Adapt API order data to legacy UI format
+        const normalized = {
+          ...found,
+          id: found.pk_order_id,
+          code: `DH-${found.pk_order_id}`,
+          status: ORDER_CONFIG.STATUS_MAP[found.order_status] || "Chờ xử lý",
+          type: ORDER_CONFIG.TYPE_MAP[found.order_type] || "Hàng khách đặt",
+          customer: found.customer ? {
+            name: found.customer.full_name || "Khách hàng",
+            phone: found.customer.phone_number || "---",
+            address: found.customer.address || "---"
+          } : { name: "Khách hàng", phone: "---", address: "---" },
+          products: (found.items || []).map(p => ({
+            id: p.pk_order_item_id,
+            name: p.item_name || p.product?.product_name || `Sản phẩm #${p.pk_order_item_id}`,
+            image: p.item_img || p.product?.product_image || "https://placehold.co/400x320?text=No+Image",
+            qty: p.item_quantity || 1,
+            unit: p.unit || "Bộ",
+            price: Number(p.item_price || 0),
+            material: p.item_material || "Gỗ tự nhiên",
+            size: parseItemSize(p.item_size),
+            finish: p.item_color || (p.is_finished ? "Sơn PU" : "Hàng Mộc"),
+            warranty: p.item_warranty || ORDER_CONFIG.DEFAULT_WARRANTY,
+            note: p.item_note || "",
+            isBundle: p.item_is_bundle === 1,
+            bundleItems: p.item_bundle_items || []
+          })),
+          timeline: (found.histories || []).map(h => ({
+            time: formatDateTimeVN(h.createdate),
+            label: h.action || h.label,
+            note: h.action === "Tạo đơn hàng" ? "Đơn hàng đã được tiếp nhận và chờ xử lý" : (h.note || ""),
+            active: true
+          })),
+          histories: (found.histories || []).map(h => ({
+            ...h,
+            note: h.action === "Tạo đơn hàng" ? "Đơn hàng đã được tiếp nhận và chờ xử lý" : (h.note || "")
+          })),
+          processingFee: Number(found.processing_fee || 0),
+          discount: Number(found.discount_amount || 0),
+          deposit: Number(found.deposit_amount || 0),
+          receivedAmount: Number(found.received_amount || 0),
+          total: Number(found.total_amount || 0),
+          date: found.createdate,
+          deliveryDate: found.expected_fulfillment_date,
+          notes: found.note || found.order_note || "",
+          customRequirements: found.note || found.order_note || "",
+          deliveryImage: found.delivery_image
+        };
 
-  useEffect(() => {
-    if (isOpen && order) {
-      syncProductions(order);
-      window.addEventListener("storage", () => syncProductions(order));
-      // Poll every 2s for local changes that don't trigger storage event
-      const interval = setInterval(() => syncProductions(order), 2000);
-      return () => {
-        window.removeEventListener("storage", () => syncProductions(order));
-        clearInterval(interval);
-      };
+        const mappedProductions = (found.items || []).flatMap((item) =>
+          (item.processing || []).map((proc) => {
+              const PROC_STATUS_MAP = {
+                1: "Chờ gia công",
+                2: "Đang gia công",
+                3: "Gửi Nghiệm Thu", // Vẫn giữ key "Gửi Nghiệm Thu" để khớp với logic data nhưng Label sẽ là "Chờ Nghiệm Thu"
+                4: "Hoàn Thành",
+                0: "Hủy",
+              };
+            const statusLabel = PROC_STATUS_MAP[proc.processing_status] ?? proc.processing_status;
+            return {
+              id: proc.pk_processing_id,
+              orderItemId: item.pk_order_item_id, // Lưu thêm ID của Order Item để Backend nhận diện đúng
+              orderId: found.pk_order_id,
+              orderCode: `DH-${found.pk_order_id}`,
+              productName: item.item_name || `Sản phẩm #${item.pk_order_item_id}`,
+              productImage: item.item_img || null,
+              assignedWorker: proc.worker?.profile?.full_name || proc.worker?.email || "Chưa giao",
+              status: statusLabel,
+              expectedEndDate: proc.end_date || null,
+              quantityPlanned: proc.quantity || item.item_quantity || 1,
+              quantityCompleted: statusLabel === "Hoàn Thành" ? (proc.quantity || item.item_quantity || 1) : 0,
+              needsRedo: false,
+              completionPhoto: (() => {
+                if (!proc.finished_img) return null;
+                try {
+                  const imgs = JSON.parse(proc.finished_img);
+                  if (Array.isArray(imgs)) return imgs[0];
+                  return proc.finished_img;
+                } catch {
+                  // Nếu không phải JSON, trả về nguyên bản (có thể là URL string)
+                  return proc.finished_img;
+                }
+              })(),
+              isDelayed: proc.end_date ? diffDays(proc.end_date, todayVN()) < 0 && statusLabel !== "Hoàn Thành" : false,
+              workerNotes: proc.note || "",
+            };
+          })
+        );
+
+        setOrder(normalized);
+        setDeliveryImage(normalized.deliveryImage || null);
+        setProductions(mappedProductions);
+        const rem = (normalized.total || 0) + (normalized.processingFee || 0) - (normalized.discount || 0) - (normalized.deposit || 0) - (normalized.receivedAmount || 0);
+        setFinalPayment(rem > 0 ? rem : 0);
+        setViewState("ready");
+      } else {
+        setViewState("error");
+      }
+    } catch (err) {
+      console.error(err);
+      setViewState("error");
     }
-  }, [isOpen, order, syncProductions]);
+  }, [invoiceId]);
 
   useEffect(() => {
     if (!isOpen || !invoiceId) {
@@ -649,52 +789,15 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
       setDeliveryImage(null);
       return;
     }
-
     setViewState("loading");
-    setTimeout(() => {
-      let found = MOCK_ORDERS_DETAILED[invoiceId];
-      if (!found) {
-        const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
-        found = saved.find(o => o.id === invoiceId || o.code === invoiceId);
-      }
-      if (!found) {
-        found = INITIAL_ORDERS.find(o => o.id === invoiceId || o.code === invoiceId);
-      }
-
-      if (found) {
-        const normalized = {
-          ...found,
-          customer: found.customer || {
-            name: found.customerName || "Khách hàng",
-            phone: found.phone || "---",
-            address: found.address || "---"
-          },
-          products: found.products || [
-            { name: "Sản phẩm đồ gỗ", material: "Gỗ tự nhiên", size: "Chuẩn", finish: "Sơn PU", qty: 1, price: found.total || 0, unit: "Bộ" }
-          ],
-          timeline: found.timeline || [
-            { time: found.date ? fmtDateTime(found.date) : fmtDateTime(new Date()), label: "Tạo đơn", active: true }
-          ],
-          processingFee: found.processingFee || 0,
-          discount: found.discount || 0,
-          deposit: found.deposit || 0,
-          paymentStatus: found.paymentStatus || "pending",
-        };
-        setOrder(normalized);
-        const rem = (normalized.total || 0) + (normalized.processingFee || 0) - (normalized.discount || 0) - (normalized.deposit || 0);
-        setFinalPayment(rem > 0 ? rem : 0);
-        setViewState("ready");
-      } else {
-        setViewState("error");
-      }
-    }, 600);
-  }, [invoiceId, isOpen]);
+    fetchOrderData();
+  }, [isOpen, invoiceId, fetchOrderData]);
 
   useEffect(() => {
     if (showCompleteModal && order) {
       const calculatedTotal = order.products.reduce((acc, p) => acc + (p.price || 0) * p.qty, 0);
       const displayTotal = order.total != null ? order.total : calculatedTotal;
-      const rem = displayTotal + (order.processingFee || 0) - (order.discount || 0) - (order.deposit || 0);
+      const rem = displayTotal + (order.processingFee || 0) - (order.discount || 0) - (order.deposit || 0) - (order.receivedAmount || 0);
       setFinalPayment(rem > 0 ? rem : 0);
     }
   }, [showCompleteModal, order]);
@@ -741,76 +844,43 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
     }
   }, [handoverItemsData, showHandoverModal]);
 
-  const convertCancelledToStock = (o) => {
-    const possibleStatuses = ["Đã nhập kho", "Chờ giao hàng", "Chờ duyệt hủy", "Đang gia công", "Đang sản xuất"];
-    const isFinishedOrTriaging = possibleStatuses.includes(o.status);
+  const updateProductionInLocal = async (orderItemId, updates) => {
+    try {
+      // Map labels to DB status numbers: 1: Chờ, 2: Đang, 3: Nghiệm thu, 4: Xong, 0: Hủy
+      let statusNum = undefined;
+      if (updates.status === "Hoàn Thành") statusNum = 4;
+      if (updates.status === "Đang gia công") statusNum = 2;
+      if (updates.status === "Hủy") statusNum = 0;
 
-    if (!isFinishedOrTriaging || (o.type !== "Hàng khách đặt" && o.type !== "Hàng mộc")) return;
-
-    const savedProducts = localStorage.getItem("tpf_simulated_products");
-    const savedLogs = localStorage.getItem("tpf_simulated_inventory_logs");
-
-    let currentInventory = savedProducts ? JSON.parse(savedProducts) : [];
-    let currentLogs = savedLogs ? JSON.parse(savedLogs) : [];
-
-    const newItems = o.products.map((p, idx) => {
-      let cat = "Phòng khách";
-      const n = p.name?.toLowerCase() || "";
-      if (n.includes("giường") || n.includes("tủ áo") || n.includes("tab")) cat = "Phòng ngủ";
-      else if (n.includes("thờ") || n.includes("án gian") || n.includes("sập")) cat = "Phòng thờ";
-      else if (n.includes("ăn") || n.includes("bếp")) cat = "Phòng ăn";
-      else if (n.includes("tượng") || n.includes("bình") || n.includes("tranh")) cat = "Trang trí";
-
-      const isMocOrder = o.type === "Hàng mộc";
-      const targetType = isMocOrder ? "Hàng mộc" : "Hàng sẵn";
-
-      const newItem = {
-        id: `SP-CAN-${o.code}-${idx}-${Date.now()}`,
-        code: `${isMocOrder ? "HM" : "HS"}-${o.code}-${idx + 1}`,
-        name: p.name,
-        category: cat,
-        material: p.material,
-        color: isMocOrder ? "Để mộc" : p.finish,
-        dimensions: p.size,
-        costPrice: 0,
-        retailPrice: p.price,
-        unit: "Bộ",
-        productType: targetType,
-        status: targetType,
-        stock: p.qty,
-        isPriced: true,
-        description: `Tự động nhập từ đơn hủy ${o.code}. Loại: ${o.type}.`,
-        techNotes: { leg: "", apron: "", other: "Hàng hoàn hoàn thiện/mộc từ đơn hủy." }
+      const payload = {
+        handover_items: [{
+          pk_order_item_id: orderItemId, // Phải dùng pk_order_item_id để backend findOne
+          processing_status: statusNum,
+          note: updates.note,
+          cancel_note: updates.cancel_note
+        }]
       };
 
-      const logEntry = {
-        id: `LOG-CAN-${Date.now()}-${idx}`,
-        timestamp: new Date().toISOString(),
-        type: "Nhập kho",
-        productName: p.name,
-        productCode: newItem.code,
-        change: +p.qty,
-        balance: p.qty,
-        reference: o.code,
-        authorizedBy: "Hệ thống (Tự động)",
-        note: `Hủy đơn ${o.code}. Khách mất cọc. Chuyển sang hàng sẵn.`
-      };
-      currentLogs.unshift(logEntry);
-      return newItem;
-    });
-
-    localStorage.setItem("tpf_simulated_products", JSON.stringify([...currentInventory, ...newItems]));
-    localStorage.setItem("tpf_simulated_inventory_logs", JSON.stringify(currentLogs.slice(0, 100)));
-
-    toast.success(`Đã tự động nhập ${newItems.length} món vào Kho!`, { icon: "📦" });
+      const res = await orderService.updateOrderStatus(order.id, payload);
+      if (res) {
+        await fetchOrderData();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Update production error:", error);
+      toast.error("Lỗi cập nhật tiến độ sản phẩm");
+      return false;
+    }
   };
 
   const productTotal = order?.products?.reduce((acc, p) => acc + (p.price || 0) * (p.qty || 1), 0) || 0;
-  const remainingValue = productTotal - (order?.deposit || 0) - (order?.receivedAmount || 0);
+  const remainingValue = order?.status === "Đơn đã hủy" ? 0 : (productTotal - (order?.deposit || 0) - (order?.receivedAmount || 0));
+  const recoveryAmt = (order?.deposit || 0) + (order?.receivedAmount || 0);
 
   const lastActiveStatus = useMemo(() => {
     if (!order?.timeline) return "Chờ xử lý";
-    const cancelIdx = order.timeline.findIndex(t => t.label.includes("Yêu cầu hủy") || t.label.includes("Chờ duyệt hủy"));
+    const cancelIdx = order.timeline.findIndex(t => t.label?.includes("Yêu cầu hủy") || t.label?.includes("Chờ duyệt hủy"));
     if (cancelIdx > 0) return order.timeline[cancelIdx - 1]?.label || "Đang xử lý";
     return order.status;
   }, [order?.timeline, order?.status]);
@@ -819,136 +889,93 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
   const isStarted = ["Đang sản xuất", "Đã nhập kho", "Đang gia công", "Chờ giao hàng"].includes(lastActiveStatus) || hasProduction;
   const isRefundBlocked = isStarted;
 
-  const handleUpdate = (newStatus, extraData = {}) => {
-    const saved = JSON.parse(localStorage.getItem("tpf_simulated_orders") || "[]");
-    let target = { ...order, status: newStatus, ...extraData };
-
-    if (newStatus === "Đơn đã hủy" && extraData.depositResolution === "forfeited") {
-      convertCancelledToStock(target);
+  const handleUpdate = async (newStatus, extraData = {}) => {
+    try {
+      const statusValue = ORDER_CONFIG.REVERSE_STATUS_MAP[newStatus];
+      const payload = {
+        order_status: statusValue !== undefined ? statusValue : order.order_status,
+        ...extraData
+      };
+      const res = await orderService.updateOrderStatus(order.id, payload);
+      if (res) {
+        await fetchOrderData();
+        onStatusChanged(order.id, newStatus);
+        toast.success(`Đã cập nhật trạng thái: ${newStatus}`);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Lỗi khi cập nhật trạng thái");
     }
-
-    const now = new Date();
-    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} — ${now.toLocaleDateString("vi-VN")}`;
-
-    let label = `Cập nhật: ${newStatus}`;
-    let desc = `Trạng thái được cập nhật bởi Chủ cửa hàng.`;
-
-    if (extraData.timelineLabel) label = extraData.timelineLabel;
-    if (extraData.timelineDesc) desc = extraData.timelineDesc;
-
-    const newEntry = { time: timeStr, label, desc, active: true };
-    target.timeline = [...(target.timeline || []), newEntry];
-
-    delete target.timelineLabel;
-    delete target.timelineDesc;
-
-    const updatedList = saved.filter(o => o.id !== order.id && o.code !== order.code);
-    updatedList.push(target);
-
-    localStorage.setItem("tpf_simulated_orders", JSON.stringify(updatedList));
-    setOrder(target);
-    onStatusChanged(target.id, newStatus);
-    toast.success(`Đã cập nhật trạng thái: ${newStatus}`);
   };
 
-  const handleFinishOrder = () => {
+  const handleFinishOrder = async () => {
     if (!deliveryImage && !order.deliveryImage) {
       toast.error("Vui lòng tải ảnh giao hàng trước!");
       return;
     }
 
-    try {
-      const savedWarranties = JSON.parse(localStorage.getItem("tpf_simulated_warranties") || "[]");
-      const newWarranties = order.products.map((p, idx) => {
-        const mat = p.material?.toLowerCase() || "";
-        const months = mat.includes("sồi") || mat.includes("mdf") || mat.includes("công nghiệp") ? 12 : 36;
-        const start = new Date();
-        const end = new Date();
-        end.setMonth(end.getMonth() + months);
-
-        return {
-          id: `BH-${order.code}-${idx + 1}`,
-          orderId: order.code,
-          productName: p.name,
-          startDate: start.toISOString().split('T')[0],
-          endDate: end.toISOString().split('T')[0],
-          status: "Active"
-        };
-      });
-      localStorage.setItem("tpf_simulated_warranties", JSON.stringify([...savedWarranties, ...newWarranties]));
-    } catch (e) { console.error(e); }
-
     const debtAmount = Math.max(0, remainingValue - finalPayment);
     const isFullPayment = debtAmount <= 0;
 
-    handleUpdate("Hoàn thành", {
-      deliveryImage: deliveryImage || order.deliveryImage,
-      receivedAmount: finalPayment,
-      debtAmount: debtAmount,
-      paymentMethod,
-      paymentStatus: isFullPayment ? "full" : "partial",
-      timelineLabel: "Hoàn tất đơn hàng",
-      timelineDesc: isFullPayment
-        ? "Khách hàng đã nhận đủ sản phẩm và thanh toán hoàn tất. Kích hoạt bảo hành."
-        : `Khách nhận hàng & thanh toán một phần. Ghi nợ: ${fmtCurrency(debtAmount)}. Kích hoạt bảo hành.`
+    await handleUpdate("Hoàn thành", {
+      received_amount: Number(finalPayment || 0),
+      delivery_image: deliveryImage,
+      order_note: isFullPayment ? "Khách đã thanh toán đủ" : `Khách nợ: ${fmtCurrency(debtAmount)}`
     });
     setShowCompleteModal(false);
   };
 
-  const handleHandoverConfirm = () => {
-    const newStatus = "Đang gia công";
-
-    const updatedProducts = order.products.map((p, idx) => ({
-      ...p,
-      finishingDays: handoverItemsData[idx]?.days || "",
-      deadline: handoverItemsData[idx]?.deadline || handoverDeadline
-    }));
-
-    const finalDeadlines = updatedProducts.map(p => p.deadline).filter(d => !!d);
-    const maxDeadline = finalDeadlines.length > 0
-      ? new Date(Math.max(...finalDeadlines.map(d => new Date(d)))).toISOString().split('T')[0]
-      : handoverDeadline;
-
-    const deadlineStr = maxDeadline ? new Date(maxDeadline).toLocaleDateString("vi-VN") : "Chưa xác định";
-
-    // Create production items for each product
+  const handleHandoverConfirm = async () => {
     try {
-      const savedProds = JSON.parse(localStorage.getItem("tpf_simulated_productions") || "[]");
-      const newProds = updatedProducts.map((p, idx) => ({
-        id: `PROD-${order.code}-${idx + 1}-${Date.now()}`,
-        orderId: order.id || order.code,
-        orderCode: order.code,
-        productName: p.name,
-        assignedWorker: "Chưa giao",
-        status: "Đang đánh giấy ráp",
-        isPendingApproval: false,
-        expectedEndDate: p.deadline || maxDeadline,
-        quantityPlanned: p.qty || 1,
-        quantityCompleted: 0,
-        productImage: p.image || "https://dogomynghenamtuan.com/wp-content/uploads/2020/07/sap-tho-tu-linh-go-mit-moc.jpg",
-        workerNotes: "Bàn giao gia công sản xuất mới."
-      }));
-      localStorage.setItem("tpf_simulated_productions", JSON.stringify([...savedProds, ...newProds]));
-    } catch (e) { console.error(e); }
+      // 1. Kiểm tra logic ngày: Deadline xưởng sơn phải <= Ngày giao khách
+      if (order.deliveryDate) {
+        const invalidItems = handoverItemsData.filter((item) => {
+          if (!item.deadline) return false;
+          return isDateAfter(item.deadline, order.deliveryDate);
+        });
 
-    handleUpdate(newStatus, {
-      products: updatedProducts,
-      worker_deadline: maxDeadline,
-      handover_notes: handoverNotes,
-      handover_checklist: {
-        approved_at: new Date().toISOString(),
-        notes: handoverNotes,
-        deadline: maxDeadline,
-      },
-      timelineLabel: "Bàn giao gia công",
-      timelineDesc: `Bàn giao ${updatedProducts.length} món. Hạn (muộn nhất): ${deadlineStr}.`
-    });
-    setShowHandoverModal(false);
+        if (invalidItems.length > 0) {
+          toast.error("Hạn xong sản phẩm không được sau Ngày giao khách!");
+          return;
+        }
+
+        if (isDateAfter(handoverDeadline, order.deliveryDate)) {
+          toast.error("Hạn bàn giao tổng không được sau Ngày giao khách!");
+          return;
+        }
+      }
+
+      // 2. Chuẩn bị dữ liệu chi tiết từng món
+      const handoverItems = order.products.map((p, idx) => ({
+        pk_order_item_id: p.id,
+        start_date: todayVN(), // Mặc định ngày bắt đầu là hôm nay khi bàn giao
+        end_date: handoverItemsData[idx]?.deadline,
+        note: handoverNotes
+      }));
+
+      await handleUpdate("Đang gia công", {
+        note: handoverNotes || "Bàn giao gia công cho xưởng sơn",
+        expected_fulfillment_date: handoverDeadline,
+        handover_items: handoverItems
+      });
+      setShowHandoverModal(false);
+    } catch (e) {
+      console.error(e);
+      toast.error("Lỗi khi bàn giao");
+    }
   };
 
   const handleSafeClose = () => {
     if (hasUnsavedChanges) {
-      if (window.confirm("Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn đóng?")) onClose();
+      setConfirmConfig({
+        title: "Xác nhận đóng",
+        message: "Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn đóng?",
+        onConfirm: () => {
+          setShowConfirm(false);
+          onClose();
+        }
+      });
+      setShowConfirm(true);
     } else onClose();
   };
 
@@ -1068,11 +1095,11 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
           )}
         </div>
 
-        {viewState === "ready" && order && (
+        {viewState === "ready" && order && (userRole === 'owner' || userRole === 'sales') && (
           <div className="p-4 border-t border-[var(--grid-border)]/50 bg-[var(--bg-main)]/50 flex items-center justify-end shrink-0 popup-footer printer-hidden">
             <div className="flex items-center gap-3">
               {/* ── Hàng mộc & Hàng khách đặt: bàn giao xưởng ── */}
-              {order.status === "Chờ xử lý" && (order.type === "Hàng mộc" || order.type === "Hàng khách đặt") && (
+              {userRole === 'owner' && order.status === "Chờ xử lý" && (order.type === "Hàng mộc" || order.type === "Hàng khách đặt") && (
                 <button
                   className="px-5 py-2 bg-[var(--brand-primary)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center gap-2"
                   onClick={() => setShowHandoverModal(true)}
@@ -1081,26 +1108,30 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                 </button>
               )}
 
-              {order.status === "Đang gia công" && (order.type === "Hàng mộc" || order.type === "Hàng khách đặt") && (
-                <button
-                  disabled={productions.length > 0 && !productions.every(p => p.status === "Hoàn thành")}
-                  className={`h-10 px-5 rounded-lg text-[13px] font-bold transition-all active:scale-95 flex items-center gap-2 ${productions.length > 0 && !productions.every(p => p.status === "Hoàn thành")
-                    ? "bg-[var(--text-placeholder)]/20 text-[var(--text-placeholder)] cursor-not-allowed"
-                    : "bg-[var(--status-success)] text-[var(--primary-foreground)] hover:opacity-90"
-                    }`}
-                  onClick={() => {
-                    if (window.confirm("Xác nhận sản phẩm đã hoàn thiện và sẵn sàng để giao?")) {
-                      handleUpdate("Chờ giao hàng");
-                    }
-                  }}
-                  title={productions.length > 0 && !productions.every(p => p.status === "Hoàn thành") ? "Chờ thợ hoàn thiện 100% các món hàng" : ""}
-                >
-                  {productions.length > 0 && !productions.every(p => p.status === "Hoàn thành") ? <Clock size={16} /> : <CheckCircle size={16} />}
-                  {productions.length > 0 && !productions.every(p => p.status === "Hoàn thành") ? "CHỜ XƯỞNG HOÀN THIỆN" : "HOÀN TẤT GIA CÔNG"}
-                </button>
+              {userRole === 'owner' && order.status === "Đang gia công" && (order.type === "Hàng mộc" || order.type === "Hàng khách đặt") && (
+                <>
+                  {/* Trường hợp thợ chưa làm xong hết */}
+                  {productions.length > 0 && !productions.every(p => p.status === "Hoàn Thành") ? (
+                    <button
+                      disabled
+                      className="h-10 px-5 rounded-lg text-[13px] font-bold bg-[var(--text-placeholder)]/20 text-[var(--text-placeholder)] cursor-not-allowed flex items-center gap-2"
+                      title="Chờ thợ hoàn thiện 100% các món hàng"
+                    >
+                      <Clock size={16} /> CHỜ XƯỞNG HOÀN THIỆN
+                    </button>
+                  ) : (
+                    /* Trường hợp thợ đã xong 100% - Đổi sang nút khác */
+                    <button
+                      className="h-10 px-5 rounded-lg text-[13px] font-bold bg-[var(--status-success)] text-[var(--primary-foreground)] hover:opacity-90 transition-all active:scale-95 flex items-center gap-2 shadow-sm"
+                      onClick={() => handleUpdate("Chờ giao hàng")}
+                    >
+                      <CheckCircle size={16} /> CHUYỂN SANG CHỜ GIAO
+                    </button>
+                  )}
+                </>
               )}
 
-              {order.status === "Chờ giao hàng" && (
+              {userRole === 'owner' && order.status === "Chờ giao hàng" && (
                 <button
                   className="px-5 py-2 bg-[var(--palette-blue)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center gap-2"
                   onClick={() => handleUpdate("Đang giao hàng")}
@@ -1109,7 +1140,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                 </button>
               )}
 
-              {order.status === "Đang giao hàng" && (
+              {userRole === 'owner' && order.status === "Đang giao hàng" && (
                 <button
                   className="px-5 py-2 bg-[var(--status-success)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center gap-2"
                   onClick={() => setShowCompleteModal(true)}
@@ -1118,19 +1149,25 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                 </button>
               )}
 
-              {order.status === "Chờ duyệt hủy" && (
+              {userRole === 'owner' && order.status === "Chờ duyệt hủy" && (
                 <div className="flex gap-2 p-1 bg-[var(--background)] border border-[var(--grid-border)]/50 rounded-xl">
                   <button
                     disabled={["Đang sản xuất", "Đang gia công", "Chờ giao hàng"].includes(lastActiveStatus) || (order.productionOrders?.length > 0)}
                     className="px-6 py-2.5 bg-[var(--bg-main)] text-[var(--text-secondary)] rounded-lg text-[13px] font-bold hover:bg-[var(--grid-border)]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex items-center gap-2"
                     onClick={() => {
-                      if (window.confirm("Duyệt hủy đơn và HOÀN TRẢ TIỀN CỌC cho khách hàng?")) {
-                        handleUpdate("Đơn đã hủy", {
-                          depositResolution: "refunded",
-                          timelineLabel: "Duyệt đơn hủy (Hoàn cọc)",
-                          timelineDesc: "Đơn bị hủy khi chưa triển khai. Chủ cửa hàng đã đồng ý hoàn trả 100% tiền cọc."
-                        });
-                      }
+                      setConfirmConfig({
+                        title: "Duyệt đơn hủy & Hoàn cọc",
+                        message: "Duyệt hủy đơn và HOÀN TRẢ TIỀN CỌC cho khách hàng?",
+                        onConfirm: () => {
+                          handleUpdate("Đơn đã hủy", {
+                            deposit_resolution: "refunded",
+                            timelineLabel: "Duyệt đơn hủy (Hoàn cọc)",
+                            timelineDesc: "Đơn bị hủy khi chưa triển khai. Chủ cửa hàng đã đồng ý hoàn trả 100% tiền cọc."
+                          });
+                          setShowConfirm(false);
+                        }
+                      });
+                      setShowConfirm(true);
                     }}
                   >
                     {["Đang sản xuất", "Đang gia công", "Chờ giao hàng"].includes(lastActiveStatus) ? <Lock size={16} /> : <RefreshCw size={16} />}
@@ -1139,17 +1176,23 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                   <button
                     className="px-6 py-2.5 bg-[var(--palette-orange)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center gap-2"
                     onClick={() => {
-                      const recoveryAmt = order.deposit || 0;
                       const msg = recoveryAmt > 0
                         ? `Thu hồi ${fmtCurrency(recoveryAmt)} cọc & Nhập lại kho?`
                         : `Hủy đơn & Nhập lại kho?`;
-                      if (window.confirm(msg)) {
-                        handleUpdate("Đơn đã hủy", {
-                          depositResolution: "forfeited",
-                          timelineLabel: "Duyệt đơn hủy (Thu cọc)",
-                          timelineDesc: `Quyết định của Chủ: Thu hồi ${recoveryAmt} cọc bồi thường chi phí. Tự động nhập kho món hàng sẵn/mộc.`
-                        });
-                      }
+
+                      setConfirmConfig({
+                        title: "Duyệt đơn hủy & Thu cọc",
+                        message: msg,
+                        onConfirm: () => {
+                          handleUpdate("Đơn đã hủy", {
+                            deposit_resolution: "forfeited",
+                            timelineLabel: "Duyệt đơn hủy (Thu cọc)",
+                            timelineDesc: `Quyết định của Chủ: Thu hồi ${recoveryAmt} cọc bồi thường chi phí. Tự động nhập kho món hàng sẵn/mộc.`
+                          });
+                          setShowConfirm(false);
+                        }
+                      });
+                      setShowConfirm(true);
                     }}
                   >
                     <Trash2 size={16} /> DUYỆT & THU CỌC
@@ -1161,6 +1204,11 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                 <button
                   className="px-4 py-2 bg-[var(--background)] text-[var(--status-error)] border border-[var(--status-error)]/10 rounded-lg text-[13px] font-bold hover:bg-[var(--status-error)]/5 transition-all flex items-center gap-2"
                   onClick={() => {
+                    if (userRole === 'owner') {
+                      setShowOwnerCancel(true);
+                      return;
+                    }
+
                     const isInitial = order.status === "Chờ xử lý" || order.status === "Chờ sản xuất";
                     let confirmMsg = "Xác nhận yêu cầu hủy đơn hàng này?";
                     if (isInitial) {
@@ -1168,12 +1216,24 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                     } else {
                       confirmMsg = "HÀNG ĐANG XỬ LÝ - Chuyển sang Chờ duyệt hủy để thực hiện THU CỌC bồi thường?";
                     }
-                    if (window.confirm(confirmMsg)) {
-                      handleUpdate("Chờ duyệt hủy", { cancelReason: "Chủ cửa hàng yêu cầu hủy" });
-                    }
+
+                    setConfirmConfig({
+                      title: "Yêu cầu hủy đơn hàng",
+                      message: confirmMsg,
+                      showInput: true,
+                      inputPlaceholder: "Nhập lý do khách hàng muốn hủy đơn...",
+                      required: true,
+                      onConfirm: (reason) => {
+                        handleUpdate("Chờ duyệt hủy", {
+                          cancel_reason: reason || "Nhân viên Sales yêu cầu hủy"
+                        });
+                        setShowConfirm(false);
+                      }
+                    });
+                    setShowConfirm(true);
                   }}
                 >
-                  <Ban size={16} /> HỦY
+                  <Ban size={16} /> {userRole === 'sales' ? "YÊU CẦU HỦY" : "HỦY"}
                 </button>
               )}
             </div>
@@ -1238,21 +1298,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                   )}
                 </div>
 
-                <div>
-                  <label className="text-[11px] font-black text-[var(--text-placeholder)] uppercase tracking-widest ml-1">Hình thức thanh toán</label>
-                  <div className="grid grid-cols-2 gap-2 mt-1.5">
-                    {["Chuyển khoản", "Tiền mặt"].map(m => (
-                      <button
-                        key={m}
-                        onClick={() => setPaymentMethod(m)}
-                        className={`py-2 px-4 rounded-lg border font-bold text-[13px] transition-all ${paymentMethod === m ? 'bg-[var(--brand-primary)] border-[var(--brand-primary)] text-[var(--primary-foreground)]' : 'bg-[var(--background)] border-[var(--grid-border)] text-[var(--text-secondary)] hover:bg-[var(--grid-header-bg)]'
-                          }`}
-                      >
-                        {m}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+
 
                 <div>
                   <label className="text-[11px] font-black text-[var(--text-placeholder)] uppercase tracking-widest ml-1">Ảnh giao hàng thực tế</label>
@@ -1262,17 +1308,31 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                       <img src={deliveryImage} className="h-20 w-auto rounded-lg object-cover" alt="Delivery" />
                     ) : (
                       <div className="flex flex-col items-center gap-1 text-[var(--text-placeholder)]">
-                        <Camera size={20} />
-                        <span className="text-[10px] font-bold uppercase">Nhấp để tải ảnh</span>
+                        {isUploading ? (
+                          <RefreshCw size={20} className="animate-spin text-[var(--brand-primary)]" />
+                        ) : (
+                          <Camera size={20} />
+                        )}
+                        <span className="text-[10px] font-bold uppercase">
+                          {isUploading ? "Đang tải..." : "Nhấp để tải ảnh"}
+                        </span>
                       </div>
                     )}
                     <input type="file" accept="image/*" className="hidden"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const file = e.target.files[0];
                         if (file) {
-                          const reader = new FileReader();
-                          reader.onloadend = () => setDeliveryImage(reader.result);
-                          reader.readAsDataURL(file);
+                          try {
+                            setIsUploading(true);
+                            const res = await uploadImage(file);
+                            setDeliveryImage(res.url);
+                            toast.success("Đã tải ảnh lên thành công!");
+                          } catch (err) {
+                            console.error(err);
+                            toast.error("Lỗi khi tải ảnh lên Cloudinary");
+                          } finally {
+                            setIsUploading(false);
+                          }
                         }
                       }}
                     />
@@ -1307,7 +1367,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                 </div>
                 <div>
                   <h3 className="text-[16px] font-bold text-[var(--text-main)] leading-none uppercase tracking-tight">
-                    BÀN GIAO GIA CÔNG XƯỞNG SƠN
+                    BÀN GIAO GIA CÔNG
                   </h3>
                   <p className="text-[11px] text-[var(--text-secondary)] mt-1.5 flex items-center gap-1.5">
                     <Package size={12} className="opacity-60" /> {order?.products?.length} món hàng cần hoàn thiện
@@ -1334,14 +1394,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                     <span className="text-[13px] font-bold">{fmtDate(order?.deliveryDate)}</span>
                   </div>
                 </div>
-                <div className="px-3 py-1.5 bg-[var(--status-focus)] border border-[var(--brand-primary)]/10 rounded-full flex items-center gap-2">
-                  <Hammer size={12} className="text-[var(--brand-primary)]" />
-                  <span className="text-[11px] font-bold text-[var(--brand-primary)] uppercase tracking-wider">
-                    Xưởng Sơn Hoàn Thiện
-                  </span>
-                </div>
               </div>
-
               {/* Product List Section */}
               <div className="space-y-3">
                 <h4 className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-widest px-1">
@@ -1383,7 +1436,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                             <div className="relative">
                               <input
                                 type="date"
-                                className="w-full pl-8 pr-2 py-1.5 bg-white border border-[var(--grid-border)] rounded-lg font-bold text-[11px] text-[var(--text-main)] focus:border-[var(--brand-primary)] outline-none transition-all"
+                                className={`w-full pl-8 pr-2 py-1.5 bg-white border rounded-lg font-bold text-[11px] outline-none transition-all ${itemData.deadline && order?.deliveryDate && isDateAfter(itemData.deadline, order.deliveryDate) ? 'border-red-500 text-red-600 bg-red-50' : 'border-[var(--grid-border)] text-[var(--text-main)] focus:border-[var(--brand-primary)]'}`}
                                 value={itemData.deadline || ""}
                                 onChange={(e) => {
                                   const newData = [...handoverItemsData];
@@ -1507,14 +1560,14 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                   <RotateCcw size={16} /> YÊU CẦU SỬA LẠI
                 </button>
                 <button
-                  onClick={() => {
-                    updateProductionInLocal(inspectItem.id, {
-                      status: "Hoàn thành",
-                      isPendingApproval: false,
-                      quantityCompleted: inspectItem.quantityPlanned
+                  onClick={async () => {
+                    const ok = await updateProductionInLocal(inspectItem.orderItemId, {
+                      status: "Hoàn Thành"
                     });
-                    toast.success("Đã nghiệm thu thành công sản phẩm!");
-                    setInspectItem(null);
+                    if (ok) {
+                      toast.success("Đã nghiệm thu thành công sản phẩm!");
+                      setInspectItem(null);
+                    }
                   }}
                   className="h-10 px-4 bg-emerald-600 text-white rounded-lg text-[13px] font-bold hover:bg-emerald-700 transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
@@ -1557,17 +1610,17 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                   HỦY
                 </button>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     if (!redoNote.trim()) { toast.error("Vui lòng nhập nội dung cần sửa"); return; }
-                    updateProductionInLocal(redoItem.id, {
-                      status: "Đang sơn",
-                      isPendingApproval: false,
-                      needsRedo: true,
-                      redoNote: redoNote
+                    const ok = await updateProductionInLocal(redoItem.orderItemId, {
+                      status: "Đang gia công",
+                      note: redoNote
                     });
-                    toast.success("Đã gửi yêu cầu sửa lại cho thợ!");
-                    setRedoItem(null);
-                    setRedoNote("");
+                    if (ok) {
+                      toast.success("Đã gửi yêu cầu sửa lại cho thợ!");
+                      setRedoItem(null);
+                      setRedoNote("");
+                    }
                   }}
                   className="flex-1 h-10 px-4 bg-[var(--status-error)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center justify-center"
                 >
@@ -1578,9 +1631,89 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={showConfirm}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setShowConfirm(false)}
+        showInput={confirmConfig.showInput}
+        inputPlaceholder={confirmConfig.inputPlaceholder}
+        required={confirmConfig.required}
+      />
+
+      <OwnerCancelModal
+        isOpen={showOwnerCancel}
+        onClose={() => setShowOwnerCancel(false)}
+        onConfirm={(res, reason) => {
+          handleUpdate("Đơn đã hủy", {
+            deposit_resolution: res,
+            cancel_reason: reason,
+            timelineLabel: res === "refunded" ? "Hủy đơn (Hoàn cọc)" : "Hủy đơn (Thu cọc)",
+            timelineDesc: reason
+          });
+          setShowOwnerCancel(false);
+        }}
+      />
     </div>
   );
 }
+
+const OwnerCancelModal = ({ isOpen, onClose, onConfirm }) => {
+  const [reason, setReason] = useState("");
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={onClose} />
+      <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in border border-gray-100">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
+              <Ban size={20} className="text-rose-500" /> HỦY ĐƠN HÀNG
+            </h3>
+            <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-full transition cursor-pointer text-gray-400"><X size={18} /></button>
+          </div>
+
+          <div className="space-y-4">
+            <p className="text-[13px] text-gray-500 leading-relaxed">
+              Bạn đang thực hiện hủy đơn hàng trực tiếp với quyền Chủ cửa hàng. Vui lòng nhập lý do và quyết định phương án xử lý tiền cọc.
+            </p>
+
+            <textarea
+              autoFocus
+              className="w-full h-28 p-4 text-[13px] border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all resize-none font-medium"
+              placeholder="Lý do hủy đơn..."
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+
+            <div className="flex gap-2 pt-4 border-t border-gray-50">
+              <button
+                disabled={!reason.trim()}
+                onClick={() => onConfirm("refunded", reason)}
+                className="flex-1 px-4 py-2.5 bg-[var(--bg-main)] text-[var(--text-secondary)] rounded-xl text-[12px] font-bold hover:bg-[var(--grid-border)]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex items-center justify-center gap-2 border border-[var(--grid-border)]/30"
+              >
+                <RefreshCw size={16} /> HOÀN CỌC
+              </button>
+
+              <button
+                disabled={!reason.trim()}
+                onClick={() => onConfirm("forfeited", reason)}
+                className="flex-1 px-4 py-2.5 bg-[var(--palette-orange)] text-white rounded-xl text-[12px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20"
+              >
+                <Trash2 size={16} /> THU CỌC
+              </button>
+            </div>
+
+
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // ===================== MINI UI ATOMS =====================
 

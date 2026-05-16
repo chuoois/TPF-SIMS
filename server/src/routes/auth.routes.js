@@ -8,7 +8,9 @@ const AuthController = require("../controller/auth.controller");
  * Created Date: 14/03/2026
  */
 
-const { verifyAccessToken } = require("../middleware/auth.middleware");
+const { verifyAccessToken } = require("../middlewares/auth.middleware");
+const validate = require("../middlewares/validate.middleware");
+const { loginSchema, forgotPasswordSchema } = require("../validations/auth.validation");
 
 /**
  * @swagger
@@ -36,7 +38,7 @@ const { verifyAccessToken } = require("../middleware/auth.middleware");
  *       401:
  *         description: Unauthorized
  */
-router.post("/login", AuthController.login);
+router.post("/login", validate(loginSchema), AuthController.login);
 
 /**
  * @swagger
@@ -87,7 +89,7 @@ router.post("/logout", verifyAccessToken, AuthController.logout);
  *       404:
  *         description: User not found
  */
-router.post("/forgot-password", AuthController.forgotPassword);
+router.post("/forgot-password", validate(forgotPasswordSchema), AuthController.forgotPassword);
 
 /**
  * @swagger

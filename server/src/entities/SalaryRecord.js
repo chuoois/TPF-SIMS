@@ -6,7 +6,7 @@ const sequelize = require("../config/db");
  * 1 bản ghi lương = 1 nhân viên trong 1 kỳ lương.
  * Unique constraint: (fk_period_id, fk_employee_id) – mỗi NV chỉ có 1 bản ghi/kỳ.
  * total_salary được tính tại runtime: base_rate_snapshot × days_worked + SUM(adjustments)
- * Created By: ThinhBui
+ * Created By: hieunm
  * Created Date: 25/04/2026
  */
 const SalaryRecord = sequelize.define(

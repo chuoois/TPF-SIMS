@@ -4,7 +4,7 @@ const systemLogController = require("./systemLog.controller");
 
 /**
  * Employee Controller – Quản lý nhân viên xưởng
- * Created By: ThinhBui
+ * Created By: Hieunm
  * Created Date: 25/04/2026
  */
 class EmployeeController {

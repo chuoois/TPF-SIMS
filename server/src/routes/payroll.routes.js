@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const payrollController = require("../controller/payroll.controller");
-const { verifyAccessToken, verifyRole } = require("../middleware/auth.middleware");
+const { verifyAccessToken, verifyRole } = require("../middlewares/auth.middleware");
 
 /**
  * @swagger
@@ -12,7 +12,7 @@ const { verifyAccessToken, verifyRole } = require("../middleware/auth.middleware
 
 /**
  * Payroll Routes
- * Created By: ThinhBui
+ * Created By: Hieunm
  * Created Date: 25/04/2026
  */
 

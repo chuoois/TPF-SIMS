@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import * as Yup from "yup";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import {
@@ -27,32 +28,49 @@ import {
   Calendar,
   Settings,
   X,
-  AlertTriangle,
+  Hammer,
 } from "lucide-react";
-import {
-  updateMockTaskStatus,
-  getTaskById,
-  updateTaskFinishedImage,
-  updateTaskDeadline,
-} from "../mock";
+
+import workerService from "@/services/worker.service";
+import { uploadImage } from "@/services/cloudinary.service";
+
+// Helper to safely render values that may be objects
+const formatValue = (val) => {
+  if (val && typeof val === "object") {
+    try {
+      return JSON.stringify(val);
+    } catch {
+      return String(val);
+    }
+  }
+  return val;
+};
+
+// Schema validate khi thợ gửi ảnh hoàn thành (mảng files)
+const finishedImagesSchema = Yup.object().shape({
+  files: Yup.array()
+    .min(1, "Vui lòng tải lên ít nhất 1 ảnh sản phẩm hoàn thành")
+    .max(10, "Tối đa 10 ảnh")
+    .required("Vui lòng tải lên ảnh sản phẩm hoàn thành trước khi gửi"),
+});
 
 /* ─── Production Steps ─── */
 const STEPS = [
-  { id: 1, key: "WAITING", label: "Tiếp nhận", icon: PackageCheck },
-  { id: 2, key: "INSPECTION", label: "Nghiệm thu", icon: Play },
-  { id: 3, key: "OWNER_PENDING", label: "Chờ chủ duyệt", icon: AlertCircle },
-  { id: 4, key: "COMPLETED", label: "Hoàn thành", icon: CheckCircle2 },
+  { id: 1, key: "Chờ gia công", label: "Chờ nhận", icon: Clock },
+  { id: 2, key: "Đang gia công", label: "Đang làm", icon: Hammer },
+  { id: 3, key: "Gửi Nghiệm Thu", label: "Nghiệm thu", icon: Camera },
+  { id: 4, key: "Hoàn Thành", label: "Xong", icon: CheckCircle2 },
 ];
 
 const getStepIndex = (status) => {
   switch (status) {
-    case "WAITING":
+    case "Chờ gia công":
       return 0;
-    case "INSPECTION":
+    case "Đang gia công":
       return 1;
-    case "OWNER_PENDING":
+    case "Gửi Nghiệm Thu":
       return 2;
-    case "COMPLETED":
+    case "Hoàn Thành":
       return 4;
     default:
       return 0;
@@ -62,32 +80,32 @@ const getStepIndex = (status) => {
 /* ─── Status badge helper ─── */
 const getStatusBadge = (status) => {
   const map = {
-    WAITING: {
-      label: "Tiếp nhận",
+    "Chờ gia công": {
+      label: "Chờ gia công",
       bg: "rgba(158,158,158,0.1)",
       color: "var(--text-secondary)",
       border: "var(--grid-border)",
     },
-    INSPECTION: {
-      label: "Đang nghiệm thu",
-      bg: "rgba(33,164,244,0.08)",
-      color: "#1a8fd4",
-      border: "rgba(33,164,244,0.2)",
+    "Đang gia công": {
+      label: "Đang gia công",
+      bg: "rgba(52,176,87,0.08)",
+      color: "var(--brand-primary)",
+      border: "rgba(52,176,87,0.15)",
     },
-    OWNER_PENDING: {
+    "Gửi Nghiệm Thu": {
       label: "Chờ chủ duyệt",
       bg: "rgba(245,158,11,0.08)",
       color: "#d97706",
       border: "rgba(245,158,11,0.2)",
     },
-    COMPLETED: {
+    "Hoàn Thành": {
       label: "Hoàn thành",
       bg: "rgba(52,176,87,0.08)",
       color: "var(--status-success)",
       border: "rgba(52,176,87,0.2)",
     },
   };
-  return map[status] || map.WAITING;
+  return map[status] || map["Chờ gia công"];
 };
 
 const getDeadlineStyle = (urgency) => {
@@ -129,7 +147,7 @@ export default function TaskDetail() {
 
   const [selectedTask, setSelectedTask] = useState(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [finishedImage, setFinishedImage] = useState(null);
+  const [pendingFiles, setPendingFiles] = useState([]);  // File objects chưa upload (preview cục bộ)
   const [isUploading, setIsUploading] = useState(false);
   const [showDeadlineModal, setShowDeadlineModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
@@ -163,54 +181,139 @@ export default function TaskDetail() {
     return { label: `Còn lại ${diffDays} ngày`, color: "text-emerald-600" };
   };
 
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    const task = getTaskById(id);
-    if (task) {
-      setSelectedTask(task);
-    } else {
-      navigate("/worker/dashboard");
-    }
+    const fetchTask = async () => {
+      try {
+        setIsLoading(true);
+        const res = await workerService.getPendingTasks();
+
+        let foundTask = null;
+        for (const order of res.data) {
+          const item = order.items.find((i) => i.id === id);
+          if (item) {
+            foundTask = {
+              ...item,
+              image: item.picture,
+              orderId: order.id,
+              customerName: order.customerName,
+              isCustomOrder: order.isCustomOrder,
+              workerNotes: item.note || "" // Áp dụng note từ backend vào workerNotes
+            };
+            break;
+          }
+        }
+
+        if (foundTask) {
+          setSelectedTask(foundTask);
+        } else {
+          navigate("/worker/dashboard");
+        }
+      } catch (error) {
+        console.error("Lỗi khi tải chi tiết công việc:", error);
+        toast.error("Không thể tải dữ liệu công việc!");
+        navigate("/worker/dashboard");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTask();
   }, [id, navigate]);
 
-  const updateTaskStatus = (taskId, newStatus) => {
-    updateMockTaskStatus(taskId, newStatus, finishedImage);
-    // Re-read the task from mock to pick up any changes (e.g. startedAt)
-    const updated = getTaskById(taskId);
-    setSelectedTask(updated);
-    setFinishedImage(null);
+  // Trích xuất số ID thực từ "SP-123" → "123"
+  const extractRealId = (formattedId) => {
+    if (!formattedId) return null;
+    return String(formattedId).replace('SP-', '');
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setIsUploading(true);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFinishedImage(reader.result);
+  const updateTaskStatus = async (taskId, newStatus) => {
+    const realId = extractRealId(taskId);
+    try {
+      if (newStatus === 'Đang gia công') {
+        await workerService.startTask(realId);
+        toast.success('Đã bắt đầu gia công!');
+        setSelectedTask(prev => ({ ...prev, status: newStatus }));
+      } else if (newStatus === 'Gửi Nghiệm Thu') {
+        // Upload tất cả ảnh lên Cloudinary rồi mới gọi API
+        setIsUploading(true);
+        const uploadedUrls = [];
+        for (const file of pendingFiles) {
+          const result = await uploadImage(file);
+          uploadedUrls.push(result.url);
+        }
+        await workerService.completeTask(realId, uploadedUrls);
+        toast.success('Đã gửi ảnh, chờ chủ duyệt!');
+        setSelectedTask(prev => ({ ...prev, status: newStatus, finishedImages: uploadedUrls }));
+        setPendingFiles([]);
         setIsUploading(false);
-      };
-      reader.readAsDataURL(file);
+      }
+    } catch (error) {
+      setIsUploading(false);
+      console.error('Lỗi cập nhật trạng thái:', error);
+      toast.error(error?.response?.data?.message || 'Lỗi khi cập nhật trạng thái!');
     }
   };
 
-  const handleUpdateImage = () => {
-    if (!finishedImage) return;
-    setIsUploading(true);
-    setTimeout(() => {
-      updateTaskFinishedImage(selectedTask.id, finishedImage);
-      const updated = getTaskById(selectedTask.id);
-      setSelectedTask(updated);
-      setFinishedImage(null);
-      setIsUploading(false);
-      toast.success("Đã cập nhật ảnh sản phẩm!");
-    }, 1000);
+  // Chọn ảnh → chỉ preview cục bộ, CHƯA upload Cloudinary
+  const handleImageChange = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    
+    try {
+      await finishedImagesSchema.validate({ files: [...pendingFiles, ...files] });
+      setPendingFiles(prev => [...prev, ...files]);
+      // Reset input để có thể chọn lại cùng file
+      e.target.value = null;
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
 
-  const handleStartProduction = () => {
-    updateMockTaskStatus(selectedTask.id, "INSPECTION");
-    const updated = getTaskById(selectedTask.id);
-    setSelectedTask(updated);
-    toast.success("Bắt đầu chuyển sang nghiệm thu!");
+  // Xóa 1 ảnh khỏi danh sách pending
+  const handleRemovePendingFile = (index) => {
+    setPendingFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Gửi lại ảnh mới khi đang ở OWNER_PENDING
+  const handleUpdateImages = async () => {
+    try {
+      await finishedImagesSchema.validate({ files: pendingFiles });
+    } catch (err) {
+      toast.error(err.message);
+      return;
+    }
+    const realId = extractRealId(selectedTask.id);
+    setIsUploading(true);
+    try {
+      const uploadedUrls = [];
+      for (const file of pendingFiles) {
+        const result = await uploadImage(file);
+        uploadedUrls.push(result.url);
+      }
+      await workerService.completeTask(realId, uploadedUrls);
+      setSelectedTask(prev => ({ ...prev, finishedImages: uploadedUrls }));
+      setPendingFiles([]);
+      toast.success("Đã cập nhật ảnh sản phẩm!");
+    } catch (error) {
+      console.error("Lỗi cập nhật ảnh:", error);
+      toast.error(error?.response?.data?.message || "Lỗi khi cập nhật ảnh!");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleStartProduction = async () => {
+    const realId = extractRealId(selectedTask.id);
+    try {
+      await workerService.startTask(realId);
+      setSelectedTask(prev => ({ ...prev, status: 'Đang gia công', startedAt: new Date().toLocaleDateString('vi-VN') }));
+      toast.success('Đã bắt đầu gia công!');
+    } catch (error) {
+      console.error('Start task error:', error);
+      toast.error(error?.response?.data?.message || 'Lỗi khi bắt đầu gia công!');
+    }
   };
 
   const handleSetPlanDate = () => {
@@ -237,15 +340,19 @@ export default function TaskDetail() {
     if (diffDays <= 1) urgency = "URGENT";
     else if (diffDays <= 3) urgency = "WARNING";
 
-    updateTaskDeadline(selectedTask.id, dateStr, urgency);
+    // Since mock data was removed, we update local state for demonstration
+    // In a real app, this should call workerService.updateDeadline(...)
+    setSelectedTask(prev => ({
+      ...prev,
+      deadline: dateStr,
+      status: isStartingProduction ? "Đang gia công" : prev.status,
+      startedAt: isStartingProduction ? new Date().toLocaleDateString("vi-VN") : prev.startedAt
+    }));
 
     if (isStartingProduction) {
-      updateMockTaskStatus(selectedTask.id, "INSPECTION");
       setIsStartingProduction(false);
     }
 
-    const updated = getTaskById(selectedTask.id);
-    setSelectedTask(updated);
     setShowDeadlineModal(false);
     setSelectedDate("");
     toast.success(
@@ -263,7 +370,7 @@ export default function TaskDetail() {
 
   /* ─── Action Button ─── */
   const renderActionButton = () => {
-    if (selectedTask.status === "WAITING") {
+    if (selectedTask.status === "Chờ gia công") {
       return (
         <button
           onClick={handleStartProduction}
@@ -277,112 +384,166 @@ export default function TaskDetail() {
           }
           onMouseLeave={(e) => (e.currentTarget.style.filter = "none")}
         >
-          <Play size={15} /> Bắt đầu nghiệm thu
+          <Play size={15} /> Bắt đầu gia công
         </button>
       );
     }
 
-    if (selectedTask.status === "INSPECTION") {
+    if (selectedTask.status === "Đang gia công") {
       return (
         <div className="flex flex-col gap-4 items-end">
           <div className="w-full max-w-sm">
             <label className="block text-[12px] font-bold text-gray-500 mb-2 uppercase tracking-wider">
               Ảnh sản phẩm hoàn thiện <span className="text-red-500">*</span>
+              <span className="text-[10px] font-normal text-gray-400 ml-1">
+                ({pendingFiles.length}/10 ảnh)
+              </span>
             </label>
-            <div className="relative group">
-              <label
-                className={`w-full h-32 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${
-                  finishedImage
-                    ? "border-emerald-500 bg-emerald-50"
-                    : "border-gray-200 bg-gray-50 hover:bg-gray-100"
-                }`}
-              >
-                {finishedImage ? (
-                  <div className="flex items-center gap-4 px-4 w-full">
+
+            {/* Grid preview ảnh đã chọn */}
+            {pendingFiles.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {pendingFiles.map((file, index) => (
+                  <div key={index} className="relative group/thumb rounded-xl overflow-hidden border border-emerald-200 shadow-sm aspect-square">
                     <img
-                      src={finishedImage}
-                      className="w-24 h-24 rounded-xl object-cover border border-emerald-200 shadow-md"
-                      alt="Preview"
+                      src={URL.createObjectURL(file)}
+                      className="w-full h-full object-cover"
+                      alt={`Preview ${index + 1}`}
                     />
-                    <div className="flex flex-col">
-                      <span className="text-emerald-700 font-bold text-[13px]">
-                        Ảnh đã chọn
-                      </span>
-                      <span className="text-[11px] text-gray-400 font-medium">
-                        Nhấp để thay đổi
-                      </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePendingFile(index)}
+                      className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity cursor-pointer"
+                    >
+                      <X size={12} className="text-white" />
+                    </button>
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/40 text-white text-[9px] text-center py-0.5 font-medium">
+                      {index + 1}
                     </div>
                   </div>
-                ) : (
-                  <>
-                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm mb-2 group-hover:scale-110 transition-transform">
-                      <Camera size={20} className="text-gray-400" />
-                    </div>
-                    <span className="text-gray-400 text-[11px] font-bold uppercase tracking-wider">
-                      Chụp hoặc tải ảnh lên
-                    </span>
-                  </>
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageChange}
-                />
-              </label>
-            </div>
+                ))}
+              </div>
+            )}
+
+            {/* Nút thêm ảnh */}
+            {pendingFiles.length < 10 && (
+              <div className="relative group">
+                <label
+                  className="w-full h-20 rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 hover:bg-gray-100 flex flex-col items-center justify-center cursor-pointer transition-all"
+                >
+                  <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm mb-1 group-hover:scale-110 transition-transform">
+                    <Camera size={16} className="text-gray-400" />
+                  </div>
+                  <span className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">
+                    Chụp hoặc thêm ảnh
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+                </label>
+              </div>
+            )}
           </div>
+
           <button
-            onClick={() => {
-              if (!finishedImage) {
-                toast.error("Vui lòng tải ảnh sản phẩm hoàn thiện!");
-                return;
+            onClick={async () => {
+              try {
+                await finishedImagesSchema.validate({ files: pendingFiles });
+                updateTaskStatus(selectedTask.id, "Gửi Nghiệm Thu");
+              } catch (err) {
+                toast.error(err.message);
               }
-              updateTaskStatus(selectedTask.id, "OWNER_PENDING");
             }}
-            disabled={isUploading || !finishedImage}
-            className={`h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 ${
-              isUploading || !finishedImage
+            disabled={isUploading || pendingFiles.length === 0}
+            className={`h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 ${isUploading || pendingFiles.length === 0
                 ? "opacity-50 cursor-not-allowed bg-gray-400"
                 : "cursor-pointer bg-emerald-600 hover:bg-emerald-700"
-            }`}
+              }`}
             style={{ color: "#fff" }}
           >
-            <CheckCircle2 size={15} /> Gửi ảnh cho chủ duyệt
+            {isUploading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Đang tải ảnh lên...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 size={15} /> Gửi {pendingFiles.length} ảnh cho chủ duyệt
+              </>
+            )}
           </button>
         </div>
       );
     }
 
-    if (selectedTask.status === "OWNER_PENDING") {
-      const currentDisplayImage = finishedImage || selectedTask.finishedImage;
+    if (selectedTask.status === "Gửi Nghiệm Thu") {
+      const serverImages = selectedTask.finishedImages || [];
+      const hasPendingFiles = pendingFiles.length > 0;
 
       return (
         <div className="flex flex-col gap-4 items-end">
           <div className="w-full max-w-sm">
             <label className="block text-[12px] font-bold text-gray-500 mb-2 uppercase tracking-wider">
-              {finishedImage ? "Ảnh mới chọn" : "Ảnh đã gửi cho chủ duyệt"}
+              {hasPendingFiles ? "Ảnh mới chọn (chưa lưu)" : "Ảnh đã gửi cho chủ duyệt"}
             </label>
-            <div className="relative group">
-              <label className="w-full h-32 rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/30 flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-amber-50">
-                <div className="flex items-center gap-4 px-4 w-full">
-                  <img
-                    src={currentDisplayImage}
-                    className="w-24 h-24 rounded-xl object-cover border border-amber-200 shadow-md"
-                    alt="Preview"
-                  />
-                  <div className="flex flex-col">
-                    <span className="text-amber-700 font-bold text-[13px]">
-                      {finishedImage ? "Ảnh mới (Chưa lưu)" : "Ảnh đã gửi"}
-                    </span>
-                    <span className="text-[11px] text-gray-400 font-medium">
-                      Nhấp để thay đổi ảnh khác
-                    </span>
+
+            {/* Grid ảnh đã gửi (từ server) */}
+            {!hasPendingFiles && serverImages.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {serverImages.map((url, index) => (
+                  <div
+                    key={index}
+                    className="relative group/img rounded-xl overflow-hidden border border-amber-200 shadow-sm aspect-square cursor-zoom-in"
+                    onClick={() => setZoomImage(url)}
+                  >
+                    <img src={url} className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-110" alt={`Sent ${index + 1}`} />
+                    <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/20 transition-colors flex items-center justify-center">
+                      <ZoomIn size={18} className="text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow-md" />
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/40 text-white text-[9px] text-center py-0.5 font-medium">
+                      {index + 1}
+                    </div>
                   </div>
-                </div>
+                ))}
+              </div>
+            )}
+
+            {/* Grid ảnh mới (pending files) */}
+            {hasPendingFiles && (
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {pendingFiles.map((file, index) => (
+                  <div key={index} className="relative group/thumb rounded-xl overflow-hidden border border-amber-200 shadow-sm aspect-square">
+                    <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" alt={`New ${index + 1}`} />
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePendingFile(index)}
+                      className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity cursor-pointer"
+                    >
+                      <X size={12} className="text-white" />
+                    </button>
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/40 text-white text-[9px] text-center py-0.5 font-medium">
+                      {index + 1}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Nút thêm ảnh mới */}
+            <div className="relative group">
+              <label className="w-full h-16 rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/30 flex items-center justify-center cursor-pointer transition-all hover:bg-amber-50 gap-2">
+                <Camera size={16} className="text-amber-500" />
+                <span className="text-amber-600 text-[11px] font-bold uppercase tracking-wider">
+                  {hasPendingFiles ? "Thêm ảnh" : "Chọn ảnh mới để gửi lại"}
+                </span>
                 <input
                   type="file"
                   accept="image/*"
+                  multiple
                   className="hidden"
                   onChange={handleImageChange}
                 />
@@ -391,27 +552,31 @@ export default function TaskDetail() {
           </div>
 
           <div className="flex gap-3">
-            {finishedImage && (
+            {hasPendingFiles && (
               <button
-                onClick={() => setFinishedImage(null)}
+                onClick={() => setPendingFiles([])}
                 className="h-11 px-6 rounded-xl font-semibold text-[14px] border border-gray-200 text-gray-500 hover:bg-gray-50 transition-all cursor-pointer"
               >
                 Hủy thay đổi
               </button>
             )}
             <button
-              onClick={finishedImage ? handleUpdateImage : null}
-              disabled={isUploading || !finishedImage}
-              className={`h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 ${
-                !finishedImage
+              onClick={hasPendingFiles ? handleUpdateImages : null}
+              disabled={isUploading || !hasPendingFiles}
+              className={`h-11 px-8 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 ${!hasPendingFiles
                   ? "opacity-50 cursor-not-allowed bg-amber-100/50 text-amber-600 border border-amber-200"
                   : "cursor-pointer bg-amber-600 hover:bg-amber-700 text-white shadow-amber-200"
-              }`}
+                }`}
             >
-              {finishedImage ? (
+              {isUploading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Đang tải ảnh lên...
+                </>
+              ) : hasPendingFiles ? (
                 <>
                   <CheckCircle2 size={15} />
-                  Cập nhật ảnh đã gửi
+                  Gửi lại {pendingFiles.length} ảnh mới
                 </>
               ) : (
                 <>
@@ -419,24 +584,6 @@ export default function TaskDetail() {
                   Đang chờ chủ duyệt
                 </>
               )}
-            </button>
-            <button
-              onClick={() => {
-                updateTaskStatus(selectedTask.id, "COMPLETED");
-                toast.success("Mô phỏng: Chủ xưởng đã duyệt!");
-              }}
-              className="h-11 px-6 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
-              <CheckCircle2 size={15} /> Giả lập Chủ Duyệt
-            </button>
-            <button
-              onClick={() => {
-                updateTaskStatus(selectedTask.id, "INSPECTION");
-                toast.error("Mô phỏng: Chủ xưởng yêu cầu làm lại!");
-              }}
-              className="h-11 px-6 rounded-xl font-semibold text-[14px] transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
-            >
-              <AlertCircle size={15} /> Giả lập Từ Chối
             </button>
           </div>
         </div>
@@ -536,7 +683,7 @@ export default function TaskDetail() {
             {/* Left: Product title & badges */}
             <div className="flex flex-col gap-3">
               <div className="flex flex-wrap items-center gap-2.5">
-                {selectedTask.status !== "WAITING" &&
+                {selectedTask.status !== "Chờ gia công" &&
                   selectedTask.status !== "REWORK" && (
                     <button
                       onClick={() => {
@@ -675,6 +822,22 @@ export default function TaskDetail() {
             />
           </div>
         </div>
+        
+        {/* HIỂN THỊ GHI CHÚ TỪ CHỦ XƯỞNG (ĐẶC BIỆT KHI YÊU CẦU SỬA LẠI) */}
+        {selectedTask.workerNotes && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 animate-in fade-in slide-in-from-top-2">
+            <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={20} />
+            <div>
+              <p className="text-[11px] font-black text-amber-600 uppercase tracking-widest mb-1 flex items-center gap-2">
+                Ghi chú từ chủ xưởng 
+                {selectedTask.status === 'Đang gia công' && <span className="bg-amber-500 text-white px-1.5 py-0.5 rounded text-[9px] animate-pulse">CẦN SỬA LẠI</span>}
+              </p>
+              <p className="text-[14px] font-bold text-amber-900 leading-relaxed italic">
+                "{selectedTask.workerNotes}"
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* ═══════════ MAIN 2-COLUMN LAYOUT ═══════════ */}
         <div className="flex flex-col lg:flex-row gap-5 items-start w-full">
@@ -706,7 +869,7 @@ export default function TaskDetail() {
                       className="text-[13px] font-bold"
                       style={{ color: "var(--text-main)" }}
                     >
-                      Hình ảnh sản phẩm 
+                      Hình ảnh sản phẩm
                     </h3>
                   </div>
                   {/* Main Image */}
@@ -804,12 +967,12 @@ export default function TaskDetail() {
                         boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
                       }}
                       onMouseEnter={(e) =>
-                        (e.currentTarget.style.borderColor =
-                          "var(--brand-primary)")
+                      (e.currentTarget.style.borderColor =
+                        "var(--brand-primary)")
                       }
                       onMouseLeave={(e) =>
-                        (e.currentTarget.style.borderColor =
-                          "var(--grid-border)")
+                      (e.currentTarget.style.borderColor =
+                        "var(--grid-border)")
                       }
                     >
                       <FileSignature size={13} style={{ color: "#4368E0" }} />{" "}
@@ -1009,7 +1172,7 @@ export default function TaskDetail() {
                       className="text-[13px] leading-relaxed break-words whitespace-pre-line"
                       style={{ color: "var(--text-main)" }}
                     >
-                      {selectedTask.note}
+                      {formatValue(selectedTask.note)}
                     </p>
                   </div>
                 </div>

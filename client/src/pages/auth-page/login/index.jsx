@@ -30,7 +30,7 @@ export const LoginPage = () => {
         OWNER: "/owner/dashboard",
         SALES: "/sales/dashboard/orders",
         ACCOUNTANT: "/accountant/dashboard",
-        WORKER: "/worker/home",
+        WORKER: "/worker/dashboard",
       };
       navigate(roleRedirectMap[user.role] || "/");
     }
@@ -63,7 +63,7 @@ export const LoginPage = () => {
           OWNER: "/owner/dashboard",
           SALES: "/sales/dashboard/orders",
           ACCOUNTANT: "/accountant/dashboard",
-          WORKER: "/worker/home",
+          WORKER: "/worker/dashboard",
         };
 
         toast.success("Đăng nhập thành công");

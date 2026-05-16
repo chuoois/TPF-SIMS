@@ -1,12 +1,16 @@
 /**
  * ViewImportModal – Xem Chi Tiết Phiếu Nhập Kho (Read-Only)
  * Hỗ trợ cả dòng đơn lẻ và dòng bộ (isBundle=true) với bảng các món lẻ.
+ * Updated: Tải chi tiết từ API để hiển thị đúng tên sản phẩm.
  */
 
+import { useState, useEffect } from "react";
 import {
     X, ArrowDownToLine, Building2, Calendar, Warehouse,
     StickyNote, Package, Ruler, Tag, Layers, AlignLeft, Hash, List, Info, Hexagon
 } from "lucide-react";
+import importService from "@/services/import.service";
+import { toast } from "react-hot-toast";
 
 // ── Helpers ──────────────────────────────────────────────
 const fmtCurrency = (n) =>
@@ -64,8 +68,7 @@ function UnitListGrid({ qty, unitIds, prefix }) {
 
 // ── Bundle card ───────────────────────────────────────────────────
 function BundleLineCard({ line, idx }) {
-    const invoiceTotal = (Number(line.bundleQty) || 0) * (Number(line.bundlePrice) || 0);
-    const formLabel = line.formType === "READY" ? "Hàng nhập thêm" : "Hàng mới";
+    const invoiceTotal = (Number(line.bundleQty) || 0) * (Number(line.bundlePrice || line.importPrice) || 0);
     const productTypeLabel = { RAW: "Hàng mộc", CUSTOM: "Hàng khách đặt", FINISHED: "Hàng có sẵn" }[line.productType] || "";
 
     return (
@@ -80,16 +83,11 @@ function BundleLineCard({ line, idx }) {
                         <span className="text-[12px] font-extrabold uppercase tracking-wider text-purple-900 block" style={{lineHeight: 1.2}}>
                             Bộ Sản Phẩm #{idx + 1}
                         </span>
-                        <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider bg-white text-purple-600 border border-purple-200/60 shadow-sm">
-                                {formLabel}
+                        {productTypeLabel && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider bg-fuchsia-50 text-fuchsia-600 border border-fuchsia-200/60 shadow-sm mt-1 inline-block">
+                                {productTypeLabel}
                             </span>
-                            {productTypeLabel && (
-                                <span className="text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider bg-fuchsia-50 text-fuchsia-600 border border-fuchsia-200/60 shadow-sm">
-                                    {productTypeLabel}
-                                </span>
-                            )}
-                        </div>
+                        )}
                     </div>
                 </div>
                 {invoiceTotal > 0 && (
@@ -106,16 +104,16 @@ function BundleLineCard({ line, idx }) {
                 {/* Title & Stats */}
                 <div className="flex flex-col gap-4">
                     <div>
-                        <h3 className="text-lg font-black text-gray-900 mb-1.5">{line.bundleName || "—"}</h3>
+                        <h3 className="text-lg font-black text-gray-900 mb-1.5">{line.bundleName || line.productName || "—"}</h3>
                         {(line.bundleCode || line.productCode) && (
                             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-gray-50 text-gray-600 text-[11px] font-mono border border-gray-200">
                                 <Tag size={11} className="text-gray-400" /> {line.bundleCode || line.productCode}
                             </div>
                         )}
                     </div>
-                    
+
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                         <InfoBlock icon={Tag} label="Giá nhập/bộ" value={fmtCurrency(line.bundlePrice)} />
+                         <InfoBlock icon={Tag} label="Giá nhập/bộ" value={fmtCurrency(line.bundlePrice || line.importPrice)} />
                          {line.category && <InfoBlock icon={AlignLeft} label="Danh mục" value={line.category} />}
                          {(line.materialType || line.woodType) && <InfoBlock icon={Hexagon} label="Chất liệu" value={line.materialType || line.woodType} />}
                          {line.color && <InfoBlock icon={Info} label="Màu sắc" value={line.color} />}
@@ -162,7 +160,7 @@ function BundleLineCard({ line, idx }) {
                     )}
 
                     {/* Danh sách mã định danh */}
-                    <UnitListGrid qty={line.bundleQty} unitIds={line.unitIds} prefix={line.bundleCode || "BO"} />
+                    <UnitListGrid qty={line.bundleQty || line.qty} unitIds={line.unitIds} prefix={line.bundleCode || line.productCode || "BO"} />
                 </div>
 
                 {/* Chi tiết */}
@@ -184,7 +182,6 @@ function BundleLineCard({ line, idx }) {
 // ── Single product card ───────────────────────────────────
 function SingleLineCard({ line, idx }) {
     const lineTotal = Number(line.qty || 0) * Number(line.importPrice || 0);
-    const formLabel = line.formType === "READY" ? "Hàng nhập thêm" : "Hàng mới";
     const productTypeLabel = { RAW: "Hàng mộc", CUSTOM: "Hàng khách đặt", FINISHED: "Hàng có sẵn" }[line.productType] || "";
     const dims = [line.length, line.width, line.height].filter(Boolean).join(" × ");
 
@@ -200,18 +197,11 @@ function SingleLineCard({ line, idx }) {
                         <span className="text-[12px] font-extrabold uppercase tracking-wider text-emerald-900 block" style={{lineHeight: 1.2}}>
                             Mặt Hàng #{idx + 1}
                         </span>
-                        <div className="flex items-center gap-2 mt-1">
-                            {formLabel && (
-                                <span className="text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider bg-white text-emerald-600 border border-emerald-200/60 shadow-sm">
-                                    {formLabel}
-                                </span>
-                            )}
-                            {productTypeLabel && (
-                                <span className="text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider bg-teal-50 text-teal-700 border border-teal-200/60 shadow-sm">
-                                    {productTypeLabel}
-                                </span>
-                            )}
-                        </div>
+                        {productTypeLabel && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider bg-teal-50 text-teal-700 border border-teal-200/60 shadow-sm mt-1 inline-block">
+                                {productTypeLabel}
+                            </span>
+                        )}
                     </div>
                 </div>
                 {lineTotal > 0 && (
@@ -233,7 +223,7 @@ function SingleLineCard({ line, idx }) {
                                 className="w-full sm:w-36 h-36 rounded-xl object-cover border border-gray-200 shadow-sm p-1 bg-white" />
                         </div>
                     )}
-                    
+
                     <div className="flex-1 flex flex-col gap-4">
                         <div>
                             <h3 className="text-lg font-black text-gray-900 mb-1.5">{line.productName || "—"}</h3>
@@ -243,7 +233,7 @@ function SingleLineCard({ line, idx }) {
                                 </div>
                             )}
                         </div>
-                        
+
                         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                              <InfoBlock icon={Tag} label="Giá nhập/món" value={fmtCurrency(Number(line.importPrice))} />
                              {line.category && <InfoBlock icon={AlignLeft} label="Danh mục" value={line.category} />}
@@ -275,11 +265,36 @@ function SingleLineCard({ line, idx }) {
 
 // ─────────────────────────────────────────────────────────
 export default function ViewImportModal({ item, onClose }) {
+    const [detail, setDetail] = useState(null);
+    const [loadingDetail, setLoadingDetail] = useState(false);
+
+    // Tải chi tiết phiếu từ API khi mở modal
+    useEffect(() => {
+        if (!item?.id) return;
+        const fetchDetail = async () => {
+            try {
+                setLoadingDetail(true);
+                const data = await importService.getImportReceiptDetail(item.id);
+                setDetail(data);
+            } catch (err) {
+                console.error("Lỗi tải chi tiết phiếu nhập:", err);
+                toast.error("Không thể tải chi tiết phiếu nhập!");
+                // Fallback: dùng dữ liệu có sẵn từ danh sách
+                setDetail(item);
+            } finally {
+                setLoadingDetail(false);
+            }
+        };
+        fetchDetail();
+    }, [item?.id]);
+
     if (!item) return null;
 
-    const lines = item.lines || [];
-    const grandTotal = item.totalPrice ?? lines.reduce((s, l) => {
-        if (l.isBundle) return s + (Number(l.bundleQty || 0) * Number(l.bundlePrice || 0));
+    // Dùng detail từ API (đầy đủ) hoặc fallback về item từ danh sách
+    const receipt = detail || item;
+    const lines = receipt.lines || [];
+    const grandTotal = receipt.totalPrice ?? lines.reduce((s, l) => {
+        if (l.isBundle) return s + (Number(l.bundleQty || 0) * Number(l.bundlePrice || l.importPrice || 0));
         return s + (Number(l.qty || 0) * Number(l.importPrice || 0));
     }, 0);
 
@@ -304,7 +319,7 @@ export default function ViewImportModal({ item, onClose }) {
                             </h2>
                             <div className="flex items-center gap-2 mt-0.5">
                                 <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-100 font-bold">
-                                    {item.code}
+                                    {receipt.code}
                                 </span>
                             </div>
                         </div>
@@ -318,60 +333,73 @@ export default function ViewImportModal({ item, onClose }) {
                 {/* ── Scrollable Body ── */}
                 <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
 
-                    {/* KHU VỰC 1: Thông tin chứng từ */}
-                    <div className="rounded-2xl p-5 space-y-4 bg-white border border-gray-200 shadow-sm">
-                        <p className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-indigo-600">
-                            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-[10px] font-black bg-indigo-600 shadow-sm">1</span>
-                            Thông tin chứng từ
-                        </p>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
-                            <InfoBlock icon={Calendar} label="Ngày nhập" value={fmtDate(item.date)} className="bg-indigo-50/30 border-indigo-50" />
-                            <InfoBlock icon={Building2} label="Xưởng cung cấp" value={item.supplier} className="bg-indigo-50/30 border-indigo-50" />
+                    {/* Loading state */}
+                    {loadingDetail && (
+                        <div className="flex flex-col items-center justify-center py-16 gap-3">
+                            <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                            <p className="text-[13px] font-medium text-gray-500">Đang tải chi tiết phiếu nhập...</p>
                         </div>
-                        {item.note && (
-                            <div className="flex items-start gap-2 border-t border-gray-100 pt-4 mt-2">
-                                <div className="flex flex-col gap-1.5 w-full">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 text-gray-500">
-                                        <StickyNote size={12} className="text-gray-400"/> Ghi chú
-                                    </span>
-                                    <span className="text-[13px] italic text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                        {item.note}
-                                    </span>
+                    )}
+
+                    {!loadingDetail && (
+                        <>
+                            {/* KHU VỰC 1: Thông tin chứng từ */}
+                            <div className="rounded-2xl p-5 space-y-4 bg-white border border-gray-200 shadow-sm">
+                                <p className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-indigo-600">
+                                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-[10px] font-black bg-indigo-600 shadow-sm">1</span>
+                                    Thông tin chứng từ
+                                </p>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
+                                    <InfoBlock icon={Calendar} label="Ngày tạo phiếu" value={fmtDate(receipt.date)} className="bg-indigo-50/30 border-indigo-50" />
+                                    <InfoBlock icon={Calendar} label="Ngày nhập hàng" value={receipt.importDate ? new Date(receipt.importDate).toLocaleDateString("vi-VN") : "—"} className="bg-indigo-50/30 border-indigo-50" />
+                                    <InfoBlock icon={Building2} label="Xưởng cung cấp" value={receipt.supplier} className="bg-indigo-50/30 border-indigo-50" />
                                 </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* KHU VỰC 2: Chi tiết sản phẩm */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <p className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-indigo-600">
-                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-[10px] font-black bg-indigo-600 shadow-sm">2</span>
-                                Chi tiết mặt hàng
-                            </p>
-                            <span className="text-[11px] font-bold bg-indigo-50 text-indigo-600 px-2 py-1 rounded-lg border border-indigo-100">
-                                Tổng {lines.length} dòng
-                            </span>
-                        </div>
-
-                        {lines.length === 0 ? (
-                            <div className="rounded-2xl border border-dashed border-gray-300 p-8 text-center bg-gray-50">
-                                <span className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
-                                    <Package size={20} className="text-gray-400" />
-                                </span>
-                                <p className="text-[13px] font-semibold text-gray-600">Không có dữ liệu mặt hàng</p>
-                                <p className="text-[11px] text-gray-400 mt-1">Phiếu nhập này trống mặt hàng do lỗi.</p>
-                            </div>
-                        ) : (
-                            <div className="flex flex-col gap-5">
-                                {lines.map((line, idx) =>
-                                    line.isBundle
-                                        ? <BundleLineCard key={line._id ?? idx} line={line} idx={idx} />
-                                        : <SingleLineCard key={line._id ?? idx} line={line} idx={idx} />
+                                {receipt.note && (
+                                    <div className="flex items-start gap-2 border-t border-gray-100 pt-4 mt-2">
+                                        <div className="flex flex-col gap-1.5 w-full">
+                                            <span className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 text-gray-500">
+                                                <StickyNote size={12} className="text-gray-400"/> Ghi chú
+                                            </span>
+                                            <span className="text-[13px] italic text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                                {receipt.note}
+                                            </span>
+                                        </div>
+                                    </div>
                                 )}
                             </div>
-                        )}
-                    </div>
+
+                            {/* KHU VỰC 2: Chi tiết sản phẩm */}
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-indigo-600">
+                                        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-[10px] font-black bg-indigo-600 shadow-sm">2</span>
+                                        Chi tiết mặt hàng
+                                    </p>
+                                    <span className="text-[11px] font-bold bg-indigo-50 text-indigo-600 px-2 py-1 rounded-lg border border-indigo-100">
+                                        Tổng {lines.length} dòng · {receipt.qty || 0} đơn vị
+                                    </span>
+                                </div>
+
+                                {lines.length === 0 ? (
+                                    <div className="rounded-2xl border border-dashed border-gray-300 p-8 text-center bg-gray-50">
+                                        <span className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                                            <Package size={20} className="text-gray-400" />
+                                        </span>
+                                        <p className="text-[13px] font-semibold text-gray-600">Không có dữ liệu mặt hàng</p>
+                                        <p className="text-[11px] text-gray-400 mt-1">Phiếu nhập này trống mặt hàng do lỗi.</p>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col gap-5">
+                                        {lines.map((line, idx) =>
+                                            line.isBundle
+                                                ? <BundleLineCard key={line._id ?? idx} line={line} idx={idx} />
+                                                : <SingleLineCard key={line._id ?? idx} line={line} idx={idx} />
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* ── Footer ── */}
@@ -381,7 +409,7 @@ export default function ViewImportModal({ item, onClose }) {
                             Tổng giá trị phiếu
                         </span>
                         <span className="text-[22px] font-black text-indigo-600 leading-none">
-                            {fmtCurrency(grandTotal)}
+                            {loadingDetail ? "..." : fmtCurrency(grandTotal)}
                         </span>
                     </div>
                     <button onClick={onClose}

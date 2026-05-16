@@ -20,7 +20,12 @@ const notificationRoutes = require("./routes/notification.routes");
 const inventoryRoutes = require("./routes/inventory.routes");
 const supplierRoutes = require("./routes/supplier.routes");
 const couponRoutes = require("./routes/coupon.routes");
+const workerRoutes = require("./routes/worker.routes");
+const manufacturingOrderRoutes = require("./routes/manufacturingOrder.routes");
+const importRoutes = require("./routes/import.routes");
+const dashboardRoutes = require("./routes/dashboard.routes");
 const swaggerUi = require("swagger-ui-express");
+
 const swaggerJsDoc = require("swagger-jsdoc");
 
 const app = express();
@@ -40,7 +45,8 @@ app.use(cors({
 }));
 
 app.use(cookieParser());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // ── Routes ────────────────────────────────────────────────
 app.use("/api/auth", authRoutes);
@@ -57,6 +63,10 @@ app.use("/api/notification", notificationRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/supplier", supplierRoutes);
 app.use("/api/coupon", couponRoutes);
+app.use("/api/worker", workerRoutes);
+app.use("/api/manufacturing-order", manufacturingOrderRoutes);
+app.use("/api/import", importRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // ── Swagger ───────────────────────────────────────────────
 const SERVER_URL = process.env.SERVER_URL || "http://localhost:3000";
@@ -97,11 +107,17 @@ initSocket(server);
 
 // ── Start ─────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running at ${SERVER_URL}`);
-  console.log(`Swagger docs available at ${SERVER_URL}/api-docs`);
-});
 
 sequelize.sync({ alter: true })
-  .then(() => console.log("Database connected and synced successful"))
-  .catch((err) => console.error("Unable to connect/sync the database:", err.message));
+  .then(() => {
+    console.log("Database connected and synced successful");
+    server.listen(PORT, "0.0.0.0", () => {
+      const SERVER_URL = `http://localhost:${PORT}`;
+      console.log(`Server running at ${SERVER_URL}`);
+      console.log(`Swagger docs available at ${SERVER_URL}/api-docs`);
+    });
+  })
+  .catch((err) => {
+    console.error("Unable to connect/sync the database:", err.message);
+    process.exit(1);
+  });

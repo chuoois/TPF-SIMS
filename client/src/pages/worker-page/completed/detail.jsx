@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { Clock, CheckCircle2, ArrowLeft, TreePine, Maximize2, Palette, Layers, Camera, ZoomIn, X } from "lucide-react";
 import { useState, useEffect } from "react";
-import { getItemById } from "../mock";
+import workerService from "@/services/worker.service";
 
 export default function CompletedTaskDetail() {
   const navigate = useNavigate();
@@ -11,9 +11,30 @@ export default function CompletedTaskDetail() {
   const [task, setTask] = useState(null);
 
   useEffect(() => {
-    if (id) {
-      setTask(getItemById(id));
-    }
+    const fetchTask = async () => {
+      if (id) {
+        try {
+          const res = await workerService.getCompletedTasks();
+          let foundTask = null;
+          for (const order of res.data) {
+            const item = order.items.find((i) => i.id === id);
+            if (item) {
+              foundTask = {
+                ...item,
+                image: item.picture,
+                customerImages: item.finishedImage ? [item.finishedImage] : [],
+                orderCode: order.id
+              };
+              break;
+            }
+          }
+          setTask(foundTask);
+        } catch (error) {
+          console.error("Failed to load task", error);
+        }
+      }
+    };
+    fetchTask();
   }, [id]);
 
   if (!task) {

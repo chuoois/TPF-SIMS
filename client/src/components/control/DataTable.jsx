@@ -314,13 +314,6 @@ const DataTable = ({
 
             {/* Filters Group (Extra + Date) */}
             <div className="flex items-center gap-4 ml-auto">
-              {/* Extra Filters */}
-              {extraFilters && (
-                <div className="flex items-center gap-2">
-                  {extraFilters}
-                </div>
-              )}
-
               {/* Date Filters */}
               {(setDateFrom || setDateTo) && (
                 <div className="flex items-center gap-4">
@@ -365,6 +358,13 @@ const DataTable = ({
                       Xóa bộ lọc
                     </button>
                   )}
+                </div>
+              )}
+
+              {/* Extra Filters */}
+              {extraFilters && (
+                <div className="flex items-center gap-2">
+                  {extraFilters}
                 </div>
               )}
             </div>

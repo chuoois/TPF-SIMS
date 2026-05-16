@@ -18,9 +18,6 @@ class AuthController {
     try {
       const { email, password } = req.body;
 
-      if (!email || !password) {
-        return res.status(400).json({ message: "Vui lòng nhập email và mật khẩu" });
-      }
 
       // Tìm user kèm role và profile
       const user = await UserAccount.findOne({
@@ -84,7 +81,7 @@ class AuthController {
       });
 
       // Ghi log đăng nhập
-      await systemLogController.record(req, "LOGIN", `Người dùng ${user.email} đăng nhập thành công`, "INFO", user.user_account_id);
+      await systemLogController.record(req, "Đăng nhập", `Người dùng ${user.email} đăng nhập thành công`, "INFO", user.user_account_id);
 
       return res.status(200).json({
         message: "Đăng nhập thành công",
@@ -206,7 +203,7 @@ class AuthController {
 
       // Ghi log đăng xuất
       if (req.user) {
-        await systemLogController.record(req, "LOGOUT", `Người dùng ${req.user.email} đã đăng xuất`, "INFO");
+        await systemLogController.record(req, "Đăng xuất", `Người dùng ${req.user.email} đã đăng xuất`, "INFO");
       }
 
       return res.status(200).json({ message: "Đăng xuất thành công" });
@@ -223,9 +220,6 @@ class AuthController {
     try {
       const { email } = req.body;
 
-      if (!email) {
-        return res.status(400).json({ message: "Vui lòng nhập email" });
-      }
 
       const user = await UserAccount.findOne({ where: { email } });
 
@@ -248,7 +242,7 @@ class AuthController {
       await sendNewPasswordEmail(email, newPassword);
 
       // Ghi log quên mật khẩu
-      await systemLogController.record(req, "FORGOT_PASSWORD", `Yêu cầu cấp lại mật khẩu cho email: ${email}`, "WARN", user.user_account_id);
+      await systemLogController.record(req, "Quên mật khẩu", `Yêu cầu cấp lại mật khẩu cho email: ${email}`, "WARN", user.user_account_id);
 
       return res.status(200).json({ message: "Mật khẩu mới đã được gửi vào email của bạn" });
     } catch (error) {
