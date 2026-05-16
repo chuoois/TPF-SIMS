@@ -139,4 +139,13 @@ router.patch("/item/:itemSerial/status", InventoryController.updateItemStatus);
  */
 router.post("/defective/process", InventoryController.processDefectiveItems);
 
+/**
+ * @swagger
+ * /api/inventory/product/{id}/min-stock:
+ *   patch:
+ *     summary: Cập nhật định mức tồn kho tối thiểu
+ *     tags: [Inventory]
+ */
+router.patch("/product/:id/min-stock", InventoryController.updateMinStock);
+
 module.exports = router;

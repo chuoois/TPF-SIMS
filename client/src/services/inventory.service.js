@@ -55,6 +55,14 @@ const inventoryService = {
     const response = await axiosInstance.post("/inventory/defective/process", data);
     return response.data;
   },
+
+  /**
+   * Cập nhật định mức tồn kho tối thiểu
+   */
+  async updateMinStock(productId, minStock) {
+    const response = await axiosInstance.patch(`/inventory/product/${productId}/min-stock`, { minStock });
+    return response.data;
+  },
 };
 
 export default inventoryService;

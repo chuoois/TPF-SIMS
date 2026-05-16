@@ -547,7 +547,7 @@ class ProductController {
                     "pk_product_id", "sku", "product_name", "product_img",
                     "is_bundle", "bundle_items", "size", "is_gift", "description",
                     "warranty_months", "product_type", "product_status",
-                    "stock_quantity", "createdate", "modifiedate",
+                    "stock_quantity", "createdate", "modifiedate", "min_stock",
                     [stockQuantityLiteral, "available_quantity"]
                 ],
                 include: includes,
@@ -628,6 +628,7 @@ class ProductController {
                     finishedRetailPrice: pricing ? parseFloat(pricing.final_price) : 0,
                     profitMargin: pricing ? parseFloat(pricing.profit_margin) : 0,
                     isPriced: pricing ? (parseFloat(pricing.final_price) > 0 || parseFloat(pricing.raw_price) > 0) : false,
+                    minStock: p.min_stock || 0,
                     createdate: p.createdate,
                 };
             });

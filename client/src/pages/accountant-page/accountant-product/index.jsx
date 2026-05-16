@@ -213,12 +213,20 @@ export default function AccountantProductManage() {
     fetchProducts();
   }, [currentPage, itemsPerPage, search, categoryFilter, typeFilter]);
 
-  const handleSaveProduct = (updated) => {
-    setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-    setEditProduct(null);
-    toast.success("Đã cập nhật thông tin sản phẩm!", {
-      style: { fontSize: "14px" },
-    });
+  const handleSaveProduct = async (updated) => {
+    try {
+      setLoading(true);
+      await inventoryService.updateMinStock(updated.id, updated.minStock);
+      
+      setEditProduct(null);
+      toast.success("Đã cập nhật định mức tồn kho!");
+      fetchProducts(); 
+    } catch (error) {
+      console.error("Lỗi khi cập nhật sản phẩm:", error);
+      toast.error("Không thể lưu thay đổi!");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Đã bỏ logic filter local vì API đã xử lý

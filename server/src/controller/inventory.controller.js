@@ -102,6 +102,7 @@ class InventoryController {
           "is_gift",
           "is_bundle",
           "bundle_items",
+          "min_stock",
           [stockLiteral, "stock"],
           [availableLiteral, "available"],
           [defectiveLiteral, "defective"],
@@ -169,7 +170,7 @@ class InventoryController {
             delivering: parseInt(p.delivering) || 0,
           },
           importedAt: p.importedAt,
-          minStock: 2, // Hardcoded minStock for now since DB doesn't have it
+          minStock: p.min_stock || 0,
         };
       });
 
@@ -401,7 +402,7 @@ class InventoryController {
         where: { product_status: 1 },
         attributes: [
           "pk_product_id", "sku", "product_name", "product_type",
-          "product_img", "size",
+          "product_img", "size", "min_stock",
           [sequelize.literal(`(
             SELECT COUNT(*) FROM product_item
             WHERE product_item.fk_product_id = Product.pk_product_id
@@ -459,7 +460,7 @@ class InventoryController {
           stock,
           available,
           defective,
-          minStock: MIN_STOCK,
+          minStock: j.min_stock || 0,
           importedAt: j.importedAt,
           daysOld,
         };
@@ -475,7 +476,7 @@ class InventoryController {
 
       // Cảnh báo hàng dưới định mức (FINISHED, available <= minStock)
       const lowStockProducts = mapped
-        .filter(p => p.type === "FINISHED" && p.available <= MIN_STOCK)
+        .filter(p => p.type === "FINISHED" && p.available <= p.minStock)
         .slice(0, 20);
 
       // Hàng tồn lâu (> 60 ngày)
@@ -543,6 +544,35 @@ class InventoryController {
     } catch (error) {
       console.error("Get dashboard stats error:", error);
       return res.status(500).json({ message: "Lỗi hệ thống khi lấy thống kê kho hàng" });
+    }
+  }
+
+  /**
+   * Cập nhật định mức tồn kho tối thiểu (min_stock)
+   */
+  async updateMinStock(req, res) {
+    try {
+      const { id } = req.params;
+      const { minStock } = req.body;
+
+      const product = await Product.findByPk(id);
+      if (!product) {
+        return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
+      }
+
+      await product.update({
+        min_stock: minStock !== undefined ? minStock : product.min_stock,
+        modifiedate: new Date(),
+        modifieby: req.user.userId
+      });
+
+      return res.status(200).json({ 
+        message: "Cập nhật định mức tồn kho thành công", 
+        data: { minStock: product.min_stock } 
+      });
+    } catch (error) {
+      console.error("Update min stock error:", error);
+      return res.status(500).json({ message: "Lỗi hệ thống khi cập nhật định mức tồn kho" });
     }
   }
 }
