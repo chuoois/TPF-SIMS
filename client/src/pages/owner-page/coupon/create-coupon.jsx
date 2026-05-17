@@ -312,7 +312,7 @@ export default function CouponCreatePage() {
                     code: c.coupon_code || "",
                     name: c.coupon_name || "",
                     description: c.description || "",
-                    discountValue: c.discount_percent ? String(c.discount_percent) : "",
+                    discountValue: c.discount_percent ? String(Number(c.discount_percent)) : "",
                     startDate: c.start_date ? new Date(c.start_date).toISOString().slice(0, 10) : "",
                     endDate: c.end_date ? new Date(c.end_date).toISOString().slice(0, 10) : "",
                     allProducts: !c.products || c.products.length === 0,
