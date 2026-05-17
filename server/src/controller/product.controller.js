@@ -176,7 +176,7 @@ class ProductController {
                 where,
                 attributes: [
                     "pk_product_id", "sku", "product_name", "product_img",
-                    "is_bundle", "bundle_items", "size", "is_gift", "description", "warranty_months",
+                    "is_bundle", "bundle_items", "size", "is_gift", "description", "warranty_months", "min_stock",
                     [stockQuantityLiteral, "available_quantity"]
                 ],
                 include: [
@@ -279,6 +279,7 @@ class ProductController {
                     sell_type_name,
                     description: p.description,
                     warranty_months: p.warranty_months,
+                    min_stock: p.min_stock || 0,
                 };
             });
 
@@ -316,7 +317,7 @@ class ProductController {
             const product = await Product.findByPk(id, {
                 attributes: [
                     "pk_product_id", "sku", "product_name", "product_img",
-                    "is_bundle", "bundle_items", "size", "is_gift", "warranty_months", "description",
+                    "is_bundle", "bundle_items", "size", "is_gift", "warranty_months", "description", "min_stock",
                     [stockQuantityLiteral, "available_quantity"]
                 ],
                 include: [
@@ -414,7 +415,8 @@ class ProductController {
                     discount_percent,
                     coupon_code: coupon ? coupon.coupon_code : null
                 },
-                items: p.items || []
+                items: p.items || [],
+                min_stock: p.min_stock || 0
             };
 
             return res.status(200).json(response);
