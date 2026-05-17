@@ -24,6 +24,7 @@ const manufacturingOrderRoutes = require("./routes/manufacturingOrder.routes");
 const importRoutes = require("./routes/import.routes");
 const customerDebtRoutes = require("./routes/customerDebt.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
+const supplierDebtRoutes = require("./routes/supplierDebt.routes");
 
 const swaggerUi = require("swagger-ui-express");
 const couponRoutes = require("./routes/coupon.routes");
@@ -69,6 +70,7 @@ app.use("/api/manufacturing-order", manufacturingOrderRoutes);
 app.use("/api/import", importRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/customer-debt", customerDebtRoutes);
+app.use("/api/supplier-debt", supplierDebtRoutes);
 app.use("/api/coupon", couponRoutes);
 
 
