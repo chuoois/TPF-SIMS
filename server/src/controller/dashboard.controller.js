@@ -11,8 +11,62 @@ const {
     SystemLog,
     UserAccount,
     UserProfile,
-    UserRole
+    UserRole,
+    ImportReceipt,
+    SalaryRecord,
+    SalaryAdjustment,
+    PayrollPeriod,
+    CustomerProfile,
+    Employee
 } = require("../entities");
+
+/**
+ * Tính khoảng thời gian cho Accountant Dashboard dựa trên các bộ lọc
+ */
+function getAccountantDateRange(query) {
+    const { period = "month", selectedMonth, selectedQuarter, selectedYear, startDate, endDate } = query;
+    let dateFrom = null;
+    let dateTo = null;
+
+    const now = new Date();
+    const yNow = now.getFullYear();
+    const mNow = now.getMonth();
+
+    try {
+        if (period === "custom" && startDate && endDate) {
+            dateFrom = new Date(`${startDate}T00:00:00.000Z`);
+            dateTo = new Date(`${endDate}T23:59:59.999Z`);
+        } else if (period === "month" && selectedMonth) {
+            // selectedMonth format: "MM/YYYY", ví dụ "05/2026"
+            const [m, y] = selectedMonth.split("/");
+            dateFrom = new Date(Date.UTC(parseInt(y), parseInt(m) - 1, 1, 0, 0, 0));
+            dateTo = new Date(Date.UTC(parseInt(y), parseInt(m), 0, 23, 59, 59, 999));
+        } else if (period === "quarter" && selectedQuarter) {
+            // selectedQuarter format: "Q1/2026"
+            const [q, y] = selectedQuarter.split("/");
+            const quarter = parseInt(q.replace("Q", ""));
+            const year = parseInt(y);
+            const startMonth = (quarter - 1) * 3;
+            const endMonth = startMonth + 2;
+            dateFrom = new Date(Date.UTC(year, startMonth, 1, 0, 0, 0));
+            dateTo = new Date(Date.UTC(year, endMonth + 1, 0, 23, 59, 59, 999));
+        } else if (period === "year" && selectedYear) {
+            const y = parseInt(selectedYear);
+            dateFrom = new Date(Date.UTC(y, 0, 1, 0, 0, 0));
+            dateTo = new Date(Date.UTC(y, 11, 31, 23, 59, 59, 999));
+        } else {
+            // Fallback mặc định tháng hiện tại
+            dateFrom = new Date(Date.UTC(yNow, mNow, 1, 0, 0, 0));
+            dateTo = new Date(Date.UTC(yNow, mNow + 1, 0, 23, 59, 59, 999));
+        }
+    } catch (err) {
+        console.error("Parse date range error:", err);
+        dateFrom = new Date(Date.UTC(yNow, mNow, 1, 0, 0, 0));
+        dateTo = new Date(Date.UTC(yNow, mNow + 1, 0, 23, 59, 59, 999));
+    }
+
+    return { dateFrom, dateTo };
+}
 
 /**
  * Dashboard Controller - Tổng hợp dữ liệu cho Owner Dashboard
@@ -281,6 +335,335 @@ class DashboardController {
         } catch (error) {
             console.error("Get owner dashboard error:", error);
             return res.status(500).json({ message: "Lỗi hệ thống khi tải dữ liệu tổng quan" });
+        }
+    }
+
+    /**
+     * GET /api/dashboard/accountant
+     * Trả về dữ liệu tổng quan tài chính cho Accountant Dashboard kèm các bộ lọc
+     */
+    async getAccountantDashboard(req, res) {
+        try {
+            const { orderType = "all", costType = "all" } = req.query;
+            const { dateFrom, dateTo } = getAccountantDateRange(req.query);
+
+            // 1. Điều kiện lọc Order
+            const orderWhere = {
+                status: 1,
+                createdate: { [Op.gte]: dateFrom, [Op.lte]: dateTo }
+            };
+            if (orderType !== "all") {
+                orderWhere.order_type = parseInt(orderType);
+            }
+
+            // 2. Thực hiện các truy vấn chính song song
+            const [
+                completedOrdersData,
+                abnormalOrdersData,
+                importReceiptsData,
+                salaryRecordsData,
+                mfgOrdersData
+            ] = await Promise.all([
+                // 2a. Đơn hàng hoàn thành (Doanh thu bán hàng)
+                Order.findAll({
+                    where: { ...orderWhere, order_status: 6 },
+                    include: [{
+                        model: CustomerProfile,
+                        as: "customer",
+                        attributes: ["full_name", "phone_number"]
+                    }],
+                    order: [["createdate", "DESC"]]
+                }),
+
+                // 2b. Đơn hàng hủy mất cọc (Doanh thu bất thường)
+                Order.findAll({
+                    where: { ...orderWhere, order_status: 0, deposit_resolution: "forfeited" },
+                    include: [{
+                        model: CustomerProfile,
+                        as: "customer",
+                        attributes: ["full_name", "phone_number"]
+                    }],
+                    order: [["createdate", "DESC"]]
+                }),
+
+                // 2c. Phiếu nhập kho (Chi phí nhập hàng)
+                ImportReceipt.findAll({
+                    where: {
+                        import_date: { [Op.gte]: dateFrom, [Op.lte]: dateTo }
+                    },
+                    order: [["import_date", "DESC"]]
+                }),
+
+                // 2d. Bản ghi lương nhân viên (Chi phí lương)
+                SalaryRecord.findAll({
+                    where: {
+                        createdate: { [Op.gte]: dateFrom, [Op.lte]: dateTo }
+                    },
+                    include: [
+                        {
+                            model: SalaryAdjustment,
+                            as: "adjustments"
+                        },
+                        {
+                            model: Employee,
+                            as: "employee",
+                            include: [{
+                                model: UserAccount,
+                                as: "account",
+                                include: [{
+                                    model: UserProfile,
+                                    as: "profile",
+                                    attributes: ["full_name"]
+                                }]
+                            }]
+                        }
+                    ],
+                    order: [["createdate", "DESC"]]
+                }),
+
+                // 2e. Lệnh sản xuất gửi xưởng (Dùng cho dòng tiền cọc xưởng)
+                ManufacturingOrder.findAll({
+                    where: {
+                        createdate: { [Op.gte]: dateFrom, [Op.lte]: dateTo },
+                        deposit_amount: { [Op.gt]: 0 }
+                    }
+                })
+            ]);
+
+            // 3. Truy vấn bổ sung cho Dòng tiền (Cọc khách vào & Hoàn cọc khách)
+            const [customerDepositOrders, refundDepositOrders] = await Promise.all([
+                // Cọc khách vào (Các đơn có cọc > 0)
+                Order.findAll({
+                    where: {
+                        status: 1,
+                        createdate: { [Op.gte]: dateFrom, [Op.lte]: dateTo },
+                        deposit_amount: { [Op.gt]: 0 }
+                    },
+                    include: [{ model: CustomerProfile, as: "customer", attributes: ["full_name"] }]
+                }),
+                // Hoàn cọc khách (Đơn hủy, refunded)
+                Order.findAll({
+                    where: {
+                        status: 1,
+                        createdate: { [Op.gte]: dateFrom, [Op.lte]: dateTo },
+                        order_status: 0,
+                        deposit_resolution: "refunded",
+                        deposit_amount: { [Op.gt]: 0 }
+                    },
+                    include: [{ model: CustomerProfile, as: "customer", attributes: ["full_name"] }]
+                })
+            ]);
+
+            // ═══════════════════════════════════════════════════════════
+            // XỬ LÝ SỐ LIỆU & FORMAT CHO FRONTEND
+            // ═══════════════════════════════════════════════════════════
+
+            // --- A. DOANH THU ---
+            const completedOrders = completedOrdersData.map(o => ({
+                id: o.pk_order_id,
+                code: `DH-${o.pk_order_id}`,
+                customer: o.customer?.full_name || "Khách lẻ",
+                date: new Date(o.createdate).toLocaleDateString("vi-VN"),
+                total_amount: parseFloat(o.total_amount) || 0
+            }));
+            const revenue = completedOrders.reduce((sum, o) => sum + o.total_amount, 0);
+
+            // --- B. DOANH THU BẤT THƯỜNG ---
+            const abnormalOrders = abnormalOrdersData.map(o => ({
+                id: o.pk_order_id,
+                order_code: `DH-${o.pk_order_id}`,
+                customer: o.customer?.full_name || "Khách lẻ",
+                date: new Date(o.createdate).toLocaleDateString("vi-VN"),
+                reason: o.cancel_reason || "Hủy đơn - Khách chịu phạt cọc",
+                deposit_kept: parseFloat(o.deposit_amount) || 0
+            }));
+            const abnormalRevenue = abnormalOrders.reduce((sum, o) => sum + o.deposit_kept, 0);
+
+            // --- C. CHI PHÍ ---
+            // Chi phí nhập hàng
+            const importReceipts = importReceiptsData.map(r => ({
+                id: r.pk_receipt_id,
+                code: r.receipt_code,
+                supplier: r.supplier_name || "Nhà cung cấp",
+                date: new Date(r.import_date).toLocaleDateString("vi-VN"),
+                amount: parseFloat(r.total_amount) || 0
+            }));
+            const importCost = (costType === "all" || costType === "import")
+                ? importReceipts.reduce((sum, r) => sum + r.amount, 0)
+                : 0;
+
+            // Chi phí lương
+            const salaryRecords = salaryRecordsData.map(s => {
+                const baseSalary = (parseFloat(s.base_rate_snapshot) || 0) * (parseFloat(s.days_worked) || 0);
+                const adjustmentsSum = (s.adjustments || []).reduce((sum, adj) => {
+                    const amt = parseFloat(adj.amount) || 0;
+                    return adj.type === "PENALTY" ? sum - amt : sum + amt;
+                }, 0);
+                const totalSalary = baseSalary + adjustmentsSum;
+
+                return {
+                    id: s.record_id,
+                    employee: s.employee?.account?.profile?.full_name || s.employee?.full_name || `NV #${s.fk_employee_id}`,
+                    baseSalary,
+                    adjustmentsSum,
+                    totalSalary: totalSalary > 0 ? totalSalary : 0
+                };
+            });
+            const salaryCost = (costType === "all" || costType === "salary")
+                ? salaryRecords.reduce((sum, s) => sum + s.totalSalary, 0)
+                : 0;
+
+            const totalCost = importCost + salaryCost;
+
+            // --- D. LỢI NHUẬN ---
+            const profit = revenue - totalCost + abnormalRevenue;
+
+            // --- E. DÒNG TIỀN (CASH FLOWS) ---
+            const cashFlows = [];
+            // 1. Cọc khách vào
+            customerDepositOrders.forEach(o => {
+                cashFlows.push({
+                    id: `cust-${o.pk_order_id}`,
+                    date: new Date(o.createdate).toLocaleDateString("vi-VN"),
+                    rawDate: new Date(o.createdate),
+                    type: "CUSTOMER_DEPOSIT",
+                    label: `Khách ${o.customer?.full_name || "lẻ"} đặt cọc đơn DH-${o.pk_order_id}`,
+                    amount: parseFloat(o.deposit_amount) || 0
+                });
+            });
+            // 2. Cọc xưởng ra
+            mfgOrdersData.forEach(m => {
+                cashFlows.push({
+                    id: `mfg-${m.pk_manufacturing_order_id}`,
+                    date: new Date(m.createdate).toLocaleDateString("vi-VN"),
+                    rawDate: new Date(m.createdate),
+                    type: "IMPORT_DEPOSIT",
+                    label: `Đặt cọc lệnh sản xuất ${m.order_code}`,
+                    amount: parseFloat(m.deposit_amount) || 0
+                });
+            });
+            // 3. Hoàn cọc khách
+            refundDepositOrders.forEach(o => {
+                cashFlows.push({
+                    id: `ref-${o.pk_order_id}`,
+                    date: new Date(o.createdate).toLocaleDateString("vi-VN"),
+                    rawDate: new Date(o.createdate),
+                    type: "REFUND_DEPOSIT",
+                    label: `Hoàn cọc cho khách ${o.customer?.full_name || "lẻ"} (DH-${o.pk_order_id})`,
+                    amount: parseFloat(o.deposit_amount) || 0
+                });
+            });
+
+            // Sort dòng tiền theo ngày mới nhất
+            cashFlows.sort((a, b) => b.rawDate - a.rawDate);
+
+            const customerIn = cashFlows.filter(c => c.type === "CUSTOMER_DEPOSIT").reduce((sum, c) => sum + c.amount, 0);
+            const importOut = cashFlows.filter(c => c.type === "IMPORT_DEPOSIT").reduce((sum, c) => sum + c.amount, 0);
+            const refundOut = cashFlows.filter(c => c.type === "REFUND_DEPOSIT").reduce((sum, c) => sum + c.amount, 0);
+            const netCash = customerIn - importOut - refundOut;
+
+            // ═══════════════════════════════════════════════════════════
+            // TẠO DỮ LIỆU SO SÁNH 6 THÁNG GẦN NHẤT
+            // ═══════════════════════════════════════════════════════════
+            const now = new Date();
+            const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+
+            const [allOrders6M, allImports6M, allSalaries6M] = await Promise.all([
+                Order.findAll({
+                    where: { status: 1, createdate: { [Op.gte]: sixMonthsAgo } },
+                    attributes: ["pk_order_id", "total_amount", "deposit_amount", "order_status", "deposit_resolution", "createdate"],
+                    raw: true
+                }),
+                ImportReceipt.findAll({
+                    where: { import_date: { [Op.gte]: sixMonthsAgo } },
+                    attributes: ["total_amount", "import_date"],
+                    raw: true
+                }),
+                SalaryRecord.findAll({
+                    where: { createdate: { [Op.gte]: sixMonthsAgo } },
+                    include: [{ model: SalaryAdjustment, as: "adjustments", attributes: ["amount", "type"] }]
+                })
+            ]);
+
+            // Tạo danh sách 6 tháng (format MM/YYYY)
+            const monthlyComparisons = [];
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const monthStr = `${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+
+                // Filter data cho tháng này
+                const mOrders = allOrders6M.filter(o => {
+                    const oDate = new Date(o.createdate);
+                    return oDate.getMonth() === d.getMonth() && oDate.getFullYear() === d.getFullYear();
+                });
+                const mImports = allImports6M.filter(imp => {
+                    const impDate = new Date(imp.import_date);
+                    return impDate.getMonth() === d.getMonth() && impDate.getFullYear() === d.getFullYear();
+                });
+                const mSalaries = allSalaries6M.filter(s => {
+                    const sDate = new Date(s.createdate);
+                    return sDate.getMonth() === d.getMonth() && sDate.getFullYear() === d.getFullYear();
+                });
+
+                // Tính toán chỉ số tháng
+                const mRev = mOrders.filter(o => o.order_status === 6).reduce((sum, o) => sum + (parseFloat(o.total_amount) || 0), 0);
+                const mAbnormal = mOrders.filter(o => o.order_status === 0 && o.deposit_resolution === "forfeited").reduce((sum, o) => sum + (parseFloat(o.deposit_amount) || 0), 0);
+                const mImpCost = mImports.reduce((sum, imp) => sum + (parseFloat(imp.total_amount) || 0), 0);
+
+                const mSalCost = mSalaries.reduce((sum, s) => {
+                    const base = (parseFloat(s.base_rate_snapshot) || 0) * (parseFloat(s.days_worked) || 0);
+                    const adjSum = (s.adjustments || []).reduce((aSum, adj) => {
+                        const amt = parseFloat(adj.amount) || 0;
+                        return adj.type === "PENALTY" ? aSum - amt : aSum + amt;
+                    }, 0);
+                    const tot = base + adjSum;
+                    return sum + (tot > 0 ? tot : 0);
+                }, 0);
+
+                const mTotCost = mImpCost + mSalCost;
+                const mProfit = mRev - mTotCost + mAbnormal;
+
+                monthlyComparisons.push({
+                    month: monthStr,
+                    revenue: mRev,
+                    salaryCost: mSalCost,
+                    importCost: mImpCost,
+                    totalCost: mTotCost,
+                    abnormal: mAbnormal,
+                    profit: mProfit
+                });
+            }
+
+            // Reverse để tháng mới nhất lên đầu bảng so sánh
+            monthlyComparisons.reverse();
+
+            // ═══════════════════════════════════════════════════════════
+            // TRẢ VỀ KẾT QUẢ
+            // ═══════════════════════════════════════════════════════════
+            return res.status(200).json({
+                summary: {
+                    revenue,
+                    importCost,
+                    salaryCost,
+                    totalCost,
+                    abnormalRevenue,
+                    profit,
+                    customerIn,
+                    importOut,
+                    refundOut,
+                    netCash
+                },
+                completedOrders,
+                abnormalOrders,
+                importReceipts,
+                salaryRecords,
+                cashFlows,
+                monthlyComparisons
+            });
+
+        } catch (error) {
+            console.error("Get accountant dashboard error:", error);
+            return res.status(500).json({ message: "Lỗi hệ thống khi tải dữ liệu tổng quan tài chính" });
         }
     }
 }
