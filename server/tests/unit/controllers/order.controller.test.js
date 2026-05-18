@@ -13,6 +13,7 @@ jest.mock("../../../src/entities", () => {
   return {
     sequelize: {
       transaction: jest.fn(async () => mockTransaction),
+      literal: jest.fn(),
     },
     Order: {
       findAndCountAll: jest.fn(),
@@ -143,11 +144,10 @@ describe("OrderController Unit Tests", () => {
 
       expect(Order.create).toHaveBeenCalled();
       expect(OrderItem.create).toHaveBeenCalled();
-      // Should allocate 2 items
       expect(mockProductItemUpdate).toHaveBeenCalledTimes(2);
       expect(OrderHistory.create).toHaveBeenCalled();
       expect(systemLogController.record).toHaveBeenCalled();
-      expect(socketManager.sendNotification).toHaveBeenCalledTimes(2); // 1 for creator, 1 for admin
+      expect(socketManager.sendNotification).toHaveBeenCalledTimes(2);
       expect(mockRes.status).toHaveBeenCalledWith(201);
     });
 
@@ -164,7 +164,6 @@ describe("OrderController Unit Tests", () => {
       
       OrderItem.create.mockResolvedValue({ pk_order_item_id: 50 });
       
-      // Kho chỉ có 2 cái
       ProductItem.findAll.mockResolvedValue([
         { pk_item_id: 1, update: jest.fn() },
         { pk_item_id: 2, update: jest.fn() }
@@ -176,6 +175,23 @@ describe("OrderController Unit Tests", () => {
       expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
         message: expect.stringContaining("không đủ số lượng sẵn sàng trong kho")
       }));
+    });
+
+    it("nên rollback giao dịch và trả về lỗi 400 khi database lỗi kết nối đột ngột (UTCID12)", async () => {
+      mockReq.body = {
+        fk_customer_id: 1,
+        order_type: 2,
+        items: [{ fk_product_id: 10, item_quantity: 2 }]
+      };
+
+      CustomerProfile.findOne.mockRejectedValue(new Error("Lỗi kết nối cơ sở dữ liệu đột ngột"));
+
+      await orderController.createOrder(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Lỗi kết nối cơ sở dữ liệu đột ngột"
+      });
     });
   });
 
