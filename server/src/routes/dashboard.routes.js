@@ -104,4 +104,63 @@ const ownerOnly = verifyRole(["OWNER", "ADMIN"]);
  */
 router.get("/owner", ownerOnly, DashboardController.getOwnerDashboard);
 
+/**
+ * @swagger
+ * /api/dashboard/accountant:
+ *   get:
+ *     summary: Lấy dữ liệu tổng quan tài chính cho Accountant Dashboard
+ *     description: |
+ *       Trả về toàn bộ số liệu tổng quan tài chính, doanh thu, chi phí, dòng tiền, doanh thu bất thường
+ *       kèm hỗ trợ bộ lọc thời gian (month, quarter, year, custom), loại đơn hàng và loại chi phí.
+ *     tags: [Dashboard]
+ *     parameters:
+ *       - in: query
+ *         name: period
+ *         schema:
+ *           type: string
+ *         description: month | quarter | year | custom
+ *       - in: query
+ *         name: selectedMonth
+ *         schema:
+ *           type: string
+ *         description: MM/YYYY (ví dụ 05/2026)
+ *       - in: query
+ *         name: selectedQuarter
+ *         schema:
+ *           type: string
+ *         description: Q1/2026
+ *       - in: query
+ *         name: selectedYear
+ *         schema:
+ *           type: string
+ *         description: 2026
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *         description: YYYY-MM-DD
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *         description: YYYY-MM-DD
+ *       - in: query
+ *         name: orderType
+ *         schema:
+ *           type: string
+ *         description: all | 1 | 2 | 3
+ *       - in: query
+ *         name: costType
+ *         schema:
+ *           type: string
+ *         description: all | import | salary
+ *     responses:
+ *       200:
+ *         description: Dữ liệu dashboard tài chính kế toán
+ *       500:
+ *         description: Lỗi hệ thống
+ */
+const accountantOrAdmin = verifyRole(["ACCOUNTANT", "ADMIN", "OWNER"]);
+router.get("/accountant", accountantOrAdmin, DashboardController.getAccountantDashboard);
+
 module.exports = router;
