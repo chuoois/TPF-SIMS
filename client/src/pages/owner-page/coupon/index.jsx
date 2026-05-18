@@ -19,7 +19,8 @@ const fmtDate = (iso) => {
 };
 
 const fmtDiscount = (value) => {
-    return `${value}%`;
+    const num = Number(String(value).replace(',', '.'));
+    return `${isNaN(num) ? value : num}%`;
 };
 
 // ─── Sub-components ────────────────────────────────────────────────────────

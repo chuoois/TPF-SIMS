@@ -18,6 +18,16 @@ const dashboardService = {
     const response = await axiosInstance.get("/dashboard/owner", { params });
     return response.data;
   },
+
+  /**
+   * Lấy dữ liệu tổng quan tài chính cho Kế toán
+   * @param {Object} params - Query params (period, selectedMonth, selectedQuarter, selectedYear, startDate, endDate, orderType, costType)
+   * @returns {Promise}
+   */
+  async getAccountantDashboard(params = {}) {
+    const response = await axiosInstance.get("/dashboard/accountant", { params });
+    return response.data;
+  },
 };
 
 export default dashboardService;
