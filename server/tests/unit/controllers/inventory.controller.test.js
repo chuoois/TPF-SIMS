@@ -39,22 +39,30 @@ describe("InventoryController Unit Tests", () => {
   });
 
   describe("getInventoryProducts()", () => {
-    it("nên trả về danh sách sản phẩm trong kho thành công", async () => {
-      mockReq.query = { page: 1, limit: 10 };
-      
-      const mockProduct = {
+    
+    // Helper helper to generate standardized products for inventory mock response
+    function createMockProduct(overrides = {}) {
+      return {
         toJSON: () => ({
           pk_product_id: 1,
-          product_name: "Test",
+          sku: "SP01",
+          product_name: "Bàn Gỗ Cũ",
           product_type: "FINISHED",
+          min_stock: 2,
           stock: 10,
           available: 5,
           processing: 2,
           defective: 0,
           delivering: 3,
+          importedAt: "2026-05-01",
+          ...overrides,
         })
       };
-      Product.findAll.mockResolvedValue([mockProduct]);
+    }
+
+    it("UTCID01 - Lấy tất cả danh sách mặc định với limit=20 - HTTP 200", async () => {
+      mockReq.query = { page: 1, limit: 20 };
+      Product.findAll.mockResolvedValue([createMockProduct()]);
 
       await inventoryController.getInventoryProducts(mockReq, mockRes);
 
@@ -62,24 +70,98 @@ describe("InventoryController Unit Tests", () => {
       expect(mockRes.status).toHaveBeenCalledWith(200);
       const resData = mockRes.json.mock.calls[0][0];
       expect(resData.data.length).toBe(1);
-      expect(resData.counts.FINISHED).toBe(1);
+      expect(resData.counts.ALL).toBe(1);
+      expect(resData.pagination.limit).toBe(20);
     });
 
-    it("nên lọc theo typeFilter = DEFECTIVE", async () => {
-      mockReq.query = { typeFilter: "DEFECTIVE" };
-      
-      const mockProduct1 = { toJSON: () => ({ pk_product_id: 1, type: "FINISHED", defective: 0 }) };
-      const mockProduct2 = { toJSON: () => ({ pk_product_id: 2, type: "FINISHED", defective: 1 }) }; // Co loi
-      
-      Product.findAll.mockResolvedValue([mockProduct1, mockProduct2]);
+    it("UTCID02 - Lọc tìm kiếm theo từ khóa 'Bàn Gỗ' - HTTP 200", async () => {
+      mockReq.query = { search: "Bàn Gỗ" };
+      Product.findAll.mockResolvedValue([
+        createMockProduct({ product_name: "Bàn Gỗ Sửa Đổi" })
+      ]);
+
+      await inventoryController.getInventoryProducts(mockReq, mockRes);
+
+      expect(Product.findAll).toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      const resData = mockRes.json.mock.calls[0][0];
+      expect(resData.data[0].name).toContain("Bàn Gỗ");
+    });
+
+    it("UTCID03 - Lọc chính xác theo danh mục 'Bàn' - HTTP 200", async () => {
+      mockReq.query = { category: "Bàn" };
+      Product.findAll.mockResolvedValue([
+        createMockProduct({ category: { category_name: "Bàn" } })
+      ]);
+
+      await inventoryController.getInventoryProducts(mockReq, mockRes);
+
+      expect(Product.findAll).toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      const resData = mockRes.json.mock.calls[0][0];
+      expect(resData.data[0].category).toBe("Bàn");
+    });
+
+    it("UTCID04 - Lọc đặc biệt tồn kho thấp (LOW_STOCK) - HTTP 200", async () => {
+      mockReq.query = { typeFilter: "LOW_STOCK" };
+      // available (1) <= minStock (2)
+      const lowStockProd = createMockProduct({ available: 1, min_stock: 2 });
+      const highStockProd = createMockProduct({ available: 10, min_stock: 2 });
+
+      Product.findAll.mockResolvedValue([lowStockProd, highStockProd]);
 
       await inventoryController.getInventoryProducts(mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
       const resData = mockRes.json.mock.calls[0][0];
-      // Product 2 passes filter
       expect(resData.data.length).toBe(1);
-      expect(resData.data[0].id).toBe(2);
+      expect(resData.data[0].stockBreakdown.available).toBe(1);
+    });
+
+    it("UTCID05 - Lọc đặc biệt hàng tồn kho lâu năm (LONG_STAY > 60 ngày) - HTTP 200", async () => {
+      mockReq.query = { typeFilter: "LONG_STAY" };
+      
+      const oldDate = new Date();
+      oldDate.setDate(oldDate.getDate() - 70); // 70 days ago
+      const longStayProd = createMockProduct({ importedAt: oldDate.toISOString() });
+
+      const newDate = new Date();
+      newDate.setDate(newDate.getDate() - 10); // 10 days ago
+      const freshProd = createMockProduct({ pk_product_id: 2, importedAt: newDate.toISOString() });
+
+      Product.findAll.mockResolvedValue([longStayProd, freshProd]);
+
+      await inventoryController.getInventoryProducts(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      const resData = mockRes.json.mock.calls[0][0];
+      expect(resData.data.length).toBe(1);
+    });
+
+    it("UTCID06 - Lọc đặc biệt hàng lỗi (DEFECTIVE) - HTTP 200", async () => {
+      mockReq.query = { typeFilter: "DEFECTIVE" };
+      
+      const defectiveProd = createMockProduct({ defective: 3 });
+      const normalProd = createMockProduct({ pk_product_id: 2, defective: 0 });
+
+      Product.findAll.mockResolvedValue([defectiveProd, normalProd]);
+
+      await inventoryController.getInventoryProducts(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      const resData = mockRes.json.mock.calls[0][0];
+      expect(resData.data.length).toBe(1);
+      expect(resData.data[0].stockBreakdown.defective).toBe(3);
+    });
+
+    it("UTCID07 - [Abnormal] Database bị ngắt kết nối / lỗi truy vấn - HTTP 500 + 'Lỗi hệ thống khi lấy danh sách kho hàng'", async () => {
+      mockReq.query = {};
+      Product.findAll.mockRejectedValue(new Error("Database connection timeout"));
+
+      await inventoryController.getInventoryProducts(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: "Lỗi hệ thống khi lấy danh sách kho hàng" });
     });
   });
 

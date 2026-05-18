@@ -115,7 +115,7 @@ describe("CustomRequestController Unit Tests", () => {
 
       await customRequestController.updateStatus(mockReq, mockRes);
 
-      expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ status: 2 }));
+      expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ status: 2 }), expect.any(Object));
       expect(socketManager.sendNotification).toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(200);
     });
