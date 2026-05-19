@@ -328,26 +328,6 @@ export const Navbar = () => {
               </div>
 
               <div className="py-1">
-                <button
-                  onClick={openProfileModal}
-                  className="w-full flex items-center gap-3 px-4 py-2 text-[13px] font-medium text-[var(--text-secondary)] hover:bg-gray-50 hover:text-[var(--brand-primary)] transition-colors cursor-pointer"
-                >
-                  <User size={16} />
-                  <span>Hồ sơ cá nhân</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setShowSettings(false);
-                    setShowChangePasswordModal(true);
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-2 text-[13px] font-medium text-[var(--text-secondary)] hover:bg-gray-50 hover:text-[var(--brand-primary)] transition-colors cursor-pointer"
-                >
-                  <Lock size={16} />
-                  <span>Đổi mật khẩu</span>
-                </button>
-
-                <div className="h-[1px] bg-gray-100 my-1"></div>
 
                 <button
                   onClick={handleLogout}
