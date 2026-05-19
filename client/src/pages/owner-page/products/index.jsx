@@ -23,19 +23,19 @@ import productAttributeService from "@/services/productAttribute.service";
 import productService from "@/services/product.service";
 
 // ===================== HELPERS =====================
-const DEFAULT_MIN_STOCK = 5;
-
 const fmtCurrency = (n) => {
   if (n === undefined || n === null || isNaN(n) || n === 0) return "—";
   return new Intl.NumberFormat("vi-VN").format(n) + "₫";
 };
 
 const isLowStock = (item) => {
-  const threshold = item.minStock > 0 ? item.minStock : DEFAULT_MIN_STOCK;
+  const threshold = item.minStock;
+  if (threshold === undefined || threshold === null || threshold <= 0) {
+    return false;
+  }
   return (
-    item.stock > 0 &&
-    item.stock <= threshold &&
-    item.productType !== "Hàng khách đặt"
+    item.productType === "Hàng sẵn" &&
+    item.stock <= threshold
   );
 };
 
@@ -328,7 +328,7 @@ export default function OwnerProducts() {
     {
       header: "Bảo hành",
       headerClassName: "text-center w-[90px] whitespace-nowrap",
-      className: "text-center whitespace-nowrap",
+      className: "text-center w-[90px] whitespace-nowrap",
       render: (item) => (
         item.status !== "Chưa định giá" && item.status !== "Quà tặng" ? (
           <span className="text-[12px] text-gray-600 font-medium whitespace-nowrap">
@@ -342,7 +342,7 @@ export default function OwnerProducts() {
     {
       header: "Giá bán",
       headerClassName: "text-left w-[140px] whitespace-nowrap",
-      className: "text-left whitespace-nowrap",
+      className: "text-left w-[140px] whitespace-nowrap",
       render: (item) => {
         if (item.status === "Quà tặng") {
           return (
@@ -396,16 +396,25 @@ export default function OwnerProducts() {
     },
     {
       header: "Tồn",
-      headerClassName: "text-right",
-      className: "text-right",
-      render: (item) =>
-        item.productType !== "Hàng khách đặt" ? (
-          <span className={`font-bold ${item.stock === 0 ? "text-[var(--status-error)]" : "text-[var(--text-main)]"}`}>
-            {item.stock}
-          </span>
-        ) : (
-          <span className="text-[var(--text-placeholder)]">—</span>
-        ),
+      headerClassName: "text-center w-[110px] whitespace-nowrap",
+      className: "text-center w-[110px] whitespace-nowrap",
+      render: (item) => {
+        if (item.productType === "Hàng khách đặt") {
+          return <span className="text-[var(--text-placeholder)]">—</span>;
+        }
+        return (
+          <div className="flex flex-col items-center justify-center">
+            <span className={`font-bold ${item.stock === 0 ? "text-[var(--status-error)]" : "text-[var(--text-main)]"}`}>
+              {item.stock}
+            </span>
+            {item.minStock > 0 && (
+              <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap mt-0.5">
+                Định mức: {item.minStock}
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
       header: "Trạng thái",
@@ -429,8 +438,11 @@ export default function OwnerProducts() {
               </span>
             )}
             {isLowStock(item) && (
-              <span className="inline-flex items-center justify-center w-full px-2 py-1 rounded-md bg-amber-50 text-amber-600 text-[9px] font-black uppercase tracking-tighter border border-amber-200 gap-1">
-                <AlertTriangle size={10} /> Sắp hết hàng
+              <span 
+                className="inline-flex items-center justify-center w-full px-2 py-1 rounded-md bg-amber-50 text-amber-600 text-[9px] font-black uppercase tracking-tighter border border-amber-200 gap-1"
+                title={`Định mức tối thiểu: ${item.minStock}`}
+              >
+                <AlertTriangle size={10} /> Sắp hết hàng ({item.minStock})
               </span>
             )}
           </div>

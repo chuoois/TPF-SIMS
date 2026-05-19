@@ -173,8 +173,16 @@ class DashboardController {
                 where: {
                     product_status: 1,
                     is_gift: { [Op.or]: [0, null] },
+                    product_type: "FINISHED",
+                    min_stock: { [Op.gt]: 0 },
                     [Op.and]: [
-                        sequelize.where(lowStockLiteral, { [Op.lte]: LOW_STOCK_THRESHOLD })
+                        sequelize.literal(`(
+                            SELECT COUNT(*)
+                            FROM product_item
+                            WHERE product_item.fk_product_id = Product.pk_product_id
+                            AND product_item.item_status = 1
+                            AND product_item.fk_order_item_id IS NULL
+                        ) <= Product.min_stock`)
                     ]
                 },
                 attributes: [
@@ -182,6 +190,7 @@ class DashboardController {
                     "sku",
                     "product_name",
                     "is_bundle",
+                    "min_stock",
                     [lowStockLiteral, "available_stock"]
                 ],
                 order: [[lowStockLiteral, "ASC"]],
@@ -327,7 +336,8 @@ class DashboardController {
                         sku: plain.sku,
                         name: plain.product_name,
                         currentStock: parseInt(plain.available_stock) || 0,
-                        isBundle: plain.is_bundle === 1
+                        isBundle: plain.is_bundle === 1,
+                        minStock: plain.min_stock || 0
                     };
                 }),
                 recentActivities: formattedActivities
