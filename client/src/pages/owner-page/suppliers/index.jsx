@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Users,
@@ -20,13 +20,16 @@ import {
   Mail,
   MoreVertical,
   Calendar,
-  Trash2
+  Trash2,
+  Loader2
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import { Button } from "@/components/ui/button";
 import DataTable from "@/components/control/DataTable";
 import { toast } from "react-hot-toast";
 import { cn } from "@/lib/utils";
+import supplierDebtService from "@/services/supplierDebt.service";
+import supplierService from "@/services/supplier.service";
 
 // ===================== STATIC DATA =====================
 const INITIAL_SUPPLIERS = [
@@ -85,13 +88,45 @@ const ModalContainer = ({ title, onClose, children, maxWidth = "max-w-2xl" }) =>
   </div>
 );
 
+const formatLedgerDate = (d) => {
+  if (!d) return "—";
+  try {
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return d;
+    return dt.toLocaleDateString("vi-VN") + " " + dt.toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    return d;
+  }
+};
+
 const SupplierDashboardModal = ({ supplier, onClose }) => {
   const [activeTab, setActiveTab] = useState("profile");
   const [activeShipment, setActiveShipment] = useState(null);
 
+  const [loading, setLoading] = useState(true);
+  const [ledger, setLedger] = useState([]);
+  const [importHistory, setImportHistory] = useState([]);
+
+  useEffect(() => {
+    const fetchLedger = async () => {
+      setLoading(true);
+      try {
+        const res = await supplierDebtService.getSupplierLedger(supplier.id);
+        setLedger(res.ledger || []);
+        setImportHistory(res.importHistory || []);
+      } catch (err) {
+        console.error("Failed to fetch ledger", err);
+        toast.error("Không thể tải sổ công nợ chi tiết");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLedger();
+  }, [supplier.id]);
+
   const shipmentItems = activeShipment ? MOCK_SHIPMENT_ITEMS[activeShipment.code] || [] : [];
-  const totalIncurred = MOCK_PAYMENT_HISTORY.reduce((acc, t) => (t.change > 0 ? acc + t.change : acc), 0);
-  const totalPaid = Math.abs(MOCK_PAYMENT_HISTORY.reduce((acc, t) => (t.change < 0 ? acc + t.change : acc), 0));
+  const totalIncurred = ledger.reduce((acc, t) => (t.change > 0 ? acc + t.change : acc), 0);
+  const totalPaid = Math.abs(ledger.reduce((acc, t) => (t.change < 0 ? acc + t.change : acc), 0));
 
   const tabs = [
     { id: "profile", label: "Thông tin", icon: Building2 },
@@ -137,8 +172,15 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
         )}
 
         <div className="flex-1 overflow-y-auto pr-1">
-          {/* TAB 1: PROFILE */}
-          {activeTab === "profile" && !activeShipment && (
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+              <Loader2 className="animate-spin mb-2" size={24} />
+              <span>Đang tải dữ liệu...</span>
+            </div>
+          ) : (
+            <>
+              {/* TAB 1: PROFILE */}
+              {activeTab === "profile" && !activeShipment && (
             <div className="space-y-6 animate-in fade-in duration-300">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Cột trái: Hồ sơ chi tiết */}
@@ -271,7 +313,7 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {MOCK_IMPORT_HISTORY.map((h, idx) => (
+                      {importHistory.map((h, idx) => (
                         <tr key={h.id} className="hover:bg-red-50/20 transition-colors">
                           <td className="px-4 py-4 text-center text-[13px] font-medium text-gray-500">{idx + 1}</td>
                           <td className="px-6 py-4">
@@ -283,7 +325,7 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
                               <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                             </button>
                           </td>
-                          <td className="px-6 py-4 text-gray-500 font-medium">{h.date}</td>
+                          <td className="px-6 py-4 text-gray-500 font-medium">{new Date(h.date).toLocaleDateString("vi-VN")}</td>
                           <td className="px-6 py-4 text-right font-black text-gray-900">{formatCurrency(h.total)}</td>
                         </tr>
                       ))}
@@ -376,10 +418,10 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {MOCK_PAYMENT_HISTORY.map((t, idx) => (
+                    {ledger.map((t, idx) => (
                       <tr key={t.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-4 py-5 text-center text-[13px] font-medium text-gray-500">{idx + 1}</td>
-                        <td className="px-6 py-5 text-gray-500 whitespace-nowrap font-medium">{t.date}</td>
+                        <td className="px-6 py-5 text-gray-500 whitespace-nowrap font-medium">{formatLedgerDate(t.date)}</td>
                         <td className="px-6 py-5">
                           <p className="font-bold text-gray-800">{t.note}</p>
                           <p className="text-[11px] text-gray-400 font-bold mt-0.5">{t.id}</p>
@@ -407,6 +449,8 @@ const SupplierDashboardModal = ({ supplier, onClose }) => {
                 </table>
               </div>
             </div>
+          )}
+          </>
           )}
         </div>
 
@@ -446,7 +490,6 @@ const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
       phone: "",
       email: "",
       address: "",
-      group: "",
       totalImport: 0,
       debt: 0,
       notes: [],
@@ -534,21 +577,7 @@ const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
               className="w-full h-11 px-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[13px] font-medium"
             />
           </div>
-          <div className="space-y-2">
-            <label className="text-[12px] font-bold text-gray-500 uppercase tracking-widest">Nhóm nhà cung cấp</label>
-            <select
-              name="group"
-              value={formData.group}
-              onChange={handleChange}
-              className="w-full h-11 px-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[13px] font-medium appearance-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236b7280%22 stroke-width=%222%22%3E%3Cpath d=%22m6 9 6 6 6-6%22/%3E%3C/svg%3E')] bg-[length:14px] bg-[right_1rem_center] bg-no-repeat"
-            >
-              <option value="">-- Chọn nhóm --</option>
-              <option value="Xưởng mộc gia công">Xưởng mộc gia công</option>
-              <option value="Tổng kho gỗ nguyên liệu">Tổng kho gỗ nguyên liệu</option>
-              <option value="Xưởng nội thất mỹ nghệ">Xưởng nội thất mỹ nghệ</option>
-              <option value="Cửa hàng kim khí">Cửa hàng kim khí</option>
-            </select>
-          </div>
+
           <div className="space-y-2">
             <label className="text-[12px] font-bold text-gray-500 uppercase tracking-widest">Số điện thoại</label>
             <div className="relative">
@@ -697,7 +726,8 @@ const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
 export default function OwnerSuppliers() {
   const [modalType, setModalType] = useState(null); // 'dashboard' | 'action'
 
-  const [suppliers, setSuppliers] = useState(INITIAL_SUPPLIERS);
+  const [suppliers, setSuppliers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -705,6 +735,23 @@ export default function OwnerSuppliers() {
   const [itemsPerPage, setItemsPerPage] = useState(15);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
+
+  const fetchSuppliers = async () => {
+    setLoading(true);
+    try {
+      const response = await supplierDebtService.getAllSupplierDebts();
+      setSuppliers(response.data || []);
+    } catch (err) {
+      console.error("Failed to fetch suppliers", err);
+      toast.error("Không thể tải danh sách nhà cung cấp");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSuppliers();
+  }, []);
 
   // Standardize DataTable Columns
   const columns = [
@@ -715,14 +762,21 @@ export default function OwnerSuppliers() {
       render: (s, idx) => (currentPage - 1) * itemsPerPage + idx + 1,
     },
     {
+      header: "Mã NCC",
+      headerClassName: "w-[100px] text-center",
+      className: "text-center",
+      render: (s) => (
+        <span className="text-[11px] font-black text-gray-500 font-mono tracking-wider bg-gray-50 border border-gray-100 px-2.5 py-1 rounded-lg">
+          {s.code}
+        </span>
+      ),
+    },
+    {
       header: "Nhà cung cấp",
       render: (s) => (
-        <div className="flex flex-col gap-0.5">
-          <span className="text-[13px] font-bold text-gray-900 group-hover:text-green-600 transition-colors uppercase tracking-tight">
-            {s.name}
-          </span>
-          <span className="text-[10px] font-bold text-gray-400 font-mono tracking-widest">{s.code}</span>
-        </div>
+        <span className="text-[13px] font-bold text-gray-900 group-hover:text-green-600 transition-colors uppercase tracking-tight">
+          {s.name}
+        </span>
       ),
     },
     {
@@ -737,14 +791,7 @@ export default function OwnerSuppliers() {
         </div>
       ),
     },
-    {
-      header: "Phân nhóm",
-      render: (s) => (
-        <span className="px-2.5 py-1 rounded-lg bg-gray-50 border border-gray-100 text-[11px] font-bold text-gray-500">
-          {s.group || "Chưa phân loại"}
-        </span>
-      ),
-    },
+
     {
       header: "Tổng nhập hàng",
       headerClassName: "text-right",
@@ -837,19 +884,55 @@ export default function OwnerSuppliers() {
     currentPage * itemsPerPage
   );
 
-  const handleSaveSupplier = (data) => {
-    if (selectedSupplier) {
-      setSuppliers(suppliers.map(s => s.id === data.id ? data : s));
-    } else {
-      setSuppliers([...suppliers, data]);
+  const handleSaveSupplier = async (data) => {
+    try {
+      let existingPayments = [];
+      if (selectedSupplier) {
+        try {
+          const parsed = JSON.parse(selectedSupplier.rawNote || "{}");
+          existingPayments = parsed.payments || [];
+        } catch (e) {}
+      }
+
+      const payload = {
+        supplier_name: data.name,
+        contact_person: data.contactPerson,
+        phone_number: data.phone,
+        email: data.email,
+        address: data.address,
+        tax_code: data.code,
+        note: JSON.stringify({
+          notes: data.notes && data.notes.length > 0 ? data.notes.join("\n") : "",
+          payments: existingPayments
+        })
+      };
+
+      if (selectedSupplier) {
+        await supplierService.updateSupplier(selectedSupplier.id, payload);
+        toast.success("Cập nhật thông tin nhà cung cấp thành công!");
+      } else {
+        await supplierService.createSupplier(payload);
+        toast.success("Tạo nhà cung cấp mới thành công!");
+      }
+      closeModal();
+      fetchSuppliers();
+    } catch (err) {
+      console.error("Failed to save supplier", err);
+      toast.error(err.response?.data?.message || "Không thể lưu thông tin nhà cung cấp");
     }
-    closeModal();
   };
 
-  const handleDeleteSupplier = (id) => {
-    if (window.confirm("Bạn có chắc chắn muốn xoá nhà cung cấp này?")) {
-      setSuppliers(suppliers.filter(s => s.id !== id));
-      closeModal();
+  const handleDeleteSupplier = async (id) => {
+    if (window.confirm("Bạn có chắc chắn muốn xóa đối tác này? Hành động này không thể hoàn tác.")) {
+      try {
+        await supplierService.deleteSupplier(id);
+        toast.success("Xóa nhà cung cấp thành công!");
+        closeModal();
+        fetchSuppliers();
+      } catch (err) {
+        console.error("Failed to delete supplier", err);
+        toast.error("Không thể xóa nhà cung cấp");
+      }
     }
   };
 
@@ -863,10 +946,16 @@ export default function OwnerSuppliers() {
     setModalType(null);
   };
 
-  const handleBulkDelete = () => {
-    setSuppliers(prev => prev.filter(s => !selectedIds.includes(s.id)));
-    setSelectedIds([]);
-    toast.success(`Đã xóa ${selectedIds.length} nhà cung cấp thành công!`);
+  const handleBulkDelete = async () => {
+    try {
+      await Promise.all(selectedIds.map(id => supplierService.deleteSupplier(id)));
+      setSelectedIds([]);
+      toast.success(`Đã xóa ${selectedIds.length} nhà cung cấp thành công!`);
+      fetchSuppliers();
+    } catch (err) {
+      console.error("Bulk delete failed", err);
+      toast.error("Không thể xóa hàng loạt nhà cung cấp");
+    }
   };
 
   return (
@@ -896,42 +985,48 @@ export default function OwnerSuppliers() {
           </button>
         </div>
 
-        {/* Standard DataTable Integration */}
-        <DataTable
-          columns={columns}
-          data={filtered}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          searchPlaceholder="Tìm mã NCC, tên nhà cung cấp, SĐT..."
-          dateFrom={dateFrom}
-          setDateFrom={setDateFrom}
-          dateTo={dateTo}
-          setDateTo={setDateTo}
-          hasActiveFilters={hasActiveFilters}
-          clearAllFilters={clearAllFilters}
-          rowActions={rowActions}
-          selectedIds={selectedIds}
-          setSelectedIds={setSelectedIds}
-          bulkActions={[
-            {
-              label: "XÓA HÀNG LOẠT",
-              icon: Trash2,
-              onClick: handleBulkDelete,
-              requireConfirm: true,
-              confirmTitle: "Xóa hàng loạt nhà cung cấp?",
-              confirmMessage: `Bạn có chắc chắn muốn xóa ${selectedIds.length} nhà cung cấp đã chọn không? Hành động này không thể hoàn tác.`
-            }
-          ]}
-          pagination={{
-            total: filtered.length,
-            currentPage,
-            setCurrentPage,
-            itemsPerPage,
-            setItemsPerPage
-          }}
-          rowClassName={() => "group"}
-          onRowClick={(s) => openModal(s, "dashboard")}
-        />
+        {loading ? (
+          <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-xl border border-slate-100 min-h-[300px]">
+            <Loader2 className="animate-spin text-slate-300 mb-2" size={28} />
+            <span className="text-[13px] text-slate-400 font-medium">Đang tải dữ liệu...</span>
+          </div>
+        ) : (
+          <DataTable
+            columns={columns}
+            data={filtered}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            searchPlaceholder="Tìm mã NCC, tên nhà cung cấp, SĐT..."
+            dateFrom={dateFrom}
+            setDateFrom={setDateFrom}
+            dateTo={dateTo}
+            setDateTo={setDateTo}
+            hasActiveFilters={hasActiveFilters}
+            clearAllFilters={clearAllFilters}
+            rowActions={rowActions}
+            selectedIds={selectedIds}
+            setSelectedIds={setSelectedIds}
+            bulkActions={[
+              {
+                label: "XÓA HÀNG LOẠT",
+                icon: Trash2,
+                onClick: handleBulkDelete,
+                requireConfirm: true,
+                confirmTitle: "Xóa hàng loạt nhà cung cấp?",
+                confirmMessage: `Bạn có chắc chắn muốn xóa ${selectedIds.length} nhà cung cấp đã chọn không? Hành động này không thể hoàn tác.`
+              }
+            ]}
+            pagination={{
+              total: filtered.length,
+              currentPage,
+              setCurrentPage,
+              itemsPerPage,
+              setItemsPerPage
+            }}
+            rowClassName={() => "group"}
+            onRowClick={(s) => openModal(s, "dashboard")}
+          />
+        )}
       </div>
 
       {/* Modals */}

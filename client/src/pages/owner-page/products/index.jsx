@@ -79,6 +79,7 @@ export default function OwnerProducts() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("Tất cả");
   const [categoryFilter, setCategoryFilter] = useState("Tất cả");
+  const [roomFilter, setRoomFilter] = useState("Tất cả");
   const [productTypeFilter, setProductTypeFilter] = useState("Tất cả");
 
   const [metadata, setMetadata] = useState({
@@ -133,6 +134,13 @@ export default function OwnerProducts() {
         );
         if (cat) params.category_id = cat.pk_product_category_id;
       }
+      // Lọc room theo ID
+      if (roomFilter !== "Tất cả") {
+        const rm = metadata.rooms?.find(
+          (r) => r.room_name === roomFilter,
+        );
+        if (rm) params.room_id = rm.pk_product_room_id;
+      }
 
       const result = await productService.getOwnerProducts(params);
       setProducts(result.data || []);
@@ -145,7 +153,7 @@ export default function OwnerProducts() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, searchQuery, productTypeFilter, categoryFilter, metadata.categories]);
+  }, [currentPage, itemsPerPage, searchQuery, productTypeFilter, categoryFilter, roomFilter, metadata.categories, metadata.rooms]);
 
   useEffect(() => {
     fetchProducts();
@@ -154,7 +162,7 @@ export default function OwnerProducts() {
   // Reset page khi filter thay đổi
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, categoryFilter, productTypeFilter]);
+  }, [searchQuery, statusFilter, categoryFilter, roomFilter, productTypeFilter]);
 
   // Client-side status filter (applied after API data)
   const filteredProducts = useMemo(() => {
@@ -180,11 +188,17 @@ export default function OwnerProducts() {
 
   const hasActiveFilters =
     categoryFilter !== "Tất cả" ||
+    roomFilter !== "Tất cả" ||
     searchQuery ||
     productTypeFilter !== "Tất cả";
 
+  const hasAnyFilter =
+    hasActiveFilters ||
+    statusFilter !== "Tất cả";
+
   const clearFilters = () => {
     setCategoryFilter("Tất cả");
+    setRoomFilter("Tất cả");
     setSearchQuery("");
     setStatusFilter("Tất cả");
     setProductTypeFilter("Tất cả");
@@ -563,7 +577,7 @@ export default function OwnerProducts() {
         )}
 
         {/* EMPTY STATE */}
-        {!loading && !error && products.length === 0 && (
+        {!loading && !error && products.length === 0 && !hasAnyFilter && (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <PackageOpen size={56} className="text-slate-300" />
             <p className="text-lg font-semibold text-slate-400">Chưa có sản phẩm nào</p>
@@ -571,7 +585,7 @@ export default function OwnerProducts() {
         )}
 
         {/* DATA TABLE */}
-        {!loading && !error && products.length > 0 && (
+        {!loading && !error && (products.length > 0 || hasAnyFilter) && (
           <DataTable
             columns={columns}
             data={filteredProducts}
@@ -638,16 +652,16 @@ export default function OwnerProducts() {
               },
             ]}
             extraFilters={
-              <>
+              <div className="flex items-center gap-2">
                 <div className="relative flex items-center">
                   <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
                     className="h-10 px-3 pr-9 rounded-lg text-[13px] font-medium outline-none cursor-pointer focus:ring-2 transition appearance-none"
                     style={{
-                      border: categoryFilter !== "Tất cả" ? "1px solid var(--brand-primary)" : "1px solid var(--grid-border)",
-                      backgroundColor: categoryFilter !== "Tất cả" ? "var(--status-focus)" : "#fff",
-                      color: categoryFilter !== "Tất cả" ? "var(--brand-primary)" : "var(--text-main)",
+                      border: "1px solid var(--grid-border)",
+                      backgroundColor: "#fff",
+                      color: "var(--text-main)",
                     }}
                   >
                     <option value="Tất cả">Danh mục sản phẩm</option>
@@ -659,14 +673,36 @@ export default function OwnerProducts() {
                   </select>
                   <ChevronDown
                     size={14}
-                    className="absolute right-3 pointer-events-none opacity-50"
-                    style={{
-                      color: categoryFilter !== "Tất cả" ? "var(--brand-primary)" : "var(--text-main)",
-                    }}
+                    className="absolute right-3 pointer-events-none opacity-50 text-gray-400"
                     strokeWidth={2.5}
                   />
                 </div>
-              </>
+
+                <div className="relative flex items-center">
+                  <select
+                    value={roomFilter}
+                    onChange={(e) => setRoomFilter(e.target.value)}
+                    className="h-10 px-3 pr-9 rounded-lg text-[13px] font-medium outline-none cursor-pointer focus:ring-2 transition appearance-none"
+                    style={{
+                      border: "1px solid var(--grid-border)",
+                      backgroundColor: "#fff",
+                      color: "var(--text-main)",
+                    }}
+                  >
+                    <option value="Tất cả">Khu vực</option>
+                    {(metadata.rooms || []).map((r) => (
+                      <option key={r.room_name} value={r.room_name}>
+                        {r.room_name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={14}
+                    className="absolute right-3 pointer-events-none opacity-50 text-gray-400"
+                    strokeWidth={2.5}
+                  />
+                </div>
+              </div>
             }
             pagination={{
               total: statusFilter === "Tất cả" ? totalItems : filteredProducts.length,
