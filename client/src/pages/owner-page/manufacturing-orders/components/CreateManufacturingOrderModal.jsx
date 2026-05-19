@@ -14,6 +14,7 @@ import {
   PackageCheck, ImagePlus, ClipboardEdit,
   StickyNote, AlertTriangle, Sparkles,
   ChevronDown, Trash2, Calendar, Paintbrush,
+  Upload, Image as ImageIcon,
 } from "lucide-react";
 import { formatDateVN } from "@/lib/dateUtils";
 
@@ -1125,45 +1126,79 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
 
 
         {showCustomForm && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40">
-            <div className="w-full max-w-lg bg-white rounded-lg shadow-2xl overflow-hidden flex flex-col">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" onClick={() => setShowCustomForm(false)} />
+            <div className="bg-white w-full max-w-[700px] max-h-[90vh] rounded-lg flex flex-col relative shadow-2xl overflow-hidden border border-slate-200">
               {/* Sub-modal Header */}
-              <div className="px-4 py-3 border-b bg-[var(--status-focus)]/30 shrink-0">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-[13px] font-black text-[var(--brand-primary)] uppercase tracking-tight flex items-center gap-2">
-                    <Package size={14} /> Nhập thông tin sản phẩm mới
-                  </h4>
-                  <button onClick={() => setShowCustomForm(false)} className="text-gray-400 cursor-pointer p-1 rounded-full"><X size={16} /></button>
-                </div>
+              <div className="bg-white px-6 py-4 border-b border-slate-200 flex items-center justify-between shrink-0">
+                <h2 className="text-base font-bold text-[var(--text-main)] flex items-center gap-2">
+                  <Plus size={16} className="text-[var(--brand-primary)]" /> Thêm sản phẩm mới
+                </h2>
+                <button onClick={() => setShowCustomForm(false)} className="p-1.5 hover:bg-slate-100 rounded-full transition text-slate-400 cursor-pointer">
+                  <X size={20} />
+                </button>
               </div>
 
               {/* Sub-modal Body */}
-              <div className="p-4 flex-1">
-                <div className="grid grid-cols-2 gap-x-3 gap-y-2 mb-3">
-                  <div className="col-span-1">
-                    <label className="block text-[11px] font-bold text-[var(--text-placeholder)] uppercase mb-1 ml-0.5 tracking-wider">Tên sản phẩm *</label>
-                    <input
-                      placeholder="Tên sản phẩm..."
-                      className="w-full px-3 py-1.5 text-[12px] rounded-md border border-gray-200 focus:border-[var(--brand-primary)] outline-none bg-gray-50/20"
-                      value={newProduct.name}
-                      onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
-                    />
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+                <div className="flex gap-6">
+                  {/* Left: Image upload */}
+                  <div className="w-[160px] shrink-0 space-y-3">
+                    <label className="block cursor-pointer group relative">
+                      {newProduct.images.length > 0 ? (
+                        <img src={newProduct.images[0]} alt="Ảnh SP" className="w-full aspect-square object-cover rounded-xl border group-hover:opacity-70 transition" />
+                      ) : (
+                        <div className="w-full aspect-square bg-gray-100 rounded-xl border flex flex-col items-center justify-center text-slate-300 group-hover:bg-gray-200 transition">
+                          <Upload size={28} className="mb-1" />
+                          <span className="text-xs">Chọn ảnh</span>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 rounded-xl flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition">
+                        <Upload size={20} className="text-white" />
+                      </div>
+                      <input type="file" multiple accept="image/*" className="hidden" onChange={e => {
+                        const files = Array.from(e.target.files || []);
+                        files.forEach(file => {
+                          const reader = new FileReader();
+                          reader.onload = ev => setNewProduct(prev => ({ ...prev, images: [...prev.images, ev.target.result] }));
+                          reader.readAsDataURL(file);
+                        });
+                      }} />
+                    </label>
+                    {newProduct.images.length > 1 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {newProduct.images.map((img, idx) => (
+                          <div key={idx} className="relative w-10 h-10 rounded-lg overflow-hidden border bg-white shrink-0 group">
+                            <img src={img} alt="" className="w-full h-full object-cover" />
+                            <div onClick={() => setNewProduct(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== idx) }))}
+                              className="absolute inset-0 bg-red-500/80 text-white flex items-center justify-center cursor-pointer transition-opacity opacity-0 group-hover:opacity-100">
+                              <X size={10} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="col-span-1">
-                    <label className="block text-[11px] font-bold text-[var(--text-placeholder)] uppercase mb-1 ml-0.5 tracking-wider">Mã sản phẩm</label>
-                    <input
-                      placeholder="Mã tự động..."
-                      className="w-full px-3 py-1.5 text-[12px] font-mono rounded-md border border-gray-200 focus:border-[var(--brand-primary)] outline-none bg-gray-50/20"
-                      value={newProduct.code}
-                      onChange={e => setNewProduct({ ...newProduct, code: e.target.value, isManualCode: true })}
-                    />
-                  </div>
+
+                  {/* Right: Form fields */}
+                  <div className="flex-1 space-y-5">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="col-span-2">
+                        <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">Tên sản phẩm *</label>
+                        <input placeholder="Nhập tên sản phẩm" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/30 focus:border-[var(--brand-primary)] transition bg-white"
+                          value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">Mã sản phẩm</label>
+                        <input placeholder="Mã tự động..." className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/30 focus:border-[var(--brand-primary)] transition bg-white"
+                          value={newProduct.code} onChange={e => setNewProduct({ ...newProduct, code: e.target.value, isManualCode: true })} />
+                      </div>
                   <div className="relative">
-                    <label className="block text-[11px] font-bold text-[var(--text-placeholder)] uppercase mb-1 ml-0.5 tracking-wider">Chất liệu</label>
+                    <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">Chất liệu</label>
                     <input
                       type="text"
-                      placeholder="..."
-                      className="w-full px-3 py-1.5 text-[12px] rounded-md border border-gray-200 focus:border-[var(--brand-primary)] outline-none bg-gray-50/20"
+                      placeholder="Chọn hoặc nhập chất liệu..."
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/30 focus:border-[var(--brand-primary)] transition bg-white"
                       value={newProduct.material}
                       onChange={e => {
                         setNewProduct({ ...newProduct, material: e.target.value });
@@ -1173,12 +1208,12 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                       onBlur={() => setTimeout(() => setShowWoodDropdown(false), 200)}
                     />
                     {showWoodDropdown && (
-                      <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-md shadow-xl z-50 overflow-hidden border-slate-100 ring-1 ring-black/5">
-                        <div className="max-h-32 overflow-y-auto p-0.5">
+                      <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-150 rounded-xl shadow-xl z-50 overflow-hidden ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-100">
+                        <div className="max-h-48 overflow-y-auto p-1 scrollbar-thin">
                           {attributes.materials.filter(w => w.toLowerCase().includes(newProduct.material.toLowerCase())).map(w => (
                             <div
                               key={w}
-                              className="px-2.5 py-1.5 text-[12px] cursor-pointer rounded font-bold text-slate-700 hover:bg-slate-50"
+                              className="px-3 py-2 text-sm cursor-pointer rounded-lg font-medium text-slate-700 hover:bg-slate-50 transition-colors"
                               onMouseDown={(e) => {
                                 e.preventDefault();
                                 setNewProduct({ ...newProduct, material: w });
@@ -1188,17 +1223,20 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                               {w}
                             </div>
                           ))}
+                          {attributes.materials.filter(w => w.toLowerCase().includes(newProduct.material.toLowerCase())).length === 0 && (
+                            <div className="px-3 py-2 text-sm text-slate-400 italic">Thêm mới: "{newProduct.material}"</div>
+                          )}
                         </div>
                       </div>
                     )}
                   </div>
 
                   <div className="relative">
-                    <label className="block text-[11px] font-bold text-[var(--text-placeholder)] uppercase mb-1 ml-0.5 tracking-wider">Màu sắc</label>
+                    <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">Màu sắc</label>
                     <input
                       type="text"
-                      placeholder="..."
-                      className="w-full px-3 py-1.5 text-[12px] rounded-md border border-gray-200 focus:border-[var(--brand-primary)] outline-none bg-gray-50/20"
+                      placeholder="Chọn hoặc nhập màu sắc..."
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/30 focus:border-[var(--brand-primary)] transition bg-white"
                       value={newProduct.color}
                       onChange={e => {
                         setNewProduct({ ...newProduct, color: e.target.value });
@@ -1208,12 +1246,12 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                       onBlur={() => setTimeout(() => setShowColorDropdown(false), 200)}
                     />
                     {showColorDropdown && (
-                      <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-md shadow-xl z-50 overflow-hidden border-slate-100 ring-1 ring-black/5">
-                        <div className="max-h-32 overflow-y-auto p-0.5">
+                      <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-150 rounded-xl shadow-xl z-50 overflow-hidden ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-100">
+                        <div className="max-h-48 overflow-y-auto p-1 scrollbar-thin">
                           {attributes.colors.filter(c => c.toLowerCase().includes(newProduct.color.toLowerCase())).map(c => (
                             <div
                               key={c}
-                              className="px-2.5 py-1.5 text-[12px] cursor-pointer rounded font-bold text-slate-700"
+                              className="px-3 py-2 text-sm cursor-pointer rounded-lg font-medium text-slate-700 hover:bg-slate-50 transition-colors"
                               onMouseDown={(e) => {
                                 e.preventDefault();
                                 setNewProduct({ ...newProduct, color: c });
@@ -1223,16 +1261,19 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                               {c}
                             </div>
                           ))}
+                          {attributes.colors.filter(c => c.toLowerCase().includes(newProduct.color.toLowerCase())).length === 0 && (
+                            <div className="px-3 py-2 text-sm text-slate-400 italic">Thêm mới: "{newProduct.color}"</div>
+                          )}
                         </div>
                       </div>
                     )}
                   </div>
 
                   <div className="relative col-span-1">
-                    <label className="block text-[11px] font-bold text-[var(--text-placeholder)] uppercase mb-1 ml-0.5 tracking-wider">Danh mục</label>
+                    <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">Danh mục</label>
                     <input
-                      placeholder="VD: Sofa, Bàn, Giường..."
-                      className="w-full px-3 py-1.5 text-[12px] rounded-md border border-gray-200 focus:border-[var(--brand-primary)] outline-none bg-gray-50/20"
+                      placeholder="Chọn hoặc nhập danh mục..."
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/30 focus:border-[var(--brand-primary)] transition bg-white"
                       value={newProduct.category}
                       onChange={e => {
                         setNewProduct({ ...newProduct, category: e.target.value });
@@ -1242,12 +1283,12 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                       onBlur={() => setTimeout(() => setShowCategoryDropdown(false), 200)}
                     />
                     {showCategoryDropdown && (
-                      <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-md shadow-xl z-50 overflow-hidden border-slate-100 ring-1 ring-black/5">
-                        <div className="max-h-32 overflow-y-auto p-0.5">
+                      <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-150 rounded-xl shadow-xl z-50 overflow-hidden ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-100">
+                        <div className="max-h-48 overflow-y-auto p-1 scrollbar-thin">
                           {attributes.categories.filter(c => c.toLowerCase().includes(newProduct.category.toLowerCase())).map(c => (
                             <div
                               key={c}
-                              className="px-2.5 py-1.5 text-[12px] cursor-pointer rounded font-bold text-slate-700 hover:bg-slate-50"
+                              className="px-3 py-2 text-sm cursor-pointer rounded-lg font-medium text-slate-700 hover:bg-slate-50 transition-colors"
                               onMouseDown={(e) => {
                                 e.preventDefault();
                                 setNewProduct({ ...newProduct, category: c });
@@ -1257,15 +1298,18 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                               {c}
                             </div>
                           ))}
+                          {attributes.categories.filter(c => c.toLowerCase().includes(newProduct.category.toLowerCase())).length === 0 && (
+                            <div className="px-3 py-2 text-sm text-slate-400 italic">Thêm mới: "{newProduct.category}"</div>
+                          )}
                         </div>
                       </div>
                     )}
                   </div>
                   <div className="relative col-span-1">
-                    <label className="block text-[11px] font-bold text-[var(--text-placeholder)] uppercase mb-1 ml-0.5 tracking-wider">Phòng</label>
+                    <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">Phòng</label>
                     <input
-                      placeholder="VD: Phòng khách..."
-                      className="w-full px-3 py-1.5 text-[12px] rounded-md border border-gray-200 focus:border-[var(--brand-primary)] outline-none bg-gray-50/20"
+                      placeholder="Chọn hoặc nhập phòng..."
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/30 focus:border-[var(--brand-primary)] transition bg-white"
                       value={newProduct.room}
                       onChange={e => {
                         setNewProduct({ ...newProduct, room: e.target.value });
@@ -1275,12 +1319,12 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                       onBlur={() => setTimeout(() => setShowRoomDropdown(false), 200)}
                     />
                     {showRoomDropdown && (
-                      <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-md shadow-xl z-50 overflow-hidden border-slate-100 ring-1 ring-black/5">
-                        <div className="max-h-32 overflow-y-auto p-0.5">
+                      <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-150 rounded-xl shadow-xl z-50 overflow-hidden ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-100">
+                        <div className="max-h-48 overflow-y-auto p-1 scrollbar-thin">
                           {attributes.rooms.filter(r => r.toLowerCase().includes(newProduct.room.toLowerCase())).map(r => (
                             <div
                               key={r}
-                              className="px-2.5 py-1.5 text-[12px] cursor-pointer rounded font-bold text-slate-700 hover:bg-slate-50"
+                              className="px-3 py-2 text-sm cursor-pointer rounded-lg font-medium text-slate-700 hover:bg-slate-50 transition-colors"
                               onMouseDown={(e) => {
                                 e.preventDefault();
                                 setNewProduct({ ...newProduct, room: r });
@@ -1290,46 +1334,96 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                               {r}
                             </div>
                           ))}
+                          {attributes.rooms.filter(r => r.toLowerCase().includes(newProduct.room.toLowerCase())).length === 0 && (
+                            <div className="px-3 py-2 text-sm text-slate-400 italic">Thêm mới: "{newProduct.room}"</div>
+                          )}
                         </div>
                       </div>
                     )}
                   </div>
 
-                  <div className="col-span-2">
-                    <label className="block text-[11px] font-bold text-[var(--text-placeholder)] uppercase mb-1 ml-0.5 tracking-wider">KT (D-R-C) & Số lượng</label>
-                    <div className="flex items-center gap-1.5">
-                      {[
-                        { l: 'D', f: 'length' }, { l: 'R', f: 'width' }, { l: 'C', f: 'height' }
-                      ].map(d => (
-                        <input key={d.f} placeholder={d.l} type="number" className="w-[50px] px-1 py-1.5 text-[12px] text-center rounded-md border border-gray-200 outline-none bg-gray-50/20 focus:border-[var(--brand-primary)]"
-                          value={newProduct[d.f]} onChange={e => setNewProduct({ ...newProduct, [d.f]: e.target.value })}
-                        />
-                      ))}
-                      <div className="flex-1" />
-                      <div className="flex items-center gap-0.5 bg-gray-50 border border-gray-200 rounded-md px-1.5 py-0.5">
-                        <button onClick={() => setNewProduct({ ...newProduct, qty: Math.max(1, newProduct.qty - 1) })} className="cursor-pointer p-1 rounded-sm text-gray-400 border-none bg-transparent flex items-center justify-center"><Minus size={12} /></button>
-                        <span className="text-[12px] font-black min-w-[25px] text-center text-[var(--brand-primary)]">{newProduct.qty}</span>
-                        <button onClick={() => setNewProduct({ ...newProduct, qty: newProduct.qty + 1 })} className="cursor-pointer p-1 rounded-sm text-gray-400 border-none bg-transparent flex items-center justify-center"><Plus size={12} /></button>
+                  <div className="col-span-1">
+                    <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">Số lượng *</label>
+                    <div className="flex items-center gap-1.5 h-[38px]">
+                      <div className="flex items-center gap-0.5 bg-gray-50 border border-slate-200 rounded-lg px-2 py-1.5 h-full">
+                        <button
+                          type="button"
+                          onClick={() => setNewProduct({ ...newProduct, qty: Math.max(1, newProduct.qty - 1) })}
+                          className="cursor-pointer p-1 hover:bg-gray-200 rounded text-slate-500 border-none bg-transparent flex items-center justify-center transition-colors"
+                        >
+                          <Minus size={12} />
+                        </button>
+                        <span className="text-sm font-black min-w-[30px] text-center text-[var(--brand-primary)]">{newProduct.qty}</span>
+                        <button
+                          type="button"
+                          onClick={() => setNewProduct({ ...newProduct, qty: newProduct.qty + 1 })}
+                          className="cursor-pointer p-1 hover:bg-gray-200 rounded text-slate-500 border-none bg-transparent flex items-center justify-center transition-colors"
+                        >
+                          <Plus size={12} />
+                        </button>
                       </div>
                     </div>
                   </div>
 
                   <div className="col-span-2">
-                    <label className="block text-[11px] font-bold text-[var(--text-placeholder)] uppercase mb-1 ml-0.5 tracking-wider">Ghi chú kỹ thuật</label>
+                    <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
+                      Kích thước (Dân dụng D × R × C) cm
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="Dài"
+                        className="w-24 border border-slate-200 rounded-lg px-3 py-2 text-sm text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/30 focus:border-[var(--brand-primary)] text-center transition bg-white"
+                        value={newProduct.length}
+                        onChange={e => {
+                          const val = e.target.value.replace(/[^0-9.]/g, '');
+                          setNewProduct({ ...newProduct, length: val });
+                        }}
+                      />
+                      <span className="text-slate-400 font-bold">×</span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="Rộng"
+                        className="w-24 border border-slate-200 rounded-lg px-3 py-2 text-sm text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/30 focus:border-[var(--brand-primary)] text-center transition bg-white"
+                        value={newProduct.width}
+                        onChange={e => {
+                          const val = e.target.value.replace(/[^0-9.]/g, '');
+                          setNewProduct({ ...newProduct, width: val });
+                        }}
+                      />
+                      <span className="text-slate-400 font-bold">×</span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="Cao"
+                        className="w-24 border border-slate-200 rounded-lg px-3 py-2 text-sm text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/30 focus:border-[var(--brand-primary)] text-center transition bg-white"
+                        value={newProduct.height}
+                        onChange={e => {
+                          const val = e.target.value.replace(/[^0-9.]/g, '');
+                          setNewProduct({ ...newProduct, height: val });
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="col-span-2">
+                    <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">Ghi chú kỹ thuật</label>
                     <textarea
-                      placeholder="Yêu cầu riêng biệt..."
-                      className="w-full px-3 py-1.5 text-[12px] rounded-md border border-gray-200 outline-none h-14 resize-none bg-gray-50/20 focus:border-[var(--brand-primary)]"
+                      placeholder="Nhập yêu cầu kỹ thuật riêng biệt..."
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/30 focus:border-[var(--brand-primary)] min-h-[72px] resize-none transition bg-white"
                       value={newProduct.note}
                       onChange={e => setNewProduct({ ...newProduct, note: e.target.value })}
                     />
                   </div>
 
                   {/* Bundle Toggle & List */}
-                  <div className="col-span-2 mt-1">
-                    <label className="flex items-center gap-2 text-[12px] font-bold text-[var(--text-main)] cursor-pointer mb-2">
+                  <div className="col-span-2">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-[var(--text-main)] cursor-pointer mb-2">
                       <input 
                         type="checkbox" 
-                        className="w-4 h-4 rounded border-gray-300 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
+                        className="w-4 h-4 rounded border-slate-300 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)] cursor-pointer"
                         checked={newProduct.isBundle === 1}
                         onChange={(e) => {
                           const isBundle = e.target.checked ? 1 : 0;
@@ -1340,12 +1434,12 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                     </label>
 
                     {newProduct.isBundle === 1 && (
-                      <div className="p-3 bg-indigo-50/50 border border-indigo-100 rounded-lg flex flex-col gap-2">
+                      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-3">
                         {newProduct.bundleItems.map((b, bidx) => (
                           <div key={bidx} className="flex gap-2 items-start">
                             <input 
                               placeholder="Tên món (VD: Bàn ăn)"
-                              className="flex-1 px-2 py-1 text-[12px] rounded border border-gray-200 focus:border-indigo-400 outline-none"
+                              className="flex-1 px-3 py-2 text-sm rounded-lg border border-slate-200 focus:border-[var(--brand-primary)] outline-none bg-white"
                               value={b.name}
                               onChange={(e) => {
                                 const newBundle = [...newProduct.bundleItems];
@@ -1353,110 +1447,88 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                                 setNewProduct({ ...newProduct, bundleItems: newBundle });
                               }}
                             />
-                            <div className="flex gap-1 w-[120px]">
+                            <div className="flex gap-1.5 w-[160px] shrink-0">
                               {['length', 'width', 'height'].map(dim => (
-                                <input key={dim} placeholder={dim[0].toUpperCase()} type="number" 
-                                  className="w-full px-1 py-1 text-[11px] text-center rounded border border-gray-200 focus:border-indigo-400 outline-none"
+                                <input key={dim} placeholder={dim === 'length' ? 'D' : dim === 'width' ? 'R' : 'C'} 
+                                  type="text"
+                                  inputMode="decimal"
+                                  className="w-full px-2 py-2 text-xs text-center rounded-lg border border-slate-200 focus:border-[var(--brand-primary)] outline-none bg-white"
                                   value={b.size[dim]} 
                                   onChange={e => {
+                                    const val = e.target.value.replace(/[^0-9.]/g, '');
                                     const newBundle = [...newProduct.bundleItems];
-                                    newBundle[bidx].size[dim] = e.target.value;
+                                    newBundle[bidx].size[dim] = val;
                                     setNewProduct({ ...newProduct, bundleItems: newBundle });
                                   }}
                                 />
                               ))}
                             </div>
                             <input 
-                              type="number" placeholder="SL" min="1"
-                              className="w-12 px-1 py-1 text-[12px] text-center rounded border border-gray-200 focus:border-indigo-400 outline-none"
+                              type="text" 
+                              inputMode="numeric"
+                              placeholder="SL"
+                              className="w-14 px-2 py-2 text-sm text-center rounded-lg border border-slate-200 focus:border-[var(--brand-primary)] outline-none bg-white"
                               value={b.quantity}
                               onChange={(e) => {
+                                const val = e.target.value.replace(/[^0-9]/g, '');
                                 const newBundle = [...newProduct.bundleItems];
-                                newBundle[bidx].quantity = e.target.value;
+                                newBundle[bidx].quantity = val;
                                 setNewProduct({ ...newProduct, bundleItems: newBundle });
                               }}
                             />
                             <button 
+                              type="button"
                               onClick={() => {
                                 const newBundle = newProduct.bundleItems.filter((_, i) => i !== bidx);
                                 setNewProduct({ ...newProduct, bundleItems: newBundle });
                               }}
-                              className="w-6 h-6 flex items-center justify-center text-red-500 hover:bg-red-50 rounded cursor-pointer shrink-0 mt-0.5"
+                              className="w-9 h-9 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg cursor-pointer shrink-0 border border-slate-100 transition-colors"
                             >
-                              <X size={14} />
+                              <X size={16} />
                             </button>
                           </div>
                         ))}
                         <button 
+                          type="button"
                           onClick={() => setNewProduct({ ...newProduct, bundleItems: [...newProduct.bundleItems, { name: "", quantity: 1, size: { length: "", width: "", height: "" } }] })}
-                          className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 cursor-pointer self-start mt-1"
+                          className="flex items-center gap-1 text-xs font-bold text-[var(--brand-primary)] hover:opacity-80 cursor-pointer self-start transition"
                         >
-                          <Plus size={12} /> Thêm món con
+                          <Plus size={14} /> Thêm món con
                         </button>
                       </div>
                     )}
                   </div>
                 </div>
-
-                <div className="flex flex-col gap-2.5">
-                  <div className="flex items-center justify-between px-0.5">
-                    <label className="flex items-center gap-2 text-[10px] font-black text-[var(--brand-primary)] uppercase cursor-pointer">
-                      <ImagePlus size={14} />
-                      Ảnh minh họa
-                      <input type="file" multiple className="hidden" onChange={e => {
-                        const files = Array.from(e.target.files || []);
-                        files.forEach(file => {
-                          const reader = new FileReader();
-                          reader.onload = ev => setNewProduct(prev => ({ ...prev, images: [...prev.images, ev.target.result] }));
-                          reader.readAsDataURL(file);
-                        });
-                      }} />
-                    </label>
-                    {newProduct.images.length > 0 && <span className="text-[10px] text-gray-400 font-bold">Đã chọn {newProduct.images.length}</span>}
-                  </div>
-
-                  {newProduct.images.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 p-1.5 rounded-lg bg-gray-50 border border-dashed border-gray-200">
-                      {newProduct.images.map((img, idx) => (
-                        <div key={idx} className="relative w-12 h-12 rounded-md overflow-hidden border shadow-sm bg-white shrink-0 group">
-                          <img src={img} alt="" className="w-full h-full object-cover" />
-                          <div
-                            onClick={() => setNewProduct(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== idx) }))}
-                            className="absolute inset-0 bg-red-500/80 text-white flex items-center justify-center cursor-pointer transition-opacity opacity-0 group-hover:opacity-100"
-                          >
-                            <X size={12} />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Sub-modal Footer */}
-              <div className="flex items-center justify-end gap-3 px-4 py-3 border-t bg-gray-50 shrink-0">
-                <button
-                  onClick={() => setShowCustomForm(false)}
-                  className="text-[13px] font-bold text-gray-400 px-6 py-2 rounded-lg cursor-pointer border border-transparent bg-transparent"
-                >
-                  Hủy
-                </button>
-                <button
-                  onClick={() => {
-                    if (!newProduct.name) return toast.error("Vui lòng nhập tên sản phẩm");
-                    setCustomItems([...customItems, { ...newProduct, id: Date.now() }]);
-                    setNewProduct({ name: "", material: "", length: "", width: "", height: "", color: "", qty: 1, note: "", images: [], code: "", isManualCode: false, isBundle: 0, bundleItems: [], category: "", room: "" });
-                    setShowCustomForm(false);
-                    toast.success("Đã thêm sản phẩm");
-                  }}
-                  className="bg-[var(--brand-primary)] text-white text-[13px] font-bold px-8 py-2 rounded-lg cursor-pointer border-none"
-                >
-                  Thêm vào danh sách
-                </button>
               </div>
             </div>
           </div>
-        )}
+
+          {/* Sub-modal Footer */}
+          <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowCustomForm(false)}
+              className="px-5 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-500 hover:bg-slate-100 transition cursor-pointer bg-white"
+            >
+              Hủy
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!newProduct.name) return toast.error("Vui lòng nhập tên sản phẩm");
+                setCustomItems([...customItems, { ...newProduct, id: Date.now() }]);
+                setNewProduct({ name: "", material: "", length: "", width: "", height: "", color: "", qty: 1, note: "", images: [], code: "", isManualCode: false, isBundle: 0, bundleItems: [], category: "", room: "" });
+                setShowCustomForm(false);
+                toast.success("Đã thêm sản phẩm");
+              }}
+              className="px-6 py-2 bg-[var(--brand-primary)] hover:opacity-90 active:scale-[0.98] text-white rounded-lg text-sm font-semibold transition shadow-md shadow-[var(--brand-primary)]/10 cursor-pointer border-none"
+            >
+              Thêm vào danh sách
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
 
         {/* ══════════ STEP 2: Select Supplier ══════════ */}
         {step === 2 && (

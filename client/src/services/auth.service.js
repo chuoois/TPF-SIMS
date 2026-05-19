@@ -55,6 +55,27 @@ const authService = {
     const response = await axiosInstance.get("/auth/profile");
     return response.data;
   },
+
+  /**
+   * Cập nhật thông tin cá nhân
+   * @param {object} data { fullName, phoneNumber, dob, gender }
+   * @returns {Promise}
+   */
+  async updateProfile(data) {
+    const response = await axiosInstance.put("/auth/profile", data);
+    return response.data;
+  },
+
+  /**
+   * Đổi mật khẩu tài khoản
+   * @param {string} oldPassword
+   * @param {string} newPassword
+   * @returns {Promise}
+   */
+  async changePassword(oldPassword, newPassword) {
+    const response = await axiosInstance.put("/auth/change-password", { oldPassword, newPassword });
+    return response.data;
+  },
 };
 
 export default authService;

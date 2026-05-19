@@ -31,7 +31,44 @@ const forgotPasswordSchema = Joi.object({
   'object.unknown': 'Trường {#label} không được phép có trong request',
 });
 
+const changePasswordSchema = Joi.object({
+  oldPassword: Joi.string().required().messages({
+    'string.empty': 'Vui lòng nhập mật khẩu cũ',
+    'any.required': 'Vui lòng nhập mật khẩu cũ',
+  }),
+  newPassword: Joi.string().min(6).max(255).required().messages({
+    'string.empty': 'Vui lòng nhập mật khẩu mới',
+    'string.min': 'Mật khẩu mới phải có ít nhất 6 ký tự',
+    'string.max': 'Mật khẩu mới không được vượt quá 255 ký tự',
+    'any.required': 'Vui lòng nhập mật khẩu mới',
+  }),
+}).unknown(false).messages({
+  'object.unknown': 'Trường {#label} không được phép có trong request',
+});
+
+const updateProfileSchema = Joi.object({
+  fullName: Joi.string().max(150).required().messages({
+    'string.empty': 'Vui lòng nhập họ và tên',
+    'string.max': 'Họ và tên không được vượt quá 150 ký tự',
+    'any.required': 'Vui lòng nhập họ và tên',
+  }),
+  phoneNumber: Joi.string().max(20).allow('', null).optional().messages({
+    'string.max': 'Số điện thoại không được vượt quá 20 ký tự',
+  }),
+  dob: Joi.string().isoDate().allow('', null).optional().messages({
+    'string.isoDate': 'Ngày sinh không đúng định dạng YYYY-MM-DD',
+  }),
+  gender: Joi.number().integer().valid(0, 1).allow(null).optional().messages({
+    'number.base': 'Giới tính không hợp lệ',
+    'any.only': 'Giới tính phải là Nam hoặc Nữ',
+  }),
+}).unknown(false).messages({
+  'object.unknown': 'Trường {#label} không được phép có trong request',
+});
+
 module.exports = {
   loginSchema,
   forgotPasswordSchema,
+  changePasswordSchema,
+  updateProfileSchema,
 };

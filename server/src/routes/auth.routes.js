@@ -10,7 +10,7 @@ const AuthController = require("../controller/auth.controller");
 
 const { verifyAccessToken } = require("../middlewares/auth.middleware");
 const validate = require("../middlewares/validate.middleware");
-const { loginSchema, forgotPasswordSchema } = require("../validations/auth.validation");
+const { loginSchema, forgotPasswordSchema, changePasswordSchema, updateProfileSchema } = require("../validations/auth.validation");
 
 /**
  * @swagger
@@ -106,6 +106,7 @@ router.post("/forgot-password", validate(forgotPasswordSchema), AuthController.f
  *         description: Unauthorized
  */
 router.get("/profile", verifyAccessToken, AuthController.getProfile);
-
+router.put("/profile", verifyAccessToken, validate(updateProfileSchema), AuthController.updateProfile);
+router.put("/change-password", verifyAccessToken, validate(changePasswordSchema), AuthController.changePassword);
 
 module.exports = router;

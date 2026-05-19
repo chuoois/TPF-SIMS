@@ -15,12 +15,6 @@ import {
   Plus,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import {
-  CATEGORIES,
-  WOOD_TYPES,
-  COLORS,
-  PRODUCT_STATUSES,
-} from "./constants";
 import productService from "@/services/product.service";
 import { uploadImage } from "@/services/cloudinary.service";
 
@@ -195,15 +189,15 @@ export default function ProductModal({
   // Extract options from metadata or use defaults
   const categories = metadata.categories?.length > 0 
     ? metadata.categories.map(c => c.category_name) 
-    : CATEGORIES;
+    : [];
   
   const materials = metadata.materials?.length > 0 
     ? metadata.materials.map(m => m.material_name) 
-    : WOOD_TYPES;
+    : [];
 
   const colors = metadata.colors?.length > 0 
     ? metadata.colors.map(c => c.color_name) 
-    : COLORS;
+    : [];
 
   const rooms = metadata.rooms?.length > 0 
     ? metadata.rooms.map(r => r.room_name) 

@@ -271,12 +271,107 @@ class AuthController {
           user_account_id: user.user_account_id,
           email: user.email,
           role: user.role?.role_code,
-          fullName: user.profile?.full_name || "Người dùng",
+          fullName: user.profile?.full_name || "",
+          phoneNumber: user.profile?.phone_number || "",
+          dob: user.profile?.dob || "",
+          gender: user.profile?.gender !== undefined ? user.profile?.gender : null,
         },
       });
     } catch (error) {
       console.error("Get profile error:", error);
       return res.status(500).json({ message: "Lỗi hệ thống" });
+    }
+  }
+
+  /**
+   * Cập nhật hồ sơ thông tin cá nhân
+   */
+  async updateProfile(req, res) {
+    try {
+      const { fullName, phoneNumber, dob, gender } = req.body;
+      const userId = req.user.userId;
+
+      // Tìm tài khoản
+      const user = await UserAccount.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Người dùng không tồn tại" });
+      }
+
+      let profile = await UserProfile.findOne({ where: { user_account_id: userId } });
+      if (!profile) {
+        profile = await UserProfile.create({
+          user_account_id: userId,
+          full_name: fullName,
+          phone_number: phoneNumber,
+          dob: dob || null,
+          gender: gender !== undefined ? gender : null,
+          createdate: new Date(),
+          createby: userId
+        });
+      } else {
+        await profile.update({
+          full_name: fullName,
+          phone_number: phoneNumber,
+          dob: dob || null,
+          gender: gender !== undefined ? gender : null,
+          modifiedate: new Date(),
+          modifieby: userId
+        });
+      }
+
+      // Ghi log cập nhật thông tin cá nhân
+      await systemLogController.record(req, "Cập nhật hồ sơ", `Người dùng ${user.email} cập nhật thông tin cá nhân thành công`, "INFO", userId);
+
+      return res.status(200).json({
+        message: "Cập nhật thông tin cá nhân thành công",
+        user: {
+          user_account_id: user.user_account_id,
+          email: user.email,
+          role: req.user.roleCode,
+          fullName: profile.full_name,
+          phoneNumber: profile.phone_number,
+          dob: profile.dob,
+          gender: profile.gender,
+        }
+      });
+    } catch (error) {
+      console.error("Update profile error:", error);
+      return res.status(500).json({ message: "Lỗi hệ thống khi cập nhật hồ sơ" });
+    }
+  }
+
+  /**
+   * Thay đổi mật khẩu người dùng
+   */
+  async changePassword(req, res) {
+    try {
+      const { oldPassword, newPassword } = req.body;
+      const userId = req.user.userId;
+
+      const user = await UserAccount.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Người dùng không tồn tại" });
+      }
+
+      const isMatch = await bcrypt.compare(oldPassword, user.password_hash);
+      if (!isMatch) {
+        return res.status(400).json({ message: "Mật khẩu cũ không chính xác" });
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await user.update({
+        password_hash: hashedPassword,
+        modifiedate: new Date(),
+        modifieby: userId
+      });
+
+      // Ghi log đổi mật khẩu
+      await systemLogController.record(req, "Đổi mật khẩu", `Người dùng ${user.email} đổi mật khẩu thành công`, "INFO", userId);
+
+      return res.status(200).json({ message: "Đổi mật khẩu thành công" });
+    } catch (error) {
+      console.error("Change password error:", error);
+      return res.status(500).json({ message: "Lỗi hệ thống khi đổi mật khẩu" });
     }
   }
 }
