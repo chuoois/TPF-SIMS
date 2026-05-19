@@ -61,14 +61,17 @@ class SupplierDebtController {
                 // 3. Lấy tất cả đợt thanh toán thêm được lưu dạng JSON trong supplier.note
                 let payments = [];
                 let supplierGroup = "Xưởng liên kết";
+                let notesArray = [];
                 if (supplier.note) {
                     try {
                         const parsed = JSON.parse(supplier.note);
                         payments = parsed.payments || [];
                         supplierGroup = parsed.group || "Xưởng liên kết";
+                        notesArray = parsed.notes ? parsed.notes.split("\n") : [];
                     } catch (e) {
                         // note không phải JSON, treat as text note
                         supplierGroup = supplier.note || "Xưởng liên kết";
+                        notesArray = [supplier.note].filter(Boolean);
                     }
                 }
                 const totalPaidAdditional = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
@@ -79,13 +82,15 @@ class SupplierDebtController {
 
                 return {
                     id: supplier.pk_supplier_id,
-                    code: `NCC-${String(supplier.pk_supplier_id).padStart(3, '0')}`,
+                    code: supplier.tax_code || `NCC-${String(supplier.pk_supplier_id).padStart(3, '0')}`,
                     name: supplier.supplier_name,
-                    contactPerson: supplier.contact_person,
-                    phone: supplier.phone_number,
-                    email: supplier.email,
-                    address: supplier.address,
+                    contactPerson: supplier.contact_person || "",
+                    phone: supplier.phone_number || "",
+                    email: supplier.email || "",
+                    address: supplier.address || "",
                     group: supplierGroup,
+                    notes: notesArray,
+                    rawNote: supplier.note,
                     totalImport,
                     totalPaid,
                     debt: debt > 0 ? debt : 0
