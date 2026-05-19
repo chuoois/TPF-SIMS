@@ -389,7 +389,9 @@ export default function OwnerDashboard() {
                             : "bg-amber-50 text-amber-600 border border-amber-100"
                         )}
                       >
-                        {p.currentStock === 0 ? "Hết hàng" : `Còn ${p.currentStock} ${p.isBundle ? "bộ" : "chiếc"}`}
+                        {p.currentStock === 0 
+                          ? `Hết hàng (Định mức: ${p.minStock})` 
+                          : `Còn ${p.currentStock} / ${p.minStock} ${p.isBundle ? "bộ" : "chiếc"}`}
                       </span>
                     </div>
                   )) : (

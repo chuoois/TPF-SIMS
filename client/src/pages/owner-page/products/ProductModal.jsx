@@ -670,6 +670,16 @@ export default function ProductModal({
                           : product.stock}
                       </span>
                     </div>
+                    {product.productType !== "Hàng khách đặt" && product.minStock > 0 && (
+                      <div className="border-t border-slate-200 pt-3 flex items-center justify-between">
+                        <span className="text-xs text-slate-500">
+                          Định mức tối thiểu (Kế toán nhập)
+                        </span>
+                        <span className="font-bold text-slate-600 text-sm">
+                          {product.minStock}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {product.description && (
