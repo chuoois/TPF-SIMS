@@ -340,6 +340,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
             if (p.isBundle) {
                 const newBundle = emptyBundle();
                 newBundle._id = Math.random();
+                newBundle.manufacturingOrderItemId = p.id; // pk_manufacturing_order_item_id
                 newBundle.bundleCode = p.bundleCode || p.productCode || "";
                 newBundle.bundleName = p.bundleName || p.productName;
                 newBundle.category = p.category || "";
@@ -360,6 +361,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
             } else {
                 const newLine = emptyLine();
                 newLine._id = Math.random();
+                newLine.manufacturingOrderItemId = p.id; // pk_manufacturing_order_item_id
                 newLine.productCode = p.productCode || "";
                 newLine.productName = p.productName;
                 newLine.category = p.category || "";
@@ -432,6 +434,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
                 invoiceImgUrl,
                 manufacturingOrderId,
                 lines: lines.map(l => ({
+                    id: l.manufacturingOrderItemId || null, // pk_manufacturing_order_item_id để backend liên kết OrderItem
                     isBundle: l.isBundle,
                     // Dòng lẻ
                     productId: l.productId || null,

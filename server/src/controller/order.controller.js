@@ -59,7 +59,7 @@ class OrderController {
                     }
                 ],
                 attributes: [
-                    'pk_order_id', 'createdate', 'expected_fulfillment_date', 'total_amount', 
+                    'pk_order_id', 'createdate', 'expected_fulfillment_date', 'total_amount',
                     'deposit_amount', 'received_amount', 'delivery_image', 'order_status', 'order_type',
                     'deposit_resolution', 'cancel_reason',
                     [
@@ -90,7 +90,7 @@ class OrderController {
             // Lấy counts theo status (áp dụng các bộ lọc hiện tại trừ order_status)
             const countWhere = { ...where };
             delete countWhere.order_status;
-            
+
             const countsQuery = await Order.count({
                 where: countWhere,
                 include: [
@@ -177,7 +177,7 @@ class OrderController {
                     }
                 ],
                 attributes: [
-                    'pk_order_id', 'order_status', 'order_type', 'createdate', 
+                    'pk_order_id', 'order_status', 'order_type', 'createdate',
                     'expected_fulfillment_date', 'total_amount', 'deposit_amount', 'received_amount',
                     'address', 'note', 'fulfillment_method', 'delivery_image', 'deposit_resolution', 'cancel_reason'
                 ],
@@ -402,9 +402,9 @@ class OrderController {
         const t = await sequelize.transaction();
         try {
             const { id } = req.params;
-            const { 
-                order_status, note, deposit_amount, received_amount, 
-                delivery_image, handover_items, deposit_resolution, cancel_reason 
+            const {
+                order_status, note, deposit_amount, received_amount,
+                delivery_image, handover_items, deposit_resolution, cancel_reason
             } = req.body;
             const userId = req.user.userId;
 
@@ -414,12 +414,12 @@ class OrderController {
             }
 
             const oldStatus = order.order_status;
-            
+
             // Nếu Sales yêu cầu hủy (chuyển sang Chờ duyệt hủy - 7), bắt buộc phải có lý do
             if (Number(order_status) === 7 && req.user.roleCode === 'SALES' && !cancel_reason) {
                 throw new Error("Vui lòng nhập lý do hủy đơn hàng.");
             }
-            
+
             // Cập nhật thông tin cơ bản
             const updateData = {
                 modifiedate: new Date(),
@@ -458,17 +458,17 @@ class OrderController {
             // Logic BÀN GIAO GIA CÔNG (Status 3: Đang gia công)
             if (order_status == 3 || handover_items) {
                 const items = await OrderItem.findAll({ where: { fk_order_id: id }, transaction: t });
-                
+
                 for (const item of items) {
                     // Tìm thông tin bàn giao tương ứng cho item này (nếu có)
                     const handoverData = (handover_items || []).find(h => h.pk_order_item_id === item.pk_order_item_id);
 
                     // Kiểm tra xem đã có bản ghi gia công chưa
-                    let processingRecord = await OrderItemProcessing.findOne({ 
+                    let processingRecord = await OrderItemProcessing.findOne({
                         where: { fk_order_item_id: item.pk_order_item_id },
-                        transaction: t 
+                        transaction: t
                     });
-                    
+
                     if (!processingRecord) {
                         processingRecord = await OrderItemProcessing.create({
                             fk_order_item_id: item.pk_order_item_id,
@@ -575,7 +575,7 @@ class OrderController {
                 createBy: userId
             });
 
-            // 🟢 Thông báo cho TẤT CẢ THỢ khi đơn hàng chuyển sang "Đang gia công" (status 3)
+            //  Thông báo cho TẤT CẢ THỢ khi đơn hàng chuyển sang "Đang gia công" (status 3)
             if (Number(order_status) === 3 && Number(oldStatus) !== 3) {
                 // Lấy thông tin đơn hàng kèm sản phẩm
                 const orderWithItems = await Order.findByPk(id, {

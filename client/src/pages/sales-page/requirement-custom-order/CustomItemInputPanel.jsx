@@ -453,7 +453,7 @@ export default function CustomItemInputPanel({
           )}
         </div>
 
-        {/* Section: Price & Deposit */}
+        {/* Section: Quantity */}
         <div className="space-y-3">
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-1.5">

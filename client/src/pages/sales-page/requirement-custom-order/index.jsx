@@ -18,11 +18,11 @@ import RequirementCartPanel from "./RequirementCartPanel";
 import CustomItemInputPanel from "./CustomItemInputPanel";
 import { Button } from "@/components/ui/button";
 import { X, Package } from "lucide-react";
-import { 
-  ORDER_CONFIG, 
-  DELIVERY_METHODS, 
-  createEmptyTab, 
-  fmt 
+import {
+  ORDER_CONFIG,
+  DELIVERY_METHODS,
+  createEmptyTab,
+  fmt
 } from "@/constants/orderConfig";
 import { todayVN, nowVN } from "@/lib/dateUtils";
 import { format } from "date-fns";
@@ -37,9 +37,7 @@ import useCachedFetch from "@/hooks/useCachedFetch";
 const orderSchema = Yup.object().shape({
   selectedCustomer: Yup.object().nullable().required("Vui lòng chọn khách hàng"),
   orderNote: Yup.string().nullable(),
-  depositAmount: Yup.number()
-    .min(0, "Số tiền đặt cọc không được âm")
-    .required("Vui lòng nhập số tiền cọc"),
+
   cartItems: Yup.array()
     .min(1, "Danh sách yêu cầu không được để trống")
     .required("Danh sách yêu cầu không được để trống"),
@@ -69,7 +67,7 @@ export default function CustomOrderRequirementsPage() {
   const [customerSearch, setCustomerSearch] = useState("");
 
   const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0] || createEmptyTab();
-  
+
   const generateOrderCode = useCallback(() => {
     return format(nowVN(), "'DH'MMddHHmm");
   }, []);
@@ -111,11 +109,11 @@ export default function CustomOrderRequirementsPage() {
                   const msg = uploadError.message?.includes("cloud_name is disabled")
                     ? "Lỗi cấu hình máy chủ ảnh (Cloudinary bị vô hiệu hóa). Vẫn tiếp tục lưu yêu cầu không có ảnh mẫu?"
                     : "Không thể tải ảnh lên máy chủ. Vẫn tiếp tục lưu yêu cầu không có ảnh mẫu?";
-                  
+
                   if (!window.confirm(msg)) {
                     throw new Error("Người dùng đã hủy lưu do lỗi tải ảnh.");
                   }
-                  newUrls = []; 
+                  newUrls = [];
                 }
               }
 
@@ -187,12 +185,12 @@ export default function CustomOrderRequirementsPage() {
   // Fetch customers via useCachedFetch
   const fetchCustomersFn = useCallback(async () => {
     if (!debouncedCustomerSearch.trim()) return { items: [], total: 0 };
-    
+
     const res = await customerService.getAllCustomers({
       search: debouncedCustomerSearch,
       limit: 10,
     });
-    
+
     return {
       items: res.data.map((c) => ({
         id: c.pk_customer_id,
@@ -204,8 +202,8 @@ export default function CustomOrderRequirementsPage() {
     };
   }, [debouncedCustomerSearch]);
 
-  const { 
-    data: cachedCustomerData, 
+  const {
+    data: cachedCustomerData,
     isLoading: isSearchingCustomers,
     isRefreshing: isRefreshingCustomers
   } = useCachedFetch(
