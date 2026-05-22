@@ -85,7 +85,7 @@ const Product = sequelize.define(
     },
     product_type: {
       type: DataTypes.STRING(20),
-      defaultValue: "FINISHED",
+      defaultValue: "CUSTOM",
       comment: "Loại SP: FINISHED, RAW, CUSTOM",
     },
     warranty_months: {

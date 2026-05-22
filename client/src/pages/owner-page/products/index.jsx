@@ -33,10 +33,7 @@ const isLowStock = (item) => {
   if (threshold === undefined || threshold === null || threshold <= 0) {
     return false;
   }
-  return (
-    item.productType === "Hàng sẵn" &&
-    item.stock <= threshold
-  );
+  return item.stock > 0 && item.stock <= threshold;
 };
 
 const getStatusConfig = (status) => {
@@ -53,8 +50,6 @@ const getStatusConfig = (status) => {
       return { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" };
     case "Quà tặng":
       return { bg: "#FAF5FF", text: "#7E22CE", border: "#E9D5FF" };
-    case "Ngừng kinh doanh":
-      return { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
     default:
       return { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
   }
@@ -223,7 +218,7 @@ export default function OwnerProducts() {
   const handleDeleteProduct = async (id) => {
     try {
       await productService.deleteProduct(id);
-      toast.success("Đã vô hiệu hóa sản phẩm thành công!");
+      toast.success("Đã xóa sản phẩm vĩnh viễn thành công!");
       setShowDeleteConfirm(false);
       setItemToDelete(null);
       fetchProducts();
@@ -625,7 +620,6 @@ export default function OwnerProducts() {
                 icon: Pencil,
                 label: "Sửa thông tin",
                 onClick: (item) => openModal(item, "edit"),
-                showIf: (item) => item.status !== "Hết hàng",
               },
               {
                 icon: Trash2,
@@ -652,7 +646,7 @@ export default function OwnerProducts() {
                   try {
                     await Promise.all(selectedIds.map((id) => productService.deleteProduct(id)));
                     setSelectedIds([]);
-                    toast.success(`Đã vô hiệu hóa ${selectedIds.length} sản phẩm!`);
+                    toast.success(`Đã xóa vĩnh viễn ${selectedIds.length} sản phẩm!`);
                     fetchProducts();
                   } catch (err) {
                     toast.error(err?.response?.data?.message || "Lỗi khi xóa hàng loạt");
@@ -660,7 +654,7 @@ export default function OwnerProducts() {
                 },
                 requireConfirm: true,
                 confirmTitle: "Xóa hàng loạt sản phẩm?",
-                confirmMessage: `Bạn có chắc chắn muốn vô hiệu hóa ${selectedIds.length} sản phẩm đang chọn?`,
+                confirmMessage: `Bạn có chắc chắn muốn xóa vĩnh viễn ${selectedIds.length} sản phẩm đang chọn? Hành động này không thể hoàn tác!`,
               },
             ]}
             extraFilters={
@@ -729,8 +723,8 @@ export default function OwnerProducts() {
 
       <ConfirmModal
         isOpen={showDeleteConfirm}
-        title="Xác nhận vô hiệu hóa sản phẩm"
-        message={`Bạn có chắc chắn muốn vô hiệu hóa sản phẩm "${itemToDelete?.name}" (${itemToDelete?.code}) không? Sản phẩm sẽ không hiển thị trong bán hàng.`}
+        title="Xác nhận xóa sản phẩm vĩnh viễn"
+        message={`Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm "${itemToDelete?.name}" (${itemToDelete?.code}) không? Hành động này không thể hoàn tác!`}
         onCancel={() => {
           setShowDeleteConfirm(false);
           setItemToDelete(null);
