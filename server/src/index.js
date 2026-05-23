@@ -38,12 +38,19 @@ const app = express();
 // ─────────────────────────────────────────────────────────
 // CORS
 // ─────────────────────────────────────────────────────────
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
-  : [
-      "http://localhost:5173",
-      "http://localhost:3000",
-    ];
+const defaultAllowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://tpf-sims.vercel.app",
+];
+
+const envAllowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",")
+      .map((o) => o.trim())
+      .filter(Boolean)
+  : [];
+
+const allowedOrigins = [...new Set([...defaultAllowedOrigins, ...envAllowedOrigins])];
 
 app.use(
   cors({
@@ -55,9 +62,8 @@ app.use(
         return callback(null, true);
       }
 
-      return callback(
-        new Error(`CORS policy: origin "${origin}" not allowed`)
-      );
+      console.warn(`CORS blocked origin: ${origin}`);
+      return callback(null, false);
     },
     credentials: true,
   })
