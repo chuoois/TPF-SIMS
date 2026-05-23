@@ -16,9 +16,7 @@ import { toast } from "react-hot-toast";
 import {
     MATERIAL_TYPES,
     COLORS,
-    SUPPLIERS,
     PRODUCT_TYPES,
-    ALL_PRODUCTS,
 } from "../mockData";
 import importService from "@/services/import.service";
 import { uploadImage } from "@/services/cloudinary.service";

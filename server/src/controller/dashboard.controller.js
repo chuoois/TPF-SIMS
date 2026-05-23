@@ -74,8 +74,6 @@ function getAccountantDateRange(query) {
  * Created Date: 15/05/2026
  */
 
-const LOW_STOCK_THRESHOLD = 5;
-
 /**
  * Tính khoảng thời gian dựa trên period
  * @param {string} period - today | week | month | year | all

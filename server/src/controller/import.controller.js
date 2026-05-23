@@ -251,23 +251,29 @@ class ImportController {
           let linkedOrderItem = null;
           if (line.id) {
             const moItem = await ManufacturingOrderItem.findByPk(line.id, { transaction: t });
-            if (moItem && moItem.fk_custom_request_item_id) {
-              linkedOrderItem = await OrderItem.findOne({
-                where: { fk_custom_request_item_id: moItem.fk_custom_request_item_id, status: 1 },
-                transaction: t
-              });
-              if (linkedOrderItem && productId) {
-                await linkedOrderItem.update({
-                  fk_product_id: productId,
-                  import_status: 1, // Đã về kho
-                  modifiedate: new Date(),
-                }, { transaction: t });
-                linkedOrderIds.add(linkedOrderItem.fk_order_id); // Track order
-                // Cập nhật fk_product_id cho CustomRequestItem
-                await CustomRequestItem.update(
-                  { fk_product_id: productId, modifiedate: new Date() },
-                  { where: { pk_custom_request_item_id: moItem.fk_custom_request_item_id }, transaction: t }
-                );
+            if (moItem) {
+              // Đánh dấu ManufacturingOrderItem đã được nhập kho
+              if (productId) {
+                await moItem.update({ fk_product_id: productId }, { transaction: t });
+              }
+              if (moItem.fk_custom_request_item_id) {
+                linkedOrderItem = await OrderItem.findOne({
+                  where: { fk_custom_request_item_id: moItem.fk_custom_request_item_id, status: 1 },
+                  transaction: t
+                });
+                if (linkedOrderItem && productId) {
+                  await linkedOrderItem.update({
+                    fk_product_id: productId,
+                    import_status: 1, // Đã về kho
+                    modifiedate: new Date(),
+                  }, { transaction: t });
+                  linkedOrderIds.add(linkedOrderItem.fk_order_id); // Track order
+                  // Cập nhật fk_product_id cho CustomRequestItem
+                  await CustomRequestItem.update(
+                    { fk_product_id: productId, modifiedate: new Date() },
+                    { where: { pk_custom_request_item_id: moItem.fk_custom_request_item_id }, transaction: t }
+                  );
+                }
               }
             }
           }
@@ -355,23 +361,30 @@ class ImportController {
           let linkedOrderItem = null;
           if (line.id) {
             const moItem = await ManufacturingOrderItem.findByPk(line.id, { transaction: t });
-            if (moItem && moItem.fk_custom_request_item_id) {
-              linkedOrderItem = await OrderItem.findOne({
-                where: { fk_custom_request_item_id: moItem.fk_custom_request_item_id, status: 1 },
-                transaction: t
-              });
-              // Cập nhật fk_product_id và import_status cho OrderItem
-              if (linkedOrderItem && productId) {
-                await linkedOrderItem.update({
-                  fk_product_id: productId,
-                  import_status: 1, // Đã về kho
-                  modifiedate: new Date(),
-                }, { transaction: t });
-                // Cập nhật fk_product_id cho CustomRequestItem
-                await CustomRequestItem.update(
-                  { fk_product_id: productId, modifiedate: new Date() },
-                  { where: { pk_custom_request_item_id: moItem.fk_custom_request_item_id }, transaction: t }
-                );
+            if (moItem) {
+              // Đánh dấu ManufacturingOrderItem đã được nhập kho
+              if (productId) {
+                await moItem.update({ fk_product_id: productId }, { transaction: t });
+              }
+              if (moItem.fk_custom_request_item_id) {
+                linkedOrderItem = await OrderItem.findOne({
+                  where: { fk_custom_request_item_id: moItem.fk_custom_request_item_id, status: 1 },
+                  transaction: t
+                });
+                // Cập nhật fk_product_id và import_status cho OrderItem
+                if (linkedOrderItem && productId) {
+                  await linkedOrderItem.update({
+                    fk_product_id: productId,
+                    import_status: 1, // Đã về kho
+                    modifiedate: new Date(),
+                  }, { transaction: t });
+                  linkedOrderIds.add(linkedOrderItem.fk_order_id); // Track order
+                  // Cập nhật fk_product_id cho CustomRequestItem
+                  await CustomRequestItem.update(
+                    { fk_product_id: productId, modifiedate: new Date() },
+                    { where: { pk_custom_request_item_id: moItem.fk_custom_request_item_id }, transaction: t }
+                  );
+                }
               }
             }
           }
@@ -397,12 +410,22 @@ class ImportController {
       // Cập nhật tổng tiền và tổng SL
       await receipt.update({ total_amount: totalAmount, total_qty: totalQty }, { transaction: t });
 
-      // Cập nhật trạng thái ManufacturingOrder → Đã hoàn thành (status = 4)
+      // Cập nhật trạng thái ManufacturingOrder → chỉ chuyển sang Hoàn thành (status=4)
+      // khi TẤT CẢ ManufacturingOrderItem đã được nhập kho (có fk_product_id)
       if (moId) {
-        await ManufacturingOrder.update(
-          { status: 4, modifiedate: new Date() },
-          { where: { pk_manufacturing_order_id: moId }, transaction: t }
-        );
+        const allMoItems = await ManufacturingOrderItem.findAll({
+          where: { fk_manufacturing_order_id: moId },
+          attributes: ["pk_manufacturing_order_item_id", "fk_product_id"],
+          transaction: t,
+        });
+        const allImported = allMoItems.length > 0 && allMoItems.every(item => item.fk_product_id != null);
+        if (allImported) {
+          await ManufacturingOrder.update(
+            { status: 4, modifiedate: new Date() },
+            { where: { pk_manufacturing_order_id: moId }, transaction: t }
+          );
+        }
+        // Nếu chưa nhập đủ → giữ nguyên status → vẫn hiện trong danh sách yêu cầu nhập
       }
 
       // Kiểm tra nếu tất cả OrderItem của Order đều đã về kho → chuyển order_status sang 2 (Chờ xử lý)
