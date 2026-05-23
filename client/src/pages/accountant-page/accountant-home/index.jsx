@@ -10,8 +10,8 @@ import {
   TrendingUp, TrendingDown, DollarSign, ArrowDownUp,
   AlertCircle, ChevronDown, ChevronRight,
   ArrowUpRight, ArrowDownRight, Plus,
-  Calendar, Filter, RefreshCw, AlertTriangle,
-  Package, Layers, UserCheck, CheckCircle
+  Calendar, RefreshCw, AlertTriangle,
+  Package, Layers, UserCheck
 } from "lucide-react";
 import dashboardService from "@/services/dashboard.service";
 
