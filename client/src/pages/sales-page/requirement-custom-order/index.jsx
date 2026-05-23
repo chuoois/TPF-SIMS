@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Component CustomOrderRequirementsPage
  * Custom wood product orders — made-to-order items
  * UI synced with POS InStockInvoicePage
@@ -18,26 +18,20 @@ import RequirementCartPanel from "./RequirementCartPanel";
 import CustomItemInputPanel from "./CustomItemInputPanel";
 import { Button } from "@/components/ui/button";
 import { X, Package } from "lucide-react";
-import {
-  ORDER_CONFIG,
-  DELIVERY_METHODS,
-  createEmptyTab,
-  fmt
-} from "@/constants/orderConfig";
-import { todayVN, nowVN } from "@/lib/dateUtils";
-import { format } from "date-fns";
+import { createEmptyTab, fmt } from "@/constants/orderConfig";
 import customerService from "@/services/customer.service";
-import orderService from "@/services/order.service";
 import customRequestService from "@/services/customRequest.service";
-
 import { uploadMultipleImages } from "@/services/cloudinary.service";
 import useCachedFetch from "@/hooks/useCachedFetch";
 
-// ===================== VALIDATION SCHEMA =====================
+const STORAGE_KEYS = {
+  TABS: "tpf_custom_order_draft_tabs",
+  ACTIVE_TAB_ID: "tpf_custom_order_draft_active_id",
+};
+
 const orderSchema = Yup.object().shape({
   selectedCustomer: Yup.object().nullable().required("Vui lòng chọn khách hàng"),
   orderNote: Yup.string().nullable(),
-
   cartItems: Yup.array()
     .min(1, "Danh sách yêu cầu không được để trống")
     .required("Danh sách yêu cầu không được để trống"),
@@ -45,43 +39,119 @@ const orderSchema = Yup.object().shape({
   deliveryDate: Yup.string().nullable(),
 });
 
+const safeParseJson = (value, fallback) => {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+};
+
+const loadDraftTabs = () => {
+  const raw = localStorage.getItem(STORAGE_KEYS.TABS);
+  return raw ? safeParseJson(raw, null) : null;
+};
+
+const loadActiveTabId = (tabs) => {
+  const raw = localStorage.getItem(STORAGE_KEYS.ACTIVE_TAB_ID);
+  if (!raw) return null;
+  const parsed = Number(raw);
+  if (!Number.isNaN(parsed) && tabs.some((tab) => tab.id === parsed)) {
+    return parsed;
+  }
+  return tabs[0]?.id || null;
+};
+
+const normalizeCustomer = (customer) => ({
+  id: customer.pk_customer_id,
+  name: customer.full_name,
+  phone: customer.phone_number,
+  address: customer.address || "",
+});
+
+const buildRequestPayload = async (values) => {
+  const cartItems = await Promise.all(
+    values.cartItems.map(async (item) => {
+      if (!item.images?.length) return item;
+
+      const filesToUpload = item.images.filter((image) => typeof image !== "string");
+      const existingUrls = item.images.filter((image) => typeof image === "string");
+
+      if (!filesToUpload.length) {
+        return { ...item, images: existingUrls };
+      }
+
+      try {
+        const uploadedResults = await uploadMultipleImages(filesToUpload);
+        const uploadedUrls = uploadedResults.map((res) => res.url);
+        return { ...item, images: [...existingUrls, ...uploadedUrls] };
+      } catch (uploadError) {
+        console.error("Upload images failed", uploadError);
+        const msg = uploadError.message?.includes("cloud_name is disabled")
+          ? "Lỗi cấu hình máy chủ ảnh (Cloudinary bị vô hiệu hóa). Vẫn tiếp tục lưu yêu cầu không có ảnh mẫu?"
+          : "Không thể tải ảnh lên máy chủ. Vẫn tiếp tục lưu yêu cầu không có ảnh mẫu?";
+
+        if (!window.confirm(msg)) {
+          throw new Error("Người dùng đã hủy lưu do lỗi tải ảnh.");
+        }
+
+        return { ...item, images: existingUrls };
+      }
+    })
+  );
+
+  return {
+    fk_customer_id: values.selectedCustomer.id,
+    note: values.orderNote,
+    address: values.selectedCustomer?.address || "",
+    order_status: 1,
+    order_type: 3,
+    items: cartItems.map((item) => ({
+      item_name: item.productName,
+      item_img: "",
+      item_quantity: item.quantity,
+      item_price: item.expectedPrice || 0,
+      item_material: item.woodType,
+      item_color: item.color,
+      item_size: item.size,
+      item_note: item.note,
+      is_finished: 0,
+      item_is_bundle: item.item_is_bundle || 0,
+      item_bundle_items: item.item_bundle_items || null,
+      customer_img: item.images || [],
+    })),
+  };
+};
+
+const isSamePayload = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
 export default function CustomOrderRequirementsPage() {
   const [tabs, setTabs] = useState(() => {
-    const saved = localStorage.getItem("tpf_custom_order_draft_tabs");
-    return saved ? JSON.parse(saved) : [createEmptyTab()];
+    const savedTabs = loadDraftTabs();
+    return Array.isArray(savedTabs) && savedTabs.length > 0 ? savedTabs : [createEmptyTab()];
   });
 
-  const [activeTabId, setActiveTabId] = useState(() => {
-    const savedId = localStorage.getItem("tpf_custom_order_draft_active_id");
-    if (savedId) {
-      const parsed = Number(savedId);
-      return isNaN(parsed) ? savedId : parsed;
-    }
-    return tabs.length > 0 ? tabs[0].id : null;
-  });
-
+  const [activeTabId, setActiveTabId] = useState(() => loadActiveTabId(tabs));
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const [showWorkshopStatus, setShowWorkshopStatus] = useState(false);
   const [viewingItem, setViewingItem] = useState(null);
   const [editingItemId, setEditingItemId] = useState(null);
   const [customerSearch, setCustomerSearch] = useState("");
 
-  const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0] || createEmptyTab();
-
-  const generateOrderCode = useCallback(() => {
-    return format(nowVN(), "'DH'MMddHHmm");
-  }, []);
+  const activeTab = useMemo(
+    () => tabs.find((tab) => tab.id === activeTabId) || tabs[0] || createEmptyTab(),
+    [tabs, activeTabId]
+  );
 
   const debouncedCustomerSearch = useDebounce(customerSearch, 300);
-  const lastSyncedValuesRef = useRef(null);
+  const lastSyncedValuesRef = useRef(activeTab);
 
-  // ===================== FORMIK CONFIG =====================
   const formik = useFormik({
     initialValues: activeTab,
     enableReinitialize: false,
     validationSchema: orderSchema,
     onSubmit: async (values) => {
-      if (values.cartItems.length === 0) {
+      if (!values.cartItems?.length) {
         toast.error("Danh sách yêu cầu trống!");
         return;
       }
@@ -89,75 +159,16 @@ export default function CustomOrderRequirementsPage() {
       const loadingToast = toast.loading("Đang lưu yêu cầu thiết kế...");
 
       try {
-        // Upload any pending files in cart items
-        const finalCartItems = await Promise.all(
-          values.cartItems.map(async (item) => {
-            if (item.images && item.images.length > 0) {
-              const filesToUpload = item.images.filter(img => typeof img !== 'string');
-              const existingUrls = item.images.filter(img => typeof img === 'string');
-
-              let newUrls = [];
-              if (filesToUpload.length > 0) {
-                try {
-                  const uploadedResults = await uploadMultipleImages(filesToUpload);
-                  newUrls = uploadedResults.map((res) => res.url);
-                } catch (uploadError) {
-                  console.error("Image upload failed:", uploadError);
-                  // If upload fails, we notify but don't crash the whole process 
-                  // unless it's critical. For custom orders, images are important,
-                  // but we let the user decide if they want to proceed without them.
-                  const msg = uploadError.message?.includes("cloud_name is disabled")
-                    ? "Lỗi cấu hình máy chủ ảnh (Cloudinary bị vô hiệu hóa). Vẫn tiếp tục lưu yêu cầu không có ảnh mẫu?"
-                    : "Không thể tải ảnh lên máy chủ. Vẫn tiếp tục lưu yêu cầu không có ảnh mẫu?";
-
-                  if (!window.confirm(msg)) {
-                    throw new Error("Người dùng đã hủy lưu do lỗi tải ảnh.");
-                  }
-                  newUrls = [];
-                }
-              }
-
-              return {
-                ...item,
-                images: [...existingUrls, ...newUrls]
-              };
-            }
-            return item;
-          })
-        );
-
-        const requestData = {
-          fk_customer_id: values.selectedCustomer.id,
-          note: values.orderNote,
-          address: values.deliveryMethod === 'delivery' ? (values.selectedCustomer?.address || "") : 'Lấy tại cửa hàng',
-          order_status: 1,
-          order_type: 3,
-          items: finalCartItems.map((item) => ({
-            item_name: item.productName,
-            item_img: "",
-            item_quantity: item.quantity,
-            item_price: item.expectedPrice || 0,
-            item_material: item.woodType,
-            item_color: item.color,
-            item_size: item.size,
-            item_note: item.note,
-            is_finished: 0,
-            item_is_bundle: item.item_is_bundle || 0,
-            item_bundle_items: item.item_bundle_items || null,
-            customer_img: item.images || [],
-          })),
-        };
-
+        const requestData = await buildRequestPayload(values);
         await customRequestService.createRequest(requestData);
         toast.dismiss(loadingToast);
 
-        // Clear active tab after success
-        if (tabs.length <= 1) {
+        if (tabs.length === 1) {
           const freshTab = createEmptyTab();
           setTabs([freshTab]);
           formik.resetForm({ values: freshTab });
         } else {
-          closeTab(activeTabId, { stopPropagation: () => { } });
+          closeTab(activeTabId, { stopPropagation: () => {} });
         }
       } catch (error) {
         console.error("Create custom request error:", error);
@@ -169,20 +180,18 @@ export default function CustomOrderRequirementsPage() {
     },
   });
 
-  // Show validation errors as toasts when submitting
   useEffect(() => {
-    if (formik.submitCount > 0 && !formik.isValid) {
-      const firstError = Object.values(formik.errors)[0];
-      if (typeof firstError === "string") {
-        toast.error(firstError);
-      } else if (Array.isArray(firstError)) {
-        // Handle array of errors (like cartItems)
-        toast.error(typeof firstError[0] === 'string' ? firstError[0] : "Dữ liệu không hợp lệ");
-      }
+    if (formik.submitCount === 0 || formik.isValid) return;
+    const firstError = Object.values(formik.errors)[0];
+    if (typeof firstError === "string") {
+      toast.error(firstError);
+      return;
     }
-  }, [formik.submitCount]);
+    if (Array.isArray(firstError)) {
+      toast.error(typeof firstError[0] === "string" ? firstError[0] : "Dữ liệu không hợp lệ");
+    }
+  }, [formik.submitCount, formik.errors, formik.isValid]);
 
-  // Fetch customers via useCachedFetch
   const fetchCustomersFn = useCallback(async () => {
     if (!debouncedCustomerSearch.trim()) return { items: [], total: 0 };
 
@@ -192,20 +201,15 @@ export default function CustomOrderRequirementsPage() {
     });
 
     return {
-      items: res.data.map((c) => ({
-        id: c.pk_customer_id,
-        name: c.full_name,
-        phone: c.phone_number,
-        address: c.address || "",
-      })),
-      total: res.pagination?.totalItems || res.data.length
+      items: res.data.map((customer) => normalizeCustomer(customer)),
+      total: res.pagination?.totalItems || res.data.length,
     };
   }, [debouncedCustomerSearch]);
 
   const {
     data: cachedCustomerData,
     isLoading: isSearchingCustomers,
-    isRefreshing: isRefreshingCustomers
+    isRefreshing: isRefreshingCustomers,
   } = useCachedFetch(
     `custom_order_customers_${debouncedCustomerSearch}`,
     fetchCustomersFn,
@@ -214,116 +218,127 @@ export default function CustomOrderRequirementsPage() {
 
   const customerResults = cachedCustomerData?.items || [];
 
-  // Sync Formik when switching tabs
   useEffect(() => {
     formik.resetForm({ values: activeTab });
     lastSyncedValuesRef.current = activeTab;
   }, [activeTabId]);
 
-  // Sync Formik values back to tabs
   useEffect(() => {
-    if (!formik.values || lastSyncedValuesRef.current === formik.values) return;
-    if (JSON.stringify(activeTab) === JSON.stringify(formik.values)) {
+    if (!formik.values) return;
+    if (isSamePayload(lastSyncedValuesRef.current, formik.values)) return;
+    if (isSamePayload(activeTab, formik.values)) {
       lastSyncedValuesRef.current = formik.values;
       return;
     }
 
-    setTabs((prev) =>
-      prev.map((t) => (t.id === activeTabId ? { ...t, ...formik.values } : t))
+    setTabs((previousTabs) =>
+      previousTabs.map((tab) =>
+        tab.id === activeTabId ? { ...tab, ...formik.values } : tab
+      )
     );
     lastSyncedValuesRef.current = formik.values;
   }, [formik.values, activeTabId, activeTab]);
 
-  // Save drafts to localStorage
   useEffect(() => {
-    localStorage.setItem("tpf_custom_order_draft_tabs", JSON.stringify(tabs));
+    localStorage.setItem(STORAGE_KEYS.TABS, JSON.stringify(tabs));
   }, [tabs]);
 
   useEffect(() => {
-    if (activeTabId) {
-      localStorage.setItem("tpf_custom_order_draft_active_id", activeTabId);
+    if (activeTabId !== null && activeTabId !== undefined) {
+      localStorage.setItem(STORAGE_KEYS.ACTIVE_TAB_ID, String(activeTabId));
     }
   }, [activeTabId]);
 
   const updateActiveTab = useCallback(
     (updates) => {
-      setTabs((prev) =>
-        prev.map((t) => (t.id === activeTabId ? { ...t, ...updates } : t))
+      setTabs((previousTabs) =>
+        previousTabs.map((tab) =>
+          tab.id === activeTabId ? { ...tab, ...updates } : tab
+        )
       );
     },
     [activeTabId]
   );
 
   const addTab = () => {
-    const t = createEmptyTab();
-    setTabs((p) => [...p, t]);
-    setActiveTabId(t.id);
+    const tab = createEmptyTab();
+    setTabs((previousTabs) => [...previousTabs, tab]);
+    setActiveTabId(tab.id);
   };
 
-  const closeTab = (tabId, e) => {
-    if (e && e.stopPropagation) e.stopPropagation();
+  const closeTab = (tabId, event) => {
+    if (event?.stopPropagation) event.stopPropagation();
     if (tabs.length <= 1) return;
-    setTabs((prev) => {
-      const filtered = prev.filter((t) => t.id !== tabId);
-      if (activeTabId === tabId)
-        setActiveTabId(filtered[filtered.length - 1].id);
-      return filtered;
+
+    setTabs((previousTabs) => {
+      const remaining = previousTabs.filter((tab) => tab.id !== tabId);
+      if (activeTabId === tabId) {
+        setActiveTabId(remaining[remaining.length - 1]?.id || null);
+      }
+      return remaining;
     });
   };
 
-  // Cart operations (Update to use Formik)
-  const updateQuantity = (id, delta) => {
-    const newItems = formik.values.cartItems
-      .map((i) =>
-        i.id === id ? { ...i, quantity: Math.max(0, i.quantity + delta) } : i
+  const adjustCartItemQuantity = (id, amount) => {
+    const items = formik.values.cartItems || [];
+    const updated = items
+      .map((item) =>
+        item.id === id ? { ...item, quantity: Math.max(0, item.quantity + amount) } : item
       )
-      .filter((i) => i.quantity > 0);
-    formik.setFieldValue("cartItems", newItems);
+      .filter((item) => item.quantity > 0);
+    formik.setFieldValue("cartItems", updated);
   };
 
   const removeFromCart = (id) => {
-    const newItems = formik.values.cartItems.filter((i) => i.id !== id);
-    formik.setFieldValue("cartItems", newItems);
-  };
-
-  const setQuantity = (id, qty) => {
-    const val = parseInt(qty) || 0;
-    if (val <= 0) return removeFromCart(id);
-    const newItems = formik.values.cartItems.map((i) =>
-      i.id === id ? { ...i, quantity: val } : i
+    formik.setFieldValue(
+      "cartItems",
+      (formik.values.cartItems || []).filter((item) => item.id !== id)
     );
-    formik.setFieldValue("cartItems", newItems);
   };
 
-  // Computed values from Formik
-  const itemCount = (formik.values.cartItems || []).reduce((sum, i) => sum + i.quantity, 0);
-  const subtotal = (formik.values.cartItems || []).reduce(
-    (sum, i) => sum + (Number(i.expectedPrice) || 0) * i.quantity,
+  const setQuantity = (id, quantity) => {
+    const value = Number(quantity) || 0;
+    if (value <= 0) {
+      removeFromCart(id);
+      return;
+    }
+
+    formik.setFieldValue(
+      "cartItems",
+      (formik.values.cartItems || []).map((item) =>
+        item.id === id ? { ...item, quantity: value } : item
+      )
+    );
+  };
+
+  const itemCount = (formik.values.cartItems || []).reduce(
+    (sum, item) => sum + item.quantity,
     0
   );
+
+  const subtotal = (formik.values.cartItems || []).reduce(
+    (sum, item) => sum + (Number(item.expectedPrice) || 0) * item.quantity,
+    0
+  );
+
   const totalPayable = Math.max(
     0,
     subtotal - (formik.values.discount || 0) - (formik.values.depositAmount || 0)
   );
 
-  const handleCheckout = () => {
-    formik.handleSubmit();
-  };
+  const handleCheckout = formik.handleSubmit;
 
   return (
     <>
       <PageHelmet title="Yêu cầu đặt riêng - TPF-SIMS" />
 
-      <div
-        className="flex h-full gap-4 -m-4 p-4 relative"
-        style={{ backgroundColor: "var(--bg-main)" }}
-      >
+      <div className="flex h-full gap-4 -m-4 p-4 relative" style={{ backgroundColor: "var(--bg-main)" }}>
         {(isSearchingCustomers || isRefreshingCustomers || formik.isSubmitting) && (
           <div className="fixed top-0 left-0 right-0 z-[9999]">
             <div className="h-[2px] bg-indigo-500 animate-[loading_1.5s_infinite] origin-left"></div>
           </div>
         )}
-        {/* LEFT PANEL – CART & ORDER INFO */}
+
         <RequirementCartPanel
           tabs={tabs}
           activeTabId={activeTabId}
@@ -331,7 +346,7 @@ export default function CustomOrderRequirementsPage() {
           setActiveTabId={setActiveTabId}
           addTab={addTab}
           closeTab={closeTab}
-          updateQuantity={updateQuantity}
+          updateQuantity={adjustCartItemQuantity}
           removeFromCart={removeFromCart}
           setQuantity={setQuantity}
           updateActiveTab={updateActiveTab}
@@ -350,7 +365,6 @@ export default function CustomOrderRequirementsPage() {
           formik={formik}
         />
 
-        {/* RIGHT PANEL – INPUT FORM */}
         <CustomItemInputPanel
           activeTab={formik.values}
           updateActiveTab={updateActiveTab}
@@ -364,22 +378,15 @@ export default function CustomOrderRequirementsPage() {
         isOpen={showAddCustomer}
         onClose={() => setShowAddCustomer(false)}
         onCustomerAdded={(customer) => {
-          formik.setFieldValue("selectedCustomer", {
-            id: customer.pk_customer_id,
-            name: customer.full_name,
-            phone: customer.phone_number,
-            address: customer.address || "",
-          });
+          formik.setFieldValue("selectedCustomer", normalizeCustomer(customer));
         }}
       />
 
-      {/* Workshop Status Modal */}
       <WorkshopStatusModal
         isOpen={showWorkshopStatus}
         onClose={() => setShowWorkshopStatus(false)}
       />
 
-      {/* Viewing Item Overlay */}
       {viewingItem && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="bg-white rounded-2xl w-full max-w-xl overflow-hidden p-6 text-left border border-gray-200">
@@ -394,17 +401,21 @@ export default function CustomOrderRequirementsPage() {
               <div className="flex gap-4">
                 <div className="w-32 h-32 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0">
                   {viewingItem.images?.length > 0 ? (
-                    <img src={typeof viewingItem.images[0] === "string" ? viewingItem.images[0] : URL.createObjectURL(viewingItem.images[0])} className="w-full h-full object-cover" />
+                    <img
+                      src={typeof viewingItem.images[0] === "string" ? viewingItem.images[0] : URL.createObjectURL(viewingItem.images[0])}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300"><Package size={40} /></div>
+                    <div className="w-full h-full flex items-center justify-center text-gray-300">
+                      <Package size={40} />
+                    </div>
                   )}
                 </div>
                 <div className="flex-1">
                   <h4 className="text-xl font-bold text-gray-900">{viewingItem.productName}</h4>
                   <p className="text-sm text-gray-500 mt-1">{viewingItem.woodType} | {viewingItem.color}</p>
                   <p className="text-sm text-gray-500 mt-0.5">
-                    Kích thước:{" "}
-                    {typeof viewingItem.size === "object"
+                    Kích thước: {typeof viewingItem.size === "object"
                       ? `${viewingItem.size.length}x${viewingItem.size.width}x${viewingItem.size.height} ${viewingItem.size.unit || "cm"}`
                       : viewingItem.size}
                   </p>
@@ -429,4 +440,3 @@ export default function CustomOrderRequirementsPage() {
     </>
   );
 }
-

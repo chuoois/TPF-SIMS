@@ -53,7 +53,7 @@ export default function RequirementsListing({ userRole = 'sales' }) {
       items: response.data.map((r) => {
         const itemNames = (r.items || []).map(it => it.item_name).filter(Boolean);
         const hasBundle = (r.items || []).some(it => Number(it.item_is_bundle) === 1);
-        
+
         return {
           id: r.pk_custom_request_id,
           code: r.request_code,
