@@ -1,12 +1,14 @@
 require("dotenv").config();
 
 const path = require("path");
+const http = require("http");
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
 const sequelize = require("./config/db");
 require("./entities");
+const { initSocket } = require("./sockets/socketManager");
 
 // Routes
 const authRoutes = require("./routes/auth.routes");
@@ -35,6 +37,8 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerJsDoc = require("swagger-jsdoc");
 
 const app = express();
+const server = http.createServer(app);
+initSocket(server);
 
 // ─────────────────────────────────────────────────────────
 // CORS
@@ -190,7 +194,7 @@ sequelize
 if (require.main === module) {
   const PORT = Number(process.env.PORT) || 3000;
 
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
     console.log(`Swagger docs available at ${SERVER_URL}/api-docs`);
   });
@@ -200,3 +204,4 @@ if (require.main === module) {
 // Export App For Vercel
 // ─────────────────────────────────────────────────────────
 module.exports = app;
+module.exports.server = server;
