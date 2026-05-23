@@ -1,5 +1,6 @@
 require("dotenv").config();
 
+const path = require("path");
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
@@ -163,7 +164,7 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ["./src/routes/*.js"],
+  apis: [path.join(__dirname, "routes", "*.js")],
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
@@ -185,6 +186,14 @@ sequelize
   .catch((err) => {
     console.error("Database connection error:", err.message);
   });
+
+if (require.main === module) {
+  const PORT = Number(process.env.PORT) || 3000;
+
+  app.listen(PORT, () => {
+    console.log(`Server listening on port ${PORT}`);
+  });
+}
 
 // ─────────────────────────────────────────────────────────
 // Export App For Vercel
