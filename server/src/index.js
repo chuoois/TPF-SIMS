@@ -1,11 +1,13 @@
 require("dotenv").config();
+
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
-const http = require("http");
+
 const sequelize = require("./config/db");
 require("./entities");
-const { initSocket } = require("./sockets/socketManager");
+
+// Routes
 const authRoutes = require("./routes/auth.routes");
 const customerRoutes = require("./routes/customer.routes");
 const accountRoutes = require("./routes/account.routes");
@@ -25,33 +27,73 @@ const importRoutes = require("./routes/import.routes");
 const customerDebtRoutes = require("./routes/customerDebt.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const supplierDebtRoutes = require("./routes/supplierDebt.routes");
-
-const swaggerUi = require("swagger-ui-express");
 const couponRoutes = require("./routes/coupon.routes");
 
+// Swagger
+const swaggerUi = require("swagger-ui-express");
 const swaggerJsDoc = require("swagger-jsdoc");
 
 const app = express();
 
-// ── CORS ──────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
+// CORS
+// ─────────────────────────────────────────────────────────
 const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(",").map(o => o.trim())
-  : ["http://localhost:5173", "http://localhost:3000"];
+  ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+  : [
+      "http://localhost:5173",
+      "http://localhost:3000",
+    ];
 
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error(`CORS policy: origin "${origin}" not allowed`));
-  },
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow Postman / mobile / server requests
+      if (!origin) return callback(null, true);
 
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(
+        new Error(`CORS policy: origin "${origin}" not allowed`)
+      );
+    },
+    credentials: true,
+  })
+);
+
+// ─────────────────────────────────────────────────────────
+// Middlewares
+// ─────────────────────────────────────────────────────────
 app.use(cookieParser());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// ── Routes ────────────────────────────────────────────────
+app.use(
+  express.json({
+    limit: "10mb",
+  })
+);
+
+app.use(
+  express.urlencoded({
+    limit: "10mb",
+    extended: true,
+  })
+);
+
+// ─────────────────────────────────────────────────────────
+// Health Check
+// ─────────────────────────────────────────────────────────
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "TPF-SIMS Backend Running",
+  });
+});
+
+// ─────────────────────────────────────────────────────────
+// API Routes
+// ─────────────────────────────────────────────────────────
 app.use("/api/auth", authRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api/account", accountRoutes);
@@ -73,9 +115,11 @@ app.use("/api/customer-debt", customerDebtRoutes);
 app.use("/api/supplier-debt", supplierDebtRoutes);
 app.use("/api/coupon", couponRoutes);
 
-
-// ── Swagger ───────────────────────────────────────────────
-const SERVER_URL = process.env.SERVER_URL || "http://localhost:3000";
+// ─────────────────────────────────────────────────────────
+// Swagger
+// ─────────────────────────────────────────────────────────
+const SERVER_URL =
+  process.env.SERVER_URL || "http://localhost:3000";
 
 const swaggerOptions = {
   swaggerDefinition: {
@@ -84,11 +128,19 @@ const swaggerOptions = {
       title: "TPF-SIMS API Documentation",
       version: "1.0.0",
       description: "API Documentation for TPF-SIMS Server",
-      contact: { name: "Developer" },
+      contact: {
+        name: "Developer",
+      },
     },
     servers: [
-      { url: SERVER_URL, description: "Active server" },
-      { url: "http://localhost:3000", description: "Local server" },
+      {
+        url: SERVER_URL,
+        description: "Production Server",
+      },
+      {
+        url: "http://localhost:3000",
+        description: "Local Server",
+      },
     ],
     components: {
       securitySchemes: {
@@ -99,31 +151,36 @@ const swaggerOptions = {
         },
       },
     },
-    security: [{ bearerAuth: [] }],
+    security: [
+      {
+        bearerAuth: [],
+      },
+    ],
   },
   apis: ["./src/routes/*.js"],
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// ── HTTP & Socket ─────────────────────────────────────────
-const server = http.createServer(app);
-initSocket(server);
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocs)
+);
 
-// ── Start ─────────────────────────────────────────────────
-const PORT = process.env.PORT || 3000;
-
-sequelize.sync({ alter: false })
+// ─────────────────────────────────────────────────────────
+// Database Connection
+// ─────────────────────────────────────────────────────────
+sequelize
+  .authenticate()
   .then(() => {
-    console.log("Database connected and synced successful");
-    server.listen(PORT, "0.0.0.0", () => {
-      const SERVER_URL = `http://localhost:${PORT}`;
-      console.log(`Server running at ${SERVER_URL}`);
-      console.log(`Swagger docs available at ${SERVER_URL}/api-docs`);
-    });
+    console.log("Database connected successfully");
   })
   .catch((err) => {
-    console.error("Unable to connect/sync the database:", err.message);
-    process.exit(1);
+    console.error("Database connection error:", err.message);
   });
+
+// ─────────────────────────────────────────────────────────
+// Export App For Vercel
+// ─────────────────────────────────────────────────────────
+module.exports = app;
