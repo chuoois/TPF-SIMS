@@ -71,6 +71,7 @@ class ImportController {
             attributes: [
               "pk_manufacturing_order_item_id",
               "fk_product_id",
+              "fk_custom_request_item_id",
               "item_name",
               "item_material",
               "item_color",
@@ -85,7 +86,7 @@ class ImportController {
               {
                 model: Product,
                 as: "product",
-                attributes: ["pk_product_id", "sku", "product_img"],
+                attributes: ["pk_product_id", "sku", "product_img", "product_type"],
                 include: [
                   { model: ProductCategory, as: "category", attributes: ["category_name"], required: false },
                   { model: ProductColor, as: "color", attributes: ["color_name"], required: false },
@@ -119,7 +120,11 @@ class ImportController {
             materialType: it.item_material || it.product?.material?.material_name || "",
             color: it.item_color || it.product?.color?.color_name || "",
             size: it.item_size,
-            productType: "FINISHED",
+            // Ưu tiên lấy product_type từ Product đã tồn tại;
+            // nếu chưa có Product nhưng item liên kết CustomRequest → CUSTOM;
+            // fallback: FINISHED
+            productType: it.product?.product_type
+              || (it.fk_custom_request_item_id ? "CUSTOM" : "FINISHED"),
             requestedQty: it.quantity || 1,
             estimatedPrice: parseFloat(it.import_price) || 0,
             isBundle: Number(it.item_is_bundle) === 1,
