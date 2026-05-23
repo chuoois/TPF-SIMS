@@ -12,6 +12,7 @@ const userSockets = new Map(); // Lưu trữ map user_id -> socket_id
  */
 const initSocket = (server) => {
   io = new Server(server, {
+    path: "/socket.io",
     cors: {
       origin: "*", // Trong sản xuất nên giới hạn origins
       methods: ["GET", "POST"],
