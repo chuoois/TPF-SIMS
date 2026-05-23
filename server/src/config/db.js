@@ -7,21 +7,46 @@ const { Sequelize } = require("sequelize");
  */
 
 const sequelize = new Sequelize(
-  (process.env.DB_NAME || "").trim(),
-  (process.env.DB_USER || "").trim(),
-  (process.env.DB_PASSWORD || "").trim(),
+  process.env.DB_NAME?.trim(),
+  process.env.DB_USER?.trim(),
+  process.env.DB_PASSWORD?.trim(),
   {
-    host: (process.env.DB_HOST || "").trim(),
-    port: (process.env.DB_PORT || "").trim(),
+    host: process.env.DB_HOST?.trim(),
+
+    // PORT phải là number
+    port: Number(process.env.DB_PORT),
+
     dialect: "mysql",
+
     logging: false,
+
     dialectOptions: {
       connectTimeout: 60000,
+
       ssl: {
-        rejectUnauthorized: false, // Required for Aiven MySQL
+        require: true,
+        rejectUnauthorized: false,
       },
+    },
+
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000,
     },
   }
 );
 
-module.exports = sequelize;
+// Test connection
+sequelize
+  .authenticate()
+  .then(() => {
+    console.log("✅ Database connected successfully");
+  })
+  .catch((error) => {
+    console.error("❌ Database connection failed:");
+    console.error(error);
+  });
+
+module.exports = sequelize;
