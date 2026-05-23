@@ -1,4 +1,5 @@
 const { Sequelize } = require("sequelize");
+const mysql2 = require("mysql2");
 
 /**
  * Config Database bằng Sequelize
@@ -17,6 +18,7 @@ const sequelize = new Sequelize(
     port: Number(process.env.DB_PORT),
 
     dialect: "mysql",
+    dialectModule: mysql2,
 
     logging: false,
 
