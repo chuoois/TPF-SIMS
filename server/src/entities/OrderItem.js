@@ -81,6 +81,16 @@ const OrderItem = sequelize.define(
       type: DataTypes.TINYINT,
       defaultValue: 1,
     },
+    import_status: {
+      type: DataTypes.TINYINT,
+      defaultValue: 0,
+      comment: "Trạng thái về kho: 0-Chưa về kho, 1-Đã về kho",
+    },
+    fk_custom_request_item_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: "Liên kết với chi tiết yêu cầu đặt riêng (CustomRequestItem)",
+    },
     createdate: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

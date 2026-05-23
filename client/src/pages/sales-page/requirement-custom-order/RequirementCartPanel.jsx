@@ -24,20 +24,7 @@ import { Button } from "@/components/ui/button";
 import CustomCheckbox from "@/components/control/CustomCheckbox";
 import { fmt, DELIVERY_METHODS } from "@/constants/orderConfig";
 
-const calculateCustomDeposit = (subtotal) => {
-  if (!subtotal || subtotal <= 0) {
-    return { amount: 0, percentage: 0, reason: "", rate: 0 };
-  }
-  const rate = 0.5;
-  let amount = Math.round(subtotal * rate);
-  amount = Math.min(amount, subtotal);
-  return {
-    amount,
-    percentage: Math.round(rate * 100),
-    rate,
-    reason: "Đơn hàng đặt làm riêng (Yêu cầu cọc 50% để nhập phôi gỗ)",
-  };
-};
+
 
 export default function RequirementCartPanel({
   tabs,
@@ -58,8 +45,6 @@ export default function RequirementCartPanel({
   setShowWorkshopStatus,
   setViewingItem,
   itemCount,
-  subtotal,
-  totalPayable,
   handleCheckout,
   onEditItem,
   formik,
@@ -67,23 +52,7 @@ export default function RequirementCartPanel({
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const customerSearchRef = useRef(null);
 
-  const suggestedDepositInfo = useMemo(() => {
-    return calculateCustomDeposit(subtotal);
-  }, [subtotal]);
 
-  // Tự động cập nhật tiền cọc vào Formik - Lấy nguyên logic bên invoice-instock
-  useEffect(() => {
-    if (formik.values.isFullPayment) {
-      if (formik.values.depositAmount !== subtotal) {
-        formik.setFieldValue("depositAmount", subtotal);
-      }
-    } else {
-      const suggested = Math.round(subtotal * 0.5);
-      if (formik.values.depositAmount !== suggested) {
-        formik.setFieldValue("depositAmount", suggested);
-      }
-    }
-  }, [formik.values.depositAmount, formik.values.isFullPayment, subtotal, formik.setFieldValue]);
 
   return (
     <div
@@ -210,14 +179,7 @@ export default function RequirementCartPanel({
                           ? `${item.size.length}x${item.size.width}x${item.size.height} ${item.size.unit || "cm"}${item.size.note ? ` (${item.size.note})` : ""}`
                           : item.size}
                       </span>
-                      {formik.values.mode === "DIRECT_ORDER" && (
-                        <span
-                          className="text-[11px] font-medium"
-                          style={{ color: "var(--text-secondary)" }}
-                        >
-                          × {fmt(item.expectedPrice || 0)}đ
-                        </span>
-                      )}
+
                     </div>
                   </div>
 

@@ -5,6 +5,7 @@ import {
   Package,
   Trash2,
   AlertCircle,
+  AlertTriangle,
   ChevronDown,
   Tag,
   ShieldCheck,
@@ -27,6 +28,14 @@ const fmtCurrency = (n) => {
   return new Intl.NumberFormat("vi-VN").format(n) + "₫";
 };
 
+const isLowStock = (item) => {
+  const threshold = item.minStock;
+  if (threshold === undefined || threshold === null || threshold <= 0) {
+    return false;
+  }
+  return item.stock > 0 && item.stock <= threshold;
+};
+
 const getStatusConfig = (status) => {
   switch (status) {
     case "Chưa định giá":
@@ -41,8 +50,6 @@ const getStatusConfig = (status) => {
       return { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" };
     case "Quà tặng":
       return { bg: "#FAF5FF", text: "#7E22CE", border: "#E9D5FF" };
-    case "Ngừng kinh doanh":
-      return { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
     default:
       return { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
   }
@@ -67,6 +74,7 @@ export default function OwnerProducts() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("Tất cả");
   const [categoryFilter, setCategoryFilter] = useState("Tất cả");
+  const [roomFilter, setRoomFilter] = useState("Tất cả");
   const [productTypeFilter, setProductTypeFilter] = useState("Tất cả");
 
   const [metadata, setMetadata] = useState({
@@ -121,6 +129,13 @@ export default function OwnerProducts() {
         );
         if (cat) params.category_id = cat.pk_product_category_id;
       }
+      // Lọc room theo ID
+      if (roomFilter !== "Tất cả") {
+        const rm = metadata.rooms?.find(
+          (r) => r.room_name === roomFilter,
+        );
+        if (rm) params.room_id = rm.pk_product_room_id;
+      }
 
       const result = await productService.getOwnerProducts(params);
       setProducts(result.data || []);
@@ -133,7 +148,7 @@ export default function OwnerProducts() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, searchQuery, productTypeFilter, categoryFilter, metadata.categories]);
+  }, [currentPage, itemsPerPage, searchQuery, productTypeFilter, categoryFilter, roomFilter, metadata.categories, metadata.rooms]);
 
   useEffect(() => {
     fetchProducts();
@@ -142,34 +157,43 @@ export default function OwnerProducts() {
   // Reset page khi filter thay đổi
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, categoryFilter, productTypeFilter]);
+  }, [searchQuery, statusFilter, categoryFilter, roomFilter, productTypeFilter]);
 
   // Client-side status filter (applied after API data)
   const filteredProducts = useMemo(() => {
     if (statusFilter === "Tất cả") return products;
+    if (statusFilter === "Sắp hết hàng") return products.filter((p) => isLowStock(p));
     return products.filter((p) => p.status === statusFilter);
   }, [products, statusFilter]);
 
   const statusCounts = useMemo(() => {
     const counts = {
       "Tất cả": products.length,
+      "Sắp hết hàng": 0,
       "Chưa định giá": 0,
       "Hết hàng": 0,
       "Quà tặng": 0,
     };
     products.forEach((p) => {
       if (counts[p.status] !== undefined) counts[p.status]++;
+      if (isLowStock(p)) counts["Sắp hết hàng"]++;
     });
     return counts;
   }, [products]);
 
   const hasActiveFilters =
     categoryFilter !== "Tất cả" ||
+    roomFilter !== "Tất cả" ||
     searchQuery ||
     productTypeFilter !== "Tất cả";
 
+  const hasAnyFilter =
+    hasActiveFilters ||
+    statusFilter !== "Tất cả";
+
   const clearFilters = () => {
     setCategoryFilter("Tất cả");
+    setRoomFilter("Tất cả");
     setSearchQuery("");
     setStatusFilter("Tất cả");
     setProductTypeFilter("Tất cả");
@@ -194,7 +218,7 @@ export default function OwnerProducts() {
   const handleDeleteProduct = async (id) => {
     try {
       await productService.deleteProduct(id);
-      toast.success("Đã vô hiệu hóa sản phẩm thành công!");
+      toast.success("Đã xóa sản phẩm vĩnh viễn thành công!");
       setShowDeleteConfirm(false);
       setItemToDelete(null);
       fetchProducts();
@@ -279,27 +303,45 @@ export default function OwnerProducts() {
     },
     {
       header: "Loại hàng",
-      render: (item) => (
-        <div className="flex flex-col">
-          <span className="font-medium text-[var(--text-main)] text-[13px]">
+      render: (item) => {
+        let typeClass = "bg-gray-100 text-gray-700 border-gray-200";
+        if (item.productType === "Hàng sẵn") {
+          typeClass = "bg-emerald-50 text-emerald-700 border-emerald-200";
+        } else if (item.productType === "Hàng mộc") {
+          typeClass = "bg-amber-50 text-amber-700 border-amber-200";
+        } else if (item.productType === "Hàng khách đặt") {
+          typeClass = "bg-blue-50 text-blue-700 border-blue-200";
+        }
+        
+        return (
+          <span className={`inline-flex px-2 py-1 rounded-md text-[11px] font-bold border ${typeClass} whitespace-nowrap`}>
             {item.productType}
           </span>
-          {item.status !== "Chưa định giá" && (
-            <span className="text-[10px] text-[var(--brand-primary)] font-bold flex items-center gap-0.5 mt-1 bg-[var(--brand-primary)]/5 px-1.5 py-0.5 rounded-sm border border-blue-100 self-start">
-              <ShieldCheck size={10} /> BH: {item.warrantyMonths || 12}T
-            </span>
-          )}
-        </div>
+        );
+      },
+    },
+    {
+      header: "Bảo hành",
+      headerClassName: "text-center w-[90px] whitespace-nowrap",
+      className: "text-center w-[90px] whitespace-nowrap",
+      render: (item) => (
+        item.status !== "Chưa định giá" && item.status !== "Quà tặng" ? (
+          <span className="text-[12px] text-gray-600 font-medium whitespace-nowrap">
+            {item.warrantyMonths || 12} tháng
+          </span>
+        ) : (
+          <span className="text-[var(--text-placeholder)]">—</span>
+        )
       ),
     },
     {
       header: "Giá bán",
-      headerClassName: "text-right",
-      className: "text-right",
+      headerClassName: "text-left w-[140px] whitespace-nowrap",
+      className: "text-left w-[140px] whitespace-nowrap",
       render: (item) => {
         if (item.status === "Quà tặng") {
           return (
-            <div className="flex flex-col items-end">
+            <div className="flex flex-col items-start">
               <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-purple-100 text-purple-700 border border-purple-200">
                 Quà tặng
               </span>
@@ -311,7 +353,7 @@ export default function OwnerProducts() {
         }
         if (item.status === "Hàng khách đặt") {
           return (
-            <div className="flex flex-col items-end">
+            <div className="flex flex-col items-start">
               <span className="text-[13px] font-black text-amber-600">
                 {fmtCurrency(item.retailPrice)}
               </span>
@@ -330,7 +372,7 @@ export default function OwnerProducts() {
         }
         if (item.productType === "Hàng mộc") {
           return (
-            <div className="flex flex-col items-end">
+            <div className="flex flex-col items-start">
               <span className="text-[12px] font-bold text-[var(--palette-orange)]">
                 {fmtCurrency(item.rawRetailPrice)} (Mộc)
               </span>
@@ -341,41 +383,64 @@ export default function OwnerProducts() {
           );
         }
         return (
-          <p className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>
+          <span className="text-[13px] font-bold text-left block" style={{ color: "var(--text-main)" }}>
             {fmtCurrency(item.retailPrice)}
-          </p>
+          </span>
         );
       },
     },
     {
       header: "Tồn",
-      headerClassName: "text-right",
-      className: "text-right",
-      render: (item) =>
-        item.productType !== "Hàng khách đặt" ? (
-          <span className={`font-bold ${item.stock === 0 ? "text-[var(--status-error)]" : "text-[var(--text-main)]"}`}>
-            {item.stock}
-          </span>
-        ) : (
-          <span className="text-[var(--text-placeholder)]">—</span>
-        ),
+      headerClassName: "text-center w-[110px] whitespace-nowrap",
+      className: "text-center w-[110px] whitespace-nowrap",
+      render: (item) => {
+        if (item.productType === "Hàng khách đặt") {
+          return <span className="text-[var(--text-placeholder)]">—</span>;
+        }
+        return (
+          <div className="flex flex-col items-center justify-center">
+            <span className={`font-bold ${item.stock === 0 ? "text-[var(--status-error)]" : "text-[var(--text-main)]"}`}>
+              {item.stock}
+            </span>
+            {item.minStock > 0 && (
+              <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap mt-0.5">
+                Định mức: {item.minStock}
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
       header: "Trạng thái",
       render: (item) => {
         const sc = getStatusConfig(item.status);
+        const hideMainStatus = ["Hàng sẵn", "Hàng mộc", "Hàng khách đặt"].includes(item.status);
+        
         return (
-          <span
-            className="inline-flex items-center justify-center w-[130px] px-2 py-1 text-[11px] font-bold rounded-md whitespace-nowrap gap-1.5"
-            style={{
-              backgroundColor: sc.bg,
-              color: sc.text,
-              border: `1px solid ${sc.border}`,
-            }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: sc.text }} />
-            {item.status}
-          </span>
+          <div className="flex flex-col gap-1 w-[130px]">
+            {!hideMainStatus && (
+              <span
+                className="inline-flex items-center justify-center w-full px-2 py-1 text-[11px] font-bold rounded-md whitespace-nowrap gap-1.5"
+                style={{
+                  backgroundColor: sc.bg,
+                  color: sc.text,
+                  border: `1px solid ${sc.border}`,
+                }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: sc.text }} />
+                {item.status}
+              </span>
+            )}
+            {isLowStock(item) && (
+              <span 
+                className="inline-flex items-center justify-center w-full px-2 py-1 rounded-md bg-amber-50 text-amber-600 text-[9px] font-black uppercase tracking-tighter border border-amber-200 gap-1"
+                title={`Định mức tối thiểu: ${item.minStock}`}
+              >
+                <AlertTriangle size={10} /> Sắp hết hàng ({item.minStock})
+              </span>
+            )}
+          </div>
         );
       },
     },
@@ -420,15 +485,6 @@ export default function OwnerProducts() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Nút thêm sản phẩm mới */}
-            <button
-              onClick={() => setModalState({ product: {}, mode: "create" })}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold text-white transition-all active:scale-95 cursor-pointer"
-              style={{ backgroundColor: "var(--brand-primary)" }}
-            >
-              <Plus size={16} /> Thêm sản phẩm
-            </button>
-
             <div
               className="flex p-1 rounded-lg"
               style={{
@@ -457,6 +513,7 @@ export default function OwnerProducts() {
         <div className="flex items-center gap-2 shrink-0 flex-wrap py-1">
           {[
             { id: "Tất cả", label: "Tất cả" },
+            { id: "Sắp hết hàng", label: "Sắp hết hàng", color: "amber", icon: AlertTriangle },
             { id: "Chưa định giá", label: "Chưa định giá", color: "red", icon: AlertCircle },
             { id: "Hết hàng", label: "Hết hàng", color: "red", icon: AlertCircle },
             { id: "Quà tặng", label: "Quà tặng", color: "purple" },
@@ -467,9 +524,11 @@ export default function OwnerProducts() {
               s.id !== "Tất cả"
                 ? isRedForce
                   ? { bg: "#FEF2F2", text: "#B91C1C", border: "#FECACA" }
-                  : s.color === "purple"
-                    ? { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" }
-                    : { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" }
+                  : s.color === "amber"
+                    ? { bg: "#FFFBEB", text: "#D97706", border: "#FDE68A" }
+                    : s.color === "purple"
+                      ? { bg: "#F5F3FF", text: "#7C3AED", border: "#DDD6FE" }
+                      : { bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" }
                 : null;
 
             return (
@@ -525,23 +584,15 @@ export default function OwnerProducts() {
         )}
 
         {/* EMPTY STATE */}
-        {!loading && !error && products.length === 0 && (
+        {!loading && !error && products.length === 0 && !hasAnyFilter && (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <PackageOpen size={56} className="text-slate-300" />
             <p className="text-lg font-semibold text-slate-400">Chưa có sản phẩm nào</p>
-            <p className="text-sm text-slate-400">Bấm "Thêm sản phẩm" để tạo sản phẩm mới</p>
-            <button
-              onClick={() => setModalState({ product: {}, mode: "create" })}
-              className="flex items-center gap-2 mt-2 px-5 py-2.5 rounded-lg text-sm font-bold text-white transition active:scale-95 cursor-pointer"
-              style={{ backgroundColor: "var(--brand-primary)" }}
-            >
-              <Plus size={16} /> Thêm sản phẩm đầu tiên
-            </button>
           </div>
         )}
 
         {/* DATA TABLE */}
-        {!loading && !error && products.length > 0 && (
+        {!loading && !error && (products.length > 0 || hasAnyFilter) && (
           <DataTable
             columns={columns}
             data={filteredProducts}
@@ -569,7 +620,6 @@ export default function OwnerProducts() {
                 icon: Pencil,
                 label: "Sửa thông tin",
                 onClick: (item) => openModal(item, "edit"),
-                showIf: (item) => item.status !== "Hết hàng",
               },
               {
                 icon: Trash2,
@@ -596,7 +646,7 @@ export default function OwnerProducts() {
                   try {
                     await Promise.all(selectedIds.map((id) => productService.deleteProduct(id)));
                     setSelectedIds([]);
-                    toast.success(`Đã vô hiệu hóa ${selectedIds.length} sản phẩm!`);
+                    toast.success(`Đã xóa vĩnh viễn ${selectedIds.length} sản phẩm!`);
                     fetchProducts();
                   } catch (err) {
                     toast.error(err?.response?.data?.message || "Lỗi khi xóa hàng loạt");
@@ -604,20 +654,20 @@ export default function OwnerProducts() {
                 },
                 requireConfirm: true,
                 confirmTitle: "Xóa hàng loạt sản phẩm?",
-                confirmMessage: `Bạn có chắc chắn muốn vô hiệu hóa ${selectedIds.length} sản phẩm đang chọn?`,
+                confirmMessage: `Bạn có chắc chắn muốn xóa vĩnh viễn ${selectedIds.length} sản phẩm đang chọn? Hành động này không thể hoàn tác!`,
               },
             ]}
             extraFilters={
-              <>
+              <div className="flex items-center gap-2">
                 <div className="relative flex items-center">
                   <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
                     className="h-10 px-3 pr-9 rounded-lg text-[13px] font-medium outline-none cursor-pointer focus:ring-2 transition appearance-none"
                     style={{
-                      border: categoryFilter !== "Tất cả" ? "1px solid var(--brand-primary)" : "1px solid var(--grid-border)",
-                      backgroundColor: categoryFilter !== "Tất cả" ? "var(--status-focus)" : "#fff",
-                      color: categoryFilter !== "Tất cả" ? "var(--brand-primary)" : "var(--text-main)",
+                      border: "1px solid var(--grid-border)",
+                      backgroundColor: "#fff",
+                      color: "var(--text-main)",
                     }}
                   >
                     <option value="Tất cả">Danh mục sản phẩm</option>
@@ -629,14 +679,36 @@ export default function OwnerProducts() {
                   </select>
                   <ChevronDown
                     size={14}
-                    className="absolute right-3 pointer-events-none opacity-50"
-                    style={{
-                      color: categoryFilter !== "Tất cả" ? "var(--brand-primary)" : "var(--text-main)",
-                    }}
+                    className="absolute right-3 pointer-events-none opacity-50 text-gray-400"
                     strokeWidth={2.5}
                   />
                 </div>
-              </>
+
+                <div className="relative flex items-center">
+                  <select
+                    value={roomFilter}
+                    onChange={(e) => setRoomFilter(e.target.value)}
+                    className="h-10 px-3 pr-9 rounded-lg text-[13px] font-medium outline-none cursor-pointer focus:ring-2 transition appearance-none"
+                    style={{
+                      border: "1px solid var(--grid-border)",
+                      backgroundColor: "#fff",
+                      color: "var(--text-main)",
+                    }}
+                  >
+                    <option value="Tất cả">Khu vực</option>
+                    {(metadata.rooms || []).map((r) => (
+                      <option key={r.room_name} value={r.room_name}>
+                        {r.room_name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={14}
+                    className="absolute right-3 pointer-events-none opacity-50 text-gray-400"
+                    strokeWidth={2.5}
+                  />
+                </div>
+              </div>
             }
             pagination={{
               total: statusFilter === "Tất cả" ? totalItems : filteredProducts.length,
@@ -651,8 +723,8 @@ export default function OwnerProducts() {
 
       <ConfirmModal
         isOpen={showDeleteConfirm}
-        title="Xác nhận vô hiệu hóa sản phẩm"
-        message={`Bạn có chắc chắn muốn vô hiệu hóa sản phẩm "${itemToDelete?.name}" (${itemToDelete?.code}) không? Sản phẩm sẽ không hiển thị trong bán hàng.`}
+        title="Xác nhận xóa sản phẩm vĩnh viễn"
+        message={`Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm "${itemToDelete?.name}" (${itemToDelete?.code}) không? Hành động này không thể hoàn tác!`}
         onCancel={() => {
           setShowDeleteConfirm(false);
           setItemToDelete(null);

@@ -36,11 +36,6 @@ import { toast } from "react-hot-toast";
 import { CATEGORIES } from "../mockData";
 import inventoryService from "@/services/inventory.service";
 
-// ─────────────────────────────────────────────────────────
-// MOCK DATA – xem mockData.js ở cùng cấp thư mục
-// ─────────────────────────────────────────────────────────
-
-
 // ── Pill config ──────────────────────────────────────────
 const TYPE_FILTERS = [
   {
@@ -109,21 +104,32 @@ const fmtCurrency = (n) =>
   n != null ? new Intl.NumberFormat("vi-VN").format(n) + "₫" : "—";
 
 // ── Hỗ trợ tính ngày tồn kho ──────────────────────────────
-const TODAY = new Date();
+// Dùng hàm thay vì hằng số để luôn lấy ngày hiện tại, tránh lỗi -1 khi nhập hàng mới
+const getToday = () => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0); // chuẩn về 00:00:00 để so sánh theo ngày
+  return d;
+};
+
+const normalizeDate = (d) => {
+  const nd = new Date(d);
+  nd.setHours(0, 0, 0, 0);
+  return nd;
+};
 
 const getImportDateRange = (p) => {
   let dates = [];
   if (p.lots && p.lots.length > 0) {
     p.lots.forEach((lot) => {
-      if (lot.importDate) dates.push(new Date(lot.importDate));
+      if (lot.importDate) dates.push(normalizeDate(lot.importDate));
       if (lot.units) {
         lot.units.forEach((u) => {
-          if (u.importDate) dates.push(new Date(u.importDate));
+          if (u.importDate) dates.push(normalizeDate(u.importDate));
         });
       }
     });
   } else if (p.importedAt) {
-    dates.push(new Date(p.importedAt));
+    dates.push(normalizeDate(p.importedAt));
   }
   if (dates.length === 0) return null;
 
@@ -134,7 +140,7 @@ const getImportDateRange = (p) => {
 const getDaysInStock = (p) => {
   const range = getImportDateRange(p);
   if (!range) return null;
-  return Math.floor((TODAY - range.first) / (1000 * 60 * 60 * 24));
+  return Math.max(0, Math.floor((getToday() - range.first) / (1000 * 60 * 60 * 24)));
 };
 
 const fmtShortDate = (d) =>
@@ -591,12 +597,13 @@ export default function AccountantProductManage() {
                               </span>
                             );
 
-                          const daysOldest = Math.floor(
-                            (TODAY - range.first) / (1000 * 60 * 60 * 24),
-                          );
-                          const daysNewest = Math.floor(
-                            (TODAY - range.last) / (1000 * 60 * 60 * 24),
-                          );
+                          const today = getToday();
+                          const daysOldest = Math.max(0, Math.floor(
+                            (today - range.first) / (1000 * 60 * 60 * 24),
+                          ));
+                          const daysNewest = Math.max(0, Math.floor(
+                            (today - range.last) / (1000 * 60 * 60 * 24),
+                          ));
                           const text =
                             daysOldest === daysNewest
                               ? `${daysOldest} ngày`

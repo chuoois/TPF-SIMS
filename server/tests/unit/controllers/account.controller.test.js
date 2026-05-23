@@ -6,6 +6,9 @@ const { Op } = require("sequelize");
 
 jest.mock("bcrypt");
 jest.mock("../../../src/controller/systemLog.controller");
+jest.mock("../../../src/sockets/socketManager", () => ({
+  forceLogout: jest.fn(),
+}));
 jest.mock("../../../src/entities", () => {
   const mockTransaction = { commit: jest.fn(), rollback: jest.fn() };
   return {
@@ -25,6 +28,9 @@ jest.mock("../../../src/entities", () => {
     },
     UserProfile: {
       create: jest.fn(),
+    },
+    RefreshToken: {
+      destroy: jest.fn(),
     },
   };
 });

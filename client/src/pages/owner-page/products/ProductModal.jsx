@@ -15,12 +15,6 @@ import {
   Plus,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import {
-  CATEGORIES,
-  WOOD_TYPES,
-  COLORS,
-  PRODUCT_STATUSES,
-} from "./constants";
 import productService from "@/services/product.service";
 import { uploadImage } from "@/services/cloudinary.service";
 
@@ -195,15 +189,15 @@ export default function ProductModal({
   // Extract options from metadata or use defaults
   const categories = metadata.categories?.length > 0 
     ? metadata.categories.map(c => c.category_name) 
-    : CATEGORIES;
+    : [];
   
   const materials = metadata.materials?.length > 0 
     ? metadata.materials.map(m => m.material_name) 
-    : WOOD_TYPES;
+    : [];
 
   const colors = metadata.colors?.length > 0 
     ? metadata.colors.map(c => c.color_name) 
-    : COLORS;
+    : [];
 
   const rooms = metadata.rooms?.length > 0 
     ? metadata.rooms.map(r => r.room_name) 
@@ -294,6 +288,9 @@ export default function ProductModal({
   const isWood = isCreate ? form.productType === "Hàng mộc" : product.productType === "Hàng mộc";
   const canDelete = product.stock === 0;
 
+  // Lấy giá nhập gần nhất (lô mới nhất)
+  const latestCost = newestLot ? newestLot.importPrice : (form.costPrice || 0);
+
   const set = (key) => (e) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
   const setNum = (key) => (e) => {
@@ -330,7 +327,7 @@ export default function ProductModal({
     };
     if (includePricing) {
       payload.pricing = {
-        cost_price: form.costPrice || 0,
+        cost_price: latestCost || form.costPrice || 0,
         raw_price: form.rawRetailPrice || 0,
         final_price: isWood ? (form.finishedRetailPrice || 0) : (form.retailPrice || 0),
         profit_margin: form.margin || 0,
@@ -394,9 +391,9 @@ export default function ProductModal({
     }
   };
 
-  const totalCost = form.costPrice + form.processingCost;
+  const totalCost = latestCost + form.processingCost;
   const multiplier = 1 + form.margin / 100;
-  const suggestedRaw = form.costPrice * multiplier;
+  const suggestedRaw = latestCost * multiplier;
   const suggestedFinished = totalCost * multiplier;
 
   return (
@@ -676,6 +673,16 @@ export default function ProductModal({
                           : product.stock}
                       </span>
                     </div>
+                    {product.productType !== "Hàng khách đặt" && product.minStock > 0 && (
+                      <div className="border-t border-slate-200 pt-3 flex items-center justify-between">
+                        <span className="text-xs text-slate-500">
+                          Định mức tối thiểu (Kế toán nhập)
+                        </span>
+                        <span className="font-bold text-slate-600 text-sm">
+                          {product.minStock}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {product.description && (
@@ -715,13 +722,13 @@ export default function ProductModal({
                       {/* Giá nhập & Chi phí gia công & Lịch sử */}
                       <div className="col-span-2 grid grid-cols-3 gap-4 items-start">
                         <div className="col-span-1 flex flex-col gap-4">
-                          {/* Giá nhập */}
+                          {/* Giá nhập gần nhất */}
                           <div className="bg-slate-50/50 border border-slate-200 rounded-xl p-4 flex flex-col justify-center h-full">
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
                               Giá nhập gốc / Lô mới nhất
                             </span>
                             <span className="text-2xl font-black text-[var(--text-main)]">
-                              {fmtCost(form.costPrice)}
+                              {fmtCost(latestCost)}
                             </span>
                           </div>
                         </div>
@@ -965,7 +972,7 @@ export default function ProductModal({
               Hủy
             </button>
 
-            {mode === "view" && product.status !== "Hết hàng" && (
+            {mode === "view" && (
               <button
                 onClick={() => onSwitchMode("edit")}
                 className="px-5 py-2.5 rounded-lg text-sm font-bold text-[var(--brand-primary)] bg-[var(--brand-primary)]/10 border border-[var(--brand-primary)]/20 hover:bg-[var(--brand-primary)]/20 transition flex items-center gap-2"

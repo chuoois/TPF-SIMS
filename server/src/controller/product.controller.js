@@ -560,6 +560,38 @@ class ProductController {
                 offset: parseInt(offset),
             });
 
+            // Lấy dữ liệu lô hàng từ ProductItem
+            const productIds = rows.map(r => r.pk_product_id);
+            const productItems = await ProductItem.findAll({
+                where: { fk_product_id: productIds },
+                attributes: ["fk_product_id", "cost_price", "batch_code", "createdate", "item_status", "fk_order_item_id"],
+            });
+
+            const lotsMap = {};
+            productItems.forEach(item => {
+                const pid = item.fk_product_id;
+                if (!lotsMap[pid]) lotsMap[pid] = {};
+
+                // Group by batch_code, fallback to date + cost_price
+                const dateKey = item.createdate ? new Date(item.createdate).toISOString().split('T')[0] : 'unknown_date';
+                const key = item.batch_code || `${dateKey}_${parseFloat(item.cost_price)}`;
+
+                if (!lotsMap[pid][key]) {
+                    lotsMap[pid][key] = {
+                        lotId: key,
+                        importDate: item.createdate || new Date(),
+                        importPrice: parseFloat(item.cost_price) || 0,
+                        initialQuantity: 0,
+                        remainingQuantity: 0,
+                    };
+                }
+
+                lotsMap[pid][key].initialQuantity += 1;
+                if (item.item_status === 1 && item.fk_order_item_id === null) {
+                    lotsMap[pid][key].remainingQuantity += 1;
+                }
+            });
+
             // Map dữ liệu
             const PRODUCT_TYPE_MAP = { FINISHED: "Hàng sẵn", RAW: "Hàng mộc", CUSTOM: "Hàng khách đặt" };
 
@@ -572,7 +604,7 @@ class ProductController {
                 // Xác định status hiển thị
                 let displayStatus;
                 if (p.product_status === 0) {
-                    displayStatus = "Ngừng kinh doanh";
+                    displayStatus = "Hết hàng";
                 } else if (p.is_gift === 1) {
                     displayStatus = "Quà tặng";
                 } else if (!pricing || (pricing.final_price <= 0 && pricing.raw_price <= 0)) {
@@ -632,6 +664,7 @@ class ProductController {
                     isPriced: pricing ? (parseFloat(pricing.final_price) > 0 || parseFloat(pricing.raw_price) > 0) : false,
                     minStock: p.min_stock || 0,
                     createdate: p.createdate,
+                    lots: Object.values(lotsMap[p.pk_product_id] || {}).sort((a, b) => new Date(b.importDate) - new Date(a.importDate)),
                 };
             });
 
@@ -796,13 +829,17 @@ class ProductController {
     }
 
     /**
-     * Xóa sản phẩm (Soft-delete, chỉ OWNER)
+     * Xóa sản phẩm vĩnh viễn (Hard-delete, chỉ OWNER)
+     * - Kiểm tra tồn kho active trước khi xóa
+     * - Kiểm tra đơn hàng đang xử lý liên quan
+     * - Xóa các bản ghi con: ProductPricing, ProductItem, CouponProduct
+     * - Gỡ liên kết FK ở OrderItem, ManufacturingOrderItem (set NULL để giữ lịch sử)
+     * - Xóa bản ghi Product
      */
     async deleteProduct(req, res) {
         const t = await sequelize.transaction();
         try {
             const { id } = req.params;
-            const userId = req.user.id;
 
             const product = await Product.findByPk(id);
             if (!product) {
@@ -810,7 +847,7 @@ class ProductController {
                 return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
             }
 
-            // Kiểm tra có ProductItem active không
+            // Kiểm tra có ProductItem active (đang trong kho) không
             const activeItems = await ProductItem.count({
                 where: {
                     fk_product_id: id,
@@ -826,22 +863,66 @@ class ProductController {
                 });
             }
 
-            // Soft-delete: set product_status = 0
-            await product.update({
-                product_status: 0,
-                modifieby: userId,
-                modifiedate: new Date(),
-            }, { transaction: t });
+            // Kiểm tra có đơn hàng đang xử lý (chưa hoàn thành/hủy) liên quan không
+            const pendingOrderItems = await sequelize.query(`
+                SELECT COUNT(*) as cnt
+                FROM order_item oi
+                JOIN \`order\` o ON oi.fk_order_id = o.pk_order_id
+                WHERE oi.fk_product_id = :productId
+                AND oi.status = 1
+                AND o.order_status NOT IN (0, 6)
+            `, {
+                replacements: { productId: id },
+                type: sequelize.QueryTypes.SELECT,
+                transaction: t
+            });
 
-            // Tắt pricing liên quan
-            await ProductPricing.update(
-                { status: 0, modifieby: userId, modifiedate: new Date() },
-                { where: { fk_product_id: id, status: 1 }, transaction: t }
+            if (pendingOrderItems[0]?.cnt > 0) {
+                await t.rollback();
+                return res.status(400).json({
+                    message: `Không thể xóa! Sản phẩm đang có ${pendingOrderItems[0].cnt} đơn hàng chưa hoàn thành.`
+                });
+            }
+
+            // 1. Xóa tất cả ProductPricing liên quan
+            await ProductPricing.destroy({
+                where: { fk_product_id: id },
+                transaction: t
+            });
+
+            // 2. Xóa tất cả ProductItem liên quan (đã kiểm tra active = 0 ở trên)
+            await ProductItem.destroy({
+                where: { fk_product_id: id },
+                transaction: t
+            });
+
+            // 3. Xóa liên kết CouponProduct
+            const { CouponProduct } = require("../entities");
+            await CouponProduct.destroy({
+                where: { fk_product_id: id },
+                transaction: t
+            });
+
+            // 4. Gỡ liên kết FK ở OrderItem (giữ lịch sử đơn hàng, set NULL)
+            const { OrderItem: OI } = require("../entities");
+            await OI.update(
+                { fk_product_id: null },
+                { where: { fk_product_id: id }, transaction: t }
             );
+
+            // 5. Gỡ liên kết FK ở ManufacturingOrderItem (giữ lịch sử nhập hàng)
+            const { ManufacturingOrderItem: MOI } = require("../entities");
+            await MOI.update(
+                { fk_product_id: null },
+                { where: { fk_product_id: id }, transaction: t }
+            );
+
+            // 6. Xóa sản phẩm
+            await product.destroy({ transaction: t });
 
             await t.commit();
 
-            return res.status(200).json({ message: "Đã vô hiệu hóa sản phẩm thành công" });
+            return res.status(200).json({ message: "Đã xóa sản phẩm vĩnh viễn thành công" });
         } catch (error) {
             await t.rollback();
             console.error("Delete product error:", error);

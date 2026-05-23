@@ -6,7 +6,8 @@
  * Updated: 02/04/2026 – Bỏ khái niệm lô, hiển thị đơn vị theo phiếu nhập
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   Package,
@@ -244,7 +245,144 @@ function BundleItemsTable({ items }) {
 
 
 
-// ── Receipt Group Card ─────────────────────────────────
+
+// ── Status Options ─────────────────────────────────────────
+const STATUS_OPTIONS = [
+  { key: "AVAILABLE",        ...UNIT_STATUS_CONFIG.AVAILABLE },
+  { key: "PROCESSING",       ...UNIT_STATUS_CONFIG.PROCESSING },
+  { key: "PENDING_DELIVERY", ...UNIT_STATUS_CONFIG.PENDING_DELIVERY },
+  { key: "DEFECTIVE",        ...UNIT_STATUS_CONFIG.DEFECTIVE },
+];
+
+// ── Status Dropdown – dùng Portal để tránh bị clip bởi overflow ──
+function StatusDropdown({ unit, onChangeStatus, updatingSerial }) {
+  const [open, setOpen] = useState(false);
+  const [dropPos, setDropPos] = useState({ top: 0, left: 0 });
+  const btnRef = useRef(null);
+  const isUpdating = updatingSerial === unit.unitId;
+  const dropId = `status-drop-${unit.unitId}`;
+
+  // Đóng dropdown khi click ngoài (cả button lẫn portal)
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => {
+      const dropEl = document.getElementById(dropId);
+      const clickedInsideBtn = btnRef.current && btnRef.current.contains(e.target);
+      const clickedInsideDrop = dropEl && dropEl.contains(e.target);
+      if (!clickedInsideBtn && !clickedInsideDrop) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open, dropId]);
+
+  // Tính vị trí button khi mở dropdown
+  const handleToggle = () => {
+    if (btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setDropPos({ top: r.bottom + 6, left: r.left });
+    }
+    setOpen((v) => !v);
+  };
+
+  const cfg = UNIT_STATUS_CONFIG[unit.status] || UNIT_STATUS_CONFIG.AVAILABLE;
+
+  // Spinner khi đang gọi API
+  if (isUpdating) {
+    return (
+      <span
+        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold"
+        style={{ backgroundColor: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}
+      >
+        <span
+          className="w-3 h-3 border-2 rounded-full animate-spin shrink-0"
+          style={{ borderColor: cfg.color, borderTopColor: "transparent" }}
+        />
+        Đang lưu...
+      </span>
+    );
+  }
+
+  return (
+    <>
+      {/* Badge có thể click */}
+      <button
+        ref={btnRef}
+        onClick={handleToggle}
+        title="Nhấn để thay đổi trạng thái"
+        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer hover:opacity-75 transition-opacity select-none"
+        style={{ backgroundColor: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}
+      >
+        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: cfg.color }} />
+        {cfg.label}
+        <ChevronDown
+          size={9}
+          style={{
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 0.15s",
+          }}
+        />
+      </button>
+
+      {/* Dropdown dùng Portal – render ra document.body tránh bị overflow clip */}
+      {open && createPortal(
+        <div
+          id={dropId}
+          className="bg-white rounded-xl shadow-2xl overflow-hidden"
+          style={{
+            position: "fixed",
+            top: dropPos.top,
+            left: dropPos.left,
+            zIndex: 9999,
+            border: "1.5px solid #E5E7EB",
+            minWidth: "170px",
+          }}
+        >
+          {/* Header */}
+          <div
+            className="px-3 py-2 border-b"
+            style={{ borderColor: "#F3F4F6", backgroundColor: "#F9FAFB" }}
+          >
+            <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#9CA3AF" }}>
+              Đổi trạng thái đơn vị
+            </p>
+          </div>
+
+          {STATUS_OPTIONS.map(({ key, label, color, bg, border }) => {
+            const isCurrent = key === unit.status;
+            return (
+              <button
+                key={key}
+                onClick={() => {
+                  if (!isCurrent) onChangeStatus(unit.lotId, unit.unitId, key);
+                  setOpen(false);
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-[11px] font-bold text-left transition-colors"
+                style={{
+                  backgroundColor: isCurrent ? bg : "white",
+                  color: color,
+                  borderBottom: "1px solid #F9FAFB",
+                  cursor: isCurrent ? "default" : "pointer",
+                }}
+                onMouseEnter={(e) => { if (!isCurrent) e.currentTarget.style.backgroundColor = bg; }}
+                onMouseLeave={(e) => { if (!isCurrent) e.currentTarget.style.backgroundColor = "white"; }}
+              >
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                {label}
+                {isCurrent && (
+                  <span className="ml-auto text-[9px] font-black" style={{ color }}>✓ Hiện tại</span>
+                )}
+              </button>
+            );
+          })}
+        </div>,
+        document.body
+      )}
+    </>
+  );
+}
+
+// ── Receipt Group Card ─────────────────────────────────────
+
 function ReceiptGroupCard({ receiptId, units, index, onChangeStatus, updatingSerial }) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -437,10 +575,8 @@ function ReceiptGroupCard({ receiptId, units, index, onChangeStatus, updatingSer
                 </tr>
               </thead>
               <tbody>
+
                 {visibleUnits.map((unit, idx) => {
-                  const cfg =
-                    UNIT_STATUS_CONFIG[unit.status] ||
-                    UNIT_STATUS_CONFIG.AVAILABLE;
                   return (
                     <tr
                       key={unit.unitId}
@@ -487,25 +623,14 @@ function ReceiptGroupCard({ receiptId, units, index, onChangeStatus, updatingSer
                           {fmtDate(unit.importDate || importDate)}
                         </span>
                       </td>
-                      {/* Trạng thái */}
+                      {/* Trạng thái – có thể chỉnh sửa */}
                       <td className="px-4 py-2.5">
-                        <span
-                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold"
-                          style={{
-                            backgroundColor: cfg.bg,
-                            color: cfg.color,
-                            border: `1px solid ${cfg.border}`,
-                          }}
-                        >
-                          <span
-                            className="w-1.5 h-1.5 rounded-full shrink-0"
-                            style={{ backgroundColor: cfg.color }}
-                          />
-                          {cfg.label}
-                        </span>
+                        <StatusDropdown
+                          unit={unit}
+                          onChangeStatus={onChangeStatus}
+                          updatingSerial={updatingSerial}
+                        />
                       </td>
-
-
                     </tr>
                   );
                 })}

@@ -1,19 +1,57 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import { Bell, Settings, LogOut, CheckCircle2, XCircle, Info, Clock, Check } from "lucide-react";
+import {
+  Bell,
+  Settings,
+  LogOut,
+  CheckCircle2,
+  XCircle,
+  Info,
+  Clock,
+  Check,
+  Lock,
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  Loader2,
+  ShieldCheck,
+  X
+} from "lucide-react";
 import Logo from "@/assets/tp-logo.svg";
 import { useAuth } from "@/context/AuthContext";
 import { useNotification } from "@/context/NotificationContext";
+import authService from "@/services/auth.service";
 
 export const Navbar = () => {
-  const { user, logout } = useAuth();
+  const { user, setUser, logout } = useAuth();
   const navigate = useNavigate();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotification();
   const [showSettings, setShowSettings] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const settingsRef = useRef(null);
   const notifRef = useRef(null);
+
+  // Profile Modal State
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileData, setProfileData] = useState({
+    fullName: "",
+    phoneNumber: "",
+    dob: "",
+    gender: 1
+  });
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  // Change Password Modal State
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+  const [savingPassword, setSavingPassword] = useState(false);
 
 
   // Close dropdown when clicking outside
@@ -29,6 +67,101 @@ export const Navbar = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Action Handlers
+  const openProfileModal = async () => {
+    setShowSettings(false);
+    setShowProfileModal(true);
+    setProfileLoading(true);
+    try {
+      const data = await authService.getProfile();
+      if (data && data.user) {
+        setProfileData({
+          fullName: data.user.fullName || "",
+          phoneNumber: data.user.phoneNumber || "",
+          dob: data.user.dob ? data.user.dob.substring(0, 10) : "",
+          gender: data.user.gender !== null && data.user.gender !== undefined ? data.user.gender : 1
+        });
+      }
+    } catch (error) {
+      toast.error("Không thể tải thông tin hồ sơ");
+      setShowProfileModal(false);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    if (!profileData.fullName.trim()) {
+      toast.error("Họ và tên không được để trống");
+      return;
+    }
+    setSavingProfile(true);
+    try {
+      const res = await authService.updateProfile({
+        fullName: profileData.fullName.trim(),
+        phoneNumber: profileData.phoneNumber.trim(),
+        dob: profileData.dob || null,
+        gender: Number(profileData.gender)
+      });
+      
+      // Cập nhật thông tin trong AuthContext để hiển thị đồng bộ trên thanh Navbar
+      if (res && res.user) {
+        setUser(prev => ({
+          ...prev,
+          fullName: res.user.fullName
+        }));
+        // Cập nhật localStorage
+        const localUser = JSON.parse(localStorage.getItem("user") || "{}");
+        localUser.name = res.user.fullName;
+        localStorage.setItem("user", JSON.stringify(localUser));
+      }
+
+      toast.success("Cập nhật hồ sơ thành công");
+      setShowProfileModal(false);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Lỗi khi cập nhật hồ sơ");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const handleSavePassword = async (e) => {
+    e.preventDefault();
+    if (!passwordData.oldPassword) {
+      toast.error("Vui lòng nhập mật khẩu cũ");
+      return;
+    }
+    if (!passwordData.newPassword) {
+      toast.error("Vui lòng nhập mật khẩu mới");
+      return;
+    }
+    if (passwordData.newPassword.length < 6) {
+      toast.error("Mật khẩu mới phải có ít nhất 6 ký tự");
+      return;
+    }
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("Mật khẩu xác nhận không trùng khớp");
+      return;
+    }
+
+    setSavingPassword(true);
+    try {
+      await authService.changePassword(passwordData.oldPassword, passwordData.newPassword);
+      toast.success("Đổi mật khẩu thành công!");
+      setShowChangePasswordModal(false);
+      setPasswordData({
+        oldPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+      });
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Lỗi khi đổi mật khẩu");
+    } finally {
+      setSavingPassword(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -195,12 +328,6 @@ export const Navbar = () => {
               </div>
 
               <div className="py-1">
-                <button className="w-full flex items-center gap-3 px-4 py-2 text-[13px] font-medium text-[var(--text-secondary)] hover:bg-gray-50 hover:text-[var(--brand-primary)] transition-colors cursor-pointer">
-                  <Settings size={16} />
-                  <span>Hồ sơ cá nhân</span>
-                </button>
-
-                <div className="h-[1px] bg-gray-100 my-1"></div>
 
                 <button
                   onClick={handleLogout}
@@ -214,6 +341,239 @@ export const Navbar = () => {
           )}
         </div>
       </div>
+
+      {/* ─── PERSONAL PROFILE MODAL ──────────────────────────────────────── */}
+      {showProfileModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-150 flex items-center justify-between bg-slate-50 shrink-0">
+              <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                <User size={18} className="text-[var(--brand-primary)]" />
+                Hồ sơ cá nhân
+              </h2>
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 overflow-y-auto flex-1">
+              {profileLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <Loader2 size={32} className="animate-spin text-[var(--brand-primary)]" />
+                  <span className="text-sm font-medium text-slate-500">Đang tải thông tin...</span>
+                </div>
+              ) : (
+                <form onSubmit={handleSaveProfile} className="space-y-4">
+                  {/* Email */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                      <Mail size={13} /> Email tài khoản
+                    </label>
+                    <input
+                      type="email"
+                      value={user?.email || ""}
+                      disabled
+                      className="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-500 outline-none cursor-not-allowed"
+                    />
+                    <span className="text-[10px] text-slate-400 mt-1 block">Email không thể tự thay đổi. Vui lòng liên hệ quản trị viên để cập nhật.</span>
+                  </div>
+
+                  {/* Full Name */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                      <User size={13} /> Họ và tên
+                    </label>
+                    <input
+                      type="text"
+                      value={profileData.fullName}
+                      onChange={(e) => setProfileData({ ...profileData, fullName: e.target.value })}
+                      placeholder="Nhập họ và tên..."
+                      required
+                      className="w-full border border-slate-200 focus:border-[var(--brand-primary)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 transition"
+                    />
+                  </div>
+
+                  {/* Phone Number */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                      <Phone size={13} /> Số điện thoại
+                    </label>
+                    <input
+                      type="text"
+                      value={profileData.phoneNumber}
+                      onChange={(e) => setProfileData({ ...profileData, phoneNumber: e.target.value })}
+                      placeholder="Nhập số điện thoại..."
+                      className="w-full border border-slate-200 focus:border-[var(--brand-primary)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 transition"
+                    />
+                  </div>
+
+                  {/* DOB & Gender */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                        <Calendar size={13} /> Ngày sinh
+                      </label>
+                      <input
+                        type="date"
+                        value={profileData.dob}
+                        onChange={(e) => setProfileData({ ...profileData, dob: e.target.value })}
+                        className="w-full border border-slate-200 focus:border-[var(--brand-primary)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                        Giới tính
+                      </label>
+                      <select
+                        value={profileData.gender}
+                        onChange={(e) => setProfileData({ ...profileData, gender: Number(e.target.value) })}
+                        className="w-full border border-slate-200 focus:border-[var(--brand-primary)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 transition bg-white"
+                      >
+                        <option value={1}>Nam</option>
+                        <option value={0}>Nữ</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Actions Footer */}
+                  <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-150 mt-6 bg-white shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setShowProfileModal(false)}
+                      className="px-4 py-2 rounded-lg text-sm font-semibold text-slate-500 hover:bg-slate-100 transition cursor-pointer"
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={savingProfile}
+                      className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold text-white transition active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ backgroundColor: "var(--brand-primary)" }}
+                    >
+                      {savingProfile ? (
+                        <>
+                          <Loader2 size={15} className="animate-spin" />
+                          Đang lưu...
+                        </>
+                      ) : (
+                        "Lưu thay đổi"
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── CHANGE PASSWORD MODAL ───────────────────────────────────────── */}
+      {showChangePasswordModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-150 flex items-center justify-between bg-slate-50 shrink-0">
+              <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                <Lock size={18} className="text-[var(--brand-primary)]" />
+                Đổi mật khẩu
+              </h2>
+              <button
+                onClick={() => {
+                  setShowChangePasswordModal(false);
+                  setPasswordData({ oldPassword: "", newPassword: "", confirmPassword: "" });
+                }}
+                className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <form onSubmit={handleSavePassword} className="space-y-4">
+                {/* Old Password */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                    <Lock size={13} /> Mật khẩu cũ
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.oldPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, oldPassword: e.target.value })}
+                    placeholder="Nhập mật khẩu hiện tại..."
+                    required
+                    className="w-full border border-slate-200 focus:border-[var(--brand-primary)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 transition"
+                  />
+                </div>
+
+                {/* New Password */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                    <ShieldCheck size={13} /> Mật khẩu mới
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                    placeholder="Tối thiểu 6 ký tự..."
+                    required
+                    className="w-full border border-slate-200 focus:border-[var(--brand-primary)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 transition"
+                  />
+                </div>
+
+                {/* Confirm New Password */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                    <ShieldCheck size={13} /> Xác nhận mật khẩu mới
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                    placeholder="Nhập lại mật khẩu mới..."
+                    required
+                    className="w-full border border-slate-200 focus:border-[var(--brand-primary)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/20 transition"
+                  />
+                </div>
+
+                {/* Actions Footer */}
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-150 mt-6 bg-white shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowChangePasswordModal(false);
+                      setPasswordData({ oldPassword: "", newPassword: "", confirmPassword: "" });
+                    }}
+                    className="px-4 py-2 rounded-lg text-sm font-semibold text-slate-500 hover:bg-slate-100 transition cursor-pointer"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingPassword}
+                    className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold text-white transition active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: "var(--brand-primary)" }}
+                  >
+                    {savingPassword ? (
+                      <>
+                        <Loader2 size={15} className="animate-spin" />
+                        Đang lưu...
+                      </>
+                    ) : (
+                      "Đổi mật khẩu"
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

@@ -330,10 +330,23 @@ const StandardOrderView = ({
                     <div className="p-6">
                       <div className="flex items-start justify-between">
                         <div className="min-w-0 flex-1">
-                          <h4 className="text-[18px] font-black text-[var(--text-main)] leading-tight">{p.name}</h4>
-                          <span className="mt-2 inline-block px-2 py-0.5 rounded bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] text-[11px] font-black uppercase">x{p.qty} {p.unit}</span>
+                          <h4 className="text-[18px] font-black text-[var(--text-main)] leading-tight mb-2">{p.name}</h4>
+                          <span className="inline-block px-2 py-0.5 rounded bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] text-[11px] font-black uppercase">x{p.qty} {p.unit}</span>
                         </div>
-                        <p className="text-[20px] font-black text-[var(--text-main)] ml-4">{fmtCurrency(p.price)}</p>
+                        <div className="flex flex-col items-end ml-4">
+                          <p className="text-[20px] font-black text-[var(--text-main)]">{fmtCurrency(p.price)}</p>
+                          <div className="mt-2.5">
+                            {p.importStatus === 1 ? (
+                              <span className="flex items-center gap-1.5 px-3 py-1.5 shadow-sm rounded-lg text-[11px] font-black bg-[var(--status-success)] text-white border border-[var(--status-success)]/30 uppercase tracking-wide">
+                                <CheckCircle size={14} /> Đã về kho
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1.5 px-3 py-1.5 shadow-sm rounded-lg text-[11px] font-black bg-[var(--palette-orange)] text-white border border-[var(--palette-orange)]/30 uppercase tracking-wide">
+                                <Clock size={14} /> Chưa về kho
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-[var(--bg-main)] rounded-xl">
                         {[
@@ -704,7 +717,8 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
             warranty: p.item_warranty || ORDER_CONFIG.DEFAULT_WARRANTY,
             note: p.item_note || "",
             isBundle: p.item_is_bundle === 1,
-            bundleItems: p.item_bundle_items || []
+            bundleItems: p.item_bundle_items || [],
+            importStatus: p.import_status || 0
           })),
           timeline: (found.histories || []).map(h => ({
             time: formatDateTimeVN(h.createdate),

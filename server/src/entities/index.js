@@ -152,6 +152,10 @@ CustomRequestItem.belongsTo(CustomRequest, { foreignKey: "fk_custom_request_id",
 CustomRequestItem.belongsTo(Supplier, { foreignKey: "fk_supplier_id", as: "supplier" });
 Supplier.hasMany(CustomRequestItem, { foreignKey: "fk_supplier_id", as: "customItems" });
 
+// CustomRequestItem 1:1 OrderItem (Liên kết yêu cầu đặt riêng với chi tiết đơn hàng)
+CustomRequestItem.hasOne(OrderItem, { foreignKey: "fk_custom_request_item_id", as: "orderItem" });
+OrderItem.belongsTo(CustomRequestItem, { foreignKey: "fk_custom_request_item_id", as: "customRequestItem" });
+
 // Product Many:Many ProductCoupon
 Product.belongsToMany(ProductCoupon, {
   through: CouponProduct,

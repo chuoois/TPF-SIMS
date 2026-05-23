@@ -300,6 +300,7 @@ class CustomRequestController {
                         const newOrderItem = await OrderItem.create({
                             fk_order_id: newOrder.pk_order_id,
                             fk_product_id: reqItem.fk_product_id,
+                            fk_custom_request_item_id: reqItem.pk_custom_request_item_id,
                             item_name: reqItem.item_name,
                             item_img: reqItem.item_img,
                             item_quantity: reqItem.item_quantity,
@@ -314,6 +315,7 @@ class CustomRequestController {
                             design_img: reqItem.design_img,
                             is_finished: reqItem.is_finished,
                             item_warranty: reqItem.item_warranty || 12,
+                            import_status: 0, // Hàng khách đặt riêng → chưa về kho
                             createby: userId,
                         }, { transaction: t });
 
