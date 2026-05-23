@@ -429,13 +429,16 @@ class ImportController {
       }
 
       // Kiểm tra nếu tất cả OrderItem của Order đều đã về kho → chuyển order_status sang 2 (Chờ xử lý)
+      console.log(">>> linkedOrderIds:", [...linkedOrderIds]);
       for (const orderId of linkedOrderIds) {
         const allItems = await OrderItem.findAll({
           where: { fk_order_id: orderId, status: 1 },
           attributes: ['pk_order_item_id', 'import_status'],
           transaction: t
         });
-        const allArrived = allItems.length > 0 && allItems.every(item => item.import_status === 1);
+        console.log(">>> Order", orderId, "items import_status:", allItems.map(i => ({ id: i.pk_order_item_id, import_status: i.import_status, type: typeof i.import_status })));
+        const allArrived = allItems.length > 0 && allItems.every(item => Number(item.import_status) === 1);
+        console.log(">>> allArrived:", allArrived);
         if (allArrived) {
           await Order.update(
             { order_status: 2, modifiedate: new Date() },
@@ -448,6 +451,7 @@ class ImportController {
             note: "Tất cả sản phẩm trong đơn hàng đã về kho. Tự động chuyển sang Chờ xử lý.",
             createby: req.user?.userId || null,
           }, { transaction: t });
+          console.log(">>> Order", orderId, "đã chuyển sang status 2 (Chờ xử lý)");
         }
       }
 
