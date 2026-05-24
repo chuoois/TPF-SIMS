@@ -546,7 +546,7 @@ const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-[12px] font-bold text-gray-500 uppercase tracking-widest">Mã nhà cung cấp</label>
+            <label className="text-[12px] font-bold text-gray-500 uppercase tracking-widest">Mã nhà cung cấp <span className="text-red-500">*</span></label>
             <input
               name="code"
               value={formData.code}
@@ -557,7 +557,7 @@ const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[12px] font-bold text-gray-500 uppercase tracking-widest">Tên nhà cung cấp</label>
+            <label className="text-[12px] font-bold text-gray-500 uppercase tracking-widest">Tên nhà cung cấp <span className="text-red-500">*</span></label>
             <input
               name="name"
               value={formData.name}
@@ -605,7 +605,7 @@ const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
             </div>
           </div>
           <div className="md:col-span-2 space-y-2">
-            <label className="text-[12px] font-bold text-gray-500 uppercase tracking-widest">Địa chỉ</label>
+            <label className="text-[12px] font-bold text-gray-500 uppercase tracking-widest">Địa chỉ <span className="text-red-500">*</span></label>
             <div className="relative">
               <MapPin size={14} className="absolute left-4 top-3.5 text-gray-400" />
               <textarea
@@ -615,6 +615,7 @@ const SupplierActionModal = ({ supplier, onClose, onSave, onDelete }) => {
                 rows={2}
                 placeholder="Địa chỉ cụ thể của xưởng/kho..."
                 className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-[13px] font-medium resize-none"
+                required
               />
             </div>
           </div>

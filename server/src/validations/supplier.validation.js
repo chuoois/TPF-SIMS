@@ -26,9 +26,11 @@ const createSupplierSchema = Joi.object({
     'string.email': 'Email không đúng định dạng',
     'string.max': 'Email không được vượt quá 255 ký tự',
   }),
-  address: Joi.string().max(255).allow(null, '').optional().messages({
+  address: Joi.string().max(255).required().messages({
     'string.base': 'Địa chỉ phải là một chuỗi ký tự',
+    'string.empty': 'Vui lòng nhập địa chỉ',
     'string.max': 'Địa chỉ không được vượt quá 255 ký tự',
+    'any.required': 'Vui lòng nhập địa chỉ',
   }),
   tax_code: Joi.string().max(50).allow(null, '').optional().messages({
     'string.base': 'Mã số thuế phải là một chuỗi ký tự',
@@ -60,8 +62,9 @@ const updateSupplierSchema = Joi.object({
     'string.email': 'Email không đúng định dạng',
     'string.max': 'Email không được vượt quá 255 ký tự',
   }),
-  address: Joi.string().max(255).allow(null, '').optional().messages({
+  address: Joi.string().max(255).optional().messages({
     'string.base': 'Địa chỉ phải là một chuỗi ký tự',
+    'string.empty': 'Địa chỉ không được để trống',
     'string.max': 'Địa chỉ không được vượt quá 255 ký tự',
   }),
   tax_code: Joi.string().max(50).allow(null, '').optional().messages({
