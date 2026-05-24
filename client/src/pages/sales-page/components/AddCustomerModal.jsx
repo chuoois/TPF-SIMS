@@ -319,7 +319,7 @@ export default function AddCustomerModal({ isOpen, onClose, onCustomerAdded }) {
               className={labelClass}
               style={{ color: "var(--text-placeholder)" }}
             >
-              Địa chỉ
+              Địa chỉ <span style={{ color: "var(--status-error)" }}>*</span>
             </label>
             <div className="relative">
               <MapPin

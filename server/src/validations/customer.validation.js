@@ -20,9 +20,11 @@ const createCustomerSchema = Joi.object({
     'string.base': 'Số điện thoại phải là một chuỗi ký tự',
     'string.max': 'Số điện thoại không được vượt quá 20 ký tự',
   }),
-  address: Joi.string().max(255).allow(null, '').optional().messages({
+  address: Joi.string().max(255).required().messages({
     'string.base': 'Địa chỉ phải là một chuỗi ký tự',
+    'string.empty': 'Vui lòng nhập địa chỉ',
     'string.max': 'Địa chỉ không được vượt quá 255 ký tự',
+    'any.required': 'Vui lòng nhập địa chỉ',
   }),
   gender: Joi.number().valid(1, 2, 3).allow(null, 0, '').optional().messages({
     'number.base': 'Giới tính phải là số',
@@ -61,8 +63,9 @@ const updateCustomerSchema = Joi.object({
     'string.base': 'Số điện thoại phải là một chuỗi ký tự',
     'string.max': 'Số điện thoại không được vượt quá 20 ký tự',
   }),
-  address: Joi.string().max(255).allow(null, '').optional().messages({
+  address: Joi.string().max(255).optional().messages({
     'string.base': 'Địa chỉ phải là một chuỗi ký tự',
+    'string.empty': 'Địa chỉ không được để trống',
     'string.max': 'Địa chỉ không được vượt quá 255 ký tự',
   }),
   gender: Joi.number().valid(1, 2, 3).allow(null, 0, '').optional().messages({

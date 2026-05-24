@@ -246,6 +246,47 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
   };
 
   const handleSaveAll = async () => {
+    if (userRole === 'owner') {
+      if (!deliveryDate) {
+        toast.error("Vui lòng chọn Ngày giao dự kiến");
+        return;
+      }
+
+      for (let i = 0; i < itemSpecs.length; i++) {
+        const spec = itemSpecs[i];
+        const specName = spec.name || `Sản phẩm thứ ${i + 1}`;
+
+        if (!spec.fk_supplier_id) {
+          toast.error(`Sản phẩm "${specName}": Vui lòng chọn Xưởng / Nhà cung cấp`);
+          return;
+        }
+
+        if (!spec.expectedWorkshopDate) {
+          toast.error(`Sản phẩm "${specName}": Vui lòng nhập Ngày xong xưởng`);
+          return;
+        }
+
+        const wsDate = new Date(spec.expectedWorkshopDate);
+        const delDate = new Date(deliveryDate);
+        wsDate.setHours(0, 0, 0, 0);
+        delDate.setHours(0, 0, 0, 0);
+
+        if (wsDate >= delDate) {
+          toast.error(`Sản phẩm "${specName}": Ngày xong xưởng (${spec.expectedWorkshopDate}) phải trước ngày giao dự kiến (${deliveryDate})`);
+          return;
+        }
+
+        if (!spec.costPrice || Number(spec.costPrice) <= 0) {
+          toast.error(`Sản phẩm "${specName}": Giá vốn / nhập phải lớn hơn 0`);
+          return;
+        }
+
+        if (Number(spec.costPrice) > Number(spec.price)) {
+          toast.error(`Sản phẩm "${specName}": Giá vốn (${spec.costPrice.toLocaleString("vi-VN")}đ) không được lớn hơn giá bán (${spec.price.toLocaleString("vi-VN")}đ)`);
+          return;
+        }
+      }
+    }
 
     setIsSaving(true);
     const loadingToast = toast.loading("Đang lưu thay đổi...");
@@ -323,9 +364,50 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
 
   const handleUpdateStatus = async (newStatus, successMsg) => {
     // Chỉ validate phương thức giao hàng khi xác nhận hoàn thành (xác nhận giao hàng)
-    if (newStatus === 3 && !deliveryMethod) {
-      toast.error("Vui lòng chọn Phương thức giao hàng trước khi hoàn thành");
-      return;
+    if (newStatus === 3) {
+      if (!deliveryMethod) {
+        toast.error("Vui lòng chọn Phương thức giao hàng trước khi hoàn thành");
+        return;
+      }
+      if (!deliveryDate) {
+        toast.error("Vui lòng chọn Ngày giao dự kiến trước khi hoàn thành");
+        return;
+      }
+
+      for (let i = 0; i < itemSpecs.length; i++) {
+        const spec = itemSpecs[i];
+        const specName = spec.name || `Sản phẩm thứ ${i + 1}`;
+
+        if (!spec.fk_supplier_id) {
+          toast.error(`Sản phẩm "${specName}": Vui lòng chọn Xưởng / Nhà cung cấp trước khi hoàn thành`);
+          return;
+        }
+
+        if (!spec.expectedWorkshopDate) {
+          toast.error(`Sản phẩm "${specName}": Vui lòng nhập Ngày xong xưởng trước khi hoàn thành`);
+          return;
+        }
+
+        const wsDate = new Date(spec.expectedWorkshopDate);
+        const delDate = new Date(deliveryDate);
+        wsDate.setHours(0, 0, 0, 0);
+        delDate.setHours(0, 0, 0, 0);
+
+        if (wsDate >= delDate) {
+          toast.error(`Sản phẩm "${specName}": Ngày xong xưởng (${spec.expectedWorkshopDate}) phải trước ngày giao dự kiến (${deliveryDate})`);
+          return;
+        }
+
+        if (!spec.costPrice || Number(spec.costPrice) <= 0) {
+          toast.error(`Sản phẩm "${specName}": Vui lòng cập nhật Giá vốn lớn hơn 0 trước khi hoàn thành`);
+          return;
+        }
+
+        if (Number(spec.costPrice) > Number(spec.price)) {
+          toast.error(`Sản phẩm "${specName}": Giá vốn không được lớn hơn giá bán`);
+          return;
+        }
+      }
     }
 
     try {
