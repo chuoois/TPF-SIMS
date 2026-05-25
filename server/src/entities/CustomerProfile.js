@@ -75,6 +75,16 @@ const CustomerProfile = sequelize.define(
         name: "unique_customer_code",
       },
     ],
+    hooks: {
+      beforeValidate: (customer) => {
+        if (customer.email === "") {
+          customer.email = null;
+        }
+        if (customer.dob === "") {
+          customer.dob = null;
+        }
+      },
+    },
   }
 );
 

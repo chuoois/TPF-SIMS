@@ -17,6 +17,7 @@ import {
 import toast from "react-hot-toast";
 import productService from "@/services/product.service";
 import { uploadImage } from "@/services/cloudinary.service";
+import ImageZoomModal from "@/components/control/ImageZoomModal";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 const fmtCurrency = (n) => {
@@ -206,6 +207,8 @@ export default function ProductModal({
   const [saving, setSaving] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [zoomImage, setZoomImage] = useState(null);
+  const [dimErrors, setDimErrors] = useState({ dimL: "", dimW: "", dimH: "" });
 
   const [form, setForm] = useState({
     name: "",
@@ -233,6 +236,7 @@ export default function ProductModal({
     setImageFile(null);
     setImagePreview(null);
     setSaving(false);
+    setDimErrors({ dimL: "", dimW: "", dimH: "" });
     if (product && product.id) {
       const dims = (product.dimensions || "")
         .split(/[xX*×]/)
@@ -298,6 +302,60 @@ export default function ProductModal({
     setForm((prev) => ({ ...prev, [key]: raw === "" ? 0 : Number(raw) }));
   };
 
+  const handleDimensionKeyDown = (e) => {
+    if (["e", "E", "+", "-"].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  const handleDimensionChange = (key, value) => {
+    let sanitized = value.replace(/[^0-9.]/g, "");
+    const parts = sanitized.split(".");
+    if (parts.length > 2) {
+      sanitized = parts[0] + "." + parts.slice(1).join("");
+    }
+    if (sanitized.length > 7) {
+      sanitized = sanitized.slice(0, 7);
+    }
+    if (parts.length === 2 && parts[1].length > 2) {
+      sanitized = parts[0] + "." + parts[1].slice(0, 2);
+    }
+    setForm((prev) => ({ ...prev, [key]: sanitized }));
+
+    let errorMsg = "";
+    if (sanitized !== "") {
+      const num = Number(sanitized);
+      if (isNaN(num)) {
+        errorMsg = "Vui lòng nhập số hợp lệ";
+      } else if (num <= 0) {
+        errorMsg = "Kích thước phải lớn hơn 0";
+      } else if (num > 9999) {
+        errorMsg = "Kích thước tối đa là 9999 cm";
+      }
+    }
+    setDimErrors((prev) => ({ ...prev, [key]: errorMsg }));
+  };
+
+  const validateDimensions = () => {
+    if (dimErrors.dimL || dimErrors.dimW || dimErrors.dimH) {
+      toast.error("Vui lòng sửa các lỗi kích thước trước khi lưu!");
+      return false;
+    }
+    const keys = ["dimL", "dimW", "dimH"];
+    const labels = { dimL: "Chiều dài", dimW: "Chiều rộng", dimH: "Chiều cao" };
+    for (const key of keys) {
+      const val = form[key];
+      if (val !== undefined && val !== null && val !== "") {
+        const num = Number(val);
+        if (isNaN(num) || num <= 0 || num > 9999) {
+          toast.error(`${labels[key]} phải là số dương lớn hơn 0 và nhỏ hơn hoặc bằng 9999 cm`);
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+
   // Helper: lookup FK ID from metadata by name
   const findCategoryId = (name) => metadata.categories?.find(c => c.category_name === name)?.pk_product_category_id || null;
   const findMaterialId = (name) => metadata.materials?.find(m => m.material_name === name)?.pk_product_material_id || null;
@@ -339,6 +397,7 @@ export default function ProductModal({
   const handleSaveEdit = async () => {
     if (!form.name?.trim()) { toast.error("Tên sản phẩm không được để trống!"); return; }
     if (!form.code?.trim()) { toast.error("Mã sản phẩm không được để trống!"); return; }
+    if (!validateDimensions()) return;
     setSaving(true);
     try {
       const payload = await buildPayload(false);
@@ -358,6 +417,7 @@ export default function ProductModal({
     } else {
       if (!form.retailPrice) { toast.error("Vui lòng nhập giá bán niêm yết."); return; }
     }
+    if (!validateDimensions()) return;
     setSaving(true);
     try {
       const payload = await buildPayload(true);
@@ -372,6 +432,7 @@ export default function ProductModal({
   const handleCreate = async () => {
     if (!form.name?.trim()) { toast.error("Tên sản phẩm không được để trống!"); return; }
     if (!form.code?.trim()) { toast.error("Mã sản phẩm không được để trống!"); return; }
+    if (!validateDimensions()) return;
     setSaving(true);
     try {
       const payload = await buildPayload(true);
@@ -480,7 +541,8 @@ export default function ProductModal({
                 <img
                   src={product.img}
                   alt={product.name}
-                  className="w-full aspect-square object-cover rounded-xl border"
+                  onClick={() => setZoomImage({ src: product.img, alt: `${product.name} (${product.code})` })}
+                  className="w-full aspect-square object-cover rounded-xl border hover:scale-105 transition-all cursor-zoom-in active:scale-95 duration-200 hover:shadow-md"
                 />
               ) : (
                 <div className="w-full aspect-square bg-gray-100 rounded-xl border flex flex-col items-center justify-center text-slate-300">
@@ -568,12 +630,23 @@ export default function ProductModal({
               {/* Edit Mode Content */}
               {(mode === "edit" || isCreate) && (
                 <div className="grid grid-cols-2 gap-4">
-                  <SelectField
-                    label="Loại hàng"
-                    value={form.productType}
-                    onChange={set("productType")}
-                    options={["Hàng sẵn", "Hàng mộc", "Hàng khách đặt"]}
-                  />
+                  {isCreate ? (
+                    <SelectField
+                      label="Loại hàng"
+                      value={form.productType}
+                      onChange={set("productType")}
+                      options={["Hàng sẵn", "Hàng mộc", "Hàng khách đặt"]}
+                    />
+                  ) : (
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">
+                        Loại hàng
+                      </label>
+                      <div className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-[var(--text-secondary)] bg-slate-50 font-medium select-none">
+                        {form.productType}
+                      </div>
+                    </div>
+                  )}
                   <SelectField
                     label="Chất liệu"
                     value={form.material}
@@ -595,28 +668,62 @@ export default function ProductModal({
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
-                        className="w-20 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/30 text-center"
+                        className={`w-20 border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 text-center transition-all ${
+                          dimErrors.dimL
+                            ? "border-red-400 focus:ring-red-500/20 focus:border-red-500"
+                            : "border-slate-200 focus:ring-[var(--brand-primary)]/30 focus:border-[var(--brand-primary)]"
+                        }`}
                         placeholder="Dài"
                         value={form.dimL}
-                        onChange={set("dimL")}
+                        onKeyDown={handleDimensionKeyDown}
+                        onChange={(e) => handleDimensionChange("dimL", e.target.value)}
                       />
                       <span className="text-slate-400 font-bold">×</span>
                       <input
                         type="text"
-                        className="w-20 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/30 text-center"
+                        className={`w-20 border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 text-center transition-all ${
+                          dimErrors.dimW
+                            ? "border-red-400 focus:ring-red-500/20 focus:border-red-500"
+                            : "border-slate-200 focus:ring-[var(--brand-primary)]/30 focus:border-[var(--brand-primary)]"
+                        }`}
                         placeholder="Rộng"
                         value={form.dimW}
-                        onChange={set("dimW")}
+                        onKeyDown={handleDimensionKeyDown}
+                        onChange={(e) => handleDimensionChange("dimW", e.target.value)}
                       />
                       <span className="text-slate-400 font-bold">×</span>
                       <input
                         type="text"
-                        className="w-20 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/30 text-center"
+                        className={`w-20 border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 text-center transition-all ${
+                          dimErrors.dimH
+                            ? "border-red-400 focus:ring-red-500/20 focus:border-red-500"
+                            : "border-slate-200 focus:ring-[var(--brand-primary)]/30 focus:border-[var(--brand-primary)]"
+                        }`}
                         placeholder="Cao"
                         value={form.dimH}
-                        onChange={set("dimH")}
+                        onKeyDown={handleDimensionKeyDown}
+                        onChange={(e) => handleDimensionChange("dimH", e.target.value)}
                       />
                     </div>
+                    {(dimErrors.dimL || dimErrors.dimW || dimErrors.dimH) && (
+                      <div className="mt-2 space-y-1">
+                        {dimErrors.dimL && (
+                          <p className="text-[10px] text-red-500 font-bold ml-1">
+                            * Chiều dài: {dimErrors.dimL}
+                          </p>
+                        )}
+                        {dimErrors.dimW && (
+                          <p className="text-[10px] text-red-500 font-bold ml-1">
+                            * Chiều rộng: {dimErrors.dimW}
+                          </p>
+                        )}
+                        {dimErrors.dimH && (
+                          <p className="text-[10px] text-red-500 font-bold ml-1">
+                            * Chiều cao: {dimErrors.dimH}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="col-span-2">
                     <InputField
@@ -1013,6 +1120,13 @@ export default function ProductModal({
           </div>
         </div>
       </div>
+
+      <ImageZoomModal
+        isOpen={!!zoomImage}
+        src={zoomImage?.src}
+        alt={zoomImage?.alt}
+        onClose={() => setZoomImage(null)}
+      />
     </div>
   );
 }
