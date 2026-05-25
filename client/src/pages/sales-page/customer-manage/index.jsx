@@ -168,6 +168,9 @@ export default function SalesCustomerManage() {
     try {
       const submitData = {
         ...form,
+        email: form.email.trim() === "" ? null : form.email.trim(),
+        dob: form.dob === "" ? null : form.dob,
+        note: form.note.trim() === "" ? null : form.note.trim(),
         gender: GENDER_MAP[form.gender] || 0
       };
 

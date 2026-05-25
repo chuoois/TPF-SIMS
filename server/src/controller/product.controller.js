@@ -443,9 +443,11 @@ class ProductController {
             const {
                 category_id, color_id, material_id, room_id,
                 product_type, product_status, search, is_gift,
+                low_stock,
                 page = 1, limit = 20
             } = req.query;
             const offset = (page - 1) * limit;
+            const isLowStockFilter = low_stock === 'true' || low_stock === '1';
 
             const andConditions = [];
 
@@ -491,6 +493,23 @@ class ProductController {
                         { "$material.material_name$": { [Op.like]: searchTerm } },
                     ]
                 });
+            }
+
+            // Low stock filter: lọc server-side bằng subquery trong WHERE
+            if (isLowStockFilter) {
+                andConditions.push(sequelize.literal(`(
+                    SELECT COUNT(*)
+                    FROM product_item
+                    WHERE product_item.fk_product_id = Product.pk_product_id
+                    AND product_item.item_status = 1
+                    AND product_item.fk_order_item_id IS NULL
+                ) > 0 AND (
+                    SELECT COUNT(*)
+                    FROM product_item
+                    WHERE product_item.fk_product_id = Product.pk_product_id
+                    AND product_item.item_status = 1
+                    AND product_item.fk_order_item_id IS NULL
+                ) <= Product.min_stock AND Product.min_stock > 0`));
             }
 
             const where = andConditions.length > 0 ? { [Op.and]: andConditions } : {};

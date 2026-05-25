@@ -94,7 +94,6 @@ export default function CustomItemInputPanel({
 
   const updateNewItem = (field, value) => {
     setNewItem((prev) => ({ ...prev, [field]: value }));
-    // Clear error when typing
     if (errors[field]) {
       setErrors((prev) => {
         const next = { ...prev };
@@ -102,6 +101,53 @@ export default function CustomItemInputPanel({
         return next;
       });
     }
+  };
+
+  const handleDimensionKeyDown = (e) => {
+    if (["e", "E", "+", "-"].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  const sanitizeDimensionInput = (value) => {
+    let sanitized = value.replace(/[^0-9.]/g, "");
+    const parts = sanitized.split(".");
+    if (parts.length > 2) {
+      sanitized = parts[0] + "." + parts.slice(1).join("");
+    }
+    if (sanitized.length > 7) {
+      sanitized = sanitized.slice(0, 7);
+    }
+    if (parts.length === 2 && parts[1].length > 2) {
+      sanitized = parts[0] + "." + parts[1].slice(0, 2);
+    }
+    return sanitized;
+  };
+
+  const handleDimChange = (field, val) => {
+    const sanitized = sanitizeDimensionInput(val);
+    updateNewItem(field, sanitized);
+    
+    let errorMsg = "";
+    if (sanitized !== "") {
+      const num = Number(sanitized);
+      if (isNaN(num)) {
+        errorMsg = "Lỗi";
+      } else if (num <= 0) {
+        errorMsg = "Phải > 0";
+      } else if (num > 9999) {
+        errorMsg = "Tối đa 9999";
+      }
+    }
+    setErrors((prev) => {
+      const next = { ...prev };
+      if (errorMsg) {
+        next[field] = errorMsg;
+      } else {
+        delete next[field];
+      }
+      return next;
+    });
   };
 
 
@@ -126,6 +172,43 @@ export default function CustomItemInputPanel({
   const saveItem = async () => {
     try {
       await itemSchema.validate(newItem, { abortEarly: false });
+
+      // Validate dimensions if not bundle
+      if (newItem.item_is_bundle !== 1) {
+        const dims = [
+          { label: "Dài", val: newItem.length },
+          { label: "Rộng", val: newItem.width },
+          { label: "Cao", val: newItem.height },
+        ];
+        for (const dim of dims) {
+          if (dim.val !== undefined && dim.val !== null && dim.val !== "") {
+            const num = Number(dim.val);
+            if (isNaN(num) || num <= 0 || num > 9999) {
+              toast.error(`Kích thước ${dim.label} phải lớn hơn 0 và nhỏ hơn hoặc bằng 9999 cm`);
+              return;
+            }
+          }
+        }
+      } else {
+        // Validate bundle items' dimensions
+        for (let idx = 0; idx < (newItem.item_bundle_items || []).length; idx++) {
+          const sub = newItem.item_bundle_items[idx];
+          const subDims = [
+            { label: "Dài", val: sub.size_length },
+            { label: "Rộng", val: sub.size_width },
+            { label: "Cao", val: sub.size_height },
+          ];
+          for (const dim of subDims) {
+            if (dim.val !== undefined && dim.val !== null && dim.val !== "") {
+              const num = Number(dim.val);
+              if (isNaN(num) || num <= 0 || num > 9999) {
+                toast.error(`Sản phẩm con thứ ${idx + 1}: Kích thước ${dim.label} phải lớn hơn 0 và nhỏ hơn hoặc bằng 9999 cm`);
+                return;
+              }
+            }
+          }
+        }
+      }
 
       // Sync material if new
       if (newItem.woodType && !materialOptions.some(m => m.toLowerCase() === newItem.woodType.toLowerCase())) {
@@ -325,12 +408,20 @@ export default function CustomItemInputPanel({
                   <Ruler size={10} /> {dim.label} (cm)
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   value={newItem[dim.field]}
-                  onChange={(e) => updateNewItem(dim.field, e.target.value)}
-                  className={`${inputBase} text-center bg-white !py-2`}
+                  onKeyDown={handleDimensionKeyDown}
+                  onChange={(e) => handleDimChange(dim.field, e.target.value)}
+                  className={`${inputBase} text-center bg-white !py-2 ${
+                    errors[dim.field] ? "border-red-500 bg-red-50" : ""
+                  }`}
                   style={{ ...inputStyle, padding: "8px", backgroundColor: "white" }}
                 />
+                {errors[dim.field] && (
+                  <p className="text-[9px] text-red-500 font-bold text-center">
+                    {errors[dim.field]}
+                  </p>
+                )}
               </div>
             ))}
           </div>
@@ -432,12 +523,14 @@ export default function CustomItemInputPanel({
                       <div key={dim.field}>
                         <span className="text-[9px] text-gray-400 font-bold ml-0.5">{dim.label}</span>
                         <input
-                          type="number"
+                          type="text"
                           placeholder="cm"
                           value={sub[dim.field]}
+                          onKeyDown={handleDimensionKeyDown}
                           onChange={(e) => {
+                            const sanitized = sanitizeDimensionInput(e.target.value);
                             const updated = [...newItem.item_bundle_items];
-                            updated[idx] = { ...updated[idx], [dim.field]: e.target.value };
+                            updated[idx] = { ...updated[idx], [dim.field]: sanitized };
                             updateNewItem("item_bundle_items", updated);
                           }}
                           className={`${inputBase} !py-1 text-[11px] text-center`}
