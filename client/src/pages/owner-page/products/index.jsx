@@ -18,6 +18,7 @@ import { PageHelmet } from "@/components/seo/PageHelmet";
 import toast from "react-hot-toast";
 import DataTable from "@/components/control/DataTable";
 import ConfirmModal from "@/components/control/ConfirmModal";
+import ImageZoomModal from "@/components/control/ImageZoomModal";
 import ProductModal from "./ProductModal";
 import productAttributeService from "@/services/productAttribute.service";
 import productService from "@/services/product.service";
@@ -69,6 +70,7 @@ export default function OwnerProducts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [totalItems, setTotalItems] = useState(0);
+  const [zoomImage, setZoomImage] = useState(null); // { src: '', alt: '' }
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState("");
@@ -136,6 +138,10 @@ export default function OwnerProducts() {
         );
         if (rm) params.room_id = rm.pk_product_room_id;
       }
+      // Lọc sắp hết hàng (server-side)
+      if (statusFilter === "Sắp hết hàng") {
+        params.low_stock = true;
+      }
 
       const result = await productService.getOwnerProducts(params);
       setProducts(result.data || []);
@@ -148,7 +154,7 @@ export default function OwnerProducts() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, searchQuery, productTypeFilter, categoryFilter, roomFilter, metadata.categories, metadata.rooms]);
+  }, [currentPage, itemsPerPage, searchQuery, productTypeFilter, categoryFilter, roomFilter, statusFilter, metadata.categories, metadata.rooms]);
 
   useEffect(() => {
     fetchProducts();
@@ -160,9 +166,9 @@ export default function OwnerProducts() {
   }, [searchQuery, statusFilter, categoryFilter, roomFilter, productTypeFilter]);
 
   // Client-side status filter (applied after API data)
+  // Sắp hết hàng is now server-side, so skip client filtering for it
   const filteredProducts = useMemo(() => {
-    if (statusFilter === "Tất cả") return products;
-    if (statusFilter === "Sắp hết hàng") return products.filter((p) => isLowStock(p));
+    if (statusFilter === "Tất cả" || statusFilter === "Sắp hết hàng") return products;
     return products.filter((p) => p.status === statusFilter);
   }, [products, statusFilter]);
 
@@ -250,7 +256,11 @@ export default function OwnerProducts() {
             <img
               src={item.img}
               alt={item.name}
-              className={`w-12 h-12 rounded-lg object-cover border bg-white transition-all ${item.status === "Chưa định giá" ? "ring-2 ring-[var(--status-error)] ring-offset-1" : ""}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setZoomImage({ src: item.img, alt: `${item.name} (${item.code})` });
+              }}
+              className={`w-12 h-12 rounded-lg object-cover border bg-white transition-all hover:scale-105 active:scale-95 cursor-zoom-in hover:shadow-md ${item.status === "Chưa định giá" ? "ring-2 ring-[var(--status-error)] ring-offset-1" : ""}`}
             />
           ) : (
             <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-[var(--bg-main)] border text-gray-300">
@@ -711,7 +721,7 @@ export default function OwnerProducts() {
               </div>
             }
             pagination={{
-              total: statusFilter === "Tất cả" ? totalItems : filteredProducts.length,
+              total: (statusFilter === "Tất cả" || statusFilter === "Sắp hết hàng") ? totalItems : filteredProducts.length,
               currentPage,
               setCurrentPage,
               itemsPerPage,
@@ -730,6 +740,13 @@ export default function OwnerProducts() {
           setItemToDelete(null);
         }}
         onConfirm={() => handleDeleteProduct(itemToDelete?.id)}
+      />
+
+      <ImageZoomModal
+        isOpen={!!zoomImage}
+        src={zoomImage?.src}
+        alt={zoomImage?.alt}
+        onClose={() => setZoomImage(null)}
       />
     </>
   );

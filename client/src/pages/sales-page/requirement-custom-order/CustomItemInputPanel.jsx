@@ -25,7 +25,7 @@ import { fmt } from "@/constants/orderConfig";
 import productAttributeService from "@/services/productAttribute.service";
 import { uploadMultipleImages } from "@/services/cloudinary.service";
 
-const inputBase = "w-full text-[13px] rounded-lg px-4 py-3 focus:outline-none transition-all border";
+const inputBase = "w-full text-[13px] rounded-2xl px-4 py-3 focus:outline-none transition-all border";
 const inputStyle = {
   color: "var(--text-main)",
   borderColor: "var(--grid-border)",
@@ -94,7 +94,6 @@ export default function CustomItemInputPanel({
 
   const updateNewItem = (field, value) => {
     setNewItem((prev) => ({ ...prev, [field]: value }));
-    // Clear error when typing
     if (errors[field]) {
       setErrors((prev) => {
         const next = { ...prev };
@@ -102,6 +101,53 @@ export default function CustomItemInputPanel({
         return next;
       });
     }
+  };
+
+  const handleDimensionKeyDown = (e) => {
+    if (["e", "E", "+", "-"].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  const sanitizeDimensionInput = (value) => {
+    let sanitized = value.replace(/[^0-9.]/g, "");
+    const parts = sanitized.split(".");
+    if (parts.length > 2) {
+      sanitized = parts[0] + "." + parts.slice(1).join("");
+    }
+    if (sanitized.length > 7) {
+      sanitized = sanitized.slice(0, 7);
+    }
+    if (parts.length === 2 && parts[1].length > 2) {
+      sanitized = parts[0] + "." + parts[1].slice(0, 2);
+    }
+    return sanitized;
+  };
+
+  const handleDimChange = (field, val) => {
+    const sanitized = sanitizeDimensionInput(val);
+    updateNewItem(field, sanitized);
+    
+    let errorMsg = "";
+    if (sanitized !== "") {
+      const num = Number(sanitized);
+      if (isNaN(num)) {
+        errorMsg = "Lỗi";
+      } else if (num <= 0) {
+        errorMsg = "Phải > 0";
+      } else if (num > 9999) {
+        errorMsg = "Tối đa 9999";
+      }
+    }
+    setErrors((prev) => {
+      const next = { ...prev };
+      if (errorMsg) {
+        next[field] = errorMsg;
+      } else {
+        delete next[field];
+      }
+      return next;
+    });
   };
 
 
@@ -126,6 +172,43 @@ export default function CustomItemInputPanel({
   const saveItem = async () => {
     try {
       await itemSchema.validate(newItem, { abortEarly: false });
+
+      // Validate dimensions if not bundle
+      if (newItem.item_is_bundle !== 1) {
+        const dims = [
+          { label: "Dài", val: newItem.length },
+          { label: "Rộng", val: newItem.width },
+          { label: "Cao", val: newItem.height },
+        ];
+        for (const dim of dims) {
+          if (dim.val !== undefined && dim.val !== null && dim.val !== "") {
+            const num = Number(dim.val);
+            if (isNaN(num) || num <= 0 || num > 9999) {
+              toast.error(`Kích thước ${dim.label} phải lớn hơn 0 và nhỏ hơn hoặc bằng 9999 cm`);
+              return;
+            }
+          }
+        }
+      } else {
+        // Validate bundle items' dimensions
+        for (let idx = 0; idx < (newItem.item_bundle_items || []).length; idx++) {
+          const sub = newItem.item_bundle_items[idx];
+          const subDims = [
+            { label: "Dài", val: sub.size_length },
+            { label: "Rộng", val: sub.size_width },
+            { label: "Cao", val: sub.size_height },
+          ];
+          for (const dim of subDims) {
+            if (dim.val !== undefined && dim.val !== null && dim.val !== "") {
+              const num = Number(dim.val);
+              if (isNaN(num) || num <= 0 || num > 9999) {
+                toast.error(`Sản phẩm con thứ ${idx + 1}: Kích thước ${dim.label} phải lớn hơn 0 và nhỏ hơn hoặc bằng 9999 cm`);
+                return;
+              }
+            }
+          }
+        }
+      }
 
       // Sync material if new
       if (newItem.woodType && !materialOptions.some(m => m.toLowerCase() === newItem.woodType.toLowerCase())) {
@@ -311,26 +394,35 @@ export default function CustomItemInputPanel({
 
         {/* Section: Specs — only for non-bundle items */}
         {newItem.item_is_bundle !== 1 && (
-        <div className="p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--grid-border)] space-y-3">
-          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Thông số kỹ thuật</p>
+        <div className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--grid-border)] space-y-4 shadow-sm">
+          <p className="text-[12px] font-semibold text-gray-600">Thông số kỹ thuật</p>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {[
               { label: "Dài", field: "length" },
               { label: "Rộng", field: "width" },
               { label: "Cao", field: "height" },
             ].map((dim) => (
-              <div key={dim.field} className="space-y-1.5">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1">
-                  <Ruler size={10} /> {dim.label} (cm)
+              <div key={dim.field} className="space-y-2">
+                <label className="text-[11px] font-semibold text-gray-500 ml-1 flex items-center gap-1">
+                  <Ruler size={12} /> {dim.label} (cm)
                 </label>
                 <input
-                  type="number"
+                  type="text"
+                  placeholder="Nhập..."
                   value={newItem[dim.field]}
-                  onChange={(e) => updateNewItem(dim.field, e.target.value)}
-                  className={`${inputBase} text-center bg-white !py-2`}
-                  style={{ ...inputStyle, padding: "8px", backgroundColor: "white" }}
+                  onKeyDown={handleDimensionKeyDown}
+                  onChange={(e) => handleDimChange(dim.field, e.target.value)}
+                  className={`${inputBase} text-center bg-white ${
+                    errors[dim.field] ? "border-red-500 bg-red-50" : ""
+                  }`}
+                  style={{ ...inputStyle, backgroundColor: "white" }}
                 />
+                {errors[dim.field] && (
+                  <p className="text-[9px] text-red-500 font-bold text-center">
+                    {errors[dim.field]}
+                  </p>
+                )}
               </div>
             ))}
           </div>
@@ -338,10 +430,10 @@ export default function CustomItemInputPanel({
         )}
 
         {/* Section: Ghi chú + Bundle (always visible) */}
-        <div className="p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--grid-border)] space-y-3">
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1">
-              <ClipboardEdit size={10} /> Ghi chú sản xuất (Yêu cầu riêng)
+        <div className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--grid-border)] space-y-4 shadow-sm">
+          <div className="space-y-2">
+            <label className="text-[11px] font-semibold text-gray-500 ml-1 flex items-center gap-1">
+              <ClipboardEdit size={12} /> Ghi chú sản xuất (Yêu cầu riêng)
             </label>
             <textarea
               placeholder="Nhập các yêu cầu sản xuất đặc biệt khác..."
@@ -432,12 +524,14 @@ export default function CustomItemInputPanel({
                       <div key={dim.field}>
                         <span className="text-[9px] text-gray-400 font-bold ml-0.5">{dim.label}</span>
                         <input
-                          type="number"
+                          type="text"
                           placeholder="cm"
                           value={sub[dim.field]}
+                          onKeyDown={handleDimensionKeyDown}
                           onChange={(e) => {
+                            const sanitized = sanitizeDimensionInput(e.target.value);
                             const updated = [...newItem.item_bundle_items];
-                            updated[idx] = { ...updated[idx], [dim.field]: e.target.value };
+                            updated[idx] = { ...updated[idx], [dim.field]: sanitized };
                             updateNewItem("item_bundle_items", updated);
                           }}
                           className={`${inputBase} !py-1 text-[11px] text-center`}

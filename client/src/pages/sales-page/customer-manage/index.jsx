@@ -150,6 +150,7 @@ export default function SalesCustomerManage() {
     const errors = {};
     if (!form.full_name.trim()) errors.full_name = "Vui lòng nhập họ tên";
     if (!form.phone_number.trim()) errors.phone_number = "Vui lòng nhập SĐT";
+    if (!form.address.trim()) errors.address = "Vui lòng nhập địa chỉ";
 
     if (form.dob) {
       const selectedDate = form.dob ? new Date(form.dob) : nowVN();
@@ -167,6 +168,9 @@ export default function SalesCustomerManage() {
     try {
       const submitData = {
         ...form,
+        email: form.email.trim() === "" ? null : form.email.trim(),
+        dob: form.dob === "" ? null : form.dob,
+        note: form.note.trim() === "" ? null : form.note.trim(),
         gender: GENDER_MAP[form.gender] || 0
       };
 
@@ -649,7 +653,7 @@ export default function SalesCustomerManage() {
                   className={labelClass}
                   style={{ color: "var(--text-placeholder)" }}
                 >
-                  Địa chỉ
+                  Địa chỉ <span style={{ color: "var(--status-error)" }}>*</span>
                 </label>
                 <div className="relative">
                   <MapPin
@@ -663,9 +667,22 @@ export default function SalesCustomerManage() {
                     value={form.address}
                     onChange={(e) => updateForm("address", e.target.value)}
                     className="w-full text-[13px] rounded-lg pl-10 pr-3 py-2.5 focus:outline-none focus:ring-2 transition bg-transparent resize-none"
-                    style={inputStyle}
+                    style={{
+                      ...inputStyle,
+                      borderColor: formErrors.address
+                        ? "var(--status-error)"
+                        : "var(--grid-border)",
+                    }}
                   />
                 </div>
+                {formErrors.address && (
+                  <p
+                    className="text-[11px] mt-1"
+                    style={{ color: "var(--status-error)" }}
+                  >
+                    {formErrors.address}
+                  </p>
+                )}
               </div>
 
               {/* Note */}

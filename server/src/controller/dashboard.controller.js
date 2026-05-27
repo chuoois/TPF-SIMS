@@ -29,40 +29,59 @@ function getAccountantDateRange(query) {
     let dateTo = null;
 
     const now = new Date();
-    const yNow = now.getFullYear();
-    const mNow = now.getMonth();
+    // Quy đổi về timezone VN (UTC+7) để tính tháng/năm hiện tại
+    const vnNow = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+    const yNow = vnNow.getUTCFullYear();
+    const mNow = vnNow.getUTCMonth();
+
+    // Helper: tạo ngày theo múi giờ VN (UTC+7)
+    // VD: ngày 01/05/2026 00:00:00 VN = 30/04/2026 17:00:00 UTC
+    const vnStart = (y, m, d = 1) => new Date(Date.UTC(y, m, d, -7, 0, 0));       // 00:00:00 VN
+    const vnEnd   = (y, m, d)     => new Date(Date.UTC(y, m, d, 16, 59, 59, 999)); // 23:59:59 VN
 
     try {
         if (period === "custom" && startDate && endDate) {
-            dateFrom = new Date(`${startDate}T00:00:00.000Z`);
-            dateTo = new Date(`${endDate}T23:59:59.999Z`);
+            if (startDate > endDate) {
+                // Fallback về tháng hiện tại nếu range không hợp lệ
+                dateFrom = vnStart(yNow, mNow, 1);
+                dateTo   = vnEnd(yNow, mNow + 1, 0);
+            } else {
+                // Lấy ngày cuối tháng của endDate
+                const [ey, em, ed] = endDate.split("-").map(Number);
+                const [sy, sm, sd] = startDate.split("-").map(Number);
+                dateFrom = vnStart(sy, sm - 1, sd);
+                dateTo   = vnEnd(ey, em - 1, ed);
+            }
         } else if (period === "month" && selectedMonth) {
             // selectedMonth format: "MM/YYYY", ví dụ "05/2026"
             const [m, y] = selectedMonth.split("/");
-            dateFrom = new Date(Date.UTC(parseInt(y), parseInt(m) - 1, 1, 0, 0, 0));
-            dateTo = new Date(Date.UTC(parseInt(y), parseInt(m), 0, 23, 59, 59, 999));
+            const mInt = parseInt(m);
+            const yInt = parseInt(y);
+            dateFrom = vnStart(yInt, mInt - 1, 1);
+            // Ngày cuối tháng: tháng m+1 ngày 0 = ngày cuối tháng m
+            dateTo   = vnEnd(yInt, mInt, 0);
         } else if (period === "quarter" && selectedQuarter) {
             // selectedQuarter format: "Q1/2026"
             const [q, y] = selectedQuarter.split("/");
             const quarter = parseInt(q.replace("Q", ""));
             const year = parseInt(y);
-            const startMonth = (quarter - 1) * 3;
-            const endMonth = startMonth + 2;
-            dateFrom = new Date(Date.UTC(year, startMonth, 1, 0, 0, 0));
-            dateTo = new Date(Date.UTC(year, endMonth + 1, 0, 23, 59, 59, 999));
+            const startMonth = (quarter - 1) * 3;   // 0-indexed: Q1=0, Q2=3, Q3=6, Q4=9
+            const endMonth   = startMonth + 2;
+            dateFrom = vnStart(year, startMonth, 1);
+            dateTo   = vnEnd(year, endMonth + 1, 0); // ngày cuối tháng cuối quý
         } else if (period === "year" && selectedYear) {
             const y = parseInt(selectedYear);
-            dateFrom = new Date(Date.UTC(y, 0, 1, 0, 0, 0));
-            dateTo = new Date(Date.UTC(y, 11, 31, 23, 59, 59, 999));
+            dateFrom = vnStart(y, 0, 1);         // 01/01/yyyy 00:00:00 VN
+            dateTo   = vnEnd(y, 11, 31);         // 31/12/yyyy 23:59:59 VN
         } else {
-            // Fallback mặc định tháng hiện tại
-            dateFrom = new Date(Date.UTC(yNow, mNow, 1, 0, 0, 0));
-            dateTo = new Date(Date.UTC(yNow, mNow + 1, 0, 23, 59, 59, 999));
+            // Fallback mặc định: tháng hiện tại theo VN time
+            dateFrom = vnStart(yNow, mNow, 1);
+            dateTo   = vnEnd(yNow, mNow + 1, 0);
         }
     } catch (err) {
         console.error("Parse date range error:", err);
-        dateFrom = new Date(Date.UTC(yNow, mNow, 1, 0, 0, 0));
-        dateTo = new Date(Date.UTC(yNow, mNow + 1, 0, 23, 59, 59, 999));
+        dateFrom = vnStart(yNow, mNow, 1);
+        dateTo   = vnEnd(yNow, mNow + 1, 0);
     }
 
     return { dateFrom, dateTo };
@@ -384,14 +403,20 @@ class DashboardController {
                 }),
 
                 // 2b. Đơn hàng hủy mất cọc (Doanh thu bất thường)
+                // Lọc theo modifiedate (ngày hủy thực tế) để phản ánh đúng kỳ tài chính
                 Order.findAll({
-                    where: { ...orderWhere, order_status: 0, deposit_resolution: "forfeited" },
+                    where: {
+                        status: 1,
+                        modifiedate: { [Op.gte]: dateFrom, [Op.lte]: dateTo },
+                        order_status: 0,
+                        deposit_resolution: "forfeited"
+                    },
                     include: [{
                         model: CustomerProfile,
                         as: "customer",
                         attributes: ["full_name", "phone_number"]
                     }],
-                    order: [["createdate", "DESC"]]
+                    order: [["modifiedate", "DESC"]]
                 }),
 
                 // 2c. Phiếu nhập kho (Chi phí nhập hàng)

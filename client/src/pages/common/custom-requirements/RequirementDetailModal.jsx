@@ -76,6 +76,221 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
   const [materialOptions, setMaterialOptions] = useState([]);
   const [colorOptions, setColorOptions] = useState([]);
   const [activeDropdown, setActiveDropdown] = useState({ index: null, type: null });
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (!isEditing) {
+      setErrors({});
+    }
+  }, [isEditing]);
+
+  const validateField = (field, value, specIndex = null, subIndex = null) => {
+    if (!isEditing) return "";
+
+    let errorMsg = "";
+    if (userRole === 'owner') {
+      if (specIndex === null) {
+        if (field === "deliveryMethod") {
+          if (!value) errorMsg = "Vui lòng chọn phương thức giao hàng";
+        } else if (field === "deliveryDate") {
+          if (!value) {
+            errorMsg = "Vui lòng chọn ngày giao dự kiến";
+          } else {
+            const delD = new Date(value);
+            delD.setHours(0, 0, 0, 0);
+            for (let i = 0; i < itemSpecs.length; i++) {
+              if (itemSpecs[i].expectedWorkshopDate) {
+                const wsD = new Date(itemSpecs[i].expectedWorkshopDate);
+                wsD.setHours(0, 0, 0, 0);
+                if (wsD >= delD) {
+                  errorMsg = `Ngày giao phải sau ngày xong xưởng của "${itemSpecs[i].name || i+1}" (${itemSpecs[i].expectedWorkshopDate})`;
+                  break;
+                }
+              }
+            }
+          }
+        } else if (field === "totalAmount") {
+          if (!value || Number(value) <= 0) errorMsg = "Tổng tiền phải lớn hơn 0";
+        } else if (field === "depositAmount") {
+          if (value === undefined || value === null || value === "") {
+            errorMsg = "Tiền cọc không được để trống";
+          } else if (Number(value) < 0) {
+            errorMsg = "Tiền cọc không được nhỏ hơn 0";
+          }
+        } else if (field === "notes") {
+          if (!value || !value.trim()) errorMsg = "Vui lòng nhập ghi chú chung";
+        }
+      } else {
+        const spec = itemSpecs[specIndex];
+        if (subIndex === null) {
+          if (field === "material") {
+            if (!value || !value.trim()) errorMsg = "Vui lòng nhập chất liệu";
+          } else if (field === "color") {
+            if (!value || !value.trim()) errorMsg = "Vui lòng nhập màu sắc";
+          } else if (field === "quantity") {
+            if (!value || Number(value) <= 0) errorMsg = "Số lượng phải lớn hơn 0";
+          } else if (field === "price") {
+            if (!value || Number(value) <= 0) errorMsg = "Đơn giá bán phải lớn hơn 0";
+          } else if (field === "costPrice") {
+            if (!value || Number(value) <= 0) {
+              errorMsg = "Giá vốn phải lớn hơn 0";
+            } else if (Number(value) > Number(spec.price)) {
+              errorMsg = "Giá vốn không được lớn hơn giá bán";
+            }
+          } else if (field === "length") {
+            if (!value || Number(value) <= 0) errorMsg = "Dài phải > 0";
+          } else if (field === "width") {
+            if (!value || Number(value) <= 0) errorMsg = "Rộng phải > 0";
+          } else if (field === "height") {
+            if (!value || Number(value) <= 0) errorMsg = "Cao phải > 0";
+          } else if (field === "item_warranty") {
+            if (value === undefined || value === null || value === "") {
+              errorMsg = "Bảo hành không được để trống";
+            } else if (Number(value) < 0) {
+              errorMsg = "Bảo hành không được < 0";
+            }
+          } else if (field === "fk_supplier_id") {
+            if (!value) errorMsg = "Vui lòng chọn xưởng";
+          } else if (field === "expectedWorkshopDate") {
+            if (!value) {
+              errorMsg = "Vui lòng nhập ngày xong xưởng";
+            } else if (deliveryDate) {
+              const wsD = new Date(value);
+              const delD = new Date(deliveryDate);
+              wsD.setHours(0, 0, 0, 0);
+              delD.setHours(0, 0, 0, 0);
+              if (wsD >= delD) {
+                errorMsg = `Ngày xong xưởng phải trước ngày giao dự kiến (${deliveryDate})`;
+              }
+            }
+          } else if (field === "note") {
+            if (!value || !value.trim()) errorMsg = "Vui lòng nhập yêu cầu kỹ thuật";
+          }
+        } else {
+          if (field === "bundle_name") {
+            if (!value || !value.trim()) errorMsg = "Vui lòng nhập tên món";
+          } else if (field === "bundle_quantity") {
+            if (!value || Number(value) <= 0) errorMsg = "Số lượng phải > 0";
+          } else if (field === "bundle_length") {
+            if (!value || Number(value) <= 0) errorMsg = "Dài phải > 0";
+          } else if (field === "bundle_width") {
+            if (!value || Number(value) <= 0) errorMsg = "Rộng phải > 0";
+          } else if (field === "bundle_height") {
+            if (!value || Number(value) <= 0) errorMsg = "Cao phải > 0";
+          }
+        }
+      }
+    }
+
+    const key = specIndex === null 
+      ? field 
+      : subIndex === null 
+        ? `specs.${specIndex}.${field}` 
+        : `specs.${specIndex}.bundle.${subIndex}.${field}`;
+
+    setErrors(prev => {
+      const next = { ...prev };
+      if (errorMsg) {
+        next[key] = errorMsg;
+      } else {
+        delete next[key];
+      }
+      return next;
+    });
+
+    return errorMsg;
+  };
+
+  const validateAll = () => {
+    if (userRole !== 'owner') return true;
+
+    const newErrors = {};
+
+    if (!deliveryMethod) newErrors["deliveryMethod"] = "Vui lòng chọn phương thức giao hàng";
+    if (!deliveryDate) {
+      newErrors["deliveryDate"] = "Vui lòng chọn ngày giao dự kiến";
+    } else {
+      const delD = new Date(deliveryDate);
+      delD.setHours(0, 0, 0, 0);
+      for (let i = 0; i < itemSpecs.length; i++) {
+        if (itemSpecs[i].expectedWorkshopDate) {
+          const wsD = new Date(itemSpecs[i].expectedWorkshopDate);
+          wsD.setHours(0, 0, 0, 0);
+          if (wsD >= delD) {
+            newErrors["deliveryDate"] = `Ngày giao phải sau ngày xong xưởng của "${itemSpecs[i].name || i+1}" (${itemSpecs[i].expectedWorkshopDate})`;
+            break;
+          }
+        }
+      }
+    }
+    if (!totalAmount || Number(totalAmount) <= 0) newErrors["totalAmount"] = "Tổng tiền phải lớn hơn 0";
+    if (depositAmount === undefined || depositAmount === null || depositAmount === "") {
+      newErrors["depositAmount"] = "Tiền cọc không được để trống";
+    } else if (Number(depositAmount) < 0) {
+      newErrors["depositAmount"] = "Tiền cọc không được nhỏ hơn 0";
+    }
+    if (!notes || !notes.trim()) newErrors["notes"] = "Vui lòng nhập ghi chú chung";
+
+    for (let i = 0; i < itemSpecs.length; i++) {
+      const spec = itemSpecs[i];
+
+      if (!spec.material || !spec.material.trim()) newErrors[`specs.${i}.material`] = "Vui lòng nhập chất liệu";
+      if (!spec.color || !spec.color.trim()) newErrors[`specs.${i}.color`] = "Vui lòng nhập màu sắc";
+      if (!spec.quantity || Number(spec.quantity) <= 0) newErrors[`specs.${i}.quantity`] = "Số lượng phải lớn hơn 0";
+      if (!spec.price || Number(spec.price) <= 0) newErrors[`specs.${i}.price`] = "Đơn giá bán phải lớn hơn 0";
+      
+      if (!spec.costPrice || Number(spec.costPrice) <= 0) {
+        newErrors[`specs.${i}.costPrice`] = "Giá vốn phải lớn hơn 0";
+      } else if (Number(spec.costPrice) > Number(spec.price)) {
+        newErrors[`specs.${i}.costPrice`] = "Giá vốn không được lớn hơn giá bán";
+      }
+
+      if (Number(spec.item_is_bundle) !== 1) {
+        if (!spec.length || Number(spec.length) <= 0) newErrors[`specs.${i}.length`] = "Dài phải > 0";
+        if (!spec.width || Number(spec.width) <= 0) newErrors[`specs.${i}.width`] = "Rộng phải > 0";
+        if (!spec.height || Number(spec.height) <= 0) newErrors[`specs.${i}.height`] = "Cao phải > 0";
+      } else {
+        if (!spec.item_bundle_items || spec.item_bundle_items.length === 0) {
+          newErrors[`specs.${i}.bundle`] = "Bộ sản phẩm phải có ít nhất 1 món";
+        } else {
+          for (let j = 0; j < spec.item_bundle_items.length; j++) {
+            const sub = spec.item_bundle_items[j];
+            if (!sub.name || !sub.name.trim()) newErrors[`specs.${i}.bundle.${j}.bundle_name`] = "Vui lòng nhập tên món";
+            if (!sub.quantity || Number(sub.quantity) <= 0) newErrors[`specs.${i}.bundle.${j}.bundle_quantity`] = "Số lượng phải > 0";
+            
+            const size = sub.size || {};
+            if (!size.length || Number(size.length) <= 0) newErrors[`specs.${i}.bundle.${j}.bundle_length`] = "Dài phải > 0";
+            if (!size.width || Number(size.width) <= 0) newErrors[`specs.${i}.bundle.${j}.bundle_width`] = "Rộng phải > 0";
+            if (!size.height || Number(size.height) <= 0) newErrors[`specs.${i}.bundle.${j}.bundle_height`] = "Cao phải > 0";
+          }
+        }
+      }
+
+      if (spec.item_warranty === undefined || spec.item_warranty === null || spec.item_warranty === "") {
+        newErrors[`specs.${i}.item_warranty`] = "Bảo hành không được để trống";
+      } else if (Number(spec.item_warranty) < 0) {
+        newErrors[`specs.${i}.item_warranty`] = "Bảo hành không được < 0";
+      }
+
+      if (!spec.fk_supplier_id) newErrors[`specs.${i}.fk_supplier_id`] = "Vui lòng chọn xưởng";
+      if (!spec.expectedWorkshopDate) {
+        newErrors[`specs.${i}.expectedWorkshopDate`] = "Vui lòng nhập ngày xong xưởng";
+      } else if (deliveryDate) {
+        const wsD = new Date(spec.expectedWorkshopDate);
+        const delD = new Date(deliveryDate);
+        wsD.setHours(0, 0, 0, 0);
+        delD.setHours(0, 0, 0, 0);
+        if (wsD >= delD) {
+          newErrors[`specs.${i}.expectedWorkshopDate`] = `Ngày xong xưởng phải trước ngày giao dự kiến (${deliveryDate})`;
+        }
+      }
+
+      if (!spec.note || !spec.note.trim()) newErrors[`specs.${i}.note`] = "Vui lòng nhập yêu cầu kỹ thuật";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const calculateSuggested = (total) => {
     if (!total || total <= 0) return { amount: 0, percentage: 50 };
@@ -90,8 +305,13 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
     (userRole === 'owner' && req?.status === "Đã tiếp nhận")
   );
 
-  // Quyền sửa các thông tin chung (Ngày giao, Tiền cọc, Tổng tiền, v.v.)
-  const canEditHeader = canEdit;
+  // Quyền sửa thông tin chung (Giao hàng, Thanh toán, Ghi chú, Bản thiết kế 3D)
+  // → Chỉ Owner khi "Đã tiếp nhận"
+  const canEditHeader = canEdit && userRole === 'owner';
+
+  // Quyền sửa thông tin kỹ thuật sản phẩm (chất liệu, màu, kích thước, đơn giá, note)
+  // → Sales khi "Chờ tiếp nhận", Owner khi "Đã tiếp nhận"
+  const canEditSpec = canEdit;
 
   // Quyền sửa các thông tin quản lý (Xưởng, Giá vốn, Ngày xong xưởng) - Chỉ dành cho Owner
   const canEditManagement = canEdit && userRole === 'owner';
@@ -175,12 +395,12 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
 
   // Tự động tính tổng tiền từ đơn giá từng sản phẩm
   useEffect(() => {
-    if (!canEditHeader) return;
+    if (!canEditSpec) return;
     const newTotal = itemSpecs.reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 1), 0);
     if (newTotal !== totalAmount) {
       setTotalAmount(newTotal);
     }
-  }, [itemSpecs, canEditHeader]);
+  }, [itemSpecs, canEditSpec]);
 
   // Tự động cập nhật tiền cọc khi thay đổi tổng tiền hoặc chế độ trả đủ
   useEffect(() => {
@@ -201,14 +421,14 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
   }, [itemSpecs, userRole]);
 
   const handleUpdateItemSpec = (index, field, value) => {
-    if (!canEdit) return;
+    if (!canEditSpec) return;
     const newSpecs = [...itemSpecs];
     newSpecs[index][field] = value;
     setItemSpecs(newSpecs);
   };
 
   const handleAddBundleSubItem = (itemIndex) => {
-    if (!canEdit) return;
+    if (!canEditSpec) return;
     const newSpecs = [...itemSpecs];
     const bundleItems = [...(newSpecs[itemIndex].item_bundle_items || [])];
     bundleItems.push({
@@ -221,7 +441,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
   };
 
   const handleUpdateBundleSubItem = (itemIndex, subIndex, field, value) => {
-    if (!canEdit) return;
+    if (!canEditSpec) return;
     const newSpecs = [...itemSpecs];
     const bundleItems = [...(newSpecs[itemIndex].item_bundle_items || [])];
 
@@ -237,7 +457,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
   };
 
   const handleRemoveBundleSubItem = (itemIndex, subIndex) => {
-    if (!canEdit) return;
+    if (!canEditSpec) return;
     const newSpecs = [...itemSpecs];
     const bundleItems = [...(newSpecs[itemIndex].item_bundle_items || [])];
     bundleItems.splice(subIndex, 1);
@@ -246,6 +466,13 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
   };
 
   const handleSaveAll = async () => {
+    if (userRole === 'owner') {
+      const isValid = validateAll();
+      if (!isValid) {
+        toast.error("Vui lòng kiểm tra và sửa các thông tin bị lỗi hiển thị trên form!");
+        return;
+      }
+    }
 
     setIsSaving(true);
     const loadingToast = toast.loading("Đang lưu thay đổi...");
@@ -307,7 +534,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
   };
 
   const handleAddDesignImages = (index, files) => {
-    if (!canEdit || !files || files.length === 0) return;
+    if (!canEditHeader || !files || files.length === 0) return;
     const newSpecs = [...itemSpecs];
     const newFilesArray = Array.from(files);
     newSpecs[index].designImages = [...(newSpecs[index].designImages || []), ...newFilesArray];
@@ -315,7 +542,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
   };
 
   const handleRemoveDesignImage = (index, imgIndex) => {
-    if (!canEdit) return;
+    if (!canEditHeader) return;
     const newSpecs = [...itemSpecs];
     newSpecs[index].designImages = newSpecs[index].designImages.filter((_, i) => i !== imgIndex);
     setItemSpecs(newSpecs);
@@ -323,9 +550,12 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
 
   const handleUpdateStatus = async (newStatus, successMsg) => {
     // Chỉ validate phương thức giao hàng khi xác nhận hoàn thành (xác nhận giao hàng)
-    if (newStatus === 3 && !deliveryMethod) {
-      toast.error("Vui lòng chọn Phương thức giao hàng trước khi hoàn thành");
-      return;
+    if (newStatus === 3) {
+      const isValid = validateAll();
+      if (!isValid) {
+        toast.error("Vui lòng kiểm tra và sửa các thông tin bị lỗi hiển thị trên form!");
+        return;
+      }
     }
 
     try {
@@ -380,20 +610,42 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
               <section className="space-y-3">
                 <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2"><Package size={14} /> Giao hàng</h3>
                 <div className="p-4 rounded-xl bg-white border border-gray-100 space-y-4">
-                  <div className={`space-y-2 p-3 rounded-lg transition-all ${canEditHeader ? 'bg-[#EAF6EE]/40 border border-[#34B057]/20' : 'opacity-60'}`}>
-                    <p className={`text-[10px] font-bold uppercase ${canEditHeader ? 'text-[#34B057]' : 'text-gray-400'}`}>Phương thức</p>
+                  <div className={`space-y-2 p-3 rounded-lg transition-all ${canEditHeader ? errors["deliveryMethod"] ? 'bg-red-50/20 border border-red-300' : 'bg-[#EAF6EE]/40 border border-[#34B057]/20' : 'opacity-60'}`}>
+                    <p className={`text-[10px] font-bold uppercase ${canEditHeader ? errors["deliveryMethod"] ? 'text-red-500' : 'text-[#34B057]' : 'text-gray-400'}`}>Phương thức</p>
                     <div className="flex flex-col gap-2">
                       {['Lấy tại cửa hàng', 'Giao tận nhà'].map(m => (
                         <label key={m} className={`flex items-center gap-2 ${canEditHeader ? 'cursor-pointer' : 'cursor-not-allowed'}`}>
-                          <input type="radio" disabled={!canEditHeader} checked={deliveryMethod === m} onChange={() => setDeliveryMethod(m)} className="w-3.5 h-3.5 text-[#34B057] focus:ring-0" />
+                          <input
+                            type="radio"
+                            disabled={!canEditHeader}
+                            checked={deliveryMethod === m}
+                            onChange={() => {
+                              setDeliveryMethod(m);
+                              validateField("deliveryMethod", m);
+                            }}
+                            className="w-3.5 h-3.5 text-[#34B057] focus:ring-0"
+                          />
                           <span className={`text-[13px] ${deliveryMethod === m ? "font-bold text-[#34B057]" : "text-gray-600"}`}>{m}</span>
                         </label>
                       ))}
                     </div>
+                    {errors["deliveryMethod"] && <p className="text-[10px] text-red-500 font-bold mt-1">{errors["deliveryMethod"]}</p>}
                   </div>
-                  <div className={`space-y-1.5 p-3 rounded-lg transition-all ${canEditHeader ? 'bg-[#EAF6EE]/40 border border-[#34B057]/20' : 'opacity-60'}`}>
-                    <p className={`text-[10px] font-bold uppercase ${canEditHeader ? 'text-[#34B057]' : 'text-gray-400'}`}>Ngày giao (Dự kiến)</p>
-                    <input type="date" readOnly={!canEditHeader} value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} className={`w-full border rounded-lg text-[13px] font-bold px-3 py-2 transition-colors ${canEditHeader ? 'bg-white border-[#34B057]/20 text-gray-700 focus:border-[#34B057] cursor-pointer' : 'bg-gray-50 border-gray-100 text-gray-500 cursor-not-allowed'}`} />
+                  <div className={`space-y-1.5 p-3 rounded-lg transition-all ${canEditHeader ? errors["deliveryDate"] ? 'bg-red-50/20 border border-red-300' : 'bg-[#EAF6EE]/40 border border-[#34B057]/20' : 'opacity-60'}`}>
+                    <p className={`text-[10px] font-bold uppercase ${canEditHeader ? errors["deliveryDate"] ? 'text-red-500' : 'text-[#34B057]' : 'text-gray-400'}`}>Ngày giao (Dự kiến)</p>
+                    <input
+                      type="date"
+                      readOnly={!canEditHeader}
+                      value={deliveryDate}
+                      onChange={(e) => {
+                        const newDate = e.target.value;
+                        setDeliveryDate(newDate);
+                        validateField("deliveryDate", newDate);
+                      }}
+                      onBlur={() => validateField("deliveryDate", deliveryDate)}
+                      className={`w-full border rounded-lg text-[13px] font-bold px-3 py-2 transition-colors ${errors["deliveryDate"] ? 'border-red-300' : 'border-[#34B057]/20'} ${canEditHeader ? 'bg-white text-gray-700 focus:border-[#34B057] cursor-pointer' : 'bg-gray-50 border-gray-100 text-gray-500 cursor-not-allowed'}`}
+                    />
+                    {errors["deliveryDate"] && <p className="text-[10px] text-red-500 font-bold mt-1">{errors["deliveryDate"]}</p>}
                   </div>
                 </div>
               </section>
@@ -401,9 +653,9 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
               <section className="space-y-3">
                 <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2"><CheckCircle size={14} /> Thanh toán (đ)</h3>
                 <div className="p-4 rounded-xl bg-white border border-gray-100 space-y-4">
-                  <div className={`space-y-1 p-3 rounded-lg transition-all ${canEditHeader ? 'bg-[#EAF6EE]/40 border border-[#34B057]/20' : 'opacity-60'}`}>
+                  <div className={`space-y-1 p-3 rounded-lg transition-all ${canEditHeader ? errors["totalAmount"] ? 'bg-red-50/20 border border-red-300' : 'bg-[#EAF6EE]/40 border border-[#34B057]/20' : 'opacity-60'}`}>
                     <div className="flex items-center justify-between">
-                      <p className={`text-[10px] font-bold uppercase ${canEditHeader ? 'text-[#34B057]' : 'text-gray-400'}`}>Tổng tiền</p>
+                      <p className={`text-[10px] font-bold uppercase ${canEditHeader ? errors["totalAmount"] ? 'text-red-500' : 'text-[#34B057]' : 'text-gray-400'}`}>Tổng tiền</p>
                       {canEditHeader && (
                         <label className="flex items-center gap-1.5 cursor-pointer">
                           <input type="checkbox" className="w-3 h-3 rounded text-[#34B057]" checked={isFullPayment} onChange={(e) => setIsFullPayment(e.target.checked)} />
@@ -411,18 +663,54 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                         </label>
                       )}
                     </div>
-                    <input type="text" readOnly={!canEditHeader} value={totalAmount === 0 ? "" : totalAmount.toLocaleString("vi-VN")} onChange={(e) => setTotalAmount(Number(e.target.value.replace(/\D/g, "")))} className={`w-full text-[18px] font-bold bg-transparent border-none focus:ring-0 p-0 ${canEditHeader ? 'text-[#34B057] border-b border-[#34B057]/10 cursor-text' : 'text-gray-400 cursor-not-allowed'}`} />
+                    <input
+                      type="text"
+                      readOnly={!canEditHeader}
+                      value={totalAmount === 0 ? "" : totalAmount.toLocaleString("vi-VN")}
+                      onChange={(e) => {
+                        const v = Number(e.target.value.replace(/\D/g, ""));
+                        setTotalAmount(v);
+                        validateField("totalAmount", v);
+                      }}
+                      onBlur={() => validateField("totalAmount", totalAmount)}
+                      className={`w-full text-[18px] font-bold bg-transparent border-none focus:ring-0 p-0 ${canEditHeader ? errors["totalAmount"] ? 'text-red-500 border-b border-red-500/30' : 'text-[#34B057] border-b border-[#34B057]/10' : 'text-gray-400'} cursor-text`}
+                    />
+                    {errors["totalAmount"] && <p className="text-[10px] text-red-500 font-bold mt-1">{errors["totalAmount"]}</p>}
                   </div>
-                  <div className={`space-y-1 p-3 rounded-lg transition-all ${canEditHeader && !isFullPayment ? 'bg-[#EAF6EE]/40 border border-[#34B057]/20' : 'opacity-60'}`}>
-                    <p className={`text-[10px] font-bold uppercase ${canEditHeader && !isFullPayment ? 'text-[#34B057]' : 'text-gray-400'}`}>Tiền cọc</p>
-                    <input type="text" readOnly={!canEditHeader || isFullPayment} value={depositAmount === 0 ? "" : depositAmount.toLocaleString("vi-VN")} onChange={(e) => setDepositAmount(Number(e.target.value.replace(/\D/g, "")))} className={`w-full text-[16px] font-bold bg-transparent border-none focus:ring-0 p-0 ${canEditHeader && !isFullPayment ? 'text-gray-700 border-b border-gray-100 cursor-text' : 'text-gray-400 cursor-not-allowed'}`} />
+                  <div className={`space-y-1 p-3 rounded-lg transition-all ${canEditHeader && !isFullPayment ? errors["depositAmount"] ? 'bg-red-50/20 border border-red-300' : 'bg-[#EAF6EE]/40 border border-[#34B057]/20' : 'opacity-60'}`}>
+                    <p className={`text-[10px] font-bold uppercase ${canEditHeader && !isFullPayment ? errors["depositAmount"] ? 'text-red-500' : 'text-[#34B057]' : 'text-gray-400'}`}>Tiền cọc</p>
+                    <input
+                      type="text"
+                      readOnly={!canEditHeader || isFullPayment}
+                      value={depositAmount === 0 ? "" : depositAmount.toLocaleString("vi-VN")}
+                      onChange={(e) => {
+                        const v = Number(e.target.value.replace(/\D/g, ""));
+                        setDepositAmount(v);
+                        validateField("depositAmount", v);
+                      }}
+                      onBlur={() => validateField("depositAmount", depositAmount)}
+                      className={`w-full text-[16px] font-bold bg-transparent border-none focus:ring-0 p-0 ${canEditHeader && !isFullPayment ? errors["depositAmount"] ? 'text-red-500 border-b border-red-500/30' : 'text-gray-700 border-b border-gray-100' : 'text-gray-400'} cursor-text`}
+                    />
+                    {errors["depositAmount"] && <p className="text-[10px] text-red-500 font-bold mt-1">{errors["depositAmount"]}</p>}
                   </div>
                 </div>
               </section>
 
               <section className="space-y-2">
-                <h3 className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 ${canEditHeader ? 'text-[#34B057]' : 'text-gray-400'}`}><FileText size={14} /> Ghi chú</h3>
-                <textarea value={notes} readOnly={!canEditHeader} onChange={(e) => setNotes(e.target.value)} className={`w-full h-24 p-3 rounded-xl border text-[12px] resize-none transition-all ${canEditHeader ? 'border-[#34B057]/20 bg-[#EAF6EE]/30 text-gray-700 focus:ring-2 focus:ring-[#34B057]/20 cursor-text' : 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed opacity-60'}`} placeholder={canEditHeader ? "Nhập ghi chú chung..." : ""} />
+                <h3 className={`text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 ${canEditHeader ? errors["notes"] ? 'text-red-500' : 'text-[#34B057]' : 'text-gray-400'}`}><FileText size={14} /> Ghi chú</h3>
+                <textarea
+                  value={notes}
+                  readOnly={!canEditHeader}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setNotes(v);
+                    validateField("notes", v);
+                  }}
+                  onBlur={() => validateField("notes", notes)}
+                  className={`w-full h-24 p-3 rounded-xl border text-[12px] resize-none transition-all ${canEditHeader ? errors["notes"] ? 'border-red-300 bg-red-50/10 text-red-500 focus:ring-2 focus:ring-red-500/20' : 'border-[#34B057]/20 bg-[#EAF6EE]/30 text-gray-700 focus:ring-2 focus:ring-[#34B057]/20 cursor-text' : 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed opacity-60'}`}
+                  placeholder={canEditHeader ? "Nhập ghi chú chung..." : ""}
+                />
+                {errors["notes"] && <p className="text-[10px] text-red-500 font-bold mt-1">{errors["notes"]}</p>}
               </section>
             </aside>
 
@@ -434,7 +722,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
 
               <div className="space-y-8 pb-10">
                 {itemSpecs.map((spec, index) => (
-                  <div key={spec.id} className={`flex flex-col gap-6 p-6 rounded-2xl border border-gray-100 bg-white transition-all ${canEdit ? 'hover:border-[#34B057]/30' : ''}`}>
+                  <div key={spec.id} className={`flex flex-col gap-6 p-6 rounded-2xl border border-gray-100 bg-white transition-all ${canEditSpec ? 'hover:border-[#34B057]/30' : ''}`}>
                     <div className="flex flex-col md:flex-row gap-6">
                       {/* Image column */}
                       <div className="w-full md:w-64 space-y-4 shrink-0">
@@ -492,35 +780,63 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
 
 
 
-                          <div className="flex flex-col gap-4">
+                            <div className="flex flex-col gap-4">
                             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                              <EditableSpecItem label="Chất liệu" value={spec.material} readOnly={!canEdit} onFocus={() => canEdit && setActiveDropdown({ index, type: 'material' })} onBlur={() => setTimeout(() => setActiveDropdown({ index: null, type: null }), 200)} onChange={(v) => handleUpdateItemSpec(index, "material", v)} options={activeDropdown.index === index && activeDropdown.type === 'material' ? materialOptions : null} onSelect={(v) => handleUpdateItemSpec(index, "material", v)} />
-                              <EditableSpecItem label="Màu sắc" value={spec.color} readOnly={!canEdit} onFocus={() => canEdit && setActiveDropdown({ index, type: 'color' })} onBlur={() => setTimeout(() => setActiveDropdown({ index: null, type: null }), 200)} onChange={(v) => handleUpdateItemSpec(index, "color", v)} options={activeDropdown.index === index && activeDropdown.type === 'color' ? colorOptions : null} onSelect={(v) => handleUpdateItemSpec(index, "color", v)} />
-                              <div><p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Số lượng</p><div className="text-[14px] font-bold text-gray-700">{spec.quantity}</div></div>
+                              <EditableSpecItem label="Chất liệu" value={spec.material} error={errors[`specs.${index}.material`]} readOnly={!canEditSpec} onFocus={() => canEditSpec && setActiveDropdown({ index, type: 'material' })} onBlur={() => { setTimeout(() => setActiveDropdown({ index: null, type: null }), 200); validateField("material", spec.material, index); }} onChange={(v) => { handleUpdateItemSpec(index, "material", v); validateField("material", v, index); }} options={activeDropdown.index === index && activeDropdown.type === 'material' ? materialOptions : null} onSelect={(v) => { handleUpdateItemSpec(index, "material", v); validateField("material", v, index); }} />
+                              <EditableSpecItem label="Màu sắc" value={spec.color} error={errors[`specs.${index}.color`]} readOnly={!canEditSpec} onFocus={() => canEditSpec && setActiveDropdown({ index, type: 'color' })} onBlur={() => { setTimeout(() => setActiveDropdown({ index: null, type: null }), 200); validateField("color", spec.color, index); }} onChange={(v) => { handleUpdateItemSpec(index, "color", v); validateField("color", v, index); }} options={activeDropdown.index === index && activeDropdown.type === 'color' ? colorOptions : null} onSelect={(v) => { handleUpdateItemSpec(index, "color", v); validateField("color", v, index); }} />
+                              <div className={`transition-all ${!canEditSpec ? 'opacity-60' : ''}`}>
+                                <label className={`text-[10px] font-bold uppercase block mb-1 ${!canEditSpec ? 'text-gray-400' : errors[`specs.${index}.quantity`] ? 'text-red-500' : 'text-[#34B057]'}`}>Số lượng</label>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  readOnly={!canEditSpec}
+                                  value={spec.quantity}
+                                  onChange={(e) => {
+                                    const v = Math.max(1, Number(e.target.value));
+                                    handleUpdateItemSpec(index, "quantity", v);
+                                    validateField("quantity", v, index);
+                                  }}
+                                  onBlur={() => validateField("quantity", spec.quantity, index)}
+                                  className={`w-full bg-transparent border-none focus:ring-0 text-[13px] font-bold p-0 border-b transition-all ${!canEditSpec ? 'text-gray-400 border-gray-100 cursor-not-allowed' : errors[`specs.${index}.quantity`] ? 'text-red-500 border-red-500/30 focus:border-red-500 cursor-text' : 'text-gray-700 border-[#34B057]/30 focus:border-[#34B057] cursor-text'}`}
+                                />
+                                {errors[`specs.${index}.quantity`] && <p className="text-[9px] text-red-500 font-bold mt-0.5">{errors[`specs.${index}.quantity`]}</p>}
+                              </div>
                             </div>
 
-                            <div className={`p-3.5 rounded-xl grid grid-cols-2 gap-6 border transition-all ${canEditHeader ? 'bg-[#EAF6EE]/30 border-[#34B057]/20' : 'bg-gray-50/50 border-gray-100 opacity-60'}`}>
+                            <div className={`p-3.5 rounded-xl grid grid-cols-2 gap-6 border transition-all ${canEditSpec ? errors[`specs.${index}.price`] || errors[`specs.${index}.costPrice`] ? 'bg-red-50/10 border-red-200' : 'bg-[#EAF6EE]/30 border-[#34B057]/20' : 'bg-gray-50/50 border-gray-100 opacity-60'}`}>
                               <div className="space-y-1">
-                                <label className={`text-[10px] font-bold uppercase block ${canEditHeader ? 'text-[#34B057]' : 'text-gray-400'}`}>Đơn giá bán (đ)</label>
+                                <label className={`text-[10px] font-bold uppercase block ${canEditSpec ? errors[`specs.${index}.price`] ? 'text-red-500' : 'text-[#34B057]' : 'text-gray-400'}`}>Đơn giá bán (đ)</label>
                                 <input
                                   type="text"
-                                  readOnly={!canEditHeader}
+                                  readOnly={!canEditSpec}
                                   value={spec.price === 0 ? "" : spec.price.toLocaleString("vi-VN")}
-                                  onChange={(e) => handleUpdateItemSpec(index, "price", Number(e.target.value.replace(/\D/g, "")))}
-                                  className={`w-full bg-transparent border-none focus:ring-0 text-[16px] font-black p-0 ${canEditHeader ? 'text-[#34B057] border-b border-[#34B057]/10 cursor-text' : 'text-gray-400 cursor-not-allowed'}`}
+                                  onChange={(e) => {
+                                    const v = Number(e.target.value.replace(/\D/g, ""));
+                                    handleUpdateItemSpec(index, "price", v);
+                                    validateField("price", v, index);
+                                  }}
+                                  onBlur={() => validateField("price", spec.price, index)}
+                                  className={`w-full bg-transparent border-none focus:ring-0 text-[16px] font-black p-0 ${canEditSpec ? errors[`specs.${index}.price`] ? 'text-red-500 border-b border-red-500/30' : 'text-[#34B057] border-b border-[#34B057]/10' : 'text-gray-400'} cursor-text`}
                                   placeholder="0"
                                 />
+                                {errors[`specs.${index}.price`] && <p className="text-[9px] text-red-500 font-bold mt-0.5">{errors[`specs.${index}.price`]}</p>}
                               </div>
                               <div className="space-y-1 border-l border-gray-200 pl-6">
-                                <label className={`text-[10px] font-bold uppercase block ${canEditManagement ? 'text-amber-600' : 'text-gray-400'}`}>Giá vốn / Nhập (đ)</label>
+                                <label className={`text-[10px] font-bold uppercase block ${canEditManagement ? errors[`specs.${index}.costPrice`] ? 'text-red-500' : 'text-amber-600' : 'text-gray-400'}`}>Giá vốn / Nhập (đ)</label>
                                 <input
                                   type="text"
                                   readOnly={!canEditManagement}
                                   value={spec.costPrice === 0 ? "" : spec.costPrice.toLocaleString("vi-VN")}
-                                  onChange={(e) => handleUpdateItemSpec(index, "costPrice", Number(e.target.value.replace(/\D/g, "")))}
-                                  className={`w-full bg-transparent border-none focus:ring-0 text-[16px] font-black p-0 ${canEditManagement ? 'text-amber-600 border-b border-amber-100 cursor-text' : 'text-gray-400 cursor-not-allowed'}`}
+                                  onChange={(e) => {
+                                    const v = Number(e.target.value.replace(/\D/g, ""));
+                                    handleUpdateItemSpec(index, "costPrice", v);
+                                    validateField("costPrice", v, index);
+                                  }}
+                                  onBlur={() => validateField("costPrice", spec.costPrice, index)}
+                                  className={`w-full bg-transparent border-none focus:ring-0 text-[16px] font-black p-0 ${canEditManagement ? errors[`specs.${index}.costPrice`] ? 'text-red-500 border-b border-red-500/30' : 'text-amber-600 border-b border-amber-100' : 'text-gray-400'} cursor-text`}
                                   placeholder="0"
                                 />
+                                {errors[`specs.${index}.costPrice`] && <p className="text-[9px] text-red-500 font-bold mt-0.5">{errors[`specs.${index}.costPrice`]}</p>}
                               </div>
                             </div>
                           </div>
@@ -534,7 +850,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                                 <p className={`text-[10px] font-bold uppercase flex items-center gap-2 ${isInactive ? 'text-gray-400' : 'text-amber-600'}`}>
                                   <Package size={14} /> Bộ sản phẩm ({(spec.item_bundle_items || []).length} món)
                                 </p>
-                                {canEdit && (
+                                {canEditSpec && (
                                   <button
                                     onClick={() => handleAddBundleSubItem(index)}
                                     className="text-[11px] font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1 px-2 py-1 rounded bg-amber-100/50 transition-colors"
@@ -555,7 +871,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                                         <div className={`w-7 h-7 rounded flex items-center justify-center text-[11px] font-black shrink-0 ${isInactive ? 'bg-gray-100 text-gray-400' : 'bg-amber-100 text-amber-700'}`}>{si + 1}</div>
 
                                         <div className="flex-1 flex flex-col md:flex-row gap-3">
-                                          {canEdit ? (
+                                          {canEditSpec ? (
                                             <input
                                               type="text"
                                               value={sub.name}
@@ -569,7 +885,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
 
                                           <div className="flex items-center gap-2 shrink-0">
                                             <span className="text-[11px] font-bold text-gray-400 uppercase">SL:</span>
-                                            {canEdit ? (
+                                            {canEditSpec ? (
                                               <input
                                                 type="number"
                                                 value={sub.quantity}
@@ -582,7 +898,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                                           </div>
                                         </div>
 
-                                        {canEdit && (
+                                        {canEditSpec && (
                                           <button
                                             onClick={() => handleRemoveBundleSubItem(index, si)}
                                             className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
@@ -596,7 +912,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                                       <div className="pl-10">
                                         <div className="flex items-center gap-2">
                                           <Ruler size={12} className="text-gray-400 shrink-0" />
-                                          {canEdit ? (
+                                          {canEditSpec ? (
                                             <div className="flex items-center gap-1 flex-1">
                                               {['length', 'width', 'height'].map((dim, di) => (
                                                 <React.Fragment key={dim}>
@@ -628,12 +944,12 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                             </div>
                           ) : (
                             /* === ĐƠN LẺ: kích thước === */
-                            <div className={`space-y-3 p-4 rounded-xl border ${canEdit ? 'bg-[#EAF6EE]/50 border-[#34B057]/10' : 'bg-gray-50/50 border-gray-100'}`}>
-                              <p className={`text-[10px] font-bold uppercase flex items-center gap-2 ${canEdit ? 'text-[#34B057]' : 'text-gray-400'}`}><Ruler size={14} /> Kích thước (D x R x C)</p>
+                            <div className={`space-y-3 p-4 rounded-xl border ${canEditSpec ? 'bg-[#EAF6EE]/50 border-[#34B057]/10' : 'bg-gray-50/50 border-gray-100'}`}>
+                              <p className={`text-[10px] font-bold uppercase flex items-center gap-2 ${canEditSpec ? 'text-[#34B057]' : 'text-gray-400'}`}><Ruler size={14} /> Kích thước (D x R x C)</p>
                               <div className="flex items-center gap-2">
                                 {['length', 'width', 'height'].map((f, i) => (
                                   <div key={f} className="flex-1 flex items-center gap-1">
-                                    <input type="number" readOnly={!canEdit} value={spec[f]} onChange={(e) => handleUpdateItemSpec(index, f, e.target.value)} className={`w-full border rounded-lg text-center text-[13px] font-bold py-2 transition-all ${canEdit ? 'bg-white border-[#34B057]/20 text-gray-700 cursor-text' : 'bg-gray-50 border-gray-100 text-gray-400 cursor-not-allowed'}`} />
+                                    <input type="number" readOnly={!canEditSpec} value={spec[f]} onChange={(e) => handleUpdateItemSpec(index, f, e.target.value)} className={`w-full border rounded-lg text-center text-[13px] font-bold py-2 transition-all ${canEditSpec ? 'bg-white border-[#34B057]/20 text-gray-700 cursor-text' : 'bg-gray-50 border-gray-100 text-gray-400 cursor-not-allowed'}`} />
                                     {i < 2 && <span className="text-gray-300">×</span>}
                                   </div>
                                 ))}
@@ -643,16 +959,16 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
 
                           {/* === THÔNG TIN CHI TIẾT SẢN PHẨM === */}
                           <div className="grid grid-cols-1 gap-4 col-span-2">
-                            <div className={`space-y-4 p-4 rounded-xl border transition-all ${canEditHeader ? 'bg-[#EAF6EE]/30 border-[#34B057]/20' : 'bg-gray-50/50 border-gray-100 opacity-60'}`}>
+                            <div className={`space-y-4 p-4 rounded-xl border transition-all ${canEditSpec ? 'bg-[#EAF6EE]/30 border-[#34B057]/20' : 'bg-gray-50/50 border-gray-100 opacity-60'}`}>
                               <div className="flex items-center justify-between">
                                 <div className="space-y-1">
-                                  <label className={`text-[10px] font-bold uppercase block ${canEditHeader ? 'text-[#34B057]' : 'text-gray-400'}`}>Bảo hành (tháng)</label>
+                                  <label className={`text-[10px] font-bold uppercase block ${canEditSpec ? 'text-[#34B057]' : 'text-gray-400'}`}>Bảo hành (tháng)</label>
                                   <input
                                     type="number"
-                                    readOnly={!canEditHeader}
+                                    readOnly={!canEditSpec}
                                     value={spec.item_warranty}
                                     onChange={(e) => handleUpdateItemSpec(index, "item_warranty", Number(e.target.value))}
-                                    className={`w-32 bg-transparent border-none focus:ring-0 text-[15px] font-bold p-0 ${canEditHeader ? 'text-gray-700 border-b border-gray-100 cursor-text' : 'text-gray-400 cursor-not-allowed'}`}
+                                    className={`w-32 bg-transparent border-none focus:ring-0 text-[15px] font-bold p-0 ${canEditSpec ? 'text-gray-700 border-b border-gray-100 cursor-text' : 'text-gray-400 cursor-not-allowed'}`}
                                   />
                                 </div>
                               </div>
@@ -680,7 +996,19 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                                     type="date"
                                     readOnly={!canEditManagement}
                                     value={spec.expectedWorkshopDate}
-                                    onChange={(e) => handleUpdateItemSpec(index, "expectedWorkshopDate", e.target.value)}
+                                    onChange={(e) => {
+                                      const newDate = e.target.value;
+                                      handleUpdateItemSpec(index, "expectedWorkshopDate", newDate);
+                                      if (newDate && deliveryDate) {
+                                        const wsD = new Date(newDate);
+                                        const delD = new Date(deliveryDate);
+                                        wsD.setHours(0, 0, 0, 0);
+                                        delD.setHours(0, 0, 0, 0);
+                                        if (wsD >= delD) {
+                                          toast.error(`Ngày xong xưởng phải trước ngày giao dự kiến (${deliveryDate})`);
+                                        }
+                                      }
+                                    }}
                                     className={`w-full text-[13px] font-bold bg-transparent border-none focus:ring-0 p-0 ${canEditManagement ? 'text-gray-700 border-b border-amber-100 cursor-pointer' : 'text-gray-400 cursor-not-allowed'}`}
                                   />
                                 </div>
@@ -689,9 +1017,9 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                           </div>
                         </div>
 
-                        <div className={`p-4 rounded-xl border transition-all ${canEdit ? 'bg-[#EAF6EE]/20 border-[#34B057]/10' : 'bg-gray-50/20 border-gray-100 opacity-60'}`}>
-                          <label className={`text-[10px] font-bold uppercase block mb-1 flex items-center gap-2 ${canEdit ? 'text-[#34B057]' : 'text-gray-400'}`}><FileText size={14} /> Yêu cầu kỹ thuật</label>
-                          <textarea readOnly={!canEdit} value={spec.note} onChange={(e) => handleUpdateItemSpec(index, "note", e.target.value)} className={`w-full bg-transparent border-none text-[13px] p-0 resize-none italic ${canEdit ? 'text-gray-700 cursor-text' : 'text-gray-400 cursor-not-allowed'}`} rows={2} />
+                        <div className={`p-4 rounded-xl border transition-all ${canEditSpec ? 'bg-[#EAF6EE]/20 border-[#34B057]/10' : 'bg-gray-50/20 border-gray-100 opacity-60'}`}>
+                          <label className={`text-[10px] font-bold uppercase block mb-1 flex items-center gap-2 ${canEditSpec ? 'text-[#34B057]' : 'text-gray-400'}`}><FileText size={14} /> Yêu cầu kỹ thuật</label>
+                          <textarea readOnly={!canEditSpec} value={spec.note} onChange={(e) => handleUpdateItemSpec(index, "note", e.target.value)} className={`w-full bg-transparent border-none text-[13px] p-0 resize-none italic ${canEditSpec ? 'text-gray-700 cursor-text' : 'text-gray-400 cursor-not-allowed'}`} rows={2} />
                         </div>
                       </div>
                     </div>
