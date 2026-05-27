@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const ImportController = require("../controller/import.controller");
 const { verifyAccessToken } = require("../middlewares/auth.middleware");
+const { validateCreateImportReceipt } = require("../validations/import.validation");
 
 /**
  * Import Routes - Quản lý Phiếu Nhập Kho
@@ -69,7 +70,7 @@ router.get("/requests", ImportController.getImportRequests.bind(ImportController
  *       201:
  *         description: Tạo phiếu nhập thành công
  */
-router.post("/receipt", ImportController.createImportReceipt.bind(ImportController));
+router.post("/receipt", validateCreateImportReceipt, ImportController.createImportReceipt.bind(ImportController));
 
 /**
  * @swagger
