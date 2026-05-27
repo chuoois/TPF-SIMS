@@ -25,7 +25,7 @@ import { fmt } from "@/constants/orderConfig";
 import productAttributeService from "@/services/productAttribute.service";
 import { uploadMultipleImages } from "@/services/cloudinary.service";
 
-const inputBase = "w-full text-[13px] rounded-lg px-4 py-3 focus:outline-none transition-all border";
+const inputBase = "w-full text-[13px] rounded-2xl px-4 py-3 focus:outline-none transition-all border";
 const inputStyle = {
   color: "var(--text-main)",
   borderColor: "var(--grid-border)",
@@ -394,28 +394,29 @@ export default function CustomItemInputPanel({
 
         {/* Section: Specs — only for non-bundle items */}
         {newItem.item_is_bundle !== 1 && (
-        <div className="p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--grid-border)] space-y-3">
-          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Thông số kỹ thuật</p>
+        <div className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--grid-border)] space-y-4 shadow-sm">
+          <p className="text-[12px] font-semibold text-gray-600">Thông số kỹ thuật</p>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {[
               { label: "Dài", field: "length" },
               { label: "Rộng", field: "width" },
               { label: "Cao", field: "height" },
             ].map((dim) => (
-              <div key={dim.field} className="space-y-1.5">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1">
-                  <Ruler size={10} /> {dim.label} (cm)
+              <div key={dim.field} className="space-y-2">
+                <label className="text-[11px] font-semibold text-gray-500 ml-1 flex items-center gap-1">
+                  <Ruler size={12} /> {dim.label} (cm)
                 </label>
                 <input
                   type="text"
+                  placeholder="Nhập..."
                   value={newItem[dim.field]}
                   onKeyDown={handleDimensionKeyDown}
                   onChange={(e) => handleDimChange(dim.field, e.target.value)}
-                  className={`${inputBase} text-center bg-white !py-2 ${
+                  className={`${inputBase} text-center bg-white ${
                     errors[dim.field] ? "border-red-500 bg-red-50" : ""
                   }`}
-                  style={{ ...inputStyle, padding: "8px", backgroundColor: "white" }}
+                  style={{ ...inputStyle, backgroundColor: "white" }}
                 />
                 {errors[dim.field] && (
                   <p className="text-[9px] text-red-500 font-bold text-center">
@@ -429,10 +430,10 @@ export default function CustomItemInputPanel({
         )}
 
         {/* Section: Ghi chú + Bundle (always visible) */}
-        <div className="p-3 rounded-xl bg-[var(--bg-main)] border border-[var(--grid-border)] space-y-3">
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1">
-              <ClipboardEdit size={10} /> Ghi chú sản xuất (Yêu cầu riêng)
+        <div className="p-4 rounded-2xl bg-[var(--bg-main)] border border-[var(--grid-border)] space-y-4 shadow-sm">
+          <div className="space-y-2">
+            <label className="text-[11px] font-semibold text-gray-500 ml-1 flex items-center gap-1">
+              <ClipboardEdit size={12} /> Ghi chú sản xuất (Yêu cầu riêng)
             </label>
             <textarea
               placeholder="Nhập các yêu cầu sản xuất đặc biệt khác..."

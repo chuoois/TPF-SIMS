@@ -189,7 +189,7 @@ export default function ProductPanel({
                         : "var(--text-secondary)",
                   }}
                 >
-                  {tab === PRODUCT_TYPES.RAW ? "Hàng gia công" : tab}
+                  {tab === PRODUCT_TYPES.RAW ? "Hàng mộc" : tab}
                 </button>
               ))}
             </div>
@@ -855,7 +855,7 @@ export default function ProductPanel({
               </button>
               <button
                 onClick={() => setIsFilterDrawerOpen(false)}
-                className="flex-1 py-2.5 rounded-lg text-[13px] cursor-pointer font-medium bg-green-500 text-white hover:bg-green-600 transition shadow-md shadow-green-500/20"
+                className="flex-1 py-2.5 rounded-lg text-[13px] cursor-pointer font-medium bg-green-500 text-white hover:bg-green-600 transition"
               >
                 Áp dụng
               </button>
