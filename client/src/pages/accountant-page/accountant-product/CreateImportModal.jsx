@@ -386,21 +386,44 @@ export default function CreateImportModal({ onClose, onSaved }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!importDate) { toast.error("Vui lòng chọn ngày nhập"); return; }
+
+        // Không cho nhập ngày tương lai quá 7 ngày hoặc quá khứ quá 1 năm
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const selectedDate = new Date(importDate);
+        const diffDays = (selectedDate - today) / (1000 * 60 * 60 * 24);
+        if (diffDays > 7) { toast.error("Ngày nhập không được vượt quá 7 ngày so với hôm nay"); return; }
+        if (diffDays < -365) { toast.error("Ngày nhập không được cách hôm nay quá 1 năm"); return; }
+
         if (lines.length === 0) { toast.error("Vui lòng thêm ít nhất 1 mặt hàng vào phiếu"); return; }
+        if (note && note.length > 500) { toast.error("Ghi chú không được vượt quá 500 ký tự"); return; }
 
         for (const l of lines) {
             if (l.isBundle) {
                 if (!l.bundleName.trim()) { toast.error("Vui lòng nhập tên bộ sản phẩm"); return; }
-                if (!l.bundlePrice || Number(l.bundlePrice) <= 0) { toast.error("Giá cả bộ phải lớn hơn 0"); return; }
-                if (!l.bundleQty || Number(l.bundleQty) <= 0) { toast.error("Số bộ phải lớn hơn 0"); return; }
-                if (l.items.length === 0) { toast.error("Bộ sản phẩm cần có ít nhất 1 món lẻ"); return; }
+                const bQty = Number(l.bundleQty);
+                if (!l.bundleQty || bQty <= 0) { toast.error(`Bộ "${l.bundleName}": Số bộ phải lớn hơn 0`); return; }
+                if (!Number.isInteger(bQty)) { toast.error(`Bộ "${l.bundleName}": Số bộ phải là số nguyên`); return; }
+                if (!l.bundlePrice || Number(l.bundlePrice) <= 0) { toast.error(`Bộ "${l.bundleName}": Giá bộ phải lớn hơn 0`); return; }
+                if (l.items.length === 0) { toast.error(`Bộ "${l.bundleName}": Cần có ít nhất 1 món lẻ`); return; }
                 const hasEmptyItem = l.items.some(it => !it.name.trim());
-                if (hasEmptyItem) { toast.error("Vui lòng nhập tên cho tất cả các món lẻ trong bộ"); return; }
+                if (hasEmptyItem) { toast.error(`Bộ "${l.bundleName}": Vui lòng nhập tên cho tất cả các món lẻ`); return; }
             } else {
                 if (!l.productName.trim()) { toast.error("Vui lòng nhập tên sản phẩm"); return; }
-                if (!l.qty || Number(l.qty) <= 0) { toast.error("Số lượng phải lớn hơn 0"); return; }
-                if (!l.importPrice || Number(l.importPrice) <= 0) { toast.error("Giá gốc phải lớn hơn 0"); return; }
+                const pQty = Number(l.qty);
+                if (!l.qty || pQty <= 0) { toast.error(`Sản phẩm "${l.productName}": Số lượng phải lớn hơn 0`); return; }
+                if (!Number.isInteger(pQty)) { toast.error(`Sản phẩm "${l.productName}": Số lượng phải là số nguyên`); return; }
+                if (!l.importPrice || Number(l.importPrice) <= 0) { toast.error(`Sản phẩm "${l.productName}": Giá gốc phải lớn hơn 0`); return; }
             }
+        }
+
+        // Kiểm tra duplicate unitIds trong toàn bộ phiếu
+        const allUnitIds = lines.flatMap(l => l.unitIds || []).filter(Boolean);
+        const uniqueUnitIds = new Set(allUnitIds);
+        if (uniqueUnitIds.size !== allUnitIds.length) {
+            const seen = {};
+            const dup = allUnitIds.find(id => (seen[id] ? true : (seen[id] = true) && false));
+            toast.error(`Mã định danh "${dup}" bị trùng lặp trong phiếu, vui lòng kiểm tra lại`);
+            return;
         }
 
         try {
@@ -925,9 +948,14 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                     </div>
                     <div>
                         <label className={lbl} style={{ ...lblS }}><span className="text-purple-600">Giá cả bộ (₫) — theo YC *</span></label>
-                        <input type="text" value={formatNumber(bundle.bundlePrice)} readOnly
-                            className={`${inp} bg-gray-50 text-gray-500 cursor-not-allowed`}
-                            style={inpS} />
+                        <input type="text" value={formatNumber(bundle.bundlePrice)}
+                            onChange={(e) => onUpdate("bundlePrice", parseNumber(e.target.value))}
+                            placeholder="Nhập giá bộ..."
+                            className={inp}
+                            style={{ ...inpS, borderColor: Number(bundle.bundlePrice) <= 0 ? "#EF4444" : "#7C3AED" }} />
+                        {Number(bundle.bundlePrice) <= 0 && (
+                            <p className="text-[11px] text-red-500 mt-1 font-medium">⚠️ Giá bộ chưa được nhập hoặc bằng 0—vui lòng điều chỉnh</p>
+                        )}
                     </div>
                 </div>
 

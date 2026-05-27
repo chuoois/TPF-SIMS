@@ -150,15 +150,7 @@ class ImportController {
     const t = await sequelize.transaction();
     try {
       const { importDate, supplier, note, invoiceImgUrl, lines, manufacturingOrderId } = req.body;
-
-      if (!importDate) {
-        await t.rollback();
-        return res.status(400).json({ message: "Vui lòng chọn ngày nhập" });
-      }
-      if (!lines || lines.length === 0) {
-        await t.rollback();
-        return res.status(400).json({ message: "Phiếu nhập cần có ít nhất 1 mặt hàng" });
-      }
+      // Các validation cơ bản đã được xử lý bởi middleware validateCreateImportReceipt
 
       // Sinh mã phiếu
       const receiptCode = await this._generateReceiptCode(importDate);
@@ -191,6 +183,7 @@ class ImportController {
           // Dòng bộ sản phẩm
           const bundleQty = parseInt(line.bundleQty) || 0;
           const bundlePrice = parseFloat(line.bundlePrice) || 0;
+          if (bundleQty <= 0 || bundlePrice <= 0) continue; // guard: bỏ qua dòng bất hợp lệ
           const lineTotal = bundleQty * bundlePrice;
           totalAmount += lineTotal;
           totalQty += bundleQty;
@@ -302,6 +295,7 @@ class ImportController {
           // Dòng sản phẩm lẻ
           const qty = parseInt(line.qty) || 0;
           const importPrice = parseFloat(line.importPrice) || 0;
+          if (qty <= 0 || importPrice <= 0) continue; // guard: bỏ qua dòng bất hợp lệ
           const lineTotal = qty * importPrice;
           totalAmount += lineTotal;
           totalQty += qty;

@@ -24,12 +24,38 @@ const fmtM = (n) => {
   return fmt(n);
 };
 
-const AVAILABLE_MONTHS = [
-  "05/2026", "04/2026", "03/2026", "02/2026", "01/2026",
-  "12/2025", "11/2025", "10/2025"
-];
-const AVAILABLE_QUARTERS = ["Q2/2026", "Q1/2026", "Q4/2025", "Q3/2025"];
-const AVAILABLE_YEARS = ["2026", "2025"];
+// ── Tự động sinh danh sách tháng/quý/năm từ 12 tháng gần nhất ──
+function generateAvailableMonths(count = 12) {
+  const now = new Date();
+  const result = [];
+  for (let i = 0; i < count; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    result.push(`${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`);
+  }
+  return result;
+}
+
+function generateAvailableQuarters(count = 6) {
+  const now = new Date();
+  const result = [];
+  let year = now.getFullYear();
+  let quarter = Math.floor(now.getMonth() / 3) + 1;
+  for (let i = 0; i < count; i++) {
+    result.push(`Q${quarter}/${year}`);
+    quarter--;
+    if (quarter < 1) { quarter = 4; year--; }
+  }
+  return result;
+}
+
+function generateAvailableYears(count = 3) {
+  const y = new Date().getFullYear();
+  return Array.from({ length: count }, (_, i) => String(y - i));
+}
+
+const AVAILABLE_MONTHS   = generateAvailableMonths(12);
+const AVAILABLE_QUARTERS = generateAvailableQuarters(6);
+const AVAILABLE_YEARS    = generateAvailableYears(3);
 
 // ── Section Card ─────────────────────────────────────────
 function Section({ icon: Icon, iconColor, borderColor, title, subtitle, badge, children, defaultOpen = true }) {
@@ -132,14 +158,15 @@ function Skeleton({ className = "" }) {
 // ══════════════════════════════════════════════════════════
 export default function AccountantHome() {
   // Bộ lọc
-  const [period, setPeriod] = useState("month"); // month, quarter, year, custom
-  const [selectedMonth, setSelectedMonth] = useState("05/2026");
-  const [selectedQuarter, setSelectedQuarter] = useState("Q2/2026");
-  const [selectedYear, setSelectedYear] = useState("2026");
+  const [period, setPeriod] = useState("month");
+  const [selectedMonth, setSelectedMonth] = useState(AVAILABLE_MONTHS[0]);    // tháng hiện tại
+  const [selectedQuarter, setSelectedQuarter] = useState(AVAILABLE_QUARTERS[0]); // quý hiện tại
+  const [selectedYear, setSelectedYear] = useState(AVAILABLE_YEARS[0]);       // năm hiện tại
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [orderType, setOrderType] = useState("all"); // all, 1 (raw), 2 (stock), 3 (custom)
-  const [costType, setCostType] = useState("all"); // all, import, salary
+  const [dateRangeError, setDateRangeError] = useState(""); // lỗi khoảng ngày
+  const [orderType, setOrderType] = useState("all");
+  const [costType, setCostType] = useState("all");
 
   // Dữ liệu & Trạng thái
   const [data, setData] = useState(null);
@@ -170,6 +197,15 @@ export default function AccountantHome() {
   };
 
   useEffect(() => {
+    // Validate khoảng ngày tùy chọn trước khi fetch
+    if (period === "custom") {
+      if (startDate && endDate && startDate > endDate) {
+        setDateRangeError("Ngày bắt đầu không được lớn hơn ngày kết thúc");
+        return;
+      }
+      if (!startDate || !endDate) return; // chờ user điền đủ 2 ngày
+    }
+    setDateRangeError("");
     fetchData();
   }, [period, selectedMonth, selectedQuarter, selectedYear, startDate, endDate, orderType, costType]);
 
@@ -276,16 +312,25 @@ export default function AccountantHome() {
               <div className="flex items-center gap-2">
                 <div className="flex-1">
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">Từ ngày</label>
-                  <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
+                  <input type="date" value={startDate}
+                    max={endDate || undefined}
+                    onChange={(e) => { setStartDate(e.target.value); setDateRangeError(""); }}
                     className="h-10 w-full px-3 rounded-xl border text-[13px] font-semibold bg-white outline-none"
-                    style={{ borderColor: "var(--grid-border)" }} />
+                    style={{ borderColor: dateRangeError ? "#EF4444" : "var(--grid-border)" }} />
                 </div>
                 <div className="flex-1">
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">Đến ngày</label>
-                  <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
+                  <input type="date" value={endDate}
+                    min={startDate || undefined}
+                    onChange={(e) => { setEndDate(e.target.value); setDateRangeError(""); }}
                     className="h-10 w-full px-3 rounded-xl border text-[13px] font-semibold bg-white outline-none"
-                    style={{ borderColor: "var(--grid-border)" }} />
+                    style={{ borderColor: dateRangeError ? "#EF4444" : "var(--grid-border)" }} />
                 </div>
+              </div>
+            )}
+            {dateRangeError && period === "custom" && (
+              <div className="text-[12px] text-red-500 font-semibold flex items-center gap-1 mt-1 col-span-full">
+                <AlertTriangle size={13} /> {dateRangeError}
               </div>
             )}
 
