@@ -3,13 +3,11 @@ import { useSearchParams } from "react-router-dom";
 import {
   Package,
   Clock,
-  Trash2,
   Eye,
   CheckCircle2
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import DataTable from "@/components/control/DataTable";
-import toast from "react-hot-toast";
 import InvoiceDetailsPopup from "./InvoiceDetailsPopup";
 import { ORDER_CONFIG } from "@/constants/orderConfig";
 import orderService from "@/services/order.service";
@@ -31,7 +29,7 @@ export default function OrdersListing({ userRole = 'owner' }) {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedIds, setSelectedIds] = useState([]);
+
   const [itemsPerPage, setItemsPerPage] = useState(15);
   const [detailId, setDetailId] = useState(null);
 
@@ -81,16 +79,7 @@ export default function OrdersListing({ userRole = 'owner' }) {
     refresh();
   };
 
-  const handleBulkCancel = () => {
-    toast.success(`Đã hủy ${selectedIds.length} đơn hàng thành công!`);
-    setSelectedIds([]);
-    refresh();
-  };
 
-  const handleSingleCancel = (o) => {
-    toast.success(`Đã hủy đơn hàng DH-${o.pk_order_id} thành công!`);
-    refresh();
-  };
 
   const possibleStatuses = useMemo(() => {
     const statuses = ORDER_CONFIG.STATUSES_BY_TYPE[activeTab];
@@ -329,9 +318,7 @@ export default function OrdersListing({ userRole = 'owner' }) {
           data={orders}
           loading={isLoading}
           onRowClick={(o) => setDetailId(o.pk_order_id)}
-          rowStyle={(item) => ({
-            backgroundColor: selectedIds.includes(item.pk_order_id) ? "var(--status-focus)" : "transparent"
-          })}
+
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           dateFrom={dateFrom}
@@ -340,38 +327,15 @@ export default function OrdersListing({ userRole = 'owner' }) {
           setDateTo={setDateTo}
           hasActiveFilters={hasActiveFilters}
           clearAllFilters={() => { updateParams({ status: "Tất cả" }); setDateFrom(""); setDateTo(""); setSearchTerm(""); }}
-          selectedIds={selectedIds}
-          setSelectedIds={setSelectedIds}
+
           rowActions={[
             {
               icon: Eye,
               label: "Xem chi tiết",
               onClick: (o) => setDetailId(o.pk_order_id),
             },
-            (userRole === 'owner' || userRole === 'sales') && {
-              icon: Trash2,
-              label: userRole === 'sales' ? "Yêu cầu hủy" : "Hủy đơn",
-              showIf: (o) => {
-                const statusName = ORDER_CONFIG.STATUS_MAP[o.order_status];
-                return ["Chờ xử lý", "Chờ sản xuất", "Đang gia công", "Chờ giao hàng"].includes(statusName);
-              },
-              onClick: (o) => handleSingleCancel(o),
-              className: "bg-white border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200",
-              requireConfirm: true,
-              confirmTitle: "Xác nhận hủy đơn hàng?",
-              confirmMessage: "Mọi thông tin thanh toán và trạng thái của đơn sẽ được chuyển về 'Đơn đã hủy'. Bạn chắc chắn chứ?"
-            },
-          ].filter(Boolean)}
-          bulkActions={userRole === 'owner' ? [
-            {
-              label: "HỦY ĐƠN HÀNG LOẠT",
-              icon: Trash2,
-              onClick: handleBulkCancel,
-              requireConfirm: true,
-              confirmTitle: "Hủy hàng loạt đơn hàng?",
-              confirmMessage: `Hệ thống sẽ chuyển ${selectedIds.length} đơn hàng đã chọn sang trạng thái hủy. Hành động này không thể hoàn tác.`
-            }
-          ] : []}
+          ]}
+
           pagination={{
             total: totalItems,
             currentPage: currentPage,
