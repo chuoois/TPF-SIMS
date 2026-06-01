@@ -39,11 +39,11 @@ const ProductPricing = sequelize.define(
     },
     raw_price: {
       type: DataTypes.DECIMAL(15, 2),
-      defaultValue: 0, // Giá chưa sơn (mộc)
+      defaultValue: 0, // Giá đã sơn hàng cần custom bao gồm hàng mộc + chi phí sơn hoàn thiện
     },
     final_price: {
       type: DataTypes.DECIMAL(15, 2),
-      defaultValue: 0, // Giá đã sơn (hoàn thiện)
+      defaultValue: 0, // Giá đã sơn (hoàn thiện) bao gồm hàng mộc chưa sơn và hàng sẵn
     },
     status: {
       type: DataTypes.TINYINT,
