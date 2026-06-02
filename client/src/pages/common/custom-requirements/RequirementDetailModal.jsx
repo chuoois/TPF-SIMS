@@ -117,8 +117,6 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
           } else if (Number(value) < 0) {
             errorMsg = "Tiền cọc không được nhỏ hơn 0";
           }
-        } else if (field === "notes") {
-          if (!value || !value.trim()) errorMsg = "Vui lòng nhập ghi chú chung";
         }
       } else {
         const spec = itemSpecs[specIndex];
@@ -163,8 +161,6 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                 errorMsg = `Ngày xong xưởng phải trước ngày giao dự kiến (${deliveryDate})`;
               }
             }
-          } else if (field === "note") {
-            if (!value || !value.trim()) errorMsg = "Vui lòng nhập yêu cầu kỹ thuật";
           }
         } else {
           if (field === "bundle_name") {
@@ -229,7 +225,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
     } else if (Number(depositAmount) < 0) {
       newErrors["depositAmount"] = "Tiền cọc không được nhỏ hơn 0";
     }
-    if (!notes || !notes.trim()) newErrors["notes"] = "Vui lòng nhập ghi chú chung";
+
 
     for (let i = 0; i < itemSpecs.length; i++) {
       const spec = itemSpecs[i];
@@ -285,7 +281,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
         }
       }
 
-      if (!spec.note || !spec.note.trim()) newErrors[`specs.${i}.note`] = "Vui lòng nhập yêu cầu kỹ thuật";
+
     }
 
     setErrors(newErrors);

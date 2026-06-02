@@ -20,7 +20,7 @@ import {
   Calendar,
   ShieldCheck,
   AlertCircle,
-  Hammer,
+
   ImagePlus,
 } from "lucide-react";
 import { todayVN, formatShortDateVN, isoToDisplayDate, formatLongDateVN } from "@/lib/dateUtils";
@@ -48,7 +48,7 @@ export default function CartPanel({
   isSearchingCustomers,
   updateActiveTab,
   setShowAddCustomer,
-  setShowWorkshopStatus,
+
   subtotal,
   itemCount,
   totalPayable,
@@ -157,13 +157,7 @@ export default function CartPanel({
           <Plus size={14} />
         </button>
 
-        <button
-          onClick={() => setShowWorkshopStatus(true)}
-          type="button"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 ml-auto rounded-lg text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 active:scale-95 shadow-sm"
-        >
-          <Hammer size={12} className="text-indigo-500" /> Check Xưởng
-        </button>
+
         {/* Order type switch — pushed to right */}
       </div>
 

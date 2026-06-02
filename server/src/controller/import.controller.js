@@ -16,6 +16,25 @@ const {
   CustomRequestItem,
 } = require("../entities");
 
+// Helper: parse item_size JSON thành object {length, width, height}
+const parseSize = (rawSize) => {
+  if (!rawSize) return { length: "", width: "", height: "" };
+  if (typeof rawSize === "object") {
+    return {
+      length: rawSize.length ?? rawSize.L ?? "",
+      width:  rawSize.width  ?? rawSize.W ?? "",
+      height: rawSize.height ?? rawSize.H ?? "",
+    };
+  }
+  // string fallback ("100x80x50")
+  const parts = String(rawSize).split(/[xX×]/g).map(s => s.trim());
+  return {
+    length: parts[0] || "",
+    width:  parts[1] || "",
+    height: parts[2] || "",
+  };
+};
+
 /**
  * Import Controller – Quản lý Phiếu Nhập Kho
  * Created By: HieuNM
@@ -86,12 +105,20 @@ class ImportController {
               {
                 model: Product,
                 as: "product",
-                attributes: ["pk_product_id", "sku", "product_img", "product_type"],
+                attributes: ["pk_product_id", "sku", "product_img", "product_type", "size"],
                 include: [
                   { model: ProductCategory, as: "category", attributes: ["category_name"], required: false },
                   { model: ProductColor, as: "color", attributes: ["color_name"], required: false },
                   { model: ProductMaterial, as: "material", attributes: ["material_name"], required: false },
                 ],
+                required: false,
+              },
+              {
+                // Join CustomRequestItem để lấy item_size/material/color gốc
+                // khi ManufacturingOrderItem chưa có Product liên kết
+                model: CustomRequestItem,
+                as: "customRequestItem",
+                attributes: ["item_size", "item_material", "item_color"],
                 required: false,
               },
             ],
@@ -111,27 +138,50 @@ class ImportController {
           supplier: j.supplier?.supplier_name || null,
           note: j.note || "",
           status: STATUS_MAP[j.status] || "PENDING",
-          items: (j.items || []).map((it) => ({
-            id: it.pk_manufacturing_order_item_id,
-            productId: it.fk_product_id,
-            productCode: it.product?.sku || "",
-            productName: it.item_name,
-            category: it.product?.category?.category_name || "",
-            materialType: it.item_material || it.product?.material?.material_name || "",
-            color: it.item_color || it.product?.color?.color_name || "",
-            size: it.item_size,
-            // Ưu tiên lấy product_type từ Product đã tồn tại;
-            // nếu chưa có Product nhưng item liên kết CustomRequest → CUSTOM;
-            // fallback: FINISHED
-            productType: it.product?.product_type
-              || (it.fk_custom_request_item_id ? "CUSTOM" : "FINISHED"),
-            requestedQty: it.quantity || 1,
-            estimatedPrice: parseFloat(it.import_price) || 0,
-            isBundle: Number(it.item_is_bundle) === 1,
-            bundleItems: it.item_bundle_items || null,
-            details: it.note || "",
-            productImg: it.product?.product_img || null,
-          })),
+          items: (j.items || []).map((it) => {
+            // Lấy size: ưu tiên item_size của ManufacturingOrderItem,
+            // fallback về item_size của CustomRequestItem gốc,
+            // rồi đến size của Product đã tồn tại
+            const rawSize =
+              it.item_size ||
+              it.customRequestItem?.item_size ||
+              it.product?.size ||
+              null;
+            const parsedSize = parseSize(rawSize);
+
+            // Lấy category từ Product đã liên kết trực tiếp với ManufacturingOrderItem
+            // Nếu không có thông tin → mặc định "Khác"
+            const category = it.product?.category?.category_name || "Khác";
+
+            return {
+              id: it.pk_manufacturing_order_item_id,
+              productId: it.fk_product_id,
+              productCode: it.product?.sku || "",
+              productName: it.item_name,
+              category,
+              materialType:
+                it.item_material ||
+                it.customRequestItem?.item_material ||
+                it.product?.material?.material_name ||
+                "",
+              color:
+                it.item_color ||
+                it.customRequestItem?.item_color ||
+                it.product?.color?.color_name ||
+                "",
+              // size trả về dạng object { length, width, height } để FE dùng trực tiếp
+              size: parsedSize,
+              productType:
+                it.product?.product_type ||
+                (it.fk_custom_request_item_id ? "CUSTOM" : "FINISHED"),
+              requestedQty: it.quantity || 1,
+              estimatedPrice: parseFloat(it.import_price) || 0,
+              isBundle: Number(it.item_is_bundle) === 1,
+              bundleItems: it.item_bundle_items || null,
+              details: it.note || "",
+              productImg: it.product?.product_img || null,
+            };
+          }),
         };
       });
 
@@ -232,6 +282,7 @@ class ImportController {
                 fk_category_id: fkCategoryId,
                 fk_material_id: fkMaterialId,
                 fk_color_id: fkColorId,
+                product_img: line.productImgUrl || null,
                 description: line.details || null,
                 is_bundle: 1,
                 bundle_items: line.items && line.items.length > 0 ? line.items : null,
@@ -240,6 +291,10 @@ class ImportController {
               },
               transaction: t,
             });
+            // Cập nhật ảnh nếu product đã tồn tại nhưng chưa có ảnh
+            if (line.productImgUrl && !created.product_img) {
+              await created.update({ product_img: line.productImgUrl }, { transaction: t });
+            }
             product = created;
           }
 
@@ -344,6 +399,7 @@ class ImportController {
                 fk_category_id: fkCategoryId,
                 fk_material_id: fkMaterialId,
                 fk_color_id: fkColorId,
+                product_img: line.productImgUrl || null,
                 description: line.details || null,
                 is_bundle: 0,
                 product_status: 1,
@@ -351,6 +407,10 @@ class ImportController {
               },
               transaction: t,
             });
+            // Cập nhật ảnh nếu product đã tồn tại nhưng chưa có ảnh
+            if (line.productImgUrl && !created.product_img) {
+              await created.update({ product_img: line.productImgUrl }, { transaction: t });
+            }
             product = created;
           }
 

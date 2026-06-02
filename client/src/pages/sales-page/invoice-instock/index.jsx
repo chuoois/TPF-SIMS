@@ -15,7 +15,7 @@ import {
   fmt
 } from "@/constants/orderConfig";
 import AddCustomerModal from "@/pages/sales-page/components/AddCustomerModal";
-import WorkshopStatusModal from "@/pages/sales-page/components/WorkshopStatusModal";
+
 import CartPanel from "./CartPanel";
 import ProductPanel from "./ProductPanel";
 import useCachedFetch from "@/hooks/useCachedFetch";
@@ -46,7 +46,7 @@ const orderSchema = Yup.object().shape({
 export default function InStockInvoicePage() {
   const printRef = useRef(null);
   const [printingOrder, setPrintingOrder] = useState(null);
-  const [showWorkshopStatus, setShowWorkshopStatus] = useState(false);
+
 
 
   useEffect(() => {
@@ -657,7 +657,7 @@ export default function InStockInvoicePage() {
           isSearchingCustomers={isSearchingCustomers}
           updateActiveTab={updateActiveTab}
           setShowAddCustomer={setShowAddCustomer}
-          setShowWorkshopStatus={setShowWorkshopStatus}
+
           subtotal={subtotal}
           itemCount={itemCount}
           totalPayable={totalPayable}
@@ -719,11 +719,7 @@ export default function InStockInvoicePage() {
         )}
       </div>
 
-      {/* ── Workshop Status Quick View Modal ── */}
-      <WorkshopStatusModal
-        isOpen={showWorkshopStatus}
-        onClose={() => setShowWorkshopStatus(false)}
-      />
+
     </>
   );
 }

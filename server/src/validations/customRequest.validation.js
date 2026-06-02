@@ -25,6 +25,7 @@ const itemSchema = Joi.object({
   fk_supplier_id: Joi.number().integer().allow(null).optional(),
   expected_supplier_date: Joi.date().allow(null, '').optional(),
   item_cost_price: Joi.number().min(0).allow(null).optional(),
+
   item_is_bundle: Joi.number().valid(0, 1).allow(null).optional(),
   item_bundle_items: Joi.any().allow(null).optional(),
   item_warranty: Joi.number().integer().allow(null).optional(),
