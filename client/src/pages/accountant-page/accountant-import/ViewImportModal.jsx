@@ -217,9 +217,9 @@ function SingleLineCard({ line, idx }) {
             <div className="p-5 flex flex-col gap-6">
                 <div className="flex flex-col sm:flex-row gap-6">
                     {/* Image section if exists */}
-                    {line.imagePreview && (
+                    {line.productImg && (
                         <div className="shrink-0 flex justify-center sm:justify-start">
-                            <img src={line.imagePreview} alt={line.productName}
+                            <img src={line.productImg} alt={line.productName}
                                 className="w-full sm:w-36 h-36 rounded-xl object-cover border border-gray-200 shadow-sm p-1 bg-white" />
                         </div>
                     )}

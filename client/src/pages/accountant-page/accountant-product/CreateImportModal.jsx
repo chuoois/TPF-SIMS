@@ -335,6 +335,13 @@ export default function CreateImportModal({ onClose, onSaved }) {
 
         const newLines = selectedItems.map(p => {
             const qtyToImport = p.requestedQty || 1;
+
+            // Parse kích thước từ p.size (API trả về object { length, width, height })
+            const sizeObj = p.size && typeof p.size === "object" ? p.size : {};
+            const parsedLength = sizeObj.length ?? "";
+            const parsedWidth  = sizeObj.width  ?? "";
+            const parsedHeight = sizeObj.height ?? "";
+
             if (p.isBundle) {
                 const newBundle = emptyBundle();
                 newBundle._id = Math.random();
@@ -345,6 +352,10 @@ export default function CreateImportModal({ onClose, onSaved }) {
                 newBundle.materialType = p.materialType || "";
                 newBundle.color = p.color || "";
                 newBundle.productType = p.productType || "FINISHED";
+                // Gán kích thước bộ từ yêu cầu nhập
+                newBundle.length = parsedLength;
+                newBundle.width  = parsedWidth;
+                newBundle.height = parsedHeight;
                 newBundle.bundleQty = qtyToImport;
                 newBundle.bundlePrice = p.estimatedPrice || "";
                 // Dùng bundleItems (từ API) hoặc items (từ mock), nếu rỗng thì init 1 món lẻ trống
@@ -366,6 +377,10 @@ export default function CreateImportModal({ onClose, onSaved }) {
                 newLine.materialType = p.materialType || "";
                 newLine.color = p.color || "";
                 newLine.productType = p.productType || "FINISHED";
+                // Gán kích thước từ yêu cầu nhập (API trả về dạng object)
+                newLine.length = parsedLength;
+                newLine.width  = parsedWidth;
+                newLine.height = parsedHeight;
                 newLine.qty = qtyToImport;
                 newLine.importPrice = p.estimatedPrice || "";
                 newLine.details = p.details || "";
@@ -443,6 +458,18 @@ export default function CreateImportModal({ onClose, onSaved }) {
                 }
             }
 
+            // 1b. Upload ảnh sản phẩm từng dòng lên Cloudinary (lấy ảnh đầu tiên)
+            const linesWithImgUrl = await Promise.all(lines.map(async (l) => {
+                const firstFile = l.imageFiles?.[0] || null;
+                if (!firstFile) return { ...l, productImgUrl: null };
+                try {
+                    const uploaded = await uploadImage(firstFile);
+                    return { ...l, productImgUrl: uploaded.url };
+                } catch {
+                    return { ...l, productImgUrl: null };
+                }
+            }));
+
             // 2. Tìm manufacturingOrderId từ request đang active
             const activeReq = mergedRequests.find(r => String(r.id) === String(activeRequestId));
             const manufacturingOrderId = activeReq?.id || null;
@@ -454,7 +481,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
                 note: note || null,
                 invoiceImgUrl,
                 manufacturingOrderId,
-                lines: lines.map(l => ({
+                lines: linesWithImgUrl.map(l => ({
                     id: l.manufacturingOrderItemId || null, // pk_manufacturing_order_item_id để backend liên kết OrderItem
                     isBundle: l.isBundle,
                     // Dòng lẻ
@@ -470,6 +497,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
                     materialType: l.materialType || "",
                     color: l.color || "",
                     productType: l.productType || "FINISHED",
+                    productImgUrl: l.productImgUrl || null, // URL ảnh sản phẩm đã upload
                     // Dòng bộ
                     bundleCode: l.bundleCode || "",
                     bundleName: l.bundleName || "",
