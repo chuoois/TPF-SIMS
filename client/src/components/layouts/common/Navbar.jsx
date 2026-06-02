@@ -182,7 +182,7 @@ export const Navbar = () => {
 
   return (
     <nav
-      className="fixed top-0 left-0 right-0 h-12 z-[4] flex items-center justify-between px-3 bg-white border-b"
+      className="fixed top-0 left-0 right-0 h-12 z-[50] flex items-center justify-between px-3 bg-white border-b"
       style={{ borderColor: "var(--grid-border)" }}
     >
       {/* ... (background decorative blocks remain same) ... */}

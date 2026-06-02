@@ -4,7 +4,8 @@ import {
   Package,
   Clock,
   Eye,
-  CheckCircle2
+  CheckCircle2,
+  AlertCircle
 } from "lucide-react";
 import { PageHelmet } from "@/components/seo/PageHelmet";
 import DataTable from "@/components/control/DataTable";
@@ -249,7 +250,7 @@ export default function OrdersListing({ userRole = 'owner' }) {
         render: (o) => {
           const statusName = ORDER_CONFIG.STATUS_MAP[o.order_status] || "Chờ xử lý";
           const sc = getStatusColor(statusName);
-          const isReady = Number(o.total_processing_count) > 0 && Number(o.pending_processing_count) === 0 && o.order_status === 3;
+          const hasInspection = Number(o.inspection_count) > 0 && o.order_status === 3;
 
           return (
             <div className="flex flex-col items-center gap-1">
@@ -257,9 +258,9 @@ export default function OrdersListing({ userRole = 'owner' }) {
                 <span className="w-1.5 h-1.5 rounded-full mr-1.5" style={{ backgroundColor: sc.text }}></span>
                 {statusName}
               </span>
-              {isReady && (
-                <span className="flex items-center gap-1 text-[10px] font-black text-[#16a34a]">
-                  <CheckCircle2 size={10} /> XƯỞNG ĐÃ XONG
+              {hasInspection && (
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black text-white bg-red-500 animate-pulse shadow-sm">
+                  <AlertCircle size={10} /> CẦN NGHIỆM THU
                 </span>
               )}
             </div>
