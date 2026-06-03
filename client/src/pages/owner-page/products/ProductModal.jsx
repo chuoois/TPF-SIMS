@@ -386,8 +386,8 @@ export default function ProductModal({
     if (includePricing) {
       payload.pricing = {
         cost_price: latestCost || form.costPrice || 0,
-        raw_price: form.rawRetailPrice || 0,
-        final_price: isWood ? (form.finishedRetailPrice || 0) : (form.retailPrice || 0),
+        raw_price: isWood ? (form.finishedRetailPrice || 0) : 0,
+        final_price: isWood ? (form.rawRetailPrice || 0) : (form.retailPrice || 0),
         profit_margin: form.margin || 0,
       };
     }
