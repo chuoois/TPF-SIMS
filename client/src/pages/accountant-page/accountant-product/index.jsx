@@ -222,11 +222,24 @@ export default function AccountantProductManage() {
   const handleSaveProduct = async (updated) => {
     try {
       setLoading(true);
-      await inventoryService.updateMinStock(updated.id, updated.minStock);
-      
+      // Truyền imgUrl nếu ảnh thay đổi (khác ảnh gốc trong editProduct)
+      const imgChanged = updated.img !== editProduct?.img;
+      await inventoryService.updateMinStock(
+        updated.id,
+        updated.minStock,
+        imgChanged ? updated.img : undefined  // undefined = không thay đổi ảnh
+      );
+
+      // Cập nhật local state ngay lập tức để UI phản hồi nhanh
+      setProducts(prev => prev.map(p =>
+        p.id === updated.id
+          ? { ...p, minStock: updated.minStock, img: imgChanged ? updated.img : p.img }
+          : p
+      ));
+
       setEditProduct(null);
-      toast.success("Đã cập nhật định mức tồn kho!");
-      fetchProducts(); 
+      toast.success("Đã cập nhật sản phẩm!");
+      fetchProducts(); // Refresh từ server để đảm bảo đồng bộ
     } catch (error) {
       console.error("Lỗi khi cập nhật sản phẩm:", error);
       toast.error("Không thể lưu thay đổi!");
@@ -325,9 +338,6 @@ export default function AccountantProductManage() {
               >
                 <Icon size={13} style={{ opacity: isActive ? 1 : 0.5 }} />
                 {tf.label}
-                <span className="text-[11px] opacity-60">
-                  ({counts[tf.value] ?? 0})
-                </span>
               </button>
             );
           })}

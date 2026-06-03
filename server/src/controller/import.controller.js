@@ -212,6 +212,41 @@ class ImportController {
       // Chuyển manufacturingOrderId sang integer an toàn
       const moId = manufacturingOrderId ? parseInt(manufacturingOrderId, 10) || null : null;
 
+      // ── Kiểm tra ManufacturingOrder tồn tại và hợp lệ ──
+      if (moId) {
+        const mo = await ManufacturingOrder.findByPk(moId, { transaction: t });
+        if (!mo) {
+          await t.rollback();
+          return res.status(404).json({ message: `Không tìm thấy yêu cầu sản xuất ID=${moId}` });
+        }
+        if (mo.status === 4) {
+          await t.rollback();
+          return res.status(400).json({ message: `Yêu cầu sản xuất "${mo.order_code}" đã hoàn thành, không thể tạo phiếu nhập thêm` });
+        }
+        if (mo.status === 0) {
+          await t.rollback();
+          return res.status(400).json({ message: `Yêu cầu sản xuất "${mo.order_code}" đã bị hủy, không thể tạo phiếu nhập` });
+        }
+      }
+
+      // ── Kiểm tra item_serial (unitIds) chưa tồn tại trong DB ──
+      const allUnitIds = lines.flatMap(l => [
+        ...(l.unitIds || []),
+        ...(l.bundleUnitIds || [])
+      ]).filter(Boolean);
+      if (allUnitIds.length > 0) {
+        const { Op: OpCheck } = require('sequelize');
+        const existing = await ProductItem.findOne({
+          where: { item_serial: { [OpCheck.in]: allUnitIds } },
+          attributes: ['item_serial'],
+          transaction: t,
+        });
+        if (existing) {
+          await t.rollback();
+          return res.status(409).json({ message: `Mã định danh "${existing.item_serial}" đã tồn tại trong kho, vui lòng kiểm tra lại` });
+        }
+      }
+
       // Tạo phiếu nhập
       const receipt = await ImportReceipt.create({
         receipt_code: receiptCode,
@@ -234,6 +269,17 @@ class ImportController {
           const bundleQty = parseInt(line.bundleQty) || 0;
           const bundlePrice = parseFloat(line.bundlePrice) || 0;
           if (bundleQty <= 0 || bundlePrice <= 0) continue; // guard: bỏ qua dòng bất hợp lệ
+
+          // ── GUARD: Kiểm tra số lượng nhập không vượt quá yêu cầu ──
+          if (line.id) {
+            const moItemCheck = await ManufacturingOrderItem.findByPk(line.id, { transaction: t });
+            if (moItemCheck && bundleQty > moItemCheck.quantity) {
+              await t.rollback();
+              return res.status(400).json({
+                message: `Bộ sản phẩm "${line.bundleName}": Số lượng nhập (${bundleQty}) vượt quá số lượng yêu cầu (${moItemCheck.quantity})`
+              });
+            }
+          }
           const lineTotal = bundleQty * bundlePrice;
           totalAmount += lineTotal;
           totalQty += bundleQty;
@@ -245,6 +291,10 @@ class ImportController {
           }
           if (!product && line.productId) {
             product = await Product.findByPk(line.productId, { transaction: t });
+          }
+          // Cập nhật ảnh nếu sản phẩm đã tồn tại nhưng chưa có ảnh
+          if (product && line.productImgUrl && !product.product_img) {
+            await product.update({ product_img: line.productImgUrl }, { transaction: t });
           }
           if (!product && line.bundleName) {
             // Tạo mới Product nếu chưa có → hàng mới từ xưởng chưa từng nhập kho
@@ -351,6 +401,17 @@ class ImportController {
           const qty = parseInt(line.qty) || 0;
           const importPrice = parseFloat(line.importPrice) || 0;
           if (qty <= 0 || importPrice <= 0) continue; // guard: bỏ qua dòng bất hợp lệ
+
+          // ── GUARD: Kiểm tra số lượng nhập không vượt quá yêu cầu ──
+          if (line.id) {
+            const moItemCheck = await ManufacturingOrderItem.findByPk(line.id, { transaction: t });
+            if (moItemCheck && qty > moItemCheck.quantity) {
+              await t.rollback();
+              return res.status(400).json({
+                message: `Sản phẩm "${line.productName}": Số lượng nhập (${qty}) vượt quá số lượng yêu cầu (${moItemCheck.quantity})`
+              });
+            }
+          }
           const lineTotal = qty * importPrice;
           totalAmount += lineTotal;
           totalQty += qty;
@@ -362,6 +423,10 @@ class ImportController {
           }
           if (!product && line.productId) {
             product = await Product.findByPk(line.productId, { transaction: t });
+          }
+          // Cập nhật ảnh nếu sản phẩm đã tồn tại nhưng chưa có ảnh
+          if (product && line.productImgUrl && !product.product_img) {
+            await product.update({ product_img: line.productImgUrl }, { transaction: t });
           }
           if (!product && line.productName) {
             // Tạo mới Product nếu chưa có → hàng mới từ xưởng chưa từng nhập kho
@@ -533,8 +598,12 @@ class ImportController {
         const msgs = error.errors?.map(e => `${e.path}: ${e.message}`).join(", ");
         return res.status(400).json({ message: `Dữ liệu không hợp lệ: ${msgs}` });
       }
-      if (error.name === "SequelizeUniqueConstraintError") {
-        return res.status(409).json({ message: "Mã phiếu đã tồn tại, vui lòng thử lại" });
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        const field = error.errors?.[0]?.path || '';
+        if (field === 'item_serial' || field.includes('serial')) {
+          return res.status(409).json({ message: 'Mã định danh đơn vị bị trùng, vui lòng kiểm tra lại danh sách mã định danh' });
+        }
+        return res.status(409).json({ message: 'Dữ liệu bị trùng lặp, vui lòng thử lại' });
       }
       return res.status(500).json({ message: error.message || "Lỗi hệ thống khi tạo phiếu nhập" });
     }
