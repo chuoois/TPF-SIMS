@@ -36,6 +36,7 @@ const inputStyle = {
 const itemSchema = Yup.object().shape({
   productName: Yup.string().trim().required("Tên sản phẩm không được để trống"),
   woodType: Yup.string().required("Vui lòng chọn hoặc nhập chất liệu"),
+  color: Yup.string().required("Vui lòng chọn hoặc nhập màu sắc"),
   quantity: Yup.number().min(1, "Số lượng phải ít nhất là 1").required(),
 });
 
@@ -85,7 +86,21 @@ export default function CustomItemInputPanel({
     if (editingItemId) {
       const item = activeTab.cartItems.find((i) => i.id === editingItemId);
       if (item) {
-        setNewItem({ ...item });
+        const mappedBundleItems = (item.item_bundle_items || []).map((bi) => {
+          const biSize = bi.size || {};
+          const getVal = (v) => (v === null || v === undefined || v === "" || Number(v) === 0) ? "" : v;
+          return {
+            ...bi,
+            size_length: bi.size_length !== undefined ? getVal(bi.size_length) : getVal(biSize.length),
+            size_width: bi.size_width !== undefined ? getVal(bi.size_width) : getVal(biSize.width),
+            size_height: bi.size_height !== undefined ? getVal(bi.size_height) : getVal(biSize.height),
+            size_note: bi.size_note !== undefined ? getVal(bi.size_note) : getVal(biSize.note),
+          };
+        });
+        setNewItem({
+          ...item,
+          item_bundle_items: mappedBundleItems,
+        });
       }
     } else {
       resetForm();
@@ -342,7 +357,7 @@ export default function CustomItemInputPanel({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-2">
-                <TreePine size={12} /> Chất liệu
+                <TreePine size={12} /> Chất liệu <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
@@ -367,7 +382,7 @@ export default function CustomItemInputPanel({
             </div>
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-2">
-                <Palette size={12} /> Màu sắc
+                <Palette size={12} /> Màu sắc <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
@@ -377,9 +392,10 @@ export default function CustomItemInputPanel({
                   onFocus={() => setShowColorDropdown(true)}
                   onBlur={() => setTimeout(() => setShowColorDropdown(false), 200)}
                   onChange={(e) => { updateNewItem("color", e.target.value); setShowColorDropdown(true); }}
-                  className={`${inputBase} !py-2`}
+                  className={`${inputBase} !py-2 ${errors.color ? "border-red-500 bg-red-50" : ""}`}
                   style={inputStyle}
                 />
+                {errors.color && <p className="text-[10px] text-red-500 font-bold ml-1 mt-1">{errors.color}</p>}
                 {showColorDropdown && (
                   <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-lg z-50 max-h-40 overflow-y-auto border-[var(--grid-border)]">
                     {colorOptions.filter(c => c.toLowerCase().includes(newItem.color.toLowerCase())).map(c => (

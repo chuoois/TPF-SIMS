@@ -19,12 +19,41 @@ import {
   ShieldCheck,
   Eye,
   Package,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CustomCheckbox from "@/components/control/CustomCheckbox";
 import { fmt, DELIVERY_METHODS } from "@/constants/orderConfig";
 
 
+
+const formatDimension = (size) => {
+  if (!size) return "—";
+  let parsed = size;
+  if (typeof size === "string") {
+    try {
+      parsed = JSON.parse(size);
+    } catch (e) {
+      return size;
+    }
+  }
+  if (parsed && typeof parsed === "object") {
+    const isPresent = (val) => {
+      if (val === null || val === undefined || val === "") return false;
+      const num = Number(val);
+      return !isNaN(num) && num > 0;
+    };
+    const parts = [];
+    if (isPresent(parsed.length)) parts.push(`D:${parsed.length}`);
+    if (isPresent(parsed.width)) parts.push(`R:${parsed.width}`);
+    if (isPresent(parsed.height)) parts.push(`C:${parsed.height}`);
+    if (parts.length > 0) {
+      return parts.join(" × ") + (parsed.unit ? ` ${parsed.unit}` : " cm");
+    }
+  }
+  return "—";
+};
 
 export default function RequirementCartPanel({
   tabs,
@@ -50,7 +79,12 @@ export default function RequirementCartPanel({
   formik,
 }) {
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const [expandedBundles, setExpandedBundles] = useState({});
   const customerSearchRef = useRef(null);
+
+  const toggleBundleExpand = (itemId) => {
+    setExpandedBundles(prev => ({ ...prev, [itemId]: !prev[itemId] }));
+  };
 
 
 
@@ -168,18 +202,25 @@ export default function RequirementCartPanel({
                       <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 text-[9px] font-bold uppercase tracking-tight shrink-0 border border-amber-100">
                         Đặt riêng
                       </span>
+                      {item.item_is_bundle === 1 && (
+                        <span className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-600 text-[9px] font-bold uppercase tracking-tight shrink-0 border border-purple-100 flex items-center gap-0.5">
+                          <Package size={9} /> Bộ SP
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span
                         className="text-[11px]"
                         style={{ color: "var(--text-placeholder)" }}
                       >
-                        {item.woodType} |{" "}
-                        {typeof item.size === "object"
-                          ? `${item.size.length}x${item.size.width}x${item.size.height} ${item.size.unit || "cm"}${item.size.note ? ` (${item.size.note})` : ""}`
-                          : item.size}
+                        {item.woodType}
+                        {item.item_is_bundle === 1
+                          ? ` | ${(item.item_bundle_items || []).length} món trong bộ`
+                          : (() => {
+                              const sizeStr = formatDimension(item.size);
+                              return sizeStr !== "—" ? ` | ${sizeStr}${item.size?.note ? ` (${item.size.note})` : ""}` : "";
+                            })()}
                       </span>
-
                     </div>
                   </div>
 
@@ -254,6 +295,44 @@ export default function RequirementCartPanel({
                     <span className="text-[11px] italic line-clamp-1" style={{ color: "var(--text-placeholder)" }}>
                       Yêu cầu: {item.note}
                     </span>
+                  </div>
+                )}
+
+                {/* Bundle items expansion */}
+                {item.item_is_bundle === 1 && item.item_bundle_items && item.item_bundle_items.length > 0 && (
+                  <div className="mt-2 pl-11">
+                    <button
+                      type="button"
+                      onClick={() => toggleBundleExpand(item.id)}
+                      className="flex items-center gap-1.5 text-[11px] font-semibold text-purple-600 hover:text-purple-700 transition cursor-pointer"
+                    >
+                      <Package size={11} />
+                      {item.item_bundle_items.length} sản phẩm trong bộ
+                      {expandedBundles[item.id] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                    </button>
+                    {expandedBundles[item.id] && (
+                      <div className="mt-1.5 space-y-1 border-l-2 border-purple-100 pl-3">
+                        {item.item_bundle_items.map((bi, biIdx) => (
+                          <div key={biIdx} className="flex items-center gap-2 py-1">
+                            <span className="w-4 h-4 rounded-full bg-purple-50 text-purple-500 text-[9px] font-bold flex items-center justify-center shrink-0">
+                              {biIdx + 1}
+                            </span>
+                            <span className="text-[11px] font-medium text-gray-700 truncate">
+                              {bi.name}
+                              <span className="ml-1 text-purple-500 font-bold">×{bi.quantity}</span>
+                            </span>
+                            {(() => {
+                              const biSizeStr = formatDimension(bi.size);
+                              return biSizeStr !== "—" && (
+                                <span className="text-[10px] text-gray-400 shrink-0">
+                                  {biSizeStr}
+                                </span>
+                              );
+                            })()}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
