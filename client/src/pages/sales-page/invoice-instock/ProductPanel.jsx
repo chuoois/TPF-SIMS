@@ -553,10 +553,10 @@ export default function ProductPanel({
             <div className="flex p-6 gap-6 max-h-[75vh] overflow-y-auto">
               {/* Product Image */}
               <div className="w-1/2 aspect-square rounded-lg overflow-hidden bg-gray-50 border border-gray-100 shadow-inner flex items-center justify-center shrink-0">
-                {selectedProductForView.image ? (
+                {selectedProductForView.product_img ? (
                   <img
-                    src={selectedProductForView.image}
-                    alt={selectedProductForView.name}
+                    src={selectedProductForView.product_img}
+                    alt={selectedProductForView.product_name}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -571,7 +571,7 @@ export default function ProductPanel({
               <div className="w-1/2 space-y-5">
                 <div className="text-left">
                   <h2 className="text-[20px] font-bold text-gray-900 leading-tight">
-                    {selectedProductForView.name}
+                    {selectedProductForView.product_name}
                   </h2>
                   <p className="text-[13px] text-gray-400 font-medium mt-1 uppercase tracking-wider">
                     SKU: {selectedProductForView.sku}
@@ -620,12 +620,19 @@ export default function ProductPanel({
                                     </span>
                                   )}
                                 </div>
-                                {bi.size && (
-                                  <span className="text-[11px] text-gray-400 mt-0.5 block">
-                                    {bi.size.width}×{bi.size.height}×{bi.size.length} {bi.size.unit}
-                                    {bi.size.note ? ` (${bi.size.note})` : ""}
-                                  </span>
-                                )}
+                                {bi.size && (() => {
+                                  const parts = [];
+                                  if (bi.size.length) parts.push(`D:${bi.size.length}`);
+                                  if (bi.size.width) parts.push(`R:${bi.size.width}`);
+                                  if (bi.size.height) parts.push(`C:${bi.size.height}`);
+                                  if (parts.length === 0) return null;
+                                  return (
+                                    <span className="text-[11px] text-gray-400 mt-0.5 block">
+                                      {parts.join(" × ")} {bi.size.unit || "cm"}
+                                      {bi.size.note ? ` (${bi.size.note})` : ""}
+                                    </span>
+                                  );
+                                })()}
                               </div>
                             </div>
                           ))}
@@ -671,7 +678,14 @@ export default function ProductPanel({
                             Kích thước
                           </p>
                           <p className="text-[13px] font-semibold text-gray-700 mt-0.5 truncate">
-                            {selectedProductForView.size ? `${selectedProductForView.size.width}x${selectedProductForView.size.height}x${selectedProductForView.size.length} ${selectedProductForView.size.unit}` : "—"}
+                            {selectedProductForView.size ? (() => {
+                              const s = selectedProductForView.size;
+                              const parts = [];
+                              if (s.length) parts.push(`D:${s.length}`);
+                              if (s.width) parts.push(`R:${s.width}`);
+                              if (s.height) parts.push(`C:${s.height}`);
+                              return parts.length > 0 ? `${parts.join(" × ")} ${s.unit || "cm"}` : "—";
+                            })() : "—"}
                           </p>
                         </div>
                       </div>

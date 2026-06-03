@@ -116,6 +116,21 @@ describe("CustomerController Unit Tests", () => {
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ message: "Tạo khách hàng thành công" }));
     });
+
+    it("nên trả về lỗi 400 nếu trùng số điện thoại", async () => {
+      mockReq.body = { full_name: "New Customer", phone_number: "0987654321" };
+      CustomerProfile.findOne.mockResolvedValue({ pk_customer_id: 1, phone_number: "0987654321" });
+
+      await customerController.createCustomer(mockReq, mockRes);
+
+      expect(CustomerProfile.findOne).toHaveBeenCalledWith(expect.objectContaining({
+        where: { phone_number: "0987654321", status: 1 }
+      }));
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+        message: "Số điện thoại này đã được đăng ký bởi một khách hàng khác."
+      }));
+    });
   });
 
   describe("updateCustomer()", () => {
@@ -133,13 +148,32 @@ describe("CustomerController Unit Tests", () => {
       mockReq.body = { phone_number: "0123456789" };
       
       const mockUpdate = jest.fn();
-      CustomerProfile.findOne.mockResolvedValue({ pk_customer_id: 1, full_name: "Test", update: mockUpdate });
+      CustomerProfile.findOne
+        .mockResolvedValueOnce({ pk_customer_id: 1, full_name: "Test", update: mockUpdate })
+        .mockResolvedValueOnce(null);
 
       await customerController.updateCustomer(mockReq, mockRes);
 
       expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ phone_number: "0123456789" }));
       expect(systemLogController.record).toHaveBeenCalled();
       expect(mockRes.status).toHaveBeenCalledWith(200);
+    });
+
+    it("nên trả về lỗi 400 nếu cập nhật số điện thoại trùng với khách hàng khác", async () => {
+      mockReq.params = { id: 1 };
+      mockReq.body = { phone_number: "0987654321" };
+      
+      const mockUpdate = jest.fn();
+      CustomerProfile.findOne
+        .mockResolvedValueOnce({ pk_customer_id: 1, full_name: "Test", update: mockUpdate })
+        .mockResolvedValueOnce({ pk_customer_id: 2, phone_number: "0987654321" });
+
+      await customerController.updateCustomer(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+        message: "Số điện thoại này đã được đăng ký bởi một khách hàng khác."
+      }));
     });
   });
 

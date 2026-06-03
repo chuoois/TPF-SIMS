@@ -20,7 +20,9 @@ import {
   Calendar,
   ShieldCheck,
   AlertCircle,
-
+  Package,
+  ChevronDown,
+  ChevronUp,
   ImagePlus,
 } from "lucide-react";
 import { todayVN, formatShortDateVN, isoToDisplayDate, formatLongDateVN } from "@/lib/dateUtils";
@@ -56,7 +58,12 @@ export default function CartPanel({
   formik,
 }) {
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const [expandedBundles, setExpandedBundles] = useState({});
   const customerSearchRef = useRef(null);
+
+  const toggleBundleExpand = (cartItemId) => {
+    setExpandedBundles(prev => ({ ...prev, [cartItemId]: !prev[cartItemId] }));
+  };
 
   // Tính subtotal trực tiếp từ formik để đảm bảo reactivity
   const currentSubtotal = useMemo(() => {
@@ -237,6 +244,11 @@ export default function CartPanel({
                           Quà tặng
                         </span>
                       )}
+                      {item.isBundle && (
+                        <span className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-600 text-[10px] font-bold uppercase tracking-tight shrink-0 border border-purple-100 flex items-center gap-0.5">
+                          <Package size={9} /> Bộ SP
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span
@@ -339,6 +351,46 @@ export default function CartPanel({
                     </div>
                   )}
                 </div>
+
+                {/* === Bundle items expansion === */}
+                {item.isBundle && item.bundleItems && (() => {
+                  const bundleData = typeof item.bundleItems === 'string' ? JSON.parse(item.bundleItems) : item.bundleItems;
+                  if (!Array.isArray(bundleData) || bundleData.length === 0) return null;
+                  const isExpanded = expandedBundles[item.cartItemId];
+                  return (
+                    <div className="mt-2 pl-11">
+                      <button
+                        type="button"
+                        onClick={() => toggleBundleExpand(item.cartItemId)}
+                        className="flex items-center gap-1.5 text-[11px] font-semibold text-purple-600 hover:text-purple-700 transition cursor-pointer"
+                      >
+                        <Package size={11} />
+                        {bundleData.length} sản phẩm trong bộ
+                        {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                      </button>
+                      {isExpanded && (
+                        <div className="mt-1.5 space-y-1 border-l-2 border-purple-100 pl-3">
+                          {bundleData.map((bi, biIdx) => (
+                            <div key={biIdx} className="flex items-center gap-2 py-1">
+                              <span className="w-4 h-4 rounded-full bg-purple-50 text-purple-500 text-[9px] font-bold flex items-center justify-center shrink-0">
+                                {biIdx + 1}
+                              </span>
+                              <span className="text-[11px] font-medium text-gray-700 truncate">
+                                {bi.name}
+                                <span className="ml-1 text-purple-500 font-bold">×{bi.quantity}</span>
+                              </span>
+                              {bi.size && (bi.size.length > 0 || bi.size.width > 0 || bi.size.height > 0) && (
+                                <span className="text-[10px] text-gray-400 shrink-0">
+                                  {bi.size.length}×{bi.size.width}×{bi.size.height} {bi.size.unit || 'cm'}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* === Upload ảnh === */}
                 {item.productType === PRODUCT_TYPES.RAW && (

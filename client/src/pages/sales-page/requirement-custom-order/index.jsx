@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Component CustomOrderRequirementsPage
  * Custom wood product orders — made-to-order items
  * UI synced with POS InStockInvoicePage
@@ -45,6 +45,33 @@ const safeParseJson = (value, fallback) => {
   } catch {
     return fallback;
   }
+};
+
+const formatDimension = (size) => {
+  if (!size) return "—";
+  let parsed = size;
+  if (typeof size === "string") {
+    try {
+      parsed = JSON.parse(size);
+    } catch (e) {
+      return size;
+    }
+  }
+  if (parsed && typeof parsed === "object") {
+    const isPresent = (val) => {
+      if (val === null || val === undefined || val === "") return false;
+      const num = Number(val);
+      return !isNaN(num) && num > 0;
+    };
+    const parts = [];
+    if (isPresent(parsed.length)) parts.push(`D:${parsed.length}`);
+    if (isPresent(parsed.width)) parts.push(`R:${parsed.width}`);
+    if (isPresent(parsed.height)) parts.push(`C:${parsed.height}`);
+    if (parts.length > 0) {
+      return parts.join(" × ") + (parsed.unit ? ` ${parsed.unit}` : " cm");
+    }
+  }
+  return "—";
 };
 
 const loadDraftTabs = () => {
@@ -221,6 +248,7 @@ export default function CustomOrderRequirementsPage() {
   useEffect(() => {
     formik.resetForm({ values: activeTab });
     lastSyncedValuesRef.current = activeTab;
+    setEditingItemId(null);
   }, [activeTabId]);
 
   useEffect(() => {
@@ -281,6 +309,10 @@ export default function CustomOrderRequirementsPage() {
 
   const adjustCartItemQuantity = (id, amount) => {
     const items = formik.values.cartItems || [];
+    const targetItem = items.find((item) => item.id === id);
+    if (targetItem && targetItem.quantity + amount <= 0 && id === editingItemId) {
+      setEditingItemId(null);
+    }
     const updated = items
       .map((item) =>
         item.id === id ? { ...item, quantity: Math.max(0, item.quantity + amount) } : item
@@ -290,6 +322,9 @@ export default function CustomOrderRequirementsPage() {
   };
 
   const removeFromCart = (id) => {
+    if (id === editingItemId) {
+      setEditingItemId(null);
+    }
     formik.setFieldValue(
       "cartItems",
       (formik.values.cartItems || []).filter((item) => item.id !== id)
@@ -412,16 +447,59 @@ export default function CustomOrderRequirementsPage() {
                   )}
                 </div>
                 <div className="flex-1">
-                  <h4 className="text-xl font-bold text-gray-900">{viewingItem.productName}</h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-xl font-bold text-gray-900">{viewingItem.productName}</h4>
+                    {viewingItem.item_is_bundle === 1 && (
+                      <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 text-[10px] font-bold uppercase border border-purple-100 flex items-center gap-1 shrink-0">
+                        <Package size={11} /> Bộ SP
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-500 mt-1">{viewingItem.woodType} | {viewingItem.color}</p>
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    Kích thước: {typeof viewingItem.size === "object"
-                      ? `${viewingItem.size.length}x${viewingItem.size.width}x${viewingItem.size.height} ${viewingItem.size.unit || "cm"}`
-                      : viewingItem.size}
-                  </p>
-                  <p className="text-lg font-bold text-green-600 mt-2">{fmt(viewingItem.expectedPrice || 0)}đ</p>
+                  {viewingItem.item_is_bundle === 1 ? (
+                    <p className="text-sm text-purple-500 mt-0.5 font-medium">
+                      Bộ gồm {(viewingItem.item_bundle_items || []).length} sản phẩm
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-500 mt-0.5">
+                      Kích thước: {formatDimension(viewingItem.size)}
+                    </p>
+                  )}
+                  {viewingItem.expectedPrice > 0 && (
+                <p className="text-lg font-bold text-green-600 mt-2">{fmt(viewingItem.expectedPrice)}đ</p>
+              )}
                 </div>
               </div>
+ 
+              {/* Danh sách sản phẩm con trong bộ */}
+              {viewingItem.item_is_bundle === 1 && viewingItem.item_bundle_items && viewingItem.item_bundle_items.length > 0 && (
+                <div className="p-4 rounded-xl bg-purple-50/50 border border-purple-100">
+                  <p className="text-xs font-bold text-purple-600 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                    <Package size={13} /> Thành phần trong bộ sản phẩm
+                  </p>
+                  <div className="space-y-2">
+                    {viewingItem.item_bundle_items.map((bi, biIdx) => {
+                      const biSizeStr = formatDimension(bi.size);
+                      return (
+                        <div key={biIdx} className="flex items-center gap-3 p-2.5 bg-white rounded-lg border border-purple-100/60">
+                          <span className="w-6 h-6 rounded-md bg-purple-100 text-purple-600 text-[10px] font-bold flex items-center justify-center shrink-0">
+                            {biIdx + 1}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-bold text-gray-800 truncate">{bi.name}</p>
+                            {biSizeStr !== "—" && (
+                              <p className="text-[11px] text-gray-400 mt-0.5">
+                                Kích thước: {biSizeStr}
+                              </p>
+                            )}
+                          </div>
+                          <span className="text-[13px] font-black text-purple-600 shrink-0">×{bi.quantity}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {viewingItem.note && (
                 <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
