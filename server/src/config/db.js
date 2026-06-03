@@ -40,14 +40,13 @@ const sequelize = new Sequelize(
   }
 );
 
-// Test connection
 sequelize
   .authenticate()
   .then(() => {
-    console.log("✅ Database connected successfully");
+    console.log("Database connected successfully");
   })
   .catch((error) => {
-    console.error("❌ Database connection failed:");
+    console.error("Database connection failed:");
     console.error(error);
   });
 

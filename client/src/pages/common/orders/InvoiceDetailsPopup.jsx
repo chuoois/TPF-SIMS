@@ -94,7 +94,7 @@ const CustomerInfoCard = ({ o }) => (
       <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3">
         <div>
           <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--text-placeholder)]">Mã đơn</p>
-          <p className="text-[13px] font-semibold mt-0.5 text-[var(--text-main)]">{o.code}</p>
+          <p className="text-[13px] font-semibold mt-0.5 text-[var(--text-main)]">{o.order_code}</p>
         </div>
         <div>
           <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--text-placeholder)]">Loại hàng</p>
@@ -336,14 +336,16 @@ const StandardOrderView = ({
                         <div className="flex flex-col items-end ml-4">
                           <p className="text-[20px] font-black text-[var(--text-main)]">{fmtCurrency(p.price)}</p>
                           <div className="mt-2.5">
-                            {p.importStatus === 1 ? (
-                              <span className="flex items-center gap-1.5 px-3 py-1.5 shadow-sm rounded-lg text-[11px] font-black bg-[var(--status-success)] text-white border border-[var(--status-success)]/30 uppercase tracking-wide">
-                                <CheckCircle size={14} /> Đã về kho
-                              </span>
-                            ) : (
-                              <span className="flex items-center gap-1.5 px-3 py-1.5 shadow-sm rounded-lg text-[11px] font-black bg-[var(--palette-orange)] text-white border border-[var(--palette-orange)]/30 uppercase tracking-wide">
-                                <Clock size={14} /> Chưa về kho
-                              </span>
+                            {o?.type !== "Hàng sẵn" && (
+                              p.importStatus === 1 ? (
+                                <span className="flex items-center gap-1.5 px-3 py-1.5 shadow-sm rounded-lg text-[11px] font-black bg-[var(--status-success)] text-white border border-[var(--status-success)]/30 uppercase tracking-wide">
+                                  <CheckCircle size={14} /> Đã về kho
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1.5 px-3 py-1.5 shadow-sm rounded-lg text-[11px] font-black bg-[var(--palette-orange)] text-white border border-[var(--palette-orange)]/30 uppercase tracking-wide">
+                                  <Clock size={14} /> Chưa về kho
+                                </span>
+                              )
                             )}
                           </div>
                         </div>
@@ -526,7 +528,7 @@ function ProdItemRow({ item, onInspect, onPreview }) {
     <div className="p-4 border border-[var(--grid-border)]/50 rounded-lg bg-[var(--background)] space-y-3">
       <div className="flex items-start gap-3">
         <div className="flex items-center gap-2 shrink-0">
-          <div 
+          <div
             className="h-12 w-12 rounded-lg overflow-hidden border border-[var(--grid-border)]/50 bg-[var(--bg-main)] relative cursor-zoom-in hover:opacity-90 transition-all"
             onClick={() => item.productImage && onPreview(item.productImage)}
             title="Ảnh mẫu sản phẩm"
@@ -543,7 +545,7 @@ function ProdItemRow({ item, onInspect, onPreview }) {
           </div>
 
           {item.completionPhoto && (
-            <div 
+            <div
               className="h-12 w-12 rounded-lg overflow-hidden border-2 border-[var(--status-success)]/30 bg-[var(--bg-main)] relative cursor-zoom-in hover:scale-105 transition-all shadow-sm"
               onClick={() => onPreview(item.completionPhoto)}
               title="Ảnh thợ đã hoàn thiện - Bấm để xem"
@@ -717,7 +719,17 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
             warranty: p.item_warranty || ORDER_CONFIG.DEFAULT_WARRANTY,
             note: p.item_note || "",
             isBundle: p.item_is_bundle === 1,
-            bundleItems: p.item_bundle_items || [],
+            bundleItems: (() => {
+              if (!p.item_bundle_items) return [];
+              try {
+                const parsed = typeof p.item_bundle_items === 'string' 
+                  ? JSON.parse(p.item_bundle_items) 
+                  : p.item_bundle_items;
+                return Array.isArray(parsed) ? parsed : [];
+              } catch (e) {
+                return [];
+              }
+            })(),
             importStatus: p.import_status || 0
           })),
           timeline: (found.histories || []).map(h => ({
@@ -744,13 +756,13 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
         const mappedProductions = (found.items || []).flatMap((item) =>
           (item.processing || []).map((proc) => {
-              const PROC_STATUS_MAP = {
-                1: "Chờ gia công",
-                2: "Đang gia công",
-                3: "Gửi Nghiệm Thu", // Vẫn giữ key "Gửi Nghiệm Thu" để khớp với logic data nhưng Label sẽ là "Chờ Nghiệm Thu"
-                4: "Hoàn Thành",
-                0: "Hủy",
-              };
+            const PROC_STATUS_MAP = {
+              1: "Chờ gia công",
+              2: "Đang gia công",
+              3: "Gửi Nghiệm Thu", // Vẫn giữ key "Gửi Nghiệm Thu" để khớp với logic data nhưng Label sẽ là "Chờ Nghiệm Thu"
+              4: "Hoàn Thành",
+              0: "Hủy",
+            };
             const statusLabel = PROC_STATUS_MAP[proc.processing_status] ?? proc.processing_status;
             return {
               id: proc.pk_processing_id,
