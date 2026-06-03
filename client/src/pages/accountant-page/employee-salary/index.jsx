@@ -51,6 +51,7 @@ export default function AccountantEmployeeSalary() {
 
     // Delete
     const [employeeToDelete, setEmployeeToDelete] = useState(null);
+    const [deactivateEmployee, setDeactivateEmployee] = useState(false);
 
     const [isPeriodModalOpen, setIsPeriodModalOpen] = useState(false);
     
@@ -124,9 +125,13 @@ export default function AccountantEmployeeSalary() {
 
     const handleCreatePeriod = async (newPeriod) => {
         try {
-            await payrollService.createPeriod({ period_month: newPeriod });
+            const res = await payrollService.createPeriod({ period_month: newPeriod });
+            const newPeriodId = res.data?.period_id?.toString();
             toast.success(`Đã tạo thành công kỳ lương ${newPeriod}`, { icon: "📅" });
-            fetchPeriods();
+            await fetchPeriods();
+            if (newPeriodId) {
+                setSelectedPeriodId(newPeriodId);
+            }
         } catch (err) {
             toast.error(err.response?.data?.message || "Lỗi khi tạo kỳ lương");
         }
@@ -194,8 +199,14 @@ export default function AccountantEmployeeSalary() {
         if (!employeeToDelete) return;
         try {
             await payrollService.deleteRecord(employeeToDelete.record_id);
-            toast.success(`Đã xóa ${employeeToDelete.name} khỏi kỳ lương`);
+            if (deactivateEmployee && employeeToDelete.employee_id) {
+                await employeeService.toggleStatus(employeeToDelete.employee_id, 0);
+                toast.success(`Đã xóa ${employeeToDelete.name} khỏi kỳ lương và đánh dấu nghỉ việc`, { icon: "🚫" });
+            } else {
+                toast.success(`Đã xóa ${employeeToDelete.name} khỏi kỳ lương`);
+            }
             setEmployeeToDelete(null);
+            setDeactivateEmployee(false);
             fetchRecords(selectedPeriodId);
         } catch(err) {
             toast.error(err.response?.data?.message || "Lỗi khi xóa");
@@ -631,7 +642,7 @@ export default function AccountantEmployeeSalary() {
             />
 
             {employeeToDelete && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setEmployeeToDelete(null)}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => { setEmployeeToDelete(null); setDeactivateEmployee(false); }}>
                     <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
                         <div className="p-6 space-y-3">
                             <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
@@ -642,9 +653,24 @@ export default function AccountantEmployeeSalary() {
                                 Bạn có chắc chắn muốn xóa bản ghi lương của <span className="font-bold text-gray-900">{employeeToDelete.name}</span> khỏi kỳ này?
                                 Hành động này không thể hoàn tác.
                             </p>
+                            {/* Tùy chọn vô hiệu hóa nhân viên */}
+                            <label className="flex items-start gap-2.5 mt-3 p-3 rounded-xl bg-orange-50 border border-orange-200 cursor-pointer group">
+                                <input
+                                    type="checkbox"
+                                    checked={deactivateEmployee}
+                                    onChange={e => setDeactivateEmployee(e.target.checked)}
+                                    className="mt-0.5 w-4 h-4 accent-orange-500 cursor-pointer shrink-0"
+                                />
+                                <div>
+                                    <p className="text-[12px] font-bold text-orange-700">Đánh dấu nhân viên đã nghỉ việc</p>
+                                    <p className="text-[11px] text-orange-600 mt-0.5">
+                                        Nhân viên sẽ không xuất hiện trong các kỳ lương mới được tạo.
+                                    </p>
+                                </div>
+                            </label>
                         </div>
                         <div className="px-6 py-4 flex items-center justify-end gap-3 bg-gray-50 border-t border-gray-100">
-                            <button onClick={() => setEmployeeToDelete(null)}
+                            <button onClick={() => { setEmployeeToDelete(null); setDeactivateEmployee(false); }}
                                 className="h-10 px-5 rounded-xl text-[13px] font-bold border border-gray-200 text-gray-600 hover:bg-white cursor-pointer transition">
                                 Hủy
                             </button>

@@ -14,14 +14,15 @@ const importLineSchema = Joi.object({
   productId: Joi.number().integer().allow(null).optional(),
   productCode: Joi.string().max(100).allow('', null).optional(),
   productName: Joi.string().max(255).allow('', null).optional(),
-  qty: Joi.number().integer().min(0).allow(null).optional().messages({
+  qty: Joi.number().integer().min(1).allow(null).optional().messages({
     'number.integer': 'Số lượng phải là số nguyên',
-    'number.min': 'Số lượng không được âm',
+    'number.min': 'Số lượng phải lớn hơn 0',
   }),
-  importPrice: Joi.number().min(0).allow(null).optional().messages({
+  importPrice: Joi.number().min(0).max(1000000000).allow(null).optional().messages({
     'number.min': 'Giá nhập không được âm',
+    'number.max': 'Giá nhập không được vượt quá 1 tỷ đồng',
   }),
-  unitIds: Joi.array().items(Joi.string().max(100)).allow(null).optional(),
+  unitIds: Joi.array().items(Joi.string().max(100)).max(500).allow(null).optional(),
   details: Joi.string().max(500).allow('', null).optional(),
   category: Joi.string().max(100).allow('', null).optional(),
   materialType: Joi.string().max(100).allow('', null).optional(),
@@ -31,14 +32,15 @@ const importLineSchema = Joi.object({
   // Dòng bộ
   bundleCode: Joi.string().max(100).allow('', null).optional(),
   bundleName: Joi.string().max(255).allow('', null).optional(),
-  bundleQty: Joi.number().integer().min(0).allow(null).optional().messages({
+  bundleQty: Joi.number().integer().min(1).allow(null).optional().messages({
     'number.integer': 'Số bộ phải là số nguyên',
-    'number.min': 'Số bộ không được âm',
+    'number.min': 'Số bộ phải lớn hơn 0',
   }),
-  bundlePrice: Joi.number().min(0).allow(null).optional().messages({
+  bundlePrice: Joi.number().min(0).max(1000000000).allow(null).optional().messages({
     'number.min': 'Giá bộ không được âm',
+    'number.max': 'Giá bộ không được vượt quá 1 tỷ đồng',
   }),
-  bundleUnitIds: Joi.array().items(Joi.string().max(100)).allow(null).optional(),
+  bundleUnitIds: Joi.array().items(Joi.string().max(100)).max(500).allow(null).optional(),
   items: Joi.array().items(
     Joi.object({
       _id: Joi.any().optional(),
@@ -76,9 +78,11 @@ const createImportReceiptSchema = Joi.object({
   lines: Joi.array()
     .items(importLineSchema)
     .min(1)
+    .max(50)
     .required()
     .messages({
       'array.min': 'Phiếu nhập cần có ít nhất 1 mặt hàng',
+      'array.max': 'Phiếu nhập không được vượt quá 50 mặt hàng',
       'any.required': 'Vui lòng thêm mặt hàng vào phiếu nhập',
     }),
 }).unknown(false).messages({
@@ -97,7 +101,18 @@ const validateCreateImportReceipt = (req, res, next) => {
     return res.status(400).json({ message: `Dữ liệu không hợp lệ: ${messages}` });
   }
 
-  // Deep validate từng dòng
+  // ── Validate khoảng ngày nhập ──────────────────────────
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const selectedDate = new Date(value.importDate);
+  const diffDays = (selectedDate - today) / (1000 * 60 * 60 * 24);
+  if (diffDays > 7) {
+    return res.status(400).json({ message: 'Ngày nhập không được vượt quá 7 ngày so với hôm nay' });
+  }
+  if (diffDays < -365) {
+    return res.status(400).json({ message: 'Ngày nhập không được cách hôm nay quá 1 năm' });
+  }
+
+  // ── Deep validate từng dòng ────────────────────────────
   for (let i = 0; i < (value.lines || []).length; i++) {
     const line = value.lines[i];
     const lineLabel = `Dòng ${i + 1}`;
@@ -140,7 +155,7 @@ const validateCreateImportReceipt = (req, res, next) => {
     }
   }
 
-  // Validate không trùng unitIds trong cùng phiếu
+  // ── Validate không trùng unitIds trong cùng phiếu ─────
   const allUnitIds = [];
   for (const line of value.lines || []) {
     const ids = line.unitIds || line.bundleUnitIds || [];

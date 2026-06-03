@@ -553,26 +553,36 @@ class InventoryController {
   async updateMinStock(req, res) {
     try {
       const { id } = req.params;
-      const { minStock } = req.body;
+      const { minStock, imgUrl } = req.body;
 
       const product = await Product.findByPk(id);
       if (!product) {
         return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
       }
 
-      await product.update({
-        min_stock: minStock !== undefined ? minStock : product.min_stock,
+      const updateData = {
         modifiedate: new Date(),
         modifieby: req.user.userId
-      });
+      };
+
+      if (minStock !== undefined) {
+        updateData.min_stock = minStock;
+      }
+
+      // Cập nhật ảnh nếu có (imgUrl = null → xóa ảnh, imgUrl = URL → cập nhật ảnh)
+      if (imgUrl !== undefined) {
+        updateData.product_img = imgUrl;
+      }
+
+      await product.update(updateData);
 
       return res.status(200).json({ 
-        message: "Cập nhật định mức tồn kho thành công", 
-        data: { minStock: product.min_stock } 
+        message: "Cập nhật sản phẩm thành công", 
+        data: { minStock: product.min_stock, img: product.product_img } 
       });
     } catch (error) {
       console.error("Update min stock error:", error);
-      return res.status(500).json({ message: "Lỗi hệ thống khi cập nhật định mức tồn kho" });
+      return res.status(500).json({ message: "Lỗi hệ thống khi cập nhật sản phẩm" });
     }
   }
 }

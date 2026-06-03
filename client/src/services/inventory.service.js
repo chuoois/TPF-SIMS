@@ -57,10 +57,15 @@ const inventoryService = {
   },
 
   /**
-   * Cập nhật định mức tồn kho tối thiểu
+   * Cập nhật định mức tồn kho tối thiểu và ảnh sản phẩm
+   * @param {number} productId
+   * @param {number|null} minStock
+   * @param {string|null} imgUrl - URL ảnh Cloudinary mới (nếu có)
    */
-  async updateMinStock(productId, minStock) {
-    const response = await axiosInstance.patch(`/inventory/product/${productId}/min-stock`, { minStock });
+  async updateMinStock(productId, minStock, imgUrl) {
+    const body = { minStock };
+    if (imgUrl !== undefined) body.imgUrl = imgUrl;
+    const response = await axiosInstance.patch(`/inventory/product/${productId}/min-stock`, body);
     return response.data;
   },
 };

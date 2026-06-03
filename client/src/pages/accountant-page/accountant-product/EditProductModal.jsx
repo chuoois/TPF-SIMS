@@ -4,13 +4,15 @@
  * Created By: HieuNM
  */
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
     X, Package, Tag, Layers, Palette, Ruler, MapPin,
     BarChart2, DollarSign, CheckCircle, Hammer, Users,
     Image as ImageIcon, TrendingDown, TrendingUp, ArrowDownToLine,
-    Save, ShieldCheck, Gift
+    Save, ShieldCheck, Gift, Upload, Trash2
 } from "lucide-react";
+import { uploadImage } from "@/services/cloudinary.service";
+import { toast } from "react-hot-toast";
 
 // ── Helpers ──────────────────────────────────────────────
 const TYPE_CONFIG = {
@@ -55,17 +57,53 @@ export default function EditProductModal({ product, onClose, onSave }) {
     if (!product) return null;
 
     const [minStock, setMinStock] = useState(product.minStock || "");
+    const [imgFile, setImgFile] = useState(null);
+    const [imgPreview, setImgPreview] = useState(product.img || null);
+    const [uploading, setUploading] = useState(false);
+    const imgInputRef = useRef(null);
 
     const cfg = TYPE_CONFIG[product.type] || TYPE_CONFIG.FINISHED;
     const TypeIcon = cfg.icon;
 
     const dims = [product.length, product.width, product.height].filter(Boolean);
 
-    const handleSave = (e) => {
+    const handleImgChange = (e) => {
+        const f = e.target.files[0];
+        if (!f) return;
+        setImgFile(f);
+        setImgPreview(URL.createObjectURL(f));
+    };
+
+    const handleRemoveImg = () => {
+        if (imgPreview && imgFile) URL.revokeObjectURL(imgPreview);
+        setImgFile(null);
+        setImgPreview(null);
+    };
+
+    const handleSave = async (e) => {
         e.preventDefault();
+        let imgUrl = product.img || null; // giữ ảnh cũ mặc định
+
+        // Nếu có file ảnh mới → upload lên Cloudinary
+        if (imgFile) {
+            try {
+                setUploading(true);
+                const uploaded = await uploadImage(imgFile);
+                imgUrl = uploaded.url;
+            } catch (err) {
+                toast.error("Tải ảnh thất bại, lưu không có ảnh mới");
+            } finally {
+                setUploading(false);
+            }
+        } else if (!imgPreview) {
+            // Người dùng xóa ảnh
+            imgUrl = null;
+        }
+
         onSave({
             ...product, // giữ nguyên các field khác
             minStock: minStock === "" ? null : Number(minStock),
+            img: imgUrl,
         });
     };
 
@@ -114,10 +152,11 @@ export default function EditProductModal({ product, onClose, onSave }) {
                     {/* Ảnh + Chỉnh sửa số liệu nổi bật */}
                     <div className="flex gap-0 border-b flex-col sm:flex-row" style={{ borderColor: "var(--grid-border)" }}>
                         {/* Ảnh */}
-                        <div className="w-full sm:w-40 shrink-0 flex items-center justify-center border-b sm:border-b-0 sm:border-r p-4"
+                        <div className="w-full sm:w-40 shrink-0 flex flex-col items-center justify-center border-b sm:border-b-0 sm:border-r p-4 gap-2"
                             style={{ borderColor: "var(--grid-border)", backgroundColor: "var(--bg-main)" }}>
-                            {product.img
-                                ? <img src={product.img} alt={product.name}
+                            {/* Preview */}
+                            {imgPreview
+                                ? <img src={imgPreview} alt={product.name}
                                     className="w-28 h-28 rounded-xl object-cover shadow-sm"
                                     style={{ border: "1px solid var(--grid-border)" }} />
                                 : <div className="w-28 h-28 rounded-xl flex flex-col items-center justify-center gap-2"
@@ -126,6 +165,24 @@ export default function EditProductModal({ product, onClose, onSave }) {
                                     <span className="text-[10px]">Chưa có ảnh</span>
                                 </div>
                             }
+                            {/* Upload / Remove buttons */}
+                            <div className="flex flex-col gap-1.5 w-full">
+                                <button type="button"
+                                    onClick={() => imgInputRef.current?.click()}
+                                    className="flex items-center justify-center gap-1.5 w-full h-7 rounded-lg text-[11px] font-bold border cursor-pointer hover:opacity-80 transition"
+                                    style={{ borderColor: "var(--brand-primary)", color: "var(--brand-primary)", backgroundColor: "#F5F3FF" }}>
+                                    <Upload size={11} /> {imgPreview ? "Đổi ảnh" : "Tải ảnh"}
+                                </button>
+                                {imgPreview && (
+                                    <button type="button"
+                                        onClick={handleRemoveImg}
+                                        className="flex items-center justify-center gap-1.5 w-full h-7 rounded-lg text-[11px] font-bold border cursor-pointer hover:opacity-80 transition"
+                                        style={{ borderColor: "#FECACA", color: "#DC2626", backgroundColor: "#FEF2F2" }}>
+                                        <Trash2 size={11} /> Xóa ảnh
+                                    </button>
+                                )}
+                            </div>
+                            <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={handleImgChange} />
                         </div>
 
                         {/* Input form for MinStock Only */}
@@ -198,10 +255,13 @@ export default function EditProductModal({ product, onClose, onSave }) {
                         style={{ borderColor: "var(--grid-border)", color: "var(--text-secondary)" }}>
                         Trở lại
                     </button>
-                    <button type="submit"
-                        className="h-10 px-6 rounded-xl text-[13px] font-bold cursor-pointer hover:opacity-90 transition flex items-center gap-2"
+                    <button type="submit" disabled={uploading}
+                        className="h-10 px-6 rounded-xl text-[13px] font-bold cursor-pointer hover:opacity-90 transition flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                         style={{ backgroundColor: "var(--brand-primary)", color: "#fff" }}>
-                        <Save size={14} /> Lưu Thay Đổi
+                        {uploading
+                            ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Đang tải ảnh...</>
+                            : <><Save size={14} /> Lưu Thay Đổi</>
+                        }
                     </button>
                 </div>
             </div>
