@@ -23,10 +23,13 @@ const Order = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    order_code: {
+      type: DataTypes.STRING(50),
+      unique: true,
+    },
     fulfillment_method: {
       type: DataTypes.STRING(100),
     },
-
     expected_fulfillment_date: {
       type: DataTypes.DATE,
     },

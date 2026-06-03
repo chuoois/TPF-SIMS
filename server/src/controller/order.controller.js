@@ -41,12 +41,21 @@ class OrderController {
 
             if (search) {
                 where[Op.or] = [
-                    { pk_order_id: isNaN(search) ? undefined : search },
-                    { '$customer.full_name$': { [Op.like]: `%${search}%` } }
+                    { order_code: { [Op.like]: `%${search}%` } },
+                    { '$customer.full_name$': { [Op.like]: `%${search}%` } },
+                    { '$customer.phone_number$': { [Op.like]: `%${search}%` } },
+                    sequelize.literal(`EXISTS (
+                        SELECT 1 
+                        FROM order_item AS i
+                        WHERE i.fk_order_id = Order.pk_order_id 
+                          AND i.item_name LIKE ${sequelize.escape('%' + search + '%')}
+                          AND i.status = 1
+                    )`)
                 ];
-                // Loại bỏ undefined nếu search không phải số
-                where[Op.or] = where[Op.or].filter(condition => Object.values(condition)[0] !== undefined);
-                if (where[Op.or].length === 0) delete where[Op.or];
+                
+                if (!isNaN(search)) {
+                    where[Op.or].push({ pk_order_id: search });
+                }
             }
 
             const { count, rows } = await Order.findAndCountAll({
@@ -61,7 +70,15 @@ class OrderController {
                 attributes: [
                     'pk_order_id', 'createdate', 'expected_fulfillment_date', 'total_amount',
                     'deposit_amount', 'received_amount', 'delivery_image', 'order_status', 'order_type',
-                    'deposit_resolution', 'cancel_reason',
+                    'deposit_resolution', 'cancel_reason', 'order_code',
+                    [
+                        sequelize.literal(`(
+                            SELECT GROUP_CONCAT(i.item_name SEPARATOR ', ')
+                            FROM order_item AS i
+                            WHERE i.fk_order_id = Order.pk_order_id AND i.status = 1
+                        )`),
+                        'product_names'
+                    ],
                     [
                         sequelize.literal(`(
                             SELECT COUNT(*) 
@@ -188,7 +205,7 @@ class OrderController {
                 attributes: [
                     'pk_order_id', 'order_status', 'order_type', 'createdate',
                     'expected_fulfillment_date', 'total_amount', 'deposit_amount', 'received_amount',
-                    'address', 'note', 'fulfillment_method', 'delivery_image', 'deposit_resolution', 'cancel_reason'
+                    'address', 'note', 'fulfillment_method', 'delivery_image', 'deposit_resolution', 'cancel_reason', 'order_code'
                 ],
                 order: [
                     // Sắp xếp lịch sử từ mới nhất đến cũ nhất giống Shopee timeline
@@ -236,6 +253,7 @@ class OrderController {
 
             // 1. Tạo bản ghi Order (Header)
             const newOrder = await Order.create({
+                order_code: `DH-${Date.now()}`, 
                 fk_customer_id,
                 fk_user_account_id: userId,
                 fulfillment_method,
@@ -304,6 +322,7 @@ class OrderController {
                         item_bundle_items: item.item_bundle_items || product?.bundle_items || null,
                         item_is_gift: item.item_is_gift ?? product?.is_gift ?? 0,
                         is_finished: final_is_finished ? 1 : 0,
+                        import_status: order_type == 2 ? 1 : 0,
                         customer_img: Array.isArray(item.customer_img) ? item.customer_img : [],
                         design_img: Array.isArray(item.design_img) ? item.design_img : [],
                         createby: userId,
