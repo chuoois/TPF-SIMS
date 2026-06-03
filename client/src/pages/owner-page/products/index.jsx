@@ -363,14 +363,9 @@ export default function OwnerProducts() {
         }
         if (item.status === "Hàng khách đặt") {
           return (
-            <div className="flex flex-col items-start">
-              <span className="text-[13px] font-black text-amber-600">
-                {fmtCurrency(item.retailPrice)}
-              </span>
-              <span className="text-[10px] font-bold text-amber-500 uppercase tracking-tighter mt-0.5">
-                (Giá chốt theo đơn)
-              </span>
-            </div>
+            <span className="text-[11px] font-bold text-amber-500 uppercase tracking-tighter">
+              Giá chốt theo đơn
+            </span>
           );
         }
         if (item.status === "Chưa định giá") {

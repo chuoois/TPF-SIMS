@@ -11,7 +11,7 @@ import {
   AlertCircle, ChevronDown, ChevronRight,
   ArrowUpRight, ArrowDownRight, Plus,
   Calendar, RefreshCw, AlertTriangle,
-  Package, Layers, UserCheck
+  Package, UserCheck
 } from "lucide-react";
 import dashboardService from "@/services/dashboard.service";
 
@@ -166,7 +166,6 @@ export default function AccountantHome() {
   const [endDate, setEndDate] = useState("");
   const [dateRangeError, setDateRangeError] = useState(""); // lỗi khoảng ngày
   const [orderType, setOrderType] = useState("all");
-  const [costType, setCostType] = useState("all");
 
   // Dữ liệu & Trạng thái
   const [data, setData] = useState(null);
@@ -185,7 +184,6 @@ export default function AccountantHome() {
         startDate: period === "custom" ? startDate : undefined,
         endDate: period === "custom" ? endDate : undefined,
         orderType,
-        costType,
       });
       setData(res);
     } catch (err) {
@@ -207,7 +205,7 @@ export default function AccountantHome() {
     }
     setDateRangeError("");
     fetchData();
-  }, [period, selectedMonth, selectedQuarter, selectedYear, startDate, endDate, orderType, costType]);
+  }, [period, selectedMonth, selectedQuarter, selectedYear, startDate, endDate, orderType]);
 
   // Giải nén dữ liệu
   const summary = data?.summary || {};
@@ -253,7 +251,7 @@ export default function AccountantHome() {
           </div>
 
           {/* Bộ lọc chi tiết */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
             {/* 1. Chọn mốc / kỳ thời gian */}
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5 flex items-center gap-1">
@@ -349,23 +347,6 @@ export default function AccountantHome() {
                 <option value="2">Đơn hàng sẵn (Stock)</option>
                 <option value="1">Đơn hàng mộc (Raw)</option>
                 <option value="3">Đơn hàng custom</option>
-              </select>
-            </div>
-
-            {/* 4. Lọc theo Loại chi phí */}
-            <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5 flex items-center gap-1">
-                <Layers size={13} /> Cơ cấu chi phí
-              </label>
-              <select
-                value={costType}
-                onChange={(e) => setCostType(e.target.value)}
-                className="h-10 w-full px-3 rounded-xl border text-[13px] font-semibold bg-white outline-none"
-                style={{ borderColor: "var(--grid-border)" }}
-              >
-                <option value="all">Tất cả chi phí</option>
-                <option value="import">Chỉ chi phí nhập hàng</option>
-                <option value="salary">Chỉ chi phí lương nhân viên</option>
               </select>
             </div>
           </div>

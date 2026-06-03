@@ -123,6 +123,7 @@ const emptyLine = () => ({
     importPrice: "",
     minStock: "",
     details: "",
+    requestedQty: null, // Số lượng tối đa từ yêu cầu (null = không giới hạn)
     unitIds: [], // Danh sách mã định danh riêng
     showUnitIds: false,
 });
@@ -149,6 +150,7 @@ const emptyBundle = () => ({
     imageFiles: [],
     imagePreviews: [],
     details: "",
+    requestedQty: null, // Số lượng tối đa từ yêu cầu (null = không giới hạn)
     items: [emptyBundleItem()],
     unitIds: [], // Mã định danh cho từng bộ
     showUnitIds: false,
@@ -352,11 +354,14 @@ export default function CreateImportModal({ onClose, onSaved }) {
                 newBundle.materialType = p.materialType || "";
                 newBundle.color = p.color || "";
                 newBundle.productType = p.productType || "FINISHED";
+                // Lưu ảnh hiện có từ yêu cầu nhập (dùng khi không upload ảnh mới)
+                newBundle.existingImgUrl = p.productImg || null;
                 // Gán kích thước bộ từ yêu cầu nhập
                 newBundle.length = parsedLength;
                 newBundle.width  = parsedWidth;
                 newBundle.height = parsedHeight;
                 newBundle.bundleQty = qtyToImport;
+                newBundle.requestedQty = p.requestedQty || null; // Giới hạn số lượng tối đa
                 newBundle.bundlePrice = p.estimatedPrice || "";
                 // Dùng bundleItems (từ API) hoặc items (từ mock), nếu rỗng thì init 1 món lẻ trống
                 const subItems = p.bundleItems || p.items || [];
@@ -377,11 +382,14 @@ export default function CreateImportModal({ onClose, onSaved }) {
                 newLine.materialType = p.materialType || "";
                 newLine.color = p.color || "";
                 newLine.productType = p.productType || "FINISHED";
+                // Lưu ảnh hiện có từ yêu cầu nhập (dùng khi không upload ảnh mới)
+                newLine.existingImgUrl = p.productImg || null;
                 // Gán kích thước từ yêu cầu nhập (API trả về dạng object)
                 newLine.length = parsedLength;
                 newLine.width  = parsedWidth;
                 newLine.height = parsedHeight;
                 newLine.qty = qtyToImport;
+                newLine.requestedQty = p.requestedQty || null; // Giới hạn số lượng tối đa
                 newLine.importPrice = p.estimatedPrice || "";
                 newLine.details = p.details || "";
                 if (qtyToImport > 0 && newLine.productCode) {
@@ -418,6 +426,10 @@ export default function CreateImportModal({ onClose, onSaved }) {
                 const bQty = Number(l.bundleQty);
                 if (!l.bundleQty || bQty <= 0) { toast.error(`Bộ "${l.bundleName}": Số bộ phải lớn hơn 0`); return; }
                 if (!Number.isInteger(bQty)) { toast.error(`Bộ "${l.bundleName}": Số bộ phải là số nguyên`); return; }
+                if (l.requestedQty !== null && bQty > l.requestedQty) {
+                    toast.error(`Bộ "${l.bundleName}": Số lượng nhập (${bQty}) không được vượt quá số lượng yêu cầu (${l.requestedQty})`);
+                    return;
+                }
                 if (!l.bundlePrice || Number(l.bundlePrice) <= 0) { toast.error(`Bộ "${l.bundleName}": Giá bộ phải lớn hơn 0`); return; }
                 if (l.items.length === 0) { toast.error(`Bộ "${l.bundleName}": Cần có ít nhất 1 món lẻ`); return; }
                 const hasEmptyItem = l.items.some(it => !it.name.trim());
@@ -427,6 +439,10 @@ export default function CreateImportModal({ onClose, onSaved }) {
                 const pQty = Number(l.qty);
                 if (!l.qty || pQty <= 0) { toast.error(`Sản phẩm "${l.productName}": Số lượng phải lớn hơn 0`); return; }
                 if (!Number.isInteger(pQty)) { toast.error(`Sản phẩm "${l.productName}": Số lượng phải là số nguyên`); return; }
+                if (l.requestedQty !== null && pQty > l.requestedQty) {
+                    toast.error(`Sản phẩm "${l.productName}": Số lượng nhập (${pQty}) không được vượt quá số lượng yêu cầu (${l.requestedQty})`);
+                    return;
+                }
                 if (!l.importPrice || Number(l.importPrice) <= 0) { toast.error(`Sản phẩm "${l.productName}": Giá gốc phải lớn hơn 0`); return; }
             }
         }
@@ -459,14 +475,15 @@ export default function CreateImportModal({ onClose, onSaved }) {
             }
 
             // 1b. Upload ảnh sản phẩm từng dòng lên Cloudinary (lấy ảnh đầu tiên)
+            // Nếu không có file mới, fallback sang ảnh hiện có từ yêu cầu nhập (existingImgUrl)
             const linesWithImgUrl = await Promise.all(lines.map(async (l) => {
                 const firstFile = l.imageFiles?.[0] || null;
-                if (!firstFile) return { ...l, productImgUrl: null };
+                if (!firstFile) return { ...l, productImgUrl: l.existingImgUrl || null };
                 try {
                     const uploaded = await uploadImage(firstFile);
                     return { ...l, productImgUrl: uploaded.url };
                 } catch {
-                    return { ...l, productImgUrl: null };
+                    return { ...l, productImgUrl: l.existingImgUrl || null };
                 }
             }));
 
@@ -843,8 +860,26 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveImage,
                 {/* Các input nhập liệu */}
                 <div className="grid grid-cols-3 gap-4 border-t pt-4" style={{ borderColor: "var(--grid-border)" }}>
                     <div>
-                        <label className={lbl} style={lblS}>Số lượng nhập</label>
-                        <input type="number" value={line.qty} onChange={(e) => onUpdate("qty", parseNumber(e.target.value))} className={inp} style={{ ...inpS, borderColor: "#7C3AED" }} />
+                        <label className={lbl} style={lblS}>
+                            Số lượng nhập
+                            {line.requestedQty !== null && (
+                                <span className="ml-1 font-normal normal-case" style={{ color: "var(--text-placeholder)" }}>
+                                    (tối đa: <span className="font-bold text-purple-600">{line.requestedQty}</span>)
+                                </span>
+                            )}
+                        </label>
+                        <input
+                            type="number"
+                            value={line.qty}
+                            min={1}
+                            max={line.requestedQty !== null ? line.requestedQty : undefined}
+                            onChange={(e) => onUpdate("qty", parseNumber(e.target.value))}
+                            className={inp}
+                            style={{ ...inpS, borderColor: line.requestedQty !== null && Number(line.qty) > line.requestedQty ? "#EF4444" : "#7C3AED" }}
+                        />
+                        {line.requestedQty !== null && Number(line.qty) > line.requestedQty && (
+                            <p className="text-[11px] text-red-500 mt-1 font-medium">⚠️ Vượt quá số lượng yêu cầu ({line.requestedQty})</p>
+                        )}
                     </div>
                     <div>
                         <label className={lbl} style={lblS}>Giá gốc nhập (₫) - từ YC *</label>
@@ -970,9 +1005,26 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                 {/* ── Row 2: Số bộ + Giá cả bộ ── */}
                 <div className="grid gap-3 grid-cols-2 mt-2">
                     <div>
-                        <label className={lbl} style={lblS}>Số bộ nhập</label>
-                        <input type="number" value={bundle.bundleQty} onChange={(e) => onUpdate("bundleQty", parseNumber(e.target.value))}
-                            className={inp} style={{ ...inpS, borderColor: "#7C3AED" }} />
+                        <label className={lbl} style={lblS}>
+                            Số bộ nhập
+                            {bundle.requestedQty !== null && (
+                                <span className="ml-1 font-normal normal-case" style={{ color: "var(--text-placeholder)" }}>
+                                    (tối đa: <span className="font-bold text-purple-600">{bundle.requestedQty}</span>)
+                                </span>
+                            )}
+                        </label>
+                        <input
+                            type="number"
+                            value={bundle.bundleQty}
+                            min={1}
+                            max={bundle.requestedQty !== null ? bundle.requestedQty : undefined}
+                            onChange={(e) => onUpdate("bundleQty", parseNumber(e.target.value))}
+                            className={inp}
+                            style={{ ...inpS, borderColor: bundle.requestedQty !== null && Number(bundle.bundleQty) > bundle.requestedQty ? "#EF4444" : "#7C3AED" }}
+                        />
+                        {bundle.requestedQty !== null && Number(bundle.bundleQty) > bundle.requestedQty && (
+                            <p className="text-[11px] text-red-500 mt-1 font-medium">⚠️ Vượt quá số lượng yêu cầu ({bundle.requestedQty})</p>
+                        )}
                     </div>
                     <div>
                         <label className={lbl} style={{ ...lblS }}><span className="text-purple-600">Giá cả bộ (₫) — theo YC *</span></label>

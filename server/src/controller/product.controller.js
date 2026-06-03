@@ -626,10 +626,10 @@ class ProductController {
                     displayStatus = "Hết hàng";
                 } else if (p.is_gift === 1) {
                     displayStatus = "Quà tặng";
-                } else if (!pricing || (pricing.final_price <= 0 && pricing.raw_price <= 0)) {
-                    displayStatus = "Chưa định giá";
                 } else if (p.product_type === "CUSTOM") {
                     displayStatus = "Hàng khách đặt";
+                } else if (!pricing || (pricing.final_price <= 0 && pricing.raw_price <= 0)) {
+                    displayStatus = "Chưa định giá";
                 } else if (availableQty === 0 && p.product_type !== "CUSTOM") {
                     displayStatus = "Hết hàng";
                 } else if (p.product_type === "RAW") {

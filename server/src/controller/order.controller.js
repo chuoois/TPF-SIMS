@@ -79,6 +79,15 @@ class OrderController {
                             WHERE i.fk_order_id = Order.pk_order_id AND i.status = 1 AND p.processing_status != 4
                         )`),
                         'pending_processing_count'
+                    ],
+                    [
+                        sequelize.literal(`(
+                            SELECT COUNT(*) 
+                            FROM order_item_processing AS p
+                            JOIN order_item AS i ON p.fk_order_item_id = i.pk_order_item_id
+                            WHERE i.fk_order_id = Order.pk_order_id AND i.status = 1 AND p.processing_status = 3
+                        )`),
+                        'inspection_count'
                     ]
                 ],
                 order: [['createdate', 'DESC']],
@@ -559,6 +568,61 @@ class OrderController {
                 note: historyNote,
                 createby: userId,
             }, { transaction: t });
+
+            // Auto-cleanup: Xóa sản phẩm CUSTOM khi đơn hàng khách đặt hoàn thành
+            if (Number(order_status) === 6 && Number(order.order_type) === 3) {
+                const orderItems = await OrderItem.findAll({
+                    where: { fk_order_id: id, status: 1 },
+                    attributes: ['pk_order_item_id', 'fk_product_id'],
+                    transaction: t
+                });
+
+                const customProductIds = [...new Set(
+                    orderItems.map(i => i.fk_product_id).filter(Boolean)
+                )];
+
+                for (const productId of customProductIds) {
+                    const product = await Product.findByPk(productId, { transaction: t });
+                    if (!product || product.product_type !== 'CUSTOM') continue;
+
+                    // 1. Xóa ProductPricing
+                    await ProductPricing.destroy({
+                        where: { fk_product_id: productId },
+                        transaction: t
+                    });
+
+                    // 2. Xóa ProductItem
+                    await ProductItem.destroy({
+                        where: { fk_product_id: productId },
+                        transaction: t
+                    });
+
+                    // 3. Xóa liên kết CouponProduct (nếu có)
+                    const { CouponProduct } = require("../entities");
+                    await CouponProduct.destroy({
+                        where: { fk_product_id: productId },
+                        transaction: t
+                    });
+
+                    // 4. Gỡ FK ở OrderItem (giữ lịch sử đơn hàng)
+                    await OrderItem.update(
+                        { fk_product_id: null },
+                        { where: { fk_product_id: productId }, transaction: t }
+                    );
+
+                    // 5. Gỡ FK ở ManufacturingOrderItem (giữ lịch sử nhập hàng)
+                    const { ManufacturingOrderItem: MOI } = require("../entities");
+                    await MOI.update(
+                        { fk_product_id: null },
+                        { where: { fk_product_id: productId }, transaction: t }
+                    );
+
+                    // 6. Xóa sản phẩm
+                    await product.destroy({ transaction: t });
+                }
+
+                console.log(`[Auto-cleanup] Đơn #${id} hoàn thành → Đã xóa ${customProductIds.length} sản phẩm CUSTOM.`);
+            }
 
             await t.commit();
 
