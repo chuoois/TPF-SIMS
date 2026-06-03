@@ -71,7 +71,29 @@ class EmployeeController {
       // Kiểm tra mã nhân viên trùng
       const existing = await Employee.findOne({ where: { employee_code } });
       if (existing) {
-        return res.status(400).json({ message: `Mã nhân viên "${employee_code}" đã tồn tại` });
+        if (existing.is_active === 1) {
+          return res.status(400).json({ message: `Mã nhân viên "${employee_code}" đã tồn tại` });
+        }
+
+        // Reactivate nhân viên đã nghỉ việc — cập nhật thông tin mới
+        await existing.update({
+          full_name,
+          role_name,
+          role_type,
+          base_rate: base_rate || 0,
+          is_active: 1,
+          user_account_id: user_account_id ?? existing.user_account_id,
+          modifiedate: new Date(),
+          modifieby: currentUserId,
+        });
+
+        await systemLogController.record(
+          req, "REACTIVATE_EMPLOYEE",
+          `Đã kích hoạt lại nhân viên: ${full_name} (${employee_code})`,
+          "INFO", currentUserId
+        );
+
+        return res.status(200).json({ message: "Kích hoạt lại nhân viên thành công", data: existing });
       }
 
       const employee = await Employee.create({
