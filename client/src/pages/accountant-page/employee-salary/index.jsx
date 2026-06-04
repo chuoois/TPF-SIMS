@@ -53,7 +53,7 @@ export default function AccountantEmployeeSalary() {
     const [employeeToDelete, setEmployeeToDelete] = useState(null);
 
     const [isPeriodModalOpen, setIsPeriodModalOpen] = useState(false);
-    
+
     // Payment confirmation
     const [selectedEmpForPayment, setSelectedEmpForPayment] = useState(null);
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -201,7 +201,7 @@ export default function AccountantEmployeeSalary() {
             toast.success(`Đã xóa ${employeeToDelete.name} khỏi hệ thống lương`, { icon: "🚫" });
             setEmployeeToDelete(null);
             fetchRecords(selectedPeriodId);
-        } catch(err) {
+        } catch (err) {
             toast.error(err.response?.data?.message || "Lỗi khi xóa");
         }
     };
@@ -220,7 +220,7 @@ export default function AccountantEmployeeSalary() {
                 await payrollService.unpayRecord(recordId);
                 toast.success(`🔄 Đã đổi trạng thái về Chưa thanh toán`);
                 fetchRecords(selectedPeriodId);
-            } catch(err) {
+            } catch (err) {
                 toast.error(err.response?.data?.message || "Lỗi khi đổi trạng thái");
             }
         } else {
@@ -250,7 +250,7 @@ export default function AccountantEmployeeSalary() {
             setSelectedEmpForPayment(null);
             setPaymentBill(null);
             fetchRecords(selectedPeriodId);
-        } catch(err) {
+        } catch (err) {
             toast.error(err.response?.data?.message || "Lỗi khi thanh toán");
         }
     };
@@ -261,7 +261,7 @@ export default function AccountantEmployeeSalary() {
             const originalAdjustments = employeeForAdjustment.adjustments || [];
             const deleted = originalAdjustments.filter(o => !newAdjustments.find(n => n.adjustment_id === o.adjustment_id));
             const added = newAdjustments.filter(n => !n.adjustment_id);
-            
+
             for (const adj of deleted) {
                 await payrollService.deleteAdjustment(adj.adjustment_id);
             }
@@ -276,7 +276,7 @@ export default function AccountantEmployeeSalary() {
             setIsAdjustmentModalOpen(false);
             setEmployeeForAdjustment(null);
             fetchRecords(selectedPeriodId);
-        } catch(err) {
+        } catch (err) {
             toast.error(err.response?.data?.message || "Lỗi khi cập nhật thưởng/phạt");
         }
     };
@@ -311,7 +311,7 @@ export default function AccountantEmployeeSalary() {
         XLSX.utils.book_append_sheet(workbook, worksheet, "Bảng Lương");
 
         const wscols = [
-            { wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 12 }, { wch: 25 }, 
+            { wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 12 }, { wch: 25 },
             { wch: 18 }, { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 15 }
         ];
         worksheet["!cols"] = wscols;
@@ -524,7 +524,7 @@ export default function AccountantEmployeeSalary() {
                                                     )}>
                                                         {totalAdjustments > 0 ? `+${formatCurrency(totalAdjustments)}` : totalAdjustments < 0 ? formatCurrency(totalAdjustments) : "—"}
                                                     </span>
-                                                    <button 
+                                                    <button
                                                         onClick={() => { setEmployeeForAdjustment(emp); setIsAdjustmentModalOpen(true); }}
                                                         className="text-[11px] text-blue-600 hover:underline cursor-pointer">
                                                         Chi tiết
@@ -558,7 +558,7 @@ export default function AccountantEmployeeSalary() {
 
                                             <td className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                                 <div className="flex gap-1 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-gray-100">
-                                                    <button 
+                                                    <button
                                                         onClick={() => handleQuickAttendance(emp)}
                                                         disabled={isLocked}
                                                         title="Điểm danh nhanh (+1 ngày)"
@@ -569,7 +569,7 @@ export default function AccountantEmployeeSalary() {
                                                         Điểm danh
                                                     </button>
                                                     <div className="w-[1px] h-4 bg-gray-200 self-center mx-0.5" />
-                                                    <button 
+                                                    <button
                                                         onClick={() => !isLocked && (setEmployeeToEdit(emp), setIsModalOpen(true))}
                                                         disabled={isLocked}
                                                         className={cn("h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[12px] font-bold transition",
@@ -579,7 +579,7 @@ export default function AccountantEmployeeSalary() {
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22h6" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
                                                         Sửa
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         onClick={() => !isLocked && setEmployeeToDelete(emp)}
                                                         disabled={isLocked}
                                                         className={cn("h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[12px] font-bold transition",
@@ -626,7 +626,7 @@ export default function AccountantEmployeeSalary() {
                 employeeToEdit={employeeToEdit}
             />
 
-            <AdjustmentModal 
+            <AdjustmentModal
                 isOpen={isAdjustmentModalOpen}
                 onClose={() => { setIsAdjustmentModalOpen(false); setEmployeeForAdjustment(null); }}
                 employee={employeeForAdjustment}
@@ -657,19 +657,19 @@ export default function AccountantEmployeeSalary() {
                             </button>
                             <button onClick={handleDeleteEmployee}
                                 className="h-10 px-5 rounded-xl text-[13px] font-bold bg-red-600 cursor-pointer text-white hover:bg-red-700 transition">
-                                Có, xóa
+                                Xóa
                             </button>
                         </div>
                     </div>
                 </div>
             )}
-            
+
             {isPaymentModalOpen && selectedEmpForPayment && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
                     onClick={() => setIsPaymentModalOpen(false)}>
                     <div className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col overflow-hidden"
                         onClick={e => e.stopPropagation()}>
-                        
+
                         <div className="px-6 py-5 shrink-0 border-b relative" style={{ borderColor: "var(--grid-border)" }}>
                             <button onClick={() => setIsPaymentModalOpen(false)}
                                 className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-black/5 cursor-pointer transition text-gray-400">
