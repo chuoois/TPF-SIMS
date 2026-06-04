@@ -162,7 +162,14 @@ export default function CustomOrderRequirementsPage() {
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const [showWorkshopStatus, setShowWorkshopStatus] = useState(false);
   const [viewingItem, setViewingItem] = useState(null);
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const [enlargedImg, setEnlargedImg] = useState(null);
   const [editingItemId, setEditingItemId] = useState(null);
+
+  const handleViewItem = (item) => {
+    setActiveImageIdx(0);
+    setViewingItem(item);
+  };
   const [customerSearch, setCustomerSearch] = useState("");
 
   const activeTab = useMemo(
@@ -391,7 +398,7 @@ export default function CustomOrderRequirementsPage() {
           isSearchingCustomers={isSearchingCustomers}
           setShowAddCustomer={setShowAddCustomer}
           setShowWorkshopStatus={setShowWorkshopStatus}
-          setViewingItem={setViewingItem}
+          setViewingItem={handleViewItem}
           itemCount={itemCount}
           subtotal={subtotal}
           totalPayable={totalPayable}
@@ -433,43 +440,51 @@ export default function CustomOrderRequirementsPage() {
             </div>
 
             <div className="space-y-4">
-              <div className="flex gap-4">
-                <div className="w-32 h-32 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0">
-                  {viewingItem.images?.length > 0 ? (
-                    <img
-                      src={typeof viewingItem.images[0] === "string" ? viewingItem.images[0] : URL.createObjectURL(viewingItem.images[0])}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300">
-                      <Package size={40} />
-                    </div>
+              {/* Product info */}
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xl font-bold text-gray-900">{viewingItem.productName}</h4>
+                  {viewingItem.item_is_bundle === 1 && (
+                    <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 text-[10px] font-bold uppercase border border-purple-100 flex items-center gap-1 shrink-0">
+                      <Package size={11} /> Bộ SP
+                    </span>
                   )}
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h4 className="text-xl font-bold text-gray-900">{viewingItem.productName}</h4>
-                    {viewingItem.item_is_bundle === 1 && (
-                      <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 text-[10px] font-bold uppercase border border-purple-100 flex items-center gap-1 shrink-0">
-                        <Package size={11} /> Bộ SP
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-500 mt-1">{viewingItem.woodType} | {viewingItem.color}</p>
-                  {viewingItem.item_is_bundle === 1 ? (
-                    <p className="text-sm text-purple-500 mt-0.5 font-medium">
-                      Bộ gồm {(viewingItem.item_bundle_items || []).length} sản phẩm
-                    </p>
-                  ) : (
-                    <p className="text-sm text-gray-500 mt-0.5">
-                      Kích thước: {formatDimension(viewingItem.size)}
-                    </p>
-                  )}
-                  {viewingItem.expectedPrice > 0 && (
-                <p className="text-lg font-bold text-green-600 mt-2">{fmt(viewingItem.expectedPrice)}đ</p>
-              )}
-                </div>
+                <p className="text-sm text-gray-500 mt-1">{viewingItem.woodType} | {viewingItem.color}</p>
+                {viewingItem.item_is_bundle === 1 ? (
+                  <p className="text-sm text-purple-500 mt-0.5 font-medium">
+                    Bộ gồm {(viewingItem.item_bundle_items || []).length} sản phẩm
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    Kích thước: {formatDimension(viewingItem.size)}
+                  </p>
+                )}
+                {viewingItem.expectedPrice > 0 && (
+                  <p className="text-lg font-bold text-green-600 mt-2">{fmt(viewingItem.expectedPrice)}đ</p>
+                )}
               </div>
+
+              {/* Sample images row */}
+              {viewingItem.images?.length > 0 && (
+                <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Ảnh mẫu</p>
+                  <div className="flex gap-2 overflow-x-auto">
+                    {viewingItem.images.map((img, idx) => {
+                      const src = typeof img === "string" ? img : URL.createObjectURL(img);
+                      return (
+                        <div
+                          key={idx}
+                          className="w-20 h-20 rounded-lg bg-white border border-gray-200 overflow-hidden shrink-0 cursor-zoom-in hover:border-[#34B057] transition-colors"
+                          onClick={() => setEnlargedImg(src)}
+                        >
+                          <img src={src} className="w-full h-full object-cover" alt={`Ảnh mẫu ${idx + 1}`} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
  
               {/* Danh sách sản phẩm con trong bộ */}
               {viewingItem.item_is_bundle === 1 && viewingItem.item_bundle_items && viewingItem.item_bundle_items.length > 0 && (
@@ -513,6 +528,13 @@ export default function CustomOrderRequirementsPage() {
               Đóng
             </Button>
           </div>
+        </div>
+      )}
+
+      {/* Enlarged image overlay */}
+      {enlargedImg && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm cursor-zoom-out" onClick={() => setEnlargedImg(null)}>
+          <img src={enlargedImg} className="max-w-[90vw] max-h-[85vh] rounded-xl shadow-2xl object-contain" />
         </div>
       )}
     </>

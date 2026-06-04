@@ -117,7 +117,7 @@ class CustomRequestController {
                     { request_code: { [Op.like]: `%${search}%` } },
                     { "$customer.full_name$": { [Op.like]: `%${search}%` } },
                     { "$customer.phone_number$": { [Op.like]: `%${search}%` } },
-                    { "$items.supplier.supplier_name$": { [Op.like]: `%${search}%` } }
+                    { "$items.item_name$": { [Op.like]: `%${search}%` } }
                 ];
             }
 
@@ -277,6 +277,7 @@ class CustomRequestController {
             if (Number(status) === 3 && Number(oldStatus) !== 3 && !request.fk_order_id) {
                 // A. Tạo Order Header
                 const newOrder = await Order.create({
+                    order_code: `DH-${Date.now()}`,
                     fk_customer_id: request.fk_customer_id,
                     fk_user_account_id: request.createby, // Gán cho người tạo yêu cầu (thường là Sales)
                     fulfillment_method: request.fulfillment_method || "Giao tận nhà",
@@ -402,10 +403,10 @@ class CustomRequestController {
                 }
             }
 
-            return res.status(200).json({ 
-                message: createdOrderId ? "Cập nhật thành công và đã tạo đơn hàng" : "Cập nhật thành công", 
+            return res.status(200).json({
+                message: createdOrderId ? "Cập nhật thành công và đã tạo đơn hàng" : "Cập nhật thành công",
                 data: request,
-                orderId: createdOrderId 
+                orderId: createdOrderId
             });
         } catch (error) {
             if (t && !t.finished) await t.rollback();
@@ -421,9 +422,9 @@ class CustomRequestController {
         const t = await sequelize.transaction();
         try {
             const { id } = req.params;
-            const { 
-                deposit_amount, total_amount, expected_fulfillment_date, 
-                fulfillment_method, note, items 
+            const {
+                deposit_amount, total_amount, expected_fulfillment_date,
+                fulfillment_method, note, items
             } = req.body;
             const userId = req.user.userId;
 
@@ -476,7 +477,7 @@ class CustomRequestController {
                     }
 
                     await CustomRequestItem.update(updateItemData, {
-                        where: { 
+                        where: {
                             pk_custom_request_item_id: item.id,
                             fk_custom_request_id: id
                         },

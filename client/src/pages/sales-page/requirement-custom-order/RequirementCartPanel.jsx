@@ -23,8 +23,8 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import CustomCheckbox from "@/components/control/CustomCheckbox";
-import { fmt, DELIVERY_METHODS } from "@/constants/orderConfig";
+
+
 
 
 
@@ -80,6 +80,7 @@ export default function RequirementCartPanel({
 }) {
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [expandedBundles, setExpandedBundles] = useState({});
+  const [enlargedImg, setEnlargedImg] = useState(null);
   const customerSearchRef = useRef(null);
 
   const toggleBundleExpand = (itemId) => {
@@ -186,10 +187,6 @@ export default function RequirementCartPanel({
                     {idx + 1}
                   </span>
 
-                  <div className="w-12 h-12 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden shrink-0 flex items-center justify-center">
-                    <Package size={20} className="text-gray-300" />
-                  </div>
-
                   {/* Product info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -295,6 +292,24 @@ export default function RequirementCartPanel({
                     <span className="text-[11px] italic line-clamp-1" style={{ color: "var(--text-placeholder)" }}>
                       Yêu cầu: {item.note}
                     </span>
+                  </div>
+                )}
+
+                {/* Sample images row */}
+                {item.images?.length > 0 && (
+                  <div className="mt-2 pl-11 flex items-center gap-1.5">
+                    <span className="text-[10px] font-semibold uppercase text-gray-400 shrink-0">Ảnh mẫu:</span>
+                    <div className="flex gap-1 overflow-x-auto">
+                      {item.images.map((img, imgIdx) => (
+                        <div key={imgIdx} className="w-9 h-9 rounded-md bg-gray-50 border border-gray-100 overflow-hidden shrink-0 cursor-zoom-in" onClick={() => setEnlargedImg(typeof img === "string" ? img : URL.createObjectURL(img))}>
+                          <img
+                            src={typeof img === "string" ? img : URL.createObjectURL(img)}
+                            className="w-full h-full object-cover"
+                            alt={`${item.productName} ${imgIdx + 1}`}
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
@@ -532,6 +547,13 @@ export default function RequirementCartPanel({
           </Button>
         </div>
       </div>
+
+      {/* Enlarged image overlay */}
+      {enlargedImg && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm cursor-zoom-out" onClick={() => setEnlargedImg(null)}>
+          <img src={enlargedImg} className="max-w-[90vw] max-h-[85vh] rounded-xl shadow-2xl object-contain" />
+        </div>
+      )}
     </div>
   );
 }

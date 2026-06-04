@@ -66,6 +66,7 @@ export default function RequirementsListing({ userRole = 'sales' }) {
           totalAmount: r.total_amount,
           deliveryDate: r.expected_fulfillment_date,
           thumbnail: r.items?.[0]?.item_img,
+          customerImages: (r.items || []).flatMap((it) => it.customer_img || []),
           productNames: itemNames.join(", "),
           itemCount: itemNames.length,
           hasBundle,
@@ -145,14 +146,32 @@ export default function RequirementsListing({ userRole = 'sales' }) {
     { header: "STT", render: (_, idx) => (currentPage - 1) * itemsPerPage + idx + 1, headerClassName: "w-[60px] text-center", className: "text-center font-medium text-slate-400" },
     { header: "Mã yêu cầu", key: "code", className: "font-mono font-bold text-slate-700" },
     {
-      header: "Ảnh", headerClassName: "w-[80px] text-center", className: "text-center",
+      header: "Ảnh mẫu", headerClassName: "w-[120px] text-center", className: "text-center",
       render: (r) => (
-        <div className="flex justify-center">
-          <div className="w-10 h-10 rounded-lg border border-slate-100 bg-slate-50 overflow-hidden cursor-zoom-in group relative" onClick={(e) => { e.stopPropagation(); setEnlargedImg(r.thumbnail); }}>
-            {r.thumbnail ? <img src={r.thumbnail} className="w-full h-full object-cover group-hover:scale-110 transition-transform" /> : <ImageIcon size={16} className="text-slate-300 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />}
-          </div>
+        <div className="flex justify-center gap-1 flex-wrap max-w-[120px] mx-auto">
+          {r.customerImages && r.customerImages.length > 0 ? (
+            r.customerImages.map((img, i) => (
+              <div
+                key={i}
+                className="w-8 h-8 rounded border border-slate-100 bg-slate-50 overflow-hidden cursor-zoom-in group relative shrink-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEnlargedImg(img);
+                }}
+              >
+                <img
+                  src={img}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                />
+              </div>
+            ))
+          ) : (
+            <div className="w-8 h-8 rounded border border-slate-100 bg-slate-50 overflow-hidden flex items-center justify-center text-slate-300">
+              <ImageIcon size={14} />
+            </div>
+          )}
         </div>
-      )
+      ),
     },
     {
       header: "Khách hàng",
@@ -329,7 +348,7 @@ export default function RequirementsListing({ userRole = 'sales' }) {
           isRefreshing={isRefreshing}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
-          searchPlaceholder="Tìm tên khách, số điện thoại, mã..."
+          searchPlaceholder="Tìm mã yêu cầu, tên KH, SĐT, tên SP..."
           dateFrom={dateFrom}
           setDateFrom={setDateFrom}
           dateTo={dateTo}

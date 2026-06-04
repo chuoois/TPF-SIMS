@@ -29,6 +29,18 @@ const parseNumberInput = (value) => {
 
 const fmtDate = (s) => (s ? new Date(s).toLocaleDateString("vi-VN") : "—");
 
+const addOneDayStr = (dateStr) => {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().split('T')[0];
+};
+
+const subOneDayStr = (dateStr) => {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().split('T')[0];
+};
+
 const fmtDateTime = (s) => {
   if (!s) return "—";
   const d = new Date(s);
@@ -336,7 +348,7 @@ const StandardOrderView = ({
                         <div className="flex flex-col items-end ml-4">
                           <p className="text-[20px] font-black text-[var(--text-main)]">{fmtCurrency(p.price)}</p>
                           <div className="mt-2.5">
-                            {o?.type !== "Hàng sẵn" && (
+                            {o?.type !== "Hàng sẵn" && o?.type !== "Hàng mộc" && (
                               p.importStatus === 1 ? (
                                 <span className="flex items-center gap-1.5 px-3 py-1.5 shadow-sm rounded-lg text-[11px] font-black bg-[var(--status-success)] text-white border border-[var(--status-success)]/30 uppercase tracking-wide">
                                   <CheckCircle size={14} /> Đã về kho
@@ -722,8 +734,8 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
             bundleItems: (() => {
               if (!p.item_bundle_items) return [];
               try {
-                const parsed = typeof p.item_bundle_items === 'string' 
-                  ? JSON.parse(p.item_bundle_items) 
+                const parsed = typeof p.item_bundle_items === 'string'
+                  ? JSON.parse(p.item_bundle_items)
                   : p.item_bundle_items;
                 return Array.isArray(parsed) ? parsed : [];
               } catch (e) {
@@ -957,7 +969,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
       if (order.deliveryDate) {
         const invalidItems = handoverItemsData.filter((item) => {
           if (!item.deadline) return false;
-          return isDateAfter(item.deadline, order.deliveryDate);
+          return item.deadline >= new Date(order.deliveryDate).toISOString().split('T')[0];
         });
 
         if (invalidItems.length > 0) {
@@ -1149,7 +1161,18 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                     /* Trường hợp thợ đã xong 100% - Đổi sang nút khác */
                     <button
                       className="h-10 px-5 rounded-lg text-[13px] font-bold bg-[var(--status-success)] text-[var(--primary-foreground)] hover:opacity-90 transition-all active:scale-95 flex items-center gap-2 shadow-sm"
-                      onClick={() => handleUpdate("Chờ giao hàng")}
+                      onClick={() => {
+                        setConfirmConfig({
+                          title: "Xác nhận chuyển sang Chờ Giao",
+                          message: "Xác nhận toàn bộ sản phẩm đã hoàn thiện và chuyển đơn hàng sang trạng thái chờ giao? Việc này sẽ thông báo cho bộ phận vận chuyển để lên lịch giao hàng.",
+                          showInput: false,
+                          onConfirm: () => {
+                            handleUpdate("Chờ giao hàng");
+                            setShowConfirm(false);
+                          }
+                        });
+                        setShowConfirm(true);
+                      }}
                     >
                       <CheckCircle size={16} /> CHUYỂN SANG CHỜ GIAO
                     </button>
@@ -1160,7 +1183,18 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
               {userRole === 'owner' && order.status === "Chờ giao hàng" && (
                 <button
                   className="px-5 py-2 bg-[var(--palette-blue)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center gap-2"
-                  onClick={() => handleUpdate("Đang giao hàng")}
+                  onClick={() => {
+                    setConfirmConfig({
+                      title: "Xác nhận bắt đầu giao hàng",
+                      message: "Xác nhận đơn hàng đã được xuất kho và đang trong quá trình vận chuyển đến tay khách hàng? Trạng thái đơn hàng sẽ được cập nhật thành 'Đang giao'.",
+                      showInput: false,
+                      onConfirm: () => {
+                        handleUpdate("Đang giao hàng");
+                        setShowConfirm(false);
+                      }
+                    });
+                    setShowConfirm(true);
+                  }}
                 >
                   <RefreshCw size={16} /> BẮT ĐẦU GIAO
                 </button>
@@ -1367,7 +1401,18 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
               </div>
 
               <button
-                onClick={handleFinishOrder}
+                onClick={() => {
+                  setConfirmConfig({
+                    title: "Xác nhận hoàn tất đơn hàng",
+                    message: "Xác nhận đơn hàng đã được giao thành công và hoàn tất thủ tục thanh toán? Sau khi hoàn tất, đơn hàng sẽ được lưu vào lịch sử giao dịch và không thể chỉnh sửa trạng thái.",
+                    showInput: false,
+                    onConfirm: () => {
+                      handleFinishOrder();
+                      setShowConfirm(false);
+                    }
+                  });
+                  setShowConfirm(true);
+                }}
                 className="w-full h-10 bg-[var(--status-success)] hover:opacity-90 text-[var(--primary-foreground)] rounded-lg font-bold text-[13px] transition-all active:scale-95 mt-2 flex items-center justify-center"
               >
                 XÁC NHẬN HOÀN TẤT
@@ -1428,10 +1473,18 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                 </h4>
                 {order?.products?.map((p, idx) => {
                   const itemData = handoverItemsData[idx] || { unitLabor: 0, days: "0", deadline: "" };
+                  const dl = itemData.deadline;
+                  const orderCreatedDate = order?.date ? new Date(order.date).toISOString().split('T')[0] : null;
+                  const orderDeliveryDate = order?.deliveryDate ? new Date(order.deliveryDate).toISOString().split('T')[0] : null;
+
+                  const isTooLate = dl && orderDeliveryDate && dl >= orderDeliveryDate;
+                  const isTooEarly = dl && orderCreatedDate && dl <= orderCreatedDate;
+                  const hasDateError = isTooLate || isTooEarly;
+
                   return (
                     <div
                       key={idx}
-                      className="bg-white border border-[var(--grid-border)] rounded-lg p-4"
+                      className={`border rounded-lg p-4 transition-colors ${hasDateError ? 'bg-[var(--status-error)]/3 border-[var(--status-error)]/40' : 'bg-white border-[var(--grid-border)]'}`}
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-14 h-14 rounded-lg overflow-hidden bg-[var(--bg-main)] border border-[var(--grid-border)] shrink-0">
@@ -1441,7 +1494,7 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <div className="flex-1 min-w-0 grid grid-cols-12 gap-8 items-center">
+                        <div className="flex-1 min-w-0 grid grid-cols-12 gap-8 items-start">
                           <div className="col-span-7 min-w-0">
                             <h4 className="text-[14px] font-bold text-[var(--text-main)] truncate">
                               {p.name}
@@ -1452,18 +1505,32 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                                 {p.qty} {p.unit}
                               </span>
                             </p>
+                            {/* Date range hint */}
+                            {orderCreatedDate && orderDeliveryDate && (
+                              <p className="text-[10px] text-[red] mt-1.5 leading-tight">
+                                Phải trong khoảng{" "}
+                                <span className="font-bold">{fmtDate(orderCreatedDate)}</span>
+                                {" → "}
+                                <span className="font-bold">{fmtDate(orderDeliveryDate)}</span>
+                              </p>
+                            )}
                           </div>
 
                           {/* Deadline Input */}
                           <div className="col-span-5">
-                            <p className="text-[9px] font-bold text-[var(--text-placeholder)] uppercase tracking-tight mb-1 ml-1">
-                              Hạn xong SP
+                            <p className={`text-[9px] font-bold uppercase tracking-tight mb-1 ml-1 ${hasDateError ? 'text-[var(--status-error)]' : 'text-[var(--text-placeholder)]'}`}>
+                              Hạn xong SP {hasDateError && '⚠'}
                             </p>
                             <div className="relative">
                               <input
                                 type="date"
-                                className={`w-full pl-8 pr-2 py-1.5 bg-white border rounded-lg font-bold text-[11px] outline-none transition-all ${itemData.deadline && order?.deliveryDate && isDateAfter(itemData.deadline, order.deliveryDate) ? 'border-red-500 text-red-600 bg-red-50' : 'border-[var(--grid-border)] text-[var(--text-main)] focus:border-[var(--brand-primary)]'}`}
-                                value={itemData.deadline || ""}
+                                min={orderCreatedDate ? addOneDayStr(orderCreatedDate) : undefined}
+                                max={orderDeliveryDate ? subOneDayStr(orderDeliveryDate) : undefined}
+                                className={`w-full pl-8 pr-2 py-1.5 border rounded-lg font-bold text-[11px] outline-none transition-all focus:ring-2 ${hasDateError
+                                  ? 'border-[var(--status-error)] text-[var(--status-error)] bg-[var(--status-error)]/5 focus:ring-[var(--status-error)]/20'
+                                  : 'bg-white border-[var(--grid-border)] text-[var(--text-main)] focus:border-[var(--brand-primary)] focus:ring-[var(--brand-primary)]/10'
+                                  }`}
+                                value={dl || ""}
                                 onChange={(e) => {
                                   const newData = [...handoverItemsData];
                                   newData[idx] = { ...itemData, deadline: e.target.value };
@@ -1472,9 +1539,22 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                               />
                               <Calendar
                                 size={12}
-                                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-placeholder)]"
+                                className={`absolute left-2.5 top-1/2 -translate-y-1/2 ${hasDateError ? 'text-[var(--status-error)]' : 'text-[var(--text-placeholder)]'}`}
                               />
                             </div>
+                            {/* Inline error message */}
+                            {isTooEarly && (
+                              <p className="mt-1.5 ml-1 text-[10px] font-bold text-[var(--status-error)] flex items-center gap-1 leading-tight">
+                                <AlertTriangle size={10} className="shrink-0" />
+                                Phải SAU ngày tạo đơn, không được trùng ({fmtDate(orderCreatedDate)})
+                              </p>
+                            )}
+                            {isTooLate && (
+                              <p className="mt-1.5 ml-1 text-[10px] font-bold text-[var(--status-error)] flex items-center gap-1 leading-tight">
+                                <AlertTriangle size={10} className="shrink-0" />
+                                Phải TRƯỚC ngày giao, không được trùng ({fmtDate(orderDeliveryDate)})
+                              </p>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1500,23 +1580,57 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
               </div>
             </div>
 
-            <div className="p-6 bg-[var(--grid-header-bg)] border-t border-[var(--grid-border)] shrink-0 flex items-center justify-end">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setShowHandoverModal(false)}
-                  className="px-6 py-2.5 rounded-lg border border-[var(--grid-border)] text-[13px] font-bold text-[var(--text-secondary)] hover:bg-white transition-all cursor-pointer"
-                >
-                  Bỏ qua
-                </button>
-                <button
-                  onClick={handleHandoverConfirm}
-                  className="px-8 py-2.5 bg-[var(--brand-primary)] hover:opacity-90 text-white rounded-lg font-bold text-[13px] transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
-                >
-                  Xác nhận bàn giao
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
+            {(() => {
+              const orderCreatedDate = order?.date ? new Date(order.date).toISOString().split('T')[0] : null;
+              const orderDeliveryDate = order?.deliveryDate ? new Date(order.deliveryDate).toISOString().split('T')[0] : null;
+              const hasAnyDateError = handoverItemsData.some(item => {
+                if (!item.deadline) return false;
+                return (orderDeliveryDate && item.deadline >= orderDeliveryDate) ||
+                  (orderCreatedDate && item.deadline <= orderCreatedDate);
+              });
+              return (
+                <div className="p-6 bg-[var(--grid-header-bg)] border-t border-[var(--grid-border)] shrink-0 space-y-3">
+                  {hasAnyDateError && (
+                    <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--status-error)]/8 border border-[var(--status-error)]/25">
+                      <AlertTriangle size={14} className="text-[var(--status-error)] shrink-0" />
+                      <p className="text-[11px] font-bold text-[var(--status-error)] leading-snug">
+                        Có sản phẩm có <span className="underline">Hạn xong SP</span> không hợp lệ. Hạn phải sau ngày tạo đơn và trước ngày giao khách.
+                      </p>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-end gap-3">
+                    <button
+                      onClick={() => setShowHandoverModal(false)}
+                      className="px-6 py-2.5 rounded-lg border border-[var(--grid-border)] text-[13px] font-bold text-[var(--text-secondary)] hover:bg-white transition-all cursor-pointer"
+                    >
+                      Bỏ qua
+                    </button>
+                    <button
+                      onClick={() => {
+                        setConfirmConfig({
+                          title: "Xác nhận bàn giao gia công",
+                          message: "Xác nhận bàn giao các sản phẩm này cho xưởng để tiến hành gia công? Hãy đảm bảo thông tin ghi chú và hạn hoàn thành đã được kiểm tra kỹ.",
+                          showInput: false,
+                          onConfirm: () => {
+                            handleHandoverConfirm();
+                            setShowConfirm(false);
+                          }
+                        });
+                        setShowConfirm(true);
+                      }}
+                      disabled={hasAnyDateError}
+                      className={`px-8 py-2.5 rounded-lg font-bold text-[13px] transition-all flex items-center gap-2 ${hasAnyDateError
+                        ? 'bg-[var(--text-placeholder)]/20 text-[var(--text-placeholder)] cursor-not-allowed'
+                        : 'bg-[var(--brand-primary)] hover:opacity-90 text-white active:scale-95 cursor-pointer'
+                        }`}
+                    >
+                      Xác nhận bàn giao
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
@@ -1586,14 +1700,23 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                   <RotateCcw size={16} /> YÊU CẦU SỬA LẠI
                 </button>
                 <button
-                  onClick={async () => {
-                    const ok = await updateProductionInLocal(inspectItem.orderItemId, {
-                      status: "Hoàn Thành"
+                  onClick={() => {
+                    setConfirmConfig({
+                      title: "Xác nhận đạt yêu cầu",
+                      message: "Xác nhận sản phẩm đã đạt chuẩn chất lượng và hoàn tất quá trình gia công? Hành động này sẽ ghi nhận sản phẩm đã sẵn sàng để bàn giao.",
+                      showInput: false,
+                      onConfirm: async () => {
+                        const ok = await updateProductionInLocal(inspectItem.orderItemId, {
+                          status: "Hoàn Thành"
+                        });
+                        if (ok) {
+                          toast.success("Đã nghiệm thu thành công sản phẩm!");
+                          setInspectItem(null);
+                        }
+                        setShowConfirm(false);
+                      }
                     });
-                    if (ok) {
-                      toast.success("Đã nghiệm thu thành công sản phẩm!");
-                      setInspectItem(null);
-                    }
+                    setShowConfirm(true);
                   }}
                   className="h-10 px-4 bg-emerald-600 text-white rounded-lg text-[13px] font-bold hover:bg-emerald-700 transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
@@ -1636,17 +1759,26 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                   HỦY
                 </button>
                 <button
-                  onClick={async () => {
+                  onClick={() => {
                     if (!redoNote.trim()) { toast.error("Vui lòng nhập nội dung cần sửa"); return; }
-                    const ok = await updateProductionInLocal(redoItem.orderItemId, {
-                      status: "Đang gia công",
-                      note: redoNote
+                    setConfirmConfig({
+                      title: "Xác nhận gửi yêu cầu sửa",
+                      message: "Xác nhận gửi yêu cầu sửa lại sản phẩm này cho thợ? Tiến độ đơn hàng có thể bị ảnh hưởng, hãy đảm bảo bạn đã ghi chú rõ ràng các lỗi cần khắc phục.",
+                      showInput: false,
+                      onConfirm: async () => {
+                        const ok = await updateProductionInLocal(redoItem.orderItemId, {
+                          status: "Đang gia công",
+                          note: redoNote
+                        });
+                        if (ok) {
+                          toast.success("Đã gửi yêu cầu sửa lại cho thợ!");
+                          setRedoItem(null);
+                          setRedoNote("");
+                        }
+                        setShowConfirm(false);
+                      }
                     });
-                    if (ok) {
-                      toast.success("Đã gửi yêu cầu sửa lại cho thợ!");
-                      setRedoItem(null);
-                      setRedoNote("");
-                    }
+                    setShowConfirm(true);
                   }}
                   className="flex-1 h-10 px-4 bg-[var(--status-error)] text-white rounded-lg text-[13px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center justify-center"
                 >
@@ -1688,55 +1820,187 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
 const OwnerCancelModal = ({ isOpen, onClose, onConfirm }) => {
   const [reason, setReason] = useState("");
+  const [pendingAction, setPendingAction] = useState(null);
+
   if (!isOpen) return null;
+
+  const hasReason = reason.trim().length > 0;
+
+  const CONFIRM_CONFIG = {
+    refunded: {
+      title: "Xác nhận HOÀN CỌC",
+      icon: <RefreshCw size={26} />,
+      accent: "var(--status-error)",
+      warning: "Tiền cọc sẽ được hoàn trả lại cho khách hàng. Hành động này không thể hoàn tác sau khi xác nhận.",
+      confirmLabel: "XÁC NHẬN HOÀN CỌC",
+    },
+    forfeited: {
+      title: "Xác nhận THU CỌC",
+      icon: <Trash2 size={26} />,
+      accent: "var(--status-error)",
+      warning: "Tiền cọc sẽ được GIỮ LẠI, không hoàn trả cho khách hàng. Hành động này không thể hoàn tác sau khi xác nhận.",
+      confirmLabel: "XÁC NHẬN THU CỌC",
+    },
+  };
+
+  const cfg = pendingAction ? CONFIRM_CONFIG[pendingAction.type] : null;
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={onClose} />
-      <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in border border-gray-100">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
-              <Ban size={20} className="text-rose-500" /> HỦY ĐƠN HÀNG
-            </h3>
-            <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-full transition cursor-pointer text-gray-400"><X size={18} /></button>
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in"
+        onClick={!pendingAction ? onClose : undefined}
+      />
+
+      {/* ── MAIN MODAL ── */}
+      <div className="relative bg-[var(--background)] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in border border-[var(--grid-border)]">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--grid-border)] bg-[var(--status-error)]/5">
+          <h3 className="text-[15px] font-black text-[var(--status-error)] flex items-center gap-2 uppercase tracking-tight">
+            <Ban size={18} /> Hủy đơn hàng
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-1.5 hover:bg-[var(--bg-main)] rounded-full transition text-[var(--text-placeholder)] hover:text-[var(--text-main)]"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {/* Notice */}
+          <div className="flex items-start gap-3 p-4 rounded-xl bg-[var(--status-error)]/5 border border-[var(--status-error)]/15">
+            <AlertTriangle size={16} className="text-[var(--status-error)] shrink-0 mt-0.5" />
+            <p className="text-[12px] text-[var(--text-secondary)] leading-relaxed font-medium">
+              Bạn đang thực hiện hủy đơn với quyền <span className="font-black text-[var(--text-main)]">Chủ cửa hàng</span>. Vui lòng nhập lý do và chọn phương án xử lý tiền cọc.
+            </p>
           </div>
 
-          <div className="space-y-4">
-            <p className="text-[13px] text-gray-500 leading-relaxed">
-              Bạn đang thực hiện hủy đơn hàng trực tiếp với quyền Chủ cửa hàng. Vui lòng nhập lý do và quyết định phương án xử lý tiền cọc.
-            </p>
-
+          {/* Textarea */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-black uppercase tracking-wider text-[var(--text-placeholder)]">
+              Lý do hủy đơn <span className="text-[var(--status-error)]">*</span>
+            </label>
             <textarea
               autoFocus
-              className="w-full h-28 p-4 text-[13px] border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all resize-none font-medium"
-              placeholder="Lý do hủy đơn..."
+              className="w-full h-28 px-4 py-3 text-[13px] bg-[var(--bg-main)] border border-[var(--grid-border)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--status-error)]/15 focus:border-[var(--status-error)]/60 transition-all resize-none font-medium text-[var(--text-main)] placeholder:text-[var(--text-placeholder)]"
+              placeholder="Nhập lý do hủy đơn hàng..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
             />
+          </div>
 
-            <div className="flex gap-2 pt-4 border-t border-gray-50">
+          {/* Action buttons — only show when reason is filled */}
+          <div
+            className={`space-y-3 transition-all duration-300 ${hasReason ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"}`}
+          >
+            <p className="text-[11px] font-black uppercase tracking-wider text-[var(--text-placeholder)] text-center">
+              Chọn phương án xử lý tiền cọc
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {/* HOÀN CỌC */}
               <button
-                disabled={!reason.trim()}
-                onClick={() => onConfirm("refunded", reason)}
-                className="flex-1 px-4 py-2.5 bg-[var(--bg-main)] text-[var(--text-secondary)] rounded-xl text-[12px] font-bold hover:bg-[var(--grid-border)]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex items-center justify-center gap-2 border border-[var(--grid-border)]/30"
+                onClick={() => setPendingAction({ type: "refunded" })}
+                className="group flex flex-col items-center gap-2.5 p-4 rounded-xl border-2 border-[var(--status-error)]/30 bg-[var(--status-error)]/5 hover:bg-[var(--status-error)]/10 hover:border-[var(--status-error)]/60 transition-all active:scale-95"
               >
-                <RefreshCw size={16} /> HOÀN CỌC
+                <div className="w-10 h-10 rounded-xl bg-[var(--status-error)]/15 flex items-center justify-center text-[var(--status-error)] group-hover:bg-[var(--status-error)]/25 transition-all">
+                  <RefreshCw size={18} />
+                </div>
+                <div className="text-center">
+                  <p className="text-[12px] font-black text-[var(--status-error)] uppercase tracking-tight">Hoàn cọc</p>
+                  <p className="text-[10px] text-[var(--text-placeholder)] font-medium mt-0.5">Trả tiền cọc cho khách</p>
+                </div>
               </button>
 
+              {/* THU CỌC */}
               <button
-                disabled={!reason.trim()}
-                onClick={() => onConfirm("forfeited", reason)}
-                className="flex-1 px-4 py-2.5 bg-[var(--palette-orange)] text-white rounded-xl text-[12px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20"
+                onClick={() => setPendingAction({ type: "forfeited" })}
+                className="group flex flex-col items-center gap-2.5 p-4 rounded-xl border-2 border-[var(--status-error)]/30 bg-[var(--status-error)]/5 hover:bg-[var(--status-error)]/10 hover:border-[var(--status-error)]/60 transition-all active:scale-95"
               >
-                <Trash2 size={16} /> THU CỌC
+                <div className="w-10 h-10 rounded-xl bg-[var(--status-error)]/15 flex items-center justify-center text-[var(--status-error)] group-hover:bg-[var(--status-error)]/25 transition-all">
+                  <Trash2 size={18} />
+                </div>
+                <div className="text-center">
+                  <p className="text-[12px] font-black text-[var(--status-error)] uppercase tracking-tight">Thu cọc</p>
+                  <p className="text-[10px] text-[var(--text-placeholder)] font-medium mt-0.5">Giữ lại tiền cọc</p>
+                </div>
               </button>
             </div>
-
-
           </div>
+
+          {/* Cancel button */}
+          <button
+            onClick={onClose}
+            className="w-full py-2.5 rounded-xl border border-[var(--grid-border)] text-[var(--text-placeholder)] text-[12px] font-bold hover:bg-[var(--bg-main)] hover:text-[var(--text-secondary)] transition-all"
+          >
+            ĐÓNG
+          </button>
         </div>
       </div>
+
+      {/* ── CONFIRM STEP ── */}
+      {pendingAction && cfg && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" />
+          <div className="relative bg-[var(--background)] w-full max-w-sm rounded-2xl shadow-2xl border border-[var(--grid-border)] overflow-hidden animate-in zoom-in-95 fade-in duration-200">
+
+            {/* Colored top bar */}
+            <div
+              className="h-1.5 w-full"
+              style={{ background: `linear-gradient(90deg, ${cfg.accent}, ${cfg.accent}99)` }}
+            />
+
+            <div className="p-6 space-y-4">
+              {/* Icon + Title */}
+              <div className="flex flex-col items-center text-center gap-3 pt-2">
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                  style={{ background: `${cfg.accent}15`, color: cfg.accent, border: `1.5px solid ${cfg.accent}30` }}
+                >
+                  {cfg.icon}
+                </div>
+                <h4 className="text-[15px] font-black text-[var(--text-main)]">{cfg.title}</h4>
+              </div>
+
+              {/* Warning */}
+              <div
+                className="flex items-start gap-2.5 p-3.5 rounded-xl text-[12px] font-medium leading-relaxed"
+                style={{ background: `${cfg.accent}08`, border: `1px solid ${cfg.accent}25`, color: cfg.accent }}
+              >
+                <AlertTriangle size={15} className="shrink-0 mt-0.5" />
+                <span>{cfg.warning}</span>
+              </div>
+
+              {/* Reason summary */}
+              <div className="bg-[var(--bg-main)] rounded-xl px-4 py-3 border border-[var(--grid-border)]">
+                <p className="text-[10px] font-black uppercase tracking-wider text-[var(--text-placeholder)] mb-1">Lý do hủy</p>
+                <p className="text-[13px] text-[var(--text-secondary)] font-medium italic leading-relaxed">"{reason}"</p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={() => setPendingAction(null)}
+                  className="flex-1 px-4 py-2.5 bg-[var(--bg-main)] border border-[var(--grid-border)] text-[var(--text-secondary)] rounded-xl text-[12px] font-bold hover:bg-[var(--grid-border)]/30 transition-all active:scale-95"
+                >
+                  QUAY LẠI
+                </button>
+                <button
+                  onClick={() => {
+                    onConfirm(pendingAction.type, reason);
+                    setPendingAction(null);
+                  }}
+                  className="flex-1 px-4 py-2.5 text-white rounded-xl text-[12px] font-bold transition-all active:scale-95"
+                  style={{ background: cfg.accent }}
+                >
+                  {cfg.confirmLabel}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

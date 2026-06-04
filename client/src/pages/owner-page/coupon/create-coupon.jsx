@@ -568,8 +568,8 @@ export default function CouponCreatePage() {
                                                 onChange={e => set("discountValue", e.target.value)}
                                                 onBlur={() => touch("discountValue")}
                                                 min={1} max={100}
-                                                placeholder="20"
-                                                className={cn("h-11 rounded-xl pl-14 pr-10 font-bold text-[15px] border-gray-200 focus-visible:border-emerald-500 focus-visible:ring-emerald-200 transition-all",
+                                                placeholder="VD: 20"
+                                                className={cn("h-11 rounded-xl pl-14 pr-10 font-bold text-[15px] border-gray-200 focus-visible:border-emerald-500 focus-visible:ring-emerald-200 transition-all placeholder:font-normal placeholder:text-gray-400",
                                                     touched.discountValue && errors.discountValue && "border-red-400 focus-visible:border-red-400 focus-visible:ring-red-200",
                                                     !errors.discountValue && form.discountValue && "bg-emerald-50/20 text-emerald-700")}
                                             />
