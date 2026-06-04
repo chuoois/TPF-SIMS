@@ -32,6 +32,8 @@ export default function EmployeeModal({
     baseRate: "",
     daysWorked: ""
   });
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingData, setPendingData] = useState(null);
 
   // Init form
   useEffect(() => {
@@ -77,18 +79,32 @@ export default function EmployeeModal({
       payment_date: formData.paymentDate,
     };
 
-    if (["SALES", "ACCOUNTANT", "SANDER", "PAINTER"].includes(formData.type)) {
+    if ([("SALES"), "ACCOUNTANT", "SANDER", "PAINTER"].includes(formData.type)) {
       employeeData.base_rate = Number(formData.baseRate) || 0;
       employeeData.days_worked = Number(formData.daysWorked) || 0;
     }
 
-    onSave(employeeData);
+    // Nếu đang sửa, hiện confirm trước khi lưu
+    if (employeeToEdit) {
+      setPendingData(employeeData);
+      setShowConfirm(true);
+    } else {
+      onSave(employeeData);
+    }
+  };
+
+  const handleConfirmSave = () => {
+    if (pendingData) {
+      onSave(pendingData);
+      setShowConfirm(false);
+      setPendingData(null);
+    }
   };
 
   const inputClass = "w-full h-9 px-3 rounded-lg border text-[13px] bg-white outline-none focus:ring-2 focus:ring-blue-100 transition";
   const inputStyle = { borderColor: "var(--grid-border)", color: "var(--text-main)" };
 
-  return (
+  return (<>
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
         onClick={onClose}>
       <div className="bg-white w-full max-w-lg rounded-lg shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200 overflow-hidden"
@@ -147,8 +163,8 @@ export default function EmployeeModal({
                       <div className="space-y-1.5">
                           <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Đơn giá / Ngày</label>
                           <input type="text" value={formatNumber(formData.baseRate)} onChange={e => setFormData({...formData, baseRate: parseNumber(e.target.value)})} required
-                              disabled={!!employeeToEdit}
-                              className={cn(inputClass, employeeToEdit && "opacity-60 cursor-not-allowed")} placeholder="400.000" style={inputStyle} />
+                              className={cn(inputClass)}
+                              placeholder="400.000" style={inputStyle} />
                       </div>
                       <div className="space-y-1.5">
                           <label className="text-[13px] font-bold" style={{ color: "var(--text-main)" }}>Số ngày công</label>
@@ -178,5 +194,52 @@ export default function EmployeeModal({
 
       </div>
     </div>
-  );
+
+    {/* Confirm Dialog */}
+    {showConfirm && (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+           onClick={() => setShowConfirm(false)}>
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
+             onClick={e => e.stopPropagation()}>
+          <div className="p-6 space-y-3">
+            <div className="w-11 h-11 rounded-full bg-amber-100 flex items-center justify-center mb-3">
+              <span className="text-xl">✏️</span>
+            </div>
+            <h3 className="text-[16px] font-black text-gray-900">Xác nhận lưu thay đổi?</h3>
+            <p className="text-[13px] text-gray-500">
+              Bạn có chắc chắn muốn lưu thay đổi thông tin lương cho 
+              <span className="font-bold text-gray-800">{employeeToEdit?.name}</span>?
+            </p>
+            {pendingData && (
+              <div className="mt-3 p-3 rounded-xl bg-gray-50 border border-gray-100 text-[12px] space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Đơn giá / Ngày:</span>
+                  <span className="font-bold text-gray-800">{new Intl.NumberFormat("vi-VN").format(pendingData.base_rate)}&#8363;</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Số ngày công:</span>
+                  <span className="font-bold text-gray-800">{pendingData.days_worked} ngày</span>
+                </div>
+                <div className="flex justify-between border-t border-gray-200 pt-1.5 mt-1">
+                  <span className="font-bold text-gray-600">Tổng lương ước tính:</span>
+                  <span className="font-black text-amber-600">{new Intl.NumberFormat("vi-VN").format(pendingData.base_rate * pendingData.days_worked)}&#8363;</span>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+            <button type="button" onClick={() => setShowConfirm(false)}
+                className="h-9 px-5 rounded-xl text-[13px] font-bold border border-gray-200 text-gray-600 hover:bg-white cursor-pointer transition">
+              Không, hủy
+            </button>
+            <button type="button" onClick={handleConfirmSave}
+                className="h-9 px-6 rounded-xl text-[13px] font-bold text-white cursor-pointer hover:opacity-90 transition"
+                style={{ backgroundColor: "var(--brand-primary)" }}>
+              Xác nhận lưu
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+  </>);
 }
