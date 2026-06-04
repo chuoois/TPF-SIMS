@@ -722,8 +722,8 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
             bundleItems: (() => {
               if (!p.item_bundle_items) return [];
               try {
-                const parsed = typeof p.item_bundle_items === 'string' 
-                  ? JSON.parse(p.item_bundle_items) 
+                const parsed = typeof p.item_bundle_items === 'string'
+                  ? JSON.parse(p.item_bundle_items)
                   : p.item_bundle_items;
                 return Array.isArray(parsed) ? parsed : [];
               } catch (e) {
@@ -1688,55 +1688,187 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
 
 const OwnerCancelModal = ({ isOpen, onClose, onConfirm }) => {
   const [reason, setReason] = useState("");
+  const [pendingAction, setPendingAction] = useState(null);
+
   if (!isOpen) return null;
+
+  const hasReason = reason.trim().length > 0;
+
+  const CONFIRM_CONFIG = {
+    refunded: {
+      title: "Xác nhận HOÀN CỌC",
+      icon: <RefreshCw size={26} />,
+      accent: "var(--status-error)",
+      warning: "Tiền cọc sẽ được hoàn trả lại cho khách hàng. Hành động này không thể hoàn tác sau khi xác nhận.",
+      confirmLabel: "XÁC NHẬN HOÀN CỌC",
+    },
+    forfeited: {
+      title: "Xác nhận THU CỌC",
+      icon: <Trash2 size={26} />,
+      accent: "var(--status-error)",
+      warning: "Tiền cọc sẽ được GIỮ LẠI, không hoàn trả cho khách hàng. Hành động này không thể hoàn tác sau khi xác nhận.",
+      confirmLabel: "XÁC NHẬN THU CỌC",
+    },
+  };
+
+  const cfg = pendingAction ? CONFIRM_CONFIG[pendingAction.type] : null;
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={onClose} />
-      <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in border border-gray-100">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
-              <Ban size={20} className="text-rose-500" /> HỦY ĐƠN HÀNG
-            </h3>
-            <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-full transition cursor-pointer text-gray-400"><X size={18} /></button>
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in"
+        onClick={!pendingAction ? onClose : undefined}
+      />
+
+      {/* ── MAIN MODAL ── */}
+      <div className="relative bg-[var(--background)] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in border border-[var(--grid-border)]">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--grid-border)] bg-[var(--status-error)]/5">
+          <h3 className="text-[15px] font-black text-[var(--status-error)] flex items-center gap-2 uppercase tracking-tight">
+            <Ban size={18} /> Hủy đơn hàng
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-1.5 hover:bg-[var(--bg-main)] rounded-full transition text-[var(--text-placeholder)] hover:text-[var(--text-main)]"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {/* Notice */}
+          <div className="flex items-start gap-3 p-4 rounded-xl bg-[var(--status-error)]/5 border border-[var(--status-error)]/15">
+            <AlertTriangle size={16} className="text-[var(--status-error)] shrink-0 mt-0.5" />
+            <p className="text-[12px] text-[var(--text-secondary)] leading-relaxed font-medium">
+              Bạn đang thực hiện hủy đơn với quyền <span className="font-black text-[var(--text-main)]">Chủ cửa hàng</span>. Vui lòng nhập lý do và chọn phương án xử lý tiền cọc.
+            </p>
           </div>
 
-          <div className="space-y-4">
-            <p className="text-[13px] text-gray-500 leading-relaxed">
-              Bạn đang thực hiện hủy đơn hàng trực tiếp với quyền Chủ cửa hàng. Vui lòng nhập lý do và quyết định phương án xử lý tiền cọc.
-            </p>
-
+          {/* Textarea */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-black uppercase tracking-wider text-[var(--text-placeholder)]">
+              Lý do hủy đơn <span className="text-[var(--status-error)]">*</span>
+            </label>
             <textarea
               autoFocus
-              className="w-full h-28 p-4 text-[13px] border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all resize-none font-medium"
-              placeholder="Lý do hủy đơn..."
+              className="w-full h-28 px-4 py-3 text-[13px] bg-[var(--bg-main)] border border-[var(--grid-border)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--status-error)]/15 focus:border-[var(--status-error)]/60 transition-all resize-none font-medium text-[var(--text-main)] placeholder:text-[var(--text-placeholder)]"
+              placeholder="Nhập lý do hủy đơn hàng..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
             />
+          </div>
 
-            <div className="flex gap-2 pt-4 border-t border-gray-50">
+          {/* Action buttons — only show when reason is filled */}
+          <div
+            className={`space-y-3 transition-all duration-300 ${hasReason ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"}`}
+          >
+            <p className="text-[11px] font-black uppercase tracking-wider text-[var(--text-placeholder)] text-center">
+              Chọn phương án xử lý tiền cọc
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {/* HOÀN CỌC */}
               <button
-                disabled={!reason.trim()}
-                onClick={() => onConfirm("refunded", reason)}
-                className="flex-1 px-4 py-2.5 bg-[var(--bg-main)] text-[var(--text-secondary)] rounded-xl text-[12px] font-bold hover:bg-[var(--grid-border)]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex items-center justify-center gap-2 border border-[var(--grid-border)]/30"
+                onClick={() => setPendingAction({ type: "refunded" })}
+                className="group flex flex-col items-center gap-2.5 p-4 rounded-xl border-2 border-[var(--status-error)]/30 bg-[var(--status-error)]/5 hover:bg-[var(--status-error)]/10 hover:border-[var(--status-error)]/60 transition-all active:scale-95"
               >
-                <RefreshCw size={16} /> HOÀN CỌC
+                <div className="w-10 h-10 rounded-xl bg-[var(--status-error)]/15 flex items-center justify-center text-[var(--status-error)] group-hover:bg-[var(--status-error)]/25 transition-all">
+                  <RefreshCw size={18} />
+                </div>
+                <div className="text-center">
+                  <p className="text-[12px] font-black text-[var(--status-error)] uppercase tracking-tight">Hoàn cọc</p>
+                  <p className="text-[10px] text-[var(--text-placeholder)] font-medium mt-0.5">Trả tiền cọc cho khách</p>
+                </div>
               </button>
 
+              {/* THU CỌC */}
               <button
-                disabled={!reason.trim()}
-                onClick={() => onConfirm("forfeited", reason)}
-                className="flex-1 px-4 py-2.5 bg-[var(--palette-orange)] text-white rounded-xl text-[12px] font-bold hover:opacity-90 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20"
+                onClick={() => setPendingAction({ type: "forfeited" })}
+                className="group flex flex-col items-center gap-2.5 p-4 rounded-xl border-2 border-[var(--status-error)]/30 bg-[var(--status-error)]/5 hover:bg-[var(--status-error)]/10 hover:border-[var(--status-error)]/60 transition-all active:scale-95"
               >
-                <Trash2 size={16} /> THU CỌC
+                <div className="w-10 h-10 rounded-xl bg-[var(--status-error)]/15 flex items-center justify-center text-[var(--status-error)] group-hover:bg-[var(--status-error)]/25 transition-all">
+                  <Trash2 size={18} />
+                </div>
+                <div className="text-center">
+                  <p className="text-[12px] font-black text-[var(--status-error)] uppercase tracking-tight">Thu cọc</p>
+                  <p className="text-[10px] text-[var(--text-placeholder)] font-medium mt-0.5">Giữ lại tiền cọc</p>
+                </div>
               </button>
             </div>
-
-
           </div>
+
+          {/* Cancel button */}
+          <button
+            onClick={onClose}
+            className="w-full py-2.5 rounded-xl border border-[var(--grid-border)] text-[var(--text-placeholder)] text-[12px] font-bold hover:bg-[var(--bg-main)] hover:text-[var(--text-secondary)] transition-all"
+          >
+            ĐÓNG
+          </button>
         </div>
       </div>
+
+      {/* ── CONFIRM STEP ── */}
+      {pendingAction && cfg && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" />
+          <div className="relative bg-[var(--background)] w-full max-w-sm rounded-2xl shadow-2xl border border-[var(--grid-border)] overflow-hidden animate-in zoom-in-95 fade-in duration-200">
+
+            {/* Colored top bar */}
+            <div
+              className="h-1.5 w-full"
+              style={{ background: `linear-gradient(90deg, ${cfg.accent}, ${cfg.accent}99)` }}
+            />
+
+            <div className="p-6 space-y-4">
+              {/* Icon + Title */}
+              <div className="flex flex-col items-center text-center gap-3 pt-2">
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                  style={{ background: `${cfg.accent}15`, color: cfg.accent, border: `1.5px solid ${cfg.accent}30` }}
+                >
+                  {cfg.icon}
+                </div>
+                <h4 className="text-[15px] font-black text-[var(--text-main)]">{cfg.title}</h4>
+              </div>
+
+              {/* Warning */}
+              <div
+                className="flex items-start gap-2.5 p-3.5 rounded-xl text-[12px] font-medium leading-relaxed"
+                style={{ background: `${cfg.accent}08`, border: `1px solid ${cfg.accent}25`, color: cfg.accent }}
+              >
+                <AlertTriangle size={15} className="shrink-0 mt-0.5" />
+                <span>{cfg.warning}</span>
+              </div>
+
+              {/* Reason summary */}
+              <div className="bg-[var(--bg-main)] rounded-xl px-4 py-3 border border-[var(--grid-border)]">
+                <p className="text-[10px] font-black uppercase tracking-wider text-[var(--text-placeholder)] mb-1">Lý do hủy</p>
+                <p className="text-[13px] text-[var(--text-secondary)] font-medium italic leading-relaxed">"{reason}"</p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={() => setPendingAction(null)}
+                  className="flex-1 px-4 py-2.5 bg-[var(--bg-main)] border border-[var(--grid-border)] text-[var(--text-secondary)] rounded-xl text-[12px] font-bold hover:bg-[var(--grid-border)]/30 transition-all active:scale-95"
+                >
+                  QUAY LẠI
+                </button>
+                <button
+                  onClick={() => {
+                    onConfirm(pendingAction.type, reason);
+                    setPendingAction(null);
+                  }}
+                  className="flex-1 px-4 py-2.5 text-white rounded-xl text-[12px] font-bold transition-all active:scale-95"
+                  style={{ background: cfg.accent }}
+                >
+                  {cfg.confirmLabel}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
