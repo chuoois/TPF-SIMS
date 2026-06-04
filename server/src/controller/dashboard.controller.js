@@ -1,4 +1,21 @@
 const { Op } = require("sequelize");
+
+/**
+ * Sinh danh sách "MM/YYYY" nằm trong khoảng [dateFrom, dateTo]
+ * Dùng để lọc PayrollPeriod.period_month cho salary
+ */
+function getMonthsInRange(dateFrom, dateTo) {
+    const months = [];
+    const cursor = new Date(dateFrom.getFullYear(), dateFrom.getMonth(), 1);
+    const end    = new Date(dateTo.getFullYear(), dateTo.getMonth(), 1);
+    while (cursor <= end) {
+        const mm = String(cursor.getMonth() + 1).padStart(2, "0");
+        const yyyy = cursor.getFullYear();
+        months.push(`${mm}/${yyyy}`);
+        cursor.setMonth(cursor.getMonth() + 1);
+    }
+    return months;
+}
 const {
     sequelize,
     Order,
@@ -428,10 +445,8 @@ class DashboardController {
                 }),
 
                 // 2d. Bản ghi lương nhân viên (Chi phí lương)
+                // Filter qua PayrollPeriod.period_month ("MM/YYYY") thay vì createdate
                 SalaryRecord.findAll({
-                    where: {
-                        createdate: { [Op.gte]: dateFrom, [Op.lte]: dateTo }
-                    },
                     include: [
                         {
                             model: SalaryAdjustment,
@@ -449,9 +464,17 @@ class DashboardController {
                                     attributes: ["full_name"]
                                 }]
                             }]
+                        },
+                        {
+                            model: PayrollPeriod,
+                            as: "period",
+                            where: {
+                                period_month: { [Op.in]: getMonthsInRange(dateFrom, dateTo) }
+                            },
+                            attributes: ["period_month", "status"]
                         }
                     ],
-                    order: [["createdate", "DESC"]]
+                    order: [[{ model: PayrollPeriod, as: "period" }, "period_month", "DESC"]]
                 }),
 
                 // 2e. Lệnh sản xuất gửi xưởng (Dùng cho dòng tiền cọc xưởng)
@@ -613,8 +636,17 @@ class DashboardController {
                     raw: true
                 }),
                 SalaryRecord.findAll({
-                    where: { createdate: { [Op.gte]: sixMonthsAgo } },
-                    include: [{ model: SalaryAdjustment, as: "adjustments", attributes: ["amount", "type"] }]
+                    include: [
+                        { model: SalaryAdjustment, as: "adjustments", attributes: ["amount", "type"] },
+                        {
+                            model: PayrollPeriod,
+                            as: "period",
+                            where: {
+                                period_month: { [Op.in]: getMonthsInRange(sixMonthsAgo, now) }
+                            },
+                            attributes: ["period_month"]
+                        }
+                    ]
                 })
             ]);
 
@@ -634,8 +666,9 @@ class DashboardController {
                     return impDate.getMonth() === d.getMonth() && impDate.getFullYear() === d.getFullYear();
                 });
                 const mSalaries = allSalaries6M.filter(s => {
-                    const sDate = new Date(s.createdate);
-                    return sDate.getMonth() === d.getMonth() && sDate.getFullYear() === d.getFullYear();
+                    // Lọc theo period_month của kỳ lương ("MM/YYYY") thay vì createdate
+                    const periodMonth = s.period?.period_month || s.period?.dataValues?.period_month || "";
+                    return periodMonth === monthStr;
                 });
 
                 // Tính toán chỉ số tháng

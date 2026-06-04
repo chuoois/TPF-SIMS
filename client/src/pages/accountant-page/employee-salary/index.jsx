@@ -16,6 +16,8 @@ import { cn } from "@/lib/utils";
 import * as XLSX from "xlsx";
 import payrollService from "@/services/payroll.service";
 import employeeService from "@/services/employee.service";
+import BulkAdjustmentModal from "./BulkAdjustmentModal";
+import BulkAttendanceModal from "./BulkAttendanceModal";
 
 /**
  * Accountant Employee Salary
@@ -63,6 +65,12 @@ export default function AccountantEmployeeSalary() {
     // Adjustment Modal
     const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
     const [employeeForAdjustment, setEmployeeForAdjustment] = useState(null);
+
+    // Bulk Adjustment Modal
+    const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+
+    // Bulk Attendance Modal
+    const [isBulkAttendanceOpen, setIsBulkAttendanceOpen] = useState(false);
 
     // Fetch periods on mount
     useEffect(() => {
@@ -171,9 +179,10 @@ export default function AccountantEmployeeSalary() {
             if (employeeToEdit) {
                 // Edit existing record
                 await payrollService.updateRecord(employeeToEdit.record_id, {
-                    days_worked: empData.days_worked
+                    days_worked: empData.days_worked,
+                    base_rate_snapshot: empData.base_rate
                 });
-                toast.success("Cập nhật ngày công thành công!");
+                toast.success("Cập nhật thông tin lương thành công!");
             } else {
                 // Add new employee globally then to period
                 const res = await employeeService.createEmployee({
@@ -278,6 +287,50 @@ export default function AccountantEmployeeSalary() {
             fetchRecords(selectedPeriodId);
         } catch (err) {
             toast.error(err.response?.data?.message || "Lỗi khi cập nhật thưởng/phạt");
+        }
+    };
+
+    const handleBulkAdjustment = async (adjData, targetRecords) => {
+        const { type, description, amount } = adjData;
+        try {
+            await Promise.all(
+                targetRecords.map(r =>
+                    payrollService.addAdjustment(r.record_id, { type, description, amount })
+                )
+            );
+            toast.success(
+                `✅ Đã áp dụng ${type === "PENALTY" ? "phạt" : type === "ALLOWANCE" ? "phụ cấp" : "thưởng"} cho ${targetRecords.length} nhân viên!`,
+                { duration: 4000 }
+            );
+            setIsBulkModalOpen(false);
+            fetchRecords(selectedPeriodId);
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Lỗi khi áp dụng hàng loạt");
+            throw err; // giữ loading state trong modal
+        }
+    };
+
+    const handleBulkAttendance = async (mode, days, targetRecords) => {
+        try {
+            await Promise.all(
+                targetRecords.map(r => {
+                    const newDays = mode === "add"
+                        ? (r.days_worked || 0) + days
+                        : days;
+                    return payrollService.updateRecord(r.record_id, { days_worked: newDays });
+                })
+            );
+            toast.success(
+                mode === "add"
+                    ? `✅ Đã cộng thêm ${days} ngày công cho ${targetRecords.length} nhân viên!`
+                    : `✅ Đã đặt ${days} ngày công cho ${targetRecords.length} nhân viên!`,
+                { duration: 4000 }
+            );
+            setIsBulkAttendanceOpen(false);
+            fetchRecords(selectedPeriodId);
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Lỗi khi điểm danh hàng loạt");
+            throw err;
         }
     };
 
@@ -442,6 +495,22 @@ export default function AccountantEmployeeSalary() {
                             className="h-9 px-3.5 rounded-lg flex items-center gap-1.5 text-[13px] font-bold cursor-pointer hover:bg-gray-50 transition shrink-0 border border-emerald-200 text-emerald-700 bg-emerald-50 ml-auto mr-1">
                             <FileDown size={15} strokeWidth={2.5} /> Xuất File Excel
                         </button>
+                        {selectedPeriodId && !isLocked && (
+                            <button
+                                onClick={() => setIsBulkModalOpen(true)}
+                                className="h-9 px-3.5 rounded-lg flex items-center gap-1.5 text-[13px] font-bold cursor-pointer hover:opacity-90 transition shrink-0 border border-amber-300 text-amber-700 bg-amber-50">
+                                <span className="text-base leading-none">⚡</span>
+                                Thưởng/Phạt hàng loạt
+                            </button>
+                        )}
+                        {selectedPeriodId && !isLocked && (
+                            <button
+                                onClick={() => setIsBulkAttendanceOpen(true)}
+                                className="h-9 px-3.5 rounded-lg flex items-center gap-1.5 text-[13px] font-bold cursor-pointer hover:opacity-90 transition shrink-0 border border-green-300 text-green-700 bg-green-50">
+                                <CalendarPlus size={14} />
+                                Điểm danh hàng loạt
+                            </button>
+                        )}
                     </div>
 
                     {/* Table */}
@@ -632,6 +701,22 @@ export default function AccountantEmployeeSalary() {
                 employee={employeeForAdjustment}
                 isLocked={isLocked}
                 onSave={handleSaveAdjustments}
+            />
+
+            <BulkAdjustmentModal
+                isOpen={isBulkModalOpen}
+                onClose={() => setIsBulkModalOpen(false)}
+                onApply={handleBulkAdjustment}
+                records={records}
+                periodMonth={currentPeriodObj?.period_month}
+            />
+
+            <BulkAttendanceModal
+                isOpen={isBulkAttendanceOpen}
+                onClose={() => setIsBulkAttendanceOpen(false)}
+                onApply={handleBulkAttendance}
+                records={records}
+                periodMonth={currentPeriodObj?.period_month}
             />
 
             {employeeToDelete && (
