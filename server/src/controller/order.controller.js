@@ -1,8 +1,8 @@
-const { Op } = require("sequelize");
 const {
     sequelize, Order, OrderItem, OrderHistory, Product,
     ProductPricing, ProductItem, ProductMaterial, ProductColor,
-    CustomerProfile, UserAccount, UserProfile, UserRole, OrderItemProcessing
+    CustomerProfile, UserAccount, UserProfile, UserRole, OrderItemProcessing,
+    CustomRequest, CustomRequestItem, ManufacturingOrder, ManufacturingOrderItem
 } = require("../entities");
 const systemLogController = require("./systemLog.controller");
 const { sendNotification } = require("../sockets/socketManager");
@@ -192,6 +192,32 @@ class OrderController {
                                         ]
                                     }
                                 ]
+                            },
+                            {
+                                model: CustomRequestItem,
+                                as: 'customRequestItem',
+                                required: false,
+                                attributes: ['pk_custom_request_item_id', 'fk_custom_request_id'],
+                                include: [
+                                    {
+                                        model: CustomRequest,
+                                        as: 'request',
+                                        required: false,
+                                        attributes: ['pk_custom_request_id', 'request_code', 'status']
+                                    },
+                                    {
+                                        model: ManufacturingOrderItem,
+                                        as: 'manufacturingDetail',
+                                        required: false,
+                                        attributes: ['pk_manufacturing_order_item_id', 'fk_manufacturing_order_id'],
+                                        include: [{
+                                            model: ManufacturingOrder,
+                                            as: 'order',
+                                            required: false,
+                                            attributes: ['pk_manufacturing_order_id', 'order_code', 'status', 'createdate']
+                                        }]
+                                    }
+                                ]
                             }
                         ]
                     },
@@ -200,6 +226,12 @@ class OrderController {
                         as: 'histories',
                         attributes: ['action', 'note', 'new_status', 'createdate'],
                         required: false
+                    },
+                    {
+                        model: CustomRequest,
+                        as: 'customRequest',
+                        required: false,
+                        attributes: ['pk_custom_request_id', 'request_code', 'status', 'createdate']
                     }
                 ],
                 attributes: [

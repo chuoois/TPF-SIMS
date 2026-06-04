@@ -300,15 +300,22 @@ export default function RequirementCartPanel({
                   <div className="mt-2 pl-11 flex items-center gap-1.5">
                     <span className="text-[10px] font-semibold uppercase text-gray-400 shrink-0">Ảnh mẫu:</span>
                     <div className="flex gap-1 overflow-x-auto">
-                      {item.images.map((img, imgIdx) => (
-                        <div key={imgIdx} className="w-9 h-9 rounded-md bg-gray-50 border border-gray-100 overflow-hidden shrink-0 cursor-zoom-in" onClick={() => setEnlargedImg(typeof img === "string" ? img : URL.createObjectURL(img))}>
-                          <img
-                            src={typeof img === "string" ? img : URL.createObjectURL(img)}
-                            className="w-full h-full object-cover"
-                            alt={`${item.productName} ${imgIdx + 1}`}
-                          />
-                        </div>
-                      ))}
+                      {item.images.map((img, imgIdx) => {
+                        const src = typeof img === "string" ? img : (img instanceof Blob || img instanceof File ? URL.createObjectURL(img) : "");
+                        return (
+                          <div key={imgIdx} className="w-9 h-9 rounded-md bg-gray-50 border border-gray-100 overflow-hidden shrink-0 cursor-zoom-in" onClick={() => src && setEnlargedImg(src)}>
+                            {src ? (
+                              <img
+                                src={src}
+                                className="w-full h-full object-cover"
+                                alt={`${item.productName} ${imgIdx + 1}`}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gray-100 text-[10px]">No img</div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

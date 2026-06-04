@@ -740,7 +740,8 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                           <div className="grid grid-cols-2 gap-2">
                             {spec.designImages.length > 0 ? (
                               spec.designImages.map((img, i) => {
-                                const src = typeof img === 'string' ? img : URL.createObjectURL(img);
+                                const src = typeof img === 'string' ? img : (img instanceof Blob || img instanceof File ? URL.createObjectURL(img) : "");
+                                if (!src) return null;
                                 return (
                                   <div key={i} className={`relative aspect-square rounded-lg border overflow-hidden ${canEditHeader ? 'border-green-100' : 'border-gray-200'}`}>
                                     <img src={src} className="w-full h-full object-cover cursor-zoom-in" onClick={() => onEnlarge(src)} />

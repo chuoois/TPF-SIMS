@@ -594,14 +594,21 @@ export default function CustomItemInputPanel({
             <ImagePlus size={12} /> Hình ảnh mẫu
           </label>
           <div className="flex flex-wrap gap-2">
-            {newItem.images.map((img, i) => (
-              <div key={i} className="relative w-14 h-14 rounded-lg border border-gray-200 overflow-hidden group">
-                <img src={typeof img === "string" ? img : URL.createObjectURL(img)} className="w-full h-full object-cover" />
-                <button onClick={() => updateNewItem("images", newItem.images.filter((_, idx) => idx !== i))} className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white">
-                  <X size={14} />
-                </button>
-              </div>
-            ))}
+            {newItem.images.map((img, i) => {
+              const src = typeof img === "string" ? img : (img instanceof Blob || img instanceof File ? URL.createObjectURL(img) : "");
+              return (
+                <div key={i} className="relative w-14 h-14 rounded-lg border border-gray-200 overflow-hidden group">
+                  {src ? (
+                    <img src={src} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gray-100 text-[10px]">No img</div>
+                  )}
+                  <button onClick={() => updateNewItem("images", newItem.images.filter((_, idx) => idx !== i))} className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white">
+                    <X size={14} />
+                  </button>
+                </div>
+              );
+            })}
             <label className="w-14 h-14 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-green-400 hover:bg-green-50 transition">
               <ImagePlus size={20} className="text-gray-300" />
               <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => {
