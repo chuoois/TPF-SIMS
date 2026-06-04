@@ -52,7 +52,7 @@ class OrderController {
                           AND i.status = 1
                     )`)
                 ];
-                
+
                 if (!isNaN(search)) {
                     where[Op.or].push({ pk_order_id: search });
                 }
@@ -253,7 +253,7 @@ class OrderController {
 
             // 1. Tạo bản ghi Order (Header)
             const newOrder = await Order.create({
-                order_code: `DH-${Date.now()}`, 
+                order_code: `DH-${Date.now()}`,
                 fk_customer_id,
                 fk_user_account_id: userId,
                 fulfillment_method,
@@ -312,7 +312,6 @@ class OrderController {
                         item_img: item.item_img || product?.product_img,
                         item_quantity: item.item_quantity || 1,
                         item_price: autoPrice || 0,
-                        // Tuân thủ Product: Lấy Material, Color, Size, Warranty từ Product nếu item trống
                         item_material: item.item_material || product?.material?.material_name,
                         item_color: item.item_color || product?.color?.color_name,
                         item_size: item.item_size || product?.size,
