@@ -381,13 +381,13 @@ class PayrollController {
 
   /**
    * PATCH /api/payroll/records/:id
-   * Cập nhật ngày công / OT cho 1 bản ghi lương
-   * Body: { days_worked?, overtime_hours? }
+   * Cập nhật ngày công / OT / đơn giá cho 1 bản ghi lương
+   * Body: { days_worked?, overtime_hours?, base_rate_snapshot? }
    */
   async updateRecord(req, res) {
     try {
       const { id } = req.params;
-      const { days_worked, overtime_hours } = req.body;
+      const { days_worked, overtime_hours, base_rate_snapshot } = req.body;
 
       const record = await SalaryRecord.findByPk(id, {
         include: [{ model: PayrollPeriod, as: "period" }],
@@ -403,6 +403,7 @@ class PayrollController {
       await record.update({
         days_worked: days_worked ?? record.days_worked,
         overtime_hours: overtime_hours ?? record.overtime_hours,
+        ...(base_rate_snapshot !== undefined && { base_rate_snapshot: Number(base_rate_snapshot) }),
         modifiedate: new Date(),
       });
 
