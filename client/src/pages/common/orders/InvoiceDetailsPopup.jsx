@@ -305,6 +305,35 @@ const StandardOrderView = ({
                   </div>
                 )}
 
+                {o.manufacturingOrders && o.manufacturingOrders.length > 0 && (
+                  <div className="bg-[var(--brand-primary)]/5 p-5 rounded-xl border border-[var(--brand-primary)]/10 space-y-2">
+                    <div className="flex items-center gap-2 text-[var(--brand-primary)]">
+                      <Package size={16} />
+                      <span className="text-[12px] font-black uppercase tracking-tight">Yêu cầu nhập hàng / Gia công</span>
+                    </div>
+                    <div className="flex flex-col gap-2.5">
+                      {o.manufacturingOrders.map((mo, moIdx) => (
+                        <div key={moIdx} className="flex items-center justify-between border-b border-dashed border-[var(--grid-border)]/30 pb-2 last:border-0 last:pb-0">
+                          <div>
+                            <p className="text-[14px] font-black text-[var(--text-main)]">
+                              {mo.code}
+                            </p>
+                            <p className="text-[11px] text-[var(--text-secondary)]">
+                              Tạo ngày {fmtDate(mo.date)}
+                            </p>
+                          </div>
+                          <span className={`px-2 py-0.5 text-[10px] font-black uppercase rounded ${mo.status === 4 ? 'bg-[var(--status-success)]/10 text-[var(--status-success)]' :
+                              mo.status === 0 ? 'bg-[var(--status-danger)]/10 text-[var(--status-danger)]' : 'bg-[var(--palette-orange)]/10 text-[var(--palette-orange)]'
+                            }`}>
+                            {mo.status === 4 ? 'Đã về kho' :
+                              mo.status === 0 ? 'Đã hủy' : 'Chưa về kho'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="lg:hidden">
                   <HistoryCard o={o} />
                 </div>
@@ -365,7 +394,14 @@ const StandardOrderView = ({
                       <div className="flex items-start justify-between">
                         <div className="min-w-0 flex-1">
                           <h4 className="text-[18px] font-black text-[var(--text-main)] leading-tight mb-2">{p.name}</h4>
-                          <span className="inline-block px-2 py-0.5 rounded bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] text-[11px] font-black uppercase">x{p.qty} {p.unit}</span>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="inline-block px-2 py-0.5 rounded bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] text-[11px] font-black uppercase">x{p.qty} {p.unit}</span>
+                            {p.manufacturingOrderCode && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] text-[10px] font-black uppercase tracking-wide border border-[var(--brand-primary)]/15">
+                                <Package size={10} /> YCNH: {p.manufacturingOrderCode}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <div className="flex flex-col items-end ml-4">
                           <p className="text-[20px] font-black text-[var(--text-main)]">{fmtCurrency(p.price)}</p>
@@ -776,7 +812,8 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                 return typeof p.customer_img === 'string' ? [p.customer_img] : [];
               }
             })(),
-            importStatus: p.import_status || 0
+            importStatus: p.import_status || 0,
+            manufacturingOrderCode: p.customRequestItem?.manufacturingDetail?.order?.order_code || null
           })),
           timeline: (found.histories || []).map(h => ({
             time: formatDateTimeVN(h.createdate),
@@ -797,7 +834,33 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
           deliveryDate: found.expected_fulfillment_date,
           notes: found.note || found.order_note || "",
           customRequirements: found.note || found.order_note || "",
-          deliveryImage: found.delivery_image
+          deliveryImage: found.delivery_image,
+          sourceRequest: found.customRequest ? {
+            code: found.customRequest.request_code,
+            id: found.customRequest.pk_custom_request_id,
+            status: found.customRequest.status,
+            date: found.customRequest.createdate
+          } : null,
+          manufacturingOrders: (() => {
+            const list = (found.items || [])
+              .map(p => p.customRequestItem?.manufacturingDetail?.order)
+              .filter(Boolean);
+            if (list.length === 0) return [];
+            const unique = [];
+            const seen = new Set();
+            for (const item of list) {
+              if (!seen.has(item.order_code)) {
+                seen.add(item.order_code);
+                unique.push({
+                  code: item.order_code,
+                  id: item.pk_manufacturing_order_id,
+                  status: item.status,
+                  date: item.createdate
+                });
+              }
+            }
+            return unique;
+          })()
         };
 
         const mappedProductions = (found.items || []).flatMap((item) =>

@@ -471,7 +471,8 @@ export default function CustomOrderRequirementsPage() {
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Ảnh mẫu</p>
                   <div className="flex gap-2 overflow-x-auto">
                     {viewingItem.images.map((img, idx) => {
-                      const src = typeof img === "string" ? img : URL.createObjectURL(img);
+                      const src = typeof img === "string" ? img : (img instanceof Blob || img instanceof File ? URL.createObjectURL(img) : "");
+                      if (!src) return null;
                       return (
                         <div
                           key={idx}
