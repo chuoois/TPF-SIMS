@@ -510,13 +510,13 @@ export default function CreateImportModal({ onClose, onSaved }) {
                 lines: linesWithImgUrl.map(l => ({
                     id: l.manufacturingOrderItemId || null, // pk_manufacturing_order_item_id để backend liên kết OrderItem
                     isBundle: l.isBundle,
-                    // Dòng lẻ
+                    // Dòng lẻ — gửi null khi là bundle để tránh Joi min(1) fail với giá trị 0
                     productId: l.productId || null,
                     productCode: l.productCode || "",
                     productName: l.productName || "",
-                    qty: Number(l.qty) || 0,
-                    importPrice: Number(l.importPrice) || 0,
-                    unitIds: l.unitIds || [],
+                    qty: l.isBundle ? null : (Number(l.qty) || null),
+                    importPrice: l.isBundle ? null : (Number(l.importPrice) || null),
+                    unitIds: l.isBundle ? [] : (l.unitIds || []),
                     details: l.details || "",
                     // Thông tin chi tiết sản phẩm (để tạo Product mới đầy đủ)
                     category: l.category || "",
@@ -524,13 +524,13 @@ export default function CreateImportModal({ onClose, onSaved }) {
                     color: l.color || "",
                     productType: l.productType || "FINISHED",
                     productImgUrl: l.productImgUrl || null, // URL ảnh sản phẩm đã upload
-                    // Dòng bộ
+                    // Dòng bộ — gửi null khi là single line để tránh Joi min(1) fail với giá trị 0
                     bundleCode: l.bundleCode || "",
                     bundleName: l.bundleName || "",
-                    bundleQty: Number(l.bundleQty) || 0,
-                    bundlePrice: Number(l.bundlePrice) || 0,
-                    bundleUnitIds: l.unitIds || [],
-                    items: l.items || [],
+                    bundleQty: l.isBundle ? (Number(l.bundleQty) || null) : null,
+                    bundlePrice: l.isBundle ? (Number(l.bundlePrice) || null) : null,
+                    bundleUnitIds: l.isBundle ? (l.unitIds || []) : [],
+                    items: l.isBundle ? (l.items || []) : [],
                 })),
             };
 
@@ -891,11 +891,39 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveImage,
                         )}
                     </div>
                     <div>
-                        <label className={lbl} style={lblS}>Giá gốc nhập (₫) - từ YC *</label>
-                        <input type="text" value={formatNumber(line.importPrice)} onChange={(e) =>
-                            onUpdate("importPrice", parseNumber(e.target.value))
-                        }
-                            className={inp} style={{ ...inpS, borderColor: "#7C3AED" }} />
+                        {line.manufacturingOrderItemId ? (
+                            // Giá từ yêu cầu → read-only, tự tính thành tiền
+                            <>
+                                <label className={lbl} style={lblS}>
+                                    Đơn giá (₫)
+                                    <span className="ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-black uppercase" style={{ backgroundColor: "#EDE9FE", color: "#6D28D9" }}>🔒 Từ YC</span>
+                                </label>
+                                <div className="h-9 px-3 rounded-lg text-[13px] flex items-center font-bold select-none"
+                                    style={{ border: "1px solid #DDD6FE", backgroundColor: "#F5F3FF", color: "#6D28D9" }}>
+                                    {formatNumber(line.importPrice)}₫
+                                </div>
+                                {Number(line.qty) > 0 && Number(line.importPrice) > 0 && (
+                                    <div className="mt-1.5 flex items-center gap-1.5 px-2 py-1 rounded-md" style={{ backgroundColor: "#F0FDF4", border: "1px solid #BBF7D0" }}>
+                                        <span className="text-[10px] text-green-600 font-medium">Thành tiền:</span>
+                                        <span className="text-[13px] font-black text-green-700">{fmtCurrency(Number(line.importPrice) * Number(line.qty))}</span>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            // Nhập thủ công → cho sửa giá
+                            <>
+                                <label className={lbl} style={lblS}>Giá gốc nhập (₫) *</label>
+                                <input type="text" value={formatNumber(line.importPrice)}
+                                    onChange={(e) => onUpdate("importPrice", parseNumber(e.target.value))}
+                                    className={inp} style={{ ...inpS, borderColor: "#7C3AED" }} />
+                                {Number(line.qty) > 0 && Number(line.importPrice) > 0 && (
+                                    <div className="mt-1.5 flex items-center gap-1.5 px-2 py-1 rounded-md" style={{ backgroundColor: "#F0FDF4", border: "1px solid #BBF7D0" }}>
+                                        <span className="text-[10px] text-green-600 font-medium">Thành tiền:</span>
+                                        <span className="text-[13px] font-black text-green-700">{fmtCurrency(Number(line.importPrice) * Number(line.qty))}</span>
+                                    </div>
+                                )}
+                            </>
+                        )}
                     </div>
                     <div>
                         <label className={lbl} style={lblS}><AlignLeft size={11} className="inline mr-1" />Ghi chú</label>
@@ -965,8 +993,8 @@ function SingleRow({ line, idx, onUpdate, onRemove, onFileChange, onRemoveImage,
                 </div>
             )}
 
-            {/* Line total */}
-            {lineTotal > 0 && (
+            {/* Line total – ẩn khi đã hiển thị inline trong ô giá */}
+            {lineTotal > 0 && !line.manufacturingOrderItemId && !line.importPrice && (
                 <div className="flex items-center justify-end">
                     <span className="text-[12px] font-bold px-3 py-1.5 rounded-lg shadow-sm" style={{ backgroundColor: "#F5F3FF", color: "#7C3AED", border: "1px solid #EDE9FE" }}>
                         Thành tiền: {fmtCurrency(lineTotal)}
@@ -1047,14 +1075,43 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                         )}
                     </div>
                     <div>
-                        <label className={lbl} style={{ ...lblS }}><span className="text-purple-600">Giá cả bộ (₫) — theo YC *</span></label>
-                        <input type="text" value={formatNumber(bundle.bundlePrice)}
-                            onChange={(e) => onUpdate("bundlePrice", parseNumber(e.target.value))}
-                            placeholder="Nhập giá bộ..."
-                            className={inp}
-                            style={{ ...inpS, borderColor: Number(bundle.bundlePrice) <= 0 ? "#EF4444" : "#7C3AED" }} />
-                        {Number(bundle.bundlePrice) <= 0 && (
-                            <p className="text-[11px] text-red-500 mt-1 font-medium">⚠️ Giá bộ chưa được nhập hoặc bằng 0—vui lòng điều chỉnh</p>
+                        {bundle.manufacturingOrderItemId ? (
+                            // Giá bộ từ yêu cầu → read-only, tự tính thành tiền
+                            <>
+                                <label className={lbl} style={lblS}>
+                                    <span className="text-purple-600">Giá mỗi bộ (₫)</span>
+                                    <span className="ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-black uppercase" style={{ backgroundColor: "#EDE9FE", color: "#6D28D9" }}>🔒 Từ YC</span>
+                                </label>
+                                <div className="h-9 px-3 rounded-lg text-[13px] flex items-center font-bold select-none"
+                                    style={{ border: "1px solid #DDD6FE", backgroundColor: "#F5F3FF", color: "#6D28D9" }}>
+                                    {formatNumber(bundle.bundlePrice)}₫
+                                </div>
+                                {Number(bundle.bundleQty) > 0 && Number(bundle.bundlePrice) > 0 && (
+                                    <div className="mt-1.5 flex items-center gap-1.5 px-2 py-1 rounded-md" style={{ backgroundColor: "#F0FDF4", border: "1px solid #BBF7D0" }}>
+                                        <span className="text-[10px] text-green-600 font-medium">Thành tiền:</span>
+                                        <span className="text-[13px] font-black text-green-700">{fmtCurrency(Number(bundle.bundlePrice) * Number(bundle.bundleQty))}</span>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            // Nhập thủ công → cho sửa giá
+                            <>
+                                <label className={lbl} style={{ ...lblS }}><span className="text-purple-600">Giá cả bộ (₫) *</span></label>
+                                <input type="text" value={formatNumber(bundle.bundlePrice)}
+                                    onChange={(e) => onUpdate("bundlePrice", parseNumber(e.target.value))}
+                                    placeholder="Nhập giá bộ..."
+                                    className={inp}
+                                    style={{ ...inpS, borderColor: Number(bundle.bundlePrice) <= 0 ? "#EF4444" : "#7C3AED" }} />
+                                {Number(bundle.bundlePrice) <= 0 && (
+                                    <p className="text-[11px] text-red-500 mt-1 font-medium">⚠️ Giá bộ chưa được nhập hoặc bằng 0</p>
+                                )}
+                                {Number(bundle.bundleQty) > 0 && Number(bundle.bundlePrice) > 0 && (
+                                    <div className="mt-1.5 flex items-center gap-1.5 px-2 py-1 rounded-md" style={{ backgroundColor: "#F0FDF4", border: "1px solid #BBF7D0" }}>
+                                        <span className="text-[10px] text-green-600 font-medium">Thành tiền:</span>
+                                        <span className="text-[13px] font-black text-green-700">{fmtCurrency(Number(bundle.bundlePrice) * Number(bundle.bundleQty))}</span>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
                 </div>
@@ -1166,8 +1223,8 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
                     </div>
                 </div>
 
-                {/* Bundle total */}
-                {lineTotal > 0 && (
+                {/* Bundle total – ẩn khi đã hiển thị inline trong ô giá */}
+                {lineTotal > 0 && !bundle.manufacturingOrderItemId && (
                     <div className="flex items-center justify-end">
                         <span className="text-[12px] font-bold px-3 py-1.5 rounded-lg shadow-sm" style={{ backgroundColor: "#F5F3FF", color: "#7C3AED", border: "1px solid #EDE9FE" }}>
                             Thành tiền (HĐ): {fmtCurrency(lineTotal)}
