@@ -386,7 +386,7 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
       header: "Số Sản Phẩm Cung Cấp",
       render: (s) => (
         <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-100">
-          {s.products?.length || 0} loại
+          {s.products?.filter(p => !p.hasManufacturingOrder).length || 0} loại
         </span>
       )
     },
@@ -394,11 +394,12 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
       header: "Tỉ Lệ Chọn",
       className: "text-center",
       render: (s) => {
-        const pKeys = (s.products || []).map(p => `${s.id}-${p.id}`);
+        const availableProducts = (s.products || []).filter(p => !p.hasManufacturingOrder);
+        const pKeys = availableProducts.map(p => `${s.id}-${p.id}`);
         const selectedInRow = pKeys.filter(k => selectedProductKeys.has(k));
         return (
           <span className={`font-bold ${selectedInRow.length > 0 ? 'text-[var(--brand-primary)]' : 'text-[var(--text-placeholder)]'}`}>
-            {selectedInRow.length}/{s.products?.length || 0} SP
+            {selectedInRow.length}/{availableProducts.length || 0} SP
           </span>
         );
       }
@@ -409,7 +410,7 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
       render: (s) => (
         <div className="flex flex-col items-end">
           <span className="text-[14px] font-black" style={{ color: "var(--text-main)" }}>
-            {s.products?.length || 0}
+            {s.products?.filter(p => !p.hasManufacturingOrder).length || 0}
           </span>
           <span className="text-[11px]" style={{ color: "var(--text-placeholder)" }}>chiếc</span>
         </div>
@@ -1013,24 +1014,22 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                   selectionMode="single"
                   renderDetail={(s) => (
                     <div className="flex flex-col gap-2 p-2 bg-slate-50/50 rounded-xl">
-                      {s.products?.map((p, pIdx) => {
+                      {s.products?.filter(p => !p.hasManufacturingOrder).map((p, pIdx) => {
                         const key = `${s.id}-${p.id}`;
                         const isPSelected = selectedProductKeys.has(key);
                         return (
                           <div
                             key={key}
-                            onClick={() => { if (!p.hasManufacturingOrder) toggleProduct(s, p); }}
-                            className={`flex items-center gap-3 p-2.5 rounded-lg border border-transparent ${p.hasManufacturingOrder ? 'opacity-60 cursor-not-allowed bg-gray-50' : 'cursor-pointer'}`}
+                            onClick={() => { toggleProduct(s, p); }}
+                            className="flex items-center gap-3 p-2.5 rounded-lg border border-transparent cursor-pointer"
                             style={{
-                              background: isPSelected ? "white" : (p.hasManufacturingOrder ? "var(--bg-muted, #f8fafc)" : "transparent"),
+                              background: isPSelected ? "white" : "transparent",
                               borderColor: isPSelected ? "var(--brand-primary)" : "transparent",
                               boxShadow: isPSelected ? "0 2px 8px -2px rgba(0,0,0,0.05)" : "none"
                             }}
                           >
                             <div className="shrink-0">
-                              {p.hasManufacturingOrder ? (
-                                <Square size={16} className="text-gray-200" />
-                              ) : isPSelected ? (
+                              {isPSelected ? (
                                 <CheckSquare size={16} className="text-[var(--brand-primary)]" />
                               ) : (
                                 <Square size={16} className="text-gray-300" />
@@ -1050,11 +1049,6 @@ export default function CreateManufacturingOrderModal({ orders, catalogProducts,
                                 {!p.sourceOrder && (
                                   <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-slate-100 text-slate-500 uppercase tracking-tighter">
                                     Danh mục
-                                  </span>
-                                )}
-                                {p.hasManufacturingOrder && (
-                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-green-100 text-green-700 uppercase tracking-tighter ml-auto">
-                                    Đã tạo YC
                                   </span>
                                 )}
                               </div>
