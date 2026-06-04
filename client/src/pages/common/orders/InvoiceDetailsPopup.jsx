@@ -327,13 +327,35 @@ const StandardOrderView = ({
                           <span className="text-[9px] font-black text-white uppercase tracking-widest">Thực tế xưởng</span>
                         </div>
                       </div>
-                      <div className="relative h-56 bg-[var(--status-warning)]/5 group cursor-pointer overflow-hidden border-l border-[var(--grid-border)]" onClick={() => p.customerSampleImage && onPreview(p.customerSampleImage)}>
-                        {p.customerSampleImage ? (
-                          <img src={p.customerSampleImage} alt="Mẫu khách" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                      <div className="relative h-56 bg-[var(--status-warning)]/5 overflow-hidden border-l border-[var(--grid-border)]">
+                        {p.customerSampleImages && p.customerSampleImages.length > 0 ? (
+                          <>
+                            {/* Main preview = first image */}
+                            <img
+                              src={p.customerSampleImages[0]}
+                              alt="Mẫu khách"
+                              className="w-full h-full object-cover cursor-zoom-in transition-transform hover:scale-105"
+                              onClick={() => onPreview(p.customerSampleImages[0])}
+                            />
+                            {/* Thumbnail strip at bottom when 2+ images */}
+                            {p.customerSampleImages.length > 1 && (
+                              <div className="absolute bottom-0 left-0 right-0 px-2 py-1.5 bg-gradient-to-t from-black/60 to-transparent flex items-end gap-1.5 z-10">
+                                {p.customerSampleImages.map((img, imgIdx) => (
+                                  <div
+                                    key={imgIdx}
+                                    className={`w-9 h-9 rounded border-2 overflow-hidden cursor-zoom-in shrink-0 transition-all hover:scale-110 ${imgIdx === 0 ? 'border-white/80 shadow-sm' : 'border-white/30 hover:border-white/70'}`}
+                                    onClick={(e) => { e.stopPropagation(); onPreview(img); }}
+                                  >
+                                    <img src={img} alt="" className="w-full h-full object-cover" />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </>
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-[var(--status-warning)]/20"><Camera size={48} /></div>
                         )}
-                        <div className="absolute top-4 right-4 px-2.5 py-1 bg-[var(--status-pending)]/80 backdrop-blur-md rounded border border-[var(--status-pending)]/30">
+                        <div className="absolute top-4 right-4 px-2.5 py-1 bg-[var(--status-pending)]/80 backdrop-blur-md rounded border border-[var(--status-pending)]/30 z-10">
                           <span className="text-[9px] font-black text-white uppercase tracking-widest">Mẫu khách</span>
                         </div>
                       </div>
@@ -740,6 +762,18 @@ export default function InvoiceDetailsPopup({ invoiceId, isOpen, onClose, onStat
                 return Array.isArray(parsed) ? parsed : [];
               } catch (e) {
                 return [];
+              }
+            })(),
+            customerSampleImages: (() => {
+              if (!p.customer_img) return [];
+              try {
+                const parsed = typeof p.customer_img === 'string'
+                  ? JSON.parse(p.customer_img)
+                  : p.customer_img;
+                if (Array.isArray(parsed)) return parsed.filter(Boolean);
+                return typeof parsed === 'string' ? [parsed] : [];
+              } catch (e) {
+                return typeof p.customer_img === 'string' ? [p.customer_img] : [];
               }
             })(),
             importStatus: p.import_status || 0
