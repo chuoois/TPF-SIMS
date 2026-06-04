@@ -336,7 +336,9 @@ export default function CreateImportModal({ onClose, onSaved }) {
         }
 
         const newLines = selectedItems.map(p => {
-            const qtyToImport = p.requestedQty || 1;
+            // requestedQty: dùng null nếu không có (không giới hạn), chứ không default về 1
+            const requestedQty = (p.requestedQty != null && p.requestedQty > 0) ? p.requestedQty : null;
+            const qtyToImport = requestedQty || 1;
 
             // Parse kích thước từ p.size (API trả về object { length, width, height })
             const sizeObj = p.size && typeof p.size === "object" ? p.size : {};
@@ -361,12 +363,19 @@ export default function CreateImportModal({ onClose, onSaved }) {
                 newBundle.width  = parsedWidth;
                 newBundle.height = parsedHeight;
                 newBundle.bundleQty = qtyToImport;
-                newBundle.requestedQty = p.requestedQty || null; // Giới hạn số lượng tối đa
+                newBundle.requestedQty = requestedQty; // Giới hạn số lượng tối đa (null = không giới hạn)
                 newBundle.bundlePrice = p.estimatedPrice || "";
-                // Dùng bundleItems (từ API) hoặc items (từ mock), nếu rỗng thì init 1 món lẻ trống
+                // Normalize bundleItems: API có thể trả về sub-items với field 'quantity' hoặc 'qty'
                 const subItems = p.bundleItems || p.items || [];
                 newBundle.items = subItems.length > 0
-                    ? subItems.map(it => ({ ...it, _id: Math.random(), productNote: "" }))
+                    ? subItems.map(it => ({
+                        ...it,
+                        _id: Math.random(),
+                        // Chuẩn hóa field: bundleItems từ API dùng 'quantity', emptyBundleItem dùng 'qty'
+                        qty: it.qty ?? it.quantity ?? 1,
+                        name: it.name || "",
+                        productNote: "",
+                    }))
                     : [emptyBundleItem()];
                 if (qtyToImport > 0 && newBundle.bundleCode) {
                     newBundle.unitIds = generateBundleUnitIds({ ...newBundle, bundleCode: newBundle.bundleCode }, qtyToImport);
@@ -389,7 +398,7 @@ export default function CreateImportModal({ onClose, onSaved }) {
                 newLine.width  = parsedWidth;
                 newLine.height = parsedHeight;
                 newLine.qty = qtyToImport;
-                newLine.requestedQty = p.requestedQty || null; // Giới hạn số lượng tối đa
+                newLine.requestedQty = requestedQty; // Giới hạn số lượng tối đa (null = không giới hạn)
                 newLine.importPrice = p.estimatedPrice || "";
                 newLine.details = p.details || "";
                 if (qtyToImport > 0 && newLine.productCode) {
@@ -992,13 +1001,24 @@ function BundleRow({ bundle, idx, onUpdate, onRemove, onAddItem, onRemoveItem, o
             <div className="pt-3 px-5 pb-5 space-y-4 " style={{ backgroundColor: "var(--bg-main)" }}>
 
                 {/* Khung thông tin Bộ (ReadOnly) */}
-                <div className="flex items-center gap-2 flex-wrap px-4 py-3 rounded-lg" style={{ backgroundColor: "#F0FDF4", border: "1px solid #BBF7D0" }}>
-                    <CheckCircle size={15} style={{ color: "#15803D" }} />
-                    <span className="text-[14px] font-bold text-gray-800 mr-2">{bundle.bundleName}</span>
-                    <span className="text-[12px] font-semibold" style={{ color: "#15803D" }}>Thuộc tính bộ:</span>
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-white ml-1 font-mono border" style={{ borderColor: "#BBF7D0" }}>{bundle.bundleCode}</span>
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-white ml-1 border" style={{ borderColor: "#BBF7D0" }}>{bundle.category}</span>
-                    {bundle.materialType && <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-white ml-1 border" style={{ borderColor: "#BBF7D0" }}>{bundle.materialType} {bundle.color && `- ${bundle.color}`}</span>}
+                <div className="px-4 py-3 rounded-lg space-y-2" style={{ backgroundColor: "#F0FDF4", border: "1px solid #BBF7D0" }}>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <CheckCircle size={15} style={{ color: "#15803D" }} />
+                        <span className="text-[14px] font-bold text-gray-800 mr-2">{bundle.bundleName}</span>
+                        <span className="text-[12px] font-semibold" style={{ color: "#15803D" }}>Thuộc tính bộ:</span>
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-white ml-1 font-mono border" style={{ borderColor: "#BBF7D0" }}>{bundle.bundleCode}</span>
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-white ml-1 border" style={{ borderColor: "#BBF7D0" }}>{bundle.category}</span>
+                        {bundle.materialType && <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-white ml-1 border" style={{ borderColor: "#BBF7D0" }}>{bundle.materialType} {bundle.color && `- ${bundle.color}`}</span>}
+                    </div>
+                    {/* Kích thước bộ (nếu có) */}
+                    {(bundle.length || bundle.width || bundle.height) && (
+                        <div className="flex items-center gap-1.5 text-[12px]" style={{ color: "#15803D" }}>
+                            <span className="font-semibold">Kích thước (D×R×C):</span>
+                            <span className="font-bold px-2 py-0.5 rounded bg-white border" style={{ borderColor: "#BBF7D0", fontFamily: "monospace" }}>
+                                {bundle.length || "0"} × {bundle.width || "0"} × {bundle.height || "0"} cm
+                            </span>
+                        </div>
+                    )}
                 </div>
 
 
