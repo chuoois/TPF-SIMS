@@ -63,14 +63,26 @@ describe("EmployeeController Unit Tests", () => {
   });
 
   describe("createEmployee()", () => {
-    it("nên trả lỗi 400 nếu mã nhân viên bị trùng", async () => {
+    it("nên trả lỗi 400 nếu mã nhân viên bị trùng và đang hoạt động", async () => {
       mockReq.body = { employee_code: "NV01" };
-      Employee.findOne.mockResolvedValue({ id: 1 }); // Đã tồn tại
+      Employee.findOne.mockResolvedValue({ id: 1, is_active: 1 });
 
       await employeeController.createEmployee(mockReq, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining("đã tồn tại") }));
+    });
+
+    it("nên kích hoạt lại nhân viên đã nghỉ việc khi mã trùng", async () => {
+      mockReq.body = { employee_code: "NV01", full_name: "NV A", role_name: "Thợ sơn", role_type: "PAINTER", base_rate: 200000 };
+      const mockUpdate = jest.fn();
+      Employee.findOne.mockResolvedValue({ id: 1, is_active: 0, user_account_id: null, update: mockUpdate });
+
+      await employeeController.createEmployee(mockReq, mockRes);
+
+      expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ is_active: 1, full_name: "NV A" }));
+      expect(Employee.create).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(200);
     });
 
     it("nên tạo mới nhân viên thành công", async () => {

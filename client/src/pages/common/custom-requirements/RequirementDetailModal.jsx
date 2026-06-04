@@ -103,7 +103,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
                 const wsD = new Date(itemSpecs[i].expectedWorkshopDate);
                 wsD.setHours(0, 0, 0, 0);
                 if (wsD >= delD) {
-                  errorMsg = `Ngày giao phải sau ngày xong xưởng của "${itemSpecs[i].name || i+1}" (${itemSpecs[i].expectedWorkshopDate})`;
+                  errorMsg = `Ngày giao phải sau ngày xong xưởng của "${itemSpecs[i].name || i + 1}" (${itemSpecs[i].expectedWorkshopDate})`;
                   break;
                 }
               }
@@ -135,12 +135,6 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
             } else if (Number(value) > Number(spec.price)) {
               errorMsg = "Giá vốn không được lớn hơn giá bán";
             }
-          } else if (field === "length") {
-            if (!value || Number(value) <= 0) errorMsg = "Dài phải > 0";
-          } else if (field === "width") {
-            if (!value || Number(value) <= 0) errorMsg = "Rộng phải > 0";
-          } else if (field === "height") {
-            if (!value || Number(value) <= 0) errorMsg = "Cao phải > 0";
           } else if (field === "item_warranty") {
             if (value === undefined || value === null || value === "") {
               errorMsg = "Bảo hành không được để trống";
@@ -158,7 +152,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
               wsD.setHours(0, 0, 0, 0);
               delD.setHours(0, 0, 0, 0);
               if (wsD >= delD) {
-                errorMsg = `Ngày xong xưởng phải trước ngày giao dự kiến (${deliveryDate})`;
+                errorMsg = `Ngày xong xưởng phải trước ngày giao dự kiến`;
               }
             }
           }
@@ -167,21 +161,15 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
             if (!value || !value.trim()) errorMsg = "Vui lòng nhập tên món";
           } else if (field === "bundle_quantity") {
             if (!value || Number(value) <= 0) errorMsg = "Số lượng phải > 0";
-          } else if (field === "bundle_length") {
-            if (!value || Number(value) <= 0) errorMsg = "Dài phải > 0";
-          } else if (field === "bundle_width") {
-            if (!value || Number(value) <= 0) errorMsg = "Rộng phải > 0";
-          } else if (field === "bundle_height") {
-            if (!value || Number(value) <= 0) errorMsg = "Cao phải > 0";
           }
         }
       }
     }
 
-    const key = specIndex === null 
-      ? field 
-      : subIndex === null 
-        ? `specs.${specIndex}.${field}` 
+    const key = specIndex === null
+      ? field
+      : subIndex === null
+        ? `specs.${specIndex}.${field}`
         : `specs.${specIndex}.bundle.${subIndex}.${field}`;
 
     setErrors(prev => {
@@ -198,9 +186,27 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
   };
 
   const validateAll = () => {
-    if (userRole !== 'owner') return true;
+    if (userRole !== 'owner') return { isValid: true, errors: {} };
 
     const newErrors = {};
+
+    // Ưu tiên kiểm tra Phân bổ sản xuất trước
+    for (let i = 0; i < itemSpecs.length; i++) {
+      const spec = itemSpecs[i];
+      if (!spec.fk_supplier_id) newErrors[`specs.${i}.fk_supplier_id`] = "Vui lòng chọn xưởng";
+      if (!spec.expectedWorkshopDate) {
+        newErrors[`specs.${i}.expectedWorkshopDate`] = "Vui lòng nhập ngày xong xưởng";
+      } else if (deliveryDate) {
+        const wsD = new Date(spec.expectedWorkshopDate);
+        const delD = new Date(deliveryDate);
+        wsD.setHours(0, 0, 0, 0);
+        delD.setHours(0, 0, 0, 0);
+        if (wsD >= delD) {
+          newErrors[`specs.${i}.expectedWorkshopDate`] = `Ngày xong xưởng phải trước ngày giao dự kiến `;
+        }
+      }
+    }
+
 
     if (!deliveryMethod) newErrors["deliveryMethod"] = "Vui lòng chọn phương thức giao hàng";
     if (!deliveryDate) {
@@ -213,7 +219,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
           const wsD = new Date(itemSpecs[i].expectedWorkshopDate);
           wsD.setHours(0, 0, 0, 0);
           if (wsD >= delD) {
-            newErrors["deliveryDate"] = `Ngày giao phải sau ngày xong xưởng của "${itemSpecs[i].name || i+1}" (${itemSpecs[i].expectedWorkshopDate})`;
+            newErrors["deliveryDate"] = `Ngày giao phải sau ngày xong xưởng của "${itemSpecs[i].name || i + 1}" (${itemSpecs[i].expectedWorkshopDate})`;
             break;
           }
         }
@@ -234,7 +240,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
       if (!spec.color || !spec.color.trim()) newErrors[`specs.${i}.color`] = "Vui lòng nhập màu sắc";
       if (!spec.quantity || Number(spec.quantity) <= 0) newErrors[`specs.${i}.quantity`] = "Số lượng phải lớn hơn 0";
       if (!spec.price || Number(spec.price) <= 0) newErrors[`specs.${i}.price`] = "Đơn giá bán phải lớn hơn 0";
-      
+
       if (!spec.costPrice || Number(spec.costPrice) <= 0) {
         newErrors[`specs.${i}.costPrice`] = "Giá vốn phải lớn hơn 0";
       } else if (Number(spec.costPrice) > Number(spec.price)) {
@@ -242,9 +248,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
       }
 
       if (Number(spec.item_is_bundle) !== 1) {
-        if (!spec.length || Number(spec.length) <= 0) newErrors[`specs.${i}.length`] = "Dài phải > 0";
-        if (!spec.width || Number(spec.width) <= 0) newErrors[`specs.${i}.width`] = "Rộng phải > 0";
-        if (!spec.height || Number(spec.height) <= 0) newErrors[`specs.${i}.height`] = "Cao phải > 0";
+        // Không validate dài rộng cao
       } else {
         if (!spec.item_bundle_items || spec.item_bundle_items.length === 0) {
           newErrors[`specs.${i}.bundle`] = "Bộ sản phẩm phải có ít nhất 1 món";
@@ -253,11 +257,9 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
             const sub = spec.item_bundle_items[j];
             if (!sub.name || !sub.name.trim()) newErrors[`specs.${i}.bundle.${j}.bundle_name`] = "Vui lòng nhập tên món";
             if (!sub.quantity || Number(sub.quantity) <= 0) newErrors[`specs.${i}.bundle.${j}.bundle_quantity`] = "Số lượng phải > 0";
-            
+
             const size = sub.size || {};
-            if (!size.length || Number(size.length) <= 0) newErrors[`specs.${i}.bundle.${j}.bundle_length`] = "Dài phải > 0";
-            if (!size.width || Number(size.width) <= 0) newErrors[`specs.${i}.bundle.${j}.bundle_width`] = "Rộng phải > 0";
-            if (!size.height || Number(size.height) <= 0) newErrors[`specs.${i}.bundle.${j}.bundle_height`] = "Cao phải > 0";
+            // Không validate dài rộng cao
           }
         }
       }
@@ -268,24 +270,15 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
         newErrors[`specs.${i}.item_warranty`] = "Bảo hành không được < 0";
       }
 
-      if (!spec.fk_supplier_id) newErrors[`specs.${i}.fk_supplier_id`] = "Vui lòng chọn xưởng";
-      if (!spec.expectedWorkshopDate) {
-        newErrors[`specs.${i}.expectedWorkshopDate`] = "Vui lòng nhập ngày xong xưởng";
-      } else if (deliveryDate) {
-        const wsD = new Date(spec.expectedWorkshopDate);
-        const delD = new Date(deliveryDate);
-        wsD.setHours(0, 0, 0, 0);
-        delD.setHours(0, 0, 0, 0);
-        if (wsD >= delD) {
-          newErrors[`specs.${i}.expectedWorkshopDate`] = `Ngày xong xưởng phải trước ngày giao dự kiến (${deliveryDate})`;
-        }
-      }
 
 
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return {
+      isValid: Object.keys(newErrors).length === 0,
+      errors: newErrors
+    };
   };
 
   const calculateSuggested = (total) => {
@@ -463,9 +456,10 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
 
   const handleSaveAll = async () => {
     if (userRole === 'owner') {
-      const isValid = validateAll();
+      const { isValid, errors: formErrors } = validateAll();
       if (!isValid) {
-        toast.error("Vui lòng kiểm tra và sửa các thông tin bị lỗi hiển thị trên form!");
+        const firstError = Object.values(formErrors)[0];
+        toast.error(firstError || "Vui lòng kiểm tra và sửa các thông tin bị lỗi hiển thị trên form!");
         return;
       }
     }
@@ -547,9 +541,10 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
   const handleUpdateStatus = async (newStatus, successMsg) => {
     // Chỉ validate phương thức giao hàng khi xác nhận hoàn thành (xác nhận giao hàng)
     if (newStatus === 3) {
-      const isValid = validateAll();
+      const { isValid, errors: formErrors } = validateAll();
       if (!isValid) {
-        toast.error("Vui lòng kiểm tra và sửa các thông tin bị lỗi hiển thị trên form!");
+        const firstError = Object.values(formErrors)[0];
+        toast.error(firstError || "Vui lòng kiểm tra và sửa các thông tin bị lỗi hiển thị trên form!");
         return;
       }
     }
@@ -776,7 +771,7 @@ export default function RequirementDetailModal({ req, onClose, onEnlarge, onOpen
 
 
 
-                            <div className="flex flex-col gap-4">
+                          <div className="flex flex-col gap-4">
                             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                               <EditableSpecItem label="Chất liệu" value={spec.material} error={errors[`specs.${index}.material`]} readOnly={!canEditSpec} onFocus={() => canEditSpec && setActiveDropdown({ index, type: 'material' })} onBlur={() => { setTimeout(() => setActiveDropdown({ index: null, type: null }), 200); validateField("material", spec.material, index); }} onChange={(v) => { handleUpdateItemSpec(index, "material", v); validateField("material", v, index); }} options={activeDropdown.index === index && activeDropdown.type === 'material' ? materialOptions : null} onSelect={(v) => { handleUpdateItemSpec(index, "material", v); validateField("material", v, index); }} />
                               <EditableSpecItem label="Màu sắc" value={spec.color} error={errors[`specs.${index}.color`]} readOnly={!canEditSpec} onFocus={() => canEditSpec && setActiveDropdown({ index, type: 'color' })} onBlur={() => { setTimeout(() => setActiveDropdown({ index: null, type: null }), 200); validateField("color", spec.color, index); }} onChange={(v) => { handleUpdateItemSpec(index, "color", v); validateField("color", v, index); }} options={activeDropdown.index === index && activeDropdown.type === 'color' ? colorOptions : null} onSelect={(v) => { handleUpdateItemSpec(index, "color", v); validateField("color", v, index); }} />

@@ -181,7 +181,7 @@ export default function OrdersListing({ userRole = 'owner' }) {
       },
       {
         header: "Mã đơn",
-        render: (o) => <p className="text-[13px] font-bold font-mono" style={{ color: "var(--text-main)" }}>DH-{o.pk_order_id}</p>,
+        render: (o) => <p className="text-[13px] font-bold font-mono" style={{ color: "var(--text-main)" }}>{o.order_code}</p>,
       },
       {
         header: "Khách hàng",
@@ -200,6 +200,14 @@ export default function OrdersListing({ userRole = 'owner' }) {
             </div>
           );
         },
+      },
+      {
+        header: "Sản phẩm",
+        render: (o) => (
+          <p className="text-[13px] text-[var(--text-main)] truncate max-w-[180px]" title={o.product_names}>
+            {o.product_names || "—"}
+          </p>
+        ),
       },
       {
         header: "Ngày tiếp nhận",
@@ -322,6 +330,7 @@ export default function OrdersListing({ userRole = 'owner' }) {
 
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
+          searchPlaceholder="Tìm mã đơn, tên/SĐT khách, tên SP..."
           dateFrom={dateFrom}
           setDateFrom={setDateFrom}
           dateTo={dateTo}

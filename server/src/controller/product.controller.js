@@ -94,20 +94,66 @@ class ProductController {
             // Nếu không phải là quà tặng, mới áp dụng các bộ lọc về giá
             if (!isGiftQuery) {
                 if (sell_type == 1) {
-                    // Hàng mộc: bắt buộc có giá mộc > 0
+                    // Hàng mộc (RAW): Chỉ lấy sản phẩm có product_type = 'RAW' và final_price > 0
+                    andConditions.push({ product_type: "RAW" });
                     pricingInclude.required = true;
-                    pricingInclude.where.raw_price = { [Op.gt]: 0 };
+                    andConditions.push({ "$pricings.final_price$": { [Op.gt]: 0 } });
 
-                    if (min_price) pricingInclude.where.raw_price[Op.gte] = parseFloat(min_price);
-                    if (max_price) {
-                        if (typeof pricingInclude.where.raw_price === 'object') {
-                            pricingInclude.where.raw_price[Op.lte] = parseFloat(max_price);
-                        } else {
-                            pricingInclude.where.raw_price = { [Op.lte]: parseFloat(max_price) };
-                        }
+                    if (min_price) {
+                        andConditions.push({ "$pricings.final_price$": { [Op.gte]: parseFloat(min_price) } });
                     }
-                } else if (sell_type == 2 || sell_type == 4) {
-                    // Hàng sẵn/Custom: bắt buộc có giá hoàn thiện > 0
+                    if (max_price) {
+                        andConditions.push({ "$pricings.final_price$": { [Op.lte]: parseFloat(max_price) } });
+                    }
+                } else if (sell_type == 2) {
+                    // Hàng sẵn: Lấy FINISHED có final_price > 0 HOẶC RAW có raw_price > 0
+                    andConditions.push({ product_type: { [Op.in]: ["FINISHED", "RAW"] } });
+                    pricingInclude.required = true;
+
+                    if (min_price || max_price) {
+                        const min = min_price ? parseFloat(min_price) : null;
+                        const max = max_price ? parseFloat(max_price) : null;
+
+                        andConditions.push({
+                            [Op.or]: [
+                                {
+                                    [Op.and]: [
+                                        { product_type: "FINISHED" },
+                                        { "$pricings.final_price$": { [Op.gt]: 0 } },
+                                        min !== null && { "$pricings.final_price$": { [Op.gte]: min } },
+                                        max !== null && { "$pricings.final_price$": { [Op.lte]: max } }
+                                    ].filter(Boolean)
+                                },
+                                {
+                                    [Op.and]: [
+                                        { product_type: "RAW" },
+                                        { "$pricings.raw_price$": { [Op.gt]: 0 } },
+                                        min !== null && { "$pricings.raw_price$": { [Op.gte]: min } },
+                                        max !== null && { "$pricings.raw_price$": { [Op.lte]: max } }
+                                    ].filter(Boolean)
+                                }
+                            ]
+                        });
+                    } else {
+                        andConditions.push({
+                            [Op.or]: [
+                                {
+                                    [Op.and]: [
+                                        { product_type: "FINISHED" },
+                                        { "$pricings.final_price$": { [Op.gt]: 0 } }
+                                    ]
+                                },
+                                {
+                                    [Op.and]: [
+                                        { product_type: "RAW" },
+                                        { "$pricings.raw_price$": { [Op.gt]: 0 } }
+                                    ]
+                                }
+                            ]
+                        });
+                    }
+                } else if (sell_type == 4) {
+                    // Hàng custom: bắt buộc có giá hoàn thiện > 0
                     pricingInclude.required = true;
                     pricingInclude.where.final_price = { [Op.gt]: 0 };
 
@@ -176,7 +222,7 @@ class ProductController {
                 where,
                 attributes: [
                     "pk_product_id", "sku", "product_name", "product_img",
-                    "is_bundle", "bundle_items", "size", "is_gift", "description", "warranty_months", "min_stock",
+                    "is_bundle", "bundle_items", "size", "is_gift", "description", "warranty_months", "min_stock", "product_type",
                     [stockQuantityLiteral, "available_quantity"]
                 ],
                 include: [
@@ -235,17 +281,33 @@ class ProductController {
                     sell_type_name = "Quà tặng";
                 } else {
                     if (sell_type == 1) {
-                        original_price = pricing ? pricing.raw_price : 0;
+                        // Hàng mộc tab: Giá khách mua mộc đem về tự sơn (final_price)
+                        original_price = pricing ? pricing.final_price : 0;
                         sell_type_name = "Hàng mộc";
                     } else if (sell_type == 2) {
-                        original_price = pricing ? pricing.final_price : 0;
+                        // Hàng sẵn tab: 
+                        // - Nếu là hàng RAW mộc nhưng bán ở tab Hàng sẵn -> yêu cầu xưởng sơn (raw_price)
+                        // - Nếu là hàng FINISHED -> giá hoàn thiện (final_price)
+                        if (pricing) {
+                            original_price = p.product_type === "RAW" ? pricing.raw_price : pricing.final_price;
+                        } else {
+                            original_price = 0;
+                        }
                         sell_type_name = "Hàng sẵn";
                     } else if (sell_type == 4) {
                         original_price = pricing ? pricing.final_price : 0;
                         sell_type_name = "Hàng custom";
                     } else {
                         // Mặc định nếu không có sell_type cụ thể
-                        original_price = pricing ? (pricing.final_price || pricing.raw_price) : 0;
+                        if (pricing) {
+                            if (p.product_type === "RAW") {
+                                original_price = pricing.final_price || pricing.raw_price;
+                            } else {
+                                original_price = pricing.final_price;
+                            }
+                        } else {
+                            original_price = 0;
+                        }
                         sell_type_name = "Sản phẩm";
                     }
                 }
@@ -676,9 +738,9 @@ class ProductController {
                     product_status: p.product_status,
                     // Pricing
                     costPrice: pricing ? parseFloat(pricing.cost_price) : 0,
-                    rawRetailPrice: pricing ? parseFloat(pricing.raw_price) : 0,
+                    rawRetailPrice: pricing ? (p.product_type === "RAW" ? parseFloat(pricing.final_price) : 0) : 0,
                     retailPrice: pricing ? parseFloat(pricing.final_price) : 0,
-                    finishedRetailPrice: pricing ? parseFloat(pricing.final_price) : 0,
+                    finishedRetailPrice: pricing ? (p.product_type === "RAW" ? parseFloat(pricing.raw_price) : parseFloat(pricing.final_price)) : 0,
                     profitMargin: pricing ? parseFloat(pricing.profit_margin) : 0,
                     isPriced: pricing ? (parseFloat(pricing.final_price) > 0 || parseFloat(pricing.raw_price) > 0) : false,
                     minStock: p.min_stock || 0,

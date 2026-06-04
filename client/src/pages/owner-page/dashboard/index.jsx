@@ -206,19 +206,16 @@ export default function OwnerDashboard() {
       name: "Tiếp nhận sản xuất",
       value: (processingPipeline[1] || 0) + (processingPipeline[2] || 0),
       icon: Package,
-      link: "/owner/manufacturing-orders"
     },
     {
       name: "Chờ nghiệm thu xưởng",
       value: processingPipeline[3] || 0,
       icon: Camera,
-      link: "/owner/manufacturing-orders"
     },
     {
       name: "Đã hoàn thành",
       value: processingPipeline[4] || 0,
       icon: CheckCircle2,
-      link: "/owner/manufacturing-orders"
     },
   ];
 
@@ -296,31 +293,6 @@ export default function OwnerDashboard() {
           </div>
         </section>
 
-
-
-        {/* ── SECTION 3: Charts & Pipeline ── */}
-        <section>
-          <SectionLabel icon={Activity} text="Biến động & Tiến độ" />
-          <div className="grid grid-cols-1 gap-4 mt-3">
-
-
-            {/* Pipeline */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-50 bg-slate-900">
-                <p className="text-[12px] font-black text-white uppercase tracking-widest flex items-center gap-2">
-                  <Activity size={15} className="text-blue-400" />
-                  Tiến độ xưởng thực tế
-                </p>
-              </div>
-              <div className="p-6 flex-1 flex flex-col justify-center gap-1">
-                {PIPELINE_DATA.map((stage, i) => (
-                  <PipelineRow key={i} stage={stage} total={totalProcessing} />
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* ── SECTION 4: Products & Activity ── */}
         <section>
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
@@ -389,8 +361,8 @@ export default function OwnerDashboard() {
                             : "bg-amber-50 text-amber-600 border border-amber-100"
                         )}
                       >
-                        {p.currentStock === 0 
-                          ? `Hết hàng (Định mức: ${p.minStock})` 
+                        {p.currentStock === 0
+                          ? `Hết hàng (Định mức: ${p.minStock})`
                           : `Còn ${p.currentStock} / ${p.minStock} ${p.isBundle ? "bộ" : "chiếc"}`}
                       </span>
                     </div>

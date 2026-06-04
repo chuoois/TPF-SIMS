@@ -14,6 +14,7 @@ jest.mock("../../../src/entities", () => {
     Employee: {
       findAll: jest.fn(),
       findByPk: jest.fn(),
+      update: jest.fn(),
     },
     PayrollPeriod: {
       findAll: jest.fn(),
@@ -27,6 +28,7 @@ jest.mock("../../../src/entities", () => {
       findByPk: jest.fn(),
       create: jest.fn(),
       bulkCreate: jest.fn(),
+      destroy: jest.fn(),
     },
     SalaryAdjustment: {
       create: jest.fn(),
@@ -184,14 +186,40 @@ describe("PayrollController Unit Tests", () => {
   });
 
   describe("deleteRecord()", () => {
-    it("nên xóa bản ghi lương", async () => {
+    it("nên xóa nhân viên khỏi mọi kỳ chưa LOCK và đánh dấu nghỉ việc", async () => {
       mockReq.params = { id: 1 };
-      const mockDestroy = jest.fn();
-      SalaryRecord.findByPk.mockResolvedValue({ period: { status: "DRAFT" }, destroy: mockDestroy });
+      SalaryRecord.findByPk.mockResolvedValue({
+        fk_employee_id: 42,
+        period: { status: "DRAFT" },
+        employee: { full_name: "NV A" },
+      });
+      PayrollPeriod.findAll.mockResolvedValue([{ period_id: 10 }, { period_id: 11 }]);
 
       await payrollController.deleteRecord(mockReq, mockRes);
-      expect(mockDestroy).toHaveBeenCalled();
+
+      expect(SalaryRecord.destroy).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({ fk_employee_id: 42 }),
+      }));
+      expect(Employee.update).toHaveBeenCalledWith(
+        expect.objectContaining({ is_active: 0 }),
+        expect.objectContaining({ where: { employee_id: 42 } })
+      );
       expect(mockRes.status).toHaveBeenCalledWith(200);
+    });
+
+    it("nên trả 403 khi kỳ đã LOCK", async () => {
+      mockReq.params = { id: 1 };
+      SalaryRecord.findByPk.mockResolvedValue({
+        fk_employee_id: 42,
+        period: { status: "LOCKED" },
+        employee: { full_name: "NV A" },
+      });
+
+      await payrollController.deleteRecord(mockReq, mockRes);
+
+      expect(SalaryRecord.destroy).not.toHaveBeenCalled();
+      expect(Employee.update).not.toHaveBeenCalled();
+      expect(mockRes.status).toHaveBeenCalledWith(403);
     });
   });
 

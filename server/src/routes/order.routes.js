@@ -38,7 +38,7 @@ router.use(ownerAndSalesOnly);
  *         name: search
  *         schema:
  *           type: string
- *         description: "Tìm kiếm theo mã đơn hoặc tên khách hàng"
+ *         description: "Tìm kiếm mã đơn, tên/SĐT khách hàng, tên SP"
  *       - in: query
  *         name: order_status
  *         schema:

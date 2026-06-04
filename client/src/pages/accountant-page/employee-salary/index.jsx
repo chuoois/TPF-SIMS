@@ -51,7 +51,6 @@ export default function AccountantEmployeeSalary() {
 
     // Delete
     const [employeeToDelete, setEmployeeToDelete] = useState(null);
-    const [deactivateEmployee, setDeactivateEmployee] = useState(false);
 
     const [isPeriodModalOpen, setIsPeriodModalOpen] = useState(false);
     
@@ -199,14 +198,8 @@ export default function AccountantEmployeeSalary() {
         if (!employeeToDelete) return;
         try {
             await payrollService.deleteRecord(employeeToDelete.record_id);
-            if (deactivateEmployee && employeeToDelete.employee_id) {
-                await employeeService.toggleStatus(employeeToDelete.employee_id, 0);
-                toast.success(`Đã xóa ${employeeToDelete.name} khỏi kỳ lương và đánh dấu nghỉ việc`, { icon: "🚫" });
-            } else {
-                toast.success(`Đã xóa ${employeeToDelete.name} khỏi kỳ lương`);
-            }
+            toast.success(`Đã xóa ${employeeToDelete.name} khỏi hệ thống lương`, { icon: "🚫" });
             setEmployeeToDelete(null);
-            setDeactivateEmployee(false);
             fetchRecords(selectedPeriodId);
         } catch(err) {
             toast.error(err.response?.data?.message || "Lỗi khi xóa");
@@ -642,35 +635,23 @@ export default function AccountantEmployeeSalary() {
             />
 
             {employeeToDelete && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => { setEmployeeToDelete(null); setDeactivateEmployee(false); }}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setEmployeeToDelete(null)}>
                     <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
                         <div className="p-6 space-y-3">
                             <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
                                 <Trash2 size={24} className="text-red-600" />
                             </div>
-                            <h2 className="text-xl font-black text-gray-900">Xóa bản ghi?</h2>
+                            <h2 className="text-xl font-black text-gray-900">Xóa nhân viên khỏi hệ thống lương?</h2>
                             <p className="text-[13px] text-gray-500">
-                                Bạn có chắc chắn muốn xóa bản ghi lương của <span className="font-bold text-gray-900">{employeeToDelete.name}</span> khỏi kỳ này?
-                                Hành động này không thể hoàn tác.
+                                Nhân viên <span className="font-bold text-gray-900">{employeeToDelete.name}</span> sẽ bị đánh dấu nghỉ việc và xóa khỏi mọi kỳ lương chưa chốt.
+                                Các kỳ đã chốt vẫn được giữ nguyên để bảo toàn lịch sử.
                             </p>
-                            {/* Tùy chọn vô hiệu hóa nhân viên */}
-                            <label className="flex items-start gap-2.5 mt-3 p-3 rounded-xl bg-orange-50 border border-orange-200 cursor-pointer group">
-                                <input
-                                    type="checkbox"
-                                    checked={deactivateEmployee}
-                                    onChange={e => setDeactivateEmployee(e.target.checked)}
-                                    className="mt-0.5 w-4 h-4 accent-orange-500 cursor-pointer shrink-0"
-                                />
-                                <div>
-                                    <p className="text-[12px] font-bold text-orange-700">Đánh dấu nhân viên đã nghỉ việc</p>
-                                    <p className="text-[11px] text-orange-600 mt-0.5">
-                                        Nhân viên sẽ không xuất hiện trong các kỳ lương mới được tạo.
-                                    </p>
-                                </div>
-                            </label>
+                            <p className="text-[12px] text-gray-400">
+                                Để dùng lại nhân viên này, hãy thêm với cùng mã nhân viên — hệ thống sẽ tự kích hoạt lại.
+                            </p>
                         </div>
                         <div className="px-6 py-4 flex items-center justify-end gap-3 bg-gray-50 border-t border-gray-100">
-                            <button onClick={() => { setEmployeeToDelete(null); setDeactivateEmployee(false); }}
+                            <button onClick={() => setEmployeeToDelete(null)}
                                 className="h-10 px-5 rounded-xl text-[13px] font-bold border border-gray-200 text-gray-600 hover:bg-white cursor-pointer transition">
                                 Hủy
                             </button>

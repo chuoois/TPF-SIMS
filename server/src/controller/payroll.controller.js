@@ -307,14 +307,21 @@ class PayrollController {
 
   /**
    * DELETE /api/payroll/records/:id
-   * Xóa 1 bản ghi lương (khi nhân viên không làm ngày nào trong kỳ)
+   * Xóa nhân viên khỏi hệ thống lương:
+   * - Xóa record hiện tại + mọi SalaryRecord khác của cùng nhân viên ở các kỳ chưa LOCK
+   * - Set Employee.is_active = 0 (không xuất hiện ở các kỳ tạo mới)
+   * Records ở các kỳ LOCKED được giữ nguyên để bảo toàn lịch sử lương đã chốt.
    */
   async deleteRecord(req, res) {
     try {
       const { id } = req.params; // record_id
+      const currentUserId = req.user?.userId;
 
       const record = await SalaryRecord.findByPk(id, {
-        include: [{ model: PayrollPeriod, as: "period" }],
+        include: [
+          { model: PayrollPeriod, as: "period" },
+          { model: Employee, as: "employee" },
+        ],
       });
 
       if (!record) {
@@ -323,13 +330,52 @@ class PayrollController {
 
       assertPeriodUnlocked(record.period);
 
-      await record.destroy();
+      const employeeId = record.fk_employee_id;
+      const employeeName = record.employee?.full_name;
 
-      return res.status(200).json({ message: "Đã xóa bản ghi lương khỏi kỳ này thành công" });
+      await sequelize.transaction(async (t) => {
+        // Xóa records của nhân viên ở mọi kỳ chưa LOCK (bao gồm record hiện tại)
+        const unlockedPeriods = await PayrollPeriod.findAll({
+          where: { status: { [Op.ne]: "LOCKED" } },
+          attributes: ["period_id"],
+          transaction: t,
+        });
+        const unlockedPeriodIds = unlockedPeriods.map((p) => p.period_id);
+
+        if (unlockedPeriodIds.length > 0) {
+          await SalaryRecord.destroy({
+            where: {
+              fk_employee_id: employeeId,
+              fk_period_id: { [Op.in]: unlockedPeriodIds },
+            },
+            transaction: t,
+          });
+        }
+
+        // Vô hiệu hóa nhân viên để không bị clone vào các kỳ tạo mới
+        await Employee.update(
+          {
+            is_active: 0,
+            modifiedate: new Date(),
+            modifieby: currentUserId,
+          },
+          { where: { employee_id: employeeId }, transaction: t }
+        );
+      });
+
+      await systemLogController.record(
+        req, "DELETE_EMPLOYEE_FROM_PAYROLL",
+        `Đã xóa nhân viên ${employeeName} (ID: ${employeeId}) khỏi hệ thống lương và đánh dấu nghỉ việc`,
+        "WARN", currentUserId
+      );
+
+      return res.status(200).json({
+        message: "Đã xóa nhân viên khỏi hệ thống lương và đánh dấu nghỉ việc",
+      });
     } catch (error) {
       if (error.status === 403) return res.status(403).json({ message: error.message });
       console.error("Delete record error:", error);
-      return res.status(500).json({ message: "Lỗi hệ thống khi xóa bản ghi lương" });
+      return res.status(500).json({ message: "Lỗi hệ thống khi xóa nhân viên khỏi hệ thống lương" });
     }
   }
 

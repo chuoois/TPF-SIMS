@@ -23,7 +23,7 @@ const orderService = {
    * @param {Object} params - Các tham số query string
    * @param {number} params.page - Trang hiện tại
    * @param {number} params.limit - Số lượng trên 1 trang
-   * @param {string} params.search - Tìm kiếm mã đơn/tên KH
+   * @param {string} params.search - Tìm kiếm mã đơn, tên/SĐT khách, tên SP
    * @param {number} params.order_status - Trạng thái đơn hàng
    * @param {number} params.order_type - Loại đơn hàng (1: Mộc, 2: Sẵn, 3: Đặt riêng)
    * @param {string} params.dateFrom - Từ ngày (YYYY-MM-DD)

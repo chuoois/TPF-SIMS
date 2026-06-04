@@ -121,6 +121,23 @@ class CustomerController {
       let { customer_code, ...customerData } = req.body;
       const userId = req.user.userId;
 
+      // Kiểm tra trùng số điện thoại (chỉ kiểm tra với các khách hàng đang hoạt động, status: 1)
+      if (customerData.phone_number) {
+        customerData.phone_number = customerData.phone_number.trim();
+        const existingCustomer = await CustomerProfile.findOne({
+          where: {
+            phone_number: customerData.phone_number,
+            status: 1,
+          },
+        });
+
+        if (existingCustomer) {
+          return res.status(400).json({
+            message: "Số điện thoại này đã được đăng ký bởi một khách hàng khác.",
+          });
+        }
+      }
+
       // Nếu không có mã khách hàng, tự động tạo
       if (!customer_code) {
         const count = await CustomerProfile.count();
@@ -162,6 +179,24 @@ class CustomerController {
 
       if (!customer) {
         return res.status(404).json({ message: "Không tìm thấy khách hàng để cập nhật" });
+      }
+
+      // Kiểm tra trùng số điện thoại với khách hàng khác (chỉ kiểm tra với các khách hàng đang hoạt động, status: 1)
+      if (updateData.phone_number) {
+        updateData.phone_number = updateData.phone_number.trim();
+        const existingCustomer = await CustomerProfile.findOne({
+          where: {
+            phone_number: updateData.phone_number,
+            status: 1,
+            pk_customer_id: { [Op.ne]: id },
+          },
+        });
+
+        if (existingCustomer) {
+          return res.status(400).json({
+            message: "Số điện thoại này đã được đăng ký bởi một khách hàng khác.",
+          });
+        }
       }
 
       await customer.update({
